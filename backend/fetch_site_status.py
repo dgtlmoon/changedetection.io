@@ -45,19 +45,20 @@ class perform_site_check(Thread):
         import html2text
 
         try:
-            r = requests.get(self.url, headers=headers, timeout=15)
-
+            r = requests.get(self.url, headers=headers, timeout=15, verify=False)
             stripped_text_from_html = html2text.html2text(r.content.decode('utf-8'))
+
         # Usually from networkIO/requests level
         except (requests.exceptions.ConnectionError,requests.exceptions.ReadTimeout) as e:
             self.datastore.update_watch(self.uuid, 'last_error', str(e))
             print(str(e))
 
-
         # Usually from html2text level
         except UnicodeDecodeError as e:
             self.datastore.update_watch(self.uuid, 'last_error', str(e))
             print(str(e))
+            # figure out how to deal with this cleaner..
+            # 'utf-8' codec can't decode byte 0xe9 in position 480: invalid continuation byte
 
         else:
 
@@ -72,9 +73,14 @@ class perform_site_check(Thread):
             fetched_md5 = hashlib.md5(stripped_text_from_html.encode('utf-8')).hexdigest()
 
             if self.current_md5 != fetched_md5:
+
+                # Dont confuse people by putting last-changed, when it actually just changed from nothing..
+                if self.datastore.get_val(self.uuid, 'previous_md5') is not None:
+                    self.datastore.update_watch(self.uuid, 'last_changed', self.timestamp)
+
                 self.datastore.update_watch(self.uuid, 'previous_md5', fetched_md5)
                 self.save_response_output(r.text)
-                self.datastore.update_watch(self.uuid, 'last_changed', self.timestamp)
+
 
         self.datastore.update_watch(self.uuid, 'last_checked', int(time.time()))
         pass

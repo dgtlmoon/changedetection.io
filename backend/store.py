@@ -13,9 +13,9 @@ class ChangeDetectionStore:
         try:
             with open('/datastore/url-watches.json') as json_file:
                 self.data = json.load(json_file)
+                self.data['watching'].reverse()
                 for p in self.data['watching']:
-                    print('url: ' + p['url'])
-                    print('')
+                    print("Watching:", p['url'])
 
         # First time ran, doesnt exist.
         except (FileNotFoundError, json.decoder.JSONDecodeError):
@@ -51,6 +51,15 @@ class ChangeDetectionStore:
                 self.sync_to_json()
 
 
+    def url_exists(self, url):
+
+        # Probably their should be dict...
+        for watch in self.data['watching']:
+            if watch['url'] == url:
+                    return True
+
+        return False
+
     def get_val(self, uuid, val):
         # Probably their should be dict...
         for watch in self.data['watching']:
@@ -78,6 +87,6 @@ class ChangeDetectionStore:
 
     def sync_to_json(self):
         with open('/datastore/url-watches.json', 'w') as json_file:
-            json.dump(self.data, json_file)
+            json.dump(self.data, json_file, indent=4)
 
 # body of the constructor

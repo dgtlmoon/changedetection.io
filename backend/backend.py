@@ -2,6 +2,14 @@
 
 
 # @todo logging
+# @todo sort by last_changed
+# @todo extra options for url like , verify=False etc.
+# @todo enable https://urllib3.readthedocs.io/en/latest/user-guide.html#ssl as option?
+# @todo maybe a button to reset all 'last-changed'.. so you can see it clearly when something happens since your last visit
+# @todo option for interval day/6 hour/etc
+# @todo on change detected, config for calling some API
+# @todo make tables responsive!
+# @todo fetch title into json
 
 import json
 import eventlet
@@ -12,6 +20,7 @@ import os
 import getopt
 import sys
 import datetime
+import timeago
 
 import threading
 
@@ -46,16 +55,23 @@ def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
             return "Checking now.."
 
     if watch_obj['last_checked'] == 0:
-        return 'Never'
+        return 'Not yet'
 
     return datetime.datetime.utcfromtimestamp(int(watch_obj['last_checked'])).strftime(format)
 
+#@app.context_processor
+#def timeago():
+#    def _timeago(lower_time, now):
+#        return timeago.format(lower_time, now)
+#    return dict(timeago=_timeago)
 
-@app.template_filter('format_timestamp')
+@app.template_filter('format_timestamp_timeago')
 def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     if timestamp == 0:
-        return 'Never'
-    return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
+        return 'Not yet'
+    return timeago.format(timestamp, time.time())
+    #return timeago.format(timestamp, time.time())
+    #return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
 
 
 @app.route("/", methods=['GET'])
@@ -111,7 +127,7 @@ def launch_checks():
     global running_update_threads
 
     for watch in datastore.data['watching']:
-        if watch['last_checked'] <= time.time() - 86400:
+        if watch['last_checked'] <= time.time() - 3*60*60:
             running_update_threads[watch['uuid']] = fetch_site_status.perform_site_check(uuid=watch['uuid'],
                                                                                          datastore=datastore)
             running_update_threads[watch['uuid']].start()
