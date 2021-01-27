@@ -2,8 +2,8 @@ version: "2"
 services:
 
   backend:
-    build: ./backend/dev-docker
-    container_name: changedetection.io-dev
+    build: ./backend/production-docker
+    container_name: changedetection.io
     volumes:
       - ./backend:/app
       - ./datastore:/datastore
@@ -13,6 +13,8 @@ services:
 
     networks:
       - changenet
+
+    restart: always
 
 networks:
   changenet:

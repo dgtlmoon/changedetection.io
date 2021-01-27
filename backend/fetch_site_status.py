@@ -60,7 +60,7 @@ class perform_site_check(Thread):
         try:
             r = requests.get(self.url, headers=headers, timeout=15, verify=False)
             stripped_text_from_html = html2text.html2text(r.content.decode('utf-8'))
-            self.save_response_stripped_output(stripped_text_from_html)
+
 
         # Usually from networkIO/requests level
         except (requests.exceptions.ConnectionError,requests.exceptions.ReadTimeout) as e:
@@ -90,6 +90,7 @@ class perform_site_check(Thread):
 
                 self.datastore.update_watch(self.uuid, 'previous_md5', fetched_md5)
                 self.save_response_html_output(r.text)
+                self.save_response_stripped_output(stripped_text_from_html)
 
 
         self.datastore.update_watch(self.uuid, 'last_checked', int(time.time()))
