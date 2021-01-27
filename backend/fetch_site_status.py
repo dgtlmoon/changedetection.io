@@ -2,7 +2,7 @@ from threading import Thread
 import time
 import requests
 import hashlib
-
+import os
 
 # Hmm Polymorphism datastore, thread, etc
 class perform_site_check(Thread):
@@ -13,21 +13,32 @@ class perform_site_check(Thread):
         self.datastore = datastore
         self.url = datastore.get_val(uuid, 'url')
         self.current_md5 = datastore.get_val(uuid, 'previous_md5')
+        self.output_path = "/datastore/{}".format(self.uuid)
 
     def save_firefox_screenshot(self, uuid, output):
         # @todo call selenium or whatever
         return
 
-    def save_response_output(self, output):
-        # @todo maybe record a history.json, [timestamp, md5, filename]
-        import os
-        path = "/datastore/{}".format(self.uuid)
-        try:
-            os.stat(path)
-        except:
-            os.mkdir(path)
+    def ensure_output_path(self):
 
-        with open("{}/{}.txt".format(path, self.timestamp), 'w') as f:
+        try:
+            os.stat(self.output_path)
+        except:
+            os.mkdir(self.output_path)
+
+    def save_response_html_output(self, output):
+        # @todo maybe record a history.json, [timestamp, md5, filename]
+
+
+        with open("{}/{}.txt".format(self.output_path, self.timestamp), 'w') as f:
+            f.write(output)
+            f.close()
+
+
+    def save_response_stripped_output(self, output):
+        # @todo maybe record a history.json, [timestamp, md5, filename]
+
+        with open("{}/{}.stripped.txt".format(self.output_path, self.timestamp), 'w') as f:
             f.write(output)
             f.close()
 
@@ -47,6 +58,7 @@ class perform_site_check(Thread):
         try:
             r = requests.get(self.url, headers=headers, timeout=15, verify=False)
             stripped_text_from_html = html2text.html2text(r.content.decode('utf-8'))
+            self.save_response_stripped_output(stripped_text_from_html)
 
         # Usually from networkIO/requests level
         except (requests.exceptions.ConnectionError,requests.exceptions.ReadTimeout) as e:
@@ -63,10 +75,6 @@ class perform_site_check(Thread):
         else:
 
             # We rely on the actual text in the html output.. many sites have random script vars etc
-
-
-
-
             self.datastore.update_watch(self.uuid, 'last_error', False)
             self.datastore.update_watch(self.uuid, 'last_check_status', r.status_code)
 
@@ -79,7 +87,7 @@ class perform_site_check(Thread):
                     self.datastore.update_watch(self.uuid, 'last_changed', self.timestamp)
 
                 self.datastore.update_watch(self.uuid, 'previous_md5', fetched_md5)
-                self.save_response_output(r.text)
+                self.save_response_html_output(r.text)
 
 
         self.datastore.update_watch(self.uuid, 'last_checked', int(time.time()))
