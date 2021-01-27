@@ -47,6 +47,11 @@ class perform_site_check(Thread):
             'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8,cs;q=0.7'
         }
 
+        extra_headers = self.datastore.get_val(self.uuid, 'headers')
+        headers.update(extra_headers)
+
+        print (headers)
+
 
         print("Checking", self.url)
         import html2text

@@ -17,7 +17,8 @@ class ChangeDetectionStore:
             'last_checked': 0,
             'last_changed': 0,
             'title': None,
-            'uuid': str(uuid.uuid4())
+            'uuid': str(uuid.uuid4()),
+            'headers' : {}
         }
 
         try:
