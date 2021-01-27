@@ -13,7 +13,6 @@ class ChangeDetectionStore:
         try:
             with open('/datastore/url-watches.json') as json_file:
                 self.data = json.load(json_file)
-                self.data['watching'].reverse()
                 for p in self.data['watching']:
                     print("Watching:", p['url'])
 

@@ -80,6 +80,10 @@ def main_page():
 
     # Show messages but once.
     # maybe if the change happened more than a few days ago.. add a class
+
+    # Sort by last_changed
+    datastore.data['watching'].sort(key=lambda x: x['last_changed'], reverse=True)
+
     output = render_template("watch-overview.html", watches=datastore.data['watching'], messages=messages)
     messages = []
     return output
