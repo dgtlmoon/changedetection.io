@@ -13,7 +13,7 @@ from flask import Flask, render_template, request, send_file, send_from_director
 
 # Local
 import store
-from nocache import nocache
+
 
 datastore = store.ChangeDetectionStore()
 
@@ -27,18 +27,17 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 
 @app.route("/", methods=['GET'])
-@nocache
 def main_page():
     return render_template("watch-overview.html", watches=datastore.data['watching'])
 
 
 @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
-@nocache
 def static_content(group, filename):
     try:
         return send_from_directory("/app/static/{}".format(group), filename=filename)
     except FileNotFoundError:
         abort(404)
+
 
 
 def main(argv):
