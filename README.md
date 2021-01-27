@@ -24,6 +24,6 @@ Now visit http://127.0.0.1:5000 , The interface will now expose the UI, you can 
 - General options for timeout, default headers
 - On change detection, callout to another API (handy for notices/issue trackers)
 - Explore the differences that were detected.
-- Use a graphic/rendered page difference instead of text (see the experimental `selenium` branch)
+- Use a graphic/rendered page difference instead of text (see the experimental `selenium-screenshot-diff` branch)
 
  
