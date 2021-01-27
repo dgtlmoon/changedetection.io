@@ -10,7 +10,11 @@
         <input type="text" placeholder="tag" size="10" name="tag"/>
         <button type="submit" class="pure-button pure-button-primary">Save</button>
     </fieldset>
+    <!-- add extra stuff, like do a http POST and send headers -->
+    <!-- user/pass r = requests.get('https://api.github.com/user', auth=('user', 'pass')) -->
 </form>
+
+<!-- make a nice list of tags here to click on -->
 
 <table class="pure-table pure-table-striped">
     <thead>
@@ -18,7 +22,7 @@
             <th>#</th>
             <th>URL</th>
             <th>Last Checked</th>
-            <th>Status</th>
+            <th>Last Changed</th>
             <th>op</th>
         </tr>
     </thead>
@@ -29,9 +33,9 @@
         <tr class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }}">
             <td>{{ loop.index }}</td>
             <td>{{ watch.url }}</td>
-            <td>2021/2/2 14:00:00</td>
-            <td>No Change</td>
-            <td><button type="submit" class="pure-button pure-button-primary">Recheck</button> <button type="submit" class="pure-button pure-button-primary">Delete</button></td>
+            <td>{{watch|format_last_checked_time}}</td>
+            <td>{{watch.last_changed|format_timestamp}}</td>
+            <td><a href="/api/checknow?uuid={{ watch.uuid}}" class="pure-button pure-button-primary">Recheck</a> <button type="submit" class="pure-button pure-button-primary">Delete</button></td>
         </tr>
   {% endfor %}
 

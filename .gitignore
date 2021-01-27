@@ -2,3 +2,4 @@ __pycache__
 .idea
 *.pyc
 datastore/url-watches.json
+datastore/*

@@ -25,19 +25,50 @@ class ChangeDetectionStore:
                 'url': 'https://changedetection.io',
                 'tag': 'general',
                 'last_checked': 0,
+                'last_changed' : 0,
                 'uuid': str(uuid.uuid4())
             })
+            self.data['watching'].append({
+                'url': 'http://www.quotationspage.com/random.php',
+                'tag': 'test',
+                'last_checked': 0,
+                'last_changed' : 0,
+                'uuid': str(uuid.uuid4())
+            })
+
 
             with open('/datastore/url-watches.json', 'w') as json_file:
                 json.dump(self.data, json_file)
 
+    def update_watch(self, uuid, val, var):
+        # Probably their should be dict...
+        for watch in self.data['watching']:
+            if watch['uuid'] == uuid:
+                watch[val] = var
+                # print("Updated..", val)
+                self.sync_to_json()
+
+
+    def get_val(self, uuid, val):
+        # Probably their should be dict...
+        for watch in self.data['watching']:
+            if watch['uuid'] == uuid:
+                if val in watch:
+                    return watch[val]
+                else:
+                    return None
+
+        return None
 
     def add_watch(self, url, tag):
         validators.url(url)
 
+        # @todo use a common generic version of this
         self.data['watching'].append({
             'url': url,
             'tag': tag,
+            'last_checked':0,
+            'last_changed': 0,
             'uuid': str(uuid.uuid4())
         })
         self.sync_to_json()
