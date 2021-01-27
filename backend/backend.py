@@ -85,6 +85,10 @@ def main_page():
     return output
 
 
+@app.route("/favicon.ico", methods=['GET'])
+def favicon():
+    return send_from_directory("/app/static/images", filename="favicon.ico")
+
 @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
 def static_content(group, filename):
     try:
