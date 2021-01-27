@@ -28,16 +28,12 @@ class perform_site_check(Thread):
 
     def save_response_html_output(self, output):
         # @todo maybe record a history.json, [timestamp, md5, filename]
-
-
         with open("{}/{}.txt".format(self.output_path, self.timestamp), 'w') as f:
             f.write(output)
             f.close()
 
 
     def save_response_stripped_output(self, output):
-        # @todo maybe record a history.json, [timestamp, md5, filename]
-
         with open("{}/{}.stripped.txt".format(self.output_path, self.timestamp), 'w') as f:
             f.write(output)
             f.close()
@@ -54,6 +50,7 @@ class perform_site_check(Thread):
 
         print("Checking", self.url)
         import html2text
+        self.ensure_output_path()
 
         try:
             r = requests.get(self.url, headers=headers, timeout=15, verify=False)

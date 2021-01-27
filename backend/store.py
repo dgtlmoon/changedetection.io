@@ -16,7 +16,7 @@ class ChangeDetectionStore:
             'tag': None,
             'last_checked': 0,
             'last_changed': 0,
-            'title': None,
+            'title': 'xxx',
             'uuid': str(uuid.uuid4())
         }
 

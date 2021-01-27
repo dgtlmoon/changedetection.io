@@ -13,7 +13,7 @@ validators
 
 bleach==3.2.1
 html5lib==0.9999999       # via bleach
-
+timeago
 html2text
 
 # @notes

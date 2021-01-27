@@ -59,8 +59,9 @@ def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
 
     return datetime.datetime.utcfromtimestamp(int(watch_obj['last_checked'])).strftime(format)
 
-#@app.context_processor
-#def timeago():
+
+# @app.context_processor
+# def timeago():
 #    def _timeago(lower_time, now):
 #        return timeago.format(lower_time, now)
 #    return dict(timeago=_timeago)
@@ -70,8 +71,8 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     if timestamp == 0:
         return 'Not yet'
     return timeago.format(timestamp, time.time())
-    #return timeago.format(timestamp, time.time())
-    #return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
+    # return timeago.format(timestamp, time.time())
+    # return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
 
 
 @app.route("/", methods=['GET'])
@@ -83,7 +84,6 @@ def main_page():
 
     # Sort by last_changed
     datastore.data['watching'].sort(key=lambda x: x['last_changed'], reverse=True)
-
     output = render_template("watch-overview.html", watches=datastore.data['watching'], messages=messages)
     messages = []
     return output
@@ -135,7 +135,7 @@ def launch_checks():
     global running_update_threads
 
     for watch in datastore.data['watching']:
-        if watch['last_checked'] <= time.time() - 3*60*60:
+        if watch['last_checked'] <= time.time() - 3 * 60 * 60:
             running_update_threads[watch['uuid']] = fetch_site_status.perform_site_check(uuid=watch['uuid'],
                                                                                          datastore=datastore)
             running_update_threads[watch['uuid']].start()
