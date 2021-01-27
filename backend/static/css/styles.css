@@ -17,7 +17,9 @@ a.github-link {
 }
 
 section.content {
+
     padding-top: 3em;
+flex-direction: column;
   display: flex;
   align-items: center;
   justify-content: center;

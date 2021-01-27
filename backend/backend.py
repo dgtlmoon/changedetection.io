@@ -9,14 +9,13 @@ import os
 import getopt
 import sys
 import datetime
-from flask import Flask, render_template, request, send_file, send_from_directory, safe_join, abort
+from flask import Flask, render_template, request, send_file, send_from_directory, safe_join, abort, redirect, url_for
 
 # Local
 import store
 
-
 datastore = store.ChangeDetectionStore()
-
+messages = []
 app = Flask(__name__, static_url_path='/static')
 app.config['STATIC_RESOURCES'] = "/app/static"
 
@@ -28,7 +27,12 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 @app.route("/", methods=['GET'])
 def main_page():
-    return render_template("watch-overview.html", watches=datastore.data['watching'])
+    global messages
+
+    # Show messages but once.
+    output = render_template("watch-overview.html", watches=datastore.data['watching'], messages=messages)
+    messages = []
+    return output
 
 
 @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
@@ -37,6 +41,19 @@ def static_content(group, filename):
         return send_from_directory("/app/static/{}".format(group), filename=filename)
     except FileNotFoundError:
         abort(404)
+
+
+@app.route("/api/add", methods=['POST'])
+def api_watch_add():
+    global messages
+
+    #@todo add_watch should throw a custom Exception for validation etc
+    datastore.add_watch(url=request.form.get('url'), tag=request.form.get('tag'))
+    messages.append({'class':'ok', 'message': 'Saved'})
+
+    return redirect(url_for('main_page'))
+    # datastore.add_watch
+
 
 
 

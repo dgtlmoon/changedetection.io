@@ -3,16 +3,16 @@
 {% block content %}
 <div class="box">
 
-<form class="pure-form">
+<form class="pure-form" action="/api/add" method="POST">
     <fieldset>
         <legend>Add new change detection watch</legend>
-        <input type="url" placeholder="https://..." />
-        <input type="text" placeholder="tag" size="10" />
+        <input type="url" placeholder="https://..." name="url"/>
+        <input type="text" placeholder="tag" size="10" name="tag"/>
         <button type="submit" class="pure-button pure-button-primary">Save</button>
     </fieldset>
 </form>
 
-<table class="pure-table">
+<table class="pure-table pure-table-striped">
     <thead>
         <tr>
             <th>#</th>
@@ -26,8 +26,8 @@
 
 
   {% for watch in watches %}
-        <tr class="pure-table-odd">
-            <td>1</td>
+        <tr class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }}">
+            <td>{{ loop.index }}</td>
             <td>{{ watch.url }}</td>
             <td>2021/2/2 14:00:00</td>
             <td>No Change</td>
