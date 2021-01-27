@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="box">
+
+<form class="pure-form">
+    <fieldset>
+        <legend>Add new change detection watch</legend>
+        <input type="url" placeholder="https://..." />
+        <input type="text" placeholder="tag" size="10" />
+        <button type="submit" class="pure-button pure-button-primary">Save</button>
+    </fieldset>
+</form>
+
+<table class="pure-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>URL</th>
+            <th>Last Checked</th>
+            <th>Status</th>
+            <th>op</th>
+        </tr>
+    </thead>
+    <tbody>
+
+
+  {% for watch in watches %}
+        <tr class="pure-table-odd">
+            <td>1</td>
+            <td>{{ watch.url }}</td>
+            <td>2021/2/2 14:00:00</td>
+            <td>No Change</td>
+            <td><button type="submit" class="pure-button pure-button-primary">Recheck</button> <button type="submit" class="pure-button pure-button-primary">Delete</button></td>
+        </tr>
+  {% endfor %}
+
+
+    </tbody>
+</table>
+</div>
+{% endblock %}

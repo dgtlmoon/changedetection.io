@@ -1,0 +1,24 @@
+aiohttp
+async-timeout
+chardet==2.3.0
+multidict
+python-engineio
+six==1.10.0
+yarl
+flask
+gevent-websocket
+eventlet
+requests
+
+# Actual connecting to services
+pytz
+phpserialize==1.3.0
+redis>=2.6.2
+pymysql==0.8
+bleach==3.2.1
+html5lib==0.9999999       # via bleach
+
+flask_socketio~=5.0
+
+# @notes
+# - Dont install socketio, it interferes with flask_socketio

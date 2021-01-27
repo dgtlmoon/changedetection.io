@@ -1,0 +1,24 @@
+/*
+ * -- BASE STYLES --
+ * Most of these are inherited from Base, but I want to change a few.
+ */
+body {
+    color: #333;
+}
+
+
+
+a {
+    text-decoration: none;
+    color: #1b98f8;
+}
+a.github-link {
+    color: #fff;
+}
+
+section.content {
+    padding-top: 3em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

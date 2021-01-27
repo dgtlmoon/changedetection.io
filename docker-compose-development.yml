@@ -1,0 +1,18 @@
+version: "2"
+services:
+
+  backend:
+    build: ./backend/dev-docker
+    container_name: changedection-backend
+    volumes:
+      - ./backend:/app
+      - ./datastore:/datastore
+
+    ports:
+      - "127.0.0.1:5000:5000"
+
+    networks:
+      - changenet
+
+networks:
+  changenet:
