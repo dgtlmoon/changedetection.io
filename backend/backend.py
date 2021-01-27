@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+
+# @todo logging
+
 import json
 import eventlet
 import eventlet.wsgi
@@ -22,7 +25,7 @@ ticker_thread = None
 
 datastore = store.ChangeDetectionStore()
 messages = []
-running_update_threads={}
+running_update_threads = {}
 
 app = Flask(__name__, static_url_path='/static')
 app.config['STATIC_RESOURCES'] = "/app/static"
@@ -32,11 +35,11 @@ app.config['STATIC_RESOURCES'] = "/app/static"
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
+
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
 # running or something similar.
 @app.template_filter('format_last_checked_time')
 def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
-
     global running_update_threads
     if watch_obj['uuid'] in running_update_threads:
         if running_update_threads[watch_obj['uuid']].is_alive():
@@ -47,17 +50,20 @@ def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
 
     return datetime.datetime.utcfromtimestamp(int(watch_obj['last_checked'])).strftime(format)
 
+
 @app.template_filter('format_timestamp')
 def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     if timestamp == 0:
         return 'Never'
     return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
 
+
 @app.route("/", methods=['GET'])
 def main_page():
     global messages
 
     # Show messages but once.
+    # maybe if the change happened more than a few days ago.. add a class
     output = render_template("watch-overview.html", watches=datastore.data['watching'], messages=messages)
     messages = []
     return output
@@ -75,9 +81,9 @@ def static_content(group, filename):
 def api_watch_add():
     global messages
 
-    #@todo add_watch should throw a custom Exception for validation etc
-    datastore.add_watch(url=request.form.get('url'), tag=request.form.get('tag'))
-    messages.append({'class':'ok', 'message': 'Saved'})
+    # @todo add_watch should throw a custom Exception for validation etc
+    datastore.add_watch(url=request.form.get('url').strip(), tag=request.form.get('tag').strip())
+    messages.append({'class': 'ok', 'message': 'Saved'})
     launch_checks()
     return redirect(url_for('main_page'))
 
@@ -86,14 +92,14 @@ def api_watch_add():
 def api_watch_checknow():
     global messages
 
-    uuid=request.args.get('uuid')
+    uuid = request.args.get('uuid')
 
     # dict would be better, this is a simple safety catch.
     for watch in datastore.data['watching']:
         if watch['uuid'] == uuid:
             # @todo cancel if already running?
             running_update_threads[uuid] = fetch_site_status.perform_site_check(uuid=uuid,
-                                                                                         datastore=datastore)
+                                                                                datastore=datastore)
             running_update_threads[uuid].start()
 
     return redirect(url_for('main_page'))
@@ -105,14 +111,15 @@ def launch_checks():
     global running_update_threads
 
     for watch in datastore.data['watching']:
-        if watch['last_checked'] <= time.time() - 20:
-            running_update_threads[watch['uuid']] = fetch_site_status.perform_site_check(uuid = watch['uuid'], datastore=datastore)
+        if watch['last_checked'] <= time.time() - 86400:
+            running_update_threads[watch['uuid']] = fetch_site_status.perform_site_check(uuid=watch['uuid'],
+                                                                                         datastore=datastore)
             running_update_threads[watch['uuid']].start()
 
-def ticker_thread_check_time_launch_checks():
 
+# Thread runner to check every minute
+def ticker_thread_check_time_launch_checks():
     while True:
-        print ("lanching")
         launch_checks()
         time.sleep(60)
 
@@ -121,9 +128,8 @@ def main(argv):
     ssl_mode = False
     port = 5000
 
-    #@todo handle ctrl break
+    # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
-
 
     try:
         opts, args = getopt.getopt(argv, "sp:")

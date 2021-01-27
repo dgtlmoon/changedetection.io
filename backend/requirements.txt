@@ -14,5 +14,7 @@ validators
 bleach==3.2.1
 html5lib==0.9999999       # via bleach
 
+html2text
+
 # @notes
 # - Dont install socketio, it interferes with flask_socketio

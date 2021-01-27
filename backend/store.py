@@ -2,6 +2,8 @@ import json
 import uuid
 import validators
 
+
+# @TODO Have a var which is the base value, this is referred to even in the templating.. merge and append,not just append
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change

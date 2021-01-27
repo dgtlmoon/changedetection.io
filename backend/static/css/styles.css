@@ -24,3 +24,7 @@ flex-direction: column;
   align-items: center;
   justify-content: center;
 }
+
+.watch-table .error {
+color: #aa0000;
+}
