@@ -37,7 +37,7 @@
             {% if watch.last_error is defined and watch.last_error != False %} !! {% endif %}
             </td>
             <td>{{watch.last_changed|format_timestamp_timeago}}</td>
-            <td><a href="/api/checknow?uuid={{ watch.uuid}}" class="pure-button pure-button-primary">Recheck</a> <button type="submit" class="pure-button pure-button-primary">Delete</button></td>
+            <td><a href="/api/checknow?uuid={{ watch.uuid}}" class="pure-button button-small pure-button-primary">Recheck</a> <button type="submit" class="pure-button  button-small pure-button-primary">Delete</button></td>
         </tr>
   {% endfor %}
 
