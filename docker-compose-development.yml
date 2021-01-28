@@ -11,6 +11,8 @@ services:
     volumes:
       - ./backend:/app
       - ./datastore:/datastore
+    environment:
+      - PYTHONUNBUFFERED=1 #https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
 
     ports:
       - "127.0.0.1:5000:5000"
