@@ -85,10 +85,7 @@ class ChangeDetectionStore:
         # Probably their should be dict...
         for watch in self.data['watching']:
             if watch['uuid'] == uuid:
-                if val in watch:
-                    return watch[val]
-                else:
-                    return None
+                return watch.get(val)
 
         return None
 
