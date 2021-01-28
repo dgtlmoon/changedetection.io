@@ -95,11 +95,11 @@ class perform_site_check(Thread):
                 self.save_response_html_output(r.text)
                 output_filepath = self.save_response_stripped_output(stripped_text_from_html)
 
-                # Update history with the stripped text for future reference
+                # Update history with the stripped text for future reference, this will also mean we save the first
+                # attempt because 'self.current_md5 != fetched_md5'  (current_md5 will be None when not run)
                 # need to learn more about attr/setters/getters
                 history = self.datastore.get_val(self.uuid, 'history')
                 history.update(dict([(self.timestamp, output_filepath)]))
-
                 self.datastore.update_watch(self.uuid, 'history', history)
 
 
