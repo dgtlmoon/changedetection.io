@@ -3,6 +3,10 @@ import time
 import requests
 import hashlib
 import os
+import re
+import html2text
+from urlextract import URLExtract
+
 
 # Hmm Polymorphism datastore, thread, etc
 class perform_site_check(Thread):
@@ -53,16 +57,29 @@ class perform_site_check(Thread):
         extra_headers = self.datastore.get_val(self.uuid, 'headers')
         headers.update(extra_headers)
 
-        print (headers)
-
-
         print("Checking", self.url)
-        import html2text
+
         self.ensure_output_path()
 
         try:
             r = requests.get(self.url, headers=headers, timeout=15, verify=False)
             stripped_text_from_html = html2text.html2text(r.content.decode('utf-8'))
+
+            # @todo This should be a config option.
+            # Many websites include junk in the links, trackers, etc.. Since we are really a service all about text changes..
+
+            extractor = URLExtract()
+            urls = extractor.find_urls(stripped_text_from_html)
+            # Remove the urls, longest first so that we dont end up chewing up bigger links with parts of smaller ones.
+            if urls:
+                urls.sort(key=len, reverse=True)
+
+                for url in urls:
+                    # Sometimes URLExtract will consider something like 'foobar.com' as a link when that was just text.
+                    if "://" in url:
+                        #print ("Stripping link", url)
+                        stripped_text_from_html = stripped_text_from_html.replace(url, '')
+
 
 
         # Usually from networkIO/requests level
