@@ -1,9 +1,9 @@
 import time
 import sys
 
+print ("Sleep loop, you should run your script from the console")
 
 while True: 
     # Wait for 5 seconds
-    print('To stderr.', file=sys.stderr)
 
     time.sleep(2)
