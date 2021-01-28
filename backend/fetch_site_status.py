@@ -34,9 +34,12 @@ class perform_site_check(Thread):
 
 
     def save_response_stripped_output(self, output):
-        with open("{}/{}.stripped.txt".format(self.output_path, self.timestamp), 'w') as f:
+        fname = "{}/{}.stripped.txt".format(self.output_path, self.timestamp)
+        with open(fname, 'w') as f:
             f.write(output)
             f.close()
+
+        return fname
 
     def run(self):
 
@@ -90,7 +93,14 @@ class perform_site_check(Thread):
 
                 self.datastore.update_watch(self.uuid, 'previous_md5', fetched_md5)
                 self.save_response_html_output(r.text)
-                self.save_response_stripped_output(stripped_text_from_html)
+                output_filepath = self.save_response_stripped_output(stripped_text_from_html)
+
+                # Update history with the stripped text for future reference
+                # need to learn more about attr/setters/getters
+                history = self.datastore.get_val(self.uuid, 'history')
+                history.update(dict([(self.timestamp, output_filepath)]))
+
+                self.datastore.update_watch(self.uuid, 'history', history)
 
 
         self.datastore.update_watch(self.uuid, 'last_checked', int(time.time()))

@@ -18,7 +18,8 @@ class ChangeDetectionStore:
             'last_changed': 0,
             'title': None,
             'uuid': str(uuid.uuid4()),
-            'headers' : {}
+            'headers' : {}, # Extra headers to send
+            'history' : {} # Dict of timestamp and output stripped filename
         }
 
         try:
