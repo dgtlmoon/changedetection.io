@@ -129,6 +129,24 @@ def api_watch_checknow():
     return redirect(url_for('main_page'))
 
 
+@app.route("/api/recheckall", methods=['GET'])
+def api_watch_recheckall():
+
+    import fetch_site_status
+
+    global running_update_threads
+    i=0
+    for watch in datastore.data['watching']:
+        i=i+1
+
+        running_update_threads[watch['uuid']] = fetch_site_status.perform_site_check(uuid=watch['uuid'],
+                                                                                     datastore=datastore)
+        running_update_threads[watch['uuid']].start()
+
+
+    return "{} rechecked of {} watches.".format(i, len(datastore.data['watching']))
+
+
 # Can be used whenever, launch threads that need launching to update the stored information
 def launch_checks():
     import fetch_site_status
