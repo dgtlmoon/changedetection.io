@@ -3,50 +3,56 @@
 {% block content %}
 <div class="box">
 
-<form class="pure-form" action="/api/add" method="POST">
-    <fieldset>
-        <legend>Add new change detection watch</legend>
-        <input type="url" placeholder="https://..." name="url"/>
-        <input type="text" placeholder="tag" size="10" name="tag"/>
-        <button type="submit" class="pure-button pure-button-primary">Save</button>
-    </fieldset>
-    <!-- add extra stuff, like do a http POST and send headers -->
-    <!-- user/pass r = requests.get('https://api.github.com/user', auth=('user', 'pass')) -->
-</form>
+    <form class="pure-form" action="/api/add" method="POST">
+        <fieldset>
+            <legend>Add new change detection watch</legend>
+            <input type="url" placeholder="https://..." name="url"/>
+            <input type="text" placeholder="tag" size="10" name="tag"/>
+            <button type="submit" class="pure-button pure-button-primary">Save</button>
+        </fieldset>
+        <!-- add extra stuff, like do a http POST and send headers -->
+        <!-- user/pass r = requests.get('https://api.github.com/user', auth=('user', 'pass')) -->
+    </form>
 
-<!-- make a nice list of tags here to click on -->
+    <!-- make a nice list of tags here to click on -->
     <i>Note: Times are in UTC for now - todo - JS front end format<br/></i>
-<table class="pure-table pure-table-striped watch-table">
-    <thead>
-        <tr>
-            <th>#</th>
-            <th></th>
-            <th>Last Checked</th>
-            <th>Last Changed</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
+    <div id="watch-table-wrapper">
+        <table class="pure-table pure-table-striped watch-table">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th></th>
+                <th>Last Checked</th>
+                <th>Last Changed</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
 
 
-  {% for watch in watches %}
-        <tr id="{{ watch.uuid }}" class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }} {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}">
-            <td>{{ loop.index }}</td>
-            <td>{% if watch.title is not none %}{{ watch.title }}{% else %}{{ watch.url }}{% endif %}<a class="external" target=_blank href="{{ watch.url }}"></a>
-{% if watch.last_error is defined and watch.last_error != False %}
-                <div class="fetch-error">{{ watch.last_error }}</div>
-                {% endif %}
-            </td>
-            <td>{{watch|format_last_checked_time}}
+            {% for watch in watches %}
+            <tr id="{{ watch.uuid }}"
+                class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }} {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}">
+                <td>{{ loop.index }}</td>
+                <td class="title-col">{% if watch.title is not none %}{{ watch.title }}{% else %}{{ watch.url }}{% endif
+                    %}<a class="external" target=_blank href="{{ watch.url }}"></a>
+                    {% if watch.last_error is defined and watch.last_error != False %}
+                    <div class="fetch-error">{{ watch.last_error }}</div>
+                    {% endif %}
+                </td>
+                <td>{{watch|format_last_checked_time}}
 
-            </td>
-            <td>{{watch.last_changed|format_timestamp_timeago}}</td>
-            <td><a href="/api/checknow?uuid={{ watch.uuid}}" class="pure-button button-small pure-button-primary">Recheck</a> <button type="submit" class="pure-button  button-small pure-button-primary">Delete</button></td>
-        </tr>
-  {% endfor %}
+                </td>
+                <td>{{watch.last_changed|format_timestamp_timeago}}</td>
+                <td><a href="/api/checknow?uuid={{ watch.uuid}}" class="pure-button button-small pure-button-primary">Recheck</a>
+                    <button type="submit" class="pure-button  button-small pure-button-primary">Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
 
 
-    </tbody>
-</table>
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
