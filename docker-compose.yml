@@ -3,6 +3,7 @@ services:
 
   backend:
     build: ./backend/production-docker
+    image: dgtlmoon/changedetection.io:0.1
     container_name: changedetection.io
     volumes:
       - ./backend:/app

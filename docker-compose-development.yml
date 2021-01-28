@@ -1,8 +1,12 @@
 version: "2"
 services:
 
+# I have a feeling we can get rid of this, and just use one docker-compose.yml, and just set a ENV var if
+# we want dev mode (just gives a docker shell) or not.
+
   backend:
     build: ./backend/dev-docker
+    image: dgtlmoon/changedetection.io:0.1-dev
     container_name: changedetection.io-dev
     volumes:
       - ./backend:/app
