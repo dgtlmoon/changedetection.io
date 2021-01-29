@@ -42,7 +42,7 @@ services:
 $ mkdir datastore
 $ docker-compose up -d
 ```
-
+(`/datastore` is optional, I prefer to have the files on my local disk instead of in a docker volume)
 
 ### Future plans
 
