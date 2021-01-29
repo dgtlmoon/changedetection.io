@@ -161,7 +161,7 @@ def api_watch_add():
 
     # @todo add_watch should throw a custom Exception for validation etc
     datastore.add_watch(url=request.form.get('url').strip(), tag=request.form.get('tag').strip())
-    messages.append({'class': 'ok', 'message': 'Saved'})
+    messages.append({'class': 'ok', 'message': 'Watch added.'})
     launch_checks()
     return redirect(url_for('main_page'))
 
