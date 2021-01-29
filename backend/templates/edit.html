@@ -4,7 +4,7 @@
 <div class="edit-form">
 
 
-    <form class="pure-form pure-form-aligned" action="/api/update?uuid={{uuid}}" method="POST">
+    <form class="pure-form pure-form-stacked" action="/api/update?uuid={{uuid}}" method="POST">
         <fieldset>
             <div class="pure-control-group">
                 <label for="url">URL</label>
@@ -17,13 +17,27 @@
                 <input type="text" placeholder="tag" size="10" id="tag" name="tag" value="{{ watch.tag}}"/>
             </div>
 
-            <div class="pure-controls">
+            <fieldset class="pure-group">
+                <label for="headers">Extra request headers</label>
+
+                <textarea id=headers name="headers" class="pure-input-1-2" placeholder="Example
+Cookie: foobar
+User-Agent: wonderbra 1.0"
+                          style="width: 100%;
+                            font-family:monospace;
+                            white-space: pre;
+                            overflow-wrap: normal;
+                            overflow-x: scroll;" rows="5">{% for key, value in watch.headers.items() %}{{ key }}: {{ value }}
+{% endfor %}</textarea>
+                <br/>
+
+            </fieldset>
+            <div class="pure-control-group">
                 <button type="submit" class="pure-button pure-button-primary">Save</button>
             </div>
+            <br/>
 
-            <div class="pure-controls">
-
-
+            <div class="pure-control-group">
                 <a href="/" class="pure-button button-small button-cancel">Cancel</a>
                 <a href="/api/delete?uuid={{uuid}}"
                    class="pure-button button-small button-error ">Delete</a>

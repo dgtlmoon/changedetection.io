@@ -172,4 +172,8 @@ color: #fff;
     border-radius: 10px;
     color: #fff;
     font-weight: bold;
-    }
+}
+
+.pure-form label  {
+font-weight: bold;
+}

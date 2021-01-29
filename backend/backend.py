@@ -107,7 +107,6 @@ def edit_page():
     global messages
 
     uuid = request.args.get('uuid')
-
     output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid], messages=messages)
     return output
 
@@ -186,9 +185,20 @@ def api_update():
     url = request.form.get('url').strip()
     tag = request.form.get('tag').strip()
 
+    form_headers = request.form.get('headers').strip().split("\n")
+    extra_headers = {}
+    if form_headers:
+        for header in form_headers:
+            if len(header):
+                parts = header.split(':', 1)
+                extra_headers.update({parts[0].strip(): parts[1].strip()})
+
+
+
     validators.url(url) #@todo switch to prop/attr/observer
     datastore.data['watching'][uuid].update({'url': url,
-                                             'tag': tag})
+                                             'tag': tag,
+                                             'headers':extra_headers})
 
     #@todo switch to prop/attr/observer
     datastore.sync_to_json()
