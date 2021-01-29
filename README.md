@@ -15,7 +15,7 @@ Get monitoring! super simple.
 
 ```
 $ mkdir ./datastore
-$ docker run -d --restart always -p "127.0.0.1:5000:5000" -v "$(pwd)"/datastore:/datastore
+$ docker run -d --restart always -p "127.0.0.1:5000:5000" -v "$(pwd)"/datastore:/datastore dgtlmoon/changedetection.io
 ```  
 
 Now visit http://127.0.0.1:5000 , The interface will now expose the UI, you can change this in the `docker-compose.yml`
