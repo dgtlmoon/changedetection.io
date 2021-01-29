@@ -63,7 +63,7 @@ class perform_site_check(Thread):
 
         try:
             r = requests.get(self.url, headers=headers, timeout=15, verify=False)
-            stripped_text_from_html = html2text.html2text(r.content.decode('utf-8'))
+            stripped_text_from_html = html2text.html2text(r.text)
 
             # @todo This should be a config option.
             # Many websites include junk in the links, trackers, etc.. Since we are really a service all about text changes..
