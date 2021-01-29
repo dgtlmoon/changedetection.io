@@ -103,6 +103,35 @@ def edit_page():
     output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid], messages=messages)
     return output
 
+@app.route("/import", methods=['GET', "POST"])
+def import_page():
+    import validators
+    global messages
+    remaining_urls=[]
+
+    good = 0
+
+    if request.method == 'POST':
+        urls = request.values.get('urls').split("\n")
+        for url in urls:
+            url = url.strip()
+            if len(url) and validators.url(url):
+                datastore.add_watch(url=url.strip(), tag="")
+                good += 1
+            else:
+                if len(url):
+                    remaining_urls.append(url)
+
+        messages.append({'class': 'ok', 'message': "{} imported, {} skipped.".format(good, len(remaining_urls))})
+
+        launch_checks()
+
+    output = render_template("import.html",
+                             messages=messages,
+                             remaining="\n".join(remaining_urls)
+                             )
+    return output
+
 
 @app.route("/favicon.ico", methods=['GET'])
 def favicon():

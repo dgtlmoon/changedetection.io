@@ -124,6 +124,7 @@ body:after, body:before {
 .edit-form {
    background: #fff;
    padding: 2em;
+   margin: 1em;
    border-radius: 5px;
 }
 .button-secondary {
