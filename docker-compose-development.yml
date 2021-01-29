@@ -6,16 +6,14 @@ services:
 
   backend:
     build: ./backend/dev-docker
-    image: dgtlmoon/changedetection.io:0.1-dev
+    image: dgtlmoon/changedetection.io:dev
     container_name: changedetection.io-dev
     volumes:
       - ./backend:/app
       - ./datastore:/datastore
-    environment:
-      - PYTHONUNBUFFERED=1 #https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
 
     ports:
-      - "127.0.0.1:5000:5000"
+      - "127.0.0.1:5001:5000"
 
     networks:
       - changenet
