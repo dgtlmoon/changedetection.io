@@ -28,7 +28,7 @@ Now visit http://127.0.0.1:5000 , You should now be able to access the UI.
 (The `/datastore` `-v` is optional, I prefer to have the files on my local disk instead of in a docker volume)
   
 
-![Self-hoster web page change monitoring application screenshot](screenshot.jpg?raw=true "Self-hosted web page change monitoring screenshot")
+![Self-hoster web page change monitoring application screenshot](screenshot.png?raw=true "Self-hosted web page change monitoring screenshot")
 
 
 ### Future plans
