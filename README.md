@@ -2,12 +2,21 @@
 
 ## Self-hosted change monitoring of web pages.
 
-_Why?_ Many years ago I had used a couple of web site change detection/monitoring services, 
-but they got bought up by larger media companies, after this, whenI logged in they
-wanted _even more_ private data about me.
+_Know when web pages change! Stay ontop of new information!_
 
-All I simply wanted todo was to know which pages were changing and when (and maybe see
-some basic information about what those changes were)
+
+#### Use cases
+
+Know when ...
+
+- Government department updates (changes are often only on their websites)
+- Local government news (changes are often only on their websites)
+- New software releases 
+- Festivals with changes
+- Realestate listing changes
+
+
+  
 
 ![Alt text](screenshot.png?raw=true "Screenshot")
 
@@ -18,7 +27,7 @@ $ mkdir ./datastore
 $ docker run -d --restart always -p "127.0.0.1:5000:5000" -v "$(pwd)"/datastore:/datastore dgtlmoon/changedetection.io
 ```  
 
-Now visit http://127.0.0.1:5000 , The interface will now expose the UI, you can change this in the `docker-compose.yml`
+Now visit http://127.0.0.1:5000 , You should now be able to access the UI.
 
 
 
