@@ -193,7 +193,7 @@ def api_update():
     #@todo switch to prop/attr/observer
     datastore.sync_to_json()
 
-    messages.append({'class': 'ok', 'message': 'Updated.'})
+    messages.append({'class': 'ok', 'message': 'Updated watch.'})
 
     return redirect(url_for('main_page'))
 
