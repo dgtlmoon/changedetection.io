@@ -11,15 +11,38 @@ some basic information about what those changes were)
 
 ![Alt text](screenshot.png?raw=true "Screenshot")
 
-Get going...
+Get monitoring! super simple.
 
 ```
-$ git clone https://github.com/dgtlmoon/changedetection.io.git
-$ cd changedetection.io
-$ docker-compose up -d
+$ mkdir ./datastore
+$ docker run -d --restart always -p "127.0.0.1:5000:5000" -v "$(pwd)"/datastore:/datastore
 ```  
 
 Now visit http://127.0.0.1:5000 , The interface will now expose the UI, you can change this in the `docker-compose.yml`
+
+
+
+Or in `docker-compose.yml` style.
+
+
+```yaml
+version: "2"
+services:
+
+  backend:
+    image: dgtlmoon/changedetection.io:latest
+    volumes:
+      - ./datastore:/datastore
+    ports:
+      - "127.0.0.1:5000:5000"
+    restart: always
+```
+
+```bash
+$ mkdir datastore
+$ docker-compose up -d
+```
+
 
 ### Future plans
 
@@ -30,3 +53,4 @@ Now visit http://127.0.0.1:5000 , The interface will now expose the UI, you can 
 - Use a graphic/rendered page difference instead of text (see the experimental `selenium-screenshot-diff` branch)
 
  
+Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
