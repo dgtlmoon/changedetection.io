@@ -1,5 +1,5 @@
 import json
-import uuid
+import uuid as uuid_builder
 import validators
 
 
@@ -9,6 +9,10 @@ import validators
 class ChangeDetectionStore:
 
     def __init__(self):
+        self.data = {
+            'watching': {}
+        }
+
 
         # Base definition for all watchers
         self.generic_definition = {
@@ -17,60 +21,44 @@ class ChangeDetectionStore:
             'last_checked': 0,
             'last_changed': 0,
             'title': None,
-            'uuid': str(uuid.uuid4()),
+            'uuid': str(uuid_builder.uuid4()),
             'headers' : {}, # Extra headers to send
             'history' : {} # Dict of timestamp and output stripped filename
         }
 
         try:
             with open('/datastore/url-watches.json') as json_file:
-                self.data = json.load(json_file)
-                # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
-                i = 0
-                while i < len(self.data['watching']):
-                    _blank = self.generic_definition.copy()
-                    _blank.update(self.data['watching'][i])
-                    self.data['watching'][i] = _blank
 
-                    print("Watching:", self.data['watching'][i]['url'])
-                    i += 1
+                self.data.update(json.load(json_file))
+
+                # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
+                # @todo pretty sure theres a python we todo this with an abstracted(?) object!
+                i = 0
+                for uuid, watch in self.data['watching'].items():
+                    _blank = self.generic_definition.copy()
+                    _blank.update(watch)
+                    self.data['watching'].update({uuid: _blank})
+                    print("Watching:", uuid, _blank['url'])
 
         # First time ran, doesnt exist.
         except (FileNotFoundError, json.decoder.JSONDecodeError):
-            print("Resetting JSON store")
+            print("Creating JSON store")
 
-            self.data = {}
-            self.data['watching'] = []
-            self._init_blank_data()
-            self.sync_to_json()
-
-    def _init_blank_data(self):
-
-        # Test site
-        _blank = self.generic_definition.copy()
-        _blank.update({
-            'url': 'https://changedetection.io',
-            'tag': 'general',
-            'uuid': str(uuid.uuid4())
-        })
-        self.data['watching'].append(_blank)
-
-        # Test site
-        _blank = self.generic_definition.copy()
-        _blank.update({
-            'url': 'http://www.quotationspage.com/random.php',
-            'tag': 'test',
-            'uuid': str(uuid.uuid4())
-        })
-        self.data['watching'].append(_blank)
+            self.add_watch(url='https://changedetection.io', tag='general')
+            self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
 
     def update_watch(self, uuid, val, var):
+
+        self.data['watching'][uuid].update({val: var})
+        self.sync_to_json()
+
+
+
+    def delete(self, uuid):
         # Probably their should be dict...
-        for watch in self.data['watching']:
-            if watch['uuid'] == uuid:
-                watch[val] = var
-                # print("Updated..", val)
-                self.sync_to_json()
+        del(self.data['watching'][uuid])
+        self.sync_to_json()
+
 
     def url_exists(self, url):
 
@@ -83,13 +71,11 @@ class ChangeDetectionStore:
 
     def get_val(self, uuid, val):
         # Probably their should be dict...
-        for watch in self.data['watching']:
-            if watch['uuid'] == uuid:
-                return watch.get(val)
-
-        return None
+        return self.data['watching'][uuid].get(val)
 
     def add_watch(self, url, tag):
+
+        # @todo deal with exception
         validators.url(url)
 
         # @todo use a common generic version of this
@@ -98,12 +84,12 @@ class ChangeDetectionStore:
         _blank.update({
             'url': url,
             'tag': tag,
-            'uuid': str(uuid.uuid4())
+            'uuid': str(uuid_builder.uuid4())
         })
-        self.data['watching'].append(_blank)
+
+        self.data['watching'].update({_blank['uuid']: _blank})
 
         self.sync_to_json()
-        # @todo throw custom exception
 
     def sync_to_json(self):
         with open('/datastore/url-watches.json', 'w') as json_file:

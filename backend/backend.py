@@ -79,19 +79,35 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
 def main_page():
     global messages
 
-    # Show messages but once.
-    # maybe if the change happened more than a few days ago.. add a class
+    # Sort by last_changed and add the uuid which is usually the key..
+    sorted_watches=[]
+    for uuid, watch in datastore.data['watching'].items():
+        watch['uuid']=uuid
+        sorted_watches.append(watch)
 
-    # Sort by last_changed
-    datastore.data['watching'].sort(key=lambda x: x['last_changed'], reverse=True)
-    output = render_template("watch-overview.html", watches=datastore.data['watching'], messages=messages)
+    sorted_watches.sort(key=lambda x: x['last_changed'], reverse=True)
+
+    output = render_template("watch-overview.html", watches=sorted_watches, messages=messages)
+
+    # Show messages but once.
     messages = []
+    return output
+
+
+@app.route("/edit", methods=['GET'])
+def edit_page():
+    global messages
+
+    uuid = request.args.get('uuid')
+
+    output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid], messages=messages)
     return output
 
 
 @app.route("/favicon.ico", methods=['GET'])
 def favicon():
     return send_from_directory("/app/static/images", filename="favicon.ico")
+
 
 @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
 def static_content(group, filename):
@@ -112,37 +128,62 @@ def api_watch_add():
     return redirect(url_for('main_page'))
 
 
+@app.route("/api/delete", methods=['GET'])
+def api_delete():
+    global messages
+    uuid = request.args.get('uuid')
+    datastore.delete(uuid)
+    messages.append({'class': 'ok', 'message': 'Deleted.'})
+
+    return redirect(url_for('main_page'))
+
+
+@app.route("/api/update", methods=['POST'])
+def api_update():
+    global messages
+    import validators
+
+    uuid = request.args.get('uuid')
+
+    url = request.form.get('url').strip()
+    tag = request.form.get('tag').strip()
+
+    validators.url(url) #@todo switch to prop/attr/observer
+    datastore.data['watching'][uuid].update({'url': url,
+                                             'tag': tag})
+
+    #@todo switch to prop/attr/observer
+    datastore.sync_to_json()
+
+    messages.append({'class': 'ok', 'message': 'Updated.'})
+
+    return redirect(url_for('main_page'))
+
 @app.route("/api/checknow", methods=['GET'])
 def api_watch_checknow():
     global messages
 
     uuid = request.args.get('uuid')
 
-    # dict would be better, this is a simple safety catch.
-    for watch in datastore.data['watching']:
-        if watch['uuid'] == uuid:
-            # @todo cancel if already running?
-            running_update_threads[uuid] = fetch_site_status.perform_site_check(uuid=uuid,
-                                                                                datastore=datastore)
-            running_update_threads[uuid].start()
+    running_update_threads[uuid] = fetch_site_status.perform_site_check(uuid=uuid,
+                                                                        datastore=datastore)
+    running_update_threads[uuid].start()
 
     return redirect(url_for('main_page'))
 
 
 @app.route("/api/recheckall", methods=['GET'])
 def api_watch_recheckall():
-
     import fetch_site_status
 
     global running_update_threads
-    i=0
-    for watch in datastore.data['watching']:
-        i=i+1
+    i = 0
+    for uuid, watch in datastore.data['watching']:
+        i = i + 1
 
-        running_update_threads[watch['uuid']] = fetch_site_status.perform_site_check(uuid=watch['uuid'],
+        running_update_threads[watch['uuid']] = fetch_site_status.perform_site_check(uuid=uuid,
                                                                                      datastore=datastore)
         running_update_threads[watch['uuid']].start()
-
 
     return "{} rechecked of {} watches.".format(i, len(datastore.data['watching']))
 
@@ -152,9 +193,9 @@ def launch_checks():
     import fetch_site_status
     global running_update_threads
 
-    for watch in datastore.data['watching']:
+    for uuid,watch in datastore.data['watching'].items():
         if watch['last_checked'] <= time.time() - 3 * 60 * 60:
-            running_update_threads[watch['uuid']] = fetch_site_status.perform_site_check(uuid=watch['uuid'],
+            running_update_threads[watch['uuid']] = fetch_site_status.perform_site_check(uuid=uuid,
                                                                                          datastore=datastore)
             running_update_threads[watch['uuid']].start()
 

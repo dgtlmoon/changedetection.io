@@ -45,7 +45,7 @@
                 </td>
                 <td>{{watch.last_changed|format_timestamp_timeago}}</td>
                 <td><a href="/api/checknow?uuid={{ watch.uuid}}" class="pure-button button-small pure-button-primary">Recheck</a>
-                    <button type="submit" class="pure-button  button-small pure-button-primary">Delete</button>
+                    <a href="/edit?uuid={{ watch.uuid}}" class="pure-button button-small pure-button-primary">Edit</a>
                 </td>
             </tr>
             {% endfor %}

@@ -87,6 +87,9 @@ class perform_site_check(Thread):
             self.datastore.update_watch(self.uuid, 'last_error', str(e))
             print(str(e))
 
+        except requests.exceptions.MissingSchema:
+            print ("Skipping {} due to missing schema/bad url".format(self.uuid))
+
         # Usually from html2text level
         except UnicodeDecodeError as e:
             self.datastore.update_watch(self.uuid, 'last_error', str(e))
