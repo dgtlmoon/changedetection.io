@@ -178,14 +178,14 @@ def api_watch_recheckall():
 
     global running_update_threads
     i = 0
-    for uuid, watch in datastore.data['watching']:
+    for uuid, watch in datastore.data['watching'].items():
         i = i + 1
 
         running_update_threads[watch['uuid']] = fetch_site_status.perform_site_check(uuid=uuid,
                                                                                      datastore=datastore)
         running_update_threads[watch['uuid']].start()
 
-    return "{} rechecked of {} watches.".format(i, len(datastore.data['watching']))
+    return "{} triggered recheck of {} watches.".format(i, len(datastore.data['watching']))
 
 
 # Can be used whenever, launch threads that need launching to update the stored information
