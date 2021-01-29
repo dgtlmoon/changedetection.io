@@ -79,15 +79,23 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
 def main_page():
     global messages
 
+    limit_tag = request.args.get('tag')
+
     # Sort by last_changed and add the uuid which is usually the key..
-    sorted_watches=[]
+    sorted_watches = []
     for uuid, watch in datastore.data['watching'].items():
-        watch['uuid']=uuid
-        sorted_watches.append(watch)
+        if limit_tag != None:
+            if watch['tag'] == limit_tag:
+                watch['uuid'] = uuid
+                sorted_watches.append(watch)
+        else:
+            watch['uuid'] = uuid
+            sorted_watches.append(watch)
 
     sorted_watches.sort(key=lambda x: x['last_changed'], reverse=True)
 
-    output = render_template("watch-overview.html", watches=sorted_watches, messages=messages)
+    existing_tags = datastore.get_all_tags()
+    output = render_template("watch-overview.html", watches=sorted_watches, messages=messages, tags=existing_tags)
 
     # Show messages but once.
     messages = []

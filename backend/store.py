@@ -52,7 +52,14 @@ class ChangeDetectionStore:
         self.data['watching'][uuid].update({val: var})
         self.sync_to_json()
 
+    def get_all_tags(self):
+        tags=[]
+        for uuid, watch in self.data['watching'].items():
+            if not watch['tag'] in tags:
+                tags.append(watch['tag'])
 
+
+        return tags
 
     def delete(self, uuid):
         # Probably their should be dict...
