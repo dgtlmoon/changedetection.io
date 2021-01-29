@@ -57,7 +57,7 @@ def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
     if watch_obj['last_checked'] == 0:
         return 'Not yet'
 
-    return datetime.datetime.utcfromtimestamp(int(watch_obj['last_checked'])).strftime(format)
+    return timeago.format(int(watch_obj['last_checked']), time.time())
 
 
 # @app.context_processor

@@ -8,14 +8,13 @@
             <legend>Add new change detection watch</legend>
             <input type="url" placeholder="https://..." name="url"/>
             <input type="text" placeholder="tag" size="10" name="tag"/>
-            <button type="submit" class="pure-button pure-button-primary">Save</button>
+            <button type="submit" class="pure-button pure-button-primary">Watch</button>
         </fieldset>
         <!-- add extra stuff, like do a http POST and send headers -->
         <!-- user/pass r = requests.get('https://api.github.com/user', auth=('user', 'pass')) -->
     </form>
 
-    <!-- make a nice list of tags here to click on -->
-    <i>Note: Times are in UTC for now - todo - JS front end format<br/></i>
+    
     <div id="watch-table-wrapper">
         <table class="pure-table pure-table-striped watch-table">
             <thead>
