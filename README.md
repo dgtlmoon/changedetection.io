@@ -5,7 +5,7 @@
 _Know when web pages change! Stay ontop of new information!_
 
 
-#### Use cases
+#### Example use cases
 
 Know when ...
 
@@ -18,7 +18,7 @@ Know when ...
 
   
 
-![Alt text](screenshot.png?raw=true "Screenshot")
+![Alt text](screenshot.png?raw=true "Self-hosted web page change monitoring screenshot")
 
 Get monitoring! super simple.
 
@@ -30,28 +30,7 @@ $ docker run -d --restart always -p "127.0.0.1:5000:5000" -v "$(pwd)"/datastore:
 Now visit http://127.0.0.1:5000 , You should now be able to access the UI.
 
 
-
-Or in `docker-compose.yml` style.
-
-
-```yaml
-version: "2"
-services:
-
-  backend:
-    image: dgtlmoon/changedetection.io:latest
-    volumes:
-      - ./datastore:/datastore
-    ports:
-      - "127.0.0.1:5000:5000"
-    restart: always
-```
-
-```bash
-$ mkdir datastore
-$ docker-compose up -d
-```
-(`/datastore` is optional, I prefer to have the files on my local disk instead of in a docker volume)
+(The `/datastore` `-v` is optional, I prefer to have the files on my local disk instead of in a docker volume)
 
 ### Future plans
 
