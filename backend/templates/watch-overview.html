@@ -15,14 +15,14 @@
         <!-- user/pass r = requests.get('https://api.github.com/user', auth=('user', 'pass')) -->
     </form>
     <div>
-{% for tag in tags %}
-        {% if tag == "" %}
-     <a href="/" class="pure-button button-tag ">All</a>
-        {% else %}
-        <a href="/?tag={{ tag}}" class="pure-button button-tag ">{{ tag }}</a>
-        {% endif %}
-{% endfor %}
-        </div>
+        {% for tag in tags %}
+            {% if tag == "" %}
+            <a href="/" class="pure-button button-tag ">All</a>
+            {% else %}
+            <a href="/?tag={{ tag}}" class="pure-button button-tag ">{{ tag }}</a>
+            {% endif %}
+        {% endfor %}
+    </div>
 
     <div id="watch-table-wrapper">
         <table class="pure-table pure-table-striped watch-table">
@@ -48,9 +48,7 @@
                     <div class="fetch-error">{{ watch.last_error }}</div>
                     {% endif %}
                 </td>
-                <td>{{watch|format_last_checked_time}}
-
-                </td>
+                <td>{{watch|format_last_checked_time}}</td>
                 <td>{{watch.last_changed|format_timestamp_timeago}}</td>
                 <td><a href="/api/checknow?uuid={{ watch.uuid}}" class="pure-button button-small pure-button-primary">Recheck</a>
                     <a href="/edit?uuid={{ watch.uuid}}" class="pure-button button-small pure-button-primary">Edit</a>

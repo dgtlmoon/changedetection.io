@@ -130,7 +130,7 @@ def import_page():
                 if len(url):
                     remaining_urls.append(url)
 
-        messages.append({'class': 'ok', 'message': "{} imported, {} skipped.".format(good, len(remaining_urls))})
+        messages.append({'class': 'ok', 'message': "{} Imported, {} Skipped.".format(good, len(remaining_urls))})
 
         launch_checks()
 
@@ -138,6 +138,7 @@ def import_page():
                              messages=messages,
                              remaining="\n".join(remaining_urls)
                              )
+    messages = []
     return output
 
 

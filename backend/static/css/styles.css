@@ -165,3 +165,11 @@ color: #fff;
     background: rgb(200, 200, 200);
     /* this is a green */
 }
+
+.messages {
+    padding: 1em;
+    background: rgba(255,255,255,.2);
+    border-radius: 10px;
+    color: #fff;
+    font-weight: bold;
+    }

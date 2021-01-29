@@ -17,10 +17,10 @@
         <ul class="pure-menu-list">
 
             <li class="pure-menu-item">
-                <a href="/import"  class="pure-menu-link">IMPORT</a>
+                <a href="/import" class="pure-menu-link">IMPORT</a>
             </li>
             <li class="pure-menu-item">
-                <a href="/settings"  class="pure-menu-link">SETTINGS</a>
+                <a href="/settings" class="pure-menu-link">SETTINGS</a>
             </li>
             <li class="pure-menu-item"><a class="github-link" href="https://github.com/dgtlmoon/changedetection.io">
                 <svg class="octicon octicon-mark-github v-align-middle" height="32" viewBox="0 0 16 16" version="1.1"
@@ -42,11 +42,13 @@
         {% block header %}{% endblock %}
     </header>
 
+    {% if messages %}
     <div class="messages">
-         {% for message in messages %}
-            <div class="flash-message {{ message['class'] }}">{{ message['message'] }}</div>
+        {% for message in messages %}
+        <div class="flash-message {{ message['class'] }}">{{ message['message'] }}</div>
         {% endfor %}
     </div>
+    {% endif %}
 
 
     {% block content %}

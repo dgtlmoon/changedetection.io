@@ -9,8 +9,13 @@
         <fieldset class="pure-group">
             <legend>One URL per line, URLs that do not pass validation will stay in the textarea.</legend>
 
-            <textarea name="urls" class="pure-input-1-2" placeholder="https://" cols="150" style="width: 100%;font-family:monospace;" rows="25">{{ remaining }}</textarea>
-        </fieldset>
+            <textarea name="urls" class="pure-input-1-2" placeholder="https://"
+                      style="width: 100%;
+                            font-family:monospace;
+                            white-space: pre;
+                            overflow-wrap: normal;
+                            overflow-x: scroll;" rows="25">{{ remaining }}</textarea>
+    </fieldset>
         <button type="submit" class="pure-button pure-input-1-2 pure-button-primary">Import</button>
 
     </form>
