@@ -5,7 +5,8 @@ import hashlib
 import os
 import re
 import html2text
-from urlextract import URLExtract
+# Not needed due to inscriptis being way better.
+#from urlextract import URLExtract
 from inscriptis import get_text
 
 # Hmm Polymorphism datastore, thread, etc
