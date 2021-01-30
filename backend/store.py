@@ -69,8 +69,12 @@ class ChangeDetectionStore:
     def get_all_tags(self):
         tags=[]
         for uuid, watch in self.data['watching'].items():
-            if not watch['tag'] in tags:
-                tags.append(watch['tag'])
+
+            # Support for comma separated list of tags.
+            for tag in watch['tag'].split(','):
+                tag = tag.strip()
+                if not tag in tags:
+                    tags.append(tag)
 
 
         return tags

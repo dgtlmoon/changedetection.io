@@ -85,9 +85,13 @@ def main_page():
     sorted_watches = []
     for uuid, watch in datastore.data['watching'].items():
         if limit_tag != None:
-            if watch['tag'] == limit_tag:
-                watch['uuid'] = uuid
-                sorted_watches.append(watch)
+            # Support for comma separated list of tags.
+            for tag_in_watch in watch['tag'].split(','):
+                tag_in_watch = tag_in_watch.strip()
+                if tag_in_watch == limit_tag:
+                    watch['uuid'] = uuid
+                    sorted_watches.append(watch)
+
         else:
             watch['uuid'] = uuid
             sorted_watches.append(watch)
