@@ -175,5 +175,16 @@ color: #fff;
 }
 
 .pure-form label  {
-font-weight: bold;
+  font-weight: bold;
 }
+
+#new-watch-form {
+    background: rgba(0,0,0,.05);
+    padding: 1em;
+    border-radius: 10px;
+    margin-bottom: 1em;
+}
+#new-watch-form legend {
+    color: #fff;
+}
+
