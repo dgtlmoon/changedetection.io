@@ -48,6 +48,9 @@
                     {% if watch.last_error is defined and watch.last_error != False %}
                     <div class="fetch-error">{{ watch.last_error }}</div>
                     {% endif %}
+                    {% if not active_tag %}
+                    <span class="watch-tag-list">{{ watch.tag}}</span>
+                    {% endif %}
                 </td>
                 <td>{{watch|format_last_checked_time}}</td>
                 <td>{{watch.last_changed|format_timestamp_timeago}}</td>

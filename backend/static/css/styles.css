@@ -46,6 +46,9 @@ section.content {
 .watch-table {
   width: 100%;
 }
+.watch-tag-list {
+  color: #e70069;
+}
 
 .box {
   max-width: 80%;
