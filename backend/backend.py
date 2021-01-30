@@ -99,7 +99,11 @@ def main_page():
     sorted_watches.sort(key=lambda x: x['last_changed'], reverse=True)
 
     existing_tags = datastore.get_all_tags()
-    output = render_template("watch-overview.html", watches=sorted_watches, messages=messages, tags=existing_tags)
+    output = render_template("watch-overview.html",
+                             watches=sorted_watches,
+                             messages=messages,
+                             tags=existing_tags,
+                             active_tag=limit_tag)
 
     # Show messages but once.
     messages = []

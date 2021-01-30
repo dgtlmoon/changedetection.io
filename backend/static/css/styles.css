@@ -140,11 +140,15 @@ body:after, body:before {
 
 .button-tag {
     background: rgb(99, 99, 99);
-    /* this is a green */
-color: #fff;
-  font-size: 65%;
+    color: #fff;
+    font-size: 65%;
+    border-bottom-left-radius: initial;
+    border-bottom-right-radius: initial;
 }
-
+.button-tag.active {
+    background: #9c9c9c;
+    font-weight: bold;
+}
 .button-error {
     background: rgb(202, 60, 60);
     /* this is a maroon */

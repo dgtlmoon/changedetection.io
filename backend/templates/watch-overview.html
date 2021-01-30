@@ -15,11 +15,12 @@
         <!-- user/pass r = requests.get('https://api.github.com/user', auth=('user', 'pass')) -->
     </form>
     <div>
+
         {% for tag in tags %}
             {% if tag == "" %}
-            <a href="/" class="pure-button button-tag ">All</a>
+            <a  href="/" class="pure-button button-tag {{'active' if active_tag == tag }}">All</a>
             {% else %}
-            <a href="/?tag={{ tag}}" class="pure-button button-tag ">{{ tag }}</a>
+            <a  href="/?tag={{ tag}}" class="pure-button button-tag {{'active' if active_tag == tag }}">{{ tag }}</a>
             {% endif %}
         {% endfor %}
     </div>
