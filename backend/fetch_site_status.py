@@ -6,7 +6,7 @@ import os
 import re
 import html2text
 from urlextract import URLExtract
-
+from inscriptis import get_text
 
 # Hmm Polymorphism datastore, thread, etc
 class perform_site_check(Thread):
@@ -36,7 +36,6 @@ class perform_site_check(Thread):
             f.write(output)
             f.close()
 
-
     def save_response_stripped_output(self, output):
         fname = "{}/{}.stripped.txt".format(self.output_path, self.timestamp)
         with open(fname, 'w') as f:
@@ -47,49 +46,56 @@ class perform_site_check(Thread):
 
     def run(self):
 
-        # Default headers
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8,cs;q=0.7'
-        }
-
         extra_headers = self.datastore.get_val(self.uuid, 'headers')
-        headers.update(extra_headers)
+
+        # Tweak the base config with the per-watch ones
+        request_headers = self.datastore.data['settings']['headers'].copy()
+        request_headers.update(extra_headers)
 
         print("Checking", self.url)
+        print(request_headers)
 
         self.ensure_output_path()
 
         try:
-            r = requests.get(self.url, headers=headers, timeout=15, verify=False)
-            stripped_text_from_html = html2text.html2text(r.text)
+            timeout = self.datastore.data['settings']['requests']['timeout']
+        except KeyError:
+            # @todo yeah this should go back to the default value in store.py, but this whole object should abstract off it
+            timeout = 15
+
+        try:
+            r = requests.get(self.url,
+                             headers=request_headers,
+                             timeout=timeout,
+                             verify=False)
+
+            stripped_text_from_html = get_text(r.text)
+
 
             # @todo This should be a config option.
             # Many websites include junk in the links, trackers, etc.. Since we are really a service all about text changes..
 
-            extractor = URLExtract()
-            urls = extractor.find_urls(stripped_text_from_html)
+# inscriptis handles this much cleaner, probably not needed..
+#            extractor = URLExtract()
+#            urls = extractor.find_urls(stripped_text_from_html)
             # Remove the urls, longest first so that we dont end up chewing up bigger links with parts of smaller ones.
-            if urls:
-                urls.sort(key=len, reverse=True)
-
-                for url in urls:
-                    # Sometimes URLExtract will consider something like 'foobar.com' as a link when that was just text.
-                    if "://" in url:
-                        #print ("Stripping link", url)
-                        stripped_text_from_html = stripped_text_from_html.replace(url, '')
+#            if urls:
+#                urls.sort(key=len, reverse=True)
+#                for url in urls:
+#                    # Sometimes URLExtract will consider something like 'foobar.com' as a link when that was just text.
+#                    if "://" in url:
+#                        # print ("Stripping link", url)
+#                        stripped_text_from_html = stripped_text_from_html.replace(url, '')
 
 
 
         # Usually from networkIO/requests level
-        except (requests.exceptions.ConnectionError,requests.exceptions.ReadTimeout) as e:
+        except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
             self.datastore.update_watch(self.uuid, 'last_error', str(e))
             print(str(e))
 
         except requests.exceptions.MissingSchema:
-            print ("Skipping {} due to missing schema/bad url".format(self.uuid))
+            print("Skipping {} due to missing schema/bad url".format(self.uuid))
 
         # Usually from html2text level
         except UnicodeDecodeError as e:
@@ -122,7 +128,6 @@ class perform_site_check(Thread):
                 history = self.datastore.get_val(self.uuid, 'history')
                 history.update(dict([(self.timestamp, output_filepath)]))
                 self.datastore.update_watch(self.uuid, 'history', history)
-
 
         self.datastore.update_watch(self.uuid, 'last_checked', int(time.time()))
         pass

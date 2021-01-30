@@ -10,7 +10,19 @@ class ChangeDetectionStore:
 
     def __init__(self):
         self.data = {
-            'watching': {}
+            'watching': {},
+            'settings': {
+                'headers': {
+                    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Accept-Language': 'en-GB,en-US;q=0.9,en;'
+                },
+                'requests': {
+                    'timeout': 15, # Default 15 seconds
+                    'max_seconds_from_last_check': 3 * 60 * 60 # Default 3 hours
+                }
+            }
         }
 
 
@@ -26,10 +38,12 @@ class ChangeDetectionStore:
             'history' : {} # Dict of timestamp and output stripped filename
         }
 
+
         try:
             with open('/datastore/url-watches.json') as json_file:
+                from_disk = json.load(json_file)
 
-                self.data.update(json.load(json_file))
+                self.data.update(from_disk)
 
                 # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
                 # @todo pretty sure theres a python we todo this with an abstracted(?) object!
