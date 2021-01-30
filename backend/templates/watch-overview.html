@@ -8,7 +8,7 @@
         <fieldset>
             <legend>Add a new change detection watch</legend>
             <input type="url" placeholder="https://..." name="url"/>
-            <input type="text" placeholder="tag" size="10" name="tag"/>
+            <input type="text" placeholder="tag" size="10" name="tag" value="{{active_tag if active_tag}}"/>
             <button type="submit" class="pure-button pure-button-primary">Watch</button>
         </fieldset>
         <!-- add extra stuff, like do a http POST and send headers -->
@@ -43,8 +43,8 @@
             <tr id="{{ watch.uuid }}"
                 class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }} {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}">
                 <td>{{ loop.index }}</td>
-                <td class="title-col">{% if watch.title is not none %}{{ watch.title }}{% else %}{{ watch.url }}{% endif
-                    %}<a class="external" target=_blank href="{{ watch.url }}"></a>
+                <td class="title-col">{{watch.title if watch.title is not none else watch.url}}
+                    <a class="external" target=_blank href="{{ watch.url }}"></a>
                     {% if watch.last_error is defined and watch.last_error != False %}
                     <div class="fetch-error">{{ watch.last_error }}</div>
                     {% endif %}
