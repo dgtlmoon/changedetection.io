@@ -76,7 +76,7 @@ class ChangeDetectionStore:
                 if not tag in tags:
                     tags.append(tag)
 
-
+        tags.sort()
         return tags
 
     def delete(self, uuid):
