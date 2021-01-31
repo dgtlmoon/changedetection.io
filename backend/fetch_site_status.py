@@ -54,7 +54,7 @@ class perform_site_check(Thread):
         request_headers.update(extra_headers)
 
         print("Checking", self.url)
-        print(request_headers)
+        #print(request_headers)
 
         self.ensure_output_path()
 

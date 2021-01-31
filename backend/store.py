@@ -9,7 +9,9 @@ import validators
 class ChangeDetectionStore:
 
     def __init__(self):
-        self.data = {
+        self.needs_write = False
+
+        self.__data = {
             'watching': {},
             'settings': {
                 'headers': {
@@ -33,6 +35,7 @@ class ChangeDetectionStore:
             'last_checked': 0,
             'last_changed': 0,
             'title': None,
+            'previous_md5': None,
             'uuid': str(uuid_builder.uuid4()),
             'headers' : {}, # Extra headers to send
             'history' : {} # Dict of timestamp and output stripped filename
@@ -43,7 +46,7 @@ class ChangeDetectionStore:
             with open('/datastore/url-watches.json') as json_file:
                 from_disk = json.load(json_file)
 
-                self.data.update(from_disk)
+                self.__data.update(from_disk)
 
                 # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
                 # @todo pretty sure theres a python we todo this with an abstracted(?) object!
@@ -51,7 +54,7 @@ class ChangeDetectionStore:
                 for uuid, watch in self.data['watching'].items():
                     _blank = self.generic_definition.copy()
                     _blank.update(watch)
-                    self.data['watching'].update({uuid: _blank})
+                    self.__data['watching'].update({uuid: _blank})
                     print("Watching:", uuid, _blank['url'])
 
         # First time ran, doesnt exist.
@@ -61,10 +64,17 @@ class ChangeDetectionStore:
             self.add_watch(url='https://changedetection.io', tag='general')
             self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
 
+
+#        self.entryVariable.get()
     def update_watch(self, uuid, val, var):
 
-        self.data['watching'][uuid].update({val: var})
-        self.sync_to_json()
+        self.__data['watching'][uuid].update({val: var})
+        self.needs_write = True
+
+
+    @property
+    def data(self):
+        return self.__data
 
     def get_all_tags(self):
         tags=[]
@@ -81,8 +91,8 @@ class ChangeDetectionStore:
 
     def delete(self, uuid):
         # Probably their should be dict...
-        del(self.data['watching'][uuid])
-        self.sync_to_json()
+        del(self.__data['watching'][uuid])
+        self.needs_write = True
 
 
     def url_exists(self, url):
@@ -114,10 +124,11 @@ class ChangeDetectionStore:
 
         self.data['watching'].update({_blank['uuid']: _blank})
 
-        self.sync_to_json()
 
     def sync_to_json(self):
+        print ("Saving index....")
         with open('/datastore/url-watches.json', 'w') as json_file:
             json.dump(self.data, json_file, indent=4)
+        self.needs_write = False
 
 # body of the constructor

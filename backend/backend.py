@@ -208,8 +208,6 @@ def api_update():
                                              'tag': tag,
                                              'headers':extra_headers})
 
-    #@todo switch to prop/attr/observer
-    datastore.sync_to_json()
 
     messages.append({'class': 'ok', 'message': 'Updated watch.'})
 
@@ -262,26 +260,39 @@ def ticker_thread_check_time_launch_checks():
         launch_checks()
         time.sleep(60)
 
+# Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
+# by just running periodically in one thread.
+def save_datastore():
+    while True:
+        if datastore.needs_write:
+            datastore.sync_to_json()
+        time.sleep(5)
 
 def main(argv):
     ssl_mode = False
     port = 5000
 
-    # @todo handle ctrl break
-    ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
-
     try:
-        opts, args = getopt.getopt(argv, "sp:")
+        opts, args = getopt.getopt(argv, "sp:", "purge")
     except getopt.GetoptError:
         print('backend.py -s SSL enable -p [port]')
         sys.exit(2)
 
     for opt, arg in opts:
+        if opt == '--purge':
+            # Remove history, the actual files you need to delete manually.
+            for uuid, watch in datastore.data['watching'].items():
+                watch.update({'history': {}, 'last_checked': 0, 'last_changed': 0, 'previous_md5': None})
+
         if opt == '-s':
             ssl_mode = True
 
         if opt == '-p':
             port = arg
+
+    # @todo handle ctrl break
+    ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
+    save_data_thread = threading.Thread(target=save_datastore).start()
 
     # @todo finalise SSL config, but this should get you in the right direction if you need it.
     if ssl_mode:
