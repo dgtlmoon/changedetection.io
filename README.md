@@ -34,9 +34,10 @@ Now visit http://127.0.0.1:5000 , You should now be able to access the UI.
 ### Future plans
 
 - Greater configuration of check interval times, page request headers.
-- General options for timeout, default headers
+- ~~General options for timeout, default headers~~
 - On change detection, callout to another API (handy for notices/issue trackers)
-- Explore the differences that were detected.
+- ~~Explore the differences that were detected~~ 
+- Add more options to explore versions of differences
 - Use a graphic/rendered page difference instead of text (see the experimental `selenium-screenshot-diff` branch)
 
  
