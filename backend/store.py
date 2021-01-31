@@ -23,7 +23,7 @@ class ChangeDetectionStore:
                 },
                 'requests': {
                     'timeout': 15, # Default 15 seconds
-                    'max_seconds_from_last_check': 3 * 60 * 60 # Default 3 hours
+                    'minutes_between_check': 3 * 60 # Default 3 hours
                 }
             }
         }
@@ -47,7 +47,18 @@ class ChangeDetectionStore:
             with open('/datastore/url-watches.json') as json_file:
                 from_disk = json.load(json_file)
 
-                self.__data.update(from_disk)
+                # @todo isnt there a way todo this dict.update recursively?
+                # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
+                if 'watching' in from_disk:
+                    self.__data['watching'].update(from_disk['watching'])
+
+                if 'settings' in from_disk:
+                    if 'headers' in from_disk['settings']:
+                        self.__data['settings']['headers'].update(from_disk['settings']['headers'])
+
+                    if 'requests' in from_disk['settings']:
+                        self.__data['settings']['requests'].update(from_disk['settings']['requests'])
+
 
                 # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
                 # @todo pretty sure theres a python we todo this with an abstracted(?) object!

@@ -121,6 +121,30 @@ def edit_page():
     output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid], messages=messages)
     return output
 
+
+@app.route("/settings", methods=['GET', "POST"])
+def settings_page():
+    global messages
+    if request.method == 'POST':
+        try:
+            minutes = int(request.values.get('minutes').strip())
+        except ValueError:
+            messages.append({'class': 'error', 'message': "Invalid value given, use an integer."})
+
+        else:
+            if minutes >= 5 and minutes <= 600:
+                datastore.data['settings']['requests']['minutes_between_check'] = minutes
+                datastore.needs_write = True
+
+                messages.append({'class': 'ok', 'message': "Updated"})
+            else:
+                messages.append({'class': 'error', 'message': "Must be equal to or greater than 5 and less than 600 minutes"})
+
+    output = render_template("settings.html", messages=messages, minutes=datastore.data['settings']['requests']['minutes_between_check'])
+    messages =[]
+
+    return output
+
 @app.route("/import", methods=['GET', "POST"])
 def import_page():
     import validators
@@ -275,8 +299,12 @@ def launch_checks():
     import fetch_site_status
     global running_update_threads
 
-    for uuid,watch in datastore.data['watching'].items():
-        if watch['last_checked'] <= time.time() - 3 * 60 * 60:
+
+    minutes = datastore.data['settings']['requests']['minutes_between_check']
+    for uuid, watch in datastore.data['watching'].items():
+
+
+        if watch['last_checked'] <= time.time() - (minutes * 60):
             running_update_threads[watch['uuid']] = fetch_site_status.perform_site_check(uuid=uuid,
                                                                                          datastore=datastore)
             running_update_threads[watch['uuid']].start()
