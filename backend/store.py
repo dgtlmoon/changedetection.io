@@ -127,6 +127,7 @@ class ChangeDetectionStore:
 
 
     def sync_to_json(self):
+        print ("Saving index")
         with open('/datastore/url-watches.json', 'w') as json_file:
             json.dump(self.data, json_file, indent=4)
         self.needs_write = False

@@ -235,7 +235,7 @@ def api_update():
     datastore.data['watching'][uuid].update({'url': url,
                                              'tag': tag,
                                              'headers':extra_headers})
-
+    datastore.needs_write = True
 
     messages.append({'class': 'ok', 'message': 'Updated watch.'})
 
