@@ -1,0 +1,61 @@
+table {
+	table-layout: fixed;
+	width: 100%;
+}
+td {
+	width: 33%;
+	padding: 3px 4px;
+	border: 1px solid transparent;
+	vertical-align: top;
+	font: 1em monospace;
+	text-align: left;
+	white-space: pre-wrap;
+}
+h1 {
+	display: inline;
+	font-size: 100%;
+}
+del {
+	text-decoration: none;
+	color: #b30000;
+	background: #fadad7;
+}
+
+ins {
+	background: #eaf2c2;
+	color: #406619;
+	text-decoration: none;
+}
+
+#result {
+	white-space: pre-wrap;
+}
+
+#settings {
+
+
+	line-height: 2em;
+}
+#settings label {
+	margin-left: 1em;
+}
+
+.source {
+	position: absolute;
+	right: 1%;
+	top: .2em;
+}
+
+@-moz-document url-prefix() {
+	body {
+		height: 99%; /* Hide scroll bar in Firefox */
+	}
+}
+
+#diff-ui {
+background: #fff;
+    padding: 2em;
+    margin: 1em;
+    border-radius: 5px;
+    font-size: 9px;
+}

@@ -7,6 +7,11 @@
     <title>Change Detection</title>
     <link rel="stylesheet" href="/static/css/pure-min.css">
     <link rel="stylesheet" href="/static/css/styles.css">
+    {% if extra_stylesheets %}
+        {% for m in extra_stylesheets %}
+        <link rel="stylesheet" href="{{ m }}">
+        {% endfor %}
+    {% endif %}
 </head>
 <body>
 

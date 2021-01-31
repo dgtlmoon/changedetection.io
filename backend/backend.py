@@ -10,7 +10,9 @@
 # @todo on change detected, config for calling some API
 # @todo make tables responsive!
 # @todo fetch title into json
-
+# https://distill.io/features
+# proxy per check
+#i
 import json
 import eventlet
 import eventlet.wsgi
@@ -34,6 +36,7 @@ ticker_thread = None
 
 datastore = store.ChangeDetectionStore()
 messages = []
+extra_stylesheets = []
 running_update_threads = {}
 
 app = Flask(__name__, static_url_path='/static')
@@ -148,6 +151,31 @@ def import_page():
     messages = []
     return output
 
+
+@app.route("/diff/<string:uuid>", methods=['GET'])
+def diff_history_page(uuid):
+    global messages
+    global extra_stylesheets
+    extra_stylesheets.append('/static/css/diff.css')
+
+    watch = datastore.data['watching'][uuid]
+
+    dates = list(watch['history'].keys())
+    dates = [int(i) for i in dates]
+    dates.sort(reverse=True)
+
+    left_file_contents = right_file_contents = ""
+    l_file = watch['history'][str(dates[-1])]
+    with open(l_file, 'r') as f:
+        left_file_contents = f.read()
+
+    r_file  = watch['history'][str(dates[-2])]
+    with open(r_file, 'r') as f:
+        right_file_contents = f.read()
+
+    output = render_template("diff.html", watch_a=watch, messages=messages, left=left_file_contents,
+                             right=right_file_contents, extra_stylesheets=extra_stylesheets)
+    return output
 
 @app.route("/favicon.ico", methods=['GET'])
 def favicon():

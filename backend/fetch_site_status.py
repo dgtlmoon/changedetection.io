@@ -127,7 +127,7 @@ class perform_site_check(Thread):
                 # attempt because 'self.current_md5 != fetched_md5'  (current_md5 will be None when not run)
                 # need to learn more about attr/setters/getters
                 history = self.datastore.get_val(self.uuid, 'history')
-                history.update(dict([(self.timestamp, output_filepath)]))
+                history.update(dict([(str(self.timestamp), output_filepath)]))
                 self.datastore.update_watch(self.uuid, 'history', history)
 
         self.datastore.update_watch(self.uuid, 'last_checked', int(time.time()))

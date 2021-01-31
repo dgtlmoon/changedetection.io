@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div id="diff-ui">
+    <del>Removed text</del>
+    <ins>Inserted Text</ins>
+
+<div id="settings">
+    <h3>Diff</h3>
+    <label><input type="radio" name="diff_type" value="diffChars"> Chars</label>
+    <label><input type="radio" name="diff_type" value="diffWords" > Words</label>
+    <label><input type="radio" name="diff_type" value="diffLines" checked=""> Lines</label>
+</div>
+
+    <table>
+        <tbody>
+        <tr>
+			<!-- just proof of concept copied straight from github.com/kpdecker/jsdiff -->
+            <td id="a" style="display: none;">{{left}}</td>
+            <td id="b" style="display: none;">{{right}}</td>
+            <td>
+                <pre id="result"></pre>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+Diff algorithm from the amazing <a href="https://github.com/kpdecker/jsdiff" >github.com/kpdecker/jsdiff</a>
+</div>
+
+<script src="/static/js/diff.js"></script>
+<script defer="">
+var a = document.getElementById('a');
+var b = document.getElementById('b');
+var result = document.getElementById('result');
+
+function changed() {
+	var diff = JsDiff[window.diffType](a.textContent, b.textContent);
+	var fragment = document.createDocumentFragment();
+	for (var i=0; i < diff.length; i++) {
+
+		if (diff[i].added && diff[i + 1] && diff[i + 1].removed) {
+			var swap = diff[i];
+			diff[i] = diff[i + 1];
+			diff[i + 1] = swap;
+		}
+
+		var node;
+		if (diff[i].removed) {
+			node = document.createElement('del');
+			node.appendChild(document.createTextNode(diff[i].value));
+		} else if (diff[i].added) {
+			node = document.createElement('ins');
+			node.appendChild(document.createTextNode(diff[i].value));
+		} else {
+			node = document.createTextNode(diff[i].value);
+		}
+		fragment.appendChild(node);
+	}
+
+	result.textContent = '';
+	result.appendChild(fragment);
+}
+
+window.onload = function() {
+	onDiffTypeChange(document.querySelector('#settings [name="diff_type"]:checked'));
+	changed();
+};
+
+a.onpaste = a.onchange =
+b.onpaste = b.onchange = changed;
+
+if ('oninput' in a) {
+	a.oninput = b.oninput = changed;
+} else {
+	a.onkeyup = b.onkeyup = changed;
+}
+
+function onDiffTypeChange(radio) {
+	window.diffType = radio.value;
+	document.title = "Diff " + radio.value.slice(4);
+}
+
+var radio = document.getElementsByName('diff_type');
+for (var i = 0; i < radio.length; i++) {
+	radio[i].onchange = function(e) {
+		onDiffTypeChange(e.target);
+		changed();
+	}
+}
+
+</script>
+
+
+
+
+
+{% endblock %}

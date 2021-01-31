@@ -26,6 +26,7 @@
     </div>
 
     <div id="watch-table-wrapper">
+
         <table class="pure-table pure-table-striped watch-table">
             <thead>
             <tr>
@@ -56,6 +57,9 @@
                 <td>{{watch.last_changed|format_timestamp_timeago}}</td>
                 <td><a href="/api/checknow?uuid={{ watch.uuid}}" class="pure-button button-small pure-button-primary">Recheck</a>
                     <a href="/edit?uuid={{ watch.uuid}}" class="pure-button button-small pure-button-primary">Edit</a>
+                    {% if watch.history|length >= 2 %}
+                    <a href="/diff/{{ watch.uuid}}" class="pure-button button-small pure-button-primary">Diff</a>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}
