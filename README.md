@@ -18,12 +18,17 @@ Know when ...
 
 **Get monitoring now! super simple, one command!**
 
+1. If you run locally you can use:
 ```
 $ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore dgtlmoon/changedetection.io
 ```  
+Now visit http://127.0.0.1:5000 , You can only access the UI only from local machine.
 
-Now visit http://127.0.0.1:5000 , You should now be able to access the UI.
-
+2. If you run in another machine:
+```
+$ docker run -d --restart always -p "5000:5000" -v datastore-volume:/datastore dgtlmoon/changedetection.io
+```  
+Now visit http://YOUR-MACHINE-IP:5000 , You should now be able to access the UI through IP.  
   
 ### Screenshots
 
