@@ -26,6 +26,9 @@ a.github-link {
   padding: 5px;
   display: flex;
   justify-content: space-between;
+  border-bottom: 2px solid #ed5900;
+
+  align-items: center;
 }
 
 section.content {
