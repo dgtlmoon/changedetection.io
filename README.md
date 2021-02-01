@@ -16,16 +16,14 @@ Know when ...
 - Realestate listing changes
 
 
-Get monitoring now! super simple.
+Get monitoring now! super simple, one command!
 
 ```
-$ mkdir ./datastore
-$ docker run -d --restart always -p "127.0.0.1:5000:5000" -v "$(pwd)"/datastore:/datastore dgtlmoon/changedetection.io
+$ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore dgtlmoon/changedetection.io
 ```  
 
 Now visit http://127.0.0.1:5000 , You should now be able to access the UI.
 
-(The `/datastore` `-v` is optional, I prefer to have the files on my local disk instead of in a docker volume)
   
 
 ![Self-hoster web page change monitoring application screenshot](screenshot.png?raw=true "Self-hosted web page change monitoring screenshot")
