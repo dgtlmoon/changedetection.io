@@ -72,11 +72,12 @@ class ChangeDetectionStore:
         # First time ran, doesnt exist.
         except (FileNotFoundError, json.decoder.JSONDecodeError):
             print("Creating JSON store")
-
-            self.add_watch(url='https://changedetection.io', tag='general')
             self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
+            self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
+            self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
+            self.add_watch(url='https://changedetection.io', tag='Tech news')
 
-
+            
 #        self.entryVariable.get()
     def update_watch(self, uuid, val, var):
 
