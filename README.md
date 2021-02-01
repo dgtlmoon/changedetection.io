@@ -16,7 +16,7 @@ Know when ...
 - Realestate listing changes
 
 
-Get monitoring now! super simple, one command!
+**Get monitoring now! super simple, one command!**
 
 ```
 $ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore dgtlmoon/changedetection.io
