@@ -216,6 +216,20 @@ def favicon():
     return send_from_directory("/app/static/images", filename="favicon.ico")
 
 
+# A few self sanity checks, mostly for developer/bug check
+@app.route("/self-check", methods=['GET'])
+def selfcheck():
+    output = "All fine"
+    # In earlier versions before a single threaded write of the JSON store, sometimes histories could get mixed.
+    # Could also maybe affect people who manually fiddle with their JSON store?
+    for uuid, watch in datastore.data['watching'].items():
+        for timestamp, path in watch['history'].items():
+            # Each history snapshot should include a full path, which contains the {uuid}
+            if not uuid in path:
+                output = "Something weird in {}, suspected incorrect snapshot path.".format(uuid)
+
+
+    return output
 @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
 def static_content(group, filename):
     try:
