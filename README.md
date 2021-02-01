@@ -25,9 +25,15 @@ $ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/d
 Now visit http://127.0.0.1:5000 , You should now be able to access the UI.
 
   
+###Screenshots
 
-![Self-hoster web page change monitoring application screenshot](screenshot.png?raw=true "Self-hosted web page change monitoring screenshot")
+Application running.
 
+![Self-hosted web page change monitoring application screenshot](screenshot.png?raw=true "Self-hosted web page change monitoring screenshot")
+
+Examining differences in content.
+
+![Self-hosted web page change monitoring context difference screenshot](screenshot-diff.png?raw=true "Self-hosted web page change monitoring context difference screenshot")
 
 ### Future plans
 
