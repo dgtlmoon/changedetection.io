@@ -18,6 +18,9 @@
 <div class="header">
     <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed">
         <a class="pure-menu-heading" href="/"><strong>Change</strong>Detection.io</a>
+        {% if current_diff_url %}
+            <a class=current-diff-url href="{{ current_diff_url }}">{{ current_diff_url }}</a>
+        {% endif %}
 
         <ul class="pure-menu-list">
 

@@ -208,7 +208,7 @@ def diff_history_page(uuid):
     #print (dates, l_file, r_file)
     output = render_template("diff.html", watch_a=watch, messages=messages, left=left_file_contents,
                              right=right_file_contents, extra_stylesheets=extra_stylesheets, versions=dates[:-1],
-                             current_previous_version=str(previous_version))
+                             current_previous_version=str(previous_version), current_diff_url=watch['url'])
     return output
 
 @app.route("/favicon.ico", methods=['GET'])
