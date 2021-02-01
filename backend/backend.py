@@ -285,7 +285,8 @@ def api_watch_checknow():
                                                                         datastore=datastore)
     running_update_threads[uuid].start()
 
-    return redirect(url_for('main_page'))
+    tag = request.args.get('tag')
+    return redirect(url_for('main_page', tag=tag))
 
 
 @app.route("/api/recheckall", methods=['GET'])
@@ -313,7 +314,7 @@ def launch_checks():
     minutes = datastore.data['settings']['requests']['minutes_between_check']
     for uuid, watch in datastore.data['watching'].items():
 
-
+#@Todo https://pymotw.com/2/Queue/
         if watch['last_checked'] <= time.time() - (minutes * 60):
             running_update_threads[watch['uuid']] = fetch_site_status.perform_site_check(uuid=uuid,
                                                                                          datastore=datastore)
