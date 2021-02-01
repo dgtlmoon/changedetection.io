@@ -32,12 +32,17 @@ ins {
 }
 
 #settings {
-
-
-	line-height: 2em;
+    background: rgba(0,0,0,.05);
+        padding: 1em;
+    border-radius: 10px;
+    margin-bottom: 1em;
+    color: #fff;
+    font-size: 80%;
 }
 #settings label {
 	margin-left: 1em;
+	display: inline-block;
+	font-weight: normal;
 }
 
 .source {
@@ -53,7 +58,7 @@ ins {
 }
 
 #diff-ui {
-background: #fff;
+    background: #fff;
     padding: 2em;
     margin: 1em;
     border-radius: 5px;

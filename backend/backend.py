@@ -187,18 +187,28 @@ def diff_history_page(uuid):
     dates = list(watch['history'].keys())
     dates = [int(i) for i in dates]
     dates.sort(reverse=True)
+    dates = [str(i) for i in dates]
+
 
     left_file_contents = right_file_contents = ""
     l_file = watch['history'][str(dates[-1])]
     with open(l_file, 'r') as f:
         left_file_contents = f.read()
 
-    r_file  = watch['history'][str(dates[-2])]
+    previous_version = request.args.get('previous_version')
+    try:
+        r_file = watch['history'][str(previous_version)]
+    except KeyError:
+        # Not present, use a default value
+        r_file = watch['history'][str(dates[-2])]
+
     with open(r_file, 'r') as f:
         right_file_contents = f.read()
 
+    #print (dates, l_file, r_file)
     output = render_template("diff.html", watch_a=watch, messages=messages, left=left_file_contents,
-                             right=right_file_contents, extra_stylesheets=extra_stylesheets)
+                             right=right_file_contents, extra_stylesheets=extra_stylesheets, versions=dates[:-1],
+                             current_previous_version=str(previous_version))
     return output
 
 @app.route("/favicon.ico", methods=['GET'])
