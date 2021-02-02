@@ -191,7 +191,7 @@ def diff_history_page(uuid):
 
 
     left_file_contents = right_file_contents = ""
-    l_file = watch['history'][str(dates[-1])]
+    l_file = watch['history'][str(dates[1])]
     with open(l_file, 'r') as f:
         left_file_contents = f.read()
 
@@ -200,7 +200,7 @@ def diff_history_page(uuid):
         r_file = watch['history'][str(previous_version)]
     except KeyError:
         # Not present, use a default value
-        r_file = watch['history'][str(dates[-2])]
+        r_file = watch['history'][dates[0]]
 
     with open(r_file, 'r') as f:
         right_file_contents = f.read()
