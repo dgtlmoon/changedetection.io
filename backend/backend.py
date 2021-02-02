@@ -310,7 +310,10 @@ def api_watch_add():
     global messages
 
     # @todo add_watch should throw a custom Exception for validation etc
-    datastore.add_watch(url=request.form.get('url').strip(), tag=request.form.get('tag').strip())
+    new_uuid = datastore.add_watch(url=request.form.get('url').strip(), tag=request.form.get('tag').strip())
+    # Straight into the queue.
+    update_q.put(new_uuid)
+
     messages.append({'class': 'ok', 'message': 'Watch added.'})
     return redirect(url_for('main_page'))
 

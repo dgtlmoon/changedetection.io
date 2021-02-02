@@ -128,15 +128,16 @@ class ChangeDetectionStore:
         validators.url(url)
 
         # @todo use a common generic version of this
-
+        new_uuid = str(uuid_builder.uuid4())
         _blank = self.generic_definition.copy()
         _blank.update({
             'url': url,
             'tag': tag,
-            'uuid': str(uuid_builder.uuid4())
+            'uuid': new_uuid
         })
 
         self.data['watching'].update({_blank['uuid']: _blank})
+        return new_uuid
 
 
     def sync_to_json(self):
