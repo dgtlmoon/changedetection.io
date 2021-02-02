@@ -117,6 +117,35 @@ def main_page():
     messages = []
     return output
 
+@app.route("/scrub", methods=['GET', 'POST'])
+def scrub_page():
+    from pathlib import Path
+
+    global messages
+
+    if request.method == 'POST':
+        confirmtext = request.form.get('confirmtext')
+
+        if confirmtext == 'scrub':
+
+            for txt_file_path in Path('/datastore').rglob('*.txt'):
+                os.unlink(txt_file_path)
+
+            for uuid, watch in datastore.data['watching'].items():
+                watch['last_checked'] = 0
+                watch['last_changed'] = 0
+                watch['previous_md5'] = None
+                watch['history'] = {}
+
+            datastore.needs_write = True
+            messages.append({'class': 'ok', 'message': 'Cleaned all version history.'})
+        else:
+            messages.append({'class': 'error', 'message': 'Wrong confirm text.'})
+
+        return redirect(url_for('main_page'))
+
+    return render_template("scrub.html")
+
 
 @app.route("/edit", methods=['GET', 'POST'])
 def edit_page():

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="edit-form">
+
+
+    <form class="pure-form pure-form-stacked" action="/scrub" method="POST">
+        <fieldset>
+            <div class="pure-control-group">
+                This will remove all version snapshots/data, but keep your list of URLs. <br/>
+                You may like to use the <strong>BACKUP</strong> link first.<br/>
+
+                Type in the word <strong>scrub</strong> to confirm that you understand!
+                <br/>
+
+            </div>
+
+            <div class="pure-control-group">
+                <br/>
+                <label for="confirmtext">Confirm</label><br/>
+                <input type="text" id="confirmtext" required="" name="confirmtext" value="" size="10"/>
+                <br/>
+
+
+            </div>
+
+
+            <div class="pure-control-group">
+                <button type="submit" class="pure-button pure-button-primary">Scrub!</button>
+            </div>
+            <br/>
+            <div class="pure-control-group">
+                <a href="/" class="pure-button button-small button-cancel">Cancel</a>
+            </div>
+
+
+        </fieldset>
+    </form>
+
+
+</div>
+
+{% endblock %}
