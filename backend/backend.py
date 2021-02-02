@@ -255,6 +255,36 @@ def favicon():
     return send_from_directory("/app/static/images", filename="favicon.ico")
 
 
+# We're good but backups are even better!
+@app.route("/backup", methods=['GET'])
+def get_backup():
+    import zipfile
+    from pathlib import Path
+    import zlib
+
+    # create a ZipFile object
+    backupname = "changedetection-backup-{}.zip".format(int(time.time()))
+
+    # We only care about UUIDS from the current index file
+    uuids = list(datastore.data['watching'].keys())
+
+    with zipfile.ZipFile(os.path.join("/datastore", backupname), 'w', compression=zipfile.ZIP_DEFLATED,
+                         compresslevel=6) as zipObj:
+        # Add the index
+        zipObj.write(os.path.join("/datastore", "url-watches.json"))
+        # Add any snapshot data we find
+        for txt_file_path in Path('/datastore').rglob('*.txt'):
+            parent_p = txt_file_path.parent
+            if parent_p.name in uuids:
+                zipObj.write(txt_file_path)
+
+    return send_file(os.path.join("/datastore", backupname),
+                     as_attachment=True,
+                     mimetype="application/zip",
+                     attachment_filename=backupname)
+
+
+
 # A few self sanity checks, mostly for developer/bug check
 @app.route("/self-check", methods=['GET'])
 def selfcheck():
