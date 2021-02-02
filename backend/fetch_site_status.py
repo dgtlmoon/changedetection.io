@@ -53,8 +53,14 @@ class perform_site_check(Thread):
         request_headers = self.datastore.data['settings']['headers'].copy()
         request_headers.update(extra_headers)
 
-        print("Checking", self.url)
-        #print(request_headers)
+        # https://github.com/psf/requests/issues/4525
+        # Requests doesnt yet support brotli encoding, so don't put 'br' here, be totally sure that the user cannot
+        # do this by accident.
+        if 'Accept-Encoding' in request_headers and "br" in request_headers['Accept-Encoding']:
+            request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
+
+#        print("Checking", self.url, request_headers)
+
 
         self.ensure_output_path()
 
