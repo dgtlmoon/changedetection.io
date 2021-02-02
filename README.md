@@ -30,7 +30,8 @@ Highly recommended :)
 
 ```bash
 docker pull dgtlmoon/changedetection.io
-docker restart $(docker ps|grep changedetection|awk '{print $1}')
+docker kill $(docker ps|grep changedetection|awk '{print $1}')
+docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore dgtlmoon/changedetection.io
 ```
   
 ### Screenshots
