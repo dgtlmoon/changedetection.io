@@ -18,12 +18,20 @@ Know when ...
 
 **Get monitoring now! super simple, one command!**
 
-```
-$ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore dgtlmoon/changedetection.io
+```bash
+docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore dgtlmoon/changedetection.io
 ```  
 
 Now visit http://127.0.0.1:5000 , You should now be able to access the UI.
 
+#### Updating to latest version
+
+Highly recommended :)
+
+```bash
+docker pull dgtlmoon/changedetection.io
+docker restart $(docker ps|grep changedetection|awk '{print $1}')
+```
   
 ### Screenshots
 
