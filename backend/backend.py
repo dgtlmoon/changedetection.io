@@ -244,6 +244,7 @@ def diff_history_page(uuid):
                              previous=previous_version_file_contents,
                              extra_stylesheets=extra_stylesheets,
                              versions=dates[1:],
+                             newest_version_timestamp=dates[0],
                              current_previous_version=str(previous_version),
                              current_diff_url=watch['url'])
 

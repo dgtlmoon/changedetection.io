@@ -16,7 +16,7 @@
                 <input type="radio" name="diff_type" id="diffChars" value="diffChars"/> Chars</label>
 
             {% if versions|length >= 1 %}
-            <label for="diff-version">Compare newest with</label>
+            <label for="diff-version">Compare newest (<span id="current-v-date"></span>) with</label>
             <select id="diff-version" name="previous_version">
                 {% for version in versions %}
                     <option value="{{version}}" {% if version== current_previous_version %} selected="" {% endif %}>
@@ -93,11 +93,15 @@ window.onload = function() {
     var diffList=document.getElementById("diff-version");
     if (typeof(diffList) != 'undefined' && diffList != null) {
         for (var option of diffList.options) {
-          //alert(option.value);
           var dateObject = new Date(option.value*1000);
           option.label=dateObject.toLocaleString();
         }
     }
+
+    /* Set current version date as local time in the browser also */
+    var current_v = document.getElementById("current-v-date");
+    var dateObject = new Date({{ newest_version_timestamp }}*1000);
+    current_v.innerHTML=dateObject.toLocaleString();
 
 
 	onDiffTypeChange(document.querySelector('#settings [name="diff_type"]:checked'));
