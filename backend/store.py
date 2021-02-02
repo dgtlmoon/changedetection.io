@@ -130,8 +130,9 @@ class ChangeDetectionStore:
 
     def add_watch(self, url, tag):
 
-        # @todo deal with exception
-        validators.url(url)
+        print("Adding", url, tag)
+        #        # @todo deal with exception
+        #        validators.url(url)
 
         # @todo use a common generic version of this
         new_uuid = str(uuid_builder.uuid4())
@@ -142,7 +143,7 @@ class ChangeDetectionStore:
             'uuid': new_uuid
         })
 
-        self.data['watching'].update({_blank['uuid']: _blank})
+        self.data['watching'][new_uuid] = _blank
         return new_uuid
 
 
