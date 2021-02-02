@@ -144,6 +144,7 @@ class ChangeDetectionStore:
         })
 
         self.data['watching'][new_uuid] = _blank
+        self.needs_write = True
         return new_uuid
 
 
