@@ -1,16 +1,15 @@
-from threading import Thread
 import time
 import requests
 import hashlib
 import os
 import re
-import html2text
-# Not needed due to inscriptis being way better.
-#from urlextract import URLExtract
 from inscriptis import get_text
 
-# Hmm Polymorphism datastore, thread, etc
-class perform_site_check(Thread):
+# Doesn't feel right having 'datastore' as a var here, perhaps this class can inherit from datastore/abstract
+# but on the other hand, I dont want a new instantiation of the that datastore object every time, due to it reading the
+# JSON store, setting vars, writing etc.
+
+class perform_site_check():
     def __init__(self, *args, uuid=False, datastore, **kwargs):
         super().__init__(*args, **kwargs)
         self.timestamp = int(time.time())  # used for storage etc too
@@ -19,6 +18,9 @@ class perform_site_check(Thread):
         self.url = datastore.get_val(uuid, 'url')
         self.current_md5 = datastore.get_val(uuid, 'previous_md5')
         self.output_path = "/datastore/{}".format(self.uuid)
+
+        self.ensure_output_path()
+        self.run()
 
     def save_firefox_screenshot(self, uuid, output):
         # @todo call selenium or whatever
@@ -59,10 +61,9 @@ class perform_site_check(Thread):
         if 'Accept-Encoding' in request_headers and "br" in request_headers['Accept-Encoding']:
             request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
 
-#        print("Checking", self.url, request_headers)
+        print("Checking", self.url)
 
 
-        self.ensure_output_path()
 
         try:
             timeout = self.datastore.data['settings']['requests']['timeout']
@@ -77,24 +78,6 @@ class perform_site_check(Thread):
                              verify=False)
 
             stripped_text_from_html = get_text(r.text)
-
-
-            # @todo This should be a config option.
-            # Many websites include junk in the links, trackers, etc.. Since we are really a service all about text changes..
-
-# inscriptis handles this much cleaner, probably not needed..
-#            extractor = URLExtract()
-#            urls = extractor.find_urls(stripped_text_from_html)
-            # Remove the urls, longest first so that we dont end up chewing up bigger links with parts of smaller ones.
-#            if urls:
-#                urls.sort(key=len, reverse=True)
-#                for url in urls:
-#                    # Sometimes URLExtract will consider something like 'foobar.com' as a link when that was just text.
-#                    if "://" in url:
-#                        # print ("Stripping link", url)
-#                        stripped_text_from_html = stripped_text_from_html.replace(url, '')
-
-
 
         # Usually from networkIO/requests level
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:

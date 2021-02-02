@@ -23,7 +23,8 @@ class ChangeDetectionStore:
                 },
                 'requests': {
                     'timeout': 15, # Default 15 seconds
-                    'minutes_between_check': 3 * 60 # Default 3 hours
+                    'minutes_between_check': 3 * 60, # Default 3 hours
+                    'workers': 10 # Number of threads, lower is better for slow connections
                 }
             }
         }
