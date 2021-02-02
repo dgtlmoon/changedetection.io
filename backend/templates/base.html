@@ -6,10 +6,10 @@
     <meta name="description" content="Self hosted website change detection.">
     <title>Change Detection</title>
     <link rel="stylesheet" href="/static/css/pure-min.css">
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/styles.css?ver=1000">
     {% if extra_stylesheets %}
         {% for m in extra_stylesheets %}
-        <link rel="stylesheet" href="{{ m }}">
+        <link rel="stylesheet" href="{{ m }}?ver=1000">
         {% endfor %}
     {% endif %}
 </head>
