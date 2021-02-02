@@ -10,7 +10,11 @@ WORKDIR /app
 ENV PYTHONUNBUFFERED=1
 
 # Attempt to store the triggered commit
-RUN echo "docker hub: $SOURCE_COMMIT" >/source.txt
+
+ARG SOURCE_COMMIT
+ARG SOURCE_BRANCH
+RUN echo "commit: $SOURCE_COMMIT branch: $SOURCE_BRANCH" >/source.txt
+
 
 RUN [ ! -d "/datastore" ] && mkdir /datastore
 
