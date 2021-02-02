@@ -199,8 +199,6 @@ def import_page():
 
         messages.append({'class': 'ok', 'message': "{} Imported, {} Skipped.".format(good, len(remaining_urls))})
 
-        launch_checks()
-
     output = render_template("import.html",
                              messages=messages,
                              remaining="\n".join(remaining_urls)
@@ -314,7 +312,6 @@ def api_watch_add():
     # @todo add_watch should throw a custom Exception for validation etc
     datastore.add_watch(url=request.form.get('url').strip(), tag=request.form.get('tag').strip())
     messages.append({'class': 'ok', 'message': 'Watch added.'})
-    launch_checks()
     return redirect(url_for('main_page'))
 
 
@@ -332,20 +329,28 @@ def api_delete():
 def api_watch_checknow():
     global messages
 
-    uuid = request.args.get('uuid')
-    update_q.put(uuid)
-
     tag = request.args.get('tag')
+    uuid = request.args.get('uuid')
+    i=0
+
+    if uuid:
+        update_q.put(uuid)
+        i = 1
+
+    elif tag != None:
+        for watch_uuid, watch in datastore.data['watching'].items():
+            if (tag != None and tag in watch['tag']):
+                i += 1
+                update_q.put(watch_uuid)
+    else:
+        # No tag, no uuid, add everything.
+        for watch_uuid, watch in datastore.data['watching'].items():
+            i += 1
+            update_q.put(watch_uuid)
+
+    messages.append({'class': 'ok', 'message': "{} watches are rechecking.".format(i)})
     return redirect(url_for('main_page', tag=tag))
 
-
-@app.route("/api/recheckall", methods=['GET'])
-def api_watch_recheckall():
-
-    for uuid, watch in datastore.data['watching'].items():
-        update_q.put(uuid)
-
-    return "Triggered recheck of {} watches.".format(len(datastore.data['watching']))
 
 
 # Requests for checking on the site use a pool of thread Workers managed by a Queue.
@@ -362,7 +367,9 @@ class Worker(threading.Thread):
             while True:
                 uuid = self.q.get()  # Blocking
                 self.current_uuid = uuid
-                fetch_site_status.perform_site_check(uuid=uuid, datastore=datastore)
+                # A little safety protection
+                if uuid in list( datastore.data['watching'].keys()):
+                    fetch_site_status.perform_site_check(uuid=uuid, datastore=datastore)
                 self.current_uuid = None # Done
                 self.q.task_done()
 

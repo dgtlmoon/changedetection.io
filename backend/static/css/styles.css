@@ -82,7 +82,16 @@ section.content {
   margin: 0 3px 0 5px;
 }
 
-/* hotovo */
+#check-all-button {
+  text-align:right;
+}
+
+#check-all-button a {
+   border-top-left-radius: initial;
+   border-top-right-radius: initial;
+   border-bottom-left-radius: 5px;
+   border-bottom-right-radius: 5px;
+}
 
 
 body:after {

@@ -26,7 +26,6 @@
     </div>
 
     <div id="watch-table-wrapper">
-
         <table class="pure-table pure-table-striped watch-table">
             <thead>
             <tr>
@@ -67,6 +66,10 @@
 
             </tbody>
         </table>
+        <div id="check-all-button">
+
+            <a href="/api/checknow{% if active_tag%}?tag={{active_tag}}{%endif%}" class="pure-button button-tag " >Recheck all {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
+        </div>
     </div>
 </div>
 {% endblock %}
