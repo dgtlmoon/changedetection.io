@@ -185,30 +185,35 @@ def diff_history_page(uuid):
     watch = datastore.data['watching'][uuid]
 
     dates = list(watch['history'].keys())
+    # Convert to int, sort and back to str again
     dates = [int(i) for i in dates]
     dates.sort(reverse=True)
     dates = [str(i) for i in dates]
 
-
-    left_file_contents = right_file_contents = ""
-    l_file = watch['history'][str(dates[1])]
-    with open(l_file, 'r') as f:
-        left_file_contents = f.read()
+    newest_file = watch['history'][dates[0]]
+    with open(newest_file, 'r') as f:
+        newest_version_file_contents = f.read()
 
     previous_version = request.args.get('previous_version')
+
     try:
-        r_file = watch['history'][str(previous_version)]
+        previous_file = watch['history'][previous_version]
     except KeyError:
-        # Not present, use a default value
-        r_file = watch['history'][dates[0]]
+        # Not present, use a default value, the second one in the sorted list.
+        previous_file = watch['history'][dates[1]]
 
-    with open(r_file, 'r') as f:
-        right_file_contents = f.read()
+    with open(previous_file, 'r') as f:
+        previous_version_file_contents = f.read()
 
-    #print (dates, l_file, r_file)
-    output = render_template("diff.html", watch_a=watch, messages=messages, left=left_file_contents,
-                             right=right_file_contents, extra_stylesheets=extra_stylesheets, versions=dates[:-1],
-                             current_previous_version=str(previous_version), current_diff_url=watch['url'])
+    output = render_template("diff.html", watch_a=watch,
+                             messages=messages,
+                             newest=newest_version_file_contents,
+                             previous=previous_version_file_contents,
+                             extra_stylesheets=extra_stylesheets,
+                             versions=dates[1:],
+                             current_previous_version=str(previous_version),
+                             current_diff_url=watch['url'])
+
     return output
 
 @app.route("/favicon.ico", methods=['GET'])
