@@ -113,12 +113,40 @@ def main_page():
     return output
 
 
-@app.route("/edit", methods=['GET'])
+@app.route("/edit", methods=['GET', 'POST'])
 def edit_page():
     global messages
+    import validators
 
-    uuid = request.args.get('uuid')
-    output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid], messages=messages)
+    if request.method == 'POST':
+        uuid = request.args.get('uuid')
+
+        url = request.form.get('url').strip()
+        tag = request.form.get('tag').strip()
+
+        form_headers = request.form.get('headers').strip().split("\n")
+        extra_headers = {}
+        if form_headers:
+            for header in form_headers:
+                if len(header):
+                    parts = header.split(':', 1)
+                    extra_headers.update({parts[0].strip(): parts[1].strip()})
+
+        validators.url(url)  # @todo switch to prop/attr/observer
+        datastore.data['watching'][uuid].update({'url': url,
+                                                 'tag': tag,
+                                                 'headers': extra_headers})
+        datastore.needs_write = True
+
+        messages.append({'class': 'ok', 'message': 'Updated watch.'})
+
+        return redirect(url_for('main_page'))
+
+    else:
+
+        uuid = request.args.get('uuid')
+        output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid], messages=messages)
+
     return output
 
 
@@ -264,35 +292,7 @@ def api_delete():
     return redirect(url_for('main_page'))
 
 
-@app.route("/api/update", methods=['POST'])
-def api_update():
-    global messages
-    import validators
 
-    uuid = request.args.get('uuid')
-
-    url = request.form.get('url').strip()
-    tag = request.form.get('tag').strip()
-
-    form_headers = request.form.get('headers').strip().split("\n")
-    extra_headers = {}
-    if form_headers:
-        for header in form_headers:
-            if len(header):
-                parts = header.split(':', 1)
-                extra_headers.update({parts[0].strip(): parts[1].strip()})
-
-
-
-    validators.url(url) #@todo switch to prop/attr/observer
-    datastore.data['watching'][uuid].update({'url': url,
-                                             'tag': tag,
-                                             'headers':extra_headers})
-    datastore.needs_write = True
-
-    messages.append({'class': 'ok', 'message': 'Updated watch.'})
-
-    return redirect(url_for('main_page'))
 
 @app.route("/api/checknow", methods=['GET'])
 def api_watch_checknow():
