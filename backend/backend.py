@@ -268,6 +268,10 @@ def get_backup():
 
     with zipfile.ZipFile(os.path.join("/datastore", backupname), 'w', compression=zipfile.ZIP_DEFLATED,
                          compresslevel=6) as zipObj:
+
+        # Be sure we're written fresh
+        datastore.sync_to_json()
+
         # Add the index
         zipObj.write(os.path.join("/datastore", "url-watches.json"))
         # Add any snapshot data we find

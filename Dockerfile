@@ -9,6 +9,9 @@ WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
 
+# Attempt to store the triggered commit
+RUN echo "docker hub: $SOURCE_COMMIT" >/source.txt
+
 RUN [ ! -d "/datastore" ] && mkdir /datastore
 
 CMD [ "python", "./backend.py" ]

@@ -1,7 +1,8 @@
 import json
 import uuid as uuid_builder
 import validators
-
+import os.path
+from os import path
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
@@ -43,6 +44,11 @@ class ChangeDetectionStore:
             'history' : {} # Dict of timestamp and output stripped filename
         }
 
+        if path.isfile('/source.txt'):
+            with open('/source.txt') as f:
+                # Should be set in Dockerfile to look for /source.txt , this will give us the git commit #
+                # So when someone gives us a backup file to examine, we know exactly what code they were running.
+                self.__data['build_sha'] = f.read()
 
         try:
             with open('/datastore/url-watches.json') as json_file:
