@@ -15,6 +15,7 @@ class ChangeDetectionStore:
         self.__data = {
             'note' : "Hello! If you change this file manually, please be sure to restart your changedetection.io instance!",
             'watching': {},
+            'tag': "0.22",
             'settings': {
                 'headers': {
                     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36',
