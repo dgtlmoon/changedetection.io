@@ -10,6 +10,7 @@ services:
     container_name: changedetection.io-dev
     volumes:
       - ./backend:/app
+      - ./requirements.txt:/requirements.txt # Normally COPY'ed in the Dockerfile
       - ./datastore:/datastore
 
     ports:
