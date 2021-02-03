@@ -46,6 +46,7 @@ update_q = queue.Queue()
 
 app = Flask(__name__, static_url_path='/static')
 app.config['STATIC_RESOURCES'] = "/app/static"
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 # app.config['SECRET_KEY'] = 'secret!'
 

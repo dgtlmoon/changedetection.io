@@ -34,8 +34,9 @@ class perform_site_check():
             os.mkdir(self.output_path)
 
     def save_response_html_output(self, output):
-        # @todo maybe record a history.json, [timestamp, md5, filename]
-        with open("{}/{}.txt".format(self.output_path, self.timestamp), 'w') as f:
+
+        # @todo Saving the original HTML can be very large, better to set as an option, these files could be important to some.
+        with open("{}/{}.html".format(self.output_path, self.timestamp), 'w') as f:
             f.write(output)
             f.close()
 
