@@ -239,8 +239,8 @@ def import_page():
 @app.route("/diff/<string:uuid>", methods=['GET'])
 def diff_history_page(uuid):
     global messages
-    global extra_stylesheets
-    extra_stylesheets.append('/static/css/diff.css')
+
+    extra_stylesheets=['/static/css/diff.css']
 
     watch = datastore.data['watching'][uuid]
 
