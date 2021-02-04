@@ -33,7 +33,6 @@ from flask import Flask, render_template, request, send_file, send_from_director
 
 # Local
 import store
-import fetch_site_status
 running_update_threads = []
 ticker_thread = None
 
@@ -400,14 +399,18 @@ class Worker(threading.Thread):
         super().__init__(*args, **kwargs)
 
     def run(self):
+        import fetch_site_status
+
         try:
             while True:
                 uuid = self.q.get()  # Blocking
                 self.current_uuid = uuid
-                # A little safety protection
-                if uuid in list( datastore.data['watching'].keys()):
-                    fetch_site_status.perform_site_check(uuid=uuid, datastore=datastore)
-                self.current_uuid = None # Done
+
+                if uuid in list(datastore.data['watching'].keys()):
+                    update_handler = fetch_site_status.perform_site_check(uuid=uuid, datastore=datastore)
+                    datastore.update_watch(uuid=uuid, update_obj=update_handler.update_data)
+
+                self.current_uuid = None  # Done
                 self.q.task_done()
 
         except KeyboardInterrupt:

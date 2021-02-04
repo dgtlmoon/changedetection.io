@@ -5,11 +5,14 @@ import os
 import re
 from inscriptis import get_text
 
-# Doesn't feel right having 'datastore' as a var here, perhaps this class can inherit from datastore/abstract
-# but on the other hand, I dont want a new instantiation of the that datastore object every time, due to it reading the
-# JSON store, setting vars, writing etc.
-
+# Some common stuff here that can be moved to a base class
 class perform_site_check():
+
+    # New state that is set after a check
+    # Return value dict
+    update_obj = {}
+
+
     def __init__(self, *args, uuid=False, datastore, **kwargs):
         super().__init__(*args, **kwargs)
         self.timestamp = int(time.time())  # used for storage etc too
@@ -21,6 +24,11 @@ class perform_site_check():
 
         self.ensure_output_path()
         self.run()
+
+    # Current state of what needs to be updated
+    @property
+    def update_data(self):
+        return self.update_obj
 
     def save_firefox_screenshot(self, uuid, output):
         # @todo call selenium or whatever
@@ -62,10 +70,6 @@ class perform_site_check():
         if 'Accept-Encoding' in request_headers and "br" in request_headers['Accept-Encoding']:
             request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
 
-        print("Checking", self.url)
-
-
-
         try:
             timeout = self.datastore.data['settings']['requests']['timeout']
         except KeyError:
@@ -80,9 +84,12 @@ class perform_site_check():
 
             stripped_text_from_html = get_text(r.text)
 
+
+
         # Usually from networkIO/requests level
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
-            self.datastore.update_watch(self.uuid, 'last_error', str(e))
+            self.update_obj["last_error"] = str(e)
+
             print(str(e))
 
         except requests.exceptions.MissingSchema:
@@ -90,35 +97,36 @@ class perform_site_check():
 
         # Usually from html2text level
         except UnicodeDecodeError as e:
-            self.datastore.update_watch(self.uuid, 'last_error', str(e))
+
+            self.update_obj["last_error"] = str(e)
             print(str(e))
             # figure out how to deal with this cleaner..
             # 'utf-8' codec can't decode byte 0xe9 in position 480: invalid continuation byte
 
         else:
+            # We rely on the actual text in the html output.. many sites have random script vars etc,
+            # in the future we'll implement other mechanisms.
 
-            # We rely on the actual text in the html output.. many sites have random script vars etc
-            self.datastore.update_watch(self.uuid, 'last_error', False)
-            self.datastore.update_watch(self.uuid, 'last_check_status', r.status_code)
+            self.update_obj["last_check_status"] = r.status_code
+            self.update_obj["last_error"] = False
 
             fetched_md5 = hashlib.md5(stripped_text_from_html.encode('utf-8')).hexdigest()
 
+
             if self.current_md5 != fetched_md5:
 
-                # Dont confuse people by putting last-changed, when it actually just changed from nothing..
+                # Don't confuse people by updating as last-changed, when it actually just changed from None..
                 if self.datastore.get_val(self.uuid, 'previous_md5') is not None:
-                    self.datastore.update_watch(self.uuid, 'last_changed', self.timestamp)
+                    self.update_obj["last_changed"] = self.timestamp
 
-                self.datastore.update_watch(self.uuid, 'previous_md5', fetched_md5)
+                self.update_obj["previous_md5"] = fetched_md5
+
                 self.save_response_html_output(r.text)
                 output_filepath = self.save_response_stripped_output(stripped_text_from_html)
 
                 # Update history with the stripped text for future reference, this will also mean we save the first
-                # attempt because 'self.current_md5 != fetched_md5'  (current_md5 will be None when not run)
-                # need to learn more about attr/setters/getters
-                history = self.datastore.get_val(self.uuid, 'history')
-                history.update(dict([(str(self.timestamp), output_filepath)]))
-                self.datastore.update_watch(self.uuid, 'history', history)
+                timestamp = str(self.timestamp)
+                self.update_obj.update({"history": {timestamp: output_filepath}})
 
-        self.datastore.update_watch(self.uuid, 'last_checked', int(time.time()))
-        pass
+            self.update_obj["last_checked"] = self.timestamp
+
