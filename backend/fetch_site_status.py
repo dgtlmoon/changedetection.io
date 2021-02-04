@@ -113,10 +113,10 @@ class perform_site_check():
             fetched_md5 = hashlib.md5(stripped_text_from_html.encode('utf-8')).hexdigest()
 
 
-            if self.current_md5 != fetched_md5:
+            if self.current_md5 != fetched_md5: # could be None or False depending on JSON type
 
                 # Don't confuse people by updating as last-changed, when it actually just changed from None..
-                if self.datastore.get_val(self.uuid, 'previous_md5') is not None:
+                if self.datastore.get_val(self.uuid, 'previous_md5'):
                     self.update_obj["last_changed"] = self.timestamp
 
                 self.update_obj["previous_md5"] = fetched_md5

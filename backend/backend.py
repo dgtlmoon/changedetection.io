@@ -76,8 +76,6 @@ def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
 
 @app.template_filter('format_timestamp_timeago')
 def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
-    if timestamp == 0:
-        return 'Not yet'
     return timeago.format(timestamp, time.time())
     # return timeago.format(timestamp, time.time())
     # return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
