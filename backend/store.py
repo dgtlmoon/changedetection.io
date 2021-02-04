@@ -141,7 +141,7 @@ class ChangeDetectionStore:
 
     def add_watch(self, url, tag):
         self.lock.acquire()
-        print("Adding", url, tag)
+        #print("Adding", url, tag)
         #        # @todo deal with exception
         #        validators.url(url)
 
