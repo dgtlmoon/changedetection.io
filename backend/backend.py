@@ -102,6 +102,7 @@ def main_page():
             watch['uuid'] = uuid
             sorted_watches.append(watch)
 
+
     sorted_watches.sort(key=lambda x: x['last_changed'], reverse=True)
 
     existing_tags = datastore.get_all_tags()
@@ -248,6 +249,7 @@ def diff_history_page(uuid):
     dates.sort(reverse=True)
     dates = [str(i) for i in dates]
 
+
     newest_file = watch['history'][dates[0]]
     with open(newest_file, 'r') as f:
         newest_version_file_contents = f.read()
@@ -392,6 +394,7 @@ class Worker(threading.Thread):
 
     current_uuid = None
 
+
     def __init__(self, q, *args, **kwargs):
         self.q = q
         super().__init__(*args, **kwargs)
@@ -399,14 +402,21 @@ class Worker(threading.Thread):
     def run(self):
         import fetch_site_status
 
+        from copy import deepcopy
+
+        update_handler = fetch_site_status.perform_site_check(datastore=datastore)
+
         try:
             while True:
                 uuid = self.q.get()  # Blocking
                 self.current_uuid = uuid
 
                 if uuid in list(datastore.data['watching'].keys()):
-                    update_handler = fetch_site_status.perform_site_check(uuid=uuid, datastore=datastore)
-                    datastore.update_watch(uuid=uuid, update_obj=update_handler.update_data)
+
+                    result = update_handler.run(uuid)
+
+                    datastore.update_watch(uuid=uuid, update_obj=result)
+
 
                 self.current_uuid = None  # Done
                 self.q.task_done()
@@ -440,7 +450,7 @@ def save_datastore():
         while True:
             if datastore.needs_write:
                 datastore.sync_to_json()
-            time.sleep(5)
+            time.sleep(1)
 
     except KeyboardInterrupt:
         return

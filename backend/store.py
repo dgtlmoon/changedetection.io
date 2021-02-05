@@ -5,6 +5,7 @@ import os.path
 from os import path
 from threading import Lock, Thread
 
+from copy import deepcopy
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
@@ -41,7 +42,7 @@ class ChangeDetectionStore:
             'last_checked': 0,
             'last_changed': 0,
             'title': None,
-            'previous_md5': None,
+            'previous_md5': "",
             'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send
             'history': {}  # Dict of timestamp and output stripped filename
@@ -71,9 +72,9 @@ class ChangeDetectionStore:
 
                 # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
                 # @todo pretty sure theres a python we todo this with an abstracted(?) object!
-                i = 0
+
                 for uuid, watch in self.data['watching'].items():
-                    _blank = self.generic_definition.copy()
+                    _blank = deepcopy(self.generic_definition)
                     _blank.update(watch)
                     self.__data['watching'].update({uuid: _blank})
                     print("Watching:", uuid, _blank['url'])
@@ -88,19 +89,18 @@ class ChangeDetectionStore:
 
     def update_watch(self, uuid, update_obj):
 
-        self.lock.acquire()
+        with self.lock:
 
-        # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
-        for dict_key, d in self.generic_definition.items():
-            if isinstance(d, dict) and dict_key in update_obj:
-                self.__data['watching'][uuid][dict_key].update(update_obj[dict_key])
-                del(update_obj[dict_key])
+            # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
+            for dict_key, d in self.generic_definition.items():
+                if isinstance(d, dict):
+                    if update_obj is not None and dict_key in update_obj:
+                        self.__data['watching'][uuid][dict_key].update(update_obj[dict_key])
+                        del(update_obj[dict_key])
 
-        # Update with the remaining values
-        self.__data['watching'][uuid].update(update_obj)
+            self.__data['watching'][uuid].update(update_obj)
 
         self.needs_write = True
-        self.lock.release()
 
     @property
     def data(self):
@@ -120,12 +120,10 @@ class ChangeDetectionStore:
         return tags
 
     def delete(self, uuid):
-
-        self.lock.acquire()
-        del (self.__data['watching'][uuid])
-        self.needs_write = True
-        self.lock.release()
-
+        with self.lock:
+            del (self.__data['watching'][uuid])
+            self.needs_write = True
+        
     def url_exists(self, url):
 
         # Probably their should be dict...
@@ -140,31 +138,30 @@ class ChangeDetectionStore:
         return self.data['watching'][uuid].get(val)
 
     def add_watch(self, url, tag):
-        self.lock.acquire()
-        #print("Adding", url, tag)
-        #        # @todo deal with exception
-        #        validators.url(url)
+        with self.lock:
 
-        # @todo use a common generic version of this
-        new_uuid = str(uuid_builder.uuid4())
-        _blank = self.generic_definition.copy()
-        _blank.update({
-            'url': url,
-            'tag': tag,
-            'uuid': new_uuid
-        })
+            # @todo use a common generic version of this
+            new_uuid = str(uuid_builder.uuid4())
+            _blank = deepcopy(self.generic_definition)
+            _blank.update({
+                'url': url,
+                'tag': tag,
+                'uuid': new_uuid
+            })
 
-        self.data['watching'][new_uuid] = _blank
+            self.data['watching'][new_uuid] = _blank
+
         self.needs_write = True
-        self.lock.release()
+
         return new_uuid
 
     def sync_to_json(self):
-        print("Saving index")
-        self.lock.acquire()
+
+
         with open('/datastore/url-watches.json', 'w') as json_file:
-            json.dump(self.data, json_file, indent=4)
+            json.dump(self.__data, json_file, indent=4)
+            print("Re-saved index")
+
         self.needs_write = False
-        self.lock.release()
 
 # body of the constructor

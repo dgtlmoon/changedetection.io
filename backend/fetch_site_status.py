@@ -5,30 +5,15 @@ import os
 import re
 from inscriptis import get_text
 
+from copy import deepcopy
+
+
 # Some common stuff here that can be moved to a base class
 class perform_site_check():
 
-    # New state that is set after a check
-    # Return value dict
-    update_obj = {}
-
-
-    def __init__(self, *args, uuid=False, datastore, **kwargs):
+    def __init__(self, *args, datastore, **kwargs):
         super().__init__(*args, **kwargs)
-        self.timestamp = int(time.time())  # used for storage etc too
-        self.uuid = uuid
         self.datastore = datastore
-        self.url = datastore.get_val(uuid, 'url')
-        self.current_md5 = datastore.get_val(uuid, 'previous_md5')
-        self.output_path = "/datastore/{}".format(self.uuid)
-
-        self.ensure_output_path()
-        self.run()
-
-    # Current state of what needs to be updated
-    @property
-    def update_data(self):
-        return self.update_obj
 
     def save_firefox_screenshot(self, uuid, output):
         # @todo call selenium or whatever
@@ -41,27 +26,30 @@ class perform_site_check():
         except:
             os.mkdir(self.output_path)
 
-    def save_response_html_output(self, output):
+    def save_response_stripped_output(self, output, fname):
 
-        # @todo Saving the original HTML can be very large, better to set as an option, these files could be important to some.
-        with open("{}/{}.html".format(self.output_path, self.timestamp), 'w') as f:
-            f.write(output)
-            f.close()
-
-    def save_response_stripped_output(self, output):
-        fname = "{}/{}.stripped.txt".format(self.output_path, self.timestamp)
         with open(fname, 'w') as f:
             f.write(output)
             f.close()
 
         return fname
 
-    def run(self):
+    def run(self, uuid):
 
-        extra_headers = self.datastore.get_val(self.uuid, 'headers')
+        timestamp = int(time.time())  # used for storage etc too
+
+        update_obj = {'previous_md5': self.datastore.data['watching'][uuid]['previous_md5'],
+                      'history': {},
+                      "last_checked": timestamp
+                      }
+
+        self.output_path = "/datastore/{}".format(uuid)
+        self.ensure_output_path()
+
+        extra_headers = self.datastore.get_val(uuid, 'headers')
 
         # Tweak the base config with the per-watch ones
-        request_headers = self.datastore.data['settings']['headers'].copy()
+        request_headers = self.datastore.data['settings']['headers']
         request_headers.update(extra_headers)
 
         # https://github.com/psf/requests/issues/4525
@@ -77,7 +65,7 @@ class perform_site_check():
             timeout = 15
 
         try:
-            r = requests.get(self.url,
+            r = requests.get(self.datastore.get_val(uuid, 'url'),
                              headers=request_headers,
                              timeout=timeout,
                              verify=False)
@@ -88,17 +76,17 @@ class perform_site_check():
 
         # Usually from networkIO/requests level
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
-            self.update_obj["last_error"] = str(e)
+            update_obj["last_error"] = str(e)
 
             print(str(e))
 
         except requests.exceptions.MissingSchema:
-            print("Skipping {} due to missing schema/bad url".format(self.uuid))
+            print("Skipping {} due to missing schema/bad url".format(uuid))
 
         # Usually from html2text level
         except UnicodeDecodeError as e:
 
-            self.update_obj["last_error"] = str(e)
+            update_obj["last_error"] = str(e)
             print(str(e))
             # figure out how to deal with this cleaner..
             # 'utf-8' codec can't decode byte 0xe9 in position 480: invalid continuation byte
@@ -107,26 +95,29 @@ class perform_site_check():
             # We rely on the actual text in the html output.. many sites have random script vars etc,
             # in the future we'll implement other mechanisms.
 
-            self.update_obj["last_check_status"] = r.status_code
-            self.update_obj["last_error"] = False
+            update_obj["last_check_status"] = r.status_code
+            update_obj["last_error"] = False
+
+            if not len(r.text):
+                update_obj["last_error"] = "Empty reply"
 
             fetched_md5 = hashlib.md5(stripped_text_from_html.encode('utf-8')).hexdigest()
 
-
-            if self.current_md5 != fetched_md5: # could be None or False depending on JSON type
+            # could be None or False depending on JSON type
+            if self.datastore.data['watching'][uuid]['previous_md5'] != fetched_md5:
 
                 # Don't confuse people by updating as last-changed, when it actually just changed from None..
-                if self.datastore.get_val(self.uuid, 'previous_md5'):
-                    self.update_obj["last_changed"] = self.timestamp
+                if self.datastore.get_val(uuid, 'previous_md5'):
+                    update_obj["last_changed"] = timestamp
 
-                self.update_obj["previous_md5"] = fetched_md5
-
-                self.save_response_html_output(r.text)
-                output_filepath = self.save_response_stripped_output(stripped_text_from_html)
+                update_obj["previous_md5"] = fetched_md5
+                fname = "{}/{}.stripped.txt".format(self.output_path, fetched_md5)
+                with open(fname, 'w') as f:
+                    f.write(stripped_text_from_html)
+                    f.close()
 
                 # Update history with the stripped text for future reference, this will also mean we save the first
-                timestamp = str(self.timestamp)
-                self.update_obj.update({"history": {timestamp: output_filepath}})
+                # Should always be keyed by string(timestamp)
+                update_obj.update({"history": {str(timestamp): fname}})
 
-            self.update_obj["last_checked"] = self.timestamp
-
+        return update_obj
