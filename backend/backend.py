@@ -90,6 +90,8 @@ def main_page():
     # Sort by last_changed and add the uuid which is usually the key..
     sorted_watches = []
     for uuid, watch in datastore.data['watching'].items():
+
+
         if limit_tag != None:
             # Support for comma separated list of tags.
             for tag_in_watch in watch['tag'].split(','):
@@ -249,6 +251,8 @@ def diff_history_page(uuid):
     dates.sort(reverse=True)
     dates = [str(i) for i in dates]
 
+    # Save the current newest history as the most recently viewed
+    datastore.set_last_viewed(uuid, dates[0])
 
     newest_file = watch['history'][dates[0]]
     with open(newest_file, 'r') as f:

@@ -41,6 +41,8 @@ class ChangeDetectionStore:
             'tag': None,
             'last_checked': 0,
             'last_changed': 0,
+            'last_viewed': 0, # history key value of the last viewed via the [diff] link
+            'newest_history_key': "",
             'title': None,
             'previous_md5': "",
             'uuid': str(uuid_builder.uuid4()),
@@ -77,7 +79,8 @@ class ChangeDetectionStore:
                     _blank = deepcopy(self.generic_definition)
                     _blank.update(watch)
                     self.__data['watching'].update({uuid: _blank})
-                    print("Watching:", uuid, _blank['url'])
+                    self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
+                    print("Watching:", uuid, self.__data['watching'][uuid]['url'])
 
         # First time ran, doesnt exist.
         except (FileNotFoundError, json.decoder.JSONDecodeError):
@@ -86,6 +89,28 @@ class ChangeDetectionStore:
             self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
             self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
             self.add_watch(url='https://changedetection.io', tag='Tech news')
+
+    # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
+    def get_newest_history_key(self, uuid):
+        if len(self.__data['watching'][uuid]['history']) == 1:
+            return 0
+
+        dates = list(self.__data['watching'][uuid]['history'].keys())
+        # Convert to int, sort and back to str again
+        dates = [int(i) for i in dates]
+        dates.sort(reverse=True)
+        if len(dates):
+            # always keyed as str
+            return str(dates[0])
+
+        return 0
+
+
+
+
+    def set_last_viewed(self, uuid, timestamp):
+        self.data['watching'][uuid].update({'last_viewed': str(timestamp)})
+        self.needs_write = True
 
     def update_watch(self, uuid, update_obj):
 
@@ -99,11 +124,13 @@ class ChangeDetectionStore:
                         del(update_obj[dict_key])
 
             self.__data['watching'][uuid].update(update_obj)
+            self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
 
         self.needs_write = True
 
     @property
     def data(self):
+
         return self.__data
 
     def get_all_tags(self):

@@ -48,7 +48,13 @@ section.content {
 /* table related */
 .watch-table {
   width: 100%;
+
 }
+
+.watch-table tr.unviewed {
+    font-weight: bold;
+}
+
 .watch-tag-list {
   color: #e70069;
   white-space: nowrap;
