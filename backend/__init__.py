@@ -24,10 +24,9 @@ import queue
 
 from flask import Flask, render_template, request, send_file, send_from_directory, safe_join, abort, redirect, url_for
 
+datastore=None
 
 # Local
-
-from backend import store
 running_update_threads = []
 ticker_thread = None
 
@@ -75,13 +74,14 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     # return timeago.format(timestamp, time.time())
     # return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
 
-def changedetection_app(config=None):
+def changedetection_app(config=None, datastore_o=None):
 
+    global datastore
+    datastore = datastore_o
     # Hmm
     app.config.update(dict(DEBUG=True))
     app.config.update(config or {})
 
-    datastore = store.ChangeDetectionStore(datastore_path=app.config['datastore_path'])
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
@@ -454,37 +454,38 @@ class Worker(threading.Thread):
                 self.q.task_done()
 
 
-    # Thread runner to check every minute, look for new watches to feed into the Queue.
-    def ticker_thread_check_time_launch_checks():
+# Thread runner to check every minute, look for new watches to feed into the Queue.
+def ticker_thread_check_time_launch_checks():
 
-        # Spin up Workers.
-        for _ in range(datastore.data['settings']['requests']['workers']):
-            new_worker = Worker(update_q)
-            running_update_threads.append(new_worker)
-            new_worker.start()
+    # Spin up Workers.
+    for _ in range(datastore.data['settings']['requests']['workers']):
+        print ("...")
+        new_worker = Worker(update_q)
+        running_update_threads.append(new_worker)
+        new_worker.start()
 
-        # Every minute check for new UUIDs to follow up on
-        while True:
-            minutes = datastore.data['settings']['requests']['minutes_between_check']
-            for uuid, watch in datastore.data['watching'].items():
-                if watch['last_checked'] <= time.time() - (minutes * 60):
-                    update_q.put(uuid)
+    # Every minute check for new UUIDs to follow up on
+    while True:
+        minutes = datastore.data['settings']['requests']['minutes_between_check']
+        for uuid, watch in datastore.data['watching'].items():
+            if watch['last_checked'] <= time.time() - (minutes * 60):
+                update_q.put(uuid)
 
-            if app.config['STOP_THREADS']:
-                return
-            time.sleep(1)
+        if app.config['STOP_THREADS']:
+            return
+        time.sleep(1)
 
 
-    # Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
-    # by just running periodically in one thread, according to python, dict updates are threadsafe.
-    def save_datastore():
+# Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
+# by just running periodically in one thread, according to python, dict updates are threadsafe.
+def save_datastore():
 
-        global stop_threads
+    global stop_threads
 
-        while True:
-            if stop_threads:
-                return
-            if datastore.needs_write:
-                datastore.sync_to_json()
-            time.sleep(1)
+    while True:
+        if app.config['STOP_THREADS']:
+            return
+        if datastore.needs_write:
+            datastore.sync_to_json()
+        time.sleep(1)
 

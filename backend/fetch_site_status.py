@@ -20,7 +20,10 @@ class perform_site_check():
         return
 
     def ensure_output_path(self):
-        os.mkdir(self.output_path)
+        try:
+            os.mkdir(self.output_path)
+        except FileExistsError:
+            print (self.output_path, "already exists.")
 
 
     def save_response_stripped_output(self, output, fname):
@@ -40,7 +43,7 @@ class perform_site_check():
                       "last_checked": timestamp
                       }
 
-        self.output_path = "/datastore/{}".format(uuid)
+        self.output_path = "{}/{}".format(self.datastore.datastore_path,uuid)
         self.ensure_output_path()
 
         extra_headers = self.datastore.get_val(uuid, 'headers')

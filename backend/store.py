@@ -7,6 +7,7 @@ from threading import Lock, Thread
 
 from copy import deepcopy
 
+
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change
@@ -42,7 +43,7 @@ class ChangeDetectionStore:
             'tag': None,
             'last_checked': 0,
             'last_changed': 0,
-            'last_viewed': 0, # history key value of the last viewed via the [diff] link
+            'last_viewed': 0,  # history key value of the last viewed via the [diff] link
             'newest_history_key': "",
             'title': None,
             'previous_md5': "",
@@ -58,7 +59,7 @@ class ChangeDetectionStore:
                 self.__data['build_sha'] = f.read()
 
         try:
-            with open('/datastore/url-watches.json') as json_file:
+            with open("{}/url-watches.json".format(self.datastore_path)) as json_file:
                 from_disk = json.load(json_file)
 
                 # @todo isnt there a way todo this dict.update recursively?
@@ -85,7 +86,7 @@ class ChangeDetectionStore:
 
         # First time ran, doesnt exist.
         except (FileNotFoundError, json.decoder.JSONDecodeError):
-            print("Creating JSON store")
+            print("Creating JSON store at", self.datastore_path)
             self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
             self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
             self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
@@ -106,9 +107,6 @@ class ChangeDetectionStore:
 
         return 0
 
-
-
-
     def set_last_viewed(self, uuid, timestamp):
         self.data['watching'][uuid].update({'last_viewed': str(timestamp)})
         self.needs_write = True
@@ -122,7 +120,7 @@ class ChangeDetectionStore:
                 if isinstance(d, dict):
                     if update_obj is not None and dict_key in update_obj:
                         self.__data['watching'][uuid][dict_key].update(update_obj[dict_key])
-                        del(update_obj[dict_key])
+                        del (update_obj[dict_key])
 
             self.__data['watching'][uuid].update(update_obj)
             self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
@@ -167,7 +165,6 @@ class ChangeDetectionStore:
 
     def add_watch(self, url, tag):
         with self.lock:
-
             # @todo use a common generic version of this
             new_uuid = str(uuid_builder.uuid4())
             _blank = deepcopy(self.generic_definition)
@@ -185,8 +182,7 @@ class ChangeDetectionStore:
 
     def sync_to_json(self):
 
-
-        with open('/datastore/url-watches.json', 'w') as json_file:
+        with open("{}/url-watches.json".format(self.datastore_path), 'w') as json_file:
             json.dump(self.__data, json_file, indent=4)
             print("Re-saved index")
 

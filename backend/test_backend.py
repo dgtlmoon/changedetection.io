@@ -2,7 +2,8 @@
 
 import pytest
 import backend
-
+from backend import store
+import os
 # https://github.com/pallets/flask/blob/1.1.2/examples/tutorial/tests/test_auth.py
 
 # Much better boilerplate than the docs
@@ -10,7 +11,20 @@ import backend
 
 @pytest.fixture
 def app(request):
-    app = backend.changedetection_app({'datastore_path':'./datastorexxx'})
+
+
+    datastore_path ="./test-datastore"
+    try:
+        os.mkdir(datastore_path)
+    except FileExistsError:
+        pass
+
+    # Kinda weird to tell them both where `datastore_path` is right..
+    app_config = {'datastore_path': datastore_path}
+    datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'])
+    app = backend.changedetection_app(app_config, datastore)
+
+
     app.debug = True
 
     def teardown():
