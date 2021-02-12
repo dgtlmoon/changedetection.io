@@ -13,8 +13,9 @@ from copy import deepcopy
 class ChangeDetectionStore:
     lock = Lock()
 
-    def __init__(self):
+    def __init__(self, datastore_path="/datastore"):
         self.needs_write = False
+        self.datastore_path = datastore_path
 
         self.__data = {
             'note': "Hello! If you change this file manually, please be sure to restart your changedetection.io instance!",

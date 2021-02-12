@@ -20,11 +20,8 @@ class perform_site_check():
         return
 
     def ensure_output_path(self):
+        os.mkdir(self.output_path)
 
-        try:
-            os.stat(self.output_path)
-        except:
-            os.mkdir(self.output_path)
 
     def save_response_stripped_output(self, output, fname):
 
