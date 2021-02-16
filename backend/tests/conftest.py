@@ -32,7 +32,9 @@ def app(request):
 
 @pytest.fixture(scope='session')
 def client(app):
-    return app.test_client()
+    with app.test_client() as client:
+        yield client
+
 
 @pytest.fixture(scope='function')
 def session(request):
