@@ -238,11 +238,14 @@ def changedetection_app(config=None, datastore_o=None):
 
             messages.append({'class': 'ok', 'message': "{} Imported, {} Skipped.".format(good, len(remaining_urls))})
 
-        output = render_template("import.html",
-                                 messages=messages,
-                                 remaining="\n".join(remaining_urls)
-                                 )
-        messages = []
+        if len(remaining_urls) == 0:
+            return redirect(url_for('main_page'))
+        else:
+            output = render_template("import.html",
+                                     messages=messages,
+                                     remaining="\n".join(remaining_urls)
+                                     )
+            messages = []
         return output
 
 
@@ -328,21 +331,6 @@ def changedetection_app(config=None, datastore_o=None):
                          attachment_filename=backupname)
 
 
-
-    # A few self sanity checks, mostly for developer/bug check
-    @app.route("/self-check", methods=['GET'])
-    def selfcheck():
-        output = "All fine"
-        # In earlier versions before a single threaded write of the JSON store, sometimes histories could get mixed.
-        # Could also maybe affect people who manually fiddle with their JSON store?
-        for uuid, watch in datastore.data['watching'].items():
-            for timestamp, path in watch['history'].items():
-                # Each history snapshot should include a full path, which contains the {uuid}
-                if not uuid in path:
-                    output = "Something weird in {}, suspected incorrect snapshot path.".format(uuid)
-
-        return output
-
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
         # These files should be in our subdirectory
@@ -380,6 +368,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/api/checknow", methods=['GET'])
     def api_watch_checknow():
+
         global messages
 
         tag = request.args.get('tag')
@@ -404,11 +393,14 @@ def changedetection_app(config=None, datastore_o=None):
         messages.append({'class': 'ok', 'message': "{} watches are rechecking.".format(i)})
         return redirect(url_for('main_page', tag=tag))
 
-
+    # for pytest flask
+    @app.route("/timestamp", methods=['GET'])
+    def api_test_rand_int():
+        return str(time.time())
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
-    save_data_thread = threading.Thread(target=save_datastore).start()
+
 
     return app
 
@@ -434,6 +426,8 @@ class Worker(threading.Thread):
                 uuid = self.q.get(block=True, timeout=1)  # Blocking
             except queue.Empty:
                 # We have a chance to kill this thread that needs to monitor for new jobs..
+                # Delays here would be caused by a current response object pending
+                # @todo switch to threaded response handler
                 if app.config['STOP_THREADS']:
                     return
             else:
@@ -442,13 +436,22 @@ class Worker(threading.Thread):
                 if uuid in list(datastore.data['watching'].keys()):
 
                     try:
-                        result = update_handler.run(uuid)
+                        result, contents = update_handler.run(uuid)
 
                     except PermissionError as s:
-                        print ("File permission error updating", uuid,str(s))
+                        app.logger.error("File permission error updating", uuid, str(s))
                     else:
                         if result:
                             datastore.update_watch(uuid=uuid, update_obj=result)
+
+                            if contents:
+                                # A change was detected
+                                datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
+
+                        else:
+                            # No change
+                            x = 1
+
 
                 self.current_uuid = None  # Done
                 self.q.task_done()
@@ -459,7 +462,6 @@ def ticker_thread_check_time_launch_checks():
 
     # Spin up Workers.
     for _ in range(datastore.data['settings']['requests']['workers']):
-        print ("...")
         new_worker = Worker(update_q)
         running_update_threads.append(new_worker)
         new_worker.start()
@@ -473,19 +475,6 @@ def ticker_thread_check_time_launch_checks():
 
         if app.config['STOP_THREADS']:
             return
-        time.sleep(1)
 
-
-# Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
-# by just running periodically in one thread, according to python, dict updates are threadsafe.
-def save_datastore():
-
-    global stop_threads
-
-    while True:
-        if app.config['STOP_THREADS']:
-            return
-        if datastore.needs_write:
-            datastore.sync_to_json()
         time.sleep(1)
 

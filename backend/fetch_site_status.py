@@ -15,36 +15,16 @@ class perform_site_check():
         super().__init__(*args, **kwargs)
         self.datastore = datastore
 
-    def save_firefox_screenshot(self, uuid, output):
-        # @todo call selenium or whatever
-        return
-
-    def ensure_output_path(self):
-        try:
-            os.mkdir(self.output_path)
-        except FileExistsError:
-            print (self.output_path, "already exists.")
-
-
-    def save_response_stripped_output(self, output, fname):
-
-        with open(fname, 'w') as f:
-            f.write(output)
-            f.close()
-
-        return fname
 
     def run(self, uuid):
 
         timestamp = int(time.time())  # used for storage etc too
+        stripped_text_from_html = False
 
         update_obj = {'previous_md5': self.datastore.data['watching'][uuid]['previous_md5'],
                       'history': {},
                       "last_checked": timestamp
                       }
-
-        self.output_path = "{}/{}".format(self.datastore.datastore_path,uuid)
-        self.ensure_output_path()
 
         extra_headers = self.datastore.get_val(uuid, 'headers')
 
@@ -111,13 +91,5 @@ class perform_site_check():
                     update_obj["last_changed"] = timestamp
 
                 update_obj["previous_md5"] = fetched_md5
-                fname = "{}/{}.stripped.txt".format(self.output_path, fetched_md5)
-                with open(fname, 'w') as f:
-                    f.write(stripped_text_from_html)
-                    f.close()
 
-                # Update history with the stripped text for future reference, this will also mean we save the first
-                # Should always be keyed by string(timestamp)
-                update_obj.update({"history": {str(timestamp): fname}})
-
-        return update_obj
+        return update_obj, stripped_text_from_html

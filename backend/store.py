@@ -7,6 +7,9 @@ from threading import Lock, Thread
 
 from copy import deepcopy
 
+import logging
+import time
+import threading
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
@@ -17,7 +20,8 @@ class ChangeDetectionStore:
     def __init__(self, datastore_path="/datastore"):
         self.needs_write = False
         self.datastore_path = datastore_path
-
+        self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
+        self.stop_thread = False
         self.__data = {
             'note': "Hello! If you change this file manually, please be sure to restart your changedetection.io instance!",
             'watching': {},
@@ -59,7 +63,7 @@ class ChangeDetectionStore:
                 self.__data['build_sha'] = f.read()
 
         try:
-            with open("{}/url-watches.json".format(self.datastore_path)) as json_file:
+            with open(self.json_store_path) as json_file:
                 from_disk = json.load(json_file)
 
                 # @todo isnt there a way todo this dict.update recursively?
@@ -91,6 +95,9 @@ class ChangeDetectionStore:
             self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
             self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
             self.add_watch(url='https://changedetection.io', tag='Tech news')
+
+        # Finally start the thread that will manage periodic data saves to JSON
+        save_data_thread = threading.Thread(target=self.save_datastore).start()
 
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
     def get_newest_history_key(self, uuid):
@@ -176,16 +183,51 @@ class ChangeDetectionStore:
 
             self.data['watching'][new_uuid] = _blank
 
-        self.needs_write = True
+        # Get the directory ready
+        output_path = "{}/{}".format(self.datastore_path, new_uuid)
+        try:
+            os.mkdir(output_path)
+        except FileExistsError:
+            print(output_path, "already exists.")
 
+        self.sync_to_json()
         return new_uuid
 
-    def sync_to_json(self):
+    # Save some text file to the appropriate path and bump the history
+    # result_obj from fetch_site_status.run()
+    def save_history_text(self, uuid, result_obj, contents):
 
-        with open("{}/url-watches.json".format(self.datastore_path), 'w') as json_file:
+        output_path = "{}/{}".format(self.datastore_path, uuid)
+        fname = "{}/{}.stripped.txt".format(output_path, result_obj['previous_md5'])
+        with open(fname, 'w') as f:
+            f.write(contents)
+            f.close()
+
+        # Update history with the stripped text for future reference, this will also mean we save the first
+        # Should always be keyed by string(timestamp)
+        self.update_watch(uuid, {"history": {str(result_obj["last_checked"]): fname}})
+
+        return fname
+
+    def sync_to_json(self):
+        print ("Saving..")
+        with open(self.json_store_path, 'w') as json_file:
             json.dump(self.__data, json_file, indent=4)
-            print("Re-saved index")
+            logging.info("Re-saved index")
 
         self.needs_write = False
+
+    # Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
+    # by just running periodically in one thread, according to python, dict updates are threadsafe.
+    def save_datastore(self):
+
+        while True:
+            if self.stop_thread:
+                print ("Shutting down datastore thread")
+                return
+            if self.needs_write:
+                self.sync_to_json()
+            time.sleep(1)
+
 
 # body of the constructor
