@@ -13,7 +13,6 @@ import os
 # https://www.python-boilerplate.com/py3+flask+pytest/
 
 
-
 @pytest.fixture(scope='session')
 def app(request):
     """Create application for the tests."""
@@ -22,7 +21,6 @@ def app(request):
     app_config = {'datastore_path': datastore_path}
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'])
     _app = changedetection_app(app_config, datastore)
-
 
     # Establish an application context before running the tests.
     ctx = _app.app_context()
@@ -34,13 +32,11 @@ def app(request):
     request.addfinalizer(teardown)
     return _app
 
+@pytest.fixture(scope='session')
+def client(app):
+    return app.test_client()
+
 @pytest.fixture(scope='function')
 def session(request):
     """Creates a new database session for a test."""
-
-
-    def teardown():
-        print ("teardown")
-
-    request.addfinalizer(teardown)
     return session

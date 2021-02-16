@@ -12,13 +12,13 @@ import requests
 # https://www.python-boilerplate.com/py3+flask+pytest/
 
 
-def test_import(session):
-    res = session.get("/")
+def test_import(client):
+    res = client.get("/")
     assert b"IMPORT" in res.data
     assert res.status_code == 200
 
     test_url_list = ["https://slashdot.org"]
-    res = session.post('/import', data={'urls': "\n".join(test_url_list)}, follow_redirects=True)
+    res = client.post('/import', data={'urls': "\n".join(test_url_list)}, follow_redirects=True)
     s = "{} Imported".format(len(test_url_list))
 
     #p= url_for('test_endpoint', _external=True
@@ -33,7 +33,7 @@ def test_import(session):
     #assert response.json() == [{'id': 1}]
 
 
-def test_import_a(session):
-    res = session.get("/")
+def test_import_a(client):
+    res = client.get("/")
     assert b"IMPORT" in res.data
     assert res.status_code == 200
