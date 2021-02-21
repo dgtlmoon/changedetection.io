@@ -1,5 +1,5 @@
 #  changedetection.io
-![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/python-app.yml/badge.svg?branch=pytest)
+![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/python-app.yml/badge.svg?branch=master)
 
 ## Self-hosted change monitoring of web pages.
 
