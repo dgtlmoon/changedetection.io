@@ -33,7 +33,7 @@ def main(argv):
             ssl_mode = True
 
         if opt == '-p':
-            port = arg
+            port = int(arg)
 
         if opt == '-d':
             datastore_path = arg
