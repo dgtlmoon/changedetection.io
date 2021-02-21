@@ -89,6 +89,6 @@ class perform_site_check():
                     update_obj["last_changed"] = timestamp
 
 
-                update_obj["current_md5"] = fetched_md5
+                update_obj["previous_md5"] = fetched_md5
 
         return update_obj, stripped_text_from_html

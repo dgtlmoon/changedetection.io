@@ -450,8 +450,7 @@ class Worker(threading.Thread):
                         app.logger.error("File permission error updating", uuid, str(s))
                     else:
                         if result:
-                            
-                            result["previous_md5"] = result["current_md5"]
+                                                        
                             datastore.update_watch(uuid=uuid, update_obj=result)
 
                             if contents:
