@@ -5,8 +5,6 @@ import os
 import re
 from inscriptis import get_text
 
-from copy import deepcopy
-
 
 # Some common stuff here that can be moved to a base class
 class perform_site_check():
@@ -17,7 +15,6 @@ class perform_site_check():
 
 
     def run(self, uuid):
-
         timestamp = int(time.time())  # used for storage etc too
         stripped_text_from_html = False
 
@@ -45,13 +42,14 @@ class perform_site_check():
             timeout = 15
 
         try:
-            r = requests.get(self.datastore.get_val(uuid, 'url'),
+            url = self.datastore.get_val(uuid, 'url')
+
+            r = requests.get(url,
                              headers=request_headers,
                              timeout=timeout,
                              verify=False)
 
             stripped_text_from_html = get_text(r.text)
-
 
 
         # Usually from networkIO/requests level
@@ -90,6 +88,7 @@ class perform_site_check():
                 if self.datastore.get_val(uuid, 'previous_md5'):
                     update_obj["last_changed"] = timestamp
 
-                update_obj["previous_md5"] = fetched_md5
+
+                update_obj["current_md5"] = fetched_md5
 
         return update_obj, stripped_text_from_html

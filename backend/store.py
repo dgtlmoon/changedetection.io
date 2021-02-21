@@ -91,10 +91,10 @@ class ChangeDetectionStore:
         # First time ran, doesnt exist.
         except (FileNotFoundError, json.decoder.JSONDecodeError):
             print("Creating JSON store at", self.datastore_path)
-            self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
-            self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
-            self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
-            self.add_watch(url='https://changedetection.io', tag='Tech news')
+            #self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
+            #self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
+            #self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
+            #self.add_watch(url='https://changedetection.io', tag='Tech news')
 
         # Finally start the thread that will manage periodic data saves to JSON
         save_data_thread = threading.Thread(target=self.save_datastore).start()
@@ -198,7 +198,7 @@ class ChangeDetectionStore:
     def save_history_text(self, uuid, result_obj, contents):
 
         output_path = "{}/{}".format(self.datastore_path, uuid)
-        fname = "{}/{}.stripped.txt".format(output_path, result_obj['previous_md5'])
+        fname = "{}/{}-{}.stripped.txt".format(output_path, result_obj['current_md5'], str(time.time()))
         with open(fname, 'w') as f:
             f.write(contents)
             f.close()

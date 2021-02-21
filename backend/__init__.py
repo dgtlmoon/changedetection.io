@@ -91,7 +91,7 @@ def changedetection_app(config=None, datastore_o=None):
     # You can divide up the stuff like this
 
     @app.route("/", methods=['GET'])
-    def main_page():
+    def index():
         global messages
 
         limit_tag = request.args.get('tag')
@@ -152,7 +152,7 @@ def changedetection_app(config=None, datastore_o=None):
             else:
                 messages.append({'class': 'error', 'message': 'Wrong confirm text.'})
 
-            return redirect(url_for('main_page'))
+            return redirect(url_for('index'))
 
         return render_template("scrub.html")
 
@@ -184,7 +184,7 @@ def changedetection_app(config=None, datastore_o=None):
 
             messages.append({'class': 'ok', 'message': 'Updated watch.'})
 
-            return redirect(url_for('main_page'))
+            return redirect(url_for('index'))
 
         else:
 
@@ -230,7 +230,9 @@ def changedetection_app(config=None, datastore_o=None):
             for url in urls:
                 url = url.strip()
                 if len(url) and validators.url(url):
-                    datastore.add_watch(url=url.strip(), tag="")
+                    new_uuid = datastore.add_watch(url=url.strip(), tag="")
+                    # Straight into the queue.
+                    update_q.put(new_uuid)
                     good += 1
                 else:
                     if len(url):
@@ -239,7 +241,7 @@ def changedetection_app(config=None, datastore_o=None):
             messages.append({'class': 'ok', 'message': "{} Imported, {} Skipped.".format(good, len(remaining_urls))})
 
         if len(remaining_urls) == 0:
-            return redirect(url_for('main_page'))
+            return redirect(url_for('index'))
         else:
             output = render_template("import.html",
                                      messages=messages,
@@ -353,7 +355,7 @@ def changedetection_app(config=None, datastore_o=None):
         update_q.put(new_uuid)
 
         messages.append({'class': 'ok', 'message': 'Watch added.'})
-        return redirect(url_for('main_page'))
+        return redirect(url_for('index'))
 
 
     @app.route("/api/delete", methods=['GET'])
@@ -363,7 +365,7 @@ def changedetection_app(config=None, datastore_o=None):
         datastore.delete(uuid)
         messages.append({'class': 'ok', 'message': 'Deleted.'})
 
-        return redirect(url_for('main_page'))
+        return redirect(url_for('index'))
 
 
     @app.route("/api/checknow", methods=['GET'])
@@ -375,28 +377,34 @@ def changedetection_app(config=None, datastore_o=None):
         uuid = request.args.get('uuid')
         i=0
 
+        running_uuids=[]
+        for t in running_update_threads:
+            running_uuids.append(t.current_uuid)
+
+        # @todo check thread is running and skip
+
         if uuid:
-            update_q.put(uuid)
+            if not uuid in running_uuids:
+                update_q.put(uuid)
             i = 1
 
         elif tag != None:
+            # Items that have this current tag
             for watch_uuid, watch in datastore.data['watching'].items():
                 if (tag != None and tag in watch['tag']):
                     i += 1
-                    update_q.put(watch_uuid)
+                    if not watch_uuid in running_uuids:
+                        update_q.put(watch_uuid)
         else:
             # No tag, no uuid, add everything.
             for watch_uuid, watch in datastore.data['watching'].items():
                 i += 1
-                update_q.put(watch_uuid)
+                if not watch_uuid in running_uuids:
+                    update_q.put(watch_uuid)
 
         messages.append({'class': 'ok', 'message': "{} watches are rechecking.".format(i)})
-        return redirect(url_for('main_page', tag=tag))
+        return redirect(url_for('index', tag=tag))
 
-    # for pytest flask
-    @app.route("/timestamp", methods=['GET'])
-    def api_test_rand_int():
-        return str(time.time())
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
@@ -423,7 +431,7 @@ class Worker(threading.Thread):
         while True:
 
             try:
-                uuid = self.q.get(block=True, timeout=1)  # Blocking
+                uuid = self.q.get(block=True, timeout=1)
             except queue.Empty:
                 # We have a chance to kill this thread that needs to monitor for new jobs..
                 # Delays here would be caused by a current response object pending
@@ -442,6 +450,8 @@ class Worker(threading.Thread):
                         app.logger.error("File permission error updating", uuid, str(s))
                     else:
                         if result:
+                            
+                            result["previous_md5"] = result["current_md5"]
                             datastore.update_watch(uuid=uuid, update_obj=result)
 
                             if contents:
@@ -468,13 +478,23 @@ def ticker_thread_check_time_launch_checks():
 
     # Every minute check for new UUIDs to follow up on
     while True:
-        minutes = datastore.data['settings']['requests']['minutes_between_check']
-        for uuid, watch in datastore.data['watching'].items():
-            if watch['last_checked'] <= time.time() - (minutes * 60):
-                update_q.put(uuid)
 
         if app.config['STOP_THREADS']:
             return
 
+        running_uuids=[]
+        for t in running_update_threads:
+            running_uuids.append(t.current_uuid)
+
+        # Look at the dataset, find a stale watch to process
+        minutes = datastore.data['settings']['requests']['minutes_between_check']
+        for uuid, watch in datastore.data['watching'].items():
+            if watch['last_checked'] <= time.time() - (minutes * 60):
+
+                # @todo maybe update_q.queue is enough?
+                if not uuid in running_uuids and uuid not in update_q.queue:
+                    update_q.put(uuid)
+
+        # Should be low so we can break this out in testing
         time.sleep(1)
 

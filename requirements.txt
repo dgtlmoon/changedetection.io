@@ -7,6 +7,9 @@ six==1.10.0
 yarl
 flask
 
+pytest
+pytest-flask # for live_server
+
 eventlet
 requests
 validators
