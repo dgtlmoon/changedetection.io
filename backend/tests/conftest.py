@@ -12,6 +12,7 @@ from backend import store
 
 global app
 
+
 @pytest.fixture(scope='session')
 def app(request):
     """Create application for the tests."""
@@ -19,6 +20,12 @@ def app(request):
     datastore_path = "./test-datastore"
 
     import os
+    try:
+        os.mkdir(datastore_path)
+    except FileExistsError:
+        pass
+
+
     try:
         os.unlink("{}/url-watches.json".format(datastore_path))
     except FileNotFoundError:
