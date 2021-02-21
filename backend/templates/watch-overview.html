@@ -17,11 +17,11 @@
     <div>
 
         {% for tag in tags %}
-            {% if tag == "" %}
-            <a  href="/" class="pure-button button-tag {{'active' if active_tag == tag }}">All</a>
-            {% else %}
-            <a  href="/?tag={{ tag}}" class="pure-button button-tag {{'active' if active_tag == tag }}">{{ tag }}</a>
-            {% endif %}
+        {% if tag == "" %}
+        <a href="/" class="pure-button button-tag {{'active' if active_tag == tag }}">All</a>
+        {% else %}
+        <a href="/?tag={{ tag}}" class="pure-button button-tag {{'active' if active_tag == tag }}">{{ tag }}</a>
+        {% endif %}
         {% endfor %}
     </div>
 
@@ -56,12 +56,14 @@
                 </td>
                 <td>{{watch|format_last_checked_time}}</td>
                 <td>{% if watch.history|length >= 2 and watch.last_changed %}
-                        {{watch.last_changed|format_timestamp_timeago}}
+                    {{watch.last_changed|format_timestamp_timeago}}
                     {% else %}
-                        Not yet
+                    Not yet
                     {% endif %}
                 </td>
-                <td><a href="/api/checknow?uuid={{ watch.uuid}}{% if request.args.get('tag') %}&tag={{request.args.get('tag')}}{% endif %}" class="pure-button button-small pure-button-primary">Recheck</a>
+                <td>
+                    <a href="/api/checknow?uuid={{ watch.uuid}}{% if request.args.get('tag') %}&tag={{request.args.get('tag')}}{% endif %}"
+                       class="pure-button button-small pure-button-primary">Recheck</a>
                     <a href="/edit?uuid={{ watch.uuid}}" class="pure-button button-small pure-button-primary">Edit</a>
                     {% if watch.history|length >= 2 %}
                     <a href="/diff/{{ watch.uuid}}" class="pure-button button-small pure-button-primary">Diff</a>
@@ -75,7 +77,8 @@
         </table>
         <div id="check-all-button">
 
-            <a href="/api/checknow{% if active_tag%}?tag={{active_tag}}{%endif%}" class="pure-button button-tag " >Recheck all {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
+            <a href="/api/checknow{% if active_tag%}?tag={{active_tag}}{%endif%}" class="pure-button button-tag ">Recheck
+                all {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
         </div>
     </div>
 </div>
