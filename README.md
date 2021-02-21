@@ -12,7 +12,7 @@ Know when ...
 
 - Government department updates (changes are often only on their websites)
 - Local government news (changes are often only on their websites)
-- New software releases 
+- New software releases, security advisories when you're not on their mailing list.
 - Festivals with changes
 - Realestate listing changes
 
