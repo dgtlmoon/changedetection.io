@@ -298,7 +298,7 @@ def changedetection_app(config=None, datastore_o=None):
     def get_backup():
         import zipfile
         from pathlib import Path
-        import zlib
+        
 
         # create a ZipFile object
         backupname = "changedetection-backup-{}.zip".format(int(time.time()))
