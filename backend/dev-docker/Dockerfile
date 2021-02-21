@@ -6,6 +6,7 @@ ENV PYTHONUNBUFFERED=1
 # Should be mounted from docker-compose-development.yml
 RUN pip3 install -r /requirements.txt
 
+WORKDIR /app
 
 RUN [ ! -d "/datastore" ] && mkdir /datastore
 

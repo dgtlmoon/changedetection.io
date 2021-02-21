@@ -2,28 +2,27 @@ FROM python:3.8-slim
 COPY requirements.txt /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt
 
+
+RUN [ ! -d "/app" ] && mkdir /app
+RUN [ ! -d "/datastore" ] && mkdir /datastore
+
 # The actual flask app
-COPY backend /app
+COPY backend /app/backend
 
 # The eventlet server wrapper
-COPY backend.py /app/backend.py
+COPY changedetection.py /app/changedetection.py
 
 WORKDIR /app
 
 # https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
-
 ENV PYTHONUNBUFFERED=1
 
 # Attempt to store the triggered commit
-
 ARG SOURCE_COMMIT
 ARG SOURCE_BRANCH
 RUN echo "commit: $SOURCE_COMMIT branch: $SOURCE_BRANCH" >/source.txt
 
-
-RUN [ ! -d "/datastore" ] && mkdir /datastore
-
-CMD [ "python", "./backend.py" , "-d", "/datastore"]
+CMD [ "python", "./changedetection.py" , "-d", "/datastore"]
 
 
 
