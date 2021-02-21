@@ -2,7 +2,12 @@ FROM python:3.8-slim
 COPY requirements.txt /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt
 
+# The actual flask app
 COPY backend /app
+
+# The eventlet server wrapper
+COPY backend.py /app/backend.py
+
 WORKDIR /app
 
 # https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
