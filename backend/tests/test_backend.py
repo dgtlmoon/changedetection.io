@@ -38,7 +38,7 @@ def set_modified_response():
 
 
 def test_check_basic_change_detection_functionality(client, live_server):
-    sleep_time_for_fetch_thread = 3
+    sleep_time_for_fetch_thread = 5
 
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
@@ -70,12 +70,6 @@ def test_check_basic_change_detection_functionality(client, live_server):
         assert b'unviewed' not in res.data
         assert b'test-endpoint' in res.data
 
-    # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
-    res = client.get(url_for("index"))
-
-    assert b'unviewed' not in res.data
-
     #####################
 
     # Make a change
@@ -98,8 +92,10 @@ def test_check_basic_change_detection_functionality(client, live_server):
     res = client.get(url_for("diff_history_page", uuid="first") )
     assert b'Compare newest' in res.data
 
+    time.sleep(2)
+
     # Do this a few times.. ensures we dont accidently set the status
-    for n in range(2):
+    for n in range(3):
         client.get(url_for("api_watch_checknow"), follow_redirects=True)
 
         # Give the thread time to pick it up
@@ -109,3 +105,11 @@ def test_check_basic_change_detection_functionality(client, live_server):
         res = client.get(url_for("index"))
         assert b'unviewed' not in res.data
         assert b'test-endpoint' in res.data
+
+
+    set_original_response()
+
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    time.sleep(sleep_time_for_fetch_thread)
+    res = client.get(url_for("index"))
+    assert b'unviewed' in res.data
