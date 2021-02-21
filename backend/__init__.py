@@ -374,7 +374,7 @@ def changedetection_app(config=None, datastore_o=None):
         # @todo check thread is running and skip
 
         if uuid:
-            if not uuid in running_uuids:
+            if uuid not in running_uuids:
                 update_q.put(uuid)
             i = 1
 
@@ -383,13 +383,13 @@ def changedetection_app(config=None, datastore_o=None):
             for watch_uuid, watch in datastore.data['watching'].items():
                 if (tag != None and tag in watch['tag']):
                     i += 1
-                    if not watch_uuid in running_uuids:
+                    if watch_uuid not in running_uuids:
                         update_q.put(watch_uuid)
         else:
             # No tag, no uuid, add everything.
             for watch_uuid, watch in datastore.data['watching'].items():
                 i += 1
-                if not watch_uuid in running_uuids:
+                if watch_uuid not in running_uuids:
                     update_q.put(watch_uuid)
 
         messages.append({'class': 'ok', 'message': "{} watches are rechecking.".format(i)})
@@ -443,9 +443,6 @@ class Worker(threading.Thread):
                                 # A change was detected
                                 datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
 
-                        else:
-                            # No change
-                            x = 1
 
                 self.current_uuid = None  # Done
                 self.q.task_done()

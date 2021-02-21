@@ -48,7 +48,6 @@ class perform_site_check():
 
             stripped_text_from_html = get_text(r.text)
 
-
         # Usually from networkIO/requests level
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
             update_obj["last_error"] = str(e)

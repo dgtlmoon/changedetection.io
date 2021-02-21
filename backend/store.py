@@ -1,9 +1,8 @@
 import json
 import uuid as uuid_builder
-import validators
 import os.path
 from os import path
-from threading import Lock, Thread
+from threading import Lock
 
 from copy import deepcopy
 

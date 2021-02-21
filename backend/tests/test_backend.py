@@ -1,12 +1,11 @@
 #!/usr/bin/python3
 
 import time
-import pytest
 from flask import url_for
 from urllib.request import urlopen
 
-def set_original_response():
 
+def set_original_response():
     test_return_data = """<html>
        <body>
      Some initial text</br>
@@ -42,7 +41,6 @@ def test_check_basic_change_detection_functionality(client, live_server):
     sleep_time_for_fetch_thread = 3
 
     @live_server.app.route('/test-endpoint')
-
     def test_endpoint():
         # Tried using a global var here but didn't seem to work, so reading from a file instead.
         with open("test-datastore/output.txt", "r") as f:
@@ -76,15 +74,13 @@ def test_check_basic_change_detection_functionality(client, live_server):
 
     assert b'unviewed' not in res.data
 
-#####################
-
+    #####################
 
     # Make a change
     set_modified_response()
 
     res = urlopen(url_for('test_endpoint', _external=True))
     assert b'which has this one new line' in res.read()
-
 
     # Force recheck
     res = client.get(url_for("api_watch_checknow"), follow_redirects=True)
@@ -95,4 +91,3 @@ def test_check_basic_change_detection_functionality(client, live_server):
     # Now something should be ready, indicated by having a 'unviewed' class
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
-
