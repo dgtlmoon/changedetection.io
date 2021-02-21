@@ -3,3 +3,5 @@ __pycache__
 *.pyc
 datastore/url-watches.json
 datastore/*
+__pycache__
+.pytest_cache

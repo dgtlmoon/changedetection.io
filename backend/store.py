@@ -1,11 +1,15 @@
 import json
 import uuid as uuid_builder
-import validators
 import os.path
 from os import path
-from threading import Lock, Thread
+from threading import Lock
 
 from copy import deepcopy
+
+import logging
+import time
+import threading
+
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
@@ -13,9 +17,11 @@ from copy import deepcopy
 class ChangeDetectionStore:
     lock = Lock()
 
-    def __init__(self):
+    def __init__(self, datastore_path="/datastore", include_default_watches=True):
         self.needs_write = False
-
+        self.datastore_path = datastore_path
+        self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
+        self.stop_thread = False
         self.__data = {
             'note': "Hello! If you change this file manually, please be sure to restart your changedetection.io instance!",
             'watching': {},
@@ -41,7 +47,7 @@ class ChangeDetectionStore:
             'tag': None,
             'last_checked': 0,
             'last_changed': 0,
-            'last_viewed': 0, # history key value of the last viewed via the [diff] link
+            'last_viewed': 0,  # history key value of the last viewed via the [diff] link
             'newest_history_key': "",
             'title': None,
             'previous_md5': "",
@@ -57,7 +63,7 @@ class ChangeDetectionStore:
                 self.__data['build_sha'] = f.read()
 
         try:
-            with open('/datastore/url-watches.json') as json_file:
+            with open(self.json_store_path) as json_file:
                 from_disk = json.load(json_file)
 
                 # @todo isnt there a way todo this dict.update recursively?
@@ -84,11 +90,16 @@ class ChangeDetectionStore:
 
         # First time ran, doesnt exist.
         except (FileNotFoundError, json.decoder.JSONDecodeError):
-            print("Creating JSON store")
-            self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
-            self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
-            self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
-            self.add_watch(url='https://changedetection.io', tag='Tech news')
+            if include_default_watches:
+                print("Creating JSON store at", self.datastore_path)
+
+                self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
+                self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
+                self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
+                self.add_watch(url='https://changedetection.io', tag='Tech news')
+
+        # Finally start the thread that will manage periodic data saves to JSON
+        save_data_thread = threading.Thread(target=self.save_datastore).start()
 
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
     def get_newest_history_key(self, uuid):
@@ -105,9 +116,6 @@ class ChangeDetectionStore:
 
         return 0
 
-
-
-
     def set_last_viewed(self, uuid, timestamp):
         self.data['watching'][uuid].update({'last_viewed': str(timestamp)})
         self.needs_write = True
@@ -121,7 +129,7 @@ class ChangeDetectionStore:
                 if isinstance(d, dict):
                     if update_obj is not None and dict_key in update_obj:
                         self.__data['watching'][uuid][dict_key].update(update_obj[dict_key])
-                        del(update_obj[dict_key])
+                        del (update_obj[dict_key])
 
             self.__data['watching'][uuid].update(update_obj)
             self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
@@ -140,7 +148,7 @@ class ChangeDetectionStore:
             # Support for comma separated list of tags.
             for tag in watch['tag'].split(','):
                 tag = tag.strip()
-                if not tag in tags:
+                if tag not in tags:
                     tags.append(tag)
 
         tags.sort()
@@ -166,7 +174,6 @@ class ChangeDetectionStore:
 
     def add_watch(self, url, tag):
         with self.lock:
-
             # @todo use a common generic version of this
             new_uuid = str(uuid_builder.uuid4())
             _blank = deepcopy(self.generic_definition)
@@ -178,17 +185,50 @@ class ChangeDetectionStore:
 
             self.data['watching'][new_uuid] = _blank
 
-        self.needs_write = True
+        # Get the directory ready
+        output_path = "{}/{}".format(self.datastore_path, new_uuid)
+        try:
+            os.mkdir(output_path)
+        except FileExistsError:
+            print(output_path, "already exists.")
 
+        self.sync_to_json()
         return new_uuid
 
+    # Save some text file to the appropriate path and bump the history
+    # result_obj from fetch_site_status.run()
+    def save_history_text(self, uuid, result_obj, contents):
+
+        output_path = "{}/{}".format(self.datastore_path, uuid)
+        fname = "{}/{}-{}.stripped.txt".format(output_path, result_obj['previous_md5'], str(time.time()))
+        with open(fname, 'w') as f:
+            f.write(contents)
+            f.close()
+
+        # Update history with the stripped text for future reference, this will also mean we save the first
+        # Should always be keyed by string(timestamp)
+        self.update_watch(uuid, {"history": {str(result_obj["last_checked"]): fname}})
+
+        return fname
+
     def sync_to_json(self):
-
-
-        with open('/datastore/url-watches.json', 'w') as json_file:
+        print("Saving..")
+        with open(self.json_store_path, 'w') as json_file:
             json.dump(self.__data, json_file, indent=4)
-            print("Re-saved index")
+            logging.info("Re-saved index")
 
         self.needs_write = False
+
+    # Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
+    # by just running periodically in one thread, according to python, dict updates are threadsafe.
+    def save_datastore(self):
+
+        while True:
+            if self.stop_thread:
+                print("Shutting down datastore thread")
+                return
+            if self.needs_write:
+                self.sync_to_json()
+            time.sleep(1)
 
 # body of the constructor

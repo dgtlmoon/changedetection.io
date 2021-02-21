@@ -18,7 +18,7 @@ RUN echo "commit: $SOURCE_COMMIT branch: $SOURCE_BRANCH" >/source.txt
 
 RUN [ ! -d "/datastore" ] && mkdir /datastore
 
-CMD [ "python", "./backend.py" ]
+CMD [ "python", "./backend.py" , "-d", "/datastore"]
 
 
 

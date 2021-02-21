@@ -1,11 +1,7 @@
 import time
 import requests
 import hashlib
-import os
-import re
 from inscriptis import get_text
-
-from copy import deepcopy
 
 
 # Some common stuff here that can be moved to a base class
@@ -15,36 +11,14 @@ class perform_site_check():
         super().__init__(*args, **kwargs)
         self.datastore = datastore
 
-    def save_firefox_screenshot(self, uuid, output):
-        # @todo call selenium or whatever
-        return
-
-    def ensure_output_path(self):
-
-        try:
-            os.stat(self.output_path)
-        except:
-            os.mkdir(self.output_path)
-
-    def save_response_stripped_output(self, output, fname):
-
-        with open(fname, 'w') as f:
-            f.write(output)
-            f.close()
-
-        return fname
-
     def run(self, uuid):
-
         timestamp = int(time.time())  # used for storage etc too
+        stripped_text_from_html = False
 
         update_obj = {'previous_md5': self.datastore.data['watching'][uuid]['previous_md5'],
                       'history': {},
                       "last_checked": timestamp
                       }
-
-        self.output_path = "/datastore/{}".format(uuid)
-        self.ensure_output_path()
 
         extra_headers = self.datastore.get_val(uuid, 'headers')
 
@@ -65,14 +39,14 @@ class perform_site_check():
             timeout = 15
 
         try:
-            r = requests.get(self.datastore.get_val(uuid, 'url'),
+            url = self.datastore.get_val(uuid, 'url')
+
+            r = requests.get(url,
                              headers=request_headers,
                              timeout=timeout,
                              verify=False)
 
             stripped_text_from_html = get_text(r.text)
-
-
 
         # Usually from networkIO/requests level
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
@@ -111,13 +85,5 @@ class perform_site_check():
                     update_obj["last_changed"] = timestamp
 
                 update_obj["previous_md5"] = fetched_md5
-                fname = "{}/{}.stripped.txt".format(self.output_path, fetched_md5)
-                with open(fname, 'w') as f:
-                    f.write(stripped_text_from_html)
-                    f.close()
 
-                # Update history with the stripped text for future reference, this will also mean we save the first
-                # Should always be keyed by string(timestamp)
-                update_obj.update({"history": {str(timestamp): fname}})
-
-        return update_obj
+        return update_obj, stripped_text_from_html
