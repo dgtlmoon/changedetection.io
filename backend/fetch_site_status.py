@@ -14,6 +14,7 @@ class perform_site_check():
     def run(self, uuid):
         timestamp = int(time.time())  # used for storage etc too
         stripped_text_from_html = False
+        changed_detected = False
 
         update_obj = {'previous_md5': self.datastore.data['watching'][uuid]['previous_md5'],
                       'history': {},
@@ -79,6 +80,7 @@ class perform_site_check():
 
             # could be None or False depending on JSON type
             if self.datastore.data['watching'][uuid]['previous_md5'] != fetched_md5:
+                changed_detected = True
 
                 # Don't confuse people by updating as last-changed, when it actually just changed from None..
                 if self.datastore.get_val(uuid, 'previous_md5'):
@@ -86,4 +88,4 @@ class perform_site_check():
 
                 update_obj["previous_md5"] = fetched_md5
 
-        return update_obj, stripped_text_from_html
+        return changed_detected, update_obj, stripped_text_from_html

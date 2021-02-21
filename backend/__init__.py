@@ -429,7 +429,7 @@ class Worker(threading.Thread):
                 if uuid in list(datastore.data['watching'].keys()):
 
                     try:
-                        result, contents = update_handler.run(uuid)
+                        changed_detected, result, contents = update_handler.run(uuid)
 
                     except PermissionError as s:
                         app.logger.error("File permission error updating", uuid, str(s))
@@ -437,8 +437,7 @@ class Worker(threading.Thread):
                         if result:
 
                             datastore.update_watch(uuid=uuid, update_obj=result)
-
-                            if contents:
+                            if changed_detected:
                                 # A change was detected
                                 datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
 
