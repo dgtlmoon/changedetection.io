@@ -58,15 +58,17 @@ def test_check_basic_change_detection_functionality(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    # Do this a few times.. ensures we dont accidently set the status
+    for n in range(3):
+        client.get(url_for("api_watch_checknow"), follow_redirects=True)
 
-    # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+        # Give the thread time to pick it up
+        time.sleep(sleep_time_for_fetch_thread)
 
-    # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
-    assert b'unviewed' not in res.data
-    assert b'test-endpoint' in res.data
+        # It should report nothing found (no new 'unviewed' class)
+        res = client.get(url_for("index"))
+        assert b'unviewed' not in res.data
+        assert b'test-endpoint' in res.data
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
@@ -91,3 +93,19 @@ def test_check_basic_change_detection_functionality(client, live_server):
     # Now something should be ready, indicated by having a 'unviewed' class
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
+
+    # Following the 'diff' link, it should no longer display as 'unviewed' even after we recheck it a few times
+    res = client.get(url_for("diff_history_page", uuid="first") )
+    assert b'Compare newest' in res.data
+
+    # Do this a few times.. ensures we dont accidently set the status
+    for n in range(2):
+        client.get(url_for("api_watch_checknow"), follow_redirects=True)
+
+        # Give the thread time to pick it up
+        time.sleep(sleep_time_for_fetch_thread)
+
+        # It should report nothing found (no new 'unviewed' class)
+        res = client.get(url_for("index"))
+        assert b'unviewed' not in res.data
+        assert b'test-endpoint' in res.data

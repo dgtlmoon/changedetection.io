@@ -249,6 +249,11 @@ def changedetection_app(config=None, datastore_o=None):
     def diff_history_page(uuid):
         global messages
 
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid= list(datastore.data['watching'].keys()).pop()
+
+
         extra_stylesheets = ['/static/css/diff.css']
 
         watch = datastore.data['watching'][uuid]
@@ -258,6 +263,11 @@ def changedetection_app(config=None, datastore_o=None):
         dates = [int(i) for i in dates]
         dates.sort(reverse=True)
         dates = [str(i) for i in dates]
+
+
+        if len(dates) < 2:
+            messages.append({'class': 'error', 'message': "Not enough saved change detection snapshots to produce a report."})
+            return redirect(url_for('index'))
 
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, dates[0])
