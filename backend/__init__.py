@@ -13,7 +13,7 @@
 # https://distill.io/features
 # proxy per check
 #  - flask_cors, itsdangerous,MarkupSafe
-import json
+
 import time
 import os
 import timeago
@@ -21,10 +21,9 @@ import timeago
 import threading
 import queue
 
+from flask import Flask, render_template, request, send_file, send_from_directory,  abort, redirect, url_for
 
-from flask import Flask, render_template, request, send_file, send_from_directory, safe_join, abort, redirect, url_for
-
-datastore=None
+datastore = None
 
 # Local
 running_update_threads = []
@@ -35,13 +34,12 @@ extra_stylesheets = []
 
 update_q = queue.Queue()
 
-
 app = Flask(__name__, static_url_path="/var/www/change-detection/backen/static")
 
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
-app.config['STOP_THREADS']= False
+app.config['STOP_THREADS'] = False
 
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -74,20 +72,19 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     # return timeago.format(timestamp, time.time())
     # return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
 
-def changedetection_app(config=None, datastore_o=None):
 
+def changedetection_app(config=None, datastore_o=None):
     global datastore
     datastore = datastore_o
     # Hmm
     app.config.update(dict(DEBUG=True))
     app.config.update(config or {})
 
-
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
-#    CORS(app)
+    #    CORS(app)
 
-    #https://github.com/pallets/flask/blob/93dd1709d05a1cf0e886df6223377bdab3b077fb/examples/tutorial/flaskr/__init__.py#L39
+    # https://github.com/pallets/flask/blob/93dd1709d05a1cf0e886df6223377bdab3b077fb/examples/tutorial/flaskr/__init__.py#L39
     # You can divide up the stuff like this
 
     @app.route("/", methods=['GET'])
@@ -100,7 +97,6 @@ def changedetection_app(config=None, datastore_o=None):
         sorted_watches = []
         for uuid, watch in datastore.data['watching'].items():
 
-
             if limit_tag != None:
                 # Support for comma separated list of tags.
                 for tag_in_watch in watch['tag'].split(','):
@@ -112,7 +108,6 @@ def changedetection_app(config=None, datastore_o=None):
             else:
                 watch['uuid'] = uuid
                 sorted_watches.append(watch)
-
 
         sorted_watches.sort(key=lambda x: x['last_changed'], reverse=True)
 
@@ -156,7 +151,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         return render_template("scrub.html")
 
-
     @app.route("/edit", methods=['GET', 'POST'])
     def edit_page():
         global messages
@@ -193,7 +187,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         return output
 
-
     @app.route("/settings", methods=['GET', "POST"])
     def settings_page():
         global messages
@@ -210,10 +203,12 @@ def changedetection_app(config=None, datastore_o=None):
 
                     messages.append({'class': 'ok', 'message': "Updated"})
                 else:
-                    messages.append({'class': 'error', 'message': "Must be equal to or greater than 5 and less than 600 minutes"})
+                    messages.append(
+                        {'class': 'error', 'message': "Must be equal to or greater than 5 and less than 600 minutes"})
 
-        output = render_template("settings.html", messages=messages, minutes=datastore.data['settings']['requests']['minutes_between_check'])
-        messages =[]
+        output = render_template("settings.html", messages=messages,
+                                 minutes=datastore.data['settings']['requests']['minutes_between_check'])
+        messages = []
 
         return output
 
@@ -221,7 +216,7 @@ def changedetection_app(config=None, datastore_o=None):
     def import_page():
         import validators
         global messages
-        remaining_urls=[]
+        remaining_urls = []
 
         good = 0
 
@@ -250,12 +245,11 @@ def changedetection_app(config=None, datastore_o=None):
             messages = []
         return output
 
-
     @app.route("/diff/<string:uuid>", methods=['GET'])
     def diff_history_page(uuid):
         global messages
 
-        extra_stylesheets=['/static/css/diff.css']
+        extra_stylesheets = ['/static/css/diff.css']
 
         watch = datastore.data['watching'][uuid]
 
@@ -299,7 +293,6 @@ def changedetection_app(config=None, datastore_o=None):
     def favicon():
         return send_from_directory("/app/static/images", filename="favicon.ico")
 
-
     # We're good but backups are even better!
     @app.route("/backup", methods=['GET'])
     def get_backup():
@@ -313,7 +306,8 @@ def changedetection_app(config=None, datastore_o=None):
         # We only care about UUIDS from the current index file
         uuids = list(datastore.data['watching'].keys())
 
-        with zipfile.ZipFile(os.path.join(app.config['datastore_path'], backupname), 'w', compression=zipfile.ZIP_DEFLATED,
+        with zipfile.ZipFile(os.path.join(app.config['datastore_path'], backupname), 'w',
+                             compression=zipfile.ZIP_DEFLATED,
                              compresslevel=6) as zipObj:
 
             # Be sure we're written fresh
@@ -332,7 +326,6 @@ def changedetection_app(config=None, datastore_o=None):
                          mimetype="application/zip",
                          attachment_filename=backupname)
 
-
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
         # These files should be in our subdirectory
@@ -343,7 +336,6 @@ def changedetection_app(config=None, datastore_o=None):
             return send_from_directory("{}/static/{}".format(p, group), filename=filename)
         except FileNotFoundError:
             abort(404)
-
 
     @app.route("/api/add", methods=['POST'])
     def api_watch_add():
@@ -357,7 +349,6 @@ def changedetection_app(config=None, datastore_o=None):
         messages.append({'class': 'ok', 'message': 'Watch added.'})
         return redirect(url_for('index'))
 
-
     @app.route("/api/delete", methods=['GET'])
     def api_delete():
         global messages
@@ -367,7 +358,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         return redirect(url_for('index'))
 
-
     @app.route("/api/checknow", methods=['GET'])
     def api_watch_checknow():
 
@@ -375,9 +365,9 @@ def changedetection_app(config=None, datastore_o=None):
 
         tag = request.args.get('tag')
         uuid = request.args.get('uuid')
-        i=0
+        i = 0
 
-        running_uuids=[]
+        running_uuids = []
         for t in running_update_threads:
             running_uuids.append(t.current_uuid)
 
@@ -405,19 +395,15 @@ def changedetection_app(config=None, datastore_o=None):
         messages.append({'class': 'ok', 'message': "{} watches are rechecking.".format(i)})
         return redirect(url_for('index', tag=tag))
 
-
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
-
 
     return app
 
 
 # Requests for checking on the site use a pool of thread Workers managed by a Queue.
 class Worker(threading.Thread):
-
     current_uuid = None
-
 
     def __init__(self, q, *args, **kwargs):
         self.q = q
@@ -461,14 +447,12 @@ class Worker(threading.Thread):
                             # No change
                             x = 1
 
-
                 self.current_uuid = None  # Done
                 self.q.task_done()
 
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
-
     # Spin up Workers.
     for _ in range(datastore.data['settings']['requests']['workers']):
         new_worker = Worker(update_q)
@@ -481,7 +465,7 @@ def ticker_thread_check_time_launch_checks():
         if app.config['STOP_THREADS']:
             return
 
-        running_uuids=[]
+        running_uuids = []
         for t in running_update_threads:
             running_uuids.append(t.current_uuid)
 
@@ -496,4 +480,3 @@ def ticker_thread_check_time_launch_checks():
 
         # Should be low so we can break this out in testing
         time.sleep(1)
-

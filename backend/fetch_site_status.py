@@ -1,8 +1,6 @@
 import time
 import requests
 import hashlib
-import os
-import re
 from inscriptis import get_text
 
 
@@ -12,7 +10,6 @@ class perform_site_check():
     def __init__(self, *args, datastore, **kwargs):
         super().__init__(*args, **kwargs)
         self.datastore = datastore
-
 
     def run(self, uuid):
         timestamp = int(time.time())  # used for storage etc too
@@ -87,7 +84,6 @@ class perform_site_check():
                 # Don't confuse people by updating as last-changed, when it actually just changed from None..
                 if self.datastore.get_val(uuid, 'previous_md5'):
                     update_obj["last_changed"] = timestamp
-
 
                 update_obj["previous_md5"] = fetched_md5
 

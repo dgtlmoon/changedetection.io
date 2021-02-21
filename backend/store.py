@@ -11,13 +11,14 @@ import logging
 import time
 import threading
 
+
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change
 class ChangeDetectionStore:
     lock = Lock()
 
-    def __init__(self, datastore_path="/datastore"):
+    def __init__(self, datastore_path="/datastore", include_default_watches=True):
         self.needs_write = False
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
@@ -90,11 +91,13 @@ class ChangeDetectionStore:
 
         # First time ran, doesnt exist.
         except (FileNotFoundError, json.decoder.JSONDecodeError):
-            print("Creating JSON store at", self.datastore_path)
-            #self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
-            #self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
-            #self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
-            #self.add_watch(url='https://changedetection.io', tag='Tech news')
+            if include_default_watches:
+                print("Creating JSON store at", self.datastore_path)
+
+                self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
+                self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
+                self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
+                self.add_watch(url='https://changedetection.io', tag='Tech news')
 
         # Finally start the thread that will manage periodic data saves to JSON
         save_data_thread = threading.Thread(target=self.save_datastore).start()
@@ -146,7 +149,7 @@ class ChangeDetectionStore:
             # Support for comma separated list of tags.
             for tag in watch['tag'].split(','):
                 tag = tag.strip()
-                if not tag in tags:
+                if tag not in tags:
                     tags.append(tag)
 
         tags.sort()
@@ -210,7 +213,7 @@ class ChangeDetectionStore:
         return fname
 
     def sync_to_json(self):
-        print ("Saving..")
+        print("Saving..")
         with open(self.json_store_path, 'w') as json_file:
             json.dump(self.__data, json_file, indent=4)
             logging.info("Re-saved index")
@@ -223,11 +226,10 @@ class ChangeDetectionStore:
 
         while True:
             if self.stop_thread:
-                print ("Shutting down datastore thread")
+                print("Shutting down datastore thread")
                 return
             if self.needs_write:
                 self.sync_to_json()
             time.sleep(1)
-
 
 # body of the constructor
