@@ -38,7 +38,7 @@ def set_modified_response():
         f.write(test_return_data)
 
 
-def test_add_endpoint_to_live_server(client, live_server):
+def test_check_basic_change_detection_functionality(client, live_server):
     sleep_time_for_fetch_thread = 3
 
     @live_server.app.route('/test-endpoint')
