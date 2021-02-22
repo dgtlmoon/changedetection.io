@@ -1,7 +1,10 @@
 #  changedetection.io
 ![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/python-app.yml/badge.svg?branch=master)
-<a href="https://hub.docker.com/r/dgtlmoon/changedetection.io" target="_blank" title="Docker Pulls">
-<img src="https://img.shields.io/docker/pulls/dgtlmoon/changedetection.io" alt="Docker Pulls"/>
+<a href="https://hub.docker.com/r/dgtlmoon/changedetection.io" target="_blank" title="Change detection docker hub">
+  <img src="https://img.shields.io/docker/pulls/dgtlmoon/changedetection.io" alt="Docker Pulls"/>
+</a>
+<a href="https://hub.docker.com/r/dgtlmoon/changedetection.io" target="_blank" title="Change detection docker hub">
+  <img src="https://img.shields.io/docker/v/dgtlmoon/changedetection.io" alt="Change detection latest tag version"/> 
 </a>
 
 ## Self-hosted change monitoring of web pages.
