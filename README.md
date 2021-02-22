@@ -11,6 +11,8 @@
 
 _Know when web pages change! Stay ontop of new information!_
 
+![Self-hosted web page change monitoring application screenshot](screenshot.png?raw=true "Self-hosted web page change monitoring screenshot")
+
 
 #### Example use cases
 
@@ -43,10 +45,6 @@ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/dat
 ```
   
 ### Screenshots
-
-Application running.
-
-![Self-hosted web page change monitoring application screenshot](screenshot.png?raw=true "Self-hosted web page change monitoring screenshot")
 
 Examining differences in content.
 
