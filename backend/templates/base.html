@@ -20,6 +20,8 @@
         <a class="pure-menu-heading" href="/"><strong>Change</strong>Detection.io</a>
         {% if current_diff_url %}
             <a class=current-diff-url href="{{ current_diff_url }}"><span style="max-width: 30%; overflow: hidden;">{{ current_diff_url }}</a>
+        {% else %}
+            <span id="version-text" class="pure-menu-heading">Version {{ version }}</span>
         {% endif %}
 
         <ul class="pure-menu-list">
@@ -66,5 +68,6 @@
 
     {% endblock %}
 </section>
+
 </body>
 </html>

@@ -237,3 +237,10 @@ body:after, body:before {
     user-select:none;
     -o-user-select:none;
 }
+
+footer {
+    padding: 10px;
+    background: #fff;
+    color: #444;
+    text-align: center;
+}

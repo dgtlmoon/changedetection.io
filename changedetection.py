@@ -50,6 +50,10 @@ def main(argv):
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'])
     app = backend.changedetection_app(app_config, datastore)
 
+    @app.context_processor
+    def inject_version():
+        return dict(version=datastore.data['tag'])
+
     if ssl_mode:
         # @todo finalise SSL config, but this should get you in the right direction if you need it.
         eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen(('', port)),
