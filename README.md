@@ -1,12 +1,17 @@
 #  changedetection.io
 ![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/python-app.yml/badge.svg?branch=master)
-<a href="https://hub.docker.com/r/dgtlmoon/changedetection.io" target="_blank" title="Docker Pulls">
-<img src="https://img.shields.io/docker/pulls/dgtlmoon/changedetection.io" alt="Docker Pulls"/>
+<a href="https://hub.docker.com/r/dgtlmoon/changedetection.io" target="_blank" title="Change detection docker hub">
+  <img src="https://img.shields.io/docker/pulls/dgtlmoon/changedetection.io" alt="Docker Pulls"/>
+</a>
+<a href="https://hub.docker.com/r/dgtlmoon/changedetection.io" target="_blank" title="Change detection docker hub">
+  <img src="https://img.shields.io/docker/v/dgtlmoon/changedetection.io" alt="Change detection latest tag version"/> 
 </a>
 
 ## Self-hosted change monitoring of web pages.
 
 _Know when web pages change! Stay ontop of new information!_
+
+![Self-hosted web page change monitoring application screenshot](screenshot.png?raw=true "Self-hosted web page change monitoring screenshot")
 
 
 #### Example use cases
@@ -40,10 +45,6 @@ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/dat
 ```
   
 ### Screenshots
-
-Application running.
-
-![Self-hosted web page change monitoring application screenshot](screenshot.png?raw=true "Self-hosted web page change monitoring screenshot")
 
 Examining differences in content.
 
