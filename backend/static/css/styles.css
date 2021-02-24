@@ -214,3 +214,26 @@ body:after, body:before {
     color: #fff;
 }
 
+#diff-col {
+    padding-left:40px;
+}
+#diff-jump {
+    position: fixed;
+    left: 0px;
+    top: 80px;
+    background: #fff;
+    padding: 10px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    box-shadow: 5px 0 5px -2px #888;
+}
+
+#diff-jump a {
+    color: #1b98f8;
+    cursor: grabbing;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select:none;
+    user-select:none;
+    -o-user-select:none;
+}

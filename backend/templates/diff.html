@@ -32,6 +32,9 @@
     <ins>Inserted Text</ins>
 </div>
 
+<div id="diff-jump">
+    <a onclick="next_diff();">Jump</a>
+</div>
 <div id="diff-ui">
 
     <table>
@@ -40,7 +43,7 @@
             <!-- just proof of concept copied straight from github.com/kpdecker/jsdiff -->
             <td id="a" style="display: none;">{{previous}}</td>
             <td id="b" style="display: none;">{{newest}}</td>
-            <td>
+            <td id="diff-col">
                 <span id="result"></span>
             </td>
         </tr>
@@ -72,9 +75,12 @@ function changed() {
 		var node;
 		if (diff[i].removed) {
 			node = document.createElement('del');
+			node.classList.add("change");
 			node.appendChild(document.createTextNode(diff[i].value));
+
 		} else if (diff[i].added) {
 			node = document.createElement('ins');
+			node.classList.add("change");
 			node.appendChild(document.createTextNode(diff[i].value));
 		} else {
 			node = document.createTextNode(diff[i].value);
@@ -131,7 +137,26 @@ for (var i = 0; i < radio.length; i++) {
 }
 
 
+var inputs = document.getElementsByClassName('change');
+inputs.current=0;
 
+function next_diff() {
+
+    var element = inputs[inputs.current];
+    var headerOffset = 80;
+    var elementPosition = element.getBoundingClientRect().top;
+    var offsetPosition = elementPosition - headerOffset +  window.scrollY;
+
+    window.scrollTo({
+         top: offsetPosition,
+         behavior: "smooth"
+    });
+
+    inputs.current++;
+    if(inputs.current >= inputs.length) {
+      inputs.current=0;
+    }
+}
 
 
 </script>
