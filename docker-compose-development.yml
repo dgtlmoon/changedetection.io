@@ -9,7 +9,7 @@ services:
     image: dgtlmoon/changedetection.io:dev
     container_name: changedetection.io-dev
     volumes:
-      - ./backend:/app
+      - .:/app
       - ./requirements.txt:/requirements.txt # Normally COPY'ed in the Dockerfile
       - ./datastore:/datastore
 
