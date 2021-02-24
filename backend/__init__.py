@@ -253,10 +253,12 @@ def changedetection_app(config=None, datastore_o=None):
         if uuid == 'first':
             uuid= list(datastore.data['watching'].keys()).pop()
 
-
         extra_stylesheets = ['/static/css/diff.css']
-
-        watch = datastore.data['watching'][uuid]
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            messages.append({'class': 'error', 'message': "No history found for the specified link, bad link?"})
+            return redirect(url_for('index'))
 
         dates = list(watch['history'].keys())
         # Convert to int, sort and back to str again
