@@ -162,13 +162,15 @@ def changedetection_app(config=None, datastore_o=None):
             url = request.form.get('url').strip()
             tag = request.form.get('tag').strip()
 
+            # Extra headers
             form_headers = request.form.get('headers').strip().split("\n")
             extra_headers = {}
             if form_headers:
                 for header in form_headers:
                     if len(header):
                         parts = header.split(':', 1)
-                        extra_headers.update({parts[0].strip(): parts[1].strip()})
+                        if len(parts) == 2:
+                            extra_headers.update({parts[0].strip(): parts[1].strip()})
 
             validators.url(url)  # @todo switch to prop/attr/observer
             datastore.data['watching'][uuid].update({'url': url,
