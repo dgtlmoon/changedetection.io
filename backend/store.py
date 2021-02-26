@@ -53,7 +53,8 @@ class ChangeDetectionStore:
             'previous_md5': "",
             'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send
-            'history': {}  # Dict of timestamp and output stripped filename
+            'history': {},  # Dict of timestamp and output stripped filename
+            'ignore_text': [] # List of text to ignore when calculating the comparison checksum
         }
 
         if path.isfile('/source.txt'):

@@ -18,10 +18,26 @@
                 <span class="pure-form-message-inline">Grouping tags, can be a comma separated list.</span>
             </div>
 
+            <!-- @todo: move to tabs --->
+            <fieldset class="pure-group">
+                <label for="ignore-text">Ignore text</label>
+
+                <textarea id="ignore-text" name="ignore-text" class="pure-input-1-2" placeholder=""
+                          style="width: 100%;
+                            font-family:monospace;
+                            white-space: pre;
+                            overflow-wrap: normal;
+                            overflow-x: scroll;" rows="5">{% for value in watch.ignore_text %}{{ value }}
+{% endfor %}</textarea>
+                <span class="pure-form-message-inline">Each line will be processed separately as an ignore rule.</span>
+
+            </fieldset>
+
+            <!-- @todo: move to tabs --->
             <fieldset class="pure-group">
                 <label for="headers">Extra request headers</label>
 
-                <textarea id=headers name="headers" class="pure-input-1-2" placeholder="Example
+                <textarea id="headers" name="headers" class="pure-input-1-2" placeholder="Example
 Cookie: foobar
 User-Agent: wonderbra 1.0"
                           style="width: 100%;
@@ -33,6 +49,8 @@ User-Agent: wonderbra 1.0"
                 <br/>
 
             </fieldset>
+
+
             <div class="pure-control-group">
                 <button type="submit" class="pure-button pure-button-primary">Save</button>
             </div>

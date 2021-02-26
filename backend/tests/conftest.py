@@ -13,7 +13,6 @@ import os
 
 global app
 
-
 @pytest.fixture(scope='session')
 def app(request):
     """Create application for the tests."""
@@ -37,7 +36,12 @@ def app(request):
     def teardown():
         datastore.stop_thread = True
         app.config['STOP_THREADS'] = True
+        try:
+            os.unlink("{}/url-watches.json".format(datastore_path))
+        except FileNotFoundError:
+            # This is fine in the case of a failure.
+            pass
+
 
     request.addfinalizer(teardown)
-
     return app

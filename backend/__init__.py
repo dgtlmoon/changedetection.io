@@ -151,13 +151,16 @@ def changedetection_app(config=None, datastore_o=None):
 
         return render_template("scrub.html")
 
-    @app.route("/edit", methods=['GET', 'POST'])
-    def edit_page():
+    @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
+    def edit_page(uuid):
         global messages
         import validators
 
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
         if request.method == 'POST':
-            uuid = request.args.get('uuid')
 
             url = request.form.get('url').strip()
             tag = request.form.get('tag').strip()
@@ -172,10 +175,27 @@ def changedetection_app(config=None, datastore_o=None):
                         if len(parts) == 2:
                             extra_headers.update({parts[0].strip(): parts[1].strip()})
 
+            update_obj = {'url': url,
+                          'tag': tag,
+                          'headers': extra_headers
+                          }
+
+            # Ignore text
+            form_ignore_text = request.form.get('ignore-text').strip()
+            ignore_text = []
+            if form_ignore_text:
+                for text in form_ignore_text.split("\n"):
+                    text = text.strip()
+                    if len(text):
+                        ignore_text.append(text)
+
+                # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
+                update_obj['previous_md5'] = ""
+
+            update_obj['ignore_text'] = ignore_text
+
             validators.url(url)  # @todo switch to prop/attr/observer
-            datastore.data['watching'][uuid].update({'url': url,
-                                                     'tag': tag,
-                                                     'headers': extra_headers})
+            datastore.data['watching'][uuid].update(update_obj)
             datastore.needs_write = True
 
             messages.append({'class': 'ok', 'message': 'Updated watch.'})
@@ -183,8 +203,6 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         else:
-
-            uuid = request.args.get('uuid')
             output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid], messages=messages)
 
         return output
