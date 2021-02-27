@@ -9,17 +9,16 @@ sleep_time_for_fetch_thread = 3
 
 
 def test_setup_liveserver(live_server):
-
-
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
         # Tried using a global var here but didn't seem to work, so reading from a file instead.
         with open("test-datastore/output.txt", "r") as f:
             return f.read()
+
     live_server.start()
 
-
     assert 1 == 1
+
 
 def set_original_response():
     test_return_data = """<html>
