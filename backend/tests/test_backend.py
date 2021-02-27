@@ -3,7 +3,23 @@
 import time
 from flask import url_for
 from urllib.request import urlopen
+import pytest
 
+sleep_time_for_fetch_thread = 3
+
+
+def test_setup_liveserver(live_server):
+
+
+    @live_server.app.route('/test-endpoint')
+    def test_endpoint():
+        # Tried using a global var here but didn't seem to work, so reading from a file instead.
+        with open("test-datastore/output.txt", "r") as f:
+            return f.read()
+    live_server.start()
+
+
+    assert 1 == 1
 
 def set_original_response():
     test_return_data = """<html>
@@ -14,7 +30,6 @@ def set_original_response():
      So let's see what happens.  </br>
      </body>
      </html>
-
     """
 
     with open("test-datastore/output.txt", "w") as f:
@@ -30,7 +45,6 @@ def set_modified_response():
      So let's see what happens.  </br>
      </body>
      </html>
-
     """
 
     with open("test-datastore/output.txt", "w") as f:
@@ -38,17 +52,7 @@ def set_modified_response():
 
 
 def test_check_basic_change_detection_functionality(client, live_server):
-    sleep_time_for_fetch_thread = 5
-
-    @live_server.app.route('/test-endpoint')
-    def test_endpoint():
-        # Tried using a global var here but didn't seem to work, so reading from a file instead.
-        with open("test-datastore/output.txt", "r") as f:
-            return f.read()
-
     set_original_response()
-
-    live_server.start()
 
     # Add our URL to the import page
     res = client.post(
@@ -91,13 +95,13 @@ def test_check_basic_change_detection_functionality(client, live_server):
     assert b'unviewed' in res.data
 
     # Following the 'diff' link, it should no longer display as 'unviewed' even after we recheck it a few times
-    res = client.get(url_for("diff_history_page", uuid="first") )
+    res = client.get(url_for("diff_history_page", uuid="first"))
     assert b'Compare newest' in res.data
 
     time.sleep(2)
 
     # Do this a few times.. ensures we dont accidently set the status
-    for n in range(3):
+    for n in range(2):
         client.get(url_for("api_watch_checknow"), follow_redirects=True)
 
         # Give the thread time to pick it up
@@ -108,10 +112,10 @@ def test_check_basic_change_detection_functionality(client, live_server):
         assert b'unviewed' not in res.data
         assert b'test-endpoint' in res.data
 
-
     set_original_response()
 
     client.get(url_for("api_watch_checknow"), follow_redirects=True)
     time.sleep(sleep_time_for_fetch_thread)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
+
