@@ -6,18 +6,6 @@ from urllib.request import urlopen
 import pytest
 
 
-def test_setup_liveserver(live_server):
-    @live_server.app.route('/test-endpoint')
-    def test_endpoint():
-        # Tried using a global var here but didn't seem to work, so reading from a file instead.
-        with open("test-datastore/output.txt", "r") as f:
-            return f.read()
-
-    live_server.start()
-
-    assert 1 == 1
-
-
 # Unit test of the stripper
 # Always we are dealing in utf-8
 def test_strip_text_func():
