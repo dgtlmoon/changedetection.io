@@ -96,6 +96,12 @@ def test_check_ignore_text_functionality(client, live_server):
     )
     assert b"1 Imported" in res.data
 
+    # Trigger a check
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+
+    # Give the thread time to pick it up
+    time.sleep(sleep_time_for_fetch_thread)
+
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
