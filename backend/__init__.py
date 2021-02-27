@@ -190,7 +190,7 @@ def changedetection_app(config=None, datastore_o=None):
                         ignore_text.append(text)
 
                 # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
-                update_obj['previous_md5'] = ""
+                update_obj['previous_md5'] = "reprocess previous"
 
             update_obj['ignore_text'] = ignore_text
 

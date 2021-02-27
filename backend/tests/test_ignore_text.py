@@ -6,7 +6,20 @@ from urllib.request import urlopen
 import pytest
 
 
+def test_setup_liveserver(live_server):
+    @live_server.app.route('/test-endpoint')
+    def test_endpoint():
+        # Tried using a global var here but didn't seem to work, so reading from a file instead.
+        with open("test-datastore/output.txt", "r") as f:
+            return f.read()
+
+    live_server.start()
+
+    assert 1 == 1
+
+
 # Unit test of the stripper
+# Always we are dealing in utf-8
 def test_strip_text_func():
     from backend import fetch_site_status
 
@@ -18,25 +31,35 @@ def test_strip_text_func():
 
     but not always."""
 
-    original_length = len(test_content.splitlines())
-
-    fetcher = fetch_site_status.perform_site_check(datastore=False)
-
     ignore_lines = ["sometimes"]
 
+    fetcher = fetch_site_status.perform_site_check(datastore=False)
     stripped_content = fetcher.strip_ignore_text(test_content, ignore_lines)
 
-    # Should be one line shorter
-    assert len(stripped_content.splitlines()) == original_length - 1
-
-    assert "sometimes" not in stripped_content
-    assert "Some content" in stripped_content
+    assert b"sometimes" not in stripped_content
+    assert b"Some content" in stripped_content
 
 
 def set_original_ignore_response():
     test_return_data = """<html>
        <body>
      Some initial text</br>
+     <p>Which is across multiple lines</p>
+     </br>
+     So let's see what happens.  </br>
+     </body>
+     </html>
+
+    """
+
+    with open("test-datastore/output.txt", "w") as f:
+        f.write(test_return_data)
+
+
+def set_modified_original_ignore_response():
+    test_return_data = """<html>
+       <body>
+     Some NEW nice initial text</br>
      <p>Which is across multiple lines</p>
      </br>
      So let's see what happens.  </br>
@@ -68,7 +91,7 @@ def set_modified_ignore_response():
 
 
 def test_check_ignore_text_functionality(client, live_server):
-    sleep_time_for_fetch_thread = 5
+    sleep_time_for_fetch_thread = 3
 
     ignore_text = "XXXXX\nYYYYY\nZZZZZ"
     set_original_ignore_response()
@@ -111,11 +134,11 @@ def test_check_ignore_text_functionality(client, live_server):
     assert b'unviewed' not in res.data
     assert b'/test-endpoint' in res.data
 
+    #  Make a change
     set_modified_ignore_response()
 
     # Trigger a check
     client.get(url_for("api_watch_checknow"), follow_redirects=True)
-
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
@@ -123,6 +146,13 @@ def test_check_ignore_text_functionality(client, live_server):
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
     assert b'/test-endpoint' in res.data
+
+    # Just to be sure.. set a regular modified change..
+    set_modified_original_ignore_response()
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    time.sleep(sleep_time_for_fetch_thread)
+    res = client.get(url_for("index"))
+    assert b'unviewed' in res.data
 
     res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

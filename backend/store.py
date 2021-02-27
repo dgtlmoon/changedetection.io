@@ -64,6 +64,7 @@ class ChangeDetectionStore:
                 self.__data['build_sha'] = f.read()
 
         try:
+            # @todo retest with ", encoding='utf-8'"
             with open(self.json_store_path) as json_file:
                 from_disk = json.load(json_file)
 
@@ -139,7 +140,6 @@ class ChangeDetectionStore:
 
     @property
     def data(self):
-
         return self.__data
 
     def get_all_tags(self):
@@ -161,6 +161,7 @@ class ChangeDetectionStore:
                 self.__data['watching'] = {}
             else:
                 del (self.__data['watching'][uuid])
+
             self.needs_write = True
 
     def url_exists(self, url):
