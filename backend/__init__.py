@@ -151,6 +151,34 @@ def changedetection_app(config=None, datastore_o=None):
 
         return render_template("scrub.html")
 
+    # If they edited an existing watch, we need to know to reset the current/previous md5 to include
+    # the excluded text.
+    def get_current_checksum_include_ignore_text(uuid):
+
+        import hashlib
+        from backend import fetch_site_status
+
+        # Get the most recent one
+        newest_history_key = datastore.get_val(uuid, 'newest_history_key')
+
+        # 0 means that theres only one, so that there should be no 'unviewed' history availabe
+        if newest_history_key == 0:
+            newest_history_key = list(datastore.data['watching'][uuid]['history'].keys())[0]
+
+        if newest_history_key:
+            with open(datastore.data['watching'][uuid]['history'][newest_history_key],
+                      encoding='utf-8') as file:
+                raw_content = file.read()
+
+                handler = fetch_site_status.perform_site_check(datastore=datastore)
+                stripped_content = handler.strip_ignore_text(raw_content,
+                                                          datastore.data['watching'][uuid]['ignore_text'])
+
+                checksum = hashlib.md5(stripped_content).hexdigest()
+                return checksum
+
+        return datastore.data['watching'][uuid]['previous_md5']
+
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     def edit_page(uuid):
         global messages
@@ -183,16 +211,19 @@ def changedetection_app(config=None, datastore_o=None):
             # Ignore text
             form_ignore_text = request.form.get('ignore-text').strip()
             ignore_text = []
-            if form_ignore_text:
+            if len(form_ignore_text):
                 for text in form_ignore_text.split("\n"):
                     text = text.strip()
                     if len(text):
                         ignore_text.append(text)
 
-                # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
-                update_obj['previous_md5'] = "reprocess previous"
+                datastore.data['watching'][uuid]['ignore_text'] = ignore_text
 
-            update_obj['ignore_text'] = ignore_text
+                # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
+                if len( datastore.data['watching'][uuid]['history']):
+                    update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
+
+
 
             validators.url(url)  # @todo switch to prop/attr/observer
             datastore.data['watching'][uuid].update(update_obj)
@@ -255,8 +286,8 @@ def changedetection_app(config=None, datastore_o=None):
 
             messages.append({'class': 'ok', 'message': "{} Imported, {} Skipped.".format(good, len(remaining_urls))})
 
-        if len(remaining_urls) == 0:
-            return redirect(url_for('index'))
+            if len(remaining_urls) == 0:
+                return redirect(url_for('index'))
         else:
             output = render_template("import.html",
                                      messages=messages,

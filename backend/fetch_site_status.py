@@ -27,6 +27,8 @@ class perform_site_check():
 
         return "\n".encode('utf8').join(output)
 
+
+
     def run(self, uuid):
         timestamp = int(time.time())  # used for storage etc too
         stripped_text_from_html = False
@@ -98,26 +100,9 @@ class perform_site_check():
                 content = self.strip_ignore_text(stripped_text_from_html,
                                                  self.datastore.data['watching'][uuid]['ignore_text'])
             else:
-                content = stripped_text_from_html
+                content = stripped_text_from_html.encode('utf8')
 
             fetched_md5 = hashlib.md5(content).hexdigest()
-
-            # If they edited an existing watch, we need to know to reset the current/previous md5 to include
-            # the excluded text.
-
-            if self.datastore.data['watching'][uuid]['previous_md5'] == "reprocess previous":
-                # Get the most recent one
-                newest_history_key = self.datastore.get_newest_history_key(uuid)
-                if newest_history_key:
-                    with open(self.datastore.data['watching'][uuid]['history'][newest_history_key],
-                              encoding='utf-8') as file:
-                        raw_content = file.read()
-
-                        stripped_content = self.strip_ignore_text(raw_content,
-                                                                  self.datastore.data['watching'][uuid]['ignore_text'])
-
-                        checksum = hashlib.md5(stripped_content).hexdigest()
-                        self.datastore.data['watching'][uuid]['previous_md5'] = checksum
 
             # could be None or False depending on JSON type
             if self.datastore.data['watching'][uuid]['previous_md5'] != fetched_md5:
