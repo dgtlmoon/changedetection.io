@@ -4,11 +4,7 @@
 name: changedetection.io
 
 
-on:
-  push:
-    branches: [ * ]
-  pull_request:
-    branches: [ * ]
+on: [push, pull_request]
 
 jobs:
   build:
