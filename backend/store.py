@@ -25,7 +25,6 @@ class ChangeDetectionStore:
         self.__data = {
             'note': "Hello! If you change this file manually, please be sure to restart your changedetection.io instance!",
             'watching': {},
-            'tag': '0.27',
             'settings': {
                 'headers': {
                     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36',
@@ -79,6 +78,8 @@ class ChangeDetectionStore:
 
                     if 'requests' in from_disk['settings']:
                         self.__data['settings']['requests'].update(from_disk['settings']['requests'])
+
+                self.__data['tag'] = "0.27"
 
                 # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
                 # @todo pretty sure theres a python we todo this with an abstracted(?) object!
