@@ -124,4 +124,6 @@ def test_check_ignore_text_functionality(client, live_server):
     assert b'unviewed' not in res.data
     assert b'/test-endpoint' in res.data
 
+    res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 

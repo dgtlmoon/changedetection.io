@@ -119,3 +119,5 @@ def test_check_basic_change_detection_functionality(client, live_server):
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
+    res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data

@@ -157,7 +157,10 @@ class ChangeDetectionStore:
 
     def delete(self, uuid):
         with self.lock:
-            del (self.__data['watching'][uuid])
+            if uuid == 'all':
+                self.__data['watching'] = {}
+            else:
+                del (self.__data['watching'][uuid])
             self.needs_write = True
 
     def url_exists(self, url):
