@@ -82,8 +82,7 @@ class ChangeDetectionStore:
 
                 # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
                 # @todo pretty sure theres a python we todo this with an abstracted(?) object!
-
-                for uuid, watch in self.data['watching'].items():
+                for uuid, watch in self.__data['watching'].items():
                     _blank = deepcopy(self.generic_definition)
                     _blank.update(watch)
                     self.__data['watching'].update({uuid: _blank})
