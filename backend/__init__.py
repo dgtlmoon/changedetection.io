@@ -17,6 +17,8 @@ import os
 import timeago
 
 import threading
+from threading import Event
+
 import queue
 
 from flask import Flask, render_template, request, send_file, send_from_directory,  abort, redirect, url_for
@@ -42,7 +44,9 @@ app = Flask(__name__, static_url_path="/var/www/change-detection/backen/static")
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
-app.config['STOP_THREADS'] = False
+app.config.exit = Event()
+
+app.config['NEW_VERSION_AVAILABLE'] = False
 
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -79,9 +83,11 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
 def changedetection_app(config=None, datastore_o=None):
     global datastore
     datastore = datastore_o
-    # Hmm
+
     app.config.update(dict(DEBUG=True))
     app.config.update(config or {})
+
+
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
@@ -89,6 +95,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # https://github.com/pallets/flask/blob/93dd1709d05a1cf0e886df6223377bdab3b077fb/examples/tutorial/flaskr/__init__.py#L39
     # You can divide up the stuff like this
+
 
     @app.route("/", methods=['GET'])
     def index():
@@ -318,12 +325,14 @@ def changedetection_app(config=None, datastore_o=None):
 
             if len(remaining_urls) == 0:
                 return redirect(url_for('index'))
+            #@todo repair
         else:
             output = render_template("import.html",
                                      messages=messages,
                                      remaining="\n".join(remaining_urls)
                                      )
             messages = []
+
         return output
 
     # Clear all statuses, so we do not see the 'unviewed' class
@@ -501,8 +510,26 @@ def changedetection_app(config=None, datastore_o=None):
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
 
+    # Check for new release version
+    threading.Thread(target=check_for_new_version).start()
     return app
 
+
+# Check for new version and anonymous stats
+def check_for_new_version():
+    import requests
+    app.config['NEW_VERSION_AVAILABLE'] = True
+    import urllib3
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+    while not app.config.exit.is_set():
+        r = requests.post("https://changedetection.io/check-ver.php",
+                          data={'version': datastore.data['version_tag'],
+                                'app_guid': datastore.data['app_guid']},
+
+                          verify=False)
+
+        app.config.exit.wait(10)
 
 # Requests for checking on the site use a pool of thread Workers managed by a Queue.
 class Worker(threading.Thread):
@@ -517,16 +544,13 @@ class Worker(threading.Thread):
 
         update_handler = fetch_site_status.perform_site_check(datastore=datastore)
 
-        while True:
+        while not app.config.exit.is_set():
 
             try:
-                uuid = self.q.get(block=True, timeout=1)
+                uuid = self.q.get(block=False)
             except queue.Empty:
-                # We have a chance to kill this thread that needs to monitor for new jobs..
-                # Delays here would be caused by a current response object pending
-                # @todo switch to threaded response handler
-                if app.config['STOP_THREADS']:
-                    return
+                pass
+
             else:
                 self.current_uuid = uuid
 
@@ -549,9 +573,13 @@ class Worker(threading.Thread):
                 self.current_uuid = None  # Done
                 self.q.task_done()
 
+            app.config.exit.wait(1)
+
+
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
+
     # Spin up Workers.
     for _ in range(datastore.data['settings']['requests']['workers']):
         new_worker = Worker(update_q)
@@ -559,23 +587,19 @@ def ticker_thread_check_time_launch_checks():
         new_worker.start()
 
     # Every minute check for new UUIDs to follow up on
-    while True:
+    minutes = datastore.data['settings']['requests']['minutes_between_check']
 
-        if app.config['STOP_THREADS']:
-            return
-
+    while not app.config.exit.is_set():
         running_uuids = []
         for t in running_update_threads:
             running_uuids.append(t.current_uuid)
 
         # Look at the dataset, find a stale watch to process
-        minutes = datastore.data['settings']['requests']['minutes_between_check']
+        threshold = time.time() - (minutes * 60)
         for uuid, watch in datastore.data['watching'].items():
-            if watch['last_checked'] <= time.time() - (minutes * 60):
-
-                # @todo maybe update_q.queue is enough?
+            if watch['last_checked'] <= threshold:
                 if not uuid in running_uuids and uuid not in update_q.queue:
                     update_q.put(uuid)
 
         # Should be low so we can break this out in testing
-        time.sleep(1)
+        app.config.exit.wait(1)

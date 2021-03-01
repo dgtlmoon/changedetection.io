@@ -22,6 +22,7 @@ class ChangeDetectionStore:
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
         self.stop_thread = False
+
         self.__data = {
             'note': "Hello! If you change this file manually, please be sure to restart your changedetection.io instance!",
             'watching': {},
@@ -79,8 +80,6 @@ class ChangeDetectionStore:
                     if 'requests' in from_disk['settings']:
                         self.__data['settings']['requests'].update(from_disk['settings']['requests'])
 
-                self.__data['tag'] = "0.27"
-
                 # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
                 # @todo pretty sure theres a python we todo this with an abstracted(?) object!
 
@@ -100,6 +99,14 @@ class ChangeDetectionStore:
                 self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
                 self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
                 self.add_watch(url='https://changedetection.io', tag='Tech news')
+
+
+        self.__data['version_tag'] = "0.27"
+
+        if not 'app_guid' in self.__data:
+            self.__data['app_guid'] = str(uuid_builder.uuid4())
+
+        self.needs_write = True
 
         # Finally start the thread that will manage periodic data saves to JSON
         save_data_thread = threading.Thread(target=self.save_datastore).start()

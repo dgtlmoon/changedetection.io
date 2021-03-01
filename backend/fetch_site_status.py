@@ -2,7 +2,8 @@ import time
 import requests
 import hashlib
 from inscriptis import get_text
-
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Some common stuff here that can be moved to a base class
 class perform_site_check():

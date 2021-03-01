@@ -21,7 +21,9 @@
         {% if current_diff_url %}
             <a class=current-diff-url href="{{ current_diff_url }}"><span style="max-width: 30%; overflow: hidden;">{{ current_diff_url }}</a>
         {% else %}
-            <span id="version-text" class="pure-menu-heading">Version {{ version }}</span>
+            {% if new_version_available %}
+              <span id="version-text" class="pure-menu-heading">A new version is available</span>
+            {% endif %}
         {% endif %}
 
         <ul class="pure-menu-list">

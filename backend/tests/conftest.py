@@ -30,10 +30,11 @@ def app(request):
     app_config = {'datastore_path': datastore_path}
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], include_default_watches=False)
     app = changedetection_app(app_config, datastore)
+    app.config['STOP_THREADS'] = True
 
     def teardown():
         datastore.stop_thread = True
-        app.config['STOP_THREADS'] = True
+        app.config.exit.set()
         try:
             os.unlink("{}/url-watches.json".format(datastore_path))
         except FileNotFoundError:
