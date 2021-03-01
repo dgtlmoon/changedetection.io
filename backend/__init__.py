@@ -318,14 +318,15 @@ def changedetection_app(config=None, datastore_o=None):
             messages.append({'class': 'ok', 'message': "{} Imported, {} Skipped.".format(good, len(remaining_urls))})
 
             if len(remaining_urls) == 0:
+                # Looking good, redirect to index.
                 return redirect(url_for('index'))
-            # @todo repair
-        else:
-            output = render_template("import.html",
-                                     messages=messages,
-                                     remaining="\n".join(remaining_urls)
-                                     )
-            messages = []
+
+        # Could be some remaining, or we could be on GET
+        output = render_template("import.html",
+                                 messages=messages,
+                                 remaining="\n".join(remaining_urls)
+                                 )
+        messages = []
 
         return output
 
