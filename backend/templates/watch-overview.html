@@ -43,8 +43,7 @@
             <tr id="{{ watch.uuid }}"
                 class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }}
                 {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
-                {% if watch.newest_history_key| int > watch.last_viewed| int %}unviewed{% endif %}
-                ">
+                {% if watch.newest_history_key| int > watch.last_viewed| int %}unviewed{% endif %}">
                 <td>{{ loop.index }}</td>
                 <td class="title-col">{{watch.title if watch.title is not none else watch.url}}
                     <a class="external" target=_blank href="{{ watch.url }}"></a>
@@ -76,11 +75,17 @@
 
             </tbody>
         </table>
-        <div id="check-all-button">
-
-            <a href="/api/checknow{% if active_tag%}?tag={{active_tag}}{%endif%}" class="pure-button button-tag ">Recheck
+        <ul id="post-list-buttons">
+            {% if has_unviewed %}
+            <li>
+                <a href="/api/mark-all-viewed" class="pure-button button-tag ">Mark all viewed</a>
+            </li>
+            {% endif %}
+            <li>
+               <a href="/api/checknow{% if active_tag%}?tag={{active_tag}}{%endif%}" class="pure-button button-tag ">Recheck
                 all {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
-        </div>
+            </li>
+        </ul>
     </div>
 </div>
 {% endblock %}

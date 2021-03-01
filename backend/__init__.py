@@ -23,6 +23,11 @@ import queue
 
 from flask import Flask, render_template, request, send_file, send_from_directory,  abort, redirect, url_for
 
+from feedgen.feed import FeedGenerator
+from flask import make_response
+import datetime
+import pytz
+
 datastore = None
 
 # Local
@@ -112,14 +117,41 @@ def changedetection_app(config=None, datastore_o=None):
         sorted_watches.sort(key=lambda x: x['last_changed'], reverse=True)
 
         existing_tags = datastore.get_all_tags()
-        output = render_template("watch-overview.html",
-                                 watches=sorted_watches,
-                                 messages=messages,
-                                 tags=existing_tags,
-                                 active_tag=limit_tag)
+        rss = request.args.get('rss')
 
-        # Show messages but once.
-        messages = []
+        if rss:
+            fg = FeedGenerator()
+            fg.title('changedetection.io')
+            fg.description('Feed description')
+            fg.link(href='https://changedetection.io')
+
+            for watch in sorted_watches:
+                if watch['unviewed']:
+                    fe = fg.add_entry()
+                    fe.title(watch['url'])
+                    fe.link(href=watch['url'])
+                    fe.description(watch['url'])
+                    fe.guid(watch['uuid'], permalink=False)
+                    dt = datetime.datetime.fromtimestamp(int(watch['newest_history_key']))
+                    dt = dt.replace(tzinfo=pytz.UTC)
+                    fe.pubDate(dt)
+
+            response = make_response(fg.rss_str())
+            response.headers.set('Content-Type', 'application/rss+xml')
+            return response
+
+        else:
+            output = render_template("watch-overview.html",
+                                     watches=sorted_watches,
+                                     messages=messages,
+                                     tags=existing_tags,
+                                     active_tag=limit_tag,
+                                     has_unviewed=datastore.data['has_unviewed'])
+
+            # Show messages but once.
+            messages = []
+
+
         return output
 
     @app.route("/scrub", methods=['GET', 'POST'])
@@ -295,6 +327,17 @@ def changedetection_app(config=None, datastore_o=None):
                                      )
             messages = []
         return output
+
+    # Clear all statuses, so we do not see the 'unviewed' class
+    @app.route("/api/mark-all-viewed", methods=['GET'])
+    def mark_all_viewed():
+
+        # Save the current newest history as the most recently viewed
+        for watch_uuid, watch in datastore.data['watching'].items():
+            datastore.set_last_viewed(watch_uuid, watch['newest_history_key'])
+
+        messages.append({'class': 'ok', 'message': "Cleared all statuses."})
+        return redirect(url_for('index'))
 
     @app.route("/diff/<string:uuid>", methods=['GET'])
     def diff_history_page(uuid):

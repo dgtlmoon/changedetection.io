@@ -120,7 +120,7 @@ class ChangeDetectionStore:
         return 0
 
     def set_last_viewed(self, uuid, timestamp):
-        self.data['watching'][uuid].update({'last_viewed': str(timestamp)})
+        self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
         self.needs_write = True
 
     def update_watch(self, uuid, update_obj):
@@ -141,6 +141,20 @@ class ChangeDetectionStore:
 
     @property
     def data(self):
+
+        has_unviewed = False
+
+        for uuid, v in self.__data['watching'].items():
+            self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
+            if int(v['newest_history_key']) <= int(v['last_viewed']):
+                self.__data['watching'][uuid]['viewed'] = True
+
+            else:
+                self.__data['watching'][uuid]['viewed'] = False
+                has_unviewed = True
+
+        self.__data['has_unviewed'] = has_unviewed
+
         return self.__data
 
     def get_all_tags(self):

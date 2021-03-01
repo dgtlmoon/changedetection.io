@@ -88,11 +88,16 @@ section.content {
   margin: 0 3px 0 5px;
 }
 
-#check-all-button {
-  text-align:right;
+#post-list-buttons {
+  text-align: right;
+  padding: 0px;
+  margin: 0px;
+}
+#post-list-buttons li {
+  display: inline-block;
 }
 
-#check-all-button a {
+#post-list-buttons a {
    border-top-left-radius: initial;
    border-top-right-radius: initial;
    border-bottom-left-radius: 5px;
