@@ -8,4 +8,6 @@ requests
 validators
 timeago ~=1.0
 inscriptis ~= 1.1
-
+feedgen ~= 0.9
+pytz
+urllib3

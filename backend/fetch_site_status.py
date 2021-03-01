@@ -2,7 +2,8 @@ import time
 import requests
 import hashlib
 from inscriptis import get_text
-
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Some common stuff here that can be moved to a base class
 class perform_site_check():
@@ -10,6 +11,24 @@ class perform_site_check():
     def __init__(self, *args, datastore, **kwargs):
         super().__init__(*args, **kwargs)
         self.datastore = datastore
+
+    def strip_ignore_text(self, content, list_ignore_text):
+        ignore = []
+        for k in list_ignore_text:
+            ignore.append(k.encode('utf8'))
+
+        output = []
+        for line in content.splitlines():
+            line = line.encode('utf8')
+
+            # Always ignore blank lines in this mode. (when this function gets called)
+            if len(line.strip()):
+                if not any(skip_text in line for skip_text in ignore):
+                    output.append(line)
+
+        return "\n".encode('utf8').join(output)
+
+
 
     def run(self, uuid):
         timestamp = int(time.time())  # used for storage etc too
@@ -76,7 +95,15 @@ class perform_site_check():
             if not len(r.text):
                 update_obj["last_error"] = "Empty reply"
 
-            fetched_md5 = hashlib.md5(stripped_text_from_html.encode('utf-8')).hexdigest()
+            # If there's text to skip
+            # @todo we could abstract out the get_text() to handle this cleaner
+            if len(self.datastore.data['watching'][uuid]['ignore_text']):
+                content = self.strip_ignore_text(stripped_text_from_html,
+                                                 self.datastore.data['watching'][uuid]['ignore_text'])
+            else:
+                content = stripped_text_from_html.encode('utf8')
+
+            fetched_md5 = hashlib.md5(content).hexdigest()
 
             # could be None or False depending on JSON type
             if self.datastore.data['watching'][uuid]['previous_md5'] != fetched_md5:

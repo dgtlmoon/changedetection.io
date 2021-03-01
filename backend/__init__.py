@@ -2,10 +2,8 @@
 
 
 # @todo logging
-# @todo sort by last_changed
 # @todo extra options for url like , verify=False etc.
 # @todo enable https://urllib3.readthedocs.io/en/latest/user-guide.html#ssl as option?
-# @todo maybe a button to reset all 'last-changed'.. so you can see it clearly when something happens since your last visit
 # @todo option for interval day/6 hour/etc
 # @todo on change detected, config for calling some API
 # @todo make tables responsive!
@@ -19,9 +17,16 @@ import os
 import timeago
 
 import threading
+from threading import Event
+
 import queue
 
-from flask import Flask, render_template, request, send_file, send_from_directory,  abort, redirect, url_for
+from flask import Flask, render_template, request, send_file, send_from_directory, abort, redirect, url_for
+
+from feedgen.feed import FeedGenerator
+from flask import make_response
+import datetime
+import pytz
 
 datastore = None
 
@@ -39,7 +44,9 @@ app = Flask(__name__, static_url_path="/var/www/change-detection/backen/static")
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
-app.config['STOP_THREADS'] = False
+app.config.exit = Event()
+
+app.config['NEW_VERSION_AVAILABLE'] = False
 
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -76,7 +83,7 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
 def changedetection_app(config=None, datastore_o=None):
     global datastore
     datastore = datastore_o
-    # Hmm
+
     app.config.update(dict(DEBUG=True))
     app.config.update(config or {})
 
@@ -112,14 +119,40 @@ def changedetection_app(config=None, datastore_o=None):
         sorted_watches.sort(key=lambda x: x['last_changed'], reverse=True)
 
         existing_tags = datastore.get_all_tags()
-        output = render_template("watch-overview.html",
-                                 watches=sorted_watches,
-                                 messages=messages,
-                                 tags=existing_tags,
-                                 active_tag=limit_tag)
+        rss = request.args.get('rss')
 
-        # Show messages but once.
-        messages = []
+        if rss:
+            fg = FeedGenerator()
+            fg.title('changedetection.io')
+            fg.description('Feed description')
+            fg.link(href='https://changedetection.io')
+
+            for watch in sorted_watches:
+                if not watch['viewed']:
+                    fe = fg.add_entry()
+                    fe.title(watch['url'])
+                    fe.link(href=watch['url'])
+                    fe.description(watch['url'])
+                    fe.guid(watch['uuid'], permalink=False)
+                    dt = datetime.datetime.fromtimestamp(int(watch['newest_history_key']))
+                    dt = dt.replace(tzinfo=pytz.UTC)
+                    fe.pubDate(dt)
+
+            response = make_response(fg.rss_str())
+            response.headers.set('Content-Type', 'application/rss+xml')
+            return response
+
+        else:
+            output = render_template("watch-overview.html",
+                                     watches=sorted_watches,
+                                     messages=messages,
+                                     tags=existing_tags,
+                                     active_tag=limit_tag,
+                                     has_unviewed=datastore.data['has_unviewed'])
+
+            # Show messages but once.
+            messages = []
+
         return output
 
     @app.route("/scrub", methods=['GET', 'POST'])
@@ -151,29 +184,80 @@ def changedetection_app(config=None, datastore_o=None):
 
         return render_template("scrub.html")
 
-    @app.route("/edit", methods=['GET', 'POST'])
-    def edit_page():
+    # If they edited an existing watch, we need to know to reset the current/previous md5 to include
+    # the excluded text.
+    def get_current_checksum_include_ignore_text(uuid):
+
+        import hashlib
+        from backend import fetch_site_status
+
+        # Get the most recent one
+        newest_history_key = datastore.get_val(uuid, 'newest_history_key')
+
+        # 0 means that theres only one, so that there should be no 'unviewed' history availabe
+        if newest_history_key == 0:
+            newest_history_key = list(datastore.data['watching'][uuid]['history'].keys())[0]
+
+        if newest_history_key:
+            with open(datastore.data['watching'][uuid]['history'][newest_history_key],
+                      encoding='utf-8') as file:
+                raw_content = file.read()
+
+                handler = fetch_site_status.perform_site_check(datastore=datastore)
+                stripped_content = handler.strip_ignore_text(raw_content,
+                                                             datastore.data['watching'][uuid]['ignore_text'])
+
+                checksum = hashlib.md5(stripped_content).hexdigest()
+                return checksum
+
+        return datastore.data['watching'][uuid]['previous_md5']
+
+    @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
+    def edit_page(uuid):
         global messages
         import validators
 
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
         if request.method == 'POST':
-            uuid = request.args.get('uuid')
 
             url = request.form.get('url').strip()
             tag = request.form.get('tag').strip()
 
+            # Extra headers
             form_headers = request.form.get('headers').strip().split("\n")
             extra_headers = {}
             if form_headers:
                 for header in form_headers:
                     if len(header):
                         parts = header.split(':', 1)
-                        extra_headers.update({parts[0].strip(): parts[1].strip()})
+                        if len(parts) == 2:
+                            extra_headers.update({parts[0].strip(): parts[1].strip()})
+
+            update_obj = {'url': url,
+                          'tag': tag,
+                          'headers': extra_headers
+                          }
+
+            # Ignore text
+            form_ignore_text = request.form.get('ignore-text').strip()
+            ignore_text = []
+            if len(form_ignore_text):
+                for text in form_ignore_text.split("\n"):
+                    text = text.strip()
+                    if len(text):
+                        ignore_text.append(text)
+
+                datastore.data['watching'][uuid]['ignore_text'] = ignore_text
+
+                # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
+                if len(datastore.data['watching'][uuid]['history']):
+                    update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
             validators.url(url)  # @todo switch to prop/attr/observer
-            datastore.data['watching'][uuid].update({'url': url,
-                                                     'tag': tag,
-                                                     'headers': extra_headers})
+            datastore.data['watching'][uuid].update(update_obj)
             datastore.needs_write = True
 
             messages.append({'class': 'ok', 'message': 'Updated watch.'})
@@ -181,8 +265,6 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         else:
-
-            uuid = request.args.get('uuid')
             output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid], messages=messages)
 
         return output
@@ -235,15 +317,29 @@ def changedetection_app(config=None, datastore_o=None):
 
             messages.append({'class': 'ok', 'message': "{} Imported, {} Skipped.".format(good, len(remaining_urls))})
 
-        if len(remaining_urls) == 0:
-            return redirect(url_for('index'))
-        else:
-            output = render_template("import.html",
-                                     messages=messages,
-                                     remaining="\n".join(remaining_urls)
-                                     )
-            messages = []
+            if len(remaining_urls) == 0:
+                # Looking good, redirect to index.
+                return redirect(url_for('index'))
+
+        # Could be some remaining, or we could be on GET
+        output = render_template("import.html",
+                                 messages=messages,
+                                 remaining="\n".join(remaining_urls)
+                                 )
+        messages = []
+
         return output
+
+    # Clear all statuses, so we do not see the 'unviewed' class
+    @app.route("/api/mark-all-viewed", methods=['GET'])
+    def mark_all_viewed():
+
+        # Save the current newest history as the most recently viewed
+        for watch_uuid, watch in datastore.data['watching'].items():
+            datastore.set_last_viewed(watch_uuid, watch['newest_history_key'])
+
+        messages.append({'class': 'ok', 'message': "Cleared all statuses."})
+        return redirect(url_for('index'))
 
     @app.route("/diff/<string:uuid>", methods=['GET'])
     def diff_history_page(uuid):
@@ -251,7 +347,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
-            uuid= list(datastore.data['watching'].keys()).pop()
+            uuid = list(datastore.data['watching'].keys()).pop()
 
         extra_stylesheets = ['/static/css/diff.css']
         try:
@@ -266,9 +362,9 @@ def changedetection_app(config=None, datastore_o=None):
         dates.sort(reverse=True)
         dates = [str(i) for i in dates]
 
-
         if len(dates) < 2:
-            messages.append({'class': 'error', 'message': "Not enough saved change detection snapshots to produce a report."})
+            messages.append(
+                {'class': 'error', 'message': "Not enough saved change detection snapshots to produce a report."})
             return redirect(url_for('index'))
 
         # Save the current newest history as the most recently viewed
@@ -409,7 +505,36 @@ def changedetection_app(config=None, datastore_o=None):
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
 
+    # Check for new release version
+    threading.Thread(target=check_for_new_version).start()
     return app
+
+
+# Check for new version and anonymous stats
+def check_for_new_version():
+    import requests
+
+    import urllib3
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+    while not app.config.exit.is_set():
+        try:
+            r = requests.post("https://changedetection.io/check-ver.php",
+                              data={'version': datastore.data['version_tag'],
+                                    'app_guid': datastore.data['app_guid']},
+
+                              verify=False)
+        except:
+            pass
+
+        try:
+            if "new_version" in r.text:
+                app.config['NEW_VERSION_AVAILABLE'] = True
+        except:
+            pass
+
+        # Check daily
+        app.config.exit.wait(86400)
 
 
 # Requests for checking on the site use a pool of thread Workers managed by a Queue.
@@ -425,16 +550,13 @@ class Worker(threading.Thread):
 
         update_handler = fetch_site_status.perform_site_check(datastore=datastore)
 
-        while True:
+        while not app.config.exit.is_set():
 
             try:
-                uuid = self.q.get(block=True, timeout=1)
+                uuid = self.q.get(block=False)
             except queue.Empty:
-                # We have a chance to kill this thread that needs to monitor for new jobs..
-                # Delays here would be caused by a current response object pending
-                # @todo switch to threaded response handler
-                if app.config['STOP_THREADS']:
-                    return
+                pass
+
             else:
                 self.current_uuid = uuid
 
@@ -453,9 +575,10 @@ class Worker(threading.Thread):
                                 # A change was detected
                                 datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
 
-
                 self.current_uuid = None  # Done
                 self.q.task_done()
+
+            app.config.exit.wait(1)
 
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
@@ -467,23 +590,19 @@ def ticker_thread_check_time_launch_checks():
         new_worker.start()
 
     # Every minute check for new UUIDs to follow up on
-    while True:
+    minutes = datastore.data['settings']['requests']['minutes_between_check']
 
-        if app.config['STOP_THREADS']:
-            return
-
+    while not app.config.exit.is_set():
         running_uuids = []
         for t in running_update_threads:
             running_uuids.append(t.current_uuid)
 
         # Look at the dataset, find a stale watch to process
-        minutes = datastore.data['settings']['requests']['minutes_between_check']
+        threshold = time.time() - (minutes * 60)
         for uuid, watch in datastore.data['watching'].items():
-            if watch['last_checked'] <= time.time() - (minutes * 60):
-
-                # @todo maybe update_q.queue is enough?
+            if watch['last_checked'] <= threshold:
                 if not uuid in running_uuids and uuid not in update_q.queue:
                     update_q.put(uuid)
 
         # Should be low so we can break this out in testing
-        time.sleep(1)
+        app.config.exit.wait(1)

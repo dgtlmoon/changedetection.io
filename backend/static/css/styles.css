@@ -88,11 +88,16 @@ section.content {
   margin: 0 3px 0 5px;
 }
 
-#check-all-button {
-  text-align:right;
+#post-list-buttons {
+  text-align: right;
+  padding: 0px;
+  margin: 0px;
+}
+#post-list-buttons li {
+  display: inline-block;
 }
 
-#check-all-button a {
+#post-list-buttons a {
    border-top-left-radius: initial;
    border-top-right-radius: initial;
    border-bottom-left-radius: 5px;
@@ -243,4 +248,21 @@ footer {
     background: #fff;
     color: #444;
     text-align: center;
+}
+
+#feed-icon {
+    vertical-align: middle;
+}
+
+#version {
+    position: absolute;
+    top: 80px;
+    right: 0px;
+    font-size: 8px;
+    background: #fff;
+    padding: 10px;
+}
+
+#new-version-text a{
+    color: #e07171;
 }

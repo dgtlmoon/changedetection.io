@@ -15,13 +15,11 @@
         <!-- user/pass r = requests.get('https://api.github.com/user', auth=('user', 'pass')) -->
     </form>
     <div>
-
+        <a href="/" class="pure-button button-tag {{'active' if not active_tag }}">All</a>
         {% for tag in tags %}
-        {% if tag == "" %}
-        <a href="/" class="pure-button button-tag {{'active' if active_tag == tag }}">All</a>
-        {% else %}
-        <a href="/?tag={{ tag}}" class="pure-button button-tag {{'active' if active_tag == tag }}">{{ tag }}</a>
-        {% endif %}
+            {% if tag != "" %}
+                <a href="/?tag={{ tag}}" class="pure-button button-tag {{'active' if active_tag == tag }}">{{ tag }}</a>
+            {% endif %}
         {% endfor %}
     </div>
 
@@ -64,22 +62,29 @@
                 <td>
                     <a href="/api/checknow?uuid={{ watch.uuid}}{% if request.args.get('tag') %}&tag={{request.args.get('tag')}}{% endif %}"
                        class="pure-button button-small pure-button-primary">Recheck</a>
-                    <a href="/edit?uuid={{ watch.uuid}}" class="pure-button button-small pure-button-primary">Edit</a>
+                    <a href="/edit/{{ watch.uuid}}" class="pure-button button-small pure-button-primary">Edit</a>
                     {% if watch.history|length >= 2 %}
                     <a href="/diff/{{ watch.uuid}}" class="pure-button button-small pure-button-primary">Diff</a>
                     {% endif %}
                 </td>
             </tr>
             {% endfor %}
-
-
             </tbody>
         </table>
-        <div id="check-all-button">
-
-            <a href="/api/checknow{% if active_tag%}?tag={{active_tag}}{%endif%}" class="pure-button button-tag ">Recheck
+        <ul id="post-list-buttons">
+            {% if has_unviewed %}
+            <li>
+                <a href="/api/mark-all-viewed" class="pure-button button-tag ">Mark all viewed</a>
+            </li>
+            {% endif %}
+            <li>
+               <a href="/api/checknow{% if active_tag%}?tag={{active_tag}}{%endif%}" class="pure-button button-tag ">Recheck
                 all {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
-        </div>
+            </li>
+            <li>
+                <a href="{{ url_for('index', tag=active_tag , rss=true)}}"><img id="feed-icon" src="/static/images/Generic_Feed-icon.svg" height="15px"></a>
+            </li>
+        </ul>
     </div>
 </div>
 {% endblock %}

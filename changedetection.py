@@ -52,7 +52,11 @@ def main(argv):
 
     @app.context_processor
     def inject_version():
-        return dict(version=datastore.data['tag'])
+        return dict(version=datastore.data['version_tag'])
+
+    @app.context_processor
+    def inject_new_version_available():
+        return dict(new_version_available=app.config['NEW_VERSION_AVAILABLE'])
 
     if ssl_mode:
         # @todo finalise SSL config, but this should get you in the right direction if you need it.

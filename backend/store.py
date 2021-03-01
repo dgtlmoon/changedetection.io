@@ -22,10 +22,10 @@ class ChangeDetectionStore:
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
         self.stop_thread = False
+
         self.__data = {
             'note': "Hello! If you change this file manually, please be sure to restart your changedetection.io instance!",
             'watching': {},
-            'tag': '0.261',
             'settings': {
                 'headers': {
                     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36',
@@ -53,7 +53,8 @@ class ChangeDetectionStore:
             'previous_md5': "",
             'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send
-            'history': {}  # Dict of timestamp and output stripped filename
+            'history': {},  # Dict of timestamp and output stripped filename
+            'ignore_text': [] # List of text to ignore when calculating the comparison checksum
         }
 
         if path.isfile('/source.txt'):
@@ -63,6 +64,7 @@ class ChangeDetectionStore:
                 self.__data['build_sha'] = f.read()
 
         try:
+            # @todo retest with ", encoding='utf-8'"
             with open(self.json_store_path) as json_file:
                 from_disk = json.load(json_file)
 
@@ -80,8 +82,7 @@ class ChangeDetectionStore:
 
                 # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
                 # @todo pretty sure theres a python we todo this with an abstracted(?) object!
-
-                for uuid, watch in self.data['watching'].items():
+                for uuid, watch in self.__data['watching'].items():
                     _blank = deepcopy(self.generic_definition)
                     _blank.update(watch)
                     self.__data['watching'].update({uuid: _blank})
@@ -97,6 +98,14 @@ class ChangeDetectionStore:
                 self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
                 self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
                 self.add_watch(url='https://changedetection.io', tag='Tech news')
+
+
+        self.__data['version_tag'] = "0.27"
+
+        if not 'app_guid' in self.__data:
+            self.__data['app_guid'] = str(uuid_builder.uuid4())
+
+        self.needs_write = True
 
         # Finally start the thread that will manage periodic data saves to JSON
         save_data_thread = threading.Thread(target=self.save_datastore).start()
@@ -117,7 +126,7 @@ class ChangeDetectionStore:
         return 0
 
     def set_last_viewed(self, uuid, timestamp):
-        self.data['watching'][uuid].update({'last_viewed': str(timestamp)})
+        self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
         self.needs_write = True
 
     def update_watch(self, uuid, update_obj):
@@ -139,6 +148,19 @@ class ChangeDetectionStore:
     @property
     def data(self):
 
+        has_unviewed = False
+
+        for uuid, v in self.__data['watching'].items():
+            self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
+            if int(v['newest_history_key']) <= int(v['last_viewed']):
+                self.__data['watching'][uuid]['viewed'] = True
+
+            else:
+                self.__data['watching'][uuid]['viewed'] = False
+                has_unviewed = True
+
+        self.__data['has_unviewed'] = has_unviewed
+
         return self.__data
 
     def get_all_tags(self):
@@ -156,7 +178,11 @@ class ChangeDetectionStore:
 
     def delete(self, uuid):
         with self.lock:
-            del (self.__data['watching'][uuid])
+            if uuid == 'all':
+                self.__data['watching'] = {}
+            else:
+                del (self.__data['watching'][uuid])
+
             self.needs_write = True
 
     def url_exists(self, url):
