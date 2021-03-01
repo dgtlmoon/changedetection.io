@@ -253,3 +253,16 @@ footer {
 #feed-icon {
     vertical-align: middle;
 }
+
+#version {
+    position: absolute;
+    top: 80px;
+    right: 0px;
+    font-size: 8px;
+    background: #fff;
+    padding: 10px;
+}
+
+#new-version-text a{
+    color: #e07171;
+}

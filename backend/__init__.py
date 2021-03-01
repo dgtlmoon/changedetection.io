@@ -513,18 +513,28 @@ def changedetection_app(config=None, datastore_o=None):
 # Check for new version and anonymous stats
 def check_for_new_version():
     import requests
-    app.config['NEW_VERSION_AVAILABLE'] = True
+
     import urllib3
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     while not app.config.exit.is_set():
-        r = requests.post("https://changedetection.io/check-ver.php",
-                          data={'version': datastore.data['version_tag'],
-                                'app_guid': datastore.data['app_guid']},
+        try:
+            r = requests.post("https://changedetection.io/check-ver.php",
+                              data={'version': datastore.data['version_tag'],
+                                    'app_guid': datastore.data['app_guid']},
 
-                          verify=False)
+                              verify=False)
+        except:
+            pass
 
-        app.config.exit.wait(10)
+        try:
+            if "new_version" in r.text:
+                app.config['NEW_VERSION_AVAILABLE'] = True
+        except:
+            pass
+
+        # Check daily
+        app.config.exit.wait(86400)
 
 
 # Requests for checking on the site use a pool of thread Workers managed by a Queue.
