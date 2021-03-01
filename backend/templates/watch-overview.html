@@ -17,7 +17,9 @@
     <div>
         <a href="/" class="pure-button button-tag {{'active' if not active_tag }}">All</a>
         {% for tag in tags %}
-        <a href="/?tag={{ tag}}" class="pure-button button-tag {{'active' if active_tag == tag }}">{{ tag }}</a>
+            {% if tag != "" %}
+                <a href="/?tag={{ tag}}" class="pure-button button-tag {{'active' if active_tag == tag }}">{{ tag }}</a>
+            {% endif %}
         {% endfor %}
     </div>
 
