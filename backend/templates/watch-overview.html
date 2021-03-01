@@ -15,13 +15,9 @@
         <!-- user/pass r = requests.get('https://api.github.com/user', auth=('user', 'pass')) -->
     </form>
     <div>
-
+        <a href="/" class="pure-button button-tag {{'active' if not active_tag }}">All</a>
         {% for tag in tags %}
-        {% if tag == "" %}
-        <a href="/" class="pure-button button-tag {{'active' if active_tag == tag }}">All</a>
-        {% else %}
         <a href="/?tag={{ tag}}" class="pure-button button-tag {{'active' if active_tag == tag }}">{{ tag }}</a>
-        {% endif %}
         {% endfor %}
     </div>
 
@@ -71,8 +67,6 @@
                 </td>
             </tr>
             {% endfor %}
-
-
             </tbody>
         </table>
         <ul id="post-list-buttons">
@@ -84,6 +78,9 @@
             <li>
                <a href="/api/checknow{% if active_tag%}?tag={{active_tag}}{%endif%}" class="pure-button button-tag ">Recheck
                 all {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
+            </li>
+            <li>
+                <a href="{{ url_for('index', tag=active_tag , rss=true)}}"><img id="feed-icon" src="/static/images/Generic_Feed-icon.svg" height="15px"></a>
             </li>
         </ul>
     </div>

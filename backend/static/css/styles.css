@@ -249,3 +249,7 @@ footer {
     color: #444;
     text-align: center;
 }
+
+#feed-icon {
+    vertical-align: middle;
+}

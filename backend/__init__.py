@@ -126,7 +126,7 @@ def changedetection_app(config=None, datastore_o=None):
             fg.link(href='https://changedetection.io')
 
             for watch in sorted_watches:
-                if watch['unviewed']:
+                if not watch['viewed']:
                     fe = fg.add_entry()
                     fe.title(watch['url'])
                     fe.link(href=watch['url'])
