@@ -2,10 +2,8 @@
 
 
 # @todo logging
-# @todo sort by last_changed
 # @todo extra options for url like , verify=False etc.
 # @todo enable https://urllib3.readthedocs.io/en/latest/user-guide.html#ssl as option?
-# @todo maybe a button to reset all 'last-changed'.. so you can see it clearly when something happens since your last visit
 # @todo option for interval day/6 hour/etc
 # @todo on change detected, config for calling some API
 # @todo make tables responsive!
