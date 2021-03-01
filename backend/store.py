@@ -73,6 +73,9 @@ class ChangeDetectionStore:
                 if 'watching' in from_disk:
                     self.__data['watching'].update(from_disk['watching'])
 
+                if 'app_guid' in from_disk:
+                    self.__data['app_guid'] = from_disk['app_guid']
+
                 if 'settings' in from_disk:
                     if 'headers' in from_disk['settings']:
                         self.__data['settings']['headers'].update(from_disk['settings']['headers'])
