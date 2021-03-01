@@ -21,7 +21,7 @@ from threading import Event
 
 import queue
 
-from flask import Flask, render_template, request, send_file, send_from_directory,  abort, redirect, url_for
+from flask import Flask, render_template, request, send_file, send_from_directory, abort, redirect, url_for
 
 from feedgen.feed import FeedGenerator
 from flask import make_response
@@ -87,15 +87,12 @@ def changedetection_app(config=None, datastore_o=None):
     app.config.update(dict(DEBUG=True))
     app.config.update(config or {})
 
-
-
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
     #    CORS(app)
 
     # https://github.com/pallets/flask/blob/93dd1709d05a1cf0e886df6223377bdab3b077fb/examples/tutorial/flaskr/__init__.py#L39
     # You can divide up the stuff like this
-
 
     @app.route("/", methods=['GET'])
     def index():
@@ -156,7 +153,6 @@ def changedetection_app(config=None, datastore_o=None):
             # Show messages but once.
             messages = []
 
-
         return output
 
     @app.route("/scrub", methods=['GET', 'POST'])
@@ -209,7 +205,7 @@ def changedetection_app(config=None, datastore_o=None):
 
                 handler = fetch_site_status.perform_site_check(datastore=datastore)
                 stripped_content = handler.strip_ignore_text(raw_content,
-                                                          datastore.data['watching'][uuid]['ignore_text'])
+                                                             datastore.data['watching'][uuid]['ignore_text'])
 
                 checksum = hashlib.md5(stripped_content).hexdigest()
                 return checksum
@@ -257,10 +253,8 @@ def changedetection_app(config=None, datastore_o=None):
                 datastore.data['watching'][uuid]['ignore_text'] = ignore_text
 
                 # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
-                if len( datastore.data['watching'][uuid]['history']):
+                if len(datastore.data['watching'][uuid]['history']):
                     update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
-
-
 
             validators.url(url)  # @todo switch to prop/attr/observer
             datastore.data['watching'][uuid].update(update_obj)
@@ -325,7 +319,7 @@ def changedetection_app(config=None, datastore_o=None):
 
             if len(remaining_urls) == 0:
                 return redirect(url_for('index'))
-            #@todo repair
+            # @todo repair
         else:
             output = render_template("import.html",
                                      messages=messages,
@@ -352,7 +346,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
-            uuid= list(datastore.data['watching'].keys()).pop()
+            uuid = list(datastore.data['watching'].keys()).pop()
 
         extra_stylesheets = ['/static/css/diff.css']
         try:
@@ -367,9 +361,9 @@ def changedetection_app(config=None, datastore_o=None):
         dates.sort(reverse=True)
         dates = [str(i) for i in dates]
 
-
         if len(dates) < 2:
-            messages.append({'class': 'error', 'message': "Not enough saved change detection snapshots to produce a report."})
+            messages.append(
+                {'class': 'error', 'message': "Not enough saved change detection snapshots to produce a report."})
             return redirect(url_for('index'))
 
         # Save the current newest history as the most recently viewed
@@ -531,6 +525,7 @@ def check_for_new_version():
 
         app.config.exit.wait(10)
 
+
 # Requests for checking on the site use a pool of thread Workers managed by a Queue.
 class Worker(threading.Thread):
     current_uuid = None
@@ -569,17 +564,14 @@ class Worker(threading.Thread):
                                 # A change was detected
                                 datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
 
-
                 self.current_uuid = None  # Done
                 self.q.task_done()
 
             app.config.exit.wait(1)
 
 
-
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
-
     # Spin up Workers.
     for _ in range(datastore.data['settings']['requests']['workers']):
         new_worker = Worker(update_q)
