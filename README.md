@@ -50,14 +50,4 @@ Examining differences in content.
 
 ![Self-hosted web page change monitoring context difference screenshot](screenshot-diff.png?raw=true "Self-hosted web page change monitoring context difference screenshot")
 
-### Future plans
-
-- Greater configuration of check interval times, page request headers.
-- ~~General options for timeout, default headers~~
-- On change detection, callout to another API (handy for notices/issue trackers)
-- ~~Explore the differences that were detected~~ 
-- Add more options to explore versions of differences
-- Use a graphic/rendered page difference instead of text (see the experimental `selenium-screenshot-diff` branch)
-
- 
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
