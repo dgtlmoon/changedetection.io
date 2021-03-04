@@ -11,8 +11,7 @@
 
 _Know when web pages change! Stay ontop of new information!_
 
-![Self-hosted web page change monitoring application screenshot](screenshot.png?raw=true "Self-hosted web page change monitoring screenshot")
-
+<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />
 
 #### Example use cases
 
@@ -48,6 +47,7 @@ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/dat
 
 Examining differences in content.
 
-![Self-hosted web page change monitoring context difference screenshot](screenshot-diff.png?raw=true "Self-hosted web page change monitoring context difference screenshot")
+
+<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
 
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
