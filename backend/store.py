@@ -229,6 +229,12 @@ class ChangeDetectionStore:
     def save_history_text(self, uuid, result_obj, contents):
 
         output_path = "{}/{}".format(self.datastore_path, uuid)
+        try:
+            os.mkdir(output_path)
+        except FileExistsError:
+            pass
+
+        output_path = "{}/{}".format(self.datastore_path, uuid)
         fname = "{}/{}-{}.stripped.txt".format(output_path, result_obj['previous_md5'], str(time.time()))
         with open(fname, 'w') as f:
             f.write(contents)

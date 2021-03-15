@@ -266,3 +266,8 @@ footer {
 #new-version-text a{
     color: #e07171;
 }
+
+#diff-stream {
+    font-size: 10px;
+    white-space: pre-wrap;
+}

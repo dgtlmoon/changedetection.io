@@ -99,6 +99,8 @@ def changedetection_app(config=None, datastore_o=None):
         global messages
 
         limit_tag = request.args.get('tag')
+        rss = request.args.get('rss')
+        mode = request.args.get('mode')
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
@@ -119,7 +121,63 @@ def changedetection_app(config=None, datastore_o=None):
         sorted_watches.sort(key=lambda x: x['last_changed'], reverse=True)
 
         existing_tags = datastore.get_all_tags()
-        rss = request.args.get('rss')
+
+        if mode == 'stream':
+            import difflib
+
+            import pprint
+            streams = []
+
+            extra_stylesheets = ['/static/css/diff.css']
+            for watch in sorted_watches:
+                if not watch['viewed']:
+
+                    # get last two date keys
+                    dates = list(watch['history'].keys())
+                    # Convert to int, sort and back to str again
+                    dates = [int(i) for i in dates]
+                    dates.sort(reverse=True)
+                    dates = [str(i) for i in dates]
+                    print ("OK", watch['uuid'])
+
+                    if len(dates) < 2:
+                        print ("Skipping", watch['url'])
+                        continue
+                    else:
+                        try:
+                            path = datastore.data['watching'][watch['uuid']]['history'][str(dates[1])]
+                            with open(path,
+                                      encoding='utf-8') as file:
+                                txt1=[line.rstrip() for line in file.readlines()]
+
+                            path = datastore.data['watching'][watch['uuid']]['history'][str(dates[0])]
+                            with open(path,
+                                      encoding='utf-8') as file:
+                                txt2 = [line.rstrip() for line in file.readlines()]
+                        except FileNotFoundError:
+                            print ("Skipping", watch['url'])
+                            continue
+
+                        df = list(difflib.unified_diff(txt1, txt2,n=1))
+                        diff_entry=[]
+                        for line in df:
+                            if line[0] == '-' or line[0] == '+':
+                                diff_entry.append(line)
+
+
+                        # pprint(df)
+                        #s = pprint.pformat(df)
+                        streams.append(diff_entry)
+
+
+            print ("###########", len(streams))
+
+            output = render_template("watch-diff-stream.html",
+                                     streams=streams,
+                                     extra_stylesheets=extra_stylesheets
+                                     )
+            return output
+
 
         if rss:
             fg = FeedGenerator()
@@ -143,7 +201,8 @@ def changedetection_app(config=None, datastore_o=None):
             return response
 
         else:
-            output = render_template("watch-overview.html",
+            #table = render_template('watch-table.html', watches=sorted_watches)
+            output = render_template("watch-table.html",
                                      watches=sorted_watches,
                                      messages=messages,
                                      tags=existing_tags,

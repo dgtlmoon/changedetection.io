@@ -1,0 +1,12 @@
+{% extends 'watch-overview.html' %}
+{% block innercontent %}
+Entries: {{ streams|length }}
+
+<div id="diff-stream" class="edit-form">
+    {% for item in streams %}
+        {{ loop.index }}
+{% for diff in item %}{% if diff[0] =='+' %}<ins>{{ diff }}</ins>{% endif %}{% if diff[0] =='-' %}<del>{{ diff }}</del>{% endif %}
+        {% endfor %}
+    {% endfor %}
+</div>
+{% endblock %}
