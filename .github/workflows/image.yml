@@ -20,5 +20,5 @@ jobs:
       - name: build the image
         run: echo |
           docker buildx build --push \
-            --tag "${{ secrets.DOCKER_USERNAME }}"/multiarch-example:latest \
+            --tag ${{ secrets.DOCKER_USERNAME }}/multiarch-example:latest \
             --platform linux/amd64,linux/arm/v7,linux/arm64 .
