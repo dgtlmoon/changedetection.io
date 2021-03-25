@@ -18,5 +18,5 @@ jobs:
       - name: build the image
       run: |
         docker buildx build \
-          --tag your-username/multiarch-example:latest \
+          --tag seedem84/multiarch-example:latest \
           --platform linux/amd64,linux/arm/v7,linux/arm64 . 
