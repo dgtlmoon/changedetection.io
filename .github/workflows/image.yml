@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: python:3.8-slim
     steps:
       - name: checkout code
         uses: actions/checkout@v2
