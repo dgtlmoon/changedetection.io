@@ -9,7 +9,10 @@
 
 ## Self-hosted change monitoring of web pages.
 
-_Know when web pages change! Stay ontop of new information!_
+_Know when web pages change! Stay ontop of new information!_ 
+
+Live your data-life *pro-actively* instead of *re-actively*, do not rely on manipulative social media for consuming important information.
+
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />
 
