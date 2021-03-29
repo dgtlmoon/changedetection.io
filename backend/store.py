@@ -47,6 +47,7 @@ class ChangeDetectionStore:
             'tag': None,
             'last_checked': 0,
             'last_changed': 0,
+            'paused': False,
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
             'newest_history_key': "",
             'title': None,
@@ -133,6 +134,10 @@ class ChangeDetectionStore:
         self.needs_write = True
 
     def update_watch(self, uuid, update_obj):
+
+        # Skip if 'paused' state
+        if self.__data['watching'][uuid]['paused']:
+            return
 
         with self.lock:
 

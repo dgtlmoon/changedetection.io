@@ -266,3 +266,7 @@ footer {
 #new-version-text a{
     color: #e07171;
 }
+
+.paused-state.state-False img {
+    opacity: 0.3;
+}
