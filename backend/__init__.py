@@ -97,8 +97,19 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/", methods=['GET'])
     def index():
         global messages
-
         limit_tag = request.args.get('tag')
+
+        pause_uuid = request.args.get('pause')
+
+        if pause_uuid:
+            try:
+                datastore.data['watching'][pause_uuid]['paused'] ^= True
+                datastore.needs_write = True
+
+                return redirect(url_for('index', limit_tag = limit_tag))
+            except KeyError:
+                pass
+
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
@@ -489,15 +500,17 @@ def changedetection_app(config=None, datastore_o=None):
             # Items that have this current tag
             for watch_uuid, watch in datastore.data['watching'].items():
                 if (tag != None and tag in watch['tag']):
-                    i += 1
-                    if watch_uuid not in running_uuids:
+                    if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                         update_q.put(watch_uuid)
+                        i += 1
+
         else:
             # No tag, no uuid, add everything.
             for watch_uuid, watch in datastore.data['watching'].items():
-                i += 1
-                if watch_uuid not in running_uuids:
+
+                if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                     update_q.put(watch_uuid)
+                    i += 1
 
         messages.append({'class': 'ok', 'message': "{} watches are rechecking.".format(i)})
         return redirect(url_for('index', tag=tag))
@@ -561,7 +574,6 @@ class Worker(threading.Thread):
                 self.current_uuid = uuid
 
                 if uuid in list(datastore.data['watching'].keys()):
-
                     try:
                         changed_detected, result, contents = update_handler.run(uuid)
 
@@ -569,7 +581,6 @@ class Worker(threading.Thread):
                         app.logger.error("File permission error updating", uuid, str(s))
                     else:
                         if result:
-
                             datastore.update_watch(uuid=uuid, update_obj=result)
                             if changed_detected:
                                 # A change was detected
