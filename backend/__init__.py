@@ -589,15 +589,16 @@ def ticker_thread_check_time_launch_checks():
         running_update_threads.append(new_worker)
         new_worker.start()
 
-    # Every minute check for new UUIDs to follow up on
-    minutes = datastore.data['settings']['requests']['minutes_between_check']
-
     while not app.config.exit.is_set():
         running_uuids = []
         for t in running_update_threads:
             running_uuids.append(t.current_uuid)
 
         # Look at the dataset, find a stale watch to process
+
+        # Every minute check for new UUIDs to follow up on, should be inside the loop incase it changes.
+        minutes = datastore.data['settings']['requests']['minutes_between_check']
+
         threshold = time.time() - (minutes * 60)
         for uuid, watch in datastore.data['watching'].items():
             if watch['last_checked'] <= threshold:
