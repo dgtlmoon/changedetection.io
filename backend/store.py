@@ -157,17 +157,17 @@ class ChangeDetectionStore:
     def data(self):
 
         has_unviewed = False
+        with self.lock:
+            for uuid, v in self.__data['watching'].items():
+                self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
+                if int(v['newest_history_key']) <= int(v['last_viewed']):
+                    self.__data['watching'][uuid]['viewed'] = True
 
-        for uuid, v in self.__data['watching'].items():
-            self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
-            if int(v['newest_history_key']) <= int(v['last_viewed']):
-                self.__data['watching'][uuid]['viewed'] = True
+                else:
+                    self.__data['watching'][uuid]['viewed'] = False
+                    has_unviewed = True
 
-            else:
-                self.__data['watching'][uuid]['viewed'] = False
-                has_unviewed = True
-
-        self.__data['has_unviewed'] = has_unviewed
+            self.__data['has_unviewed'] = has_unviewed
 
         return self.__data
 
