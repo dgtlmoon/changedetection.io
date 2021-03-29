@@ -2,7 +2,7 @@ name: build our image
 
 on:
   push:
-    branches: master
+    branches: [master, docker-push-amd64-rpi-etc]
 
 jobs:
   build:
