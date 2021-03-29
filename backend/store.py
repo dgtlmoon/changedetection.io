@@ -157,7 +157,6 @@ class ChangeDetectionStore:
     def data(self):
 
         has_unviewed = False
-
         for uuid, v in self.__data['watching'].items():
             self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
             if int(v['newest_history_key']) <= int(v['last_viewed']):
@@ -271,8 +270,8 @@ class ChangeDetectionStore:
             if self.stop_thread:
                 print("Shutting down datastore thread")
                 return
+            
             if self.needs_write:
                 self.sync_to_json()
-
             time.sleep(3)
 
