@@ -247,11 +247,21 @@ class ChangeDetectionStore:
 
     def sync_to_json(self):
         print("Saving..")
-        with open(self.json_store_path, 'w') as json_file:
-            json.dump(self.__data, json_file, indent=4)
-            logging.info("Re-saved index")
+        data ={}
 
-        self.needs_write = False
+        try:
+            data = deepcopy(self.__data)
+        except RuntimeError:
+            time.sleep(0.5)
+            print ("! Data changed when writing to JSON, trying again..")
+            self.sync_to_json()
+            return
+        else:
+            with open(self.json_store_path, 'w') as json_file:
+                json.dump(data, json_file, indent=4)
+                logging.info("Re-saved index")
+
+            self.needs_write = False
 
     # Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
     # by just running periodically in one thread, according to python, dict updates are threadsafe.
@@ -263,6 +273,6 @@ class ChangeDetectionStore:
                 return
             if self.needs_write:
                 self.sync_to_json()
-            time.sleep(1)
 
-# body of the constructor
+            time.sleep(3)
+
