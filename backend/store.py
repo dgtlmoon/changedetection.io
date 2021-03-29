@@ -157,7 +157,6 @@ class ChangeDetectionStore:
     def data(self):
 
         has_unviewed = False
-
         for uuid, v in self.__data['watching'].items():
             self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
             if int(v['newest_history_key']) <= int(v['last_viewed']):
@@ -251,7 +250,7 @@ class ChangeDetectionStore:
             json.dump(self.__data, json_file, indent=4)
             logging.info("Re-saved index")
 
-        self.needs_write = False
+            self.needs_write = False
 
     # Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
     # by just running periodically in one thread, according to python, dict updates are threadsafe.
@@ -261,8 +260,15 @@ class ChangeDetectionStore:
             if self.stop_thread:
                 print("Shutting down datastore thread")
                 return
+
+            # The delay here serves two purposes
+            # - Conserve CPU
+            # - when this thread function starts, it will try to write while other threads are modifying the structure
+            # The second point is indicative of the data structure/usage not really fitting the case, should switch to
+            # a real DB at some point
+            time.sleep(1)
             if self.needs_write:
                 self.sync_to_json()
-            time.sleep(1)
+
 
 # body of the constructor
