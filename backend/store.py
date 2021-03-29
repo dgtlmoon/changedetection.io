@@ -242,11 +242,13 @@ class ChangeDetectionStore:
 
     def sync_to_json(self):
         print("Saving..")
-        with open(self.json_store_path, 'w') as json_file:
-            json.dump(self.__data, json_file, indent=4)
-            logging.info("Re-saved index")
 
-        self.needs_write = False
+        with self.lock:
+            with open(self.json_store_path, 'w') as json_file:
+                json.dump(self.__data, json_file, indent=4)
+                logging.info("Re-saved index")
+
+                self.needs_write = False
 
     # Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
     # by just running periodically in one thread, according to python, dict updates are threadsafe.
