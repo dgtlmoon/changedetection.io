@@ -8,16 +8,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout code
+      - name: Checkout
         uses: actions/checkout@v2
-      - name: install buildx
+
+      - name: Set up Docker Buildx
         id: buildx
-        uses: crazy-max/ghaction-docker-buildx@v1
-        with:
-          version: latest
-      - name: login to docker hub
+        uses: docker/setup-buildx-action@v1
+
+      - name: Builder instance name
+        run: echo ${{ steps.buildx.outputs.name }}
+
+      - name: Available platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
+
+      - name: Login to docker hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-      - name: build the image
+
+      - name: Build
         run: |
-          docker buildx build --push \
-            --tag ${{ secrets.DOCKER_USERNAME }}/multiarch:latest \
+          docker build . --push --tag ${{ secrets.DOCKER_USERNAME }}/multiarch:latest
+        with:
+          install: true
+
