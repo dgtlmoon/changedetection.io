@@ -26,7 +26,6 @@ jobs:
 
       - name: Build
         run: |
-          docker build . --push --tag ${{ secrets.DOCKER_USERNAME }}/multiarch:latest
-        with:
-          install: true
+          docker buildx . --push --tag ${{ secrets.DOCKER_USERNAME }}/multiarch:latest
+
 
