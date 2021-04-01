@@ -2,7 +2,7 @@ name: Test, build and push to Docker Hub
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
 
 jobs:
   build:
@@ -14,11 +14,13 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install flake8 pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
@@ -55,8 +57,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-                ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:latest
-#                ${{ secrets.DOCKER_HUB_USERNAME }}:/changedetection.io:${{ env.RELEASE_VERSION }}
+            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:latest
+          #                ${{ secrets.DOCKER_HUB_USERNAME }}:/changedetection.io:${{ env.RELEASE_VERSION }}
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
