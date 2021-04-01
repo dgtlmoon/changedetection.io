@@ -8,7 +8,7 @@
         <fieldset>
 
             <label for="diffWords" class="pure-checkbox">
-                <input type="radio" name="diff_type" id="diffWords" value="diffWords" /> Words</label>
+                <input type="radio" name="diff_type" id="diffWords" value="diffWords"/> Words</label>
             <label for="diffLines" class="pure-checkbox">
                 <input type="radio" name="diff_type" id="diffLines" value="diffLines" checked=""/> Lines</label>
 
@@ -19,9 +19,9 @@
             <label for="diff-version">Compare newest (<span id="current-v-date"></span>) with</label>
             <select id="diff-version" name="previous_version">
                 {% for version in versions %}
-                    <option value="{{version}}" {% if version== current_previous_version %} selected="" {% endif %}>
-                        {{version}}
-                    </option>
+                <option value="{{version}}" {% if version== current_previous_version %} selected="" {% endif %}>
+                    {{version}}
+                </option>
                 {% endfor %}
             </select>
             <button type="submit" class="pure-button pure-button-primary">Go</button>
@@ -90,6 +90,10 @@ function changed() {
 
 	result.textContent = '';
 	result.appendChild(fragment);
+
+	// Jump at start
+	inputs.current=0;
+    next_diff();
 }
 
 window.onload = function() {
@@ -112,6 +116,7 @@ window.onload = function() {
 
 	onDiffTypeChange(document.querySelector('#settings [name="diff_type"]:checked'));
 	changed();
+
 };
 
 a.onpaste = a.onchange =
@@ -139,8 +144,7 @@ for (var i = 0; i < radio.length; i++) {
 
 var inputs = document.getElementsByClassName('change');
 inputs.current=0;
-// Jump at start
-next_diff();
+
 
 function next_diff() {
 
@@ -159,6 +163,7 @@ function next_diff() {
       inputs.current=0;
     }
 }
+
 
 
 </script>
