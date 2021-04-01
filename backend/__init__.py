@@ -174,19 +174,16 @@ def changedetection_app(config=None, datastore_o=None):
 
         if request.method == 'POST':
             confirmtext = request.form.get('confirmtext')
+            limit_timestamp = int(request.form.get('limit_date'))
 
             if confirmtext == 'scrub':
 
-                for txt_file_path in Path(app.config['datastore_path']).rglob('*.txt'):
-                    os.unlink(txt_file_path)
-
                 for uuid, watch in datastore.data['watching'].items():
-                    watch['last_checked'] = 0
-                    watch['last_changed'] = 0
-                    watch['previous_md5'] = None
-                    watch['history'] = {}
+                    if len(str(limit_timestamp)) == 10:
+                        datastore.scrub_watch(uuid, limit_timestamp = limit_timestamp)
+                    else:
+                        datastore.scrub_watch(uuid)
 
-                datastore.needs_write = True
                 messages.append({'class': 'ok', 'message': 'Cleaned all version history.'})
             else:
                 messages.append({'class': 'error', 'message': 'Wrong confirm text.'})
