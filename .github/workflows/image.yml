@@ -2,7 +2,7 @@ name: build our image
 
 on:
   push:
-    branches: [master, docker-push-amd64-rpi-etc]
+    branches: [master]
 
 jobs:
   build:
@@ -36,13 +36,13 @@ jobs:
           context: ./
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:multiarch
+          tags: |
+                ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:latest
+                ${{ secrets.DOCKER_HUB_USERNAME }}:/changedetection.io:${{ env.RELEASE_VERSION }}
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
-      #          tags: |
-      #            ${{ env.REGISTRY_IMAGE }}:latest
-      #            ${{ env.REGISTRY_IMAGE }}:${{ env.RELEASE_VERSION }}
+
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
 
