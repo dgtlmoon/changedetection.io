@@ -183,12 +183,28 @@ class ChangeDetectionStore:
         tags.sort()
         return tags
 
+    def unlink_history_file(self, path):
+        try:
+            os.unlink(path)
+        except (FileNotFoundError, IOError):
+            pass
+
+    # Delete a single watch by UUID
     def delete(self, uuid):
         with self.lock:
             if uuid == 'all':
                 self.__data['watching'] = {}
+
+                # GitHub #30 also delete history records
+                for uuid in self.data['watching']:
+                    for path in self.data['watching'][uuid]['history'].values():
+                        self.unlink_history_file(path)
+
             else:
-                del (self.__data['watching'][uuid])
+                for path in self.data['watching'][uuid]['history'].values():
+                    self.unlink_history_file(path)
+
+                del self.data['watching'][uuid]
 
             self.needs_write = True
 
@@ -204,6 +220,47 @@ class ChangeDetectionStore:
     def get_val(self, uuid, val):
         # Probably their should be dict...
         return self.data['watching'][uuid].get(val)
+
+    # Remove a watchs data but keep the entry (URL etc)
+    def scrub_watch(self, uuid, limit_timestamp = False):
+
+        import hashlib
+        del_timestamps = []
+
+        for timestamp, path in self.data['watching'][uuid]['history'].items():
+            if not limit_timestamp or (limit_timestamp is not False and int(timestamp) > limit_timestamp):
+                self.unlink_history_file(path)
+                del_timestamps.append(timestamp)
+
+
+
+                if not limit_timestamp:
+                    self.data['watching'][uuid]['last_checked'] = 0
+                    self.data['watching'][uuid]['last_changed'] = 0
+                    self.data['watching'][uuid]['previous_md5'] = 0
+
+        for timestamp in del_timestamps:
+            del self.data['watching'][uuid]['history'][str(timestamp)]
+
+            # If there was a limitstamp, we need to reset some meta data about the entry
+            # This has to happen after we remove the others from the list
+            if limit_timestamp:
+                newest_key = self.get_newest_history_key(uuid)
+                if newest_key:
+                    self.data['watching'][uuid]['last_checked'] = int(newest_key)
+                    # @todo should be the original value if it was less than newest key
+                    self.data['watching'][uuid]['last_changed'] = int(newest_key)
+                    try:
+                        with open(self.data['watching'][uuid]['history'][str(newest_key)], "rb") as fp:
+                            content = fp.read()
+                        self.data['watching'][uuid]['previous_md5'] = hashlib.md5(content).hexdigest()
+                    except (FileNotFoundError, IOError):
+                        self.data['watching'][uuid]['previous_md5'] = False
+                        pass
+
+
+        self.needs_write = True
+
 
     def add_watch(self, url, tag):
         with self.lock:
