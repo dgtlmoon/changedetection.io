@@ -598,9 +598,11 @@ def ticker_thread_check_time_launch_checks():
         new_worker.start()
 
     while not app.config.exit.is_set():
+
         running_uuids = []
         for t in running_update_threads:
-            running_uuids.append(t.current_uuid)
+            if t.current_uuid:
+                running_uuids.append(t.current_uuid)
 
         # Look at the dataset, find a stale watch to process
 
@@ -609,7 +611,7 @@ def ticker_thread_check_time_launch_checks():
 
         threshold = time.time() - (minutes * 60)
         for uuid, watch in datastore.data['watching'].items():
-            if watch['last_checked'] <= threshold:
+            if not watch['paused'] and watch['last_checked'] <= threshold:
                 if not uuid in running_uuids and uuid not in update_q.queue:
                     update_q.put(uuid)
 
