@@ -1,5 +1,6 @@
 FROM python:3.8-slim
 COPY requirements.txt /tmp/requirements.txt
+RUN apt-get update && apt-get install -y gcc libc-dev libxslt-dev zlib1g-dev g++
 
 RUN pip3 install -r /tmp/requirements.txt
 
