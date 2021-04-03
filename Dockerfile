@@ -1,6 +1,6 @@
 FROM python:3.8-slim
 COPY requirements.txt /tmp/requirements.txt
-RUN apt-get update && apt-get install -y gcc g++ --no-install-recommends && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y gcc libc-dev libxslt-dev zlib1g-dev g++ --no-install-recommends && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
 RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
 
