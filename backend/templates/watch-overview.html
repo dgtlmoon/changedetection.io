@@ -68,6 +68,10 @@
                     <a href="/edit/{{ watch.uuid}}" class="pure-button button-small pure-button-primary">Edit</a>
                     {% if watch.history|length >= 2 %}
                     <a href="/diff/{{ watch.uuid}}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary">Diff</a>
+                    {% else %}
+                        {% if watch.history|length == 1 %}
+                            <a href="/preview/{{ watch.uuid}}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary">Preview</a>
+                        {% endif %}
                     {% endif %}
                 </td>
             </tr>
