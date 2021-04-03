@@ -405,6 +405,30 @@ def changedetection_app(config=None, datastore_o=None):
 
         return output
 
+    @app.route("/preview/<string:uuid>", methods=['GET'])
+    def preview_page(uuid):
+        global messages
+
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
+        extra_stylesheets = ['/static/css/diff.css']
+
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            messages.append({'class': 'error', 'message': "No history found for the specified link, bad link?"})
+            return redirect(url_for('index'))
+
+        print(watch)
+        with open(list(watch['history'].values())[-1], 'r') as f:
+            content = f.readlines()
+
+        output = render_template("preview.html", content=content, extra_stylesheets=extra_stylesheets)
+        return output
+
+
     @app.route("/favicon.ico", methods=['GET'])
     def favicon():
         return send_from_directory("/app/static/images", filename="favicon.ico")

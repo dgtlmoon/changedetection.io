@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div id="settings">
+    <h1>Current</h1>
+</div>
+
+
+<div id="diff-ui">
+
+    <table>
+        <tbody>
+        <tr>
+            <!-- just proof of concept copied straight from github.com/kpdecker/jsdiff -->
+
+            <td id="diff-col">
+                <span id="result">{% for row in content %}<pre>{{row}}</pre>{% endfor %}</span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+
+{% endblock %}
