@@ -47,7 +47,7 @@
                 <td>{{ loop.index }}</td>
                 <td class="paused-state state-{{watch.paused}}"><a href="/?pause={{ watch.uuid}}"><img src="/static/images/pause.svg" alt="Pause"/></a></td>
                 <td class="title-col">{{watch.title if watch.title is not none else watch.url}}
-                    <a class="external" target=_blank href="{{ watch.url }}"></a>
+                    <a class="external" target="_blank" rel="noopener" href="{{ watch.url }}"></a>
                     {% if watch.last_error is defined and watch.last_error != False %}
                     <div class="fetch-error">{{ watch.last_error }}</div>
                     {% endif %}
