@@ -142,16 +142,19 @@ def changedetection_app(config=None, datastore_o=None):
     def login():
         import hashlib
         import base64
+        global messages
 
         if request.method == 'GET':
-            return render_template("login.html")
+            output = render_template("login.html", messages=messages)
+            # Show messages but once.
+            messages = []
+            return output
 
         email = request.form['email']
 
         # Getting the values back out
         raw_salt_pass = base64.b64decode(datastore.data['settings']['application']['password'])
         salt_from_storage = raw_salt_pass[:32]  # 32 is the length of the salt
-
 
         # Use the exact same setup you used to generate the key, but this time put in the password to check
         new_key = hashlib.pbkdf2_hmac(
@@ -161,7 +164,6 @@ def changedetection_app(config=None, datastore_o=None):
             100000
         )
         new_key =  salt_from_storage + new_key
-
 
         if new_key == raw_salt_pass:
             user = User()
@@ -175,8 +177,10 @@ def changedetection_app(config=None, datastore_o=None):
             # See http://flask.pocoo.org/snippets/62/ for an example.
 #            if not is_safe_url(next):
 #                return flask.abort(400)
-
             return redirect(url_for('index'))
+        else:
+            messages.append({'class': 'error', 'message': 'Incorrect password'})
+
         return redirect(url_for('login'))
 
     @app.before_request
@@ -374,6 +378,17 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def settings_page():
         global messages
+
+        if request.method == 'GET':
+            if request.values.get('removepassword'):
+                from pathlib import Path
+
+                datastore.data['settings']['application']['password'] = False
+                messages.append({'class': 'notice', 'message': "Password protection removed."})
+                flask_login.logout_user()
+
+                return redirect(url_for('settings_page'))
+
         if request.method == 'POST':
 
             password = request.values.get('password')
@@ -386,6 +401,9 @@ def changedetection_app(config=None, datastore_o=None):
                 key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
                 store = base64.b64encode(salt + key).decode('ascii')
                 datastore.data['settings']['application']['password'] = store
+                messages.append({'class': 'notice', 'message': "Password protection enabled."})
+                flask_login.logout_user()
+                return redirect(url_for('index'))
 
             try:
                 minutes = int(request.values.get('minutes').strip())
