@@ -15,6 +15,7 @@
 import time
 import os
 import timeago
+import flask_login
 
 import threading
 from threading import Event
@@ -27,6 +28,7 @@ from feedgen.feed import FeedGenerator
 from flask import make_response
 import datetime
 import pytz
+from flask_login import login_required
 
 datastore = None
 
@@ -40,6 +42,7 @@ extra_stylesheets = []
 update_q = queue.Queue()
 
 app = Flask(__name__, static_url_path="/var/www/change-detection/backen/static")
+app.secret_key = 'super secret string'  # Change this!
 
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -47,6 +50,8 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 app.config.exit = Event()
 
 app.config['NEW_VERSION_AVAILABLE'] = False
+
+app.config['LOGIN_DISABLED'] = False
 
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -80,21 +85,77 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     # return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
 
 
+class User(flask_login.UserMixin):
+    pass
+
 def changedetection_app(config=None, datastore_o=None):
     global datastore
     datastore = datastore_o
 
     app.config.update(dict(DEBUG=True))
     app.config.update(config or {})
+    login_manager = flask_login.LoginManager()
+    login_manager.init_app(app)
+    users = {'defaultuser@changedetection.io': {'password': 'secret'}}
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
     #    CORS(app)
 
+    @login_manager.user_loader
+    def user_loader(email):
+        if email not in users:
+            return
+
+        user = User()
+        user.id = email
+        return user
+
+    @login_manager.request_loader
+    def request_loader(request):
+        email = request.form.get('email')
+        if email not in users:
+            return
+
+        user = User()
+        user.id = email
+
+        # DO NOT ever store passwords in plaintext and always compare password
+        # hashes using constant-time comparison!
+        user.is_authenticated = request.form['password'] == users[email]['password']
+
+        return user
+
+    @login_manager.unauthorized_handler
+    def unauthorized_handler():
+
+        return redirect(url_for('login'))
+
     # https://github.com/pallets/flask/blob/93dd1709d05a1cf0e886df6223377bdab3b077fb/examples/tutorial/flaskr/__init__.py#L39
     # You can divide up the stuff like this
+    @app.route('/login', methods=['GET', 'POST'])
+    def login():
+        if request.method == 'GET':
+            return render_template("login.html")
+
+        email = request.form['email']
+        if request.form['password'] == users[email]['password']:
+            user = User()
+            user.id = email
+            flask_login.login_user(user, remember=True)
+            next = request.args.get('next')
+
+            # is_safe_url should check if the url is safe for redirects.
+            # See http://flask.pocoo.org/snippets/62/ for an example.
+#            if not is_safe_url(next):
+#                return flask.abort(400)
+
+            return redirect(url_for('index'))
+
+        return redirect(url_for('login'))
 
     @app.route("/", methods=['GET'])
+    @login_required
     def index():
         global messages
         limit_tag = request.args.get('tag')
@@ -167,6 +228,7 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     @app.route("/scrub", methods=['GET', 'POST'])
+    @login_required
     def scrub_page():
         from pathlib import Path
 
@@ -221,6 +283,7 @@ def changedetection_app(config=None, datastore_o=None):
         return datastore.data['watching'][uuid]['previous_md5']
 
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
+    @login_required
     def edit_page(uuid):
         global messages
         import validators
@@ -278,6 +341,7 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     @app.route("/settings", methods=['GET', "POST"])
+    @login_required
     def settings_page():
         global messages
         if request.method == 'POST':
@@ -303,6 +367,7 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     @app.route("/import", methods=['GET', "POST"])
+    @login_required
     def import_page():
         import validators
         global messages
@@ -340,6 +405,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # Clear all statuses, so we do not see the 'unviewed' class
     @app.route("/api/mark-all-viewed", methods=['GET'])
+    @login_required
     def mark_all_viewed():
 
         # Save the current newest history as the most recently viewed
@@ -350,6 +416,7 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('index'))
 
     @app.route("/diff/<string:uuid>", methods=['GET'])
+    @login_required
     def diff_history_page(uuid):
         global messages
 
@@ -406,6 +473,7 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     @app.route("/preview/<string:uuid>", methods=['GET'])
+    @login_required
     def preview_page(uuid):
         global messages
 
@@ -435,6 +503,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # We're good but backups are even better!
     @app.route("/backup", methods=['GET'])
+    @login_required
     def get_backup():
         import zipfile
         from pathlib import Path
@@ -477,6 +546,7 @@ def changedetection_app(config=None, datastore_o=None):
             abort(404)
 
     @app.route("/api/add", methods=['POST'])
+    @login_required
     def api_watch_add():
         global messages
 
@@ -489,6 +559,7 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('index'))
 
     @app.route("/api/delete", methods=['GET'])
+    @login_required
     def api_delete():
         global messages
         uuid = request.args.get('uuid')
@@ -498,6 +569,7 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('index'))
 
     @app.route("/api/checknow", methods=['GET'])
+    @login_required
     def api_watch_checknow():
 
         global messages

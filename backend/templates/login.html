@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="edit-form">
+    <form class="pure-form pure-form-stacked" action="/login" method="POST">
+        <fieldset>
+            <div class="pure-control-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required="" name="password" value=""
+                       size="15"/>
+                <input type="hidden" id="email" name="email" value="defaultuser@changedetection.io" />
+            </div>
+            <div class="pure-control-group">
+                <button type="submit" class="pure-button pure-button-primary">Submit</button>
+            </div>
+        </fieldset>
+    </form>
+</div>
+
+{% endblock %}

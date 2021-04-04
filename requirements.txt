@@ -8,5 +8,6 @@ validators
 timeago ~=1.0
 inscriptis ~= 1.1
 feedgen ~= 0.9
+flask-login ~= 0.5
 pytz
 urllib3
