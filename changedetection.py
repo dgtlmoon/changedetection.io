@@ -38,12 +38,6 @@ def main(argv):
         if opt == '-d':
             datastore_path = arg
 
-
-
-    # threads can read from disk every x seconds right?
-    # front end can just save
-    # We just need to know which threads are looking at which UUIDs
-
     # isnt there some @thingy to attach to each route to tell it, that this route needs a datastore
     app_config = {'datastore_path': datastore_path}
 

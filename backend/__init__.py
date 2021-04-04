@@ -96,7 +96,7 @@ def changedetection_app(config=None, datastore_o=None):
     app.config.update(config or {})
     login_manager = flask_login.LoginManager()
     login_manager.init_app(app)
-    users = {'defaultuser@changedetection.io': {'password': 'secret'}}
+    users = {'defaultuser@changedetection.io'}
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
@@ -131,18 +131,44 @@ def changedetection_app(config=None, datastore_o=None):
 
         return redirect(url_for('login'))
 
+    @app.route('/logout')
+    def logout():
+        flask_login.logout_user()
+        return redirect(url_for('index'))
+
     # https://github.com/pallets/flask/blob/93dd1709d05a1cf0e886df6223377bdab3b077fb/examples/tutorial/flaskr/__init__.py#L39
     # You can divide up the stuff like this
     @app.route('/login', methods=['GET', 'POST'])
     def login():
+        import hashlib
+        import base64
+
         if request.method == 'GET':
             return render_template("login.html")
 
         email = request.form['email']
-        if request.form['password'] == users[email]['password']:
+
+        # Getting the values back out
+        raw_salt_pass = base64.b64decode(datastore.data['settings']['application']['password'])
+        salt_from_storage = raw_salt_pass[:32]  # 32 is the length of the salt
+
+
+        # Use the exact same setup you used to generate the key, but this time put in the password to check
+        new_key = hashlib.pbkdf2_hmac(
+            'sha256',
+            request.form['password'].encode('utf-8'),  # Convert the password to bytes
+            salt_from_storage,
+            100000
+        )
+        new_key =  salt_from_storage + new_key
+
+
+        if new_key == raw_salt_pass:
             user = User()
             user.id = email
             flask_login.login_user(user, remember=True)
+
+            # @todo find more examples of this
             next = request.args.get('next')
 
             # is_safe_url should check if the url is safe for redirects.
@@ -151,8 +177,12 @@ def changedetection_app(config=None, datastore_o=None):
 #                return flask.abort(400)
 
             return redirect(url_for('index'))
-
         return redirect(url_for('login'))
+
+    @app.before_request
+    def do_something_whenever_a_request_comes_in():
+        # Disable password  loginif there is not one set
+        app.config['LOGIN_DISABLED'] = datastore.data['settings']['application']['password'] == False
 
     @app.route("/", methods=['GET'])
     @login_required
@@ -345,6 +375,18 @@ def changedetection_app(config=None, datastore_o=None):
     def settings_page():
         global messages
         if request.method == 'POST':
+
+            password = request.values.get('password')
+            if password:
+                import hashlib
+                import base64
+
+                # Make a new salt on every new password and store it with the password
+                salt = os.urandom(32)
+                key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+                store = base64.b64encode(salt + key).decode('ascii')
+                datastore.data['settings']['application']['password'] = store
+
             try:
                 minutes = int(request.values.get('minutes').strip())
             except ValueError:
@@ -359,6 +401,8 @@ def changedetection_app(config=None, datastore_o=None):
                 else:
                     messages.append(
                         {'class': 'error', 'message': "Must be atleast 5 minutes."})
+
+
 
         output = render_template("settings.html", messages=messages,
                                  minutes=datastore.data['settings']['requests']['minutes_between_check'])
