@@ -42,7 +42,6 @@ extra_stylesheets = []
 update_q = queue.Queue()
 
 app = Flask(__name__, static_url_path="/var/www/change-detection/backen/static")
-app.secret_key = 'super secret string'  # Change this!
 
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -585,6 +584,9 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Add the index
             zipObj.write(os.path.join(app.config['datastore_path'], "url-watches.json"))
+            # Add the flask app secret
+            zipObj.write(os.path.join(app.config['datastore_path'], "secret.txt"))
+
             # Add any snapshot data we find
             for txt_file_path in Path(app.config['datastore_path']).rglob('*.txt'):
                 parent_p = txt_file_path.parent
