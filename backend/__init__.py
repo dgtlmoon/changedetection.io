@@ -454,8 +454,6 @@ def changedetection_app(config=None, datastore_o=None):
             # Be sure we're written fresh
             datastore.sync_to_json()
 
-            os.chdir(app.config['datastore_path'])
-
             # Add the index
             zipObj.write(os.path.join(app.config['datastore_path'], "url-watches.json"), arcname="url-watches.json")
 
