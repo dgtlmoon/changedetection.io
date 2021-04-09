@@ -436,6 +436,7 @@ def changedetection_app(config=None, datastore_o=None):
     # We're good but backups are even better!
     @app.route("/backup", methods=['GET'])
     def get_backup():
+
         import zipfile
         from pathlib import Path
 
@@ -444,26 +445,30 @@ def changedetection_app(config=None, datastore_o=None):
 
         # We only care about UUIDS from the current index file
         uuids = list(datastore.data['watching'].keys())
+        backup_filepath = os.path.join(app.config['datastore_path'], backupname)
 
-        with zipfile.ZipFile(os.path.join(app.config['datastore_path'], backupname), 'w',
+        with zipfile.ZipFile(backup_filepath, "w",
                              compression=zipfile.ZIP_DEFLATED,
-                             compresslevel=6) as zipObj:
+                             compresslevel=8) as zipObj:
 
             # Be sure we're written fresh
             datastore.sync_to_json()
 
+            os.chdir(app.config['datastore_path'])
+
             # Add the index
-            zipObj.write(os.path.join(app.config['datastore_path'], "url-watches.json"))
-            # Add any snapshot data we find
+            zipObj.write(os.path.join(app.config['datastore_path'], "url-watches.json"), arcname="url-watches.json")
+
+            # Add any snapshot data we find, use the full path to access the file, but make the file 'relative' in the Zip.
             for txt_file_path in Path(app.config['datastore_path']).rglob('*.txt'):
                 parent_p = txt_file_path.parent
                 if parent_p.name in uuids:
-                    zipObj.write(txt_file_path)
+                    zipObj.write(txt_file_path,
+                                 arcname=str(txt_file_path).replace(app.config['datastore_path'], ''),
+                                 compress_type=zipfile.ZIP_DEFLATED,
+                                 compresslevel=8)
 
-        return send_file(os.path.join(app.config['datastore_path'], backupname),
-                         as_attachment=True,
-                         mimetype="application/zip",
-                         attachment_filename=backupname)
+        return send_from_directory(app.config['datastore_path'], backupname)
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):

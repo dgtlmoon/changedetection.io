@@ -3,6 +3,7 @@
 # Launch as a eventlet.wsgi server instance.
 
 import getopt
+import os
 import sys
 
 import eventlet
@@ -15,7 +16,9 @@ from backend import store
 def main(argv):
     ssl_mode = False
     port = 5000
-    datastore_path = "./datastore"
+
+    # Must be absolute so that send_from_directory doesnt try to make it relative to backend/
+    datastore_path = os.path.join(os.getcwd(), "datastore")
 
     try:
         opts, args = getopt.getopt(argv, "sd:p:", "purge")
@@ -37,8 +40,6 @@ def main(argv):
 
         if opt == '-d':
             datastore_path = arg
-
-
 
     # threads can read from disk every x seconds right?
     # front end can just save
