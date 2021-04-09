@@ -394,9 +394,11 @@ def changedetection_app(config=None, datastore_o=None):
             if password:
                 import hashlib
                 import base64
+                import secrets
 
                 # Make a new salt on every new password and store it with the password
-                salt = os.urandom(32)
+                salt = secrets.token_bytes(32)
+
                 key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
                 store = base64.b64encode(salt + key).decode('ascii')
                 datastore.data['settings']['application']['password'] = store
