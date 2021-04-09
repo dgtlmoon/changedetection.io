@@ -3,6 +3,7 @@
 # Launch as a eventlet.wsgi server instance.
 
 import getopt
+import os
 import sys
 
 import eventlet
@@ -34,7 +35,9 @@ def init_app_secret(datastore_path):
 def main(argv):
     ssl_mode = False
     port = 5000
-    datastore_path = "./datastore"
+
+    # Must be absolute so that send_from_directory doesnt try to make it relative to backend/
+    datastore_path = os.path.join(os.getcwd(), "datastore")
 
     try:
         opts, args = getopt.getopt(argv, "sd:p:", "purge")
