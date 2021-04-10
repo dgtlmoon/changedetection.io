@@ -106,7 +106,7 @@ def changedetection_app(config=None, datastore_o=None):
                 datastore.data['watching'][pause_uuid]['paused'] ^= True
                 datastore.needs_write = True
 
-                return redirect(url_for('index', limit_tag = limit_tag))
+                return redirect(url_for('index', tag = limit_tag))
             except KeyError:
                 pass
 
