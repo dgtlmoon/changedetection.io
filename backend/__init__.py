@@ -483,8 +483,13 @@ def changedetection_app(config=None, datastore_o=None):
     def api_watch_add():
         global messages
 
+        url = request.form.get('url').strip()
+        if datastore.url_exists(url):
+            messages.append({'class': 'error', 'message': 'The URL {} already exists'.format(url)})
+            return redirect(url_for('index'))
+
         # @todo add_watch should throw a custom Exception for validation etc
-        new_uuid = datastore.add_watch(url=request.form.get('url').strip(), tag=request.form.get('tag').strip())
+        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip())
         # Straight into the queue.
         update_q.put(new_uuid)
 
