@@ -16,19 +16,19 @@ import time
 import os
 import timeago
 import flask_login
+from flask_login import login_required
 
 import threading
 from threading import Event
 
 import queue
 
-from flask import Flask, render_template, request, send_file, send_from_directory, abort, redirect, url_for
+from flask import Flask, render_template, request, send_from_directory, abort, redirect, url_for
 
 from feedgen.feed import FeedGenerator
 from flask import make_response
 import datetime
 import pytz
-from flask_login import login_required
 
 datastore = None
 
