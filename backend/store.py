@@ -217,7 +217,7 @@ class ChangeDetectionStore:
     def url_exists(self, url):
 
         # Probably their should be dict...
-        for watch in self.data['watching']:
+        for watch in self.data['watching'].values():
             if watch['url'] == url:
                 return True
 
