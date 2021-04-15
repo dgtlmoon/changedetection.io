@@ -85,17 +85,51 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
 
 
 class User(flask_login.UserMixin):
+    def set_password(self, password):
+        return True
+    def get_user(self, email="defaultuser@changedetection.io"):
+        return self
+    def is_authenticated(self):
+        return True
+    def is_active(self):
+        return True
+    def is_anonymous(self):
+        return False
+    def get_id(self):
+        return str(self.id)
+
+    def check_password(self, password):
+
+        import hashlib
+        import base64
+
+        # Getting the values back out
+        raw_salt_pass = base64.b64decode(datastore.data['settings']['application']['password'])
+        salt_from_storage = raw_salt_pass[:32]  # 32 is the length of the salt
+
+        # Use the exact same setup you used to generate the key, but this time put in the password to check
+        new_key = hashlib.pbkdf2_hmac(
+            'sha256',
+            password.encode('utf-8'),  # Convert the password to bytes
+            salt_from_storage,
+            100000
+        )
+        new_key =  salt_from_storage + new_key
+
+        return new_key == raw_salt_pass
+
     pass
 
-def changedetection_app(config=None, datastore_o=None):
+def changedetection_app(conig=None, datastore_o=None):
     global datastore
     datastore = datastore_o
 
     app.config.update(dict(DEBUG=True))
-    app.config.update(config or {})
-    login_manager = flask_login.LoginManager()
-    login_manager.init_app(app)
-    users = {'defaultuser@changedetection.io'}
+    #app.config.update(config or {})
+
+    login_manager = flask_login.LoginManager(app)
+    login_manager.login_view = 'login'
+
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
@@ -103,32 +137,25 @@ def changedetection_app(config=None, datastore_o=None):
 
     @login_manager.user_loader
     def user_loader(email):
-        if email not in users:
-            return
-
         user = User()
-        user.id = email
-        return user
+        user.get_user(email)
 
-    @login_manager.request_loader
-    def request_loader(request):
-        email = request.form.get('email')
-        if email not in users:
-            return
-
-        user = User()
-        user.id = email
-
-        # DO NOT ever store passwords in plaintext and always compare password
-        # hashes using constant-time comparison!
-        user.is_authenticated = request.form['password'] == users[email]['password']
-
-        return user
+        return email
+    #
+    # @login_manager.request_loader
+    # def request_loader(request):
+    #
+    #     user = User()
+    #     x = user.is_authenticated
+    #
+    #     user.id = "defaultuser@changedetection.io"
+    #
+    #     return user
 
     @login_manager.unauthorized_handler
     def unauthorized_handler():
 
-        return redirect(url_for('login'))
+        return redirect(url_for('login',next="foobar"))
 
     @app.route('/logout')
     def logout():
@@ -139,8 +166,7 @@ def changedetection_app(config=None, datastore_o=None):
     # You can divide up the stuff like this
     @app.route('/login', methods=['GET', 'POST'])
     def login():
-        import hashlib
-        import base64
+
         global messages
 
         if request.method == 'GET':
@@ -149,34 +175,15 @@ def changedetection_app(config=None, datastore_o=None):
             messages = []
             return output
 
-        email = request.form['email']
-
-        # Getting the values back out
-        raw_salt_pass = base64.b64decode(datastore.data['settings']['application']['password'])
-        salt_from_storage = raw_salt_pass[:32]  # 32 is the length of the salt
-
-        # Use the exact same setup you used to generate the key, but this time put in the password to check
-        new_key = hashlib.pbkdf2_hmac(
-            'sha256',
-            request.form['password'].encode('utf-8'),  # Convert the password to bytes
-            salt_from_storage,
-            100000
-        )
-        new_key =  salt_from_storage + new_key
-
-        if new_key == raw_salt_pass:
-            user = User()
-            user.id = email
+        user = User()
+        user.id = "defaultuser@changedetection.io"
+        if (user.check_password(request.args.get('password'))):
             flask_login.login_user(user, remember=True)
-
-            # @todo find more examples of this
             next = request.args.get('next')
+            #            if not is_safe_url(next):
+            #                return flask.abort(400)
+            return redirect(next or url_for('index'))
 
-            # is_safe_url should check if the url is safe for redirects.
-            # See http://flask.pocoo.org/snippets/62/ for an example.
-#            if not is_safe_url(next):
-#                return flask.abort(400)
-            return redirect(url_for('index'))
         else:
             messages.append({'class': 'error', 'message': 'Incorrect password'})
 
