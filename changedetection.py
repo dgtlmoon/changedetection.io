@@ -66,6 +66,7 @@ def main(argv):
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'])
     app = backend.changedetection_app(app_config, datastore)
 
+    app.config['datastore_path'] = datastore_path
     app.secret_key = init_app_secret(app_config['datastore_path'])
 
     @app.context_processor
