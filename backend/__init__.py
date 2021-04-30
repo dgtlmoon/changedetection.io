@@ -15,13 +15,15 @@
 import time
 import os
 import timeago
+import flask_login
+from flask_login import login_required
 
 import threading
 from threading import Event
 
 import queue
 
-from flask import Flask, render_template, request, send_file, send_from_directory, abort, redirect, url_for
+from flask import Flask, render_template, request, send_from_directory, abort, redirect, url_for
 
 from feedgen.feed import FeedGenerator
 from flask import make_response
@@ -47,6 +49,8 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 app.config.exit = Event()
 
 app.config['NEW_VERSION_AVAILABLE'] = False
+
+app.config['LOGIN_DISABLED'] = False
 
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -80,21 +84,112 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     # return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
 
 
-def changedetection_app(config=None, datastore_o=None):
+class User(flask_login.UserMixin):
+    id=None
+
+    def set_password(self, password):
+        return True
+    def get_user(self, email="defaultuser@changedetection.io"):
+        return self
+    def is_authenticated(self):
+        return True
+    def is_active(self):
+        return True
+    def is_anonymous(self):
+        return False
+    def get_id(self):
+        return str(self.id)
+
+    def check_password(self, password):
+
+        import hashlib
+        import base64
+
+        # Getting the values back out
+        raw_salt_pass = base64.b64decode(datastore.data['settings']['application']['password'])
+        salt_from_storage = raw_salt_pass[:32]  # 32 is the length of the salt
+
+        # Use the exact same setup you used to generate the key, but this time put in the password to check
+        new_key = hashlib.pbkdf2_hmac(
+            'sha256',
+            password.encode('utf-8'),  # Convert the password to bytes
+            salt_from_storage,
+            100000
+        )
+        new_key =  salt_from_storage + new_key
+
+        return new_key == raw_salt_pass
+
+    pass
+
+def changedetection_app(conig=None, datastore_o=None):
     global datastore
     datastore = datastore_o
 
     app.config.update(dict(DEBUG=True))
-    app.config.update(config or {})
+    #app.config.update(config or {})
+
+    login_manager = flask_login.LoginManager(app)
+    login_manager.login_view = 'login'
+
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
     #    CORS(app)
 
+    @login_manager.user_loader
+    def user_loader(email):
+        user = User()
+        user.get_user(email)
+        return user
+
+    @login_manager.unauthorized_handler
+    def unauthorized_handler():
+        # @todo validate its a URL of this host and use that
+        return redirect(url_for('login', next=url_for('index')))
+
+    @app.route('/logout')
+    def logout():
+        flask_login.logout_user()
+        return redirect(url_for('index'))
+
     # https://github.com/pallets/flask/blob/93dd1709d05a1cf0e886df6223377bdab3b077fb/examples/tutorial/flaskr/__init__.py#L39
     # You can divide up the stuff like this
+    @app.route('/login', methods=['GET', 'POST'])
+    def login():
+
+        global messages
+
+        if request.method == 'GET':
+            output = render_template("login.html", messages=messages)
+            # Show messages but once.
+            messages = []
+            return output
+
+        user = User()
+        user.id = "defaultuser@changedetection.io"
+
+        password = request.form.get('password')
+
+        if (user.check_password(password)):
+            flask_login.login_user(user, remember=True)
+            next = request.args.get('next')
+            #            if not is_safe_url(next):
+            #                return flask.abort(400)
+            return redirect(next or url_for('index'))
+
+        else:
+            messages.append({'class': 'error', 'message': 'Incorrect password'})
+
+        return redirect(url_for('login'))
+
+    @app.before_request
+    def do_something_whenever_a_request_comes_in():
+        # Disable password  loginif there is not one set
+        app.config['LOGIN_DISABLED'] = datastore.data['settings']['application']['password'] == False
 
     @app.route("/", methods=['GET'])
+    @login_required
     def index():
         global messages
         limit_tag = request.args.get('tag')
@@ -167,6 +262,7 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     @app.route("/scrub", methods=['GET', 'POST'])
+    @login_required
     def scrub_page():
         from pathlib import Path
 
@@ -221,6 +317,7 @@ def changedetection_app(config=None, datastore_o=None):
         return datastore.data['watching'][uuid]['previous_md5']
 
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
+    @login_required
     def edit_page(uuid):
         global messages
         import validators
@@ -278,9 +375,38 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     @app.route("/settings", methods=['GET', "POST"])
+    @login_required
     def settings_page():
         global messages
+
+        if request.method == 'GET':
+            if request.values.get('removepassword'):
+                from pathlib import Path
+
+                datastore.data['settings']['application']['password'] = False
+                messages.append({'class': 'notice', 'message': "Password protection removed."})
+                flask_login.logout_user()
+
+                return redirect(url_for('settings_page'))
+
         if request.method == 'POST':
+
+            password = request.values.get('password')
+            if password:
+                import hashlib
+                import base64
+                import secrets
+
+                # Make a new salt on every new password and store it with the password
+                salt = secrets.token_bytes(32)
+
+                key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+                store = base64.b64encode(salt + key).decode('ascii')
+                datastore.data['settings']['application']['password'] = store
+                messages.append({'class': 'notice', 'message': "Password protection enabled."})
+                flask_login.logout_user()
+                return redirect(url_for('index'))
+
             try:
                 minutes = int(request.values.get('minutes').strip())
             except ValueError:
@@ -296,6 +422,8 @@ def changedetection_app(config=None, datastore_o=None):
                     messages.append(
                         {'class': 'error', 'message': "Must be atleast 5 minutes."})
 
+
+
         output = render_template("settings.html", messages=messages,
                                  minutes=datastore.data['settings']['requests']['minutes_between_check'])
         messages = []
@@ -303,6 +431,7 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     @app.route("/import", methods=['GET', "POST"])
+    @login_required
     def import_page():
         import validators
         global messages
@@ -340,6 +469,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # Clear all statuses, so we do not see the 'unviewed' class
     @app.route("/api/mark-all-viewed", methods=['GET'])
+    @login_required
     def mark_all_viewed():
 
         # Save the current newest history as the most recently viewed
@@ -350,6 +480,7 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('index'))
 
     @app.route("/diff/<string:uuid>", methods=['GET'])
+    @login_required
     def diff_history_page(uuid):
         global messages
 
@@ -406,6 +537,7 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     @app.route("/preview/<string:uuid>", methods=['GET'])
+    @login_required
     def preview_page(uuid):
         global messages
 
@@ -435,6 +567,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # We're good but backups are even better!
     @app.route("/backup", methods=['GET'])
+    @login_required
     def get_backup():
 
         import zipfile
@@ -456,6 +589,9 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Add the index
             zipObj.write(os.path.join(app.config['datastore_path'], "url-watches.json"), arcname="url-watches.json")
+
+            # Add the flask app secret
+            zipObj.write(os.path.join(app.config['datastore_path'], "secret.txt"), arcname="secret.txt")
 
             # Add any snapshot data we find, use the full path to access the file, but make the file 'relative' in the Zip.
             for txt_file_path in Path(app.config['datastore_path']).rglob('*.txt'):
@@ -480,6 +616,7 @@ def changedetection_app(config=None, datastore_o=None):
             abort(404)
 
     @app.route("/api/add", methods=['POST'])
+    @login_required
     def api_watch_add():
         global messages
 
@@ -497,6 +634,7 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('index'))
 
     @app.route("/api/delete", methods=['GET'])
+    @login_required
     def api_delete():
         global messages
         uuid = request.args.get('uuid')
@@ -506,6 +644,7 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('index'))
 
     @app.route("/api/checknow", methods=['GET'])
+    @login_required
     def api_watch_checknow():
 
         global messages

@@ -37,6 +37,9 @@ class ChangeDetectionStore:
                     'timeout': 15,  # Default 15 seconds
                     'minutes_between_check': 3 * 60,  # Default 3 hours
                     'workers': 10  # Number of threads, lower is better for slow connections
+                },
+                'application': {
+                    'password': False
                 }
             }
         }
@@ -83,6 +86,9 @@ class ChangeDetectionStore:
 
                     if 'requests' in from_disk['settings']:
                         self.__data['settings']['requests'].update(from_disk['settings']['requests'])
+
+                    if 'application' in from_disk['settings']:
+                        self.__data['settings']['application'].update(from_disk['settings']['application'])
 
                 # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
                 # @todo pretty sure theres a python we todo this with an abstracted(?) object!

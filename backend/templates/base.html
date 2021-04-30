@@ -17,7 +17,11 @@
 
 <div class="header">
     <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed">
-        <a class="pure-menu-heading" href="/"><strong>Change</strong>Detection.io</a>
+        {% if not current_user.is_authenticated %}
+            <a class="pure-menu-heading" href="https://github.com/dgtlmoon/changedetection.io" rel="noopener"><strong>Change</strong>Detection.io</a>
+        {% else %}
+            <a class="pure-menu-heading" href="/"><strong>Change</strong>Detection.io</a>
+        {% endif %}
         {% if current_diff_url %}
         <a class=current-diff-url href="{{ current_diff_url }}"><span style="max-width: 30%; overflow: hidden;">{{ current_diff_url }}</span></a>
         {% else %}
@@ -27,7 +31,7 @@
         {% endif %}
 
         <ul class="pure-menu-list">
-
+        {% if current_user.is_authenticated %}
             <li class="pure-menu-item">
                 <a href="/backup" class="pure-menu-link">BACKUP</a>
             </li>
@@ -37,6 +41,15 @@
             <li class="pure-menu-item">
                 <a href="/settings" class="pure-menu-link">SETTINGS</a>
             </li>
+        {% else %}
+            <li class="pure-menu-item">
+                <a class="pure-menu-link" href="https://github.com/dgtlmoon/changedetection.io">Website Change Detection and Notification.</a>
+            </li>
+        {% endif %}
+
+            {% if current_user.is_authenticated %}
+                <li class="pure-menu-item"><a href="/logout" class="pure-menu-link">LOG OUT</a></li>
+            {% endif %}
             <li class="pure-menu-item"><a class="github-link" href="https://github.com/dgtlmoon/changedetection.io">
                 <svg class="octicon octicon-mark-github v-align-middle" height="32" viewBox="0 0 16 16"
                      version="1.1"

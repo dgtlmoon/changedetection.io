@@ -13,6 +13,25 @@ import backend
 from backend import store
 
 
+def init_app_secret(datastore_path):
+    secret = ""
+
+    path = "{}/secret.txt".format(datastore_path)
+
+    try:
+        with open(path, "r") as f:
+            secret = f.read()
+
+    except FileNotFoundError:
+
+        import secrets
+        with open(path, "w") as f:
+            secret = secrets.token_hex(32)
+            f.write(secret)
+
+    return secret
+
+
 def main(argv):
     ssl_mode = False
     port = 5000
@@ -41,15 +60,13 @@ def main(argv):
         if opt == '-d':
             datastore_path = arg
 
-    # threads can read from disk every x seconds right?
-    # front end can just save
-    # We just need to know which threads are looking at which UUIDs
-
     # isnt there some @thingy to attach to each route to tell it, that this route needs a datastore
     app_config = {'datastore_path': datastore_path}
 
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'])
     app = backend.changedetection_app(app_config, datastore)
+
+    app.secret_key = init_app_secret(app_config['datastore_path'])
 
     @app.context_processor
     def inject_version():
