@@ -85,6 +85,8 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
 
 
 class User(flask_login.UserMixin):
+    id = 1
+
     def set_password(self, password):
         return True
     def get_user(self, email="defaultuser@changedetection.io"):
@@ -139,8 +141,8 @@ def changedetection_app(conig=None, datastore_o=None):
     def user_loader(email):
         user = User()
         user.get_user(email)
+        return user
 
-        return email
     #
     # @login_manager.request_loader
     # def request_loader(request):
@@ -177,7 +179,10 @@ def changedetection_app(conig=None, datastore_o=None):
 
         user = User()
         user.id = "defaultuser@changedetection.io"
-        if (user.check_password(request.args.get('password'))):
+
+        password = request.form.get('password')
+
+        if (user.check_password(password)):
             flask_login.login_user(user, remember=True)
             next = request.args.get('next')
             #            if not is_safe_url(next):
