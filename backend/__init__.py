@@ -380,6 +380,30 @@ def changedetection_app(conig=None, datastore_o=None):
         global messages
 
         if request.method == 'GET':
+            if request.values.get('notification-test'):
+                url_count = len(datastore.data['settings']['application']['notification_urls'])
+                if url_count:
+                    import apprise
+                    apobj = apprise.Apprise()
+                    apobj.debug = True
+
+                    # Add each notification
+                    for n in datastore.data['settings']['application']['notification_urls']:
+                        apobj.add(n)
+                    outcome = apobj.notify(
+                        body='Hello from the worlds best and simplest web page change detection and monitoring service!',
+                        title='Changedetection.io Notification Test',
+                    )
+
+                    if outcome:
+                        messages.append(
+                            {'class': 'notice', 'message': "{} Notification URLs reached.".format(url_count)})
+                    else:
+                        messages.append(
+                            {'class': 'error', 'message': "One or more Notification URLs failed"})
+
+                return redirect(url_for('settings_page'))
+
             if request.values.get('removepassword'):
                 from pathlib import Path
 
@@ -420,8 +444,8 @@ def changedetection_app(conig=None, datastore_o=None):
                     messages.append(
                         {'class': 'error', 'message': "Must be atleast 5 minutes."})
 
+            # 'validators' package doesnt work because its often a non-stanadard protocol. :(
             datastore.data['settings']['application']['notification_urls'] = []
-            import validators
             for n in request.values.get('notification_urls').strip().split("\n"):
                 url = n.strip()
                 datastore.data['settings']['application']['notification_urls'].append(url)
