@@ -17,7 +17,7 @@
 
 <div class="header">
     <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed">
-        {% if not current_user.is_authenticated %}
+        {% if has_password and not current_user.is_authenticated %}
             <a class="pure-menu-heading" href="https://github.com/dgtlmoon/changedetection.io" rel="noopener"><strong>Change</strong>Detection.io</a>
         {% else %}
             <a class="pure-menu-heading" href="/"><strong>Change</strong>Detection.io</a>
@@ -31,7 +31,7 @@
         {% endif %}
 
         <ul class="pure-menu-list">
-        {% if current_user.is_authenticated %}
+        {% if current_user.is_authenticated or not has_password %}
             <li class="pure-menu-item">
                 <a href="/backup" class="pure-menu-link">BACKUP</a>
             </li>
@@ -47,9 +47,9 @@
             </li>
         {% endif %}
 
-            {% if current_user.is_authenticated %}
-                <li class="pure-menu-item"><a href="/logout" class="pure-menu-link">LOG OUT</a></li>
-            {% endif %}
+        {% if current_user.is_authenticated %}
+            <li class="pure-menu-item"><a href="/logout" class="pure-menu-link">LOG OUT</a></li>
+        {% endif %}
             <li class="pure-menu-item"><a class="github-link" href="https://github.com/dgtlmoon/changedetection.io">
                 <svg class="octicon octicon-mark-github v-align-middle" height="32" viewBox="0 0 16 16"
                      version="1.1"

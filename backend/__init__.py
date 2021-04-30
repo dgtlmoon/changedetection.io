@@ -92,6 +92,7 @@ class User(flask_login.UserMixin):
     def get_user(self, email="defaultuser@changedetection.io"):
         return self
     def is_authenticated(self):
+
         return True
     def is_active(self):
         return True

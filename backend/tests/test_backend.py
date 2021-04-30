@@ -75,6 +75,12 @@ def test_check_basic_change_detection_functionality(client, live_server):
         assert b'unviewed' not in res.data
         assert b'test-endpoint' in res.data
 
+        # Default no password set, this stuff should be always available.
+
+        assert b"SETTINGS" in res.data
+        assert b"BACKUP" in res.data
+        assert b"IMPORT" in res.data
+
     #####################
 
     # Make a change
@@ -139,6 +145,13 @@ def test_check_access_control(client):
     client.get(url_for("import_page"), follow_redirects=True)
     assert b"Password" in res.data
 
+    # Menu should not be available yet
+    assert b"SETTINGS" not in res.data
+    assert b"BACKUP" not in res.data
+    assert b"IMPORT" not in res.data
+
+
+
     #defaultuser@changedetection.io is actually hardcoded for now, we only use a single password
     res = client.post(
         url_for("login"),
@@ -149,6 +162,12 @@ def test_check_access_control(client):
     assert b"LOG OUT" in res.data
 
     client.get(url_for("settings_page"), follow_redirects=True)
+    # Menu should be available now
+    assert b"SETTINGS" in res.data
+    assert b"BACKUP" in res.data
+    assert b"IMPORT" in res.data
+
+
     assert b"LOG OUT" in res.data
 
     # Now remove the password so other tests function, @todo this should happen before each test automatically
