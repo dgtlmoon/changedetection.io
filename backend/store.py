@@ -110,7 +110,7 @@ class ChangeDetectionStore:
                 self.add_watch(url='https://changedetection.io', tag='Tech news')
 
 
-        self.__data['version_tag'] = "0.291"
+        self.__data['version_tag'] = "0.292"
 
         if not 'app_guid' in self.__data:
             self.__data['app_guid'] = str(uuid_builder.uuid4())
