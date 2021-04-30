@@ -85,7 +85,7 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
 
 
 class User(flask_login.UserMixin):
-    id = 1
+    id=None
 
     def set_password(self, password):
         return True
@@ -143,21 +143,10 @@ def changedetection_app(conig=None, datastore_o=None):
         user.get_user(email)
         return user
 
-    #
-    # @login_manager.request_loader
-    # def request_loader(request):
-    #
-    #     user = User()
-    #     x = user.is_authenticated
-    #
-    #     user.id = "defaultuser@changedetection.io"
-    #
-    #     return user
-
     @login_manager.unauthorized_handler
     def unauthorized_handler():
-
-        return redirect(url_for('login',next="foobar"))
+        # @todo validate its a URL of this host and use that
+        return redirect(url_for('login', next=url_for('index')))
 
     @app.route('/logout')
     def logout():

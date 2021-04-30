@@ -31,7 +31,7 @@
         {% endif %}
 
         <ul class="pure-menu-list">
-
+        {% if current_user.is_authenticated %}
             <li class="pure-menu-item">
                 <a href="/backup" class="pure-menu-link">BACKUP</a>
             </li>
@@ -41,6 +41,12 @@
             <li class="pure-menu-item">
                 <a href="/settings" class="pure-menu-link">SETTINGS</a>
             </li>
+        {% else %}
+            <li class="pure-menu-item">
+                <a class="pure-menu-link" href="https://github.com/dgtlmoon/changedetection.io">Website Change Detection and Notification.</a>
+            </li>
+        {% endif %}
+
             {% if current_user.is_authenticated %}
                 <li class="pure-menu-item"><a href="/logout" class="pure-menu-link">LOG OUT</a></li>
             {% endif %}
