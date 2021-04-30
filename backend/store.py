@@ -39,7 +39,8 @@ class ChangeDetectionStore:
                     'workers': 10  # Number of threads, lower is better for slow connections
                 },
                 'application': {
-                    'password': False
+                    'password': False,
+                    'notification_urls': [] # Apprise URL list
                 }
             }
         }
@@ -110,7 +111,7 @@ class ChangeDetectionStore:
                 self.add_watch(url='https://changedetection.io', tag='Tech news')
 
 
-        self.__data['version_tag'] = "0.29"
+        self.__data['version_tag'] = "0.30"
 
         if not 'app_guid' in self.__data:
             self.__data['app_guid'] = str(uuid_builder.uuid4())

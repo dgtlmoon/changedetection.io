@@ -13,6 +13,7 @@
                 <span class="pure-form-message-inline">This is a required field.</span>
             </div>
             <br/>
+            <hr>
             <div class="pure-control-group">
                 <label for="minutes">Password protection</label>
                 <input type="password" id="password" name="password" size="15"/>
@@ -22,6 +23,24 @@
             </div>
 
             <br/>
+            <hr>
+
+            <div class="pure-control-group">
+                <label for="minutes">Global notification settings</label><br/>
+                Set your <a href="https://github.com/caronc/apprise">Apprise Notification example URLs here</a>.
+                <textarea style="overflow-wrap: normal;  overflow-x: scroll;" id="notification_urls" name="notification_urls" cols="80"
+                          rows="6" wrap=off placeholder="Example:
+
+Gitter - gitter://token/room
+Office365 - o365://TenantID:AccountEmail/ClientID/ClientSecret/TargetEmail
+AWS SNS - sns://AccessKeyID/AccessSecretKey/RegionName/+PhoneNo
+SMTPS - mailtos://mySendingUsername:mySendingPassword@example.com?to=receivingAddress@example.com
+">{{notification_urls}}</textarea>
+                Click <strong>Save</strong> first and then <a class="pure-button" href="?notification-test">Send test notifications.</a>
+            </div>
+
+            <br/>
+            <hr>
             <div class="pure-control-group">
                 <button type="submit" class="pure-button pure-button-primary">Save</button>
             </div>

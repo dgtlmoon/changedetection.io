@@ -11,3 +11,4 @@ feedgen ~= 0.9
 flask-login ~= 0.5
 pytz
 urllib3
+apprise ~= 0.9
