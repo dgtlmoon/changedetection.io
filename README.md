@@ -54,3 +54,9 @@ Examining differences in content.
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
 
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
+
+### Notes
+
+- Does not yet support Javascript
+- Wont work with Cloudfare type "Please turn on javascript" protected pages
+

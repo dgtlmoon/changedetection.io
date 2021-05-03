@@ -66,15 +66,15 @@ def main(argv):
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'])
     app = backend.changedetection_app(app_config, datastore)
 
+    app.config['datastore_path'] = datastore_path
     app.secret_key = init_app_secret(app_config['datastore_path'])
 
     @app.context_processor
     def inject_version():
-        return dict(version=datastore.data['version_tag'])
-
-    @app.context_processor
-    def inject_new_version_available():
-        return dict(new_version_available=app.config['NEW_VERSION_AVAILABLE'])
+        return dict(version=datastore.data['version_tag'],
+                    new_version_available=app.config['NEW_VERSION_AVAILABLE'],
+                    has_password=datastore.data['settings']['application']['password'] != False
+                    )
 
     if ssl_mode:
         # @todo finalise SSL config, but this should get you in the right direction if you need it.
