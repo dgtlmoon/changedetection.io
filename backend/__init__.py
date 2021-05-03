@@ -747,53 +747,14 @@ def check_for_new_version():
         app.config.exit.wait(86400)
 
 
-# Requests for checking on the site use a pool of thread Workers managed by a Queue.
-class Worker(threading.Thread):
-    current_uuid = None
-
-    def __init__(self, q, *args, **kwargs):
-        self.q = q
-        super().__init__(*args, **kwargs)
-
-    def run(self):
-        from backend import fetch_site_status
-
-        update_handler = fetch_site_status.perform_site_check(datastore=datastore)
-
-        while not app.config.exit.is_set():
-
-            try:
-                uuid = self.q.get(block=False)
-            except queue.Empty:
-                pass
-
-            else:
-                self.current_uuid = uuid
-
-                if uuid in list(datastore.data['watching'].keys()):
-                    try:
-                        changed_detected, result, contents = update_handler.run(uuid)
-
-                    except PermissionError as s:
-                        app.logger.error("File permission error updating", uuid, str(s))
-                    else:
-                        if result:
-                            datastore.update_watch(uuid=uuid, update_obj=result)
-                            if changed_detected:
-                                # A change was detected
-                                datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
-
-                self.current_uuid = None  # Done
-                self.q.task_done()
-
-            app.config.exit.wait(1)
-
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
+    from backend import update_worker
+
     # Spin up Workers.
     for _ in range(datastore.data['settings']['requests']['workers']):
-        new_worker = Worker(update_q)
+        new_worker = update_worker.update_worker(update_q, app, datastore)
         running_update_threads.append(new_worker)
         new_worker.start()
 
