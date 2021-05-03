@@ -113,7 +113,8 @@ class ChangeDetectionStore:
 
         if not 'app_guid' in self.__data:
             import sys
-            if "pytest" in sys.modules:
+            import os
+            if "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ:
                 self.__data['app_guid'] = "test-" + str(uuid_builder.uuid4())
             else:
                 self.__data['app_guid'] = str(uuid_builder.uuid4())
