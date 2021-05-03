@@ -109,11 +109,14 @@ class ChangeDetectionStore:
                 self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
                 self.add_watch(url='https://changedetection.io', tag='Tech news')
 
-
         self.__data['version_tag'] = "0.292"
 
         if not 'app_guid' in self.__data:
-            self.__data['app_guid'] = str(uuid_builder.uuid4())
+            import sys
+            if "pytest" in sys.modules:
+                self.__data['app_guid'] = "test-" + str(uuid_builder.uuid4())
+            else:
+                self.__data['app_guid'] = str(uuid_builder.uuid4())
 
         self.needs_write = True
 
