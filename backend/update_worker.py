@@ -5,9 +5,10 @@ import queue
 class update_worker(threading.Thread):
     current_uuid = None
 
-    def __init__(self, q, app, datastore, *args, **kwargs):
+    def __init__(self, q, notification_q, app, datastore, *args, **kwargs):
         self.q = q
         self.app = app
+        self.notification_q = notification_q
         self.datastore = datastore
         super().__init__(*args, **kwargs)
 
@@ -38,6 +39,7 @@ class update_worker(threading.Thread):
                             if changed_detected:
                                 # A change was detected
                                 self.datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
+                                self.notification_q.put(uuid)
 
                 self.current_uuid = None  # Done
                 self.q.task_done()

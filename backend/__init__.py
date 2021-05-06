@@ -350,7 +350,7 @@ def changedetection_app(conig=None, datastore_o=None):
                           }
 
             # Notification URLs
-            form_notification_text = request.form.get('notification-urls')
+            form_notification_text = request.form.get('notification_urls')
             notification_urls = []
             if form_notification_text:
                 for text in form_notification_text.strip().split("\n"):
@@ -361,10 +361,10 @@ def changedetection_app(conig=None, datastore_o=None):
             datastore.data['watching'][uuid]['notification_urls'] = notification_urls
 
             # Ignore text
-            form_ignore_text = request.form.get('ignore-text').strip()
+            form_ignore_text = request.form.get('ignore-text')
             ignore_text = []
-            if len(form_ignore_text):
-                for text in form_ignore_text.split("\n"):
+            if form_ignore_text:
+                for text in form_ignore_text.strip().split("\n"):
                     text = text.strip()
                     if len(text):
                         ignore_text.append(text)
@@ -806,7 +806,7 @@ def ticker_thread_check_time_launch_checks():
 
     # Spin up Workers.
     for _ in range(datastore.data['settings']['requests']['workers']):
-        new_worker = update_worker.update_worker(update_q, app, datastore)
+        new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
         running_update_threads.append(new_worker)
         new_worker.start()
 
