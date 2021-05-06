@@ -59,7 +59,8 @@ class ChangeDetectionStore:
             'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send
             'history': {},  # Dict of timestamp and output stripped filename
-            'ignore_text': [] # List of text to ignore when calculating the comparison checksum
+            'ignore_text': [], # List of text to ignore when calculating the comparison checksum
+            'notification_urls': [] # List of URLs to add to the notification Queue (Usually AppRise)
         }
 
         if path.isfile('/source.txt'):

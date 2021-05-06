@@ -41,7 +41,9 @@ extra_stylesheets = []
 
 update_q = queue.Queue()
 
-app = Flask(__name__, static_url_path="/var/www/change-detection/backen/static")
+notification_q = queue.Queue()
+
+app = Flask(__name__, static_url_path="/var/www/change-detection/backend/static")
 
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -346,6 +348,17 @@ def changedetection_app(conig=None, datastore_o=None):
                           'tag': tag,
                           'headers': extra_headers
                           }
+
+            # Notification URLs
+            form_notification_text = request.form.get('notification-urls')
+            notification_urls = []
+            if form_notification_text:
+                for text in form_notification_text.strip().split("\n"):
+                    text = text.strip()
+                    if len(text):
+                        notification_urls.append(text)
+
+            datastore.data['watching'][uuid]['notification_urls'] = notification_urls
 
             # Ignore text
             form_ignore_text = request.form.get('ignore-text').strip()
@@ -716,6 +729,8 @@ def changedetection_app(conig=None, datastore_o=None):
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
 
+    threading.Thread(target=notification_runner).start()
+
     # Check for new release version
     threading.Thread(target=check_for_new_version).start()
     return app
@@ -747,6 +762,42 @@ def check_for_new_version():
         # Check daily
         app.config.exit.wait(86400)
 
+def notification_runner():
+
+    while not app.config.exit.is_set():
+        try:
+            # At the moment only one thread runs (single runner)
+            uuid = notification_q.get(block=False)
+        except queue.Empty:
+            time.sleep(1)
+            pass
+
+        else:
+            # Well it should be here, but you know kids these days..
+            if uuid in list(datastore.data['watching'].keys()):
+                import apprise
+
+                # Create an Apprise instance
+                try:
+                    apobj = apprise.Apprise()
+
+                    if len(datastore.data['watching'][uuid]['notification_urls']):
+                        print ("Processing notifications for UUID: {}".format(uuid))
+                        target = datastore.data['watching'][uuid]
+                        for url in target['notification_urls']:
+                            apobj.add(url)
+
+                        apobj.notify(
+                            body=target['url'],
+                            # @todo This should be configurable.
+                            title="ChangeDetection.io Notification - {}".format(target['url']),
+                        )
+
+                except Exception as e:
+                    print("UUID: {} URL: {} Notification URL '{}' Error {}".format(uuid,
+                                                                                   target['url'],
+                                                                                   target['notification_urls'],
+                                                                                   e))
 
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
