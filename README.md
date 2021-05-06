@@ -75,6 +75,8 @@ Just some examples
  
 <a href="https://github.com/caronc/apprise">And everything else in this list!</a>
 
+<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-notifications.png" style="max-width:100%;" alt="Self-hosted web page change monitoring notifications"  title="Self-hosted web page change monitoring notifications"  />
+
 
 ### Notes
 
