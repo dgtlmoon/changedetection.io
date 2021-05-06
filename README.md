@@ -62,7 +62,7 @@ Simply set one or more notification URL's in the _[edit]_ tab of that watch.
 
 Just some examples
 
-	discord://webhook_id/webhook_token
+    discord://webhook_id/webhook_token
     flock://app_token/g:channel_id
     gitter://token/room
     gchat://workspace/key/token
