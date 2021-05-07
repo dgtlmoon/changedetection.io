@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - /refs/heads/*
-      - !master
 
 jobs:
   build:
