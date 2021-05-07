@@ -1,9 +1,7 @@
 name: Test only
 
-on:
-  push:
-    branches:
-      - /refs/heads/*
+# Triggers the workflow on push or pull request events
+on: [push, pull_request]
 
 jobs:
   build:
