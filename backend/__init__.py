@@ -381,6 +381,14 @@ def changedetection_app(conig=None, datastore_o=None):
 
             messages.append({'class': 'ok', 'message': 'Updated watch.'})
 
+            trigger_n = request.form.get('trigger-test-notification')
+            if trigger_n:
+                n_object = {'watch_url': url,
+                            'notification_urls': datastore.data['settings']['application']['notification_urls']}
+                notification_q.put(n_object)
+
+                messages.append({'class': 'ok', 'message': 'Notifications queued.'})
+
             return redirect(url_for('index'))
 
         else:
@@ -460,10 +468,19 @@ def changedetection_app(conig=None, datastore_o=None):
 
             # 'validators' package doesnt work because its often a non-stanadard protocol. :(
             datastore.data['settings']['application']['notification_urls'] = []
+            trigger_n = request.form.get('trigger-test-notification')
+
             for n in request.values.get('notification_urls').strip().split("\n"):
                 url = n.strip()
                 datastore.data['settings']['application']['notification_urls'].append(url)
                 datastore.needs_write = True
+
+            if trigger_n:
+                n_object = {'watch_url': "Test from changedetection.io!",
+                            'notification_urls': datastore.data['settings']['application']['notification_urls']}
+                notification_q.put(n_object)
+
+                messages.append({'class': 'ok', 'message': 'Notifications queued.'})
 
         output = render_template("settings.html", messages=messages,
                                  minutes=datastore.data['settings']['requests']['minutes_between_check'],
@@ -767,37 +784,29 @@ def notification_runner():
     while not app.config.exit.is_set():
         try:
             # At the moment only one thread runs (single runner)
-            uuid = notification_q.get(block=False)
+            n_object = notification_q.get(block=False)
         except queue.Empty:
             time.sleep(1)
             pass
 
         else:
-            # Well it should be here, but you know kids these days..
-            if uuid in list(datastore.data['watching'].keys()):
-                import apprise
+            import apprise
 
-                # Create an Apprise instance
-                try:
-                    apobj = apprise.Apprise()
+            # Create an Apprise instance
+            try:
+                apobj = apprise.Apprise()
 
-                    if len(datastore.data['watching'][uuid]['notification_urls']):
-                        print ("Processing notifications for UUID: {}".format(uuid))
-                        target = datastore.data['watching'][uuid]
-                        for url in target['notification_urls']:
-                            apobj.add(url)
+                for url in n_object['notification_urls']:
+                    apobj.add(url)
 
-                        apobj.notify(
-                            body=target['url'],
-                            # @todo This should be configurable.
-                            title="ChangeDetection.io Notification - {}".format(target['url']),
-                        )
+                apobj.notify(
+                    body=n_object['watch_url'],
+                    # @todo This should be configurable.
+                    title="ChangeDetection.io Notification - {}".format(n_object['watch_url'])
+                )
 
-                except Exception as e:
-                    print("UUID: {} URL: {} Notification URL '{}' Error {}".format(uuid,
-                                                                                   target['url'],
-                                                                                   target['notification_urls'],
-                                                                                   e))
+            except Exception as e:
+                print("Watch URL: {} Notification URL '{}' Error {}".format(n_object['watch_url'],e))
 
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.

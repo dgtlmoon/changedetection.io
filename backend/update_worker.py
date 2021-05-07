@@ -39,7 +39,13 @@ class update_worker(threading.Thread):
                             if changed_detected:
                                 # A change was detected
                                 self.datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
-                                self.notification_q.put(uuid)
+
+                                watch = self.datastore.data['watching'][uuid]
+                                if len(watch['notification_urls']):
+                                    print("Processing notifications for UUID: {}".format(uuid))
+
+                                    n_object = {'watch_url' : self.datastore.data['watching'][uuid]['url'], 'notification_urls': watch['notification_urls'] }
+                                    self.notification_q.put(n_object)
 
                 self.current_uuid = None  # Done
                 self.q.task_done()
