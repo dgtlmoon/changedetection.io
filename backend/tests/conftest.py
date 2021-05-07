@@ -35,13 +35,12 @@ def app(request):
     def teardown():
         datastore.stop_thread = True
         app.config.exit.set()
-        try:
-            os.unlink("{}/url-watches.json".format(datastore_path))
-        except FileNotFoundError:
-            # This is fine in the case of a failure.
-            pass
-
-        assert 1 == 1
+        for fname in ["url-watches.json", "count.txt", "output.txt"]:
+            try:
+                os.unlink("{}/{}".format(datastore_path, fname))
+            except FileNotFoundError:
+                # This is fine in the case of a failure.
+                pass
 
     request.addfinalizer(teardown)
     yield app
