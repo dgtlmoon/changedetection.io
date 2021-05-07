@@ -25,8 +25,12 @@ def test_setup_liveserver(live_server):
     # And this should return not zero.
     @live_server.app.route('/test_notification_counter')
     def test_notification_counter():
-        with open("test-datastore/count.txt", "r") as f:
-            return f.read()
+        try:
+            with open("test-datastore/count.txt", "r") as f:
+                return f.read()
+        except FileNotFoundError:
+                return "nope :("
+
     live_server.start()
 
     assert 1 == 1
@@ -148,7 +152,7 @@ def test_check_notification(client):
     set_original_response()
 
     # Give the endpoint time to spin up
-    time.sleep(1)
+    time.sleep(3)
 
     # Add our URL to the import page
     test_url = url_for('test_notification_counter', _external=True)
