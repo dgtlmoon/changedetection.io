@@ -797,7 +797,7 @@ def notification_runner():
                 apobj = apprise.Apprise()
 
                 for url in n_object['notification_urls']:
-                    apobj.add(url)
+                    apobj.add(url.strip())
 
                 apobj.notify(
                     body=n_object['watch_url'],

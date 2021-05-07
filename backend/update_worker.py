@@ -35,26 +35,29 @@ class update_worker(threading.Thread):
                         self.app.logger.error("File permission error updating", uuid, str(s))
                     else:
                         if result:
-                            self.datastore.update_watch(uuid=uuid, update_obj=result)
-                            if changed_detected:
-                                # A change was detected
-                                self.datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
+                            try:
+                                self.datastore.update_watch(uuid=uuid, update_obj=result)
+                                if changed_detected:
+                                    # A change was detected
+                                    self.datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
 
-                                watch = self.datastore.data['watching'][uuid]
-                                # Did it have any notification alerts to hit?
-                                if len(watch['notification_urls']):
-                                    print("Processing notifications for UUID: {}".format(uuid))
-                                    n_object = {'watch_url' : self.datastore.data['watching'][uuid]['url'], 'notification_urls': watch['notification_urls'] }
-                                    self.notification_q.put(n_object)
+                                    watch = self.datastore.data['watching'][uuid]
+                                    # Did it have any notification alerts to hit?
+                                    if len(watch['notification_urls']):
+                                        print("Processing notifications for UUID: {}".format(uuid))
+                                        n_object = {'watch_url': self.datastore.data['watching'][uuid]['url'],
+                                                    'notification_urls': watch['notification_urls']}
+                                        self.notification_q.put(n_object)
 
-                                # No? maybe theres a global setting, queue them all
-                                elif len(self.data['settings']['application']['notification_urls']):
-                                    print("Processing GLOBAL notifications for UUID: {}".format(uuid))
-                                    n_object = {'watch_url': self.datastore.data['watching'][uuid]['url'],
-                                                'notification_urls': self.data['settings']['application'][
-                                                    'notification_urls']}
-                                    self.notification_q.put(n_object)
-
+                                    # No? maybe theres a global setting, queue them all
+                                    elif len(self.datastore.data['settings']['application']['notification_urls']):
+                                        print("Processing GLOBAL notifications for UUID: {}".format(uuid))
+                                        n_object = {'watch_url': self.datastore.data['watching'][uuid]['url'],
+                                                    'notification_urls': self.datastore.data['settings']['application'][
+                                                        'notification_urls']}
+                                        self.notification_q.put(n_object)
+                            except Exception as e:
+                                print("!!!! Exception in update_worker !!!\n", e)
 
                 self.current_uuid = None  # Done
                 self.q.task_done()
