@@ -1,4 +1,4 @@
-name: Test only
+name: ChangeDetection.io Test
 
 # Triggers the workflow on push or pull request events
 on: [push, pull_request]
