@@ -6,6 +6,11 @@ from urllib.request import urlopen
 import pytest
 
 
+from . util import live_server_setup
+
+def test_setup(live_server):
+    live_server_setup(live_server)
+
 # Unit test of the stripper
 # Always we are dealing in utf-8
 def test_strip_text_func():
