@@ -82,4 +82,5 @@ Just some examples
 
 - Does not yet support Javascript
 - Wont work with Cloudfare type "Please turn on javascript" protected pages
+ -You can use the 'headers' section to monitor password protected web page changes
 
