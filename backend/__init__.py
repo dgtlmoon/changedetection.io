@@ -41,7 +41,9 @@ extra_stylesheets = []
 
 update_q = queue.Queue()
 
-app = Flask(__name__, static_url_path="/var/www/change-detection/backen/static")
+notification_q = queue.Queue()
+
+app = Flask(__name__, static_url_path="/var/www/change-detection/backend/static")
 
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -347,11 +349,22 @@ def changedetection_app(conig=None, datastore_o=None):
                           'headers': extra_headers
                           }
 
+            # Notification URLs
+            form_notification_text = request.form.get('notification_urls')
+            notification_urls = []
+            if form_notification_text:
+                for text in form_notification_text.strip().split("\n"):
+                    text = text.strip()
+                    if len(text):
+                        notification_urls.append(text)
+
+            datastore.data['watching'][uuid]['notification_urls'] = notification_urls
+
             # Ignore text
-            form_ignore_text = request.form.get('ignore-text').strip()
+            form_ignore_text = request.form.get('ignore-text')
             ignore_text = []
-            if len(form_ignore_text):
-                for text in form_ignore_text.split("\n"):
+            if form_ignore_text:
+                for text in form_ignore_text.strip().split("\n"):
                     text = text.strip()
                     if len(text):
                         ignore_text.append(text)
@@ -368,6 +381,14 @@ def changedetection_app(conig=None, datastore_o=None):
 
             messages.append({'class': 'ok', 'message': 'Updated watch.'})
 
+            trigger_n = request.form.get('trigger-test-notification')
+            if trigger_n:
+                n_object = {'watch_url': url,
+                            'notification_urls': datastore.data['settings']['application']['notification_urls']}
+                notification_q.put(n_object)
+
+                messages.append({'class': 'ok', 'message': 'Notifications queued.'})
+
             return redirect(url_for('index'))
 
         else:
@@ -381,6 +402,30 @@ def changedetection_app(conig=None, datastore_o=None):
         global messages
 
         if request.method == 'GET':
+            if request.values.get('notification-test'):
+                url_count = len(datastore.data['settings']['application']['notification_urls'])
+                if url_count:
+                    import apprise
+                    apobj = apprise.Apprise()
+                    apobj.debug = True
+
+                    # Add each notification
+                    for n in datastore.data['settings']['application']['notification_urls']:
+                        apobj.add(n)
+                    outcome = apobj.notify(
+                        body='Hello from the worlds best and simplest web page change detection and monitoring service!',
+                        title='Changedetection.io Notification Test',
+                    )
+
+                    if outcome:
+                        messages.append(
+                            {'class': 'notice', 'message': "{} Notification URLs reached.".format(url_count)})
+                    else:
+                        messages.append(
+                            {'class': 'error', 'message': "One or more Notification URLs failed"})
+
+                return redirect(url_for('settings_page'))
+
             if request.values.get('removepassword'):
                 from pathlib import Path
 
@@ -417,16 +462,30 @@ def changedetection_app(conig=None, datastore_o=None):
                 if minutes >= 5:
                     datastore.data['settings']['requests']['minutes_between_check'] = minutes
                     datastore.needs_write = True
-
-                    messages.append({'class': 'ok', 'message': "Updated"})
                 else:
                     messages.append(
                         {'class': 'error', 'message': "Must be atleast 5 minutes."})
 
+            # 'validators' package doesnt work because its often a non-stanadard protocol. :(
+            datastore.data['settings']['application']['notification_urls'] = []
+            trigger_n = request.form.get('trigger-test-notification')
 
+            for n in request.values.get('notification_urls').strip().split("\n"):
+                url = n.strip()
+                datastore.data['settings']['application']['notification_urls'].append(url)
+                datastore.needs_write = True
+
+            if trigger_n:
+                n_object = {'watch_url': "Test from changedetection.io!",
+                            'notification_urls': datastore.data['settings']['application']['notification_urls']}
+                notification_q.put(n_object)
+
+                messages.append({'class': 'ok', 'message': 'Notifications queued.'})
 
         output = render_template("settings.html", messages=messages,
-                                 minutes=datastore.data['settings']['requests']['minutes_between_check'])
+                                 minutes=datastore.data['settings']['requests']['minutes_between_check'],
+                                 notification_urls="\r\n".join(
+                                     datastore.data['settings']['application']['notification_urls']))
         messages = []
 
         return output
@@ -687,6 +746,8 @@ def changedetection_app(conig=None, datastore_o=None):
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
 
+    threading.Thread(target=notification_runner).start()
+
     # Check for new release version
     threading.Thread(target=check_for_new_version).start()
     return app
@@ -718,54 +779,42 @@ def check_for_new_version():
         # Check daily
         app.config.exit.wait(86400)
 
+def notification_runner():
 
-# Requests for checking on the site use a pool of thread Workers managed by a Queue.
-class Worker(threading.Thread):
-    current_uuid = None
+    while not app.config.exit.is_set():
+        try:
+            # At the moment only one thread runs (single runner)
+            n_object = notification_q.get(block=False)
+        except queue.Empty:
+            time.sleep(1)
+            pass
 
-    def __init__(self, q, *args, **kwargs):
-        self.q = q
-        super().__init__(*args, **kwargs)
+        else:
+            import apprise
 
-    def run(self):
-        from backend import fetch_site_status
-
-        update_handler = fetch_site_status.perform_site_check(datastore=datastore)
-
-        while not app.config.exit.is_set():
-
+            # Create an Apprise instance
             try:
-                uuid = self.q.get(block=False)
-            except queue.Empty:
-                pass
+                apobj = apprise.Apprise()
+                for url in n_object['notification_urls']:
+                    apobj.add(url.strip())
 
-            else:
-                self.current_uuid = uuid
+                apobj.notify(
+                    body=n_object['watch_url'],
+                    # @todo This should be configurable.
+                    title="ChangeDetection.io Notification - {}".format(n_object['watch_url'])
+                )
 
-                if uuid in list(datastore.data['watching'].keys()):
-                    try:
-                        changed_detected, result, contents = update_handler.run(uuid)
-
-                    except PermissionError as s:
-                        app.logger.error("File permission error updating", uuid, str(s))
-                    else:
-                        if result:
-                            datastore.update_watch(uuid=uuid, update_obj=result)
-                            if changed_detected:
-                                # A change was detected
-                                datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
-
-                self.current_uuid = None  # Done
-                self.q.task_done()
-
-            app.config.exit.wait(1)
+            except Exception as e:
+                print("Watch URL: {}  Error {}".format(n_object['watch_url'],e))
 
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
+    from backend import update_worker
+
     # Spin up Workers.
     for _ in range(datastore.data['settings']['requests']['workers']):
-        new_worker = Worker(update_q)
+        new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
         running_update_threads.append(new_worker)
         new_worker.start()
 

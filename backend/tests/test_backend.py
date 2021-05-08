@@ -3,55 +3,16 @@
 import time
 from flask import url_for
 from urllib.request import urlopen
-import pytest
+from . util import set_original_response, set_modified_response, live_server_setup
 
 sleep_time_for_fetch_thread = 3
 
 
-def test_setup_liveserver(live_server):
-    @live_server.app.route('/test-endpoint')
-    def test_endpoint():
-        # Tried using a global var here but didn't seem to work, so reading from a file instead.
-        with open("test-datastore/output.txt", "r") as f:
-            return f.read()
-
-    live_server.start()
-
-    assert 1 == 1
-
-
-def set_original_response():
-    test_return_data = """<html>
-       <body>
-     Some initial text</br>
-     <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
-     </body>
-     </html>
-    """
-
-    with open("test-datastore/output.txt", "w") as f:
-        f.write(test_return_data)
-
-
-def set_modified_response():
-    test_return_data = """<html>
-       <body>
-     Some initial text</br>
-     <p>which has this one new line</p>
-     </br>
-     So let's see what happens.  </br>
-     </body>
-     </html>
-    """
-
-    with open("test-datastore/output.txt", "w") as f:
-        f.write(test_return_data)
 
 
 def test_check_basic_change_detection_functionality(client, live_server):
     set_original_response()
+    live_server_setup(live_server)
 
     # Add our URL to the import page
     res = client.post(
@@ -128,59 +89,3 @@ def test_check_basic_change_detection_functionality(client, live_server):
     res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-
-def test_check_access_control(app, client):
-    # Still doesnt work, but this is closer.
-    return
-    with app.test_client() as c:
-
-        # Check we dont have any password protection enabled yet.
-        res = c.get(url_for("settings_page"))
-        assert b"Remove password" not in res.data
-
-        # Enable password check.
-        res = c.post(
-            url_for("settings_page"),
-            data={"password": "foobar"},
-            follow_redirects=True
-        )
-        assert b"Password protection enabled." in res.data
-        assert b"LOG OUT" not in res.data
-        print ("SESSION:", res.session)
-        # Check we hit the login
-
-        res = c.get(url_for("settings_page"), follow_redirects=True)
-        res = c.get(url_for("login"), follow_redirects=True)
-
-        assert b"Login" in res.data
-
-        print ("DEBUG >>>>>",res.data)
-        # Menu should not be available yet
-        assert b"SETTINGS" not in res.data
-        assert b"BACKUP" not in res.data
-        assert b"IMPORT" not in res.data
-
-
-
-        #defaultuser@changedetection.io is actually hardcoded for now, we only use a single password
-        res = c.post(
-            url_for("login"),
-            data={"password": "foobar", "email": "defaultuser@changedetection.io"},
-            follow_redirects=True
-        )
-
-        assert b"LOG OUT" in res.data
-        res = c.get(url_for("settings_page"))
-
-        # Menu should be available now
-        assert b"SETTINGS" in res.data
-        assert b"BACKUP" in res.data
-        assert b"IMPORT" in res.data
-
-        assert b"LOG OUT" in res.data
-
-        # Now remove the password so other tests function, @todo this should happen before each test automatically
-
-        c.get(url_for("settings_page", removepassword="true"))
-        c.get(url_for("import_page"))
-        assert b"LOG OUT" not in res.data

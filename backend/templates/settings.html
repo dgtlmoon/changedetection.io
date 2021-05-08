@@ -13,6 +13,7 @@
                 <span class="pure-form-message-inline">This is a required field.</span>
             </div>
             <br/>
+            <hr>
             <div class="pure-control-group">
                 <label for="minutes">Password protection</label>
                 <input type="password" id="password" name="password" size="15"/>
@@ -20,6 +21,27 @@
                     <a href="/settings?removepassword=true" class="pure-button pure-button-primary">Remove password</a>
                 {% endif %}
             </div>
+
+            <br/>
+            <hr>
+
+            <div class="pure-control-group">
+                <label for="minutes">Global notification settings</label><br/>
+                Notification URLs <a href="https://github.com/caronc/apprise"> see Apprise examples</a>.
+                <textarea style="overflow-wrap: normal;  overflow-x: scroll;" id="notification_urls" name="notification_urls" cols="80"
+                          rows="6" wrap=off placeholder="Example:
+
+Gitter - gitter://token/room
+Office365 - o365://TenantID:AccountEmail/ClientID/ClientSecret/TargetEmail
+AWS SNS - sns://AccessKeyID/AccessSecretKey/RegionName/+PhoneNo
+SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com
+">{{notification_urls}}</textarea>
+            </div>
+                <div class="pure-controls">
+                    <span class="pure-form-message-inline"><label for="trigger-test-notification" class="pure-checkbox">
+                        <input type="checkbox" id="trigger-test-notification" name="trigger-test-notification"> Send test notification on save.</label></span>
+
+                </div>
 
             <br/>
             <div class="pure-control-group">

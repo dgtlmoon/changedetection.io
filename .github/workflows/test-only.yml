@@ -1,10 +1,7 @@
 name: Test only
 
-on:
-  push:
-    branches:
-      - /refs/heads/*
-      - !master
+# Triggers the workflow on push or pull request events
+on: [push, pull_request]
 
 jobs:
   build:
@@ -31,5 +28,6 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
         run: |
-          cd backend; pytest
+          # Each test is totally isolated and performs its own cleanup/reset
+          cd backend; ./run_all_tests.sh
 

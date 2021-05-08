@@ -49,8 +49,24 @@ User-Agent: wonderbra 1.0"
                 <br/>
 
             </fieldset>
+            <div class="pure-control-group">
+                <label for="tag">Notification URLs</label>
+                <textarea id="notification_urls" name="notification_urls" class="pure-input-1-2" placeholder=""
+                          style="width: 100%;
+                            font-family:monospace;
+                            white-space: pre;
+                            overflow-wrap: normal;
+                            overflow-x: scroll;" rows="5">{% for value in watch.notification_urls %}{{ value }}
+{% endfor %}</textarea>
+                <span class="pure-form-message-inline">Use <a target=_new href="https://github.com/caronc/apprise">AppRise URLs</a> for notification to just about any service!</a> </span>
+                <br/>
+                <div class="pure-controls">
+                    <span class="pure-form-message-inline"><label for="trigger-test-notification" class="pure-checkbox">
+                        <input type="checkbox" id="trigger-test-notification" name="trigger-test-notification"> Send test notification on save.</label></span>
 
-
+                </div>
+            </div>
+            <br/>
             <div class="pure-control-group">
                 <button type="submit" class="pure-button pure-button-primary">Save</button>
             </div>

@@ -39,7 +39,8 @@ class ChangeDetectionStore:
                     'workers': 10  # Number of threads, lower is better for slow connections
                 },
                 'application': {
-                    'password': False
+                    'password': False,
+                    'notification_urls': [] # Apprise URL list
                 }
             }
         }
@@ -58,7 +59,8 @@ class ChangeDetectionStore:
             'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send
             'history': {},  # Dict of timestamp and output stripped filename
-            'ignore_text': [] # List of text to ignore when calculating the comparison checksum
+            'ignore_text': [], # List of text to ignore when calculating the comparison checksum
+            'notification_urls': [] # List of URLs to add to the notification Queue (Usually AppRise)
         }
 
         if path.isfile('/source.txt'):
@@ -109,7 +111,7 @@ class ChangeDetectionStore:
                 self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
                 self.add_watch(url='https://changedetection.io', tag='Tech news')
 
-        self.__data['version_tag'] = "0.292"
+        self.__data['version_tag'] = "0.30"
 
         if not 'app_guid' in self.__data:
             import sys
