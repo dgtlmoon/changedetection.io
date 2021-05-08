@@ -795,9 +795,6 @@ def notification_runner():
             # Create an Apprise instance
             try:
                 apobj = apprise.Apprise()
-                with open("test-datastore/trigger.txt", "w") as f:
-                    f.write(n_object['watch_url'])
-
                 for url in n_object['notification_urls']:
                     apobj.add(url.strip())
 
@@ -808,7 +805,7 @@ def notification_runner():
                 )
 
             except Exception as e:
-                print("Watch URL: {} Notification URL '{}' Error {}".format(n_object['watch_url'],e))
+                print("Watch URL: {}  Error {}".format(n_object['watch_url'],e))
 
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
