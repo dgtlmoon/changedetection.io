@@ -20,6 +20,7 @@ def test_setup_liveserver(live_server):
     def test_notification_endpoint():
         with open("test-datastore/count.txt", "w") as f:
             f.write("we hit it")
+        print ("\n>> Test notification endpoint was hit.\n")
         return "alright, you hit it"
 
     # And this should return not zero.
@@ -149,13 +150,14 @@ def test_check_basic_change_detection_functionality(client, live_server):
 # So we add our test here (was in a different file)
 def test_check_notification(client):
 
-    set_original_response()
+    with open("test-datastore/output.txt", "w") as f:
+        f.write("Some original text\nthat is going to change\n")
 
     # Give the endpoint time to spin up
     time.sleep(3)
 
     # Add our URL to the import page
-    test_url = url_for('test_notification_counter', _external=True)
+    test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("import_page"),
         data={"urls": test_url},
@@ -178,8 +180,15 @@ def test_check_notification(client):
     )
     assert b"Updated watch." in res.data
 
-    # Give the thread time to pick it up
-    time.sleep(3)
+    # Hit the edit page, be sure that we saved it
+    res = client.get(
+        url_for("edit_page", uuid="first"))
+    assert bytes(notification_url.encode('utf-8')) in res.data
+
+
+    with open("test-datastore/output.txt", "w") as f:
+        f.write("some totally new text\nthat should trigger a change\n\n\n\ok\n")
+
 
     # Trigger a check
     client.get(url_for("api_watch_checknow"), follow_redirects=True)
@@ -187,14 +196,11 @@ def test_check_notification(client):
     # Give the thread time to pick it up
     time.sleep(3)
 
+    # Did the front end see it?
+    res = client.get(
+        url_for("index"))
+    assert bytes("just now".encode('utf-8')) in res.data
 
-    set_modified_response()
-
-    # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
-
-    # Give the thread time to pick it up
-    time.sleep(3)
 
     # Check it triggered
     res = client.get(

@@ -795,6 +795,8 @@ def notification_runner():
             # Create an Apprise instance
             try:
                 apobj = apprise.Apprise()
+                with open("test-datastore/trigger.txt", "w") as f:
+                    f.write(n_object['watch_url'])
 
                 for url in n_object['notification_urls']:
                     apobj.add(url.strip())
