@@ -2,7 +2,7 @@ chardet==2.3.0
 flask~= 1.0
 pytest ~=6.2
 pytest-flask ~=1.1
-eventlet ~= 0.30
+eventlet>=0.31.0
 requests ~= 2.15
 validators
 timeago ~=1.0
