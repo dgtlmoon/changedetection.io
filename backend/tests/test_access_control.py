@@ -1,3 +1,4 @@
+from flask import url_for
 
 def test_check_access_control(app, client):
     # Still doesnt work, but this is closer.

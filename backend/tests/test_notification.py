@@ -1,8 +1,6 @@
 
 import time
 from flask import url_for
-from urllib.request import urlopen
-import pytest
 from . util import set_original_response, set_modified_response, live_server_setup
 
 # Hard to just add more live server URLs when one test is already running (I think)
