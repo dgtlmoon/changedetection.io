@@ -3,7 +3,7 @@ flask~= 1.0
 pytest ~=6.2
 pytest-flask ~=1.2
 eventlet>=0.31.0
-requests ~= 2.15
+requests[socks] ~= 2.15
 validators
 timeago ~=1.0
 inscriptis ~= 1.1
