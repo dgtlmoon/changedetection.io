@@ -384,7 +384,7 @@ def changedetection_app(conig=None, datastore_o=None):
             trigger_n = request.form.get('trigger-test-notification')
             if trigger_n:
                 n_object = {'watch_url': url,
-                            'notification_urls': datastore.data['settings']['application']['notification_urls']}
+                            'notification_urls': notification_urls}
                 notification_q.put(n_object)
 
                 messages.append({'class': 'ok', 'message': 'Notifications queued.'})
