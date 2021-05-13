@@ -459,12 +459,12 @@ def changedetection_app(conig=None, datastore_o=None):
                 messages.append({'class': 'error', 'message': "Invalid value given, use an integer."})
 
             else:
-                if minutes >= 5:
+                if minutes >= 1:
                     datastore.data['settings']['requests']['minutes_between_check'] = minutes
                     datastore.needs_write = True
                 else:
                     messages.append(
-                        {'class': 'error', 'message': "Must be atleast 5 minutes."})
+                        {'class': 'error', 'message': "Must be atleast 1 minute."})
 
             # 'validators' package doesnt work because its often a non-stanadard protocol. :(
             datastore.data['settings']['application']['notification_urls'] = []

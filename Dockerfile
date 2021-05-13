@@ -1,11 +1,12 @@
 FROM python:3.8-slim
 COPY requirements.txt /tmp/requirements.txt
-RUN apt-get update && apt-get install -y curl libssl-dev libffi-dev gcc libc-dev libxslt-dev zlib1g-dev g++ --no-install-recommends && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+RUN apt-get update && apt-get install -y libssl-dev libffi-dev gcc libc-dev libxslt-dev zlib1g-dev g++ --no-install-recommends && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 RUN pip3 install --upgrade pip && pip3 install --no-cache-dir -r /tmp/requirements.txt
 
  
 # More bloat, curl above is needed because the rust compiler is needed
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+# apprise requires this cryptography lib
+#RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
 
 RUN [ ! -d "/app" ] && mkdir /app
