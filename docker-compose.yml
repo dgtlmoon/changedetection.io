@@ -1,21 +1,23 @@
+version: '2'
 services:
-  changedetection.io:
-    image: dgtlmoon/changedetection.io
-    container_name: changedetection.io
-    hostname: changedetection.io
-    volumes:
-      - changedetection-data:/datastore
+    changedetection.io:
+      image: dgtlmoon/changedetection.io
+      container_name: changedetection.io
+      hostname: changedetection.io
+      volumes:
+        - changedetection-data:/datastore
 
-    # Proxy support example.
-#    environment:
-#      - HTTP_PROXY="socks5h://10.10.1.10:1080"
-#      - HTTPS_PROXY="socks5h://10.10.1.10:1080"
-      # An exclude list (useful for notifcation URLs above) can be specified by following
-#      - NO_PROXY="localhost,192.168.0.0/24"
+      # Proxy support example.
+  #    environment:
+  #      - HTTP_PROXY="socks5h://10.10.1.10:1080"
+  #      - HTTPS_PROXY="socks5h://10.10.1.10:1080"
+        # An exclude list (useful for notifcation URLs above) can be specified by following
+  #      - NO_PROXY="localhost,192.168.0.0/24"
 
-    ports:
-      - 5000:5000
-    restart: always
+      ports:
+        - 5000:5000
+      restart: always
 
-volumes: 
+volumes:
   changedetection-data:
+
