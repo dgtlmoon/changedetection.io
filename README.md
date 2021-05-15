@@ -77,6 +77,19 @@ Just some examples
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-notifications.png" style="max-width:100%;" alt="Self-hosted web page change monitoring notifications"  title="Self-hosted web page change monitoring notifications"  />
 
+### Proxy
+
+A proxy for ChangeDectection.io can be configured by setting environment variables.
+
+For example
+```
+$ export HTTP_PROXY="socks5h://10.10.1.10:1080"
+$ export HTTPS_PROXY="socks5h://10.10.1.10:1080"
+
+# An exclude list (useful for notifcation URLs above) can be specified by following
+$ export NO_PROXY="localhost,192.168.0.0/24"
+```
+For more information see https://docs.python-requests.org/en/master/user/advanced/#proxies
 
 ### Notes
 
