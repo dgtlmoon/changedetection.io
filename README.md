@@ -79,16 +79,19 @@ Just some examples
 
 ### Proxy
 
-A proxy for ChangeDectection.io can be configured by setting environment variables.
+A proxy for ChangeDectection.io can be configured by setting environment the 
+`HTTP_PROXY`, `HTTPS_PROXY` variables.
 
-For example
-```
-$ export HTTP_PROXY="socks5h://10.10.1.10:1080"
-$ export HTTPS_PROXY="socks5h://10.10.1.10:1080"
+`NO_PROXY` exclude list can be specified by following `"localhost,192.168.0.0/24"`
 
-# An exclude list (useful for notifcation URLs above) can be specified by following
-$ export NO_PROXY="localhost,192.168.0.0/24"
+as `docker run` with `-e`
+
 ```
+docker run -d --restart always -e HTTPS_PROXY="socks5h://10.10.1.10:1080" -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
+```
+
+With `docker-compose`, see the `Proxy support example` in <a href="https://github.com/dgtlmoon/changedetection.io/blob/master/docker-compose.yml">docker-compose.yml</a>.
+
 For more information see https://docs.python-requests.org/en/master/user/advanced/#proxies
 
 ### Notes
