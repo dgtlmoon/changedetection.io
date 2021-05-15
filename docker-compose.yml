@@ -1,0 +1,13 @@
+services:
+  changedetection.io:
+    image: dgtlmoon/changedetection.io
+    container_name: changedetection.io
+    hostname: changedetection.io
+    volumes:
+      - changedetection-data:/datastore
+    ports:
+      - 5000:5000
+    restart: always
+
+volumes: 
+  changedetection-data:
