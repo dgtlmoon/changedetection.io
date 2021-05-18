@@ -100,3 +100,13 @@ For more information see https://docs.python-requests.org/en/master/user/advance
 - Wont work with Cloudfare type "Please turn on javascript" protected pages
 - You can use the 'headers' section to monitor password protected web page changes
 
+
+### Support us
+
+Do you use changedetection.io to make money? does it save you time or money? Does it make your life easier? less stressful? Remember, we write this software when we should be doing actual paid work, we have to buy food and pay rent just like you.
+
+Please support us, even small amounts help a LOT.
+
+`1PLFN327GyUarpJd7nVe7Reqg9qHx5frNn`
+
+<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/btc-support.png" style="max-width:50%;" alt="Support us!"  />
