@@ -107,6 +107,6 @@ Do you use changedetection.io to make money? does it save you time or money? Doe
 
 Please support us, even small amounts help a LOT.
 
-`1PLFN327GyUarpJd7nVe7Reqg9qHx5frNn`
+BTC `1PLFN327GyUarpJd7nVe7Reqg9qHx5frNn`
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/btc-support.png" style="max-width:50%;" alt="Support us!"  />
