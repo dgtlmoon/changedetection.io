@@ -9,6 +9,9 @@
 # exit when any command fails
 set -e
 
+# Re #65 - Ability to include a link back to the installation, in the notification.
+export BASE_URL="https://foobar.com"
+
 find tests/test_*py -type f|while read test_name
 do
   echo "TEST RUNNING $test_name"
