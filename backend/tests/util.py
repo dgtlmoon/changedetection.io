@@ -43,8 +43,15 @@ def live_server_setup(live_server):
 
     @live_server.app.route('/test_notification_endpoint', methods=['POST'])
     def test_notification_endpoint():
+        from flask import request
+
         with open("test-datastore/count.txt", "w") as f:
-            f.write("we hit it")
+            f.write("we hit it\n")
+            # Debug method, dump all POST to file also, used to prove #65
+            data = request.stream.read()
+            if data != None:
+                f.write(str(data))
+
         print("\n>> Test notification endpoint was hit.\n")
         return "Text was set"
 

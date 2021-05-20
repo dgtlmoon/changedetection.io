@@ -54,6 +54,7 @@ def test_check_notification(client, live_server):
     # Did the front end see it?
     res = client.get(
         url_for("index"))
+
     assert bytes("just now".encode('utf-8')) in res.data
 
 
@@ -61,6 +62,11 @@ def test_check_notification(client, live_server):
     res = client.get(
         url_for("test_notification_counter"),
     )
-    print (res.data)
 
     assert bytes("we hit it".encode('utf-8')) in res.data
+
+    # Did we see the URL that had a change, in the notification?
+    assert bytes("test-endpoint".encode('utf-8')) in res.data
+
+    # Re #65 - did we see our foobar.com BASE_URL ?
+    assert bytes("https://foobar.com".encode('utf-8')) in res.data
