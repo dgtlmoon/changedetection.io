@@ -798,8 +798,15 @@ def notification_runner():
                 for url in n_object['notification_urls']:
                     apobj.add(url.strip())
 
+                n_body = n_object['watch_url']
+
+                # 65 - Append URL of instance to the notification if it is set.
+                base_url = os.getenv('BASE_URL')
+                if base_url != None:
+                    n_body += "\n" + base_url
+
                 apobj.notify(
-                    body=n_object['watch_url'],
+                    body=n_body,
                     # @todo This should be configurable.
                     title="ChangeDetection.io Notification - {}".format(n_object['watch_url'])
                 )

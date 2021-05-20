@@ -7,12 +7,14 @@ services:
       volumes:
         - changedetection-data:/datastore
 
-      # Proxy support example.
   #    environment:
+  #        Proxy support example.
   #      - HTTP_PROXY="socks5h://10.10.1.10:1080"
   #      - HTTPS_PROXY="socks5h://10.10.1.10:1080"
-        # An exclude list (useful for notifcation URLs above) can be specified by following
+  #        An exclude list (useful for notification URLs above) can be specified by with
   #      - NO_PROXY="localhost,192.168.0.0/24"
+  #        Base URL of your changedetection.io install (Added to notification alert
+  #      - BASE_URL="https://mysite.com"
 
       ports:
         - 5000:5000
