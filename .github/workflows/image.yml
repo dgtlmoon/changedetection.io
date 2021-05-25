@@ -62,8 +62,8 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:latest
           #                ${{ secrets.DOCKER_HUB_USERNAME }}:/changedetection.io:${{ env.RELEASE_VERSION }}
-#          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
+#          platforms: linux/amd64
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 
