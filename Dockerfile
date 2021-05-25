@@ -8,11 +8,6 @@ RUN apt-get update && apt-get install -y libssl-dev libffi-dev gcc libc-dev libx
 RUN pip3 install --upgrade pip && pip3 install --no-cache-dir -r /tmp/requirements.txt 
 
  
-# More bloat, curl above is needed because the rust compiler is needed
-# apprise requires this cryptography lib
-#RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-
-
 RUN [ ! -d "/app" ] && mkdir /app
 RUN [ ! -d "/datastore" ] && mkdir /datastore
 
