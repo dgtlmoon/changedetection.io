@@ -80,7 +80,7 @@ Just some examples
 ### Proxy
 
 A proxy for ChangeDectection.io can be configured by setting environment the 
-`HTTP_PROXY`, `HTTPS_PROXY` variables.
+`HTTP_PROXY`, `HTTPS_PROXY` variables, examples are also in the `docker-compose.yml`
 
 `NO_PROXY` exclude list can be specified by following `"localhost,192.168.0.0/24"`
 
