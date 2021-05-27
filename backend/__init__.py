@@ -633,6 +633,10 @@ def changedetection_app(conig=None, datastore_o=None):
         import zipfile
         from pathlib import Path
 
+        # Remove any existing backup file, for now we just keep one file
+        for previous_backup_filename in Path(app.config['datastore_path']).rglob('changedetection-backup-*.zip'):
+            os.unlink(previous_backup_filename)
+
         # create a ZipFile object
         backupname = "changedetection-backup-{}.zip".format(int(time.time()))
 
