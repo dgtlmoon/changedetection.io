@@ -679,7 +679,7 @@ def changedetection_app(conig=None, datastore_o=None):
                          compress_type=zipfile.ZIP_DEFLATED,
                          compresslevel=8)
 
-        return send_from_directory(app.config['datastore_path'], backupname)
+        return send_from_directory(app.config['datastore_path'], backupname, as_attachment=True)
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
