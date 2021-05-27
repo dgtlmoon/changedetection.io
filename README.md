@@ -94,6 +94,8 @@ With `docker-compose`, see the `Proxy support example` in <a href="https://githu
 
 For more information see https://docs.python-requests.org/en/master/user/advanced/#proxies
 
+This proxy support also extends to the notifications https://github.com/caronc/apprise/issues/387#issuecomment-841718867
+
 ### Notes
 
 - Does not yet support Javascript
