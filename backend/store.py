@@ -55,6 +55,7 @@ class ChangeDetectionStore:
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
             'newest_history_key': "",
             'title': None,
+            'minutes_between_check': 3 * 60,  # Default 3 hours
             'previous_md5': "",
             'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send

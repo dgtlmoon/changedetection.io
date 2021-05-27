@@ -17,6 +17,13 @@
                 <input type="text" placeholder="tag" size="10" id="tag" name="tag" value="{{ watch.tag}}"/>
                 <span class="pure-form-message-inline">Grouping tags, can be a comma separated list.</span>
             </div>
+            </br>
+            <div class="pure-control-group">
+                <label for="minutes">Maximum time in minutes until recheck.</label>
+                <input type="text" id="minutes" name="minutes" value="{{watch.minutes_between_check}}"
+                       size="5"/>
+                <span class="pure-form-message-inline">Minimum 1 minute between recheck</span>
+            </div>
 
             <!-- @todo: move to tabs --->
             <fieldset class="pure-group">
