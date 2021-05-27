@@ -856,6 +856,10 @@ def ticker_thread_check_time_launch_checks():
 
         threshold = time.time() - (minutes * 60)
         for uuid, watch in datastore.data['watching'].items():
+            # If they supplied an individual one
+            if 'minutes_between_check' in watch:
+                threshold = time.time() - (watch['minutes_between_check'] * 60)
+
             if not watch['paused'] and watch['last_checked'] <= threshold:
                 if not uuid in running_uuids and uuid not in update_q.queue:
                     update_q.put(uuid)
