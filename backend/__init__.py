@@ -633,6 +633,10 @@ def changedetection_app(conig=None, datastore_o=None):
         import zipfile
         from pathlib import Path
 
+        # Remove any existing backup file, for now we just keep one file
+        for previous_backup_filename in Path(app.config['datastore_path']).rglob('changedetection-backup-*.zip'):
+            os.unlink(previous_backup_filename)
+
         # create a ZipFile object
         backupname = "changedetection-backup-{}.zip".format(int(time.time()))
 
@@ -662,7 +666,20 @@ def changedetection_app(conig=None, datastore_o=None):
                                  compress_type=zipfile.ZIP_DEFLATED,
                                  compresslevel=8)
 
-        return send_from_directory(app.config['datastore_path'], backupname)
+            # Create a list file with just the URLs, so it's easier to port somewhere else in the future
+            list_file = os.path.join(app.config['datastore_path'], "url-list.txt")
+            with open(list_file, "w") as f:
+                for uuid in datastore.data['watching']:
+                    url = datastore.data['watching'][uuid]['url']
+                    f.write("{}\r\n".format(url))
+
+            # Add it to the Zip
+            zipObj.write(list_file,
+                         arcname="url-list.txt",
+                         compress_type=zipfile.ZIP_DEFLATED,
+                         compresslevel=8)
+
+        return send_from_directory(app.config['datastore_path'], backupname, as_attachment=True)
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
