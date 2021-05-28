@@ -334,6 +334,17 @@ def changedetection_app(conig=None, datastore_o=None):
             url = request.form.get('url').strip()
             tag = request.form.get('tag').strip()
 
+            minutes_recheck = request.form.get('minutes')
+            if minutes_recheck:
+                minutes = int(minutes_recheck.strip())
+                if minutes >= 1:
+                    datastore.data['watching'][uuid]['minutes_between_check'] = minutes
+                else:
+                    messages.append(
+                        {'class': 'error', 'message': "Must be atleast 1 minute."})
+
+
+
             # Extra headers
             form_headers = request.form.get('headers').strip().split("\n")
             extra_headers = {}
@@ -856,9 +867,16 @@ def ticker_thread_check_time_launch_checks():
 
         threshold = time.time() - (minutes * 60)
         for uuid, watch in datastore.data['watching'].items():
+
+            # If they supplied an individual entry minutes to recheck and its not the same as the default
+            if 'minutes_between_check' in watch and minutes != watch['minutes_between_check']:
+                threshold = time.time() - (watch['minutes_between_check'] * 60)
+
             if not watch['paused'] and watch['last_checked'] <= threshold:
                 if not uuid in running_uuids and uuid not in update_q.queue:
                     update_q.put(uuid)
+
+            time.sleep(1)
 
         # Should be low so we can break this out in testing
         app.config.exit.wait(1)

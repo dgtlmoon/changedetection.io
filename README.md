@@ -25,6 +25,7 @@ Know when ...
 - New software releases, security advisories when you're not on their mailing list.
 - Festivals with changes
 - Realestate listing changes
+- COVID related news from government websites
 
 
 **Get monitoring now! super simple, one command!**
