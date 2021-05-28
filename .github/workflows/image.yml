@@ -31,8 +31,8 @@ jobs:
       - name: Create release metadata
         run: |
           # COPY'ed by Dockerfile into backend/ of the image, then read by the server in store.py
-          echo ${{ steps.vars.outputs.sha_short }} > backend/source.txt
-          echo ${{ steps.vars.outputs.tag }} > backend/tag.txt
+          echo ${{ github.sha }} > backend/source.txt
+          echo ${{ github.ref }} > backend/tag.txt
 
       - name: Test with pytest
         run: |
