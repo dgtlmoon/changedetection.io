@@ -63,8 +63,8 @@ class ChangeDetectionStore:
             'notification_urls': [] # List of URLs to add to the notification Queue (Usually AppRise)
         }
 
-        if path.isfile('/source.txt'):
-            with open('/source.txt') as f:
+        if path.isfile('backend/source.txt'):
+            with open('backend/source.txt') as f:
                 # Should be set in Dockerfile to look for /source.txt , this will give us the git commit #
                 # So when someone gives us a backup file to examine, we know exactly what code they were running.
                 self.__data['build_sha'] = f.read()

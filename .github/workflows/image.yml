@@ -28,6 +28,12 @@ jobs:
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
+      - name: Create release metadata
+        run: |
+          # COPY'ed by Dockerfile into backend/ of the image, then read by the server in store.py
+          echo ${{ steps.vars.outputs.sha_short }} > backend/source.txt
+          echo ${{ steps.vars.outputs.tag }} > backend/tag.txt
+
       - name: Test with pytest
         run: |
           # Each test is totally isolated and performs its own cleanup/reset
@@ -68,7 +74,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
 
       - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+        run: echo step SHA ${{ steps.vars.outputs.sha_short }} tag ${{steps.vars.outputs.tag}} branch ${{steps.vars.outputs.branch}} digest ${{ steps.docker_build.outputs.digest }}
 
 # failed: Cache service responded with 503
 #      - name: Cache Docker layers
