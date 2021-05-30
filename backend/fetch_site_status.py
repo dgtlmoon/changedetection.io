@@ -66,24 +66,35 @@ class perform_site_check():
                              timeout=timeout,
                              verify=False)
 
-            stripped_text_from_html = get_text(r.text)
+            # CSS Filter
+            css_filter = self.datastore.data['watching'][uuid]['css_filter']
+            if css_filter and len(css_filter.strip()):
+                from bs4 import BeautifulSoup
+                soup = BeautifulSoup(r.content, "html.parser")
+                stripped_text_from_html = ""
+                for item in soup.select(css_filter):
+                    text = str(item.get_text())+"\n"
+                    stripped_text_from_html += text
+
+            else:
+                stripped_text_from_html = get_text(r.text)
 
         # Usually from networkIO/requests level
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
             update_obj["last_error"] = str(e)
-
             print(str(e))
 
         except requests.exceptions.MissingSchema:
             print("Skipping {} due to missing schema/bad url".format(uuid))
 
         # Usually from html2text level
-        except UnicodeDecodeError as e:
-
+        except Exception as e:
+            #        except UnicodeDecodeError as e:
             update_obj["last_error"] = str(e)
             print(str(e))
             # figure out how to deal with this cleaner..
             # 'utf-8' codec can't decode byte 0xe9 in position 480: invalid continuation byte
+
 
         else:
             # We rely on the actual text in the html output.. many sites have random script vars etc,
