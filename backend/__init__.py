@@ -386,6 +386,17 @@ def changedetection_app(conig=None, datastore_o=None):
                 if len(datastore.data['watching'][uuid]['history']):
                     update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
+
+            # CSS Filter
+            css_filter = request.form.get('css_filter')
+            if css_filter:
+                datastore.data['watching'][uuid]['css_filter'] = css_filter.strip()
+
+                # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
+                if len(datastore.data['watching'][uuid]['history']):
+                    update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
+
+
             validators.url(url)  # @todo switch to prop/attr/observer
             datastore.data['watching'][uuid].update(update_obj)
             datastore.needs_write = True
@@ -876,7 +887,7 @@ def ticker_thread_check_time_launch_checks():
                 if not uuid in running_uuids and uuid not in update_q.queue:
                     update_q.put(uuid)
 
-            time.sleep(1)
+            time.sleep(0.1)
 
         # Should be low so we can break this out in testing
         app.config.exit.wait(1)

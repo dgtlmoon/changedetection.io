@@ -61,7 +61,8 @@ class ChangeDetectionStore:
             'headers': {},  # Extra headers to send
             'history': {},  # Dict of timestamp and output stripped filename
             'ignore_text': [], # List of text to ignore when calculating the comparison checksum
-            'notification_urls': [] # List of URLs to add to the notification Queue (Usually AppRise)
+            'notification_urls': [], # List of URLs to add to the notification Queue (Usually AppRise)
+            'css_filter': "",
         }
 
         if path.isfile('backend/source.txt'):

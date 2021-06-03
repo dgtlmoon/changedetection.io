@@ -24,7 +24,13 @@
                        size="5"/>
                 <span class="pure-form-message-inline">Minimum 1 minute between recheck</span>
             </div>
-
+            </br>
+            <div class="pure-control-group">
+                <label for="minutes">CSS Filter</label>
+                <input type="text" id="css_filter" name="css_filter" value="{{watch.css_filter}}"
+                       size="25"/>
+                <span class="pure-form-message-inline">Limit text to this CSS rule, all matching CSS is included.</span>
+            </div>
             <!-- @todo: move to tabs --->
             <fieldset class="pure-group">
                 <label for="ignore-text">Ignore text</label>
