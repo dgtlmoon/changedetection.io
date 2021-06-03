@@ -60,6 +60,12 @@ def test_check_basic_change_detection_functionality(client, live_server):
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
+    # #75, and it should be in the RSS feed
+    res = client.get(url_for("index", rss="true"))
+    expected_url = url_for('test_endpoint', _external=True)
+    assert b'<rss' in res.data
+    assert expected_url.encode('utf-8') in res.data
+
     # Following the 'diff' link, it should no longer display as 'unviewed' even after we recheck it a few times
     res = client.get(url_for("diff_history_page", uuid="first"))
     assert b'Compare newest' in res.data
