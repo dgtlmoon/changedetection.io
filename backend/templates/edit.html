@@ -19,6 +19,12 @@
             </div>
             </br>
             <div class="pure-control-group">
+                <label for="tag">Title</label>
+                <input type="text" placeholder="" size="10" id="title" name="title" value="{% if watch.title %}{{watch.title}}{% endif %}"/>
+            </div>
+            </br>
+
+            <div class="pure-control-group">
                 <label for="minutes">Maximum time in minutes until recheck.</label>
                 <input type="text" id="minutes" name="minutes" value="{{watch.minutes_between_check}}"
                        size="5"/>

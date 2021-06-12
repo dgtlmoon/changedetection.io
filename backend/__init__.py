@@ -355,8 +355,10 @@ def changedetection_app(conig=None, datastore_o=None):
                         if len(parts) == 2:
                             extra_headers.update({parts[0].strip(): parts[1].strip()})
 
+            title = request.form.get('title')
             update_obj = {'url': url,
                           'tag': tag,
+                          'title' : title,
                           'headers': extra_headers
                           }
 
