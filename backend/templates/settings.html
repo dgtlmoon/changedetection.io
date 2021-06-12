@@ -25,7 +25,13 @@
 
             <br/>
             <hr>
-
+                <div class="pure-controls">
+                    <br/>
+                    <span ><label for="auto-title" class="pure-checkbox">
+                        <input type="checkbox" id="auto-title" name="trigger-test-notification" /> Automatically extract &lt;title&gt as name</label></span>
+                </div>
+            <br/>
+            <hr>
             <div class="pure-control-group">
                 <label for="minutes">Global notification settings</label><br/>
                 Notification URLs <a href="https://github.com/caronc/apprise"> see Apprise examples</a>.
@@ -41,9 +47,7 @@ SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com
                 <div class="pure-controls">
                     <span class="pure-form-message-inline"><label for="trigger-test-notification" class="pure-checkbox">
                         <input type="checkbox" id="trigger-test-notification" name="trigger-test-notification"> Send test notification on save.</label></span>
-
                 </div>
-
             <br/>
             <div class="pure-control-group">
                 <button type="submit" class="pure-button pure-button-primary">Save</button>

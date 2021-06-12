@@ -40,6 +40,7 @@ class ChangeDetectionStore:
                 },
                 'application': {
                     'password': False,
+                    'auto-title': False,
                     'notification_urls': [] # Apprise URL list
                 }
             }
