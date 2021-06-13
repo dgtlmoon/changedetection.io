@@ -866,15 +866,13 @@ def ticker_thread_check_time_launch_checks():
 
     while not app.config.exit.is_set():
 
+        # Get a list of watches by UUID that are currently fetching data
         running_uuids = []
         for t in running_update_threads:
             if t.current_uuid:
                 running_uuids.append(t.current_uuid)
 
-        # Look at the dataset, find a stale watch to process
-
-        # Every minute check for new UUIDs to follow up on, should be inside the loop incase it changes.
-
+        # Check for watches outside of the time threshold to put in the thread queue.
         for uuid, watch in datastore.data['watching'].items():
 
             # If they supplied an individual entry minutes to threshold.
