@@ -866,28 +866,31 @@ def ticker_thread_check_time_launch_checks():
 
     while not app.config.exit.is_set():
 
+        # Get a list of watches by UUID that are currently fetching data
         running_uuids = []
         for t in running_update_threads:
             if t.current_uuid:
                 running_uuids.append(t.current_uuid)
 
-        # Look at the dataset, find a stale watch to process
-
-        # Every minute check for new UUIDs to follow up on, should be inside the loop incase it changes.
-        minutes = datastore.data['settings']['requests']['minutes_between_check']
-
-        threshold = time.time() - (minutes * 60)
+        # Check for watches outside of the time threshold to put in the thread queue.
         for uuid, watch in datastore.data['watching'].items():
 
-            # If they supplied an individual entry minutes to recheck and its not the same as the default
-            if 'minutes_between_check' in watch and minutes != watch['minutes_between_check']:
-                threshold = time.time() - (watch['minutes_between_check'] * 60)
+            # If they supplied an individual entry minutes to threshold.
+            if 'minutes_between_check' in watch:
+                max_time = watch['minutes_between_check'] * 60
+            else:
+                # Default system wide.
+                max_time = datastore.data['settings']['requests']['minutes_between_check'] * 60
 
+            threshold = time.time() - max_time
+
+            # Yeah, put it in the queue, it's more than time.
             if not watch['paused'] and watch['last_checked'] <= threshold:
                 if not uuid in running_uuids and uuid not in update_q.queue:
                     update_q.put(uuid)
 
-            time.sleep(0.1)
+        # Wait a few seconds before checking the list again
+        time.sleep(3)
 
         # Should be low so we can break this out in testing
         app.config.exit.wait(1)
