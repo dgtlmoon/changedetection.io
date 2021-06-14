@@ -1,0 +1,67 @@
+#diff-ui {
+
+    background: #fff;
+    padding: 2em;
+    margin: 1em;
+    border-radius: 5px;
+    font-size: 9px;
+
+    table {
+        table-layout: fixed;
+        width: 100%;
+    }
+    td {
+        padding: 3px 4px;
+        border: 1px solid transparent;
+        vertical-align: top;
+        font: 1em monospace;
+        text-align: left;
+        white-space: pre-wrap;
+    }
+
+}
+h1 {
+	display: inline;
+	font-size: 100%;
+}
+del {
+	text-decoration: none;
+	color: #b30000;
+	background: #fadad7;
+}
+
+ins {
+	background: #eaf2c2;
+	color: #406619;
+	text-decoration: none;
+}
+
+#result {
+	white-space: pre-wrap;
+}
+
+#settings {
+    background: rgba(0,0,0,.05);
+    padding: 1em;
+    border-radius: 10px;
+    margin-bottom: 1em;
+    color: #fff;
+    font-size: 80%;
+    label {
+	    margin-left: 1em;
+	    display: inline-block;
+	    font-weight: normal;
+    }
+}
+
+.source {
+	position: absolute;
+	right: 1%;
+	top: .2em;
+}
+
+@-moz-document url-prefix() {
+	body {
+		height: 99%; /* Hide scroll bar in Firefox */
+	}
+}
