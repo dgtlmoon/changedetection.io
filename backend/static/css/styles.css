@@ -48,7 +48,6 @@ section.content {
 /* table related */
 .watch-table {
   width: 100%;
-
 }
 
 .watch-table tr.unviewed {
@@ -93,6 +92,7 @@ section.content {
   padding: 0px;
   margin: 0px;
 }
+
 #post-list-buttons li {
   display: inline-block;
 }
@@ -219,6 +219,10 @@ body:after, body:before {
     color: #fff;
 }
 
+#new-watch-form input {
+    width: auto !important;
+}
+
 #diff-col {
     padding-left:40px;
 }
@@ -264,7 +268,7 @@ footer {
 }
 
 #new-version-text a{
-    color: #e07171;
+    color: #e07171;http://127.0.0.1:4000/settings
 }
 
 .paused-state.state-False img {
@@ -275,3 +279,110 @@ footer {
 .paused-state.state-False:hover img{
     opacity: 0.8;
 }
+
+.pure-form  input[type=url] {
+  width: 100%;
+}
+
+.pure-form textarea {
+  width: 100%;
+  font-size: 14px;
+}
+
+
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px)  {
+  .box {
+    max-width: 95%
+  }
+  .edit-form {
+    padding: 0.5em;
+    margin: 0.5em;
+  }
+  #nav-menu {
+    overflow-x: scroll;
+  }
+
+}
+
+/*
+Max width before this PARTICULAR table gets nasty
+This query will take effect for any screen smaller than 760px
+and also iPads specifically.
+*/
+@media
+only screen and (max-width: 760px),
+(min-device-width: 768px) and (max-device-width: 1024px)  {
+
+	/* Force table to not be like tables anymore */
+	table, thead, tbody, th, td, tr {
+		display: block;
+	}
+
+    .last-checked::before {
+     color: #555;
+        content: "Last Checked ";
+    }
+    .last-changed::before {
+    color: #555;
+        content: "Last Changed ";
+    }
+
+	/* Force table to not be like tables anymore */
+	td.inline {
+		display: inline-block;
+	}
+	/* Hide table headers (but not display: none;, for accessibility) */
+	thead tr {
+		position: absolute;
+		top: -9999px;
+		left: -9999px;
+	}
+
+    .pure-table td, .pure-table th {
+      border: none;
+    }
+
+    .pure-table-striped tr {
+         background-color: #fff;
+    }
+
+    .pure-table-striped tr:nth-child(2n-1) {
+      background-color: #eee;
+    }
+    .pure-table-striped tr:nth-child(2n-1) td {
+        background-color: inherit;
+    }
+
+    td {
+        /* Behave  like a "row" */
+        border: none;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        padding-left: 50%;
+    }
+
+	td:before {
+		/* Top/left values mimic padding */
+		top: 6px;
+		left: 6px;
+		width: 45%;
+		padding-right: 10px;
+		white-space: nowrap;
+	}
+
+	/*
+	Label the data
+	*//*
+	td:nth-of-type(1):before { content: "First Name"; }
+	td:nth-of-type(2):before { content: "Last Name"; }
+	td:nth-of-type(3):before { content: "Job Title"; }
+	td:nth-of-type(4):before { content: "Favorite Color"; }
+	td:nth-of-type(5):before { content: "Wars of Trek?"; }
+	td:nth-of-type(6):before { content: "Secret Alias"; }
+	td:nth-of-type(7):before { content: "Date of Birth"; }
+	td:nth-of-type(8):before { content: "Dream Vacation City"; }
+	td:nth-of-type(9):before { content: "GPA"; }
+	td:nth-of-type(10):before { content: "Arbitrary Data"; }*/
+}
+
+
