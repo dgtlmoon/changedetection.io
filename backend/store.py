@@ -113,7 +113,7 @@ class ChangeDetectionStore:
                 self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
                 self.add_watch(url='https://changedetection.io', tag='Tech news')
 
-        self.__data['version_tag'] = "0.31"
+        self.__data['version_tag'] = "0.32"
 
         if not 'app_guid' in self.__data:
             import sys
