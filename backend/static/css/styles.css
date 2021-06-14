@@ -219,6 +219,10 @@ body:after, body:before {
     color: #fff;
 }
 
+#new-watch-form input {
+    width: auto !important;
+}
+
 #diff-col {
     padding-left:40px;
 }
@@ -276,12 +280,11 @@ footer {
     opacity: 0.8;
 }
 
-form input[type=url] {
+.pure-form  input[type=url] {
   width: 100%;
-
 }
 
-form textarea {
+.pure-form textarea {
   width: 100%;
   font-size: 14px;
 }
