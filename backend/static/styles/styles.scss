@@ -1,6 +1,7 @@
 /*
  * -- BASE STYLES --
  * Most of these are inherited from Base, but I want to change a few.
+ * npm run scss
  */
 body {
   color: #333;
@@ -10,12 +11,14 @@ body {
 .pure-table-even {
   background: #fff;
 }
+
 /* Some styles from https://css-tricks.com/ */
 
 a {
   text-decoration: none;
   color: #1b98f8;
 }
+
 a.github-link {
   color: #fff;
 }
@@ -27,12 +30,10 @@ a.github-link {
   display: flex;
   justify-content: space-between;
   border-bottom: 2px solid #ed5900;
-
   align-items: center;
 }
 
 section.content {
-
   padding-top: 5em;
   padding-bottom: 5em;
   flex-direction: column;
@@ -41,18 +42,38 @@ section.content {
   justify-content: center;
 }
 
-.pure-table.watch-table td {
-  font-size: 80%;
-}
-
 /* table related */
 .watch-table {
   width: 100%;
+
+  tr.unviewed {
+    font-weight: bold;
+  }
+
+  .error {
+    color: #a00;
+  }
+
+  td {
+    font-size: 80%;
+    white-space: nowrap;
+  }
+
+  td.title-col {
+    word-break: break-all;
+    white-space: normal;
+  }
+
+  th {
+    white-space: nowrap;
+  }
+
+  .title-col a[target="_blank"]::after, .current-diff-url::after {
+    content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
+    margin: 0 3px 0 5px;
+  }
 }
 
-.watch-table tr.unviewed {
-    font-weight: bold;
-}
 
 .watch-tag-list {
   color: #e70069;
@@ -66,42 +87,22 @@ section.content {
   justify-content: center;
 }
 
-.watch-table .error {
-  color: #a00;
-}
-
-.watch-table td {
-  white-space: nowrap;
-}
-
-.watch-table td.title-col {
-  word-break: break-all;
-  white-space: normal;
-}
-.watch-table th {
-  white-space: nowrap;
-}
-
-.watch-table .title-col a[target="_blank"]::after, .current-diff-url::after {
-  content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
-  margin: 0 3px 0 5px;
-}
 
 #post-list-buttons {
   text-align: right;
   padding: 0px;
   margin: 0px;
-}
 
-#post-list-buttons li {
-  display: inline-block;
-}
+  li {
+    display: inline-block;
+  }
 
-#post-list-buttons a {
-   border-top-left-radius: initial;
-   border-top-right-radius: initial;
-   border-bottom-left-radius: 5px;
-   border-bottom-right-radius: 5px;
+  a {
+    border-top-left-radius: initial;
+    border-top-right-radius: initial;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+  }
 }
 
 
@@ -119,13 +120,16 @@ body:after, body:before {
   width: 100%;
   z-index: -1;
 }
+
 body::after {
   opacity: 0.91;
 }
+
 body::before {
   content: "";
   background-image: url(/static/images/gradient-border.png);
 }
+
 body:before {
   background-size: cover
 }
@@ -149,148 +153,158 @@ body:after, body:before {
 }
 
 .edit-form {
-   background: #fff;
-   padding: 2em;
-   margin: 1em;
-   border-radius: 5px;
+  background: #fff;
+  padding: 2em;
+  margin: 1em;
+  border-radius: 5px;
 }
+
 .button-secondary {
-    color: white;
-    border-radius: 4px;
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+  color: white;
+  border-radius: 4px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
 .button-success {
-    background: rgb(28, 184, 65);
-    /* this is a green */
+  background: rgb(28, 184, 65);
+  /* this is a green */
 }
 
 .button-tag {
-    background: rgb(99, 99, 99);
-    color: #fff;
-    font-size: 65%;
-    border-bottom-left-radius: initial;
-    border-bottom-right-radius: initial;
-}
-.button-tag.active {
+  background: rgb(99, 99, 99);
+  color: #fff;
+  font-size: 65%;
+  border-bottom-left-radius: initial;
+  border-bottom-right-radius: initial;
+
+  &.active {
     background: #9c9c9c;
     font-weight: bold;
+  }
+
 }
+
 .button-error {
-    background: rgb(202, 60, 60);
-    /* this is a maroon */
+  background: rgb(202, 60, 60);
+  /* this is a maroon */
 }
 
 .button-warning {
-    background: rgb(223, 117, 20);
-    /* this is an orange */
+  background: rgb(223, 117, 20);
+  /* this is an orange */
 }
 
 .button-secondary {
-    background: rgb(66, 184, 221);
-    /* this is a light blue */
+  background: rgb(66, 184, 221);
+  /* this is a light blue */
 }
 
 
 .button-cancel {
-    background: rgb(200, 200, 200);
-    /* this is a green */
+  background: rgb(200, 200, 200);
+  /* this is a green */
 }
 
 .messages {
-    padding: 1em;
-    background: rgba(255,255,255,.2);
-    border-radius: 10px;
-    color: #fff;
-    font-weight: bold;
-}
-
-.pure-form label  {
+  padding: 1em;
+  background: rgba(255, 255, 255, .2);
+  border-radius: 10px;
+  color: #fff;
   font-weight: bold;
 }
 
 #new-watch-form {
-    background: rgba(0,0,0,.05);
-    padding: 1em;
-    border-radius: 10px;
-    margin-bottom: 1em;
+  background: rgba(0, 0, 0, .05);
+  padding: 1em;
+  border-radius: 10px;
+  margin-bottom: 1em;
 }
+
 #new-watch-form legend {
-    color: #fff;
+  color: #fff;
 }
 
 #new-watch-form input {
-    width: auto !important;
+  width: auto !important;
 }
 
 #diff-col {
-    padding-left:40px;
+  padding-left: 40px;
 }
+
 #diff-jump {
-    position: fixed;
-    left: 0px;
-    top: 80px;
-    background: #fff;
-    padding: 10px;
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
-    box-shadow: 5px 0 5px -2px #888;
+  position: fixed;
+  left: 0px;
+  top: 80px;
+  background: #fff;
+  padding: 10px;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+  box-shadow: 5px 0 5px -2px #888;
 }
 
 #diff-jump a {
-    color: #1b98f8;
-    cursor: grabbing;
-    -moz-user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select:none;
-    user-select:none;
-    -o-user-select:none;
+  color: #1b98f8;
+  cursor: grabbing;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -o-user-select: none;
 }
 
 footer {
-    padding: 10px;
-    background: #fff;
-    color: #444;
-    text-align: center;
+  padding: 10px;
+  background: #fff;
+  color: #444;
+  text-align: center;
 }
 
 #feed-icon {
-    vertical-align: middle;
+  vertical-align: middle;
 }
 
 #version {
-    position: absolute;
-    top: 80px;
-    right: 0px;
-    font-size: 8px;
-    background: #fff;
-    padding: 10px;
+  position: absolute;
+  top: 80px;
+  right: 0px;
+  font-size: 8px;
+  background: #fff;
+  padding: 10px;
 }
 
-#new-version-text a{
-    color: #e07171;http://127.0.0.1:4000/settings
+#new-version-text a {
+  color: #e07171;
 }
 
-.paused-state.state-False img {
+.paused-state {
+  &.state-False img {
     opacity: 0.2;
-}
+  }
 
-
-.paused-state.state-False:hover img{
+  &.state-False:hover img {
     opacity: 0.8;
-}
-
-.pure-form  input[type=url] {
-  width: 100%;
-}
-
-.pure-form textarea {
-  width: 100%;
-  font-size: 14px;
+  }
 }
 
 
-@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px)  {
+.pure-form {
+
+  label {
+    font-weight: bold;
+  }
+
+  input[type=url] {
+    width: 100%;
+  }
+
+  textarea {
+    width: 100%;
+    font-size: 14px;
+  }
+}
+
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
   .box {
     max-width: 95%
   }
@@ -309,80 +323,72 @@ Max width before this PARTICULAR table gets nasty
 This query will take effect for any screen smaller than 760px
 and also iPads specifically.
 */
-@media
-only screen and (max-width: 760px),
-(min-device-width: 768px) and (max-device-width: 1024px)  {
+@media only screen and (max-width: 760px),
+(min-device-width: 768px) and (max-device-width: 1024px) {
 
-	/* Force table to not be like tables anymore */
-	table, thead, tbody, th, td, tr {
-		display: block;
-	}
+  .watch-table {
+    /* Force table to not be like tables anymore */
+    thead, tbody, th, td, tr {
+      display: block;
+    }
 
     .last-checked::before {
-     color: #555;
-        content: "Last Checked ";
-    }
-    .last-changed::before {
-    color: #555;
-        content: "Last Changed ";
+      color: #555;
+      content: "Last Checked ";
     }
 
-	/* Force table to not be like tables anymore */
-	td.inline {
-		display: inline-block;
-	}
-	/* Hide table headers (but not display: none;, for accessibility) */
-	thead tr {
-		position: absolute;
-		top: -9999px;
-		left: -9999px;
-	}
+    .last-changed::before {
+      color: #555;
+      content: "Last Changed ";
+    }
+
+    /* Force table to not be like tables anymore */
+    td.inline {
+      display: inline-block;
+    }
+
+    /* Hide table headers (but not display: none;, for accessibility) */
+    thead tr {
+      position: absolute;
+      top: -9999px;
+      left: -9999px;
+    }
 
     .pure-table td, .pure-table th {
       border: none;
     }
 
-    .pure-table-striped tr {
-         background-color: #fff;
-    }
-
-    .pure-table-striped tr:nth-child(2n-1) {
-      background-color: #eee;
-    }
-    .pure-table-striped tr:nth-child(2n-1) td {
-        background-color: inherit;
-    }
-
     td {
-        /* Behave  like a "row" */
-        border: none;
-        border-bottom: 1px solid #eee;
-        position: relative;
-        padding-left: 50%;
+      /* Behave  like a "row" */
+      border: none;
+      border-bottom: 1px solid #eee;
+
+      &:before {
+        /* Top/left values mimic padding */
+        top: 6px;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+      }
     }
 
-	td:before {
-		/* Top/left values mimic padding */
-		top: 6px;
-		left: 6px;
-		width: 45%;
-		padding-right: 10px;
-		white-space: nowrap;
-	}
+    &.pure-table-striped {
+      tr {
+        background-color: #fff;
+      }
 
-	/*
-	Label the data
-	*//*
-	td:nth-of-type(1):before { content: "First Name"; }
-	td:nth-of-type(2):before { content: "Last Name"; }
-	td:nth-of-type(3):before { content: "Job Title"; }
-	td:nth-of-type(4):before { content: "Favorite Color"; }
-	td:nth-of-type(5):before { content: "Wars of Trek?"; }
-	td:nth-of-type(6):before { content: "Secret Alias"; }
-	td:nth-of-type(7):before { content: "Date of Birth"; }
-	td:nth-of-type(8):before { content: "Dream Vacation City"; }
-	td:nth-of-type(9):before { content: "GPA"; }
-	td:nth-of-type(10):before { content: "Arbitrary Data"; }*/
+      tr:nth-child(2n-1) {
+        background-color: #eee;
+      }
+
+      tr:nth-child(2n-1) td {
+        background-color: inherit;
+      }
+    }
+
+  }
 }
+
 
 

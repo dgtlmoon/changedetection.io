@@ -1,0 +1,283 @@
+/*
+ * -- BASE STYLES --
+ * Most of these are inherited from Base, but I want to change a few.
+ * npm run scss
+ */
+body {
+  color: #333;
+  background: #262626; }
+
+.pure-table-even {
+  background: #fff; }
+
+/* Some styles from https://css-tricks.com/ */
+a {
+  text-decoration: none;
+  color: #1b98f8; }
+
+a.github-link {
+  color: #fff; }
+
+.pure-menu-horizontal {
+  background: #fff;
+  padding: 5px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 2px solid #ed5900;
+  align-items: center; }
+
+section.content {
+  padding-top: 5em;
+  padding-bottom: 5em;
+  flex-direction: column;
+  display: flex;
+  align-items: center;
+  justify-content: center; }
+
+/* table related */
+.watch-table {
+  width: 100%; }
+  .watch-table tr.unviewed {
+    font-weight: bold; }
+  .watch-table .error {
+    color: #a00; }
+  .watch-table td {
+    font-size: 80%;
+    white-space: nowrap; }
+  .watch-table td.title-col {
+    word-break: break-all;
+    white-space: normal; }
+  .watch-table th {
+    white-space: nowrap; }
+  .watch-table .title-col a[target="_blank"]::after, .watch-table .current-diff-url::after {
+    content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
+    margin: 0 3px 0 5px; }
+
+.watch-tag-list {
+  color: #e70069;
+  white-space: nowrap; }
+
+.box {
+  max-width: 80%;
+  flex-direction: column;
+  display: flex;
+  justify-content: center; }
+
+#post-list-buttons {
+  text-align: right;
+  padding: 0px;
+  margin: 0px; }
+  #post-list-buttons li {
+    display: inline-block; }
+  #post-list-buttons a {
+    border-top-left-radius: initial;
+    border-top-right-radius: initial;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px; }
+
+body:after {
+  content: "";
+  background: linear-gradient(130deg, #ff7a18, #af002d 41.07%, #319197 76.05%); }
+
+body:after, body:before {
+  display: block;
+  height: 600px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: -1; }
+
+body::after {
+  opacity: 0.91; }
+
+body::before {
+  content: "";
+  background-image: url(/static/images/gradient-border.png); }
+
+body:before {
+  background-size: cover; }
+
+body:after, body:before {
+  -webkit-clip-path: polygon(100% 0, 0 0, 0 77.5%, 1% 77.4%, 2% 77.1%, 3% 76.6%, 4% 75.9%, 5% 75.05%, 6% 74.05%, 7% 72.95%, 8% 71.75%, 9% 70.55%, 10% 69.3%, 11% 68.05%, 12% 66.9%, 13% 65.8%, 14% 64.8%, 15% 64%, 16% 63.35%, 17% 62.85%, 18% 62.6%, 19% 62.5%, 20% 62.65%, 21% 63%, 22% 63.5%, 23% 64.2%, 24% 65.1%, 25% 66.1%, 26% 67.2%, 27% 68.4%, 28% 69.65%, 29% 70.9%, 30% 72.15%, 31% 73.3%, 32% 74.35%, 33% 75.3%, 34% 76.1%, 35% 76.75%, 36% 77.2%, 37% 77.45%, 38% 77.5%, 39% 77.3%, 40% 76.95%, 41% 76.4%, 42% 75.65%, 43% 74.75%, 44% 73.75%, 45% 72.6%, 46% 71.4%, 47% 70.15%, 48% 68.9%, 49% 67.7%, 50% 66.55%, 51% 65.5%, 52% 64.55%, 53% 63.75%, 54% 63.15%, 55% 62.75%, 56% 62.55%, 57% 62.5%, 58% 62.7%, 59% 63.1%, 60% 63.7%, 61% 64.45%, 62% 65.4%, 63% 66.45%, 64% 67.6%, 65% 68.8%, 66% 70.05%, 67% 71.3%, 68% 72.5%, 69% 73.6%, 70% 74.65%, 71% 75.55%, 72% 76.35%, 73% 76.9%, 74% 77.3%, 75% 77.5%, 76% 77.45%, 77% 77.25%, 78% 76.8%, 79% 76.2%, 80% 75.4%, 81% 74.45%, 82% 73.4%, 83% 72.25%, 84% 71.05%, 85% 69.8%, 86% 68.55%, 87% 67.35%, 88% 66.2%, 89% 65.2%, 90% 64.3%, 91% 63.55%, 92% 63%, 93% 62.65%, 94% 62.5%, 95% 62.55%, 96% 62.8%, 97% 63.3%, 98% 63.9%, 99% 64.75%, 100% 65.7%);
+  clip-path: polygon(100% 0, 0 0, 0 77.5%, 1% 77.4%, 2% 77.1%, 3% 76.6%, 4% 75.9%, 5% 75.05%, 6% 74.05%, 7% 72.95%, 8% 71.75%, 9% 70.55%, 10% 69.3%, 11% 68.05%, 12% 66.9%, 13% 65.8%, 14% 64.8%, 15% 64%, 16% 63.35%, 17% 62.85%, 18% 62.6%, 19% 62.5%, 20% 62.65%, 21% 63%, 22% 63.5%, 23% 64.2%, 24% 65.1%, 25% 66.1%, 26% 67.2%, 27% 68.4%, 28% 69.65%, 29% 70.9%, 30% 72.15%, 31% 73.3%, 32% 74.35%, 33% 75.3%, 34% 76.1%, 35% 76.75%, 36% 77.2%, 37% 77.45%, 38% 77.5%, 39% 77.3%, 40% 76.95%, 41% 76.4%, 42% 75.65%, 43% 74.75%, 44% 73.75%, 45% 72.6%, 46% 71.4%, 47% 70.15%, 48% 68.9%, 49% 67.7%, 50% 66.55%, 51% 65.5%, 52% 64.55%, 53% 63.75%, 54% 63.15%, 55% 62.75%, 56% 62.55%, 57% 62.5%, 58% 62.7%, 59% 63.1%, 60% 63.7%, 61% 64.45%, 62% 65.4%, 63% 66.45%, 64% 67.6%, 65% 68.8%, 66% 70.05%, 67% 71.3%, 68% 72.5%, 69% 73.6%, 70% 74.65%, 71% 75.55%, 72% 76.35%, 73% 76.9%, 74% 77.3%, 75% 77.5%, 76% 77.45%, 77% 77.25%, 78% 76.8%, 79% 76.2%, 80% 75.4%, 81% 74.45%, 82% 73.4%, 83% 72.25%, 84% 71.05%, 85% 69.8%, 86% 68.55%, 87% 67.35%, 88% 66.2%, 89% 65.2%, 90% 64.3%, 91% 63.55%, 92% 63%, 93% 62.65%, 94% 62.5%, 95% 62.55%, 96% 62.8%, 97% 63.3%, 98% 63.9%, 99% 64.75%, 100% 65.7%); }
+
+.button-small {
+  font-size: 85%; }
+
+.fetch-error {
+  padding-top: 1em;
+  font-size: 60%;
+  max-width: 400px;
+  display: block; }
+
+.edit-form {
+  background: #fff;
+  padding: 2em;
+  margin: 1em;
+  border-radius: 5px; }
+
+.button-secondary {
+  color: white;
+  border-radius: 4px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2); }
+
+.button-success {
+  background: #1cb841;
+  /* this is a green */ }
+
+.button-tag {
+  background: #636363;
+  color: #fff;
+  font-size: 65%;
+  border-bottom-left-radius: initial;
+  border-bottom-right-radius: initial; }
+  .button-tag.active {
+    background: #9c9c9c;
+    font-weight: bold; }
+
+.button-error {
+  background: #ca3c3c;
+  /* this is a maroon */ }
+
+.button-warning {
+  background: #df7514;
+  /* this is an orange */ }
+
+.button-secondary {
+  background: #42b8dd;
+  /* this is a light blue */ }
+
+.button-cancel {
+  background: #c8c8c8;
+  /* this is a green */ }
+
+.messages {
+  padding: 1em;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: #fff;
+  font-weight: bold; }
+
+#new-watch-form {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1em;
+  border-radius: 10px;
+  margin-bottom: 1em; }
+
+#new-watch-form legend {
+  color: #fff; }
+
+#new-watch-form input {
+  width: auto !important; }
+
+#diff-col {
+  padding-left: 40px; }
+
+#diff-jump {
+  position: fixed;
+  left: 0px;
+  top: 80px;
+  background: #fff;
+  padding: 10px;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+  box-shadow: 5px 0 5px -2px #888; }
+
+#diff-jump a {
+  color: #1b98f8;
+  cursor: grabbing;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -o-user-select: none; }
+
+footer {
+  padding: 10px;
+  background: #fff;
+  color: #444;
+  text-align: center; }
+
+#feed-icon {
+  vertical-align: middle; }
+
+#version {
+  position: absolute;
+  top: 80px;
+  right: 0px;
+  font-size: 8px;
+  background: #fff;
+  padding: 10px; }
+
+#new-version-text a {
+  color: #e07171; }
+
+.paused-state.state-False img {
+  opacity: 0.2; }
+
+.paused-state.state-False:hover img {
+  opacity: 0.8; }
+
+.pure-form label {
+  font-weight: bold; }
+
+.pure-form input[type=url] {
+  width: 100%; }
+
+.pure-form textarea {
+  width: 100%;
+  font-size: 14px; }
+
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
+  .box {
+    max-width: 95%; }
+  .edit-form {
+    padding: 0.5em;
+    margin: 0.5em; }
+  #nav-menu {
+    overflow-x: scroll; } }
+
+/*
+Max width before this PARTICULAR table gets nasty
+This query will take effect for any screen smaller than 760px
+and also iPads specifically.
+*/
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
+  .watch-table {
+    /* Force table to not be like tables anymore */
+    /* Force table to not be like tables anymore */
+    /* Hide table headers (but not display: none;, for accessibility) */ }
+    .watch-table thead, .watch-table tbody, .watch-table th, .watch-table td, .watch-table tr {
+      display: block; }
+    .watch-table .last-checked::before {
+      color: #555;
+      content: "Last Checked "; }
+    .watch-table .last-changed::before {
+      color: #555;
+      content: "Last Changed "; }
+    .watch-table td.inline {
+      display: inline-block; }
+    .watch-table thead tr {
+      position: absolute;
+      top: -9999px;
+      left: -9999px; }
+    .watch-table .pure-table td, .watch-table .pure-table th {
+      border: none; }
+    .watch-table td {
+      /* Behave  like a "row" */
+      border: none;
+      border-bottom: 1px solid #eee; }
+      .watch-table td:before {
+        /* Top/left values mimic padding */
+        top: 6px;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap; }
+    .watch-table.pure-table-striped tr {
+      background-color: #fff; }
+    .watch-table.pure-table-striped tr:nth-child(2n-1) {
+      background-color: #eee; }
+    .watch-table.pure-table-striped tr:nth-child(2n-1) td {
+      background-color: inherit; } }

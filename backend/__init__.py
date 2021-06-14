@@ -594,7 +594,7 @@ def changedetection_app(conig=None, datastore_o=None):
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
-        extra_stylesheets = ['/static/css/diff.css']
+        extra_stylesheets = ['/static/styles/diff.css']
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
@@ -651,7 +651,7 @@ def changedetection_app(conig=None, datastore_o=None):
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
-        extra_stylesheets = ['/static/css/diff.css']
+        extra_stylesheets = ['/static/styles/diff.css']
 
         try:
             watch = datastore.data['watching'][uuid]
