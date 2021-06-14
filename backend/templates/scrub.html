@@ -2,34 +2,25 @@
 
 {% block content %}
 <div class="edit-form">
-
-
     <form class="pure-form pure-form-stacked" action="/scrub" method="POST">
         <fieldset>
             <div class="pure-control-group">
                 This will remove all version snapshots/data, but keep your list of URLs. <br/>
                 You may like to use the <strong>BACKUP</strong> link first.<br/>
-
-                Type in the word <strong>scrub</strong> to confirm that you understand!
-                <br/>
-
             </div>
-
+            <br/>
             <div class="pure-control-group">
-                <br/>
-                <label for="confirmtext">Confirm text</label><br/>
+                <label for="confirmtext">Confirmation text</label>
                 <input type="text" id="confirmtext" required="" name="confirmtext" value="" size="10"/>
+                <span class="pure-form-message-inline">Type in the word <strong>scrub</strong> to confirm that you understand!</span>
             </div>
-
-
+            <br/>
             <div class="pure-control-group">
-                <br/>
-                <label for="confirmtext">Limit delete history including and after date</label><br/>
-                <input type="text" id="limit_date" required="" name="limit_date" value="" size="10"/>
-                <br/>
-
-
+                <label for="confirmtext">Optional: Limit deletion of of snapshots to snapshots <i>newer</i> than date/time</label>
+                <input type="datetime-local" id="limit_date" name="limit_date"  />
+                <span class="pure-form-message-inline">dd/mm/yyyy hh:mm (24 hour format)</span>
             </div>
+            <br/>
             <div class="pure-control-group">
                 <button type="submit" class="pure-button pure-button-primary">Scrub!</button>
             </div>
@@ -37,12 +28,8 @@
             <div class="pure-control-group">
                 <a href="/" class="pure-button button-small button-cancel">Cancel</a>
             </div>
-
-
         </fieldset>
     </form>
-
-
 </div>
 
 {% endblock %}

@@ -267,29 +267,53 @@ def changedetection_app(conig=None, datastore_o=None):
     @app.route("/scrub", methods=['GET', 'POST'])
     @login_required
     def scrub_page():
-        from pathlib import Path
 
         global messages
+        import re
 
         if request.method == 'POST':
             confirmtext = request.form.get('confirmtext')
-            limit_timestamp = int(request.form.get('limit_date'))
+            limit_date = request.form.get('limit_date')
+
+            try:
+                limit_date = limit_date.replace('T', ' ')
+                # I noticed chrome will show '/' but actually submit '-'
+                limit_date = limit_date.replace('-', '/')
+                # In the case that :ss seconds are supplied
+                limit_date = re.sub('(\d\d:\d\d)(:\d\d)', '\\1', limit_date)
+
+                str_to_dt = datetime.datetime.strptime(limit_date, '%Y/%m/%d %H:%M')
+                limit_timestamp = int(str_to_dt.timestamp())
+
+                if limit_timestamp > time.time():
+                    messages.append({'class': 'error',
+                                     'message': "Timestamp is in the future, cannot continue."})
+                    return redirect(url_for('scrub_page'))
+
+            except ValueError:
+                messages.append({'class': 'ok', 'message': 'Incorrect date format, cannot continue.'})
+                return redirect(url_for('scrub_page'))
 
             if confirmtext == 'scrub':
-
+                changes_removed = 0
                 for uuid, watch in datastore.data['watching'].items():
-                    if len(str(limit_timestamp)) == 10:
-                        datastore.scrub_watch(uuid, limit_timestamp = limit_timestamp)
+                    if limit_timestamp:
+                        changes_removed += datastore.scrub_watch(uuid, limit_timestamp=limit_timestamp)
                     else:
-                        datastore.scrub_watch(uuid)
+                        changes_removed += datastore.scrub_watch(uuid)
 
-                messages.append({'class': 'ok', 'message': 'Cleaned all version history.'})
+                messages.append({'class': 'ok',
+                                 'message': "Cleared snapshot history ({} snapshots removed)".format(
+                    changes_removed)})
             else:
-                messages.append({'class': 'error', 'message': 'Wrong confirm text.'})
+                messages.append({'class': 'error', 'message': 'Incorrect confirmation text.'})
 
             return redirect(url_for('index'))
 
-        return render_template("scrub.html")
+        output =  render_template("scrub.html", messages=messages)
+        messages = []
+        return output
+
 
     # If they edited an existing watch, we need to know to reset the current/previous md5 to include
     # the excluded text.

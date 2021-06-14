@@ -241,17 +241,19 @@ class ChangeDetectionStore:
         import hashlib
         del_timestamps = []
 
+        changes_removed = 0
+
         for timestamp, path in self.data['watching'][uuid]['history'].items():
             if not limit_timestamp or (limit_timestamp is not False and int(timestamp) > limit_timestamp):
                 self.unlink_history_file(path)
                 del_timestamps.append(timestamp)
-
-
+                changes_removed += 1
 
                 if not limit_timestamp:
                     self.data['watching'][uuid]['last_checked'] = 0
                     self.data['watching'][uuid]['last_changed'] = 0
                     self.data['watching'][uuid]['previous_md5'] = 0
+
 
         for timestamp in del_timestamps:
             del self.data['watching'][uuid]['history'][str(timestamp)]
@@ -272,9 +274,8 @@ class ChangeDetectionStore:
                         self.data['watching'][uuid]['previous_md5'] = False
                         pass
 
-
         self.needs_write = True
-
+        return changes_removed
 
     def add_watch(self, url, tag):
         with self.lock:
