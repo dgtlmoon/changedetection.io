@@ -286,17 +286,19 @@ form textarea {
   font-size: 14px;
 }
 
+
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px)  {
-  .header .pure-menu-heading {
-    display:none;
-  }
   .box {
-  max-width: 95%
+    max-width: 95%
   }
   .edit-form {
-      padding: 0.5em;
+    padding: 0.5em;
     margin: 0.5em;
-    }
+  }
+  #nav-menu {
+    overflow-x: scroll;
+  }
+
 }
 
 /*
@@ -312,6 +314,15 @@ only screen and (max-width: 760px),
 	table, thead, tbody, th, td, tr {
 		display: block;
 	}
+
+    .last-checked::before {
+     color: #555;
+        content: "Last Checked ";
+    }
+    .last-changed::before {
+    color: #555;
+        content: "Last Changed ";
+    }
 
 	/* Force table to not be like tables anymore */
 	td.inline {
@@ -348,8 +359,6 @@ only screen and (max-width: 760px),
     }
 
 	td:before {
-		/* Now like a table header */
-		position: absolute;
 		/* Top/left values mimic padding */
 		top: 6px;
 		left: 6px;
@@ -372,3 +381,5 @@ only screen and (max-width: 760px),
 	td:nth-of-type(9):before { content: "GPA"; }
 	td:nth-of-type(10):before { content: "Arbitrary Data"; }*/
 }
+
+

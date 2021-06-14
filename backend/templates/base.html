@@ -16,7 +16,8 @@
 <body>
 
 <div class="header">
-    <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed">
+
+    <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed" id="nav-menu">
         {% if has_password and not current_user.is_authenticated %}
             <a class="pure-menu-heading" href="https://github.com/dgtlmoon/changedetection.io" rel="noopener"><strong>Change</strong>Detection.io</a>
         {% else %}
