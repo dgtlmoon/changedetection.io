@@ -24,13 +24,16 @@
                        size="5"/>
                 <span class="pure-form-message-inline">Minimum 1 minute between recheck</span>
             </div>
-            </br>
+            <br/>
             <div class="pure-control-group">
                 <label for="minutes">CSS Filter</label>
                 <input type="text" id="css_filter" name="css_filter" value="{{watch.css_filter}}"
-                       size="25"/>
-                <span class="pure-form-message-inline">Limit text to this CSS rule, only  matching CSS is included.</span>
+                       size="25" placeholder=".class-name or #some-id, or other CSS selector rule."/>
+                <span class="pure-form-message-inline">Limit text to this CSS rule, only text matching this CSS rule is included.<br/>
+                    Please be sure that you throughly understand how to write CSS selector rules before filing an issue on GitHub!
+                </span>
             </div>
+            <br/>
             <!-- @todo: move to tabs --->
             <fieldset class="pure-group">
                 <label for="ignore-text">Ignore text</label>
