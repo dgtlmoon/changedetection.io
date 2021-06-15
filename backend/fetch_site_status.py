@@ -73,7 +73,7 @@ class perform_site_check():
                 soup = BeautifulSoup(r.content, "html.parser")
                 stripped_text_from_html = ""
                 for item in soup.select(css_filter):
-                    text = str(item.get_text())+"\n"
+                    text = str(item.get_text()).strip() + '\n'
                     stripped_text_from_html += text
 
             else:
