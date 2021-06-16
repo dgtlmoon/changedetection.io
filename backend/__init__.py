@@ -427,6 +427,9 @@ def changedetection_app(conig=None, datastore_o=None):
 
             messages.append({'class': 'ok', 'message': 'Updated watch.'})
 
+            # Queue the watch for immediate recheck
+            update_q.put(uuid)
+
             trigger_n = request.form.get('trigger-test-notification')
             if trigger_n:
                 n_object = {'watch_url': url,
