@@ -36,16 +36,21 @@
             <br/>
             <!-- @todo: move to tabs --->
             <fieldset class="pure-group">
-                <label for="ignore-text">Ignore text</label>
+                <label for="ignore-text">Ignore lines with text containing..</label>
 
-                <textarea id="ignore-text" name="ignore-text" class="pure-input-1-2" placeholder=""
+                <textarea id="ignore-text" name="ignore-text" class="pure-input-1-2" placeholder="Some text to ignore in a line
+/some.regex\d{2}/   for case-INsensitive regex
+"
                           style="width: 100%;
                             font-family:monospace;
                             white-space: pre;
                             overflow-wrap: normal;
                             overflow-x: scroll;" rows="5">{% for value in watch.ignore_text %}{{ value }}
 {% endfor %}</textarea>
-                <span class="pure-form-message-inline">Each line will be processed separately as an ignore rule.</span>
+                <span class="pure-form-message-inline">Each line will be processed separately as an ignore rule.<br/>
+                Regular expression support: Wrap in //, regex matches are case INsensitive.
+
+                </span>
 
             </fieldset>
 
