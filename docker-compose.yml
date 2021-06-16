@@ -1,25 +1,29 @@
 version: '2'
+
 services:
-    changedetection.io:
-      image: dgtlmoon/changedetection.io
-      container_name: changedetection.io
-      hostname: changedetection.io
-      volumes:
-        - changedetection-data:/datastore
+  changedetection:
+    image: dgtlmoon/changedetection.io
+    hostname: changedetection.io
+    volumes:
+      - changedetection-data:/datastore
+    ports:
+      - 5000:5000
+    restart: always
+    networks:
+        changenet:
+            aliases:
+                - flask-app
 
-  #    environment:
-  #        Proxy support example.
-  #      - HTTP_PROXY="socks5h://10.10.1.10:1080"
-  #      - HTTPS_PROXY="socks5h://10.10.1.10:1080"
-  #        An exclude list (useful for notification URLs above) can be specified by with
-  #      - NO_PROXY="localhost,192.168.0.0/24"
-  #        Base URL of your changedetection.io install (Added to notification alert
-  #      - BASE_URL="https://mysite.com"
-
-      ports:
-        - 5000:5000
-      restart: always
+  nginx:
+    image: nginx:1
+    ports:
+        - 80:80
+    volumes:
+        - ./docker-configs/nginx.conf:/etc/nginx/conf.d/default.conf
+    networks:
+        changenet:
 
 volumes:
   changedetection-data:
-
+networks:
+    changenet:
