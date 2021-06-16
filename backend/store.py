@@ -347,3 +347,19 @@ class ChangeDetectionStore:
                 self.sync_to_json()
             time.sleep(3)
 
+    # Go through the datastore path and remove any snapshots that are not mentioned in the index
+    # This usually is not used, but can be handy.
+    def remove_unused_snapshots(self):
+        print ("Removing snapshots from datastore that are not in the index..")
+
+        index=[]
+        for uuid in self.data['watching']:
+            for id in self.data['watching'][uuid]['history']:
+                index.append(self.data['watching'][uuid]['history'][str(id)])
+
+        import pathlib
+        # Only in the sub-directories
+        for item in pathlib.Path(self.datastore_path).rglob("*/*txt"):
+            if not str(item) in index:
+                print ("Removing",item)
+                os.unlink(item)

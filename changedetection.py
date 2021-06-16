@@ -35,12 +35,13 @@ def init_app_secret(datastore_path):
 def main(argv):
     ssl_mode = False
     port = 5000
+    do_cleanup = False
 
     # Must be absolute so that send_from_directory doesnt try to make it relative to backend/
     datastore_path = os.path.join(os.getcwd(), "datastore")
 
     try:
-        opts, args = getopt.getopt(argv, "sd:p:", "purge")
+        opts, args = getopt.getopt(argv, "csd:p:", "port")
     except getopt.GetoptError:
         print('backend.py -s SSL enable -p [port] -d [datastore path]')
         sys.exit(2)
@@ -60,11 +61,19 @@ def main(argv):
         if opt == '-d':
             datastore_path = arg
 
+        # Cleanup (remove text files that arent in the index)
+        if opt == '-c':
+            do_cleanup = True
+
     # isnt there some @thingy to attach to each route to tell it, that this route needs a datastore
     app_config = {'datastore_path': datastore_path}
 
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'])
     app = backend.changedetection_app(app_config, datastore)
+
+    # Go into cleanup mode
+    if do_cleanup:
+        datastore.remove_unused_snapshots()
 
     app.config['datastore_path'] = datastore_path
     app.secret_key = init_app_secret(app_config['datastore_path'])
