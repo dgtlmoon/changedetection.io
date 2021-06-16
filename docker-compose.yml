@@ -2,7 +2,7 @@ version: '2'
 
 services:
   changedetection:
-    image: dgtlmoon/changedetection.io
+    build: .
     hostname: changedetection.io
     volumes:
       - changedetection-data:/datastore
