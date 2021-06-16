@@ -65,12 +65,12 @@
                 <td>
                     <a href="/api/checknow?uuid={{ watch.uuid}}{% if request.args.get('tag') %}&tag={{request.args.get('tag')}}{% endif %}"
                        class="pure-button button-small pure-button-primary">Recheck</a>
-                    <a href="/edit/{{ watch.uuid}}" class="pure-button button-small pure-button-primary">Edit</a>
+                    <a href="{{ url_for('edit_page', uuid=watch.uuid)}}" class="pure-button button-small pure-button-primary">Edit</a>
                     {% if watch.history|length >= 2 %}
-                    <a href="/diff/{{ watch.uuid}}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary">Diff</a>
-                    {% else %}
+                    <a href="{{ url_for('diff_history_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary">Diff</a>
+                    {% else %}diff_history_page
                         {% if watch.history|length == 1 %}
-                            <a href="/preview/{{ watch.uuid}}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary">Preview</a>
+                            <a href="{{ url_for('preview_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary">Preview</a>
                         {% endif %}
                     {% endif %}
                 </td>

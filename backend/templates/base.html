@@ -34,13 +34,13 @@
         <ul class="pure-menu-list">
         {% if current_user.is_authenticated or not has_password %}
             <li class="pure-menu-item">
-                <a href="/backup" class="pure-menu-link">BACKUP</a>
+                <a href="{{ url_for('get_backup')}}" class="pure-menu-link">BACKUP</a>
             </li>
             <li class="pure-menu-item">
-                <a href="/import" class="pure-menu-link">IMPORT</a>
+                <a href="{{ url_for('import_page')}}" class="pure-menu-link">IMPORT</a>
             </li>
             <li class="pure-menu-item">
-                <a href="/settings" class="pure-menu-link">SETTINGS</a>
+                <a href="{{ url_for('settings_page')}}" class="pure-menu-link">SETTINGS</a>
             </li>
         {% else %}
             <li class="pure-menu-item">
