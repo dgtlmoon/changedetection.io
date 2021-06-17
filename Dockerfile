@@ -5,14 +5,7 @@ FROM python:3.8-slim as builder
 ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libssl-dev \
-    libffi-dev \
-    gcc \
-    libc-dev \
-    libxslt-dev \
-    zlib1g-dev \
-    rustc \
-    g++
+    libssl-dev
 
 RUN mkdir /install
 WORKDIR /install
@@ -23,6 +16,20 @@ RUN pip install --target=/dependencies -r /requirements.txt
 
 # Final image stage
 FROM python:3.8-slim
+
+# Actual packages needed at runtime, usually due to the notification (apprise) backend
+# rustc compiler would be needed on ARM type devices but theres an issue with some deps not building..
+ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
+
+# Re #93, #73, excluding rustc (adds another 430Mb~)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libssl-dev \
+    libffi-dev \
+    gcc \
+    libc-dev \
+    libxslt-dev \
+    zlib1g-dev \
+    g++
 
 # https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
 ENV PYTHONUNBUFFERED=1
