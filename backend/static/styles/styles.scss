@@ -13,7 +13,6 @@ body {
 }
 
 /* Some styles from https://css-tricks.com/ */
-
 a {
   text-decoration: none;
   color: #1b98f8;
@@ -22,7 +21,6 @@ a {
 a.github-link {
   color: #fff;
 }
-
 
 .pure-menu-horizontal {
   background: #fff;
@@ -206,11 +204,23 @@ body:after, body:before {
 }
 
 .messages {
-  padding: 1em;
-  background: rgba(255, 255, 255, .2);
-  border-radius: 10px;
-  color: #fff;
-  font-weight: bold;
+    li {
+        list-style: none;
+        padding: 1em;
+        border-radius: 10px;
+        color: #fff;
+        font-weight: bold;
+        &.message {
+            background: rgba(255, 255, 255, .2);
+        }
+        &.error {
+            background: rgba(255, 1, 1, .5);
+        }
+        &.notice {
+            background: rgba(255, 255, 255, .5);
+        }
+    }
+
 }
 
 #new-watch-form {
