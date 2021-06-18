@@ -57,6 +57,23 @@ app.config['LOGIN_DISABLED'] = False
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 
+def init_app_secret(datastore_path):
+    secret = ""
+
+    path = "{}/secret.txt".format(datastore_path)
+
+    try:
+        with open(path, "r") as f:
+            secret = f.read()
+
+    except FileNotFoundError:
+        import secrets
+        with open(path, "w") as f:
+            secret = secrets.token_hex(32)
+            f.write(secret)
+
+    return secret
+
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
 # running or something similar.
 @app.template_filter('format_last_checked_time')
@@ -124,7 +141,7 @@ class User(flask_login.UserMixin):
 
     pass
 
-def changedetection_app(conig=None, datastore_o=None):
+def changedetection_app(config=None, datastore_o=None):
     global datastore
     datastore = datastore_o
 
@@ -133,7 +150,7 @@ def changedetection_app(conig=None, datastore_o=None):
 
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
-
+    app.secret_key = init_app_secret(config['datastore_path'])
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
