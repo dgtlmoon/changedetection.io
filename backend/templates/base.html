@@ -68,14 +68,15 @@
         {% block header %}{% endblock %}
     </header>
 
-    {% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-        <div class="flash-message {{ message['class'] }}">{{ message['message'] }}</div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class=messages>
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
         {% endfor %}
-    </div>
-    {% endif %}
-
+        </ul>
+      {% endif %}
+    {% endwith %}
     {% block content %}
 
     {% endblock %}

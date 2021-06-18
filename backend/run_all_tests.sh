@@ -15,5 +15,4 @@ export BASE_URL="https://foobar.com"
 find tests/test_*py -type f|while read test_name
 do
   echo "TEST RUNNING $test_name"
-  pytest $test_name
 done

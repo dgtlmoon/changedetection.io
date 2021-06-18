@@ -152,12 +152,18 @@ body:after, body:before {
   background: #c8c8c8;
   /* this is a green */ }
 
-.messages {
+.messages li {
+  list-style: none;
   padding: 1em;
-  background: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   color: #fff;
   font-weight: bold; }
+  .messages li.message {
+    background: rgba(255, 255, 255, 0.2); }
+  .messages li.error {
+    background: rgba(255, 1, 1, 0.5); }
+  .messages li.notice {
+    background: rgba(255, 255, 255, 0.5); }
 
 #new-watch-form {
   background: rgba(0, 0, 0, 0.05);
