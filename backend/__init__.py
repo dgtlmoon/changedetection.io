@@ -526,6 +526,9 @@ def changedetection_app(config=None, datastore_o=None):
                 notification_q.put(n_object)
                 flash('Notifications queued.')
 
+            flash("Settings updated.")
+
+
         output = render_template("settings.html",
                                  minutes=datastore.data['settings']['requests']['minutes_between_check'],
                                  notification_urls="\r\n".join(
