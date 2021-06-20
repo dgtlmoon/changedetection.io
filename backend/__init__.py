@@ -52,7 +52,9 @@ app.config.exit = Event()
 app.config['NEW_VERSION_AVAILABLE'] = False
 
 app.config['LOGIN_DISABLED'] = False
-app.config["EXPLAIN_TEMPLATE_LOADING"] = True
+
+#app.config["EXPLAIN_TEMPLATE_LOADING"] = True
+
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
