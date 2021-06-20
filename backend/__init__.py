@@ -52,7 +52,7 @@ app.config.exit = Event()
 app.config['NEW_VERSION_AVAILABLE'] = False
 
 app.config['LOGIN_DISABLED'] = False
-
+app.config["EXPLAIN_TEMPLATE_LOADING"] = True
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
@@ -348,28 +348,21 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     @login_required
     def edit_page(uuid):
-        import validators
+        from backend import forms
+        form = forms.watchForm(request.form)
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
-        if request.method == 'POST':
+        if request.method == 'POST' and form.validate():
 
-            url = request.form.get('url').strip()
-            tag = request.form.get('tag').strip()
-
-            minutes_recheck = request.form.get('minutes')
-            if minutes_recheck:
-                minutes = int(minutes_recheck.strip())
-                if minutes >= 1:
-                    datastore.data['watching'][uuid]['minutes_between_check'] = minutes
-                else:
-                    flash("Must be atleast 1 minute between checks.", 'error')
-                    return redirect(url_for('edit_page', uuid=uuid))
+            url = form.url.data.strip()
+            tag = form.tag.data.strip()
+            datastore.data['watching'][uuid]['minutes_between_check'] = form.minutes.data
 
             # Extra headers
-            form_headers = request.form.get('headers').strip().split("\n")
+            form_headers = form.headers.data.strip().split("\n")
             extra_headers = {}
             if form_headers:
                 for header in form_headers:
@@ -384,7 +377,7 @@ def changedetection_app(config=None, datastore_o=None):
                           }
 
             # Notification URLs
-            form_notification_text = request.form.get('notification_urls')
+            form_notification_text = form.notification_urls.data.strip()
             notification_urls = []
             if form_notification_text:
                 for text in form_notification_text.strip().split("\n"):
@@ -395,7 +388,7 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['watching'][uuid]['notification_urls'] = notification_urls
 
             # Ignore text
-            form_ignore_text = request.form.get('ignore-text')
+            form_ignore_text = form.ignore_text.data.strip()
             ignore_text = []
             if form_ignore_text:
                 for text in form_ignore_text.strip().split("\n"):
@@ -410,17 +403,14 @@ def changedetection_app(config=None, datastore_o=None):
                     update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
 
-            # CSS Filter
-            css_filter = request.form.get('css_filter')
-            if css_filter:
-                datastore.data['watching'][uuid]['css_filter'] = css_filter.strip()
+            datastore.data['watching'][uuid]['css_filter'] = form.css_filter.data.strip()
 
-                # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
+            # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
+            if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
                 if len(datastore.data['watching'][uuid]['history']):
                     update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
 
-            validators.url(url)  # @todo switch to prop/attr/observer
             datastore.data['watching'][uuid].update(update_obj)
             datastore.needs_write = True
             flash("Updated watch.")
@@ -439,7 +429,7 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         else:
-            output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid])
+            output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid], form=form)
 
         return output
 

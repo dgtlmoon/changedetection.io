@@ -225,6 +225,13 @@ footer {
 .paused-state.state-False:hover img {
   opacity: 0.8; }
 
+.monospaced-textarea textarea {
+  width: 100%;
+  font-family: monospace;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: scroll; }
+
 .pure-form label {
   font-weight: bold; }
 
