@@ -74,6 +74,17 @@ def init_app_secret(datastore_path):
 
     return secret
 
+# Remember python is by reference
+# populate_form in wtfors didnt work for me.
+def populate_form_from_watch(form, watch):
+    for i in form.__dict__.keys():
+        if i[0] != '_':
+            p = getattr(form, i)
+            if hasattr(p, 'data') and i in watch:
+                if not p.data:
+                    setattr(p, "data", watch[i])
+
+
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
 # running or something similar.
 @app.template_filter('format_last_checked_time')
@@ -345,6 +356,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         return datastore.data['watching'][uuid]['previous_md5']
 
+
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     @login_required
     def edit_page(uuid):
@@ -355,50 +367,28 @@ def changedetection_app(config=None, datastore_o=None):
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
+        populate_form_from_watch(form, datastore.data['watching'][uuid])
+
         if request.method == 'POST' and form.validate():
 
             url = form.url.data.strip()
             tag = form.tag.data.strip()
-            datastore.data['watching'][uuid]['minutes_between_check'] = form.minutes.data
-
-            # Extra headers
-            form_headers = form.headers.data.strip().split("\n")
-            extra_headers = {}
-            if form_headers:
-                for header in form_headers:
-                    if len(header):
-                        parts = header.split(':', 1)
-                        if len(parts) == 2:
-                            extra_headers.update({parts[0].strip(): parts[1].strip()})
 
             update_obj = {'url': url,
                           'tag': tag,
-                          'headers': extra_headers
+                          'headers': form.headers.data
                           }
 
             # Notification URLs
-            form_notification_text = form.notification_urls.data.strip()
-            notification_urls = []
-            if form_notification_text:
-                for text in form_notification_text.strip().split("\n"):
-                    text = text.strip()
-                    if len(text):
-                        notification_urls.append(text)
-
+            notification_urls = form.notification_urls.data
             datastore.data['watching'][uuid]['notification_urls'] = notification_urls
 
             # Ignore text
-            form_ignore_text = form.ignore_text.data.strip()
-            ignore_text = []
+            form_ignore_text = form.ignore_text.data
+            datastore.data['watching'][uuid]['ignore_text'] = form_ignore_text
+
+            # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
             if form_ignore_text:
-                for text in form_ignore_text.strip().split("\n"):
-                    text = text.strip()
-                    if len(text):
-                        ignore_text.append(text)
-
-                datastore.data['watching'][uuid]['ignore_text'] = ignore_text
-
-                # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
                 if len(datastore.data['watching'][uuid]['history']):
                     update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
@@ -418,8 +408,7 @@ def changedetection_app(config=None, datastore_o=None):
             # Queue the watch for immediate recheck
             update_q.put(uuid)
 
-            trigger_n = request.form.get('trigger-test-notification')
-            if trigger_n:
+            if form.trigger_check.data:
                 n_object = {'watch_url': url,
                             'notification_urls': notification_urls}
                 notification_q.put(n_object)
@@ -436,8 +425,6 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/settings", methods=['GET', "POST"])
     @login_required
     def settings_page():
-
-
         if request.method == 'GET':
             if request.values.get('notification-test'):
                 url_count = len(datastore.data['settings']['application']['notification_urls'])

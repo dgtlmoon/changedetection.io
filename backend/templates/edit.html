@@ -5,16 +5,16 @@
     <form class="pure-form pure-form-stacked" action="/edit/{{uuid}}" method="POST">
         <fieldset>
             <div class="pure-control-group">
-                {{ render_field(form.url, label="URL", value=watch.url,  placeholder="https://...", size=30, required=true) }}
+                {{ render_field(form.url, label="URL", placeholder="https://...", size=30, required=true) }}
             </div>
             <div class="pure-control-group">
-                {{ render_field(form.tag, label="Tag", value=watch.tag, size=10) }}
+                {{ render_field(form.tag, label="Tag", size=10) }}
             </div>
             <div class="pure-control-group">
-                {{ render_field(form.minutes, label="Maximum time in minutes until recheck", value=watch.minutes_between_check, size=10) }}
+                {{ render_field(form.minutes_between_check, label="Maximum time in minutes until recheck", size=10) }}
             </div>
             <div class="pure-control-group">
-                {{ render_field(form.css_filter, label="CSS Filter", value=watch.css_filter, size=25, placeholder=".class-name or #some-id, or other CSS selector rule.") }}
+                {{ render_field(form.css_filter, label="CSS Filter", size=25, placeholder=".class-name or #some-id, or other CSS selector rule.") }}
                 <span class="pure-form-message-inline">Limit text to this CSS rule, only text matching this CSS rule is included.<br/>
                     Please be sure that you thoroughly understand how to write CSS selector rules before filing an issue on GitHub!<br/>
                     Go <a href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>
@@ -22,18 +22,18 @@
             </div>
             <!-- @todo: move to tabs --->
             <fieldset class="pure-group">
-                {{ render_field(form.ignore_text, label="Ignore text", rows=5, value=watch.ignore_text, placeholder=".class-name or #some-id, or other CSS selector rule.") }}
+                {{ render_field(form.ignore_text, label="Ignore text", rows=5) }}
                 <span class="pure-form-message-inline">Each line will be processed separately as an ignore rule.</span>
             </fieldset>
 
             <fieldset class="pure-group">
-                {{ render_field(form.headers, label="Extra Request Headers", rows=5, value=watch.headers, placeholder="Example
+                {{ render_field(form.headers, label="Extra Request Headers", rows=5, placeholder="Example
 Cookie: foobar
 User-Agent: wonderbra 1.0") }}
             </fieldset>
 
             <div class="pure-control-group">
-                {{ render_field(form.notification_urls, label="Notification URLs", rows=5, value=watch.notification_urls) }}
+                {{ render_field(form.notification_urls, label="Notification URLs", rows=5) }}
                 <span class="pure-form-message-inline">Use <a target=_new href="https://github.com/caronc/apprise">AppRise URLs</a> for notification to just about any service!</span>
             </div>
 
