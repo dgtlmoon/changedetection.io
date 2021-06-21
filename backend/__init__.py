@@ -77,7 +77,7 @@ def init_app_secret(datastore_path):
     return secret
 
 # Remember python is by reference
-# populate_form in wtfors didnt work for me.
+# populate_form in wtfors didnt work for me. (try using a setattr() obj type on datastore.watch?)
 def populate_form_from_watch(form, watch):
     for i in form.__dict__.keys():
         if i[0] != '_':
@@ -369,7 +369,8 @@ def changedetection_app(config=None, datastore_o=None):
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
-        populate_form_from_watch(form, datastore.data['watching'][uuid])
+        if request.method == 'GET':
+            populate_form_from_watch(form, datastore.data['watching'][uuid])
 
         if request.method == 'POST' and form.validate():
 
