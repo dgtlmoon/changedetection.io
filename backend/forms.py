@@ -24,6 +24,34 @@ class StringListField(StringField):
             self.data = []
 
 
+
+class SaltyPasswordField(StringField):
+    widget = widgets.PasswordInput()
+    encrypted_password = ""
+
+    def build_password(self, password):
+        import hashlib
+        import base64
+        import secrets
+
+        # Make a new salt on every new password and store it with the password
+        salt = secrets.token_bytes(32)
+
+        key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+        store = base64.b64encode(salt + key).decode('ascii')
+
+        return store
+
+    # incoming
+    def process_formdata(self, valuelist):
+        if valuelist:
+            # Remove empty strings
+            self.encrypted_password = self.build_password(valuelist[0])
+            self.data=[]
+        else:
+            self.data = []
+
+
 # Separated by  key:value
 class StringDictKeyValue(StringField):
     widget = widgets.TextArea()
@@ -71,7 +99,7 @@ class watchForm(Form):
 
 class globalSettingsForm(Form):
 
-    password = PasswordField()
+    password = SaltyPasswordField()
     remove_password = BooleanField('Remove password')
 
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
