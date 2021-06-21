@@ -82,7 +82,7 @@ def set_modified_ignore_response():
 def test_check_ignore_text_functionality(client, live_server):
     sleep_time_for_fetch_thread = 3
 
-    ignore_text = "XXXXX\nYYYYY\nZZZZZ"
+    ignore_text = "XXXXX\r\nYYYYY\r\nZZZZZ"
     set_original_ignore_response()
 
     # Give the endpoint time to spin up
@@ -107,7 +107,7 @@ def test_check_ignore_text_functionality(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"ignore-text": ignore_text, "url": test_url, "tag": "", "headers": ""},
+        data={"ignore_text": ignore_text, "url": test_url},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data

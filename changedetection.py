@@ -12,26 +12,6 @@ import backend
 
 from backend import store
 
-
-def init_app_secret(datastore_path):
-    secret = ""
-
-    path = "{}/secret.txt".format(datastore_path)
-
-    try:
-        with open(path, "r") as f:
-            secret = f.read()
-
-    except FileNotFoundError:
-
-        import secrets
-        with open(path, "w") as f:
-            secret = secrets.token_hex(32)
-            f.write(secret)
-
-    return secret
-
-
 def main(argv):
     ssl_mode = False
     port = 5000
@@ -76,7 +56,7 @@ def main(argv):
         datastore.remove_unused_snapshots()
 
     app.config['datastore_path'] = datastore_path
-    app.secret_key = init_app_secret(app_config['datastore_path'])
+
 
     @app.context_processor
     def inject_version():

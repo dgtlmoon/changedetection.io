@@ -13,7 +13,6 @@ body {
 }
 
 /* Some styles from https://css-tricks.com/ */
-
 a {
   text-decoration: none;
   color: #1b98f8;
@@ -22,7 +21,6 @@ a {
 a.github-link {
   color: #fff;
 }
-
 
 .pure-menu-horizontal {
   background: #fff;
@@ -206,11 +204,23 @@ body:after, body:before {
 }
 
 .messages {
-  padding: 1em;
-  background: rgba(255, 255, 255, .2);
-  border-radius: 10px;
-  color: #fff;
-  font-weight: bold;
+    li {
+        list-style: none;
+        padding: 1em;
+        border-radius: 10px;
+        color: #fff;
+        font-weight: bold;
+        &.message {
+            background: rgba(255, 255, 255, .2);
+        }
+        &.error {
+            background: rgba(255, 1, 1, .5);
+        }
+        &.notice {
+            background: rgba(255, 255, 255, .5);
+        }
+    }
+
 }
 
 #new-watch-form {
@@ -287,8 +297,43 @@ footer {
   }
 }
 
+.monospaced-textarea {
+    textarea {
+        width: 100%;
+        font-family: monospace;
+        white-space: pre;
+        overflow-wrap: normal;
+        overflow-x: scroll;
+    }
+}
+
 
 .pure-form {
+    .pure-control-group, .pure-group, .pure-controls {
+        padding-bottom: 1em;
+        dd {
+            margin: 0px;
+        }
+    }
+  /* The input fields with errors */
+  .error {
+    input {
+        background-color: #ffebeb;
+    }
+  }
+   /* The list of errors */
+  ul.errors {
+    padding: .5em .6em;
+    border: 1px solid #dd0000;
+    border-radius: 4px;
+    vertical-align: middle;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    li {
+        margin-left: 1em;
+        color: #dd0000;
+    }
+  }
 
   label {
     font-weight: bold;

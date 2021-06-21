@@ -103,6 +103,10 @@ This proxy support also extends to the notifications https://github.com/caronc/a
 - Wont work with Cloudfare type "Please turn on javascript" protected pages
 - You can use the 'headers' section to monitor password protected web page changes
 
+### RaspberriPi support?
+
+RaspberriPi and linux/arm/v6 linux/arm/v7 devices are supported! 
+
 
 ### Support us
 

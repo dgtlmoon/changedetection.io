@@ -11,6 +11,9 @@ feedgen ~= 0.9
 flask-login ~= 0.5
 pytz
 urllib3
+wtforms ~= 2.3.3
+
+
 
 # Notification library
 apprise ~= 0.9

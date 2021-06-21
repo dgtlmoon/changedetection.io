@@ -6,7 +6,6 @@
 # @todo enable https://urllib3.readthedocs.io/en/latest/user-guide.html#ssl as option?
 # @todo option for interval day/6 hour/etc
 # @todo on change detected, config for calling some API
-# @todo make tables responsive!
 # @todo fetch title into json
 # https://distill.io/features
 # proxy per check
@@ -23,7 +22,7 @@ from threading import Event
 
 import queue
 
-from flask import Flask, render_template, request, send_from_directory, abort, redirect, url_for
+from flask import Flask, render_template, request, send_from_directory, abort, redirect, url_for, flash
 
 from feedgen.feed import FeedGenerator
 from flask import make_response
@@ -36,7 +35,6 @@ datastore = None
 running_update_threads = []
 ticker_thread = None
 
-messages = []
 extra_stylesheets = []
 
 update_q = queue.Queue()
@@ -54,8 +52,38 @@ app.config['NEW_VERSION_AVAILABLE'] = False
 
 app.config['LOGIN_DISABLED'] = False
 
+#app.config["EXPLAIN_TEMPLATE_LOADING"] = True
+
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+
+def init_app_secret(datastore_path):
+    secret = ""
+
+    path = "{}/secret.txt".format(datastore_path)
+
+    try:
+        with open(path, "r") as f:
+            secret = f.read()
+
+    except FileNotFoundError:
+        import secrets
+        with open(path, "w") as f:
+            secret = secrets.token_hex(32)
+            f.write(secret)
+
+    return secret
+
+# Remember python is by reference
+# populate_form in wtfors didnt work for me. (try using a setattr() obj type on datastore.watch?)
+def populate_form_from_watch(form, watch):
+    for i in form.__dict__.keys():
+        if i[0] != '_':
+            p = getattr(form, i)
+            if hasattr(p, 'data') and i in watch:
+                if not p.data:
+                    setattr(p, "data", watch[i])
 
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
@@ -125,7 +153,7 @@ class User(flask_login.UserMixin):
 
     pass
 
-def changedetection_app(conig=None, datastore_o=None):
+def changedetection_app(config=None, datastore_o=None):
     global datastore
     datastore = datastore_o
 
@@ -134,7 +162,7 @@ def changedetection_app(conig=None, datastore_o=None):
 
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
-
+    app.secret_key = init_app_secret(config['datastore_path'])
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
@@ -161,12 +189,8 @@ def changedetection_app(conig=None, datastore_o=None):
     @app.route('/login', methods=['GET', 'POST'])
     def login():
 
-        global messages
-
         if request.method == 'GET':
-            output = render_template("login.html", messages=messages)
-            # Show messages but once.
-            messages = []
+            output = render_template("login.html")
             return output
 
         user = User()
@@ -182,7 +206,7 @@ def changedetection_app(conig=None, datastore_o=None):
             return redirect(next or url_for('index'))
 
         else:
-            messages.append({'class': 'error', 'message': 'Incorrect password'})
+            flash('Incorrect password', 'error')
 
         return redirect(url_for('login'))
 
@@ -194,7 +218,6 @@ def changedetection_app(conig=None, datastore_o=None):
     @app.route("/", methods=['GET'])
     @login_required
     def index():
-        global messages
         limit_tag = request.args.get('tag')
 
         pause_uuid = request.args.get('pause')
@@ -254,13 +277,9 @@ def changedetection_app(conig=None, datastore_o=None):
         else:
             output = render_template("watch-overview.html",
                                      watches=sorted_watches,
-                                     messages=messages,
                                      tags=existing_tags,
                                      active_tag=limit_tag,
                                      has_unviewed=datastore.data['has_unviewed'])
-
-            # Show messages but once.
-            messages = []
 
         return output
 
@@ -268,7 +287,6 @@ def changedetection_app(conig=None, datastore_o=None):
     @login_required
     def scrub_page():
 
-        global messages
         import re
 
         if request.method == 'POST':
@@ -286,12 +304,11 @@ def changedetection_app(conig=None, datastore_o=None):
                 limit_timestamp = int(str_to_dt.timestamp())
 
                 if limit_timestamp > time.time():
-                    messages.append({'class': 'error',
-                                     'message': "Timestamp is in the future, cannot continue."})
+                    flash("Timestamp is in the future, cannot continue.", 'error')
                     return redirect(url_for('scrub_page'))
 
             except ValueError:
-                messages.append({'class': 'ok', 'message': 'Incorrect date format, cannot continue.'})
+                flash('Incorrect date format, cannot continue.', 'error')
                 return redirect(url_for('scrub_page'))
 
             if confirmtext == 'scrub':
@@ -302,16 +319,13 @@ def changedetection_app(conig=None, datastore_o=None):
                     else:
                         changes_removed += datastore.scrub_watch(uuid)
 
-                messages.append({'class': 'ok',
-                                 'message': "Cleared snapshot history ({} snapshots removed)".format(
-                    changes_removed)})
+                flash("Cleared snapshot history ({} snapshots removed)".format(changes_removed))
             else:
-                messages.append({'class': 'error', 'message': 'Incorrect confirmation text.'})
+                flash('Incorrect confirmation text.', 'error')
 
             return redirect(url_for('index'))
 
-        output =  render_template("scrub.html", messages=messages)
-        messages = []
+        output =  render_template("scrub.html")
         return output
 
 
@@ -343,207 +357,134 @@ def changedetection_app(conig=None, datastore_o=None):
 
         return datastore.data['watching'][uuid]['previous_md5']
 
+
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     @login_required
     def edit_page(uuid):
-        global messages
-        import validators
+        from backend import forms
+        form = forms.watchForm(request.form)
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
-        if request.method == 'POST':
+        if request.method == 'GET':
+            populate_form_from_watch(form, datastore.data['watching'][uuid])
 
-            url = request.form.get('url').strip()
-            tag = request.form.get('tag').strip()
-
-            minutes_recheck = request.form.get('minutes')
-            if minutes_recheck:
-                minutes = int(minutes_recheck.strip())
-                if minutes >= 1:
-                    datastore.data['watching'][uuid]['minutes_between_check'] = minutes
-                else:
-                    messages.append(
-                        {'class': 'error', 'message': "Must be atleast 1 minute."})
-
-
-
-            # Extra headers
-            form_headers = request.form.get('headers').strip().split("\n")
-            extra_headers = {}
-            if form_headers:
-                for header in form_headers:
-                    if len(header):
-                        parts = header.split(':', 1)
-                        if len(parts) == 2:
-                            extra_headers.update({parts[0].strip(): parts[1].strip()})
-
-            update_obj = {'url': url,
-                          'tag': tag,
-                          'headers': extra_headers
+        if request.method == 'POST' and form.validate():
+            update_obj = {'url': form.url.data.strip(),
+                          'tag': form.tag.data.strip(),
+                          'headers': form.headers.data
                           }
 
             # Notification URLs
-            form_notification_text = request.form.get('notification_urls')
-            notification_urls = []
-            if form_notification_text:
-                for text in form_notification_text.strip().split("\n"):
-                    text = text.strip()
-                    if len(text):
-                        notification_urls.append(text)
-
-            datastore.data['watching'][uuid]['notification_urls'] = notification_urls
+            datastore.data['watching'][uuid]['notification_urls'] = form.notification_urls.data
 
             # Ignore text
-            form_ignore_text = request.form.get('ignore-text')
-            ignore_text = []
+            form_ignore_text = form.ignore_text.data
+            datastore.data['watching'][uuid]['ignore_text'] = form_ignore_text
+
+            # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
             if form_ignore_text:
-                for text in form_ignore_text.strip().split("\n"):
-                    text = text.strip()
-                    if len(text):
-                        ignore_text.append(text)
-
-                datastore.data['watching'][uuid]['ignore_text'] = ignore_text
-
-                # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
                 if len(datastore.data['watching'][uuid]['history']):
                     update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
 
-            # CSS Filter
-            css_filter = request.form.get('css_filter')
-            if css_filter:
-                datastore.data['watching'][uuid]['css_filter'] = css_filter.strip()
+            datastore.data['watching'][uuid]['css_filter'] = form.css_filter.data.strip()
 
-                # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
+            # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
+            if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
                 if len(datastore.data['watching'][uuid]['history']):
                     update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
 
-            validators.url(url)  # @todo switch to prop/attr/observer
             datastore.data['watching'][uuid].update(update_obj)
             datastore.needs_write = True
-
-            messages.append({'class': 'ok', 'message': 'Updated watch.'})
+            flash("Updated watch.")
 
             # Queue the watch for immediate recheck
             update_q.put(uuid)
 
-            trigger_n = request.form.get('trigger-test-notification')
-            if trigger_n:
-                n_object = {'watch_url': url,
-                            'notification_urls': notification_urls}
+            if form.trigger_check.data:
+                n_object = {'watch_url': form.url.data.strip(),
+                            'notification_urls': form.notification_urls.data}
                 notification_q.put(n_object)
 
-                messages.append({'class': 'ok', 'message': 'Notifications queued.'})
+                flash('Notifications queued.')
 
             return redirect(url_for('index'))
 
         else:
-            output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid], messages=messages)
+            output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid], form=form)
 
         return output
 
     @app.route("/settings", methods=['GET', "POST"])
     @login_required
     def settings_page():
-        global messages
+
+        from backend import forms
+        form = forms.globalSettingsForm(request.form)
 
         if request.method == 'GET':
-            if request.values.get('notification-test'):
-                url_count = len(datastore.data['settings']['application']['notification_urls'])
-                if url_count:
-                    import apprise
-                    apobj = apprise.Apprise()
-                    apobj.debug = True
+            form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'] / 60)
+            form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
 
-                    # Add each notification
-                    for n in datastore.data['settings']['application']['notification_urls']:
-                        apobj.add(n)
-                    outcome = apobj.notify(
-                        body='Hello from the worlds best and simplest web page change detection and monitoring service!',
-                        title='Changedetection.io Notification Test',
-                    )
-
-                    if outcome:
-                        messages.append(
-                            {'class': 'notice', 'message': "{} Notification URLs reached.".format(url_count)})
-                    else:
-                        messages.append(
-                            {'class': 'error', 'message': "One or more Notification URLs failed"})
-
-                return redirect(url_for('settings_page'))
-
-            if request.values.get('removepassword'):
+            # Password unset is a GET
+            if request.values.get('removepassword') == 'true':
                 from pathlib import Path
-
                 datastore.data['settings']['application']['password'] = False
-                messages.append({'class': 'notice', 'message': "Password protection removed."})
+                flash("Password protection removed.", 'notice')
                 flask_login.logout_user()
 
-                return redirect(url_for('settings_page'))
+        if request.method == 'POST' and form.validate():
 
-        if request.method == 'POST':
+            datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
+            datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data * 60
 
-            password = request.values.get('password')
-            if password:
-                import hashlib
-                import base64
-                import secrets
+            if len(form.notification_urls.data):
+                import apprise
+                apobj = apprise.Apprise()
+                apobj.debug = True
 
-                # Make a new salt on every new password and store it with the password
-                salt = secrets.token_bytes(32)
+                # Add each notification
+                for n in datastore.data['settings']['application']['notification_urls']:
+                    apobj.add(n)
+                outcome = apobj.notify(
+                    body='Hello from the worlds best and simplest web page change detection and monitoring service!',
+                    title='Changedetection.io Notification Test',
+                )
 
-                key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
-                store = base64.b64encode(salt + key).decode('ascii')
-                datastore.data['settings']['application']['password'] = store
-                messages.append({'class': 'notice', 'message': "Password protection enabled."})
+                if outcome:
+                    flash("{} Notification URLs reached.".format(len(form.notification_urls.data)), "notice")
+                else:
+                    flash("One or more Notification URLs failed", 'error')
+
+
+            datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
+            datastore.needs_write = True
+
+            if form.trigger_check.data:
+                n_object = {'watch_url': "Test from changedetection.io!",
+                            'notification_urls': form.notification_urls.data}
+                notification_q.put(n_object)
+                flash('Notifications queued.')
+
+            if form.password.encrypted_password:
+                datastore.data['settings']['application']['password'] = form.password.encrypted_password
+                flash("Password protection enabled.", 'notice')
                 flask_login.logout_user()
                 return redirect(url_for('index'))
 
-            try:
-                minutes = int(request.values.get('minutes').strip())
-            except ValueError:
-                messages.append({'class': 'error', 'message': "Invalid value given, use an integer."})
+            flash("Settings updated.")
 
-            else:
-                if minutes >= 1:
-                    datastore.data['settings']['requests']['minutes_between_check'] = minutes
-                    datastore.needs_write = True
-                else:
-                    messages.append(
-                        {'class': 'error', 'message': "Must be atleast 1 minute."})
-
-            # 'validators' package doesnt work because its often a non-stanadard protocol. :(
-            datastore.data['settings']['application']['notification_urls'] = []
-            trigger_n = request.form.get('trigger-test-notification')
-
-            for n in request.values.get('notification_urls').strip().split("\n"):
-                url = n.strip()
-                datastore.data['settings']['application']['notification_urls'].append(url)
-                datastore.needs_write = True
-
-            if trigger_n:
-                n_object = {'watch_url': "Test from changedetection.io!",
-                            'notification_urls': datastore.data['settings']['application']['notification_urls']}
-                notification_q.put(n_object)
-
-                messages.append({'class': 'ok', 'message': 'Notifications queued.'})
-
-        output = render_template("settings.html", messages=messages,
-                                 minutes=datastore.data['settings']['requests']['minutes_between_check'],
-                                 notification_urls="\r\n".join(
-                                     datastore.data['settings']['application']['notification_urls']))
-        messages = []
-
+        output = render_template("settings.html", form=form)
         return output
 
     @app.route("/import", methods=['GET', "POST"])
     @login_required
     def import_page():
         import validators
-        global messages
         remaining_urls = []
 
         good = 0
@@ -561,7 +502,7 @@ def changedetection_app(conig=None, datastore_o=None):
                     if len(url):
                         remaining_urls.append(url)
 
-            messages.append({'class': 'ok', 'message': "{} Imported, {} Skipped.".format(good, len(remaining_urls))})
+            flash("{} Imported, {} Skipped.".format(good, len(remaining_urls)))
 
             if len(remaining_urls) == 0:
                 # Looking good, redirect to index.
@@ -569,11 +510,8 @@ def changedetection_app(conig=None, datastore_o=None):
 
         # Could be some remaining, or we could be on GET
         output = render_template("import.html",
-                                 messages=messages,
                                  remaining="\n".join(remaining_urls)
                                  )
-        messages = []
-
         return output
 
     # Clear all statuses, so we do not see the 'unviewed' class
@@ -585,13 +523,12 @@ def changedetection_app(conig=None, datastore_o=None):
         for watch_uuid, watch in datastore.data['watching'].items():
             datastore.set_last_viewed(watch_uuid, watch['newest_history_key'])
 
-        messages.append({'class': 'ok', 'message': "Cleared all statuses."})
+        flash("Cleared all statuses.")
         return redirect(url_for('index'))
 
     @app.route("/diff/<string:uuid>", methods=['GET'])
     @login_required
     def diff_history_page(uuid):
-        global messages
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
@@ -601,7 +538,7 @@ def changedetection_app(conig=None, datastore_o=None):
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
-            messages.append({'class': 'error', 'message': "No history found for the specified link, bad link?"})
+            flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
         dates = list(watch['history'].keys())
@@ -611,8 +548,7 @@ def changedetection_app(conig=None, datastore_o=None):
         dates = [str(i) for i in dates]
 
         if len(dates) < 2:
-            messages.append(
-                {'class': 'error', 'message': "Not enough saved change detection snapshots to produce a report."})
+            flash("Not enough saved change detection snapshots to produce a report.", "error")
             return redirect(url_for('index'))
 
         # Save the current newest history as the most recently viewed
@@ -634,7 +570,6 @@ def changedetection_app(conig=None, datastore_o=None):
             previous_version_file_contents = f.read()
 
         output = render_template("diff.html", watch_a=watch,
-                                 messages=messages,
                                  newest=newest_version_file_contents,
                                  previous=previous_version_file_contents,
                                  extra_stylesheets=extra_stylesheets,
@@ -648,7 +583,6 @@ def changedetection_app(conig=None, datastore_o=None):
     @app.route("/preview/<string:uuid>", methods=['GET'])
     @login_required
     def preview_page(uuid):
-        global messages
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
@@ -659,7 +593,7 @@ def changedetection_app(conig=None, datastore_o=None):
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
-            messages.append({'class': 'error', 'message': "No history found for the specified link, bad link?"})
+            flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
         print(watch)
@@ -744,11 +678,10 @@ def changedetection_app(conig=None, datastore_o=None):
     @app.route("/api/add", methods=['POST'])
     @login_required
     def api_watch_add():
-        global messages
 
         url = request.form.get('url').strip()
         if datastore.url_exists(url):
-            messages.append({'class': 'error', 'message': 'The URL {} already exists'.format(url)})
+            flash('The URL {} already exists'.format(url), "error")
             return redirect(url_for('index'))
 
         # @todo add_watch should throw a custom Exception for validation etc
@@ -756,24 +689,22 @@ def changedetection_app(conig=None, datastore_o=None):
         # Straight into the queue.
         update_q.put(new_uuid)
 
-        messages.append({'class': 'ok', 'message': 'Watch added.'})
+        flash("Watch added.")
         return redirect(url_for('index'))
 
     @app.route("/api/delete", methods=['GET'])
     @login_required
     def api_delete():
-        global messages
+
         uuid = request.args.get('uuid')
         datastore.delete(uuid)
-        messages.append({'class': 'ok', 'message': 'Deleted.'})
+        flash('Deleted.')
 
         return redirect(url_for('index'))
 
     @app.route("/api/checknow", methods=['GET'])
     @login_required
     def api_watch_checknow():
-
-        global messages
 
         tag = request.args.get('tag')
         uuid = request.args.get('uuid')
@@ -805,8 +736,7 @@ def changedetection_app(conig=None, datastore_o=None):
                 if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                     update_q.put(watch_uuid)
                     i += 1
-
-        messages.append({'class': 'ok', 'message': "{} watches are rechecking.".format(i)})
+        flash("{} watches are rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
 
     # @todo handle ctrl break

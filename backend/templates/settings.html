@@ -1,42 +1,28 @@
 {% extends 'base.html' %}
 
 {% block content %}
+{% from '_helpers.jinja' import render_field %}
+
 <div class="edit-form">
-
-
     <form class="pure-form pure-form-stacked settings" action="/settings" method="POST">
         <fieldset>
             <div class="pure-control-group">
-                <label for="minutes">Maximum time in minutes until recheck.</label>
-                <input type="text" id="minutes" required="" name="minutes" value="{{minutes}}"
-                       size="5"/>
-                <span class="pure-form-message-inline">This is a required field.</span><br/>
-                <span class="pure-form-message-inline">Minimum 1 minute between recheck</span>
+                {{ render_field(form.minutes_between_check, size=5) }}
             </div>
-            <br/>
-            <hr>
             <div class="pure-control-group">
-                <label for="minutes">Password protection</label>
-                <input type="password" id="password" name="password" size="15"/>
                 {% if current_user.is_authenticated %}
                     <a href="/settings?removepassword=true" class="pure-button pure-button-primary">Remove password</a>
+                {% else %}
+                    {{ render_field(form.password, size=10) }}
                 {% endif %}
             </div>
-
-            <br/>
-            <hr>
-
             <div class="pure-control-group">
-                <label for="minutes">Global notification settings</label><br/>
-                Notification URLs <a href="https://github.com/caronc/apprise"> see Apprise examples</a>.
-                <textarea style="overflow-wrap: normal;  overflow-x: scroll;" id="notification_urls" name="notification_urls" cols="80"
-                          rows="6" wrap=off placeholder="Example:
-
-Gitter - gitter://token/room
+                {{ render_field(form.notification_urls, rows=5, placeholder="Gitter - gitter://token/room
 Office365 - o365://TenantID:AccountEmail/ClientID/ClientSecret/TargetEmail
 AWS SNS - sns://AccessKeyID/AccessSecretKey/RegionName/+PhoneNo
 SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com
-">{{notification_urls}}</textarea>
+") }}
+                <span class="pure-form-message-inline">Use <a target=_new href="https://github.com/caronc/apprise">AppRise URLs</a> for notification to just about any service!</span>
             </div>
                 <div class="pure-controls">
                     <span class="pure-form-message-inline"><label for="trigger-test-notification" class="pure-checkbox">
