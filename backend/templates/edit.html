@@ -22,8 +22,14 @@
             </div>
             <!-- @todo: move to tabs --->
             <fieldset class="pure-group">
-                {{ render_field(form.ignore_text, rows=5) }}
-                <span class="pure-form-message-inline">Each line will be processed separately as an ignore rule.</span>
+                {{ render_field(form.ignore_text, rows=5,  placeholder="Some text to ignore in a line
+/some.regex\d{2}/   for case-INsensitive regex
+") }}
+                <span class="pure-form-message-inline">
+                    Each line processed separately, any line matching will be ignored.<br/>
+                    Regular Expression support, wrap the line in forward slash <b>/regex/</b>.
+                </span>
+
             </fieldset>
 
             <fieldset class="pure-group">

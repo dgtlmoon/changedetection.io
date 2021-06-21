@@ -1,6 +1,7 @@
 from wtforms import Form, BooleanField, StringField, PasswordField, validators, IntegerField, fields, TextAreaField, \
     Field
 from wtforms import widgets
+from wtforms.validators import ValidationError
 from wtforms.fields import html5
 
 
@@ -47,7 +48,7 @@ class SaltyPasswordField(StringField):
         if valuelist:
             # Remove empty strings
             self.encrypted_password = self.build_password(valuelist[0])
-            self.data=[]
+            self.data = []
         else:
             self.data = []
 
@@ -80,6 +81,26 @@ class StringDictKeyValue(StringField):
         else:
             self.data = {}
 
+class ListRegex(object):
+    """
+    Validates that anything that looks like a regex passes as a regex
+    """
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        import re
+
+        for line in field.data:
+            if line[0] == '/' and line[-1] == '/':
+                # Because internally we dont wrap in /
+                line = line.strip('/')
+                try:
+                    re.compile(line)
+                except re.error:
+                    message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
+                    raise ValidationError(message % (line))
+
 
 class watchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
@@ -91,7 +112,7 @@ class watchForm(Form):
                                                [validators.Optional(), validators.NumberRange(min=1)])
     css_filter = StringField('CSS Filter')
 
-    ignore_text = StringListField('Ignore Text')
+    ignore_text = StringListField('Ignore Text', [ListRegex()])
     notification_urls = StringListField('Notification URL List')
     headers = StringDictKeyValue('Request Headers')
     trigger_check = BooleanField('Send test notification on save')
