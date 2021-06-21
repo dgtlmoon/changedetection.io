@@ -439,7 +439,7 @@ def changedetection_app(config=None, datastore_o=None):
         form = forms.globalSettingsForm(request.form)
 
         if request.method == 'GET':
-            form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'] / 60)
+            form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'])
             form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
 
             # Password unset is a GET
@@ -452,7 +452,7 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST' and form.validate():
 
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
-            datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data * 60
+            datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data
 
             if len(form.notification_urls.data):
                 import apprise
