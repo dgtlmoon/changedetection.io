@@ -483,7 +483,10 @@ def changedetection_app(config=None, datastore_o=None):
                 flash("Password protection enabled.", 'notice')
                 flask_login.logout_user()
                 return redirect(url_for('index'))
-
+            else:
+                # Unset it anyway, just to be sure.
+                datastore.data['settings']['application']['password'] = False
+                
             flash("Settings updated.")
 
         if request.method == 'POST' and not form.validate():

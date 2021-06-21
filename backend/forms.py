@@ -46,11 +46,12 @@ class SaltyPasswordField(StringField):
     # incoming
     def process_formdata(self, valuelist):
         if valuelist:
-            # Remove empty strings
-            self.encrypted_password = self.build_password(valuelist[0])
-            self.data = []
+            # Be really sure it's non-zero in length
+            if len(valuelist[0].strip()) > 0:
+                self.encrypted_password = self.build_password(valuelist[0])
+                self.data = ""
         else:
-            self.data = []
+            self.data = False
 
 
 # Separated by  key:value
