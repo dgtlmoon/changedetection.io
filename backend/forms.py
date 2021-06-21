@@ -123,7 +123,6 @@ class watchForm(Form):
 class globalSettingsForm(Form):
 
     password = SaltyPasswordField()
-    remove_password = BooleanField('Remove password')
 
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.NumberRange(min=1)])
