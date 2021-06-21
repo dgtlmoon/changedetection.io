@@ -7,18 +7,15 @@
     <form class="pure-form pure-form-stacked settings" action="/settings" method="POST">
         <fieldset>
             <div class="pure-control-group">
-                {{ render_field(form.minutes_between_check, size=10) }}
+                {{ render_field(form.minutes_between_check, size=5) }}
             </div>
-            <br/>
-            <hr>
             <div class="pure-control-group">
-                {{ render_field(form.password, size=10) }}
                 {% if current_user.is_authenticated %}
                     <a href="/settings?removepassword=true" class="pure-button pure-button-primary">Remove password</a>
+                {% else %}
+                    {{ render_field(form.password, size=10) }}
                 {% endif %}
             </div>
-            <hr>
-
             <div class="pure-control-group">
                 {{ render_field(form.notification_urls, rows=5, placeholder="Gitter - gitter://token/room
 Office365 - o365://TenantID:AccountEmail/ClientID/ClientSecret/TargetEmail
