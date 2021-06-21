@@ -423,91 +423,75 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/settings", methods=['GET', "POST"])
     @login_required
     def settings_page():
+
+        from backend import forms
+        form = forms.globalSettingsForm(request.form)
+
         if request.method == 'GET':
-            if request.values.get('notification-test'):
-                url_count = len(datastore.data['settings']['application']['notification_urls'])
-                if url_count:
-                    import apprise
-                    apobj = apprise.Apprise()
-                    apobj.debug = True
+            populate_form_from_watch(form, datastore.data['settings']['application'])
 
-                    # Add each notification
-                    for n in datastore.data['settings']['application']['notification_urls']:
-                        apobj.add(n)
-                    outcome = apobj.notify(
-                        body='Hello from the worlds best and simplest web page change detection and monitoring service!',
-                        title='Changedetection.io Notification Test',
-                    )
+        if request.method == 'POST' and form.validate():
 
-                    if outcome:
-                        flash("{} Notification URLs reached.".format(url_count), "notice")
-                    else:
-                        flash("One or more Notification URLs failed", 'error')
+            datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
+            datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data *60
 
-                return redirect(url_for('settings_page'))
+            if len(form.notification_urls.data):
+                import apprise
+                apobj = apprise.Apprise()
+                apobj.debug = True
 
-            if request.values.get('removepassword'):
+                # Add each notification
+                for n in datastore.data['settings']['application']['notification_urls']:
+                    apobj.add(n)
+                outcome = apobj.notify(
+                    body='Hello from the worlds best and simplest web page change detection and monitoring service!',
+                    title='Changedetection.io Notification Test',
+                )
+
+                if outcome:
+                    flash("{} Notification URLs reached.".format(len(form.notification_urls.data)), "notice")
+                else:
+                    flash("One or more Notification URLs failed", 'error')
+
+            password = form.remove_password.data
+            if form.remove_password.data:
                 from pathlib import Path
 
                 datastore.data['settings']['application']['password'] = False
                 flash("Password protection removed.", 'notice')
                 flask_login.logout_user()
 
-                return redirect(url_for('settings_page'))
-
-        if request.method == 'POST':
-
-            password = request.values.get('password')
-            if password:
-                import hashlib
-                import base64
-                import secrets
-
-                # Make a new salt on every new password and store it with the password
-                salt = secrets.token_bytes(32)
-
-                key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
-                store = base64.b64encode(salt + key).decode('ascii')
-                datastore.data['settings']['application']['password'] = store
-
-                flash("Password protection enabled.", 'notice')
-                flask_login.logout_user()
-                return redirect(url_for('index'))
-
-            try:
-                minutes = int(request.values.get('minutes').strip())
-            except ValueError:
-                flash("Invalid value given, use an integer.", "error")
-
             else:
-                if minutes >= 1:
-                    datastore.data['settings']['requests']['minutes_between_check'] = minutes
-                    datastore.needs_write = True
-                else:
-                    flash("Must be atleast 1 minute.", 'error')
 
-            # 'validators' package doesnt work because its often a non-stanadard protocol. :(
-            datastore.data['settings']['application']['notification_urls'] = []
-            trigger_n = request.form.get('trigger-test-notification')
+                if password:
+                    # @todo move to private function.. or custom password handler? returns .salt with .data? SaltyPasswordField
+                    import hashlib
+                    import base64
+                    import secrets
 
-            for n in request.values.get('notification_urls').strip().split("\n"):
-                url = n.strip()
-                datastore.data['settings']['application']['notification_urls'].append(url)
-                datastore.needs_write = True
+                    # Make a new salt on every new password and store it with the password
+                    salt = secrets.token_bytes(32)
 
-            if trigger_n:
+                    key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+                    store = base64.b64encode(salt + key).decode('ascii')
+                    datastore.data['settings']['application']['password'] = store
+
+                    flash("Password protection enabled.", 'notice')
+                    flask_login.logout_user()
+                    return redirect(url_for('index'))
+
+            datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
+            datastore.needs_write = True
+
+            if form.trigger_check.data:
                 n_object = {'watch_url': "Test from changedetection.io!",
-                            'notification_urls': datastore.data['settings']['application']['notification_urls']}
+                            'notification_urls': form.notification_urls.data}
                 notification_q.put(n_object)
                 flash('Notifications queued.')
 
             flash("Settings updated.")
 
-
-        output = render_template("settings.html",
-                                 minutes=datastore.data['settings']['requests']['minutes_between_check'],
-                                 notification_urls="\r\n".join(
-                                     datastore.data['settings']['application']['notification_urls']))
+        output = render_template("settings.html", form=form)
         return output
 
     @app.route("/import", methods=['GET', "POST"])
