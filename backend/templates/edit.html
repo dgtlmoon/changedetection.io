@@ -8,6 +8,9 @@
                 {{ render_field(form.url, placeholder="https://...", size=30, required=true) }}
             </div>
             <div class="pure-control-group">
+                {{ render_field(form.title, size=30) }}
+            </div>
+            <div class="pure-control-group">
                 {{ render_field(form.tag, size=10) }}
             </div>
             <div class="pure-control-group">

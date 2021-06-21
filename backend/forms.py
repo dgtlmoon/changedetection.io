@@ -111,6 +111,7 @@ class watchForm(Form):
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
     css_filter = StringField('CSS Filter')
+    title = StringField('Title')
 
     ignore_text = StringListField('Ignore Text', [ListRegex()])
     notification_urls = StringListField('Notification URL List')
