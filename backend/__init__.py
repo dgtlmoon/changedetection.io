@@ -6,7 +6,6 @@
 # @todo enable https://urllib3.readthedocs.io/en/latest/user-guide.html#ssl as option?
 # @todo option for interval day/6 hour/etc
 # @todo on change detected, config for calling some API
-# @todo make tables responsive!
 # @todo fetch title into json
 # https://distill.io/features
 # proxy per check
@@ -53,6 +52,8 @@ app.config['NEW_VERSION_AVAILABLE'] = False
 
 app.config['LOGIN_DISABLED'] = False
 
+#app.config["EXPLAIN_TEMPLATE_LOADING"] = True
+
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
@@ -73,6 +74,17 @@ def init_app_secret(datastore_path):
             f.write(secret)
 
     return secret
+
+# Remember python is by reference
+# populate_form in wtfors didnt work for me. (try using a setattr() obj type on datastore.watch?)
+def populate_form_from_watch(form, watch):
+    for i in form.__dict__.keys():
+        if i[0] != '_':
+            p = getattr(form, i)
+            if hasattr(p, 'data') and i in watch:
+                if not p.data:
+                    setattr(p, "data", watch[i])
+
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
 # running or something similar.
@@ -345,82 +357,47 @@ def changedetection_app(config=None, datastore_o=None):
 
         return datastore.data['watching'][uuid]['previous_md5']
 
+
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     @login_required
     def edit_page(uuid):
-        import validators
+        from backend import forms
+        form = forms.watchForm(request.form)
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
-        if request.method == 'POST':
+        if request.method == 'GET':
+            populate_form_from_watch(form, datastore.data['watching'][uuid])
 
-            url = request.form.get('url').strip()
-            tag = request.form.get('tag').strip()
-
-            minutes_recheck = request.form.get('minutes')
-            if minutes_recheck:
-                minutes = int(minutes_recheck.strip())
-                if minutes >= 1:
-                    datastore.data['watching'][uuid]['minutes_between_check'] = minutes
-                else:
-                    flash("Must be atleast 1 minute between checks.", 'error')
-                    return redirect(url_for('edit_page', uuid=uuid))
-
-            # Extra headers
-            form_headers = request.form.get('headers').strip().split("\n")
-            extra_headers = {}
-            if form_headers:
-                for header in form_headers:
-                    if len(header):
-                        parts = header.split(':', 1)
-                        if len(parts) == 2:
-                            extra_headers.update({parts[0].strip(): parts[1].strip()})
-
-            update_obj = {'url': url,
-                          'tag': tag,
-                          'headers': extra_headers
+        if request.method == 'POST' and form.validate():
+            update_obj = {'url': form.url.data.strip(),
+                          'tag': form.tag.data.strip(),
+                          'headers': form.headers.data
                           }
 
             # Notification URLs
-            form_notification_text = request.form.get('notification_urls')
-            notification_urls = []
-            if form_notification_text:
-                for text in form_notification_text.strip().split("\n"):
-                    text = text.strip()
-                    if len(text):
-                        notification_urls.append(text)
-
-            datastore.data['watching'][uuid]['notification_urls'] = notification_urls
+            datastore.data['watching'][uuid]['notification_urls'] = form.notification_urls.data
 
             # Ignore text
-            form_ignore_text = request.form.get('ignore-text')
-            ignore_text = []
+            form_ignore_text = form.ignore_text.data
+            datastore.data['watching'][uuid]['ignore_text'] = form_ignore_text
+
+            # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
             if form_ignore_text:
-                for text in form_ignore_text.strip().split("\n"):
-                    text = text.strip()
-                    if len(text):
-                        ignore_text.append(text)
-
-                datastore.data['watching'][uuid]['ignore_text'] = ignore_text
-
-                # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
                 if len(datastore.data['watching'][uuid]['history']):
                     update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
 
-            # CSS Filter
-            css_filter = request.form.get('css_filter')
-            if css_filter:
-                datastore.data['watching'][uuid]['css_filter'] = css_filter.strip()
+            datastore.data['watching'][uuid]['css_filter'] = form.css_filter.data.strip()
 
-                # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
+            # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
+            if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
                 if len(datastore.data['watching'][uuid]['history']):
                     update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
 
-            validators.url(url)  # @todo switch to prop/attr/observer
             datastore.data['watching'][uuid].update(update_obj)
             datastore.needs_write = True
             flash("Updated watch.")
@@ -428,10 +405,9 @@ def changedetection_app(config=None, datastore_o=None):
             # Queue the watch for immediate recheck
             update_q.put(uuid)
 
-            trigger_n = request.form.get('trigger-test-notification')
-            if trigger_n:
-                n_object = {'watch_url': url,
-                            'notification_urls': notification_urls}
+            if form.trigger_check.data:
+                n_object = {'watch_url': form.url.data.strip(),
+                            'notification_urls': form.notification_urls.data}
                 notification_q.put(n_object)
 
                 flash('Notifications queued.')
@@ -439,7 +415,7 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         else:
-            output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid])
+            output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid], form=form)
 
         return output
 
@@ -447,92 +423,62 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def settings_page():
 
+        from backend import forms
+        form = forms.globalSettingsForm(request.form)
 
         if request.method == 'GET':
-            if request.values.get('notification-test'):
-                url_count = len(datastore.data['settings']['application']['notification_urls'])
-                if url_count:
-                    import apprise
-                    apobj = apprise.Apprise()
-                    apobj.debug = True
+            form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'] / 60)
+            form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
 
-                    # Add each notification
-                    for n in datastore.data['settings']['application']['notification_urls']:
-                        apobj.add(n)
-                    outcome = apobj.notify(
-                        body='Hello from the worlds best and simplest web page change detection and monitoring service!',
-                        title='Changedetection.io Notification Test',
-                    )
-
-                    if outcome:
-                        flash("{} Notification URLs reached.".format(url_count), "notice")
-                    else:
-                        flash("One or more Notification URLs failed", 'error')
-
-                return redirect(url_for('settings_page'))
-
-            if request.values.get('removepassword'):
+            # Password unset is a GET
+            if request.values.get('removepassword') == 'true':
                 from pathlib import Path
-
                 datastore.data['settings']['application']['password'] = False
                 flash("Password protection removed.", 'notice')
                 flask_login.logout_user()
 
-                return redirect(url_for('settings_page'))
+        if request.method == 'POST' and form.validate():
 
-        if request.method == 'POST':
+            datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
+            datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data * 60
 
-            password = request.values.get('password')
-            if password:
-                import hashlib
-                import base64
-                import secrets
+            if len(form.notification_urls.data):
+                import apprise
+                apobj = apprise.Apprise()
+                apobj.debug = True
 
-                # Make a new salt on every new password and store it with the password
-                salt = secrets.token_bytes(32)
+                # Add each notification
+                for n in datastore.data['settings']['application']['notification_urls']:
+                    apobj.add(n)
+                outcome = apobj.notify(
+                    body='Hello from the worlds best and simplest web page change detection and monitoring service!',
+                    title='Changedetection.io Notification Test',
+                )
 
-                key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
-                store = base64.b64encode(salt + key).decode('ascii')
-                datastore.data['settings']['application']['password'] = store
+                if outcome:
+                    flash("{} Notification URLs reached.".format(len(form.notification_urls.data)), "notice")
+                else:
+                    flash("One or more Notification URLs failed", 'error')
 
+
+            datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
+            datastore.needs_write = True
+
+            if form.trigger_check.data:
+                n_object = {'watch_url': "Test from changedetection.io!",
+                            'notification_urls': form.notification_urls.data}
+                notification_q.put(n_object)
+                flash('Notifications queued.')
+
+            if form.password.encrypted_password:
+                datastore.data['settings']['application']['password'] = form.password.encrypted_password
                 flash("Password protection enabled.", 'notice')
                 flask_login.logout_user()
                 return redirect(url_for('index'))
 
-            try:
-                minutes = int(request.values.get('minutes').strip())
-            except ValueError:
-                flash("Invalid value given, use an integer.", "error")
-
-            else:
-                if minutes >= 1:
-                    datastore.data['settings']['requests']['minutes_between_check'] = minutes
-                    datastore.needs_write = True
-                else:
-                    flash("Must be atleast 1 minute.", 'error')
-
-            # 'validators' package doesnt work because its often a non-stanadard protocol. :(
-            datastore.data['settings']['application']['notification_urls'] = []
-            trigger_n = request.form.get('trigger-test-notification')
-
-            for n in request.values.get('notification_urls').strip().split("\n"):
-                url = n.strip()
-                datastore.data['settings']['application']['notification_urls'].append(url)
-                datastore.needs_write = True
-
-            if trigger_n:
-                n_object = {'watch_url': "Test from changedetection.io!",
-                            'notification_urls': datastore.data['settings']['application']['notification_urls']}
-                notification_q.put(n_object)
-                flash('Notifications queued.')
-
             flash("Settings updated.")
 
-
-        output = render_template("settings.html",
-                                 minutes=datastore.data['settings']['requests']['minutes_between_check'],
-                                 notification_urls="\r\n".join(
-                                     datastore.data['settings']['application']['notification_urls']))
+        output = render_template("settings.html", form=form)
         return output
 
     @app.route("/import", methods=['GET', "POST"])

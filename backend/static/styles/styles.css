@@ -225,15 +225,39 @@ footer {
 .paused-state.state-False:hover img {
   opacity: 0.8; }
 
-.pure-form label {
-  font-weight: bold; }
-
-.pure-form input[type=url] {
-  width: 100%; }
-
-.pure-form textarea {
+.monospaced-textarea textarea {
   width: 100%;
-  font-size: 14px; }
+  font-family: monospace;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: scroll; }
+
+.pure-form {
+  /* The input fields with errors */
+  /* The list of errors */ }
+  .pure-form .pure-control-group, .pure-form .pure-group, .pure-form .pure-controls {
+    padding-bottom: 1em; }
+    .pure-form .pure-control-group dd, .pure-form .pure-group dd, .pure-form .pure-controls dd {
+      margin: 0px; }
+  .pure-form .error input {
+    background-color: #ffebeb; }
+  .pure-form ul.errors {
+    padding: .5em .6em;
+    border: 1px solid #dd0000;
+    border-radius: 4px;
+    vertical-align: middle;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box; }
+    .pure-form ul.errors li {
+      margin-left: 1em;
+      color: #dd0000; }
+  .pure-form label {
+    font-weight: bold; }
+  .pure-form input[type=url] {
+    width: 100%; }
+  .pure-form textarea {
+    width: 100%;
+    font-size: 14px; }
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
   .box {
