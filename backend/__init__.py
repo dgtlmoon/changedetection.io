@@ -369,6 +369,10 @@ def changedetection_app(config=None, datastore_o=None):
             uuid = list(datastore.data['watching'].keys()).pop()
 
         if request.method == 'GET':
+            if not uuid in datastore.data['watching']:
+                flash("No watch with the UUID %s found." % (uuid), "error")
+                return redirect(url_for('index'))
+
             populate_form_from_watch(form, datastore.data['watching'][uuid])
 
         if request.method == 'POST' and form.validate():
@@ -415,6 +419,9 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         else:
+            if request.method == 'POST' and not form.validate():
+                flash("An error occurred, please see below.", "error")
+
             output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid], form=form)
 
         return output
@@ -477,6 +484,9 @@ def changedetection_app(config=None, datastore_o=None):
                 return redirect(url_for('index'))
 
             flash("Settings updated.")
+
+        if request.method == 'POST' and not form.validate():
+            flash("An error occurred, please see below.", "error")
 
         output = render_template("settings.html", form=form)
         return output

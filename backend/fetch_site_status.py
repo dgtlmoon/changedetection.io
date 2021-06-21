@@ -13,18 +13,34 @@ class perform_site_check():
         self.datastore = datastore
 
     def strip_ignore_text(self, content, list_ignore_text):
+        import re
         ignore = []
+        ignore_regex = []
         for k in list_ignore_text:
-            ignore.append(k.encode('utf8'))
+
+            # Is it a regex?
+            if k[0] == '/':
+                ignore_regex.append(k.strip(" /"))
+            else:
+                ignore.append(k)
 
         output = []
         for line in content.splitlines():
-            line = line.encode('utf8')
 
             # Always ignore blank lines in this mode. (when this function gets called)
             if len(line.strip()):
-                if not any(skip_text in line for skip_text in ignore):
-                    output.append(line)
+                regex_matches = False
+
+                # if any of these match, skip
+                for regex in ignore_regex:
+                    try:
+                        if re.search(regex, line, re.IGNORECASE):
+                            regex_matches = True
+                    except Exception as e:
+                        continue
+
+                if not regex_matches and not any(skip_text in line for skip_text in ignore):
+                    output.append(line.encode('utf8'))
 
         return "\n".encode('utf8').join(output)
 
