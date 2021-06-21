@@ -1,102 +1,58 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<div class="edit-form">
-
-
+{% from '_helpers.jinja' import render_field %}
+<div class="edit-form monospaced-textarea">
     <form class="pure-form pure-form-stacked" action="/edit/{{uuid}}" method="POST">
         <fieldset>
             <div class="pure-control-group">
-                <label for="url">URL</label>
-                <input type="url" id="url" required="" placeholder="https://..." name="url" value="{{ watch.url}}"
-                       size="50"/>
-                <span class="pure-form-message-inline">This is a required field.</span>
+                {{ render_field(form.url, placeholder="https://...", size=30, required=true) }}
             </div>
             <div class="pure-control-group">
-                <label for="tag">Tag</label>
-                <input type="text" placeholder="tag" size="10" id="tag" name="tag" value="{{ watch.tag}}"/>
-                <span class="pure-form-message-inline">Grouping tags, can be a comma separated list.</span>
+                {{ render_field(form.tag, size=10) }}
             </div>
-            </br>
             <div class="pure-control-group">
-                <label for="minutes">Maximum time in minutes until recheck.</label>
-                <input type="text" id="minutes" name="minutes" value="{{watch.minutes_between_check}}"
-                       size="5"/>
-                <span class="pure-form-message-inline">Minimum 1 minute between recheck</span>
+                {{ render_field(form.minutes_between_check, size=5) }}
             </div>
-            <br/>
             <div class="pure-control-group">
-                <label for="minutes">CSS Filter</label>
-                <input type="text" id="css_filter" name="css_filter" value="{{watch.css_filter}}"
-                       size="25" placeholder=".class-name or #some-id, or other CSS selector rule."/>
+                {{ render_field(form.css_filter, size=25, placeholder=".class-name or #some-id, or other CSS selector rule.") }}
                 <span class="pure-form-message-inline">Limit text to this CSS rule, only text matching this CSS rule is included.<br/>
                     Please be sure that you thoroughly understand how to write CSS selector rules before filing an issue on GitHub!<br/>
                     Go <a href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>
                 </span>
             </div>
-            <br/>
             <!-- @todo: move to tabs --->
             <fieldset class="pure-group">
-                <label for="ignore-text">Ignore text</label>
-
-                <textarea id="ignore-text" name="ignore-text" class="pure-input-1-2" placeholder=""
-                          style="width: 100%;
-                            font-family:monospace;
-                            white-space: pre;
-                            overflow-wrap: normal;
-                            overflow-x: scroll;" rows="5">{% for value in watch.ignore_text %}{{ value }}
-{% endfor %}</textarea>
+                {{ render_field(form.ignore_text, rows=5) }}
                 <span class="pure-form-message-inline">Each line will be processed separately as an ignore rule.</span>
-
             </fieldset>
 
-            <!-- @todo: move to tabs --->
             <fieldset class="pure-group">
-                <label for="headers">Extra request headers</label>
-
-                <textarea id="headers" name="headers" class="pure-input-1-2" placeholder="Example
+                {{ render_field(form.headers, rows=5, placeholder="Example
 Cookie: foobar
-User-Agent: wonderbra 1.0"
-                          style="width: 100%;
-                            font-family:monospace;
-                            white-space: pre;
-                            overflow-wrap: normal;
-                            overflow-x: scroll;" rows="5">{% for key, value in watch.headers.items() %}{{ key }}: {{ value }}
-{% endfor %}</textarea>
-                <br/>
-
+User-Agent: wonderbra 1.0") }}
             </fieldset>
-            <div class="pure-control-group">
-                <label for="tag">Notification URLs</label>
-                <textarea id="notification_urls" name="notification_urls" class="pure-input-1-2" placeholder=""
-                          style="width: 100%;
-                            font-family:monospace;
-                            white-space: pre;
-                            overflow-wrap: normal;
-                            overflow-x: scroll;" rows="5">{% for value in watch.notification_urls %}{{ value }}
-{% endfor %}</textarea>
-                <span class="pure-form-message-inline">Use <a target=_new href="https://github.com/caronc/apprise">AppRise URLs</a> for notification to just about any service!</a> </span>
-                <br/>
-                <div class="pure-controls">
-                    <span class="pure-form-message-inline"><label for="trigger-test-notification" class="pure-checkbox">
-                        <input type="checkbox" id="trigger-test-notification" name="trigger-test-notification"> Send test notification on save.</label></span>
 
-                </div>
+            <div class="pure-control-group">
+                {{ render_field(form.notification_urls, rows=5, placeholder="Gitter - gitter://token/room
+Office365 - o365://TenantID:AccountEmail/ClientID/ClientSecret/TargetEmail
+AWS SNS - sns://AccessKeyID/AccessSecretKey/RegionName/+PhoneNo
+SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com
+") }}
+                <span class="pure-form-message-inline">Use <a target=_new href="https://github.com/caronc/apprise">AppRise URLs</a> for notification to just about any service!</span>
             </div>
-            <br/>
+
+            <div class="pure-controls">
+                {{ render_field(form.trigger_check, rows=5) }}
+            </div>
             <div class="pure-control-group">
                 <button type="submit" class="pure-button pure-button-primary">Save</button>
             </div>
             <br/>
-
             <div class="pure-control-group">
                 <a href="/" class="pure-button button-small button-cancel">Cancel</a>
                 <a href="/api/delete?uuid={{uuid}}"
                    class="pure-button button-small button-error ">Delete</a>
-
             </div>
-
-
         </fieldset>
     </form>
 

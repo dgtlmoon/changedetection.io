@@ -297,8 +297,43 @@ footer {
   }
 }
 
+.monospaced-textarea {
+    textarea {
+        width: 100%;
+        font-family: monospace;
+        white-space: pre;
+        overflow-wrap: normal;
+        overflow-x: scroll;
+    }
+}
+
 
 .pure-form {
+    .pure-control-group, .pure-group, .pure-controls {
+        padding-bottom: 1em;
+        dd {
+            margin: 0px;
+        }
+    }
+  /* The input fields with errors */
+  .error {
+    input {
+        background-color: #ffebeb;
+    }
+  }
+   /* The list of errors */
+  ul.errors {
+    padding: .5em .6em;
+    border: 1px solid #dd0000;
+    border-radius: 4px;
+    vertical-align: middle;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    li {
+        margin-left: 1em;
+        color: #dd0000;
+    }
+  }
 
   label {
     font-weight: bold;
