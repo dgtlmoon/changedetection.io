@@ -486,7 +486,7 @@ def changedetection_app(config=None, datastore_o=None):
             else:
                 # Unset it anyway, just to be sure.
                 datastore.data['settings']['application']['password'] = False
-                
+
             flash("Settings updated.")
 
         if request.method == 'POST' and not form.validate():
