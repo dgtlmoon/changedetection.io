@@ -428,7 +428,8 @@ def changedetection_app(config=None, datastore_o=None):
         form = forms.globalSettingsForm(request.form)
 
         if request.method == 'GET':
-            populate_form_from_watch(form, datastore.data['settings']['application'])
+            form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'] / 60)
+            form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
 
         if request.method == 'POST' and form.validate():
 
@@ -453,32 +454,6 @@ def changedetection_app(config=None, datastore_o=None):
                 else:
                     flash("One or more Notification URLs failed", 'error')
 
-            password = form.remove_password.data
-            if form.remove_password.data:
-                from pathlib import Path
-
-                datastore.data['settings']['application']['password'] = False
-                flash("Password protection removed.", 'notice')
-                flask_login.logout_user()
-
-            else:
-
-                if password:
-                    # @todo move to private function.. or custom password handler? returns .salt with .data? SaltyPasswordField
-                    import hashlib
-                    import base64
-                    import secrets
-
-                    # Make a new salt on every new password and store it with the password
-                    salt = secrets.token_bytes(32)
-
-                    key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
-                    store = base64.b64encode(salt + key).decode('ascii')
-                    datastore.data['settings']['application']['password'] = store
-
-                    flash("Password protection enabled.", 'notice')
-                    flask_login.logout_user()
-                    return redirect(url_for('index'))
 
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.needs_write = True
@@ -488,6 +463,35 @@ def changedetection_app(config=None, datastore_o=None):
                             'notification_urls': form.notification_urls.data}
                 notification_q.put(n_object)
                 flash('Notifications queued.')
+
+
+            #@ todo ahh this is a link
+            remove_password = form.remove_password.data
+            if form.remove_password.data:
+                from pathlib import Path
+
+                datastore.data['settings']['application']['password'] = False
+                flash("Password protection removed.", 'notice')
+                flask_login.logout_user()
+
+            else:
+
+                if form.password.data:
+                    # @todo move to private function.. or custom password handler? returns .salt with .data? SaltyPasswordField
+                    import hashlib
+                    import base64
+                    import secrets
+
+                    # Make a new salt on every new password and store it with the password
+                    salt = secrets.token_bytes(32)
+
+                    key = hashlib.pbkdf2_hmac('sha256', form.password.data.encode('utf-8'), salt, 100000)
+                    store = base64.b64encode(salt + key).decode('ascii')
+                    datastore.data['settings']['application']['password'] = store
+
+                    flash("Password protection enabled.", 'notice')
+                    flask_login.logout_user()
+                    return redirect(url_for('index'))
 
             flash("Settings updated.")
 

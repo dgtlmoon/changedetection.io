@@ -76,5 +76,6 @@ class globalSettingsForm(Form):
 
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
+
     notification_urls = StringListField('Notification URL List')
     trigger_check = BooleanField('Send test notification on save')
