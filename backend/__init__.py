@@ -373,18 +373,13 @@ def changedetection_app(config=None, datastore_o=None):
             populate_form_from_watch(form, datastore.data['watching'][uuid])
 
         if request.method == 'POST' and form.validate():
-
-            url = form.url.data.strip()
-            tag = form.tag.data.strip()
-
-            update_obj = {'url': url,
-                          'tag': tag,
+            update_obj = {'url': form.url.data.strip(),
+                          'tag': form.tag.data.strip(),
                           'headers': form.headers.data
                           }
 
             # Notification URLs
-            notification_urls = form.notification_urls.data
-            datastore.data['watching'][uuid]['notification_urls'] = notification_urls
+            datastore.data['watching'][uuid]['notification_urls'] = form.notification_urls.data
 
             # Ignore text
             form_ignore_text = form.ignore_text.data
@@ -412,8 +407,8 @@ def changedetection_app(config=None, datastore_o=None):
             update_q.put(uuid)
 
             if form.trigger_check.data:
-                n_object = {'watch_url': url,
-                            'notification_urls': notification_urls}
+                n_object = {'watch_url': form.url.data.strip(),
+                            'notification_urls': form.notification_urls.data}
                 notification_q.put(n_object)
 
                 flash('Notifications queued.')
