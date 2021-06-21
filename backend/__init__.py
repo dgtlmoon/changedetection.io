@@ -584,6 +584,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  previous=previous_version_file_contents,
                                  extra_stylesheets=extra_stylesheets,
                                  versions=dates[1:],
+                                 uuid=uuid,
                                  newest_version_timestamp=dates[0],
                                  current_previous_version=str(previous_version),
                                  current_diff_url=watch['url'])
@@ -606,11 +607,15 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
-        print(watch)
-        with open(list(watch['history'].values())[-1], 'r') as f:
+        newest = list(watch['history'].keys())[-1]
+        with open(watch['history'][newest], 'r') as f:
             content = f.readlines()
 
-        output = render_template("preview.html", content=content, extra_stylesheets=extra_stylesheets)
+        output = render_template("preview.html",
+                                 content=content,
+                                 extra_stylesheets=extra_stylesheets,
+                                 current_diff_url=watch['url'],
+                                 uuid=uuid)
         return output
 
 
