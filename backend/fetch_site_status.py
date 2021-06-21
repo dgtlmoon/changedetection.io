@@ -20,7 +20,7 @@ class perform_site_check():
 
             # Is it a regex?
             if k[0] == '/':
-                ignore_regex.append(k.strip().lstrip("/").rstrip("/"))
+                ignore_regex.append(k.strip(" /"))
             else:
                 ignore.append(k)
 
