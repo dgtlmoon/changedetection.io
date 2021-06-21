@@ -1,9 +1,7 @@
+from os import unlink, path, mkdir
 import json
 import uuid as uuid_builder
-import os.path
-from os import path
 from threading import Lock
-
 from copy import deepcopy
 
 import logging
@@ -115,6 +113,12 @@ class ChangeDetectionStore:
 
         self.__data['version_tag'] = "0.34"
 
+        # Helper to remove password protection
+        password_reset_lockfile = "{}/removepassword.lock".format(self.datastore_path)
+        if path.isfile(password_reset_lockfile):
+            self.__data['settings']['application']['password'] = False
+            unlink(password_reset_lockfile)
+
         if not 'app_guid' in self.__data:
             import sys
             import os
@@ -199,7 +203,7 @@ class ChangeDetectionStore:
 
     def unlink_history_file(self, path):
         try:
-            os.unlink(path)
+            unlink(path)
         except (FileNotFoundError, IOError):
             pass
 
@@ -293,7 +297,7 @@ class ChangeDetectionStore:
         # Get the directory ready
         output_path = "{}/{}".format(self.datastore_path, new_uuid)
         try:
-            os.mkdir(output_path)
+            mkdir(output_path)
         except FileExistsError:
             print(output_path, "already exists.")
 
@@ -362,4 +366,4 @@ class ChangeDetectionStore:
         for item in pathlib.Path(self.datastore_path).rglob("*/*txt"):
             if not str(item) in index:
                 print ("Removing",item)
-                os.unlink(item)
+                unlink(item)

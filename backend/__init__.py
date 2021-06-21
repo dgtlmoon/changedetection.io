@@ -189,6 +189,10 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route('/login', methods=['GET', 'POST'])
     def login():
 
+        if not datastore.data['settings']['application']['password']:
+            flash("Login not required, no password enabled.", "notice")
+            return redirect(url_for('index'))
+
         if request.method == 'GET':
             output = render_template("login.html")
             return output
@@ -483,9 +487,6 @@ def changedetection_app(config=None, datastore_o=None):
                 flash("Password protection enabled.", 'notice')
                 flask_login.logout_user()
                 return redirect(url_for('index'))
-            else:
-                # Unset it anyway, just to be sure.
-                datastore.data['settings']['application']['password'] = False
 
             flash("Settings updated.")
 
