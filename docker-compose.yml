@@ -6,8 +6,9 @@ services:
       hostname: changedetection.io
       volumes:
         - changedetection-data:/datastore
-
   #    environment:
+  #      - PUID=1000
+  #      - PGID=1000
   #        Proxy support example.
   #      - HTTP_PROXY="socks5h://10.10.1.10:1080"
   #      - HTTPS_PROXY="socks5h://10.10.1.10:1080"
