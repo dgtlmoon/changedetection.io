@@ -6,7 +6,6 @@
 # @todo enable https://urllib3.readthedocs.io/en/latest/user-guide.html#ssl as option?
 # @todo option for interval day/6 hour/etc
 # @todo on change detected, config for calling some API
-# @todo make tables responsive!
 # @todo fetch title into json
 # https://distill.io/features
 # proxy per check
@@ -430,6 +429,7 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'GET':
             form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'] / 60)
             form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
+
             # Password unset is a GET
             if request.values.get('removepassword') == 'true':
                 from pathlib import Path
@@ -440,7 +440,7 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST' and form.validate():
 
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
-            datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data *60
+            datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data * 60
 
             if len(form.notification_urls.data):
                 import apprise
@@ -470,8 +470,6 @@ def changedetection_app(config=None, datastore_o=None):
                 notification_q.put(n_object)
                 flash('Notifications queued.')
 
-
-            #@ todo ahh this is a link
             if form.password.encrypted_password:
                 datastore.data['settings']['application']['password'] = form.password.encrypted_password
                 flash("Password protection enabled.", 'notice')
