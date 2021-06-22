@@ -105,7 +105,7 @@ This proxy support also extends to the notifications https://github.com/caronc/a
 
 ### RaspberriPi support?
 
-RaspberriPi and linux/arm/v6 linux/arm/v7 devices are supported! 
+RaspberriPi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! 
 
 
 ### Support us
