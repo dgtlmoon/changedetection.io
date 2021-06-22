@@ -781,7 +781,9 @@ def check_for_new_version():
         try:
             r = requests.post("https://changedetection.io/check-ver.php",
                               data={'version': datastore.data['version_tag'],
-                                    'app_guid': datastore.data['app_guid']},
+                                    'app_guid': datastore.data['app_guid'],
+                                    'watch_count': len(datastore.data['watching'])
+                                    },
 
                               verify=False)
         except:
