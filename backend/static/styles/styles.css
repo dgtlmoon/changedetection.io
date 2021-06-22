@@ -115,7 +115,8 @@ body:after, body:before {
   background: #fff;
   padding: 2em;
   margin: 1em;
-  border-radius: 5px; }
+  border-radius: 5px;
+  min-width: 70%; }
 
 .button-secondary {
   color: white;
