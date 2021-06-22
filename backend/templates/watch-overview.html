@@ -46,7 +46,7 @@
                 {% if watch.newest_history_key| int > watch.last_viewed| int %}unviewed{% endif %}">
                 <td class="inline">{{ loop.index }}</td>
                 <td class="inline paused-state state-{{watch.paused}}"><a href="/?pause={{ watch.uuid}}{% if active_tag %}&tag={{active_tag}}{% endif %}"><img src="/static/images/pause.svg" alt="Pause"/></a></td>
-                <td class="title-col inline">{{watch.title if watch.title is not none else watch.url}}
+                <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
                     <a class="external" target="_blank" rel="noopener" href="{{ watch.url }}"></a>
                     {% if watch.last_error is defined and watch.last_error != False %}
                     <div class="fetch-error">{{ watch.last_error }}</div>
