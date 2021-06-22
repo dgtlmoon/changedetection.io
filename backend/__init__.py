@@ -381,6 +381,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         if request.method == 'POST' and form.validate():
             update_obj = {'url': form.url.data.strip(),
+                          'minutes_between_check': form.minutes_between_check.data,
                           'tag': form.tag.data.strip(),
                           'title': form.title.data.strip(),
                           'headers': form.headers.data
