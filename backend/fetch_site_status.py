@@ -89,7 +89,10 @@ class perform_site_check():
                 soup = BeautifulSoup(r.content, "html.parser")
                 stripped_text_from_html = ""
                 for item in soup.select(css_filter):
-                    text = str(item.get_text()).strip() + '\n'
+                    # By default, bs4's get_text will lump the text together
+                    text = str(item.get_text(separator="\n", strip=True)).strip()
+                    # Try to cut back on excessive linefeeds if there are any
+                    text = text.replace("\n\n","\n")
                     stripped_text_from_html += text
 
             else:
