@@ -43,6 +43,32 @@ def set_modified_response():
     return None
 
 
+# Test that the CSS extraction works how we expect, important here is the right placing of new lines \n's
+def test_css_filter_output():
+    from backend import fetch_site_status
+    from inscriptis import get_text
+
+    css_filter = fetch_site_status.css_filter()
+
+    # Check text with sub-parts renders correctly
+    content = """<html> <body><div id="thingthing" >  Some really <b>bold</b> text  </div> </body> </html>"""
+    html_blob = css_filter.apply(css_filter="#thingthing", html_content=content)
+    text = get_text(html_blob)
+    assert text == "  Some really bold text"
+
+    content = """<html> <body>
+    <p>foo bar blah</p>
+    <div class="parts">Block A</div> <div class="parts">Block B</div></body> 
+    </html>
+"""
+    html_blob = css_filter.apply(css_filter=".parts", html_content=content)
+    text = get_text(html_blob)
+
+    # Divs are converted to 4 whitespaces by inscriptis
+    assert text == "    Block A\n    Block B"
+
+
+# Tests the whole stack works with the CSS Filter
 def test_check_markup_css_filter_restriction(client, live_server):
     sleep_time_for_fetch_thread = 3
 

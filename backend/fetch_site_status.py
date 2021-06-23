@@ -5,6 +5,17 @@ from inscriptis import get_text
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+# Given a CSS Rule, and a blob of HTML, return the blob of HTML that matches
+class css_filter(object):
+    def apply(self, css_filter, html_content):
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html_content, "html.parser")
+        html_block = ""
+        for item in soup.select(css_filter, separator=""):
+            html_block += str(item)
+
+        return html_block+"\n"
+
 # Some common stuff here that can be moved to a base class
 class perform_site_check():
 
@@ -82,21 +93,15 @@ class perform_site_check():
                              timeout=timeout,
                              verify=False)
 
-            # CSS Filter
-            css_filter = self.datastore.data['watching'][uuid]['css_filter']
-            if css_filter and len(css_filter.strip()):
-                from bs4 import BeautifulSoup
-                soup = BeautifulSoup(r.content, "html.parser")
-                stripped_text_from_html = ""
-                for item in soup.select(css_filter):
-                    # By default, bs4's get_text will lump the text together
-                    # BS4's element strip() will lose the indentation format, I've tried using a space as separator, setting strip=False etc, but doesnt help
-                    # @todo ideas? if you compare the css_filtered output to non-filtered snapshot it will always lose the indentation/format
-                    text = str(item.get_text(separator="\n", strip=True)).strip() + '\n'
-                    stripped_text_from_html += text
+            html = r.text
 
-            else:
-                stripped_text_from_html = get_text(r.text)
+            # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+            css_filter_rule = self.datastore.data['watching'][uuid]['css_filter']
+            if css_filter_rule and len(css_filter_rule.strip()):
+                filter = css_filter()
+                html = filter.apply(css_filter=css_filter_rule, html_content=r.content)
+
+            stripped_text_from_html = get_text(html)
 
         # Usually from networkIO/requests level
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:

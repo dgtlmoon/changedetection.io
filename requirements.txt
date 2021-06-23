@@ -18,6 +18,6 @@ wtforms ~= 2.3.3
 # Notification library
 apprise ~= 0.9
 
-# Used for CSS filtering
+# Used for CSS filtering, replace with soupsieve and lxml for xpath
 bs4
 
