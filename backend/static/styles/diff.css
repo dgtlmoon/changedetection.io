@@ -12,7 +12,8 @@
     border: 1px solid transparent;
     vertical-align: top;
     font: 1em monospace;
-    text-align: left;
+    text-align: left; }
+  #diff-ui pre {
     white-space: pre-wrap; }
 
 h1 {
