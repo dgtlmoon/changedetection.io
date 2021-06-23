@@ -92,9 +92,7 @@ class perform_site_check():
                     # By default, bs4's get_text will lump the text together
                     # BS4's element strip() will lose the indentation format, I've tried using a space as separator, setting strip=False etc, but doesnt help
                     # @todo ideas? if you compare the css_filtered output to non-filtered snapshot it will always lose the indentation/format
-                    text = str(item.get_text(separator="\n", strip=True)).strip()
-                    # Try to cut back on excessive linefeeds if there are any
-                    text = text.replace("\n\n","\n")
+                    text = str(item.get_text(separator="\n", strip=True)).strip() + '\n'
                     stripped_text_from_html += text
 
             else:
