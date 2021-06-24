@@ -3,18 +3,10 @@ import requests
 import hashlib
 from inscriptis import get_text
 import urllib3
+from . import html_tools
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Given a CSS Rule, and a blob of HTML, return the blob of HTML that matches
-class css_filter(object):
-    def apply(self, css_filter, html_content):
-        from bs4 import BeautifulSoup
-        soup = BeautifulSoup(html_content, "html.parser")
-        html_block = ""
-        for item in soup.select(css_filter, separator=""):
-            html_block += str(item)
-
-        return html_block+"\n"
 
 # Some common stuff here that can be moved to a base class
 class perform_site_check():
@@ -59,6 +51,7 @@ class perform_site_check():
 
     def run(self, uuid):
         timestamp = int(time.time())  # used for storage etc too
+
         stripped_text_from_html = False
         changed_detected = False
 
@@ -98,8 +91,7 @@ class perform_site_check():
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
             css_filter_rule = self.datastore.data['watching'][uuid]['css_filter']
             if css_filter_rule and len(css_filter_rule.strip()):
-                filter = css_filter()
-                html = filter.apply(css_filter=css_filter_rule, html_content=r.content)
+                html = html_tools.css_filter(css_filter=css_filter_rule, html_content=r.content)
 
             stripped_text_from_html = get_text(html)
 
@@ -149,5 +141,11 @@ class perform_site_check():
                     update_obj["last_changed"] = timestamp
 
                 update_obj["previous_md5"] = fetched_md5
+
+            # Extract title as title
+            if self.datastore.data['settings']['application']['extract_title_as_title']:
+                if not self.datastore.data['watching'][uuid]['title'] or not len(self.datastore.data['watching'][uuid]['title']):
+                    update_obj['title'] = html_tools.extract_element(find='title', html_content=html)
+
 
         return changed_detected, update_obj, stripped_text_from_html

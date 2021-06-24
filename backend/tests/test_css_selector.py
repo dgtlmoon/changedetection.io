@@ -4,6 +4,8 @@ import time
 from flask import url_for
 from . util import live_server_setup
 
+from ..html_tools import *
+
 def test_setup(live_server):
     live_server_setup(live_server)
 
@@ -48,11 +50,9 @@ def test_css_filter_output():
     from backend import fetch_site_status
     from inscriptis import get_text
 
-    css_filter = fetch_site_status.css_filter()
-
     # Check text with sub-parts renders correctly
     content = """<html> <body><div id="thingthing" >  Some really <b>bold</b> text  </div> </body> </html>"""
-    html_blob = css_filter.apply(css_filter="#thingthing", html_content=content)
+    html_blob = css_filter(css_filter="#thingthing", html_content=content)
     text = get_text(html_blob)
     assert text == "  Some really bold text"
 
@@ -61,7 +61,7 @@ def test_css_filter_output():
     <div class="parts">Block A</div> <div class="parts">Block B</div></body> 
     </html>
 """
-    html_blob = css_filter.apply(css_filter=".parts", html_content=content)
+    html_blob = css_filter(css_filter=".parts", html_content=content)
     text = get_text(html_blob)
 
     # Divs are converted to 4 whitespaces by inscriptis

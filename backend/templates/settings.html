@@ -17,6 +17,10 @@
                 {% endif %}
             </div>
             <div class="pure-control-group">
+                {{ render_field(form.extract_title_as_title) }}
+                  <span class="pure-form-message-inline">Note: This will automatically apply to all existing watches.</span>
+            </div>
+            <div class="pure-control-group">
                 {{ render_field(form.notification_urls, rows=5, placeholder="Gitter - gitter://token/room
 Office365 - o365://TenantID:AccountEmail/ClientID/ClientSecret/TargetEmail
 AWS SNS - sns://AccessKeyID/AccessSecretKey/RegionName/+PhoneNo
@@ -27,7 +31,6 @@ SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com
                 <div class="pure-controls">
                     <span class="pure-form-message-inline"><label for="trigger-test-notification" class="pure-checkbox">
                         <input type="checkbox" id="trigger-test-notification" name="trigger-test-notification"> Send test notification on save.</label></span>
-
                 </div>
 
             <br/>
