@@ -17,7 +17,7 @@ def extract_element(find='title', html_content=''):
 
     soup = BeautifulSoup(html_content, 'html.parser')
     title = soup.find(find)
-    if title:
+    if title and title.string is not None:
         html_title = title.string.strip()
 
     return html_title
