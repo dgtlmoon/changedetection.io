@@ -3,7 +3,7 @@ import requests
 import hashlib
 from inscriptis import get_text
 import urllib3
-import html_tools
+from . import html_tools
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
