@@ -33,6 +33,8 @@ class update_worker(threading.Thread):
 
                     except PermissionError as s:
                         self.app.logger.error("File permission error updating", uuid, str(s))
+                    except Exception as e:
+                        self.app.logger.error("Exception reached", uuid, str(s))
                     else:
                         if result:
                             try:

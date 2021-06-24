@@ -128,4 +128,5 @@ class globalSettingsForm(Form):
                                                [validators.NumberRange(min=1)])
 
     notification_urls = StringListField('Notification URL List')
+    extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
     trigger_check = BooleanField('Send test notification on save')

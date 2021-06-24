@@ -38,6 +38,7 @@ class ChangeDetectionStore:
                 },
                 'application': {
                     'password': False,
+                    'extract_title_as_title': False,
                     'notification_urls': [] # Apprise URL list
                 }
             }
