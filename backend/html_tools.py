@@ -10,11 +10,13 @@ def css_filter(css_filter, html_content):
 
     return html_block + "\n"
 
-def extract_title(html_content):
+
+# Extract/find element
+def extract_element(find='title', html_content=''):
     html_title = False
 
     soup = BeautifulSoup(html_content, 'html.parser')
-    title = soup.find('title')
+    title = soup.find(find)
     if title:
         html_title = title.string.strip()
 

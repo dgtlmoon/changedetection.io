@@ -145,7 +145,7 @@ class perform_site_check():
             # Extract title as title
             if self.datastore.data['settings']['application']['extract_title_as_title']:
                 if not self.datastore.data['watching'][uuid]['title'] or not len(self.datastore.data['watching'][uuid]['title']):
-                    update_obj['title'] = html_tools.extract_title(html_content=html)
+                    update_obj['title'] = html_tools.extract_element(find='title', html_content=html)
 
 
         return changed_detected, update_obj, stripped_text_from_html
