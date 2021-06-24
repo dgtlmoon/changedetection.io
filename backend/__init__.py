@@ -856,7 +856,7 @@ def ticker_thread_check_time_launch_checks():
         for uuid, watch in datastore.data['watching'].items():
 
             # If they supplied an individual entry minutes to threshold.
-            if 'minutes_between_check' in watch:
+            if 'minutes_between_check' in watch and watch['minutes_between_check'] is not None:
                 max_time = watch['minutes_between_check'] * 60
             else:
                 # Default system wide.
