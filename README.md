@@ -29,6 +29,16 @@ Know when ...
 
 
 **Get monitoring now! super simple, one command!**
+Run the python code on your own machine by cloning this repository, or with <a href="https://docs.docker.com/get-docker/">docker</a> and/or <a href="https://www.digitalocean.com/community/tutorial_collections/how-to-install-docker-compose">docker-compose</a>
+
+With one docker-compose command
+
+```bash
+docker-compose up -d
+```
+
+or
+
 
 ```bash
 docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
