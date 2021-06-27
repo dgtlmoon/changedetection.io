@@ -13,11 +13,14 @@ def css_filter(css_filter, html_content):
 
 # Extract/find element
 def extract_element(find='title', html_content=''):
-    html_title = False
+
+    #Re #106, be sure to handle when its not found
+    element_text = None
 
     soup = BeautifulSoup(html_content, 'html.parser')
-    title = soup.find(find)
-    if title and title.string is not None:
-        html_title = title.string.strip()
+    result = soup.find(find)
+    if result and result.string:
+        element_text = result.string.strip()
 
-    return html_title
+    return element_text
+
