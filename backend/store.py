@@ -112,7 +112,7 @@ class ChangeDetectionStore:
                 self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
                 self.add_watch(url='https://changedetection.io', tag='Tech news')
 
-        self.__data['version_tag'] = "0.36"
+        self.__data['version_tag'] = "0.37"
 
         # Helper to remove password protection
         password_reset_lockfile = "{}/removepassword.lock".format(self.datastore_path)
