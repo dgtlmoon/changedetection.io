@@ -380,6 +380,11 @@ def changedetection_app(config=None, datastore_o=None):
             populate_form_from_watch(form, datastore.data['watching'][uuid])
 
         if request.method == 'POST' and form.validate():
+
+            # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
+            if form.minutes_between_check.data == datastore.data['settings']['requests']['minutes_between_check']:
+                form.minutes_between_check.data = None
+
             update_obj = {'url': form.url.data.strip(),
                           'minutes_between_check': form.minutes_between_check.data,
                           'tag': form.tag.data.strip(),
@@ -428,7 +433,18 @@ def changedetection_app(config=None, datastore_o=None):
             if request.method == 'POST' and not form.validate():
                 flash("An error occurred, please see below.", "error")
 
-            output = render_template("edit.html", uuid=uuid, watch=datastore.data['watching'][uuid], form=form)
+            # Re #110 offer the default minutes
+            using_default_minutes = False
+            if form.minutes_between_check.data == None:
+                form.minutes_between_check.data = datastore.data['settings']['requests']['minutes_between_check']
+                using_default_minutes = True
+
+            output = render_template("edit.html",
+                                     uuid=uuid,
+                                     watch=datastore.data['watching'][uuid],
+                                     form=form,
+                                     using_default_minutes=using_default_minutes
+                                     )
 
         return output
 

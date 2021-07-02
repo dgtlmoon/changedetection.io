@@ -15,6 +15,11 @@
             </div>
             <div class="pure-control-group">
                 {{ render_field(form.minutes_between_check, size=5) }}
+                {% if using_default_minutes %}
+                    <span class="pure-form-message-inline">Currently using the <a href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>, change to another value if you want to be specific.</span>
+                {% else %}
+                    <span class="pure-form-message-inline">Set to blank to use the <a href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>.</span>
+                {% endif %}
             </div>
             <div class="pure-control-group">
                 {{ render_field(form.css_filter, size=25, placeholder=".class-name or #some-id, or other CSS selector rule.") }}
