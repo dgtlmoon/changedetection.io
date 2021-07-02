@@ -50,3 +50,96 @@ def test_check_watch_field_storage(client, live_server):
 
 
 
+# Re https://github.com/dgtlmoon/changedetection.io/issues/110
+def test_check_recheck_global_setting(client, live_server):
+
+    res = client.post(
+        url_for("settings_page"),
+        data={
+               "minutes_between_check": 1566,
+               },
+        follow_redirects=True
+    )
+    assert b"Settings updated." in res.data
+
+    # Now add a record
+
+    test_url = "http://somerandomsitewewatch.com"
+
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+
+    # Now visit the edit page, it should have the default minutes
+
+    res = client.get(
+        url_for("edit_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    # Should show the default minutes
+    assert b"change to another value if you want to be specific" in res.data
+    assert b"1566" in res.data
+
+    res = client.post(
+        url_for("settings_page"),
+        data={
+               "minutes_between_check": 222,
+               },
+        follow_redirects=True
+    )
+    assert b"Settings updated." in res.data
+
+    res = client.get(
+        url_for("edit_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    # Should show the default minutes
+    assert b"change to another value if you want to be specific" in res.data
+    assert b"222" in res.data
+
+    # Now change it specifically, it should show the new minutes
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"url": test_url,
+              "minutes_between_check": 55,
+              },
+        follow_redirects=True
+    )
+
+    res = client.get(
+        url_for("edit_page", uuid="first"),
+        follow_redirects=True
+    )
+    assert b"55" in res.data
+
+    # Now submit an empty field, it should give back the default global minutes
+    res = client.post(
+        url_for("settings_page"),
+        data={
+               "minutes_between_check": 666,
+               },
+        follow_redirects=True
+    )
+    assert b"Settings updated." in res.data
+
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"url": test_url,
+              "minutes_between_check": "",
+              },
+        follow_redirects=True
+    )
+
+    assert b"Updated watch." in res.data
+
+    res = client.get(
+        url_for("edit_page", uuid="first"),
+        follow_redirects=True
+    )
+    assert b"666" in res.data
+
