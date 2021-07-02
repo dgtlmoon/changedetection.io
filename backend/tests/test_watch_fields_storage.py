@@ -143,4 +143,3 @@ def test_check_recheck_global_setting(client, live_server):
     )
     assert b"666" in res.data
 
-    
