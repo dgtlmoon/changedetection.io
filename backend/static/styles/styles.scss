@@ -346,11 +346,13 @@ footer {
     width: 100%;
     font-size: 14px;
   }
-
   ul#fetch_backend {
+    margin: 0px;
     list-style: none;
     > li {
-        display: inline-block;
+        > * {
+            display: inline-block;
+        }
     }
   }
 }

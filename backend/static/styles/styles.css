@@ -259,8 +259,9 @@ footer {
     width: 100%;
     font-size: 14px; }
   .pure-form ul#fetch_backend {
+    margin: 0px;
     list-style: none; }
-    .pure-form ul#fetch_backend > li {
+    .pure-form ul#fetch_backend > li > * {
       display: inline-block; }
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
