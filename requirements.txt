@@ -19,4 +19,4 @@ apprise ~= 0.9
 # Used for CSS filtering, replace with soupsieve and lxml for xpath
 bs4
 
-selenium
+selenium ~= 3.141
