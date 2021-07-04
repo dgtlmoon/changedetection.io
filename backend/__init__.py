@@ -453,6 +453,8 @@ def changedetection_app(config=None, datastore_o=None):
     def settings_page():
 
         from backend import forms
+        from backend import content_fetcher
+
         form = forms.globalSettingsForm(request.form)
 
         if request.method == 'GET':

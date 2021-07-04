@@ -3,7 +3,7 @@ from wtforms import Form, SelectField, RadioField, BooleanField, StringField, Pa
 from wtforms import widgets
 from wtforms.validators import ValidationError
 from wtforms.fields import html5
-
+from backend import content_fetcher
 
 class StringListField(StringField):
     widget = widgets.TextArea()
@@ -82,6 +82,28 @@ class StringDictKeyValue(StringField):
         else:
             self.data = {}
 
+class ValidateContentFetcherIsReady(object):
+    """
+    Validates that anything that looks like a regex passes as a regex
+    """
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        from backend import content_fetcher
+
+        # Better would be a radiohandler that keeps a reference to each class
+        klass = getattr(content_fetcher, field.data)
+        some_object = klass()
+
+        ready = some_object.is_ready()
+
+        if not ready:
+            message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.')
+            raise ValidationError(message % (field.data))
+
+
+
 class ListRegex(object):
     """
     Validates that anything that looks like a regex passes as a regex
@@ -113,6 +135,7 @@ class watchForm(Form):
                                                [validators.Optional(), validators.NumberRange(min=1)])
     css_filter = StringField('CSS Filter')
     title = StringField('Title')
+    fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
 
     ignore_text = StringListField('Ignore Text', [ListRegex()])
     notification_urls = StringListField('Notification URL List')
@@ -128,7 +151,8 @@ class globalSettingsForm(Form):
                                                [validators.NumberRange(min=1)])
 
     notification_urls = StringListField('Notification URL List')
-    fetch_backend = RadioField(u'Fetch method', choices=[('request', 'Plaintext'),('webdriver', 'Chrome/Javascript')])
+
+    fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
 
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
     trigger_check = BooleanField('Send test notification on save')
