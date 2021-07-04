@@ -1,12 +1,11 @@
 version: '2'
 services:
-#    changedetection.io:
-#      image: dgtlmoon/changedetection.io
-#      container_name: changedetection.io
-#      hostname: changedetection.io
-#      volumes:
-#        - changedetection-data:/datastore
-#        - .:/app
+    changedetection.io:
+      image: dgtlmoon/changedetection.io:javascript
+      container_name: changedetection.io
+      hostname: changedetection.io
+      volumes:
+        - changedetection-data:/datastore
 
   #    environment:
   #      - PUID=1000
@@ -20,30 +19,22 @@ services:
   #        Base URL of your changedetection.io install (Added to notification alert
   #      - BASE_URL="https://mysite.com"
 
-#      ports:
-#        - 6500:5000
-#      restart: always
+      ports:
+        - 5000:5000
+      restart: always
 
     browser-chrome:
         hostname: browser-chrome
         image: selenium/standalone-chrome-debug:3.141.59
         ports:
           - 4444:4444
-#        networks:
-#            - opencart
         environment:
             - VNC_NO_PASSWORD=1
         volumes:
-            - .:/poop
-            # For downloads in the browser, for example PDF patterns
-            # NOTE!!!! THIS MUST BE CHMOD 777 because selenium will write to it under who knows what UID..
-            - ./tests/codeception/_output/downloads:/var/www/html/tests/codeception/_output/downloads
-            # Uploads
-            - ./tests/codeception/_data:/var/www/html/tests/codeception/_data
             # Workaround to avoid the browser crashing inside a docker container
             # See https://github.com/SeleniumHQ/docker-selenium#quick-start
             - /dev/shm:/dev/shm
-
+        restart: always
 
 volumes:
   changedetection-data:
