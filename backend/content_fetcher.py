@@ -49,6 +49,7 @@ def available_fetchers():
         for name, obj in inspect.getmembers(content_fetcher):
             if inspect.isclass(obj):
                 # @todo html_ is maybe better as fetcher_ or something
+                # In this case, make sure to edit the default one in store.py and fetch_site_status.py
                 if "html_" in name:
                     t=tuple([name,obj.fetcher_description])
                     p.append(t)
