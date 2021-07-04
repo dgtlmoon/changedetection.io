@@ -12,7 +12,7 @@
             </div>
             <div class="pure-control-group">
                 {{ render_field(form.fetch_backend) }}
-                do the attempt to connect to webdriver.. maybe should be on the individual ones instead?
+                <span class="pure-form-message-inline">Default fetch method, it's recommended to use the plain method where there is no dynamic content.</span>
             </div>
             <div class="pure-control-group">
                 {% if current_user.is_authenticated %}
