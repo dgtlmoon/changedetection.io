@@ -6,7 +6,7 @@ eventlet>=0.31.0
 requests[socks] ~= 2.15
 validators
 timeago ~=1.0
-inscriptis ~= 1.1
+inscriptis ~= 1.2
 feedgen ~= 0.9
 flask-login ~= 0.5
 pytz
