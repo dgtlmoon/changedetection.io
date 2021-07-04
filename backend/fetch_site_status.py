@@ -1,5 +1,5 @@
 import time
-import requests
+from backend import content_fetcher
 import hashlib
 from inscriptis import get_text
 import urllib3
@@ -80,11 +80,19 @@ class perform_site_check():
             timeout = self.datastore.data['settings']['requests']['timeout']
             url = self.datastore.get_val(uuid, 'url')
 
-            from backend import content_fetcher
 
             # Pluggable content fetcher
-            fetcher = content_fetcher.html_webdriver()
+            prefer_backend = self.datastore.data['watching'][uuid]['fetch_backend']
+
+            if hasattr(content_fetcher, prefer_backend):
+                klass = getattr(content_fetcher, prefer_backend)
+            else:
+                # If the klass doesnt exist, just use a default
+                klass = getattr(content_fetcher, "html_requests")
+
+            fetcher = klass()
             fetcher.run(url, timeout, request_headers)
+
             html_content = fetcher.content
 
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text

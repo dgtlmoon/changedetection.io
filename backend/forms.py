@@ -93,14 +93,15 @@ class ValidateContentFetcherIsReady(object):
         from backend import content_fetcher
 
         # Better would be a radiohandler that keeps a reference to each class
-        klass = getattr(content_fetcher, field.data)
-        some_object = klass()
+        if field.data is not None:
+            klass = getattr(content_fetcher, field.data)
+            some_object = klass()
 
-        ready = some_object.is_ready()
+            ready = some_object.is_ready()
 
-        if not ready:
-            message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.')
-            raise ValidationError(message % (field.data))
+            if not ready:
+                message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.')
+                raise ValidationError(message % (field.data))
 
 
 

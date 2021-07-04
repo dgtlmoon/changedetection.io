@@ -470,6 +470,7 @@ def changedetection_app(config=None, datastore_o=None):
             form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'])
             form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
             form.extract_title_as_title.data = datastore.data['settings']['application']['extract_title_as_title']
+            form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
 
             # Password unset is a GET
             if request.values.get('removepassword') == 'true':
@@ -483,6 +484,7 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data
             datastore.data['settings']['application']['extract_title_as_title'] = form.extract_title_as_title.data
+            datastore.data['settings']['application']['fetch_backend'] = form.fetch_backend.data
 
             if len(form.notification_urls.data):
                 import apprise

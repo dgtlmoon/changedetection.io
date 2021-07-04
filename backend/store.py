@@ -193,6 +193,10 @@ class ChangeDetectionStore:
             if not self.__data['watching'][uuid]['title']:
                 self.__data['watching'][uuid]['title'] = None
 
+            # Default var for fetch_backend
+            if not self.__data['watching'][uuid]['fetch_backend']:
+                self.__data['watching'][uuid]['fetch_backend'] = self.__data['settings']['application']['fetch_backend']
+
         self.__data['has_unviewed'] = has_unviewed
 
         return self.__data
