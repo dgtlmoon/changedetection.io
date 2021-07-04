@@ -33,7 +33,7 @@ def test_check_notification(client, live_server):
     print (">>>> Notification URL: "+notification_url)
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"notification_urls": notification_url, "url": test_url, "tag": "", "headers": ""},
+        data={"notification_urls": notification_url, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data

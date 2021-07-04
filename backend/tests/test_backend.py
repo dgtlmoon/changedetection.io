@@ -88,7 +88,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
     # Enable auto pickup of <title> in settings
     res = client.post(
         url_for("settings_page"),
-        data={"extract_title_as_title": "1", "minutes_between_check": 180},
+        data={"extract_title_as_title": "1", "minutes_between_check": 180, 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
 
