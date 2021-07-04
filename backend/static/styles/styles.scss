@@ -7,7 +7,6 @@ body {
   color: #333;
   background: #262626;
 }
-
 .pure-table-even {
   background: #fff;
 }
@@ -252,16 +251,15 @@ body:after, body:before {
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
   box-shadow: 5px 0 5px -2px #888;
-}
-
-#diff-jump a {
-  color: #1b98f8;
-  cursor: grabbing;
-  -moz-user-select: none;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  -o-user-select: none;
+     a {
+      color: #1b98f8;
+      cursor: grabbing;
+      -moz-user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -o-user-select: none;
+    }
 }
 
 footer {
@@ -348,6 +346,13 @@ footer {
     width: 100%;
     font-size: 14px;
   }
+
+  ul#fetch_backend {
+    list-style: none;
+    > li {
+        display: inline-block;
+    }
+  }
 }
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
@@ -361,7 +366,6 @@ footer {
   #nav-menu {
     overflow-x: scroll;
   }
-
 }
 
 /*
@@ -371,7 +375,6 @@ and also iPads specifically.
 */
 @media only screen and (max-width: 760px),
 (min-device-width: 768px) and (max-device-width: 1024px) {
-
   .watch-table {
     /* Force table to not be like tables anymore */
     thead, tbody, th, td, tr {
