@@ -11,6 +11,10 @@
                  <span class="pure-form-message-inline">Default time for all watches, when the watch does not have a specific time setting.</span>
             </div>
             <div class="pure-control-group">
+                {{ render_field(form.fetch_backend) }}
+                do the attempt to connect to webdriver.. maybe should be on the individual ones instead?
+            </div>
+            <div class="pure-control-group">
                 {% if current_user.is_authenticated %}
                     <a href="/settings?removepassword=true" class="pure-button pure-button-primary">Remove password</a>
                 {% else %}

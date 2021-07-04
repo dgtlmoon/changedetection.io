@@ -313,17 +313,14 @@ class ChangeDetectionStore:
 
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
-    def save_history_text(self, uuid, result_obj, contents):
+    def save_history_text(self, watch_uuid, contents):
+        import uuid
 
-        output_path = "{}/{}".format(self.datastore_path, uuid)
-        fname = "{}/{}-{}.stripped.txt".format(output_path, result_obj['previous_md5'], str(time.time()))
-        with open(fname, 'w') as f:
+        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
+        fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
+        with open(fname, 'wb') as f:
             f.write(contents)
             f.close()
-
-        # Update history with the stripped text for future reference, this will also mean we save the first
-        # Should always be keyed by string(timestamp)
-        self.update_watch(uuid, {"history": {str(result_obj["last_checked"]): fname}})
 
         return fname
 

@@ -1,4 +1,4 @@
-from wtforms import Form, BooleanField, StringField, PasswordField, validators, IntegerField, fields, TextAreaField, \
+from wtforms import Form, SelectField, RadioField, BooleanField, StringField, PasswordField, validators, IntegerField, fields, TextAreaField, \
     Field
 from wtforms import widgets
 from wtforms.validators import ValidationError
@@ -128,5 +128,7 @@ class globalSettingsForm(Form):
                                                [validators.NumberRange(min=1)])
 
     notification_urls = StringListField('Notification URL List')
+    fetch_backend = RadioField(u'Fetch method', choices=[('request', 'Plaintext'),('webdriver', 'Chrome/Javascript')])
+
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
     trigger_check = BooleanField('Send test notification on save')

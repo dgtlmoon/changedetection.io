@@ -1,5 +1,6 @@
 import threading
 import queue
+import time
 
 # Requests for checking on the site use a pool of thread Workers managed by a Queue.
 class update_worker(threading.Thread):
@@ -26,42 +27,56 @@ class update_worker(threading.Thread):
 
             else:
                 self.current_uuid = uuid
+                from backend import content_fetcher
 
                 if uuid in list(self.datastore.data['watching'].keys()):
                     try:
-                        changed_detected, result, contents = update_handler.run(uuid)
+                        now = time.time()
+                        changed_detected, update_obj, contents = update_handler.run(uuid)
+
+                        # Always record that we atleast tried
+                        self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
+                                                                           'last_checked': update_obj["last_checked"]})
 
                     except PermissionError as e:
                         self.app.logger.error("File permission error updating", uuid, str(e))
+                    except content_fetcher.EmptyReply as e:
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error':str(e)})
+
+                    #@todo how to handle when it's thrown from webdriver connecting?
                     except Exception as e:
-                        self.app.logger.error("Exception reached", uuid, str(e))
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
+
                     else:
-                        if result:
-                            try:
-                                self.datastore.update_watch(uuid=uuid, update_obj=result)
-                                if changed_detected:
-                                    # A change was detected
-                                    self.datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
 
-                                    watch = self.datastore.data['watching'][uuid]
+                        try:
+                            if changed_detected:
+                                # A change was detected, save to disk and bump the history array
+                                fname = self.datastore.save_history_text(watch_uuid=uuid, contents=contents)
+                                self.datastore.update_watch(uuid, {"history": {str(update_obj["last_checked"]): fname}})
 
-                                    # Did it have any notification alerts to hit?
-                                    if len(watch['notification_urls']):
-                                        print("Processing notifications for UUID: {}".format(uuid))
-                                        n_object = {'watch_url': self.datastore.data['watching'][uuid]['url'],
-                                                    'notification_urls': watch['notification_urls']}
-                                        self.notification_q.put(n_object)
+                                watch = self.datastore.data['watching'][uuid]
+
+                                # Did it have any notification alerts to hit?
+                                if len(watch['notification_urls']):
+                                    print("Processing notifications for UUID: {}".format(uuid))
+                                    n_object = {'watch_url': watch['url'],
+                                                'notification_urls': watch['notification_urls']}
+                                    self.notification_q.put(n_object)
 
 
-                                    # No? maybe theres a global setting, queue them all
-                                    elif len(self.datastore.data['settings']['application']['notification_urls']):
-                                        print("Processing GLOBAL notifications for UUID: {}".format(uuid))
-                                        n_object = {'watch_url': self.datastore.data['watching'][uuid]['url'],
-                                                    'notification_urls': self.datastore.data['settings']['application'][
-                                                        'notification_urls']}
-                                        self.notification_q.put(n_object)
-                            except Exception as e:
-                                print("!!!! Exception in update_worker !!!\n", e)
+                                # No? maybe theres a global setting, queue them all
+                                elif len(self.datastore.data['settings']['application']['notification_urls']):
+                                    print("Processing GLOBAL notifications for UUID: {}".format(uuid))
+                                    n_object = {'watch_url': watch['url'],
+                                                'notification_urls': self.datastore.data['settings']['application'][
+                                                    'notification_urls']}
+                                    self.notification_q.put(n_object)
+
+                                self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
+
+                        except Exception as e:
+                            print("!!!! Exception in update_worker !!!\n", e)
 
                 self.current_uuid = None  # Done
                 self.q.task_done()
