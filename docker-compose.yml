@@ -1,7 +1,7 @@
 version: '2'
 services:
     changedetection.io:
-      image: dgtlmoon/changedetection.io:javascript
+      image: dgtlmoon/changedetection.io:javascript-dev
       container_name: changedetection.io
       hostname: changedetection.io
       volumes:
