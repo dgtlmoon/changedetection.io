@@ -27,6 +27,7 @@ Know when ...
 - Realestate listing changes
 - COVID related news from government websites
 
+_Need an actual Chrome runner with Javascript support? see the experimental <a href="https://github.com/dgtlmoon/changedetection.io/tree/javascript-browser">Javascript/Chrome support changedetection.io branch!</a>_
 
 **Get monitoring now! super simple, one command!**
 Run the python code on your own machine by cloning this repository, or with <a href="https://docs.docker.com/get-docker/">docker</a> and/or <a href="https://www.digitalocean.com/community/tutorial_collections/how-to-install-docker-compose">docker-compose</a>
@@ -60,7 +61,6 @@ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/dat
 ### Screenshots
 
 Examining differences in content.
-
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
 
@@ -109,9 +109,11 @@ This proxy support also extends to the notifications https://github.com/caronc/a
 
 ### Notes
 
-- Does not yet support Javascript
-- Wont work with Cloudfare type "Please turn on javascript" protected pages
+- ~~Does not yet support Javascript~~
+- ~~Wont work with Cloudfare type "Please turn on javascript" protected pages~~
 - You can use the 'headers' section to monitor password protected web page changes
+
+See the experimental <a href="https://github.com/dgtlmoon/changedetection.io/tree/javascript-browser">Javascript/Chrome browser support!</a>
 
 ### RaspberriPi support?
 
