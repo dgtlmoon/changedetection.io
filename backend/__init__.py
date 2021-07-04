@@ -223,7 +223,6 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def index():
         limit_tag = request.args.get('tag')
-
         pause_uuid = request.args.get('pause')
 
         if pause_uuid:
