@@ -34,12 +34,21 @@ class Fetcher():
     def is_ready(self):
         return True
 
+#   Maybe for the future, each fetcher provides its own diff output, could be used for text, image
+#   the current one would return javascript output (as we use JS to generate the diff)
+#
+#   Returns tuple(mime_type, stream)
+#    @abstractmethod
+#    def return_diff(self, stream_a, stream_b):
+#        return
+
 def available_fetchers():
         import inspect
         from backend import content_fetcher
         p=[]
         for name, obj in inspect.getmembers(content_fetcher):
             if inspect.isclass(obj):
+                # @todo html_ is maybe better as fetcher_ or something
                 if "html_" in name:
                     t=tuple([name,obj.fetcher_description])
                     p.append(t)
@@ -62,12 +71,11 @@ class html_webdriver(Fetcher):
             driver.quit()
             raise
 
-
-
         # @todo - how to check this? is it possible?
         self.status_code = 200
 
-        time.sleep(5)  # Let the user actually see something!
+        # @todo - dom wait loaded?
+        time.sleep(5)
         self.content = driver.page_source
 
         driver.quit()
@@ -94,6 +102,7 @@ class html_webdriver(Fetcher):
 
         return True
 
+# "html_requests" is listed as the default fetcher in store.py!
 class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
     def run(self, url, timeout, request_headers):
