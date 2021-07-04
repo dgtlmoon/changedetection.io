@@ -29,6 +29,7 @@ Know when ...
 
 
 **Get monitoring now! super simple, one command!**
+
 Run the python code on your own machine by cloning this repository, or with <a href="https://docs.docker.com/get-docker/">docker</a> and/or <a href="https://www.digitalocean.com/community/tutorial_collections/how-to-install-docker-compose">docker-compose</a>
 
 With one docker-compose command
@@ -37,30 +38,23 @@ With one docker-compose command
 docker-compose up -d
 ```
 
-or
+Then visit http://127.0.0.1:5000 , You should now be able to access the UI.
+
+_Now with per-site configurable support for using a fast built in HTTP fetcher or use a Chrome based fetcher for monitoring of JavaScript websites!_
 
 
-```bash
-docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
-```  
-
-Now visit http://127.0.0.1:5000 , You should now be able to access the UI.
-
-#### Updating to latest version
+#### Updating to the latest version
 
 Highly recommended :)
 
 ```bash
 docker pull dgtlmoon/changedetection.io
-docker kill $(docker ps -a|grep changedetection.io|awk '{print $1}')
-docker rm $(docker ps -a|grep changedetection.io|awk '{print $1}')
-docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
+docker-compose up -d
 ```
   
 ### Screenshots
 
 Examining differences in content.
-
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
 
@@ -106,12 +100,6 @@ With `docker-compose`, see the `Proxy support example` in <a href="https://githu
 For more information see https://docs.python-requests.org/en/master/user/advanced/#proxies
 
 This proxy support also extends to the notifications https://github.com/caronc/apprise/issues/387#issuecomment-841718867
-
-### Notes
-
-- Does not yet support Javascript
-- Wont work with Cloudfare type "Please turn on javascript" protected pages
-- You can use the 'headers' section to monitor password protected web page changes
 
 ### RaspberriPi support?
 
