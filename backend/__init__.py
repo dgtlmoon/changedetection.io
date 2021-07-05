@@ -838,7 +838,7 @@ def notification_runner():
                 n_body = f"Live: {n_object['watch_url']}"
 
                 # 65 - Append URL of instance to the notification if it is set.
-                base_url = os.getenv('BASE_URL')
+                base_url = os.getenv('BASE_URL').strip('"')
                 uuid = n_object['uuid']
 
                 base_url = "http://localhost:5000" if base_url is None else base_url
