@@ -841,8 +841,6 @@ def notification_runner():
                 base_url = os.getenv('BASE_URL').strip('"')
                 uuid = n_object['uuid']
 
-                base_url = "http://localhost:5000" if base_url is None else base_url
-
                 if base_url != None:
                     n_body += f"\nDiff: {base_url}/diff/{uuid}"
 
