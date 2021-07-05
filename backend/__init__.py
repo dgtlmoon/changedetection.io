@@ -835,12 +835,16 @@ def notification_runner():
                 for url in n_object['notification_urls']:
                     apobj.add(url.strip())
 
-                n_body = n_object['watch_url']
+                n_body = f"Live: {n_object['watch_url']}"
 
                 # 65 - Append URL of instance to the notification if it is set.
                 base_url = os.getenv('BASE_URL')
+                uuid = n_object['uuid']
+
+                base_url = "http://localhost:5000" if base_url is None else base_url
+
                 if base_url != None:
-                    n_body += "\n" + base_url
+                    n_body += f"\nDiff: {base_url}/diff/{uuid}"
 
                 apobj.notify(
                     body=n_body,
