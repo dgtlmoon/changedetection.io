@@ -824,7 +824,6 @@ def notification_runner():
             n_object = notification_q.get(block=False)
         except queue.Empty:
             time.sleep(1)
-            pass
 
         else:
             import apprise
