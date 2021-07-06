@@ -41,8 +41,8 @@ class ChangeDetectionStore:
                     'extract_title_as_title': False,
                     'notification_urls': [], # Apprise URL list
                     # Custom notification content
-                    'notification_title': 'ChangeDetection.io Notification',
-                    'notification_body': 'Live: {watch_url}\n{base_url}'
+                    'notification_title': 'ChangeDetection.io Notification - {watch_url}',
+                    'notification_body': '{base_url}'
                 }
             }
         }
