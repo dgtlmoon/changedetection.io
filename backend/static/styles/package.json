@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "node-sass": "^6.0.0",
+    "node-sass": "^6.0.1",
     "trim-newlines": "^3.0.1"
   }
 }
