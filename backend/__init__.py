@@ -846,13 +846,17 @@ def notification_runner():
                 # Insert variables into the notification content
                 notification_parameters = create_notification_parameters(n_object)
                 raw_notification_text = [n_body, n_title]
-                parameterised_notification_text = [
-                    n.replace(n, n.format(**notification_parameters)) for n in raw_notification_text
-                ]
+
+                parameterised_notification_text = dict(
+                    [
+                        (i, n.replace(n, n.format(**notification_parameters)))
+                        for i, n in zip(['body', 'title'], raw_notification_text)
+                    ]
+                )
 
                 apobj.notify(
-                    body=parameterised_notification_text[0],
-                    title=parameterised_notification_text[1]
+                    body=parameterised_notification_text["body"],
+                    title=parameterised_notification_text["title"]
                 )
 
             except Exception as e:
