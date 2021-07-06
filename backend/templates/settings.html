@@ -2,7 +2,7 @@
 
 {% block content %}
 {% from '_helpers.jinja' import render_field %}
-
+<script type="text/javascript" src="static/js/settings.js"></script>
 <div class="edit-form">
     <form class="pure-form pure-form-stacked settings" action="/settings" method="POST">
         <fieldset>
@@ -43,11 +43,19 @@ SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com
                 {{ render_field(form.notification_body , rows=5) }}
                 <span class="pure-form-message-inline">Body for all notifications</span>
             </div>
-            <p><b>Parameters</b></p>
-            <table class="pure-table">
+            <div class="pure-controls">
+                <span class="pure-form-message-inline"><label for="show-token-table" class="pure-checkbox">
+                    <input type="checkbox" id="show-token-table" name="show-token-table"> Show available tokens for custom notifications.</label>
+                </span><br/>
+                <span class="pure-form-message-inline">
+                    These tokens can be used in the notification body and title to
+                    customise the notification text.
+                </span>
+            </div>
+            <table class="pure-table" id="token-table">
                 <thead>
                     <tr>
-                        <th>Parameter</th>
+                        <th>Token</th>
                         <th>Description</th>
                         <th><code>BASE_URL</code> required?</th>
                     </tr>
@@ -75,11 +83,6 @@ SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com
                     </tr>
                 </tbody>
             </table>
-            <span class="pure-form-message-inline">
-                These parameters can be used in the notification body and title to
-                customise the notification text.
-            </span>
-            <br/><br/>
             <div class="pure-control-group">
                 <button type="submit" class="pure-button pure-button-primary">Save</button>
             </div>
