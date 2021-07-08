@@ -88,6 +88,8 @@ Just some examples
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-notifications.png" style="max-width:100%;" alt="Self-hosted web page change monitoring notifications"  title="Self-hosted web page change monitoring notifications"  />
 
+Now you can customise your notifications!
+
 ### Proxy
 
 A proxy for ChangeDectection.io can be configured by setting environment the 
