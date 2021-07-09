@@ -39,7 +39,10 @@ class ChangeDetectionStore:
                 'application': {
                     'password': False,
                     'extract_title_as_title': False,
-                    'notification_urls': [] # Apprise URL list
+                    'notification_urls': [], # Apprise URL list
+                    # Custom notification content
+                    'notification_title': 'ChangeDetection.io Notification - {watch_url}',
+                    'notification_body': '{base_url}'
                 }
             }
         }
@@ -353,7 +356,7 @@ class ChangeDetectionStore:
             if self.stop_thread:
                 print("Shutting down datastore thread")
                 return
-            
+
             if self.needs_write:
                 self.sync_to_json()
             time.sleep(3)

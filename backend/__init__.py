@@ -459,6 +459,8 @@ def changedetection_app(config=None, datastore_o=None):
             form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'])
             form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
             form.extract_title_as_title.data = datastore.data['settings']['application']['extract_title_as_title']
+            form.notification_title.data = datastore.data['settings']['application']['notification_title']
+            form.notification_body.data = datastore.data['settings']['application']['notification_body']
 
             # Password unset is a GET
             if request.values.get('removepassword') == 'true':
@@ -472,6 +474,8 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data
             datastore.data['settings']['application']['extract_title_as_title'] = form.extract_title_as_title.data
+            datastore.data['settings']['application']['notification_title'] = form.notification_title.data
+            datastore.data['settings']['application']['notification_body'] = form.notification_body.data
 
             if len(form.notification_urls.data):
                 import apprise
@@ -824,7 +828,6 @@ def notification_runner():
             n_object = notification_q.get(block=False)
         except queue.Empty:
             time.sleep(1)
-            pass
 
         else:
             import apprise
@@ -835,21 +838,48 @@ def notification_runner():
                 for url in n_object['notification_urls']:
                     apobj.add(url.strip())
 
-                n_body = n_object['watch_url']
+                # Get the notification body from datastore
+                n_body = datastore.data['settings']['application']['notification_body']
+                # Get the notification title from the datastore
+                n_title = datastore.data['settings']['application']['notification_title']
 
-                # 65 - Append URL of instance to the notification if it is set.
-                base_url = os.getenv('BASE_URL')
-                if base_url != None:
-                    n_body += "\n" + base_url
+                # Insert variables into the notification content
+                notification_parameters = create_notification_parameters(n_object)
+                raw_notification_text = [n_body, n_title]
+
+                parameterised_notification_text = dict(
+                    [
+                        (i, n.replace(n, n.format(**notification_parameters)))
+                        for i, n in zip(['body', 'title'], raw_notification_text)
+                    ]
+                )
 
                 apobj.notify(
-                    body=n_body,
-                    # @todo This should be configurable.
-                    title="ChangeDetection.io Notification - {}".format(n_object['watch_url'])
+                    body=parameterised_notification_text["body"],
+                    title=parameterised_notification_text["title"]
                 )
 
             except Exception as e:
                 print("Watch URL: {}  Error {}".format(n_object['watch_url'],e))
+
+
+# Notification title + body content parameters get created here.
+def create_notification_parameters(n_object):
+    uuid = n_object['uuid']
+    # Create URLs to customise the notification with
+    base_url = os.getenv('BASE_URL', '').strip('"')
+    watch_url = n_object['watch_url']
+    if base_url != '':
+        diff_url = "{}/diff/{}".format(base_url, uuid)
+        preview_url = "{}/preview/{}".format(base_url, uuid)
+    else:
+        diff_url = preview_url = ''
+    return {
+        'base_url': base_url,
+        'watch_url': watch_url,
+        'diff_url': diff_url,
+        'preview_url': preview_url
+        }
 
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.

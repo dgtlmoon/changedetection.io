@@ -63,6 +63,9 @@ def test_check_notification(client, live_server):
         url_for("test_notification_counter"),
     )
 
+    # Give the thread time to pick it up
+    time.sleep(3)
+
     assert bytes("we hit it".encode('utf-8')) in res.data
 
     # Did we see the URL that had a change, in the notification?

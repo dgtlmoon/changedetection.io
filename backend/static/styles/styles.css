@@ -312,3 +312,7 @@ and also iPads specifically.
       background-color: #eee; }
     .watch-table.pure-table-striped tr:nth-child(2n-1) td {
       background-color: inherit; } }
+
+/* Token table toggle on settings page */
+#token-table {
+  display: none; }
