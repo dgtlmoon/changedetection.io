@@ -66,3 +66,39 @@ def test_check_notification(client, live_server):
 
         # Re #65 - did we see our foobar.com BASE_URL ?
         #assert bytes("https://foobar.com".encode('utf-8')) in notification_submission
+
+
+    ##  Now configure something clever, we go into custom config (non-default) mode
+
+    with open("test-datastore/output.txt", "w") as f:
+        f.write(";jasdhflkjadshf kjhsdfkjl ahslkjf haslkjd hfaklsj hf\njl;asdhfkasj\n")
+
+    res = client.post(
+        url_for("settings_page"),
+        data={"notification_title": "New ChangeDetection.io Notification - {watch_url}",
+              "notification_body": "{base_url}\n{watch_url}\n{preview_url}\n{diff_url}\n\n:-)",
+              "minutes_between_check": 180},
+        follow_redirects=True
+    )
+    assert b"Settings updated." in res.data
+
+    # Trigger a check
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+
+    # Give the thread time to pick it up
+    time.sleep(3)
+
+    # Did the front end see it?
+    res = client.get(
+        url_for("index"))
+
+    assert bytes("just now".encode('utf-8')) in res.data
+
+    with open("test-datastore/notification.txt", "r") as f:
+        notification_submission = f.read()
+
+        assert "diff/" in notification_submission
+        assert "preview/" in notification_submission
+        assert ":-)" in notification_submission
+        assert "New ChangeDetection.io Notification - {}".format(test_url) in notification_submission
+
