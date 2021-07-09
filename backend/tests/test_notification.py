@@ -2,6 +2,7 @@
 import time
 from flask import url_for
 from . util import set_original_response, set_modified_response, live_server_setup
+import os
 
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
@@ -57,19 +58,11 @@ def test_check_notification(client, live_server):
 
     assert bytes("just now".encode('utf-8')) in res.data
 
+    # Verify what was sent as a notification
+    with open("test-datastore/notification.txt", "r") as f:
+        notification_submission = f.read()
+        # Did we see the URL that had a change, in the notification?
+        assert test_url in notification_submission
 
-    # Check it triggered
-    res = client.get(
-        url_for("test_notification_counter"),
-    )
-
-    # Give the thread time to pick it up
-    time.sleep(3)
-
-    assert bytes("we hit it".encode('utf-8')) in res.data
-
-    # Did we see the URL that had a change, in the notification?
-    assert bytes("test-endpoint".encode('utf-8')) in res.data
-
-    # Re #65 - did we see our foobar.com BASE_URL ?
-    assert bytes("https://foobar.com".encode('utf-8')) in res.data
+        # Re #65 - did we see our foobar.com BASE_URL ?
+        #assert bytes("https://foobar.com".encode('utf-8')) in notification_submission
