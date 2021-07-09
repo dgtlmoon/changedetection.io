@@ -26,8 +26,9 @@ services:
     browser-chrome:
         hostname: browser-chrome
         image: selenium/standalone-chrome-debug:3.141.59
-        ports:
-          - 4444:4444
+#       Doesnt need to be exposed on the host
+#        ports:
+#          - 4444:4444
         environment:
             - VNC_NO_PASSWORD=1
         volumes:
