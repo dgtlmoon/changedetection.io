@@ -111,7 +111,7 @@ class watchForm(Form):
     tag = StringField('Tag', [validators.Optional(), validators.Length(max=35)])
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
-    css_filter = StringField('CSS Filter')
+    css_filter = StringField('CSS/JSON Filter')
     title = StringField('Title')
 
     ignore_text = StringListField('Ignore Text', [ListRegex()])

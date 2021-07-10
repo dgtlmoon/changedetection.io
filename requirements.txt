@@ -12,7 +12,7 @@ flask-login ~= 0.5
 pytz
 urllib3
 wtforms ~= 2.3.3
-
+jsonpath-ng ~= 1.5.3
 
 
 # Notification library
