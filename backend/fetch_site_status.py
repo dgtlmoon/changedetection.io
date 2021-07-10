@@ -99,7 +99,8 @@ class perform_site_check():
                     json_data = json.loads(html)
                     jsonpath_expression = parse(css_filter_rule.replace('json:',''))
                     match = jsonpath_expression.find(json_data)
-                    stripped_text_from_html = str(match[0].value)
+                    stripped_text_from_html = json.dumps(match[0].value, indent=4)
+
                     is_html = False
 
                 else:
