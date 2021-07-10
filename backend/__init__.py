@@ -611,7 +611,8 @@ def changedetection_app(config=None, datastore_o=None):
                                  uuid=uuid,
                                  newest_version_timestamp=dates[0],
                                  current_previous_version=str(previous_version),
-                                 current_diff_url=watch['url'])
+                                 current_diff_url=watch['url'],
+                                 extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']))
 
         return output
 

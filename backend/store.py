@@ -191,6 +191,8 @@ class ChangeDetectionStore:
             if not self.__data['watching'][uuid]['title']:
                 self.__data['watching'][uuid]['title'] = None
 
+
+
         self.__data['has_unviewed'] = has_unviewed
 
         return self.__data

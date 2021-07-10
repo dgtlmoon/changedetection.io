@@ -130,7 +130,8 @@ if ('oninput' in a) {
 
 function onDiffTypeChange(radio) {
 	window.diffType = radio.value;
-	document.title = "Diff " + radio.value.slice(4);
+// Not necessary 
+//	document.title = "Diff " + radio.value.slice(4);
 }
 
 var radio = document.getElementsByName('diff_type');
