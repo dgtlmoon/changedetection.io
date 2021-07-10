@@ -21,7 +21,7 @@ services:
 
       ports:
         - 5000:5000
-      restart: always
+      restart: unless-stopped
 
     browser-chrome:
         hostname: browser-chrome
@@ -35,7 +35,8 @@ services:
             # Workaround to avoid the browser crashing inside a docker container
             # See https://github.com/SeleniumHQ/docker-selenium#quick-start
             - /dev/shm:/dev/shm
-        restart: always
+        restart: unless-stopped
+
 
 volumes:
   changedetection-data:
