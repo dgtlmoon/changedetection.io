@@ -60,7 +60,7 @@ def main(argv):
 
     @app.context_processor
     def inject_version():
-        return dict(version=datastore.data['version_tag'],
+        return dict(right_sticky="v{}".format(datastore.data['version_tag']),
                     new_version_available=app.config['NEW_VERSION_AVAILABLE'],
                     has_password=datastore.data['settings']['application']['password'] != False
                     )
