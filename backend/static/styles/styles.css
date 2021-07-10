@@ -184,7 +184,7 @@ body:after, body:before {
 #diff-jump {
   position: fixed;
   left: 0px;
-  top: 80px;
+  top: 120px;
   background: #fff;
   padding: 10px;
   border-top-right-radius: 5px;
@@ -209,13 +209,16 @@ footer {
 #feed-icon {
   vertical-align: middle; }
 
-#version {
+.sticky-tab {
   position: absolute;
   top: 80px;
-  right: 0px;
   font-size: 8px;
   background: #fff;
   padding: 10px; }
+  .sticky-tab#left-sticky {
+    left: 0px; }
+  .sticky-tab#right-sticky {
+    right: 0px; }
 
 #new-version-text a {
   color: #e07171; }

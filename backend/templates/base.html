@@ -68,7 +68,9 @@
         </ul>
     </div>
 </div>
-<div id="version">v{{ version }}</div>
+
+{% if left_sticky %}<div class="sticky-tab" id="left-sticky"><a href="{{url_for('preview_page', uuid=uuid)}}">Show current snapshot</a></div> {% endif %}
+{% if right_sticky %}<div class="sticky-tab" id="right-sticky">{{ right_sticky }}</div> {% endif %}
 <section class="content">
     <header>
         {% block header %}{% endblock %}
