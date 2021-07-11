@@ -2,7 +2,7 @@
 {% block content %}
 {% from '_helpers.jinja' import render_field %}
 <div class="edit-form monospaced-textarea">
-    <form class="pure-form pure-form-stacked" action="/edit/{{uuid}}" method="POST">
+    <form class="pure-form pure-form-stacked" action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next') ) }}" method="POST">
         <fieldset>
             <div class="pure-control-group">
                 {{ render_field(form.url, placeholder="https://...", size=30, required=true) }}

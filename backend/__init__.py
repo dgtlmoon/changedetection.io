@@ -427,7 +427,11 @@ def changedetection_app(config=None, datastore_o=None):
 
                 flash('Notifications queued.')
 
-            return redirect(url_for('index'))
+            # Diff page [edit] link should go back to diff page
+            if request.args.get("next") and request.args.get("next") == 'diff':
+                return redirect(url_for('diff_history_page', uuid=uuid))
+            else:
+                return redirect(url_for('index'))
 
         else:
             if request.method == 'POST' and not form.validate():
