@@ -102,6 +102,28 @@ class ValidateListRegex(object):
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))
 
+class ValidateCSSJSONInput(object):
+    """
+    Filter validation
+    @todo CSS validator ;)
+    """
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        if 'json:' in field.data:
+            from jsonpath_ng.exceptions import JsonPathParserError
+            from jsonpath_ng import jsonpath, parse
+
+            input = field.data.replace('json:', '')
+
+            try:
+                parse(input)
+            except JsonPathParserError as e:
+                message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
+                raise ValidationError(message % (input, str(e)))
+
 
 class watchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
@@ -111,7 +133,7 @@ class watchForm(Form):
     tag = StringField('Tag', [validators.Optional(), validators.Length(max=35)])
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
-    css_filter = StringField('CSS/JSON Filter')
+    css_filter = StringField('CSS/JSON Filter', [ValidateCSSJSONInput()])
     title = StringField('Title')
 
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
