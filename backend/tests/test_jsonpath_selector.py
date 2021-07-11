@@ -4,8 +4,6 @@ import time
 from flask import url_for
 from . util import live_server_setup
 
-from ..html_tools import *
-
 def test_setup(live_server):
     live_server_setup(live_server)
 
@@ -60,25 +58,8 @@ def set_modified_response():
     return None
 
 
-# Test that the CSS extraction works how we expect, important here is the right placing of new lines \n's
-def test_json_filter_output():
-    return
-    import json
-    from jsonpath_ng import jsonpath, parse
-
-#    html_blob = json_filter(css_filter=".parts", html_content=content)
-
-    json_string = """
-    """
-    json_data = json.loads(json_string)
-
-    jsonpath_expression = parse('employees[1].salary')
-    match = jsonpath_expression.find(json_data)
-    assert match[0].value == "5000"
-
 
 def test_check_json_filter(client, live_server):
-    #live_server_setup(live_server)
 
     json_filter = 'json:boss.name'
 
@@ -131,6 +112,10 @@ def test_check_json_filter(client, live_server):
     time.sleep(3)
 
     # It should have 'unviewed' still
-    # Because it should be looking at only that 'sametext' id
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
+
+    # Should not see this, because its not in the JSONPath we entered
+    res = client.get(url_for("diff_history_page", uuid="first"))
+    # But the change should be there, tho its hard to test the change was detected because it will show old and new versions
+    assert b'Foobar' in res.data
