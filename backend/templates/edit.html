@@ -23,9 +23,12 @@
             </div>
             <div class="pure-control-group">
                 {{ render_field(form.css_filter, size=25, placeholder=".class-name or #some-id, or other CSS selector rule.") }}
-                <span class="pure-form-message-inline">Limit text to this CSS rule, only text matching this CSS rule is included.<br/>
-                    Please be sure that you thoroughly understand how to write CSS selector rules before filing an issue on GitHub!<br/>
-                    Go <a href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>
+                <span class="pure-form-message-inline">
+                    <ul>
+                        <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
+                        <li>JSON - Limit text to this JSON rule, using <a href="https://pypi.org/project/jsonpath-ng/">JSONPath</a>, prefix with <b>"json:"</b>, <a href="https://jsonpath.com/" target="new">test your JSONPath here</a></li>
+                    </ul>
+                    Please be sure that you thoroughly understand how to write CSS or JSONPath selector rules before filing an issue on GitHub! <a href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
                 </span>
             </div>
             <!-- @todo: move to tabs --->

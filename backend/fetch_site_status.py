@@ -88,12 +88,27 @@ class perform_site_check():
 
             html = r.text
 
-            # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+            is_html = True
             css_filter_rule = self.datastore.data['watching'][uuid]['css_filter']
             if css_filter_rule and len(css_filter_rule.strip()):
-                html = html_tools.css_filter(css_filter=css_filter_rule, html_content=r.content)
+                if 'json:' in css_filter_rule:
+                    # POC hack, @todo rename vars, see how it fits in with the javascript version
+                    import json
+                    from jsonpath_ng import jsonpath, parse
 
-            stripped_text_from_html = get_text(html)
+                    json_data = json.loads(html)
+                    jsonpath_expression = parse(css_filter_rule.replace('json:',''))
+                    match = jsonpath_expression.find(json_data)
+                    stripped_text_from_html = json.dumps(match[0].value, indent=4)
+
+                    is_html = False
+
+                else:
+                    # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+                    html = html_tools.css_filter(css_filter=css_filter_rule, html_content=r.content)
+
+            if is_html:
+                stripped_text_from_html = get_text(html)
 
         # Usually from networkIO/requests level
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:

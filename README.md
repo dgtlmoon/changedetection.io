@@ -26,6 +26,8 @@ Know when ...
 - Festivals with changes
 - Realestate listing changes
 - COVID related news from government websites
+- Detect and monitor changes in JSON API responses 
+- API monitoring and alerting
 
 _Need an actual Chrome runner with Javascript support? see the experimental <a href="https://github.com/dgtlmoon/changedetection.io/tree/javascript-browser">Javascript/Chrome support changedetection.io branch!</a>_
 
@@ -88,9 +90,21 @@ Just some examples
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-notifications.png" style="max-width:100%;" alt="Self-hosted web page change monitoring notifications"  title="Self-hosted web page change monitoring notifications"  />
 
+### JSON API Monitoring
+
+Detect changes and monitor data in JSON API's by using the built-in JSONPath selectors as a filter.
+
+
+![image](https://user-images.githubusercontent.com/275001/125165842-0ce01980-e1dc-11eb-9e73-d8137dd162dc.png)
+
+This will re-parse the JSON and apply indent to the text, making it super easy to monitor and detect changes in JSON API results
+
+![image](https://user-images.githubusercontent.com/275001/125165995-d9ea5580-e1dc-11eb-8030-f0deced2661a.png)
+
+
 ### Proxy
 
-A proxy for ChangeDectection.io can be configured by setting environment the 
+A proxy for ChangeDetection.io can be configured by setting environment the 
 `HTTP_PROXY`, `HTTPS_PROXY` variables, examples are also in the `docker-compose.yml`
 
 `NO_PROXY` exclude list can be specified by following `"localhost,192.168.0.0/24"`
