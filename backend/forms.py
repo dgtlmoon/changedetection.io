@@ -82,7 +82,7 @@ class StringDictKeyValue(StringField):
         else:
             self.data = {}
 
-class ListRegex(object):
+class ValidateListRegex(object):
     """
     Validates that anything that looks like a regex passes as a regex
     """
@@ -114,7 +114,7 @@ class watchForm(Form):
     css_filter = StringField('CSS/JSON Filter')
     title = StringField('Title')
 
-    ignore_text = StringListField('Ignore Text', [ListRegex()])
+    ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     notification_urls = StringListField('Notification URL List')
     headers = StringDictKeyValue('Request Headers')
     trigger_check = BooleanField('Send test notification on save')
