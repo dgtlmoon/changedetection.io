@@ -26,7 +26,8 @@ Know when ...
 - Festivals with changes
 - Realestate listing changes
 - COVID related news from government websites
-- Detect and monitor changes in JSON API responses
+- Detect and monitor changes in JSON API responses 
+- API monitoring and alerting
 
 _Need an actual Chrome runner with Javascript support? see the experimental <a href="https://github.com/dgtlmoon/changedetection.io/tree/javascript-browser">Javascript/Chrome support changedetection.io branch!</a>_
 
