@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Self hosted website change detection.">
-    <title>Change Detection</title>
+    <title>Change Detection{{extra_title}}</title>
     <link rel="stylesheet" href="/static/styles/pure-min.css">
     <link rel="stylesheet" href="/static/styles/styles.css?ver=1000">
     {% if extra_stylesheets %}
@@ -45,7 +45,7 @@
             </li>
             {% else %}
             <li class="pure-menu-item">
-                <a href="{{ url_for('edit_page', uuid=uuid) }}" class="pure-menu-link">EDIT</a>
+                <a href="{{ url_for('edit_page', uuid=uuid, next='diff') }}" class="pure-menu-link">EDIT</a>
             </li>
             {% endif %}
         {% else %}
@@ -68,7 +68,9 @@
         </ul>
     </div>
 </div>
-<div id="version">v{{ version }}</div>
+
+{% if left_sticky %}<div class="sticky-tab" id="left-sticky"><a href="{{url_for('preview_page', uuid=uuid)}}">Show current snapshot</a></div> {% endif %}
+{% if right_sticky %}<div class="sticky-tab" id="right-sticky">{{ right_sticky }}</div> {% endif %}
 <section class="content">
     <header>
         {% block header %}{% endblock %}

@@ -427,7 +427,11 @@ def changedetection_app(config=None, datastore_o=None):
 
                 flash('Notifications queued.')
 
-            return redirect(url_for('index'))
+            # Diff page [edit] link should go back to diff page
+            if request.args.get("next") and request.args.get("next") == 'diff':
+                return redirect(url_for('diff_history_page', uuid=uuid))
+            else:
+                return redirect(url_for('index'))
 
         else:
             if request.method == 'POST' and not form.validate():
@@ -615,7 +619,9 @@ def changedetection_app(config=None, datastore_o=None):
                                  uuid=uuid,
                                  newest_version_timestamp=dates[0],
                                  current_previous_version=str(previous_version),
-                                 current_diff_url=watch['url'])
+                                 current_diff_url=watch['url'],
+                                 extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
+                                 left_sticky= True )
 
         return output
 
@@ -830,56 +836,14 @@ def notification_runner():
             time.sleep(1)
 
         else:
-            import apprise
-
-            # Create an Apprise instance
+            # Process notifications
             try:
-                apobj = apprise.Apprise()
-                for url in n_object['notification_urls']:
-                    apobj.add(url.strip())
-
-                # Get the notification body from datastore
-                n_body = datastore.data['settings']['application']['notification_body']
-                # Get the notification title from the datastore
-                n_title = datastore.data['settings']['application']['notification_title']
-
-                # Insert variables into the notification content
-                notification_parameters = create_notification_parameters(n_object)
-                raw_notification_text = [n_body, n_title]
-
-                parameterised_notification_text = dict(
-                    [
-                        (i, n.replace(n, n.format(**notification_parameters)))
-                        for i, n in zip(['body', 'title'], raw_notification_text)
-                    ]
-                )
-
-                apobj.notify(
-                    body=parameterised_notification_text["body"],
-                    title=parameterised_notification_text["title"]
-                )
+                from backend import notification
+                notification.process_notification(n_object,datastore)
 
             except Exception as e:
                 print("Watch URL: {}  Error {}".format(n_object['watch_url'],e))
 
-
-# Notification title + body content parameters get created here.
-def create_notification_parameters(n_object):
-    uuid = n_object['uuid']
-    # Create URLs to customise the notification with
-    base_url = os.getenv('BASE_URL', '').strip('"')
-    watch_url = n_object['watch_url']
-    if base_url != '':
-        diff_url = "{}/diff/{}".format(base_url, uuid)
-        preview_url = "{}/preview/{}".format(base_url, uuid)
-    else:
-        diff_url = preview_url = ''
-    return {
-        'base_url': base_url,
-        'watch_url': watch_url,
-        'diff_url': diff_url,
-        'preview_url': preview_url
-        }
 
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
