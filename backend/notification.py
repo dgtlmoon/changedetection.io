@@ -32,10 +32,7 @@ def process_notification(n_object, datastore):
 def create_notification_parameters(n_object):
 
     # in the case we send a test notification from the main settings, there is no UUID.
-    uuid=""
-
-    if 'uuid' in n_object:
-        uuid = n_object['uuid']
+    uuid = n_object['uuid'] if 'uuid' in n_object else ''
 
     # Create URLs to customise the notification with
     base_url = os.getenv('BASE_URL', '').strip('"')
@@ -46,11 +43,12 @@ def create_notification_parameters(n_object):
         preview_url = "{}/preview/{}".format(base_url, uuid)
     else:
         diff_url = preview_url = ''
+
     return {
         'base_url': base_url,
         'watch_url': watch_url,
         'diff_url': diff_url,
         'preview_url': preview_url,
-        'current_snapshot': n_object['current_snapshot']
+        'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else ''
     }
 

@@ -22,7 +22,7 @@ def test_check_notification(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    # Give the thread time to pick it up
+    # Give the thread time to pick up the first version
     time.sleep(3)
 
     # Goto the edit page, add our ignore text
@@ -51,7 +51,8 @@ def test_check_notification(client, live_server):
 
     # Because we hit 'send test notification on save'
     time.sleep(3)
-    # Verify what was sent as a notification
+
+    # Verify what was sent as a notification, this file should exist
     with open("test-datastore/notification.txt", "r") as f:
         notification_submission = f.read()
         # Did we see the URL that had a change, in the notification?
