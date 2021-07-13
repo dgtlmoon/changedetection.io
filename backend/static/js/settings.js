@@ -13,7 +13,4 @@ window.addEventListener("load", (event) => {
   document.getElementById("toggle-customise-notifications").onclick = function () {
     toggleVisible("notification-customisation");
   };
-  document.getElementById("toggle-token-table").onclick = function () {
-    toggleVisible("token-table");
-  };
 });

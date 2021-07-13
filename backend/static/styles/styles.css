@@ -184,6 +184,15 @@ body:after, body:before {
   .messages li.notice {
     background: rgba(255, 255, 255, 0.5); }
 
+#notification-customisation {
+  display: block;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 5px; }
+
+#toggle-customise-notifications {
+  cursor: pointer; }
+
 #new-watch-form {
   background: rgba(0, 0, 0, 0.05);
   padding: 1em;
@@ -278,8 +287,7 @@ footer {
   .pure-form input[type=url] {
     width: 100%; }
   .pure-form textarea {
-    width: 100%;
-    font-size: 14px; }
+    width: 100%; }
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
   .box {
@@ -333,7 +341,3 @@ and also iPads specifically.
       background-color: #eee; }
     .watch-table.pure-table-striped tr:nth-child(2n-1) td {
       background-color: inherit; } }
-
-/* Token table toggle on settings page */
-#token-table {
-  display: none; }

@@ -241,7 +241,20 @@ body:after, body:before {
             background: rgba(255, 255, 255, .5);
         }
     }
+}
 
+#notification-customisation {
+    display: block;
+    border: 1px solid #ccc;
+    padding: 1rem;
+    border-radius: 5px;
+}
+
+#toggle-customise-notifications {
+    cursor: pointer;
+}
+
+#token-table {
 }
 
 #new-watch-form {
@@ -371,7 +384,6 @@ footer {
 
   textarea {
     width: 100%;
-    font-size: 14px;
   }
 }
 
@@ -461,7 +473,3 @@ and also iPads specifically.
   }
 }
 
-/* Token table toggle on settings page */
-#token-table {
-  display: none;
-}
