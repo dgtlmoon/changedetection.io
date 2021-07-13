@@ -90,17 +90,17 @@ Just some examples
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-notifications.png" style="max-width:100%;" alt="Self-hosted web page change monitoring notifications"  title="Self-hosted web page change monitoring notifications"  />
 
+Now you can also customise your notification content!
+
 ### JSON API Monitoring
 
-Detect changes and monitor data in JSON API's by using the built-in JSONPath selectors as a filter.
-
+Detect changes and monitor data in JSON API's by using the built-in JSONPath selectors as a filter / selector.
 
 ![image](https://user-images.githubusercontent.com/275001/125165842-0ce01980-e1dc-11eb-9e73-d8137dd162dc.png)
 
 This will re-parse the JSON and apply indent to the text, making it super easy to monitor and detect changes in JSON API results
 
 ![image](https://user-images.githubusercontent.com/275001/125165995-d9ea5580-e1dc-11eb-8030-f0deced2661a.png)
-
 
 ### Proxy
 

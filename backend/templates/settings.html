@@ -2,45 +2,100 @@
 
 {% block content %}
 {% from '_helpers.jinja' import render_field %}
-
+<script type="text/javascript" src="static/js/settings.js"></script>
 <div class="edit-form">
     <form class="pure-form pure-form-stacked settings" action="/settings" method="POST">
         <fieldset>
             <div class="pure-control-group">
                 {{ render_field(form.minutes_between_check, size=5) }}
-                 <span class="pure-form-message-inline">Default time for all watches, when the watch does not have a specific time setting.</span>
+                <span class="pure-form-message-inline">Default time for all watches, when the watch does not have a specific time setting.</span>
             </div>
             <div class="pure-control-group">
                 {% if current_user.is_authenticated %}
-                    <a href="/settings?removepassword=true" class="pure-button pure-button-primary">Remove password</a>
+                <a href="/settings?removepassword=true" class="pure-button pure-button-primary">Remove password</a>
                 {% else %}
-                    {{ render_field(form.password, size=10) }}
-                    <span class="pure-form-message-inline">Password protection for your changedetection.io application.</span>
+                {{ render_field(form.password, size=10) }}
+                <span class="pure-form-message-inline">Password protection for your changedetection.io application.</span>
                 {% endif %}
             </div>
             <div class="pure-control-group">
                 {{ render_field(form.extract_title_as_title) }}
-                  <span class="pure-form-message-inline">Note: This will automatically apply to all existing watches.</span>
+                <span class="pure-form-message-inline">Note: This will automatically apply to all existing watches.</span>
             </div>
-            <div class="pure-control-group">
-                {{ render_field(form.notification_urls, rows=5, placeholder="Gitter - gitter://token/room
+
+            <div class="field-group">
+
+                <div class="pure-control-group">
+                    {{ render_field(form.notification_urls, rows=5, placeholder="Examples:
+Gitter - gitter://token/room
 Office365 - o365://TenantID:AccountEmail/ClientID/ClientSecret/TargetEmail
 AWS SNS - sns://AccessKeyID/AccessSecretKey/RegionName/+PhoneNo
-SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com
-") }}
-                <span class="pure-form-message-inline">Use <a target=_new href="https://github.com/caronc/apprise">AppRise URLs</a> for notification to just about any service!</span>
-            </div>
-                <div class="pure-controls">
-                    <span class="pure-form-message-inline"><label for="trigger-test-notification" class="pure-checkbox">
-                        <input type="checkbox" id="trigger-test-notification" name="trigger-test-notification"> Send test notification on save.</label></span>
+SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com") }}
+                    <div class="pure-form-message-inline">Use <a target=_new href="https://github.com/caronc/apprise">AppRise URLs</a> for notification to just about any service!
+                    <a id="toggle-customise-notifications">Customise notification body: <i
+                            class="arrow down"></i></a>
+                        </div>
+                </div>
+                <div id="notification-customisation" style="display:none;">
+
+                    <div class="pure-control-group">
+                        {{ render_field(form.notification_title, size=80) }}
+                        <span class="pure-form-message-inline">Title for all notifications</span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.notification_body , rows=5) }}
+                        <span class="pure-form-message-inline">Body for all notifications</span>
+                    </div>
+                    <div class="pure-controls">
+                        <span class="pure-form-message-inline">
+                            These tokens can be used in the notification body and title to
+                            customise the notification text.
+                        </span>
+                        <table class="pure-table" id="token-table">
+                            <thead>
+                            <tr>
+                                <th>Token</th>
+                                <th>Description</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td><code>{base_url}</code></td>
+                                <td>The URL of the changedetection.io instance you are running.</td>
+                            </tr>
+                            <tr>
+                                <td><code>{watch_url}</code></td>
+                                <td>The URL being watched.</td>
+                            </tr>
+                            <tr>
+                                <td><code>{preview_url}</code></td>
+                                <td>The URL of the preview page generated by changedetection.io.</td>
+                            </tr>
+                            <tr>
+                                <td><code>{diff_url}</code></td>
+                                <td>The URL of the diff page generated by changedetection.io.</td>
+                            </tr>
+                            <tr>
+                                <td><code>{current_snapshot}</code></td>
+                                <td>The current snapshot value, useful when combined with JSON or CSS filters</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <span class="pure-form-message-inline">
+                            URLs generated by changedetection.io (such as <code>{diff_url}</code>) require the <code>BASE_URL</code> environment variable set.
+                        </span>
+                    </div>
                 </div>
 
-            <br/>
+                <span class="pure-form-message-inline"><label for="trigger-test-notification" class="pure-checkbox">
+                    <input type="checkbox" id="trigger-test-notification" name="trigger-test-notification"> Send test notification on save.</label>
+                </span>
+
+            </div>
             <div class="pure-control-group">
                 <button type="submit" class="pure-button pure-button-primary">Save</button>
             </div>
             <br/>
-
             <div class="pure-control-group">
                 <a href="/" class="pure-button button-small button-cancel">Back</a>
                 <a href="/scrub" class="pure-button button-small button-cancel">Delete History Snapshot Data</a>
