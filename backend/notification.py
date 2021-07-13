@@ -28,7 +28,6 @@ def process_notification(n_object, datastore):
     )
 
 
-
 # Notification title + body content parameters get created here.
 def create_notification_parameters(n_object):
 
@@ -51,5 +50,7 @@ def create_notification_parameters(n_object):
         'base_url': base_url,
         'watch_url': watch_url,
         'diff_url': diff_url,
-        'preview_url': preview_url
+        'preview_url': preview_url,
+        'current_snapshot': n_object['current_snapshot']
     }
+

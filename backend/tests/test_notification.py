@@ -3,7 +3,6 @@ import time
 from flask import url_for
 from . util import set_original_response, set_modified_response, live_server_setup
 
-
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
 def test_check_notification(client, live_server):
@@ -88,12 +87,12 @@ def test_check_notification(client, live_server):
     ##  Now configure something clever, we go into custom config (non-default) mode
 
     with open("test-datastore/output.txt", "w") as f:
-        f.write(";jasdhflkjadshf kjhsdfkjl ahslkjf haslkjd hfaklsj hf\njl;asdhfkasj\n")
+        f.write(";jasdhflkjadshf kjhsdfkjl ahslkjf haslkjd hfaklsj hf\njl;asdhfkasj stuff we will detect\n")
 
     res = client.post(
         url_for("settings_page"),
         data={"notification_title": "New ChangeDetection.io Notification - {watch_url}",
-              "notification_body": "{base_url}\n{watch_url}\n{preview_url}\n{diff_url}\n\n:-)",
+              "notification_body": "{base_url}\n{watch_url}\n{preview_url}\n{diff_url}\n{current_snapshot}\n:-)",
               "minutes_between_check": 180},
         follow_redirects=True
     )
@@ -118,4 +117,5 @@ def test_check_notification(client, live_server):
         assert "preview/" in notification_submission
         assert ":-)" in notification_submission
         assert "New ChangeDetection.io Notification - {}".format(test_url) in notification_submission
-
+        # This should insert the {current_snapshot}
+        assert "stuff we will detect" in notification_submission

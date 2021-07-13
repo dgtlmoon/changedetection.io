@@ -179,7 +179,6 @@ class ChangeDetectionStore:
 
     @property
     def data(self):
-
         has_unviewed = False
         for uuid, v in self.__data['watching'].items():
             self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
@@ -193,8 +192,6 @@ class ChangeDetectionStore:
             # #106 - Be sure this is None on empty string, False, None, etc
             if not self.__data['watching'][uuid]['title']:
                 self.__data['watching'][uuid]['title'] = None
-
-
 
         self.__data['has_unviewed'] = has_unviewed
 
