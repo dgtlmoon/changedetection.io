@@ -193,6 +193,9 @@ body:after, body:before {
 #toggle-customise-notifications {
   cursor: pointer; }
 
+#token-table.pure-table td, #token-table.pure-table th {
+  font-size: 80%; }
+
 #new-watch-form {
   background: rgba(0, 0, 0, 0.05);
   padding: 1em;

@@ -254,7 +254,11 @@ body:after, body:before {
     cursor: pointer;
 }
 
+
 #token-table {
+    &.pure-table td, &.pure-table th {
+        font-size: 80%;
+    }
 }
 
 #new-watch-form {
