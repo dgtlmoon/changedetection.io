@@ -46,7 +46,7 @@ def test_check_access_control(app, client):
         assert b"LOG OUT" in res.data
 
         # Now remove the password so other tests function, @todo this should happen before each test automatically
-        res = c.get(url_for("settings_page", removepassword="true"),
+        res = c.get(url_for("settings_page", removepassword="yes"),
               follow_redirects=True)
         assert b"Password protection removed." in res.data
 
@@ -93,7 +93,7 @@ def test_check_access_no_remote_access_to_remove_password(app, client):
         assert b"Password protection enabled." in res.data
         assert b"Login" in res.data
 
-        res = c.get(url_for("settings_page", removepassword="true"),
+        res = c.get(url_for("settings_page", removepassword="yes"),
               follow_redirects=True)
         assert b"Password protection removed." not in res.data
 
