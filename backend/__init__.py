@@ -422,7 +422,8 @@ def changedetection_app(config=None, datastore_o=None):
 
             if form.trigger_check.data:
                 n_object = {'watch_url': form.url.data.strip(),
-                            'notification_urls': form.notification_urls.data}
+                            'notification_urls': form.notification_urls.data,
+                            'uuid': uuid}
                 notification_q.put(n_object)
 
                 flash('Notifications queued.')

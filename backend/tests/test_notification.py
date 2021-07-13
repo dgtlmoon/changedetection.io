@@ -1,8 +1,8 @@
-
+import os
 import time
 from flask import url_for
 from . util import set_original_response, set_modified_response, live_server_setup
-import os
+
 
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
@@ -34,15 +34,32 @@ def test_check_notification(client, live_server):
     print (">>>> Notification URL: "+notification_url)
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"notification_urls": notification_url, "url": test_url, "tag": "", "headers": ""},
+        data={"notification_urls": notification_url,
+              "url": test_url,
+              "tag": "",
+              "headers": "",
+              "trigger_check": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
+    assert b"Notifications queued" in res.data
 
     # Hit the edit page, be sure that we saved it
     res = client.get(
         url_for("edit_page", uuid="first"))
     assert bytes(notification_url.encode('utf-8')) in res.data
+
+
+    # Because we hit 'send test notification on save'
+    time.sleep(3)
+    # Verify what was sent as a notification
+    with open("test-datastore/notification.txt", "r") as f:
+        notification_submission = f.read()
+        # Did we see the URL that had a change, in the notification?
+        assert test_url in notification_submission
+
+    os.unlink("test-datastore/notification.txt")
+
 
     set_modified_response()
 

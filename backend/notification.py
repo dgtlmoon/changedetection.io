@@ -31,10 +31,17 @@ def process_notification(n_object, datastore):
 
 # Notification title + body content parameters get created here.
 def create_notification_parameters(n_object):
-    uuid = n_object['uuid']
+
+    # in the case we send a test notification from the main settings, there is no UUID.
+    uuid=""
+
+    if uuid in n_object:
+        uuid = n_object['uuid']
+
     # Create URLs to customise the notification with
     base_url = os.getenv('BASE_URL', '').strip('"')
     watch_url = n_object['watch_url']
+
     if base_url != '':
         diff_url = "{}/diff/{}".format(base_url, uuid)
         preview_url = "{}/preview/{}".format(base_url, uuid)
