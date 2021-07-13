@@ -35,7 +35,7 @@ def create_notification_parameters(n_object):
     # in the case we send a test notification from the main settings, there is no UUID.
     uuid=""
 
-    if uuid in n_object:
+    if 'uuid' in n_object:
         uuid = n_object['uuid']
 
     # Create URLs to customise the notification with
