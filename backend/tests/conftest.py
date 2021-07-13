@@ -22,10 +22,18 @@ def app(request):
     except FileExistsError:
         pass
 
-    try:
-        os.unlink("{}/url-watches.json".format(datastore_path))
-    except FileNotFoundError:
-        pass
+    # Enable a BASE_URL for notifications to work (so we can look for diff/ etc URLs)
+    os.environ["BASE_URL"] = "http://mysite.com/"
+
+    # Unlink test output files
+    files = ['test-datastore/output.txt',
+             "{}/url-watches.json".format(datastore_path),
+             'test-datastore/notification.txt']
+    for file in files:
+        try:
+            os.unlink(file)
+        except FileNotFoundError:
+            pass
 
     app_config = {'datastore_path': datastore_path}
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], include_default_watches=False)
