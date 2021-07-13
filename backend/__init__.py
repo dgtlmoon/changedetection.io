@@ -828,7 +828,6 @@ def check_for_new_version():
         app.config.exit.wait(86400)
 
 def notification_runner():
-
     while not app.config.exit.is_set():
         try:
             # At the moment only one thread runs (single runner)
@@ -840,10 +839,10 @@ def notification_runner():
             # Process notifications
             try:
                 from backend import notification
-                notification.process_notification(n_object,datastore)
+                notification.process_notification(n_object, datastore)
 
             except Exception as e:
-                print("Watch URL: {}  Error {}".format(n_object['watch_url'],e))
+                print("Watch URL: {}  Error {}".format(n_object['watch_url'], e))
 
 
 
