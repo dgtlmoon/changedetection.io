@@ -115,7 +115,8 @@ body:after, body:before {
   background: #fff;
   padding: 2em;
   margin: 1em;
-  border-radius: 5px; }
+  border-radius: 5px;
+  min-width: 70%; }
 
 .button-secondary {
   color: white;
@@ -152,12 +153,18 @@ body:after, body:before {
   background: #c8c8c8;
   /* this is a green */ }
 
-.messages {
+.messages li {
+  list-style: none;
   padding: 1em;
-  background: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   color: #fff;
   font-weight: bold; }
+  .messages li.message {
+    background: rgba(255, 255, 255, 0.2); }
+  .messages li.error {
+    background: rgba(255, 1, 1, 0.5); }
+  .messages li.notice {
+    background: rgba(255, 255, 255, 0.5); }
 
 #new-watch-form {
   background: rgba(0, 0, 0, 0.05);
@@ -177,7 +184,7 @@ body:after, body:before {
 #diff-jump {
   position: fixed;
   left: 0px;
-  top: 80px;
+  top: 120px;
   background: #fff;
   padding: 10px;
   border-top-right-radius: 5px;
@@ -202,13 +209,16 @@ footer {
 #feed-icon {
   vertical-align: middle; }
 
-#version {
+.sticky-tab {
   position: absolute;
   top: 80px;
-  right: 0px;
   font-size: 8px;
   background: #fff;
   padding: 10px; }
+  .sticky-tab#left-sticky {
+    left: 0px; }
+  .sticky-tab#right-sticky {
+    right: 0px; }
 
 #new-version-text a {
   color: #e07171; }
@@ -219,15 +229,39 @@ footer {
 .paused-state.state-False:hover img {
   opacity: 0.8; }
 
-.pure-form label {
-  font-weight: bold; }
-
-.pure-form input[type=url] {
-  width: 100%; }
-
-.pure-form textarea {
+.monospaced-textarea textarea {
   width: 100%;
-  font-size: 14px; }
+  font-family: monospace;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: scroll; }
+
+.pure-form {
+  /* The input fields with errors */
+  /* The list of errors */ }
+  .pure-form .pure-control-group, .pure-form .pure-group, .pure-form .pure-controls {
+    padding-bottom: 1em; }
+    .pure-form .pure-control-group dd, .pure-form .pure-group dd, .pure-form .pure-controls dd {
+      margin: 0px; }
+  .pure-form .error input {
+    background-color: #ffebeb; }
+  .pure-form ul.errors {
+    padding: .5em .6em;
+    border: 1px solid #dd0000;
+    border-radius: 4px;
+    vertical-align: middle;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box; }
+    .pure-form ul.errors li {
+      margin-left: 1em;
+      color: #dd0000; }
+  .pure-form label {
+    font-weight: bold; }
+  .pure-form input[type=url] {
+    width: 100%; }
+  .pure-form textarea {
+    width: 100%;
+    font-size: 14px; }
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
   .box {

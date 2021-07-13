@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Self hosted website change detection.">
-    <title>Change Detection</title>
+    <title>Change Detection{{extra_title}}</title>
     <link rel="stylesheet" href="/static/styles/pure-min.css">
     <link rel="stylesheet" href="/static/styles/styles.css?ver=1000">
     {% if extra_stylesheets %}
@@ -33,6 +33,7 @@
 
         <ul class="pure-menu-list">
         {% if current_user.is_authenticated or not has_password %}
+            {% if not current_diff_url %}
             <li class="pure-menu-item">
                 <a href="{{ url_for('get_backup')}}" class="pure-menu-link">BACKUP</a>
             </li>
@@ -42,6 +43,11 @@
             <li class="pure-menu-item">
                 <a href="{{ url_for('settings_page')}}" class="pure-menu-link">SETTINGS</a>
             </li>
+            {% else %}
+            <li class="pure-menu-item">
+                <a href="{{ url_for('edit_page', uuid=uuid, next='diff') }}" class="pure-menu-link">EDIT</a>
+            </li>
+            {% endif %}
         {% else %}
             <li class="pure-menu-item">
                 <a class="pure-menu-link" href="https://github.com/dgtlmoon/changedetection.io">Website Change Detection and Notification.</a>
@@ -62,20 +68,23 @@
         </ul>
     </div>
 </div>
-<div id="version">v{{ version }}</div>
+
+{% if left_sticky %}<div class="sticky-tab" id="left-sticky"><a href="{{url_for('preview_page', uuid=uuid)}}">Show current snapshot</a></div> {% endif %}
+{% if right_sticky %}<div class="sticky-tab" id="right-sticky">{{ right_sticky }}</div> {% endif %}
 <section class="content">
     <header>
         {% block header %}{% endblock %}
     </header>
 
-    {% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-        <div class="flash-message {{ message['class'] }}">{{ message['message'] }}</div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class=messages>
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
         {% endfor %}
-    </div>
-    {% endif %}
-
+        </ul>
+      {% endif %}
+    {% endwith %}
     {% block content %}
 
     {% endblock %}

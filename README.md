@@ -26,9 +26,22 @@ Know when ...
 - Festivals with changes
 - Realestate listing changes
 - COVID related news from government websites
+- Detect and monitor changes in JSON API responses 
+- API monitoring and alerting
 
+_Need an actual Chrome runner with Javascript support? see the experimental <a href="https://github.com/dgtlmoon/changedetection.io/tree/javascript-browser">Javascript/Chrome support changedetection.io branch!</a>_
 
 **Get monitoring now! super simple, one command!**
+Run the python code on your own machine by cloning this repository, or with <a href="https://docs.docker.com/get-docker/">docker</a> and/or <a href="https://www.digitalocean.com/community/tutorial_collections/how-to-install-docker-compose">docker-compose</a>
+
+With one docker-compose command
+
+```bash
+docker-compose up -d
+```
+
+or
+
 
 ```bash
 docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
@@ -50,7 +63,6 @@ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/dat
 ### Screenshots
 
 Examining differences in content.
-
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
 
@@ -78,9 +90,21 @@ Just some examples
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-notifications.png" style="max-width:100%;" alt="Self-hosted web page change monitoring notifications"  title="Self-hosted web page change monitoring notifications"  />
 
+### JSON API Monitoring
+
+Detect changes and monitor data in JSON API's by using the built-in JSONPath selectors as a filter.
+
+
+![image](https://user-images.githubusercontent.com/275001/125165842-0ce01980-e1dc-11eb-9e73-d8137dd162dc.png)
+
+This will re-parse the JSON and apply indent to the text, making it super easy to monitor and detect changes in JSON API results
+
+![image](https://user-images.githubusercontent.com/275001/125165995-d9ea5580-e1dc-11eb-8030-f0deced2661a.png)
+
+
 ### Proxy
 
-A proxy for ChangeDectection.io can be configured by setting environment the 
+A proxy for ChangeDetection.io can be configured by setting environment the 
 `HTTP_PROXY`, `HTTPS_PROXY` variables, examples are also in the `docker-compose.yml`
 
 `NO_PROXY` exclude list can be specified by following `"localhost,192.168.0.0/24"`
@@ -99,9 +123,15 @@ This proxy support also extends to the notifications https://github.com/caronc/a
 
 ### Notes
 
-- Does not yet support Javascript
-- Wont work with Cloudfare type "Please turn on javascript" protected pages
+- ~~Does not yet support Javascript~~
+- ~~Wont work with Cloudfare type "Please turn on javascript" protected pages~~
 - You can use the 'headers' section to monitor password protected web page changes
+
+See the experimental <a href="https://github.com/dgtlmoon/changedetection.io/tree/javascript-browser">Javascript/Chrome browser support!</a>
+
+### RaspberriPi support?
+
+RaspberriPi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! 
 
 
 ### Support us

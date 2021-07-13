@@ -6,15 +6,18 @@ eventlet>=0.31.0
 requests[socks] ~= 2.15
 validators
 timeago ~=1.0
-inscriptis ~= 1.1
+inscriptis ~= 1.2
 feedgen ~= 0.9
 flask-login ~= 0.5
 pytz
 urllib3
+wtforms ~= 2.3.3
+jsonpath-ng ~= 1.5.3
+
 
 # Notification library
 apprise ~= 0.9
 
-# Used for CSS filtering
+# Used for CSS filtering, replace with soupsieve and lxml for xpath
 bs4
 

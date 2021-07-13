@@ -1,9 +1,7 @@
+from os import unlink, path, mkdir
 import json
 import uuid as uuid_builder
-import os.path
-from os import path
 from threading import Lock
-
 from copy import deepcopy
 
 import logging
@@ -40,6 +38,7 @@ class ChangeDetectionStore:
                 },
                 'application': {
                     'password': False,
+                    'extract_title_as_title': False,
                     'notification_urls': [] # Apprise URL list
                 }
             }
@@ -55,7 +54,9 @@ class ChangeDetectionStore:
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
             'newest_history_key': "",
             'title': None,
-            'minutes_between_check': 3 * 60,  # Default 3 hours
+            # Re #110, so then if this is set to None, we know to use the default value instead
+            # Requires setting to None on submit if it's the same as the default
+            'minutes_between_check': None,
             'previous_md5': "",
             'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send
@@ -113,7 +114,13 @@ class ChangeDetectionStore:
                 self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
                 self.add_watch(url='https://changedetection.io', tag='Tech news')
 
-        self.__data['version_tag'] = "0.32"
+        self.__data['version_tag'] = "0.37"
+
+        # Helper to remove password protection
+        password_reset_lockfile = "{}/removepassword.lock".format(self.datastore_path)
+        if path.isfile(password_reset_lockfile):
+            self.__data['settings']['application']['password'] = False
+            unlink(password_reset_lockfile)
 
         if not 'app_guid' in self.__data:
             import sys
@@ -180,6 +187,12 @@ class ChangeDetectionStore:
                 self.__data['watching'][uuid]['viewed'] = False
                 has_unviewed = True
 
+            # #106 - Be sure this is None on empty string, False, None, etc
+            if not self.__data['watching'][uuid]['title']:
+                self.__data['watching'][uuid]['title'] = None
+
+
+
         self.__data['has_unviewed'] = has_unviewed
 
         return self.__data
@@ -199,7 +212,7 @@ class ChangeDetectionStore:
 
     def unlink_history_file(self, path):
         try:
-            os.unlink(path)
+            unlink(path)
         except (FileNotFoundError, IOError):
             pass
 
@@ -293,7 +306,7 @@ class ChangeDetectionStore:
         # Get the directory ready
         output_path = "{}/{}".format(self.datastore_path, new_uuid)
         try:
-            os.mkdir(output_path)
+            mkdir(output_path)
         except FileExistsError:
             print(output_path, "already exists.")
 
@@ -362,4 +375,4 @@ class ChangeDetectionStore:
         for item in pathlib.Path(self.datastore_path).rglob("*/*txt"):
             if not str(item) in index:
                 print ("Removing",item)
-                os.unlink(item)
+                unlink(item)

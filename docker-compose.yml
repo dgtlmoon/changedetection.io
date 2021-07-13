@@ -1,5 +1,4 @@
 version: '2'
-
 services:
   changedetection:
     build: .
@@ -14,14 +13,15 @@ services:
 #      - NO_PROXY="localhost,192.168.0.0/24"
 #        Base URL of your changedetection.io install (Added to notification alert
 #      - BASE_URL="https://mysite.com"
-    ports:
-      - 5000:5000
-    restart: always
+
+#   Not needed because we are port's on the host via NGINX
+#    ports:
+#      - 5000:5000
+    restart: unless-stopped
     networks:
         changenet:
             aliases:
                 - flask-app
-
   nginx:
     image: nginx:1
     ports:
@@ -30,8 +30,11 @@ services:
         - ./docker-configs/nginx.conf:/etc/nginx/conf.d/default.conf
     networks:
         changenet:
+    restart: unless-stopped
 
 volumes:
   changedetection-data:
 networks:
     changenet:
+
+

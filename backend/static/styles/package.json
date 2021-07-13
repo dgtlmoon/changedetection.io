@@ -5,11 +5,12 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "scss": "node-sass --watch *.scss -o ."
+    "scss": "node-sass --watch styles.scss diff.scss -o ."
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "node-sass": "^6.0.0"
+    "node-sass": "^6.0.1",
+    "trim-newlines": "^3.0.1"
   }
 }

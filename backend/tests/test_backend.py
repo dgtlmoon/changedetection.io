@@ -8,8 +8,6 @@ from . util import set_original_response, set_modified_response, live_server_set
 sleep_time_for_fetch_thread = 3
 
 
-
-
 def test_check_basic_change_detection_functionality(client, live_server):
     set_original_response()
     live_server_setup(live_server)
@@ -82,15 +80,27 @@ def test_check_basic_change_detection_functionality(client, live_server):
         # It should report nothing found (no new 'unviewed' class)
         res = client.get(url_for("index"))
         assert b'unviewed' not in res.data
+        assert b'head title' not in res.data # Should not be present because this is off by default
         assert b'test-endpoint' in res.data
 
     set_original_response()
 
+    # Enable auto pickup of <title> in settings
+    res = client.post(
+        url_for("settings_page"),
+        data={"extract_title_as_title": "1", "minutes_between_check": 180},
+        follow_redirects=True
+    )
+
     client.get(url_for("api_watch_checknow"), follow_redirects=True)
     time.sleep(sleep_time_for_fetch_thread)
+
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
+    # It should have picked up the <title>
+    assert b'head title' in res.data
 
+    #
     # Cleanup everything
     res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

@@ -3,7 +3,8 @@
 
 def set_original_response():
     test_return_data = """<html>
-       <body>
+    <head><title>head title</title></head>
+    <body>
      Some initial text</br>
      <p>Which is across multiple lines</p>
      </br>
@@ -18,7 +19,8 @@ def set_original_response():
 
 def set_modified_response():
     test_return_data = """<html>
-       <body>
+    <head><title>modified head title</title></head>
+    <body>
      Some initial text</br>
      <p>which has this one new line</p>
      </br>

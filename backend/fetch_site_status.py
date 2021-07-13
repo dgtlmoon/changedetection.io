@@ -3,7 +3,10 @@ import requests
 import hashlib
 from inscriptis import get_text
 import urllib3
+from . import html_tools
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 # Some common stuff here that can be moved to a base class
 class perform_site_check():
@@ -13,18 +16,34 @@ class perform_site_check():
         self.datastore = datastore
 
     def strip_ignore_text(self, content, list_ignore_text):
+        import re
         ignore = []
+        ignore_regex = []
         for k in list_ignore_text:
-            ignore.append(k.encode('utf8'))
+
+            # Is it a regex?
+            if k[0] == '/':
+                ignore_regex.append(k.strip(" /"))
+            else:
+                ignore.append(k)
 
         output = []
         for line in content.splitlines():
-            line = line.encode('utf8')
 
             # Always ignore blank lines in this mode. (when this function gets called)
             if len(line.strip()):
-                if not any(skip_text in line for skip_text in ignore):
-                    output.append(line)
+                regex_matches = False
+
+                # if any of these match, skip
+                for regex in ignore_regex:
+                    try:
+                        if re.search(regex, line, re.IGNORECASE):
+                            regex_matches = True
+                    except Exception as e:
+                        continue
+
+                if not regex_matches and not any(skip_text in line for skip_text in ignore):
+                    output.append(line.encode('utf8'))
 
         return "\n".encode('utf8').join(output)
 
@@ -32,6 +51,7 @@ class perform_site_check():
 
     def run(self, uuid):
         timestamp = int(time.time())  # used for storage etc too
+
         stripped_text_from_html = False
         changed_detected = False
 
@@ -66,18 +86,37 @@ class perform_site_check():
                              timeout=timeout,
                              verify=False)
 
-            # CSS Filter
-            css_filter = self.datastore.data['watching'][uuid]['css_filter']
-            if css_filter and len(css_filter.strip()):
-                from bs4 import BeautifulSoup
-                soup = BeautifulSoup(r.content, "html.parser")
-                stripped_text_from_html = ""
-                for item in soup.select(css_filter):
-                    text = str(item.get_text()).strip() + '\n'
-                    stripped_text_from_html += text
+            html = r.text
 
-            else:
-                stripped_text_from_html = get_text(r.text)
+            is_html = True
+            css_filter_rule = self.datastore.data['watching'][uuid]['css_filter']
+            if css_filter_rule and len(css_filter_rule.strip()):
+                if 'json:' in css_filter_rule:
+                    # POC hack, @todo rename vars, see how it fits in with the javascript version
+                    import json
+                    from jsonpath_ng import jsonpath, parse
+
+                    json_data = json.loads(html)
+                    jsonpath_expression = parse(css_filter_rule.replace('json:',''))
+                    match = jsonpath_expression.find(json_data)
+                    if match:
+                        # @todo isnt there a better way to say this?
+                        if type(match[0].value) == int or type(match[0].value) == str or type(match[0].value) == float:
+                            # A single string, just use that as a string
+                            # Be sure it becomes str
+                            stripped_text_from_html = str(match[0].value)
+                        else:
+                            # JSON encoded struct as str
+                            stripped_text_from_html = json.dumps(match[0].value, indent=4)
+
+                    is_html = False
+
+                else:
+                    # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+                    html = html_tools.css_filter(css_filter=css_filter_rule, html_content=r.content)
+
+            if is_html:
+                stripped_text_from_html = get_text(html)
 
         # Usually from networkIO/requests level
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
@@ -125,5 +164,11 @@ class perform_site_check():
                     update_obj["last_changed"] = timestamp
 
                 update_obj["previous_md5"] = fetched_md5
+
+            # Extract title as title
+            if self.datastore.data['settings']['application']['extract_title_as_title']:
+                if not self.datastore.data['watching'][uuid]['title'] or not len(self.datastore.data['watching'][uuid]['title']):
+                    update_obj['title'] = html_tools.extract_element(find='title', html_content=html)
+
 
         return changed_detected, update_obj, stripped_text_from_html
