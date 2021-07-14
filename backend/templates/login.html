@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="edit-form">
-    <form class="pure-form pure-form-stacked" action="/login" method="POST">
+    <form class="pure-form pure-form-stacked" action="{{url_for('login')}}" method="POST">
         <fieldset>
             <div class="pure-control-group">
                 <label for="password">Password</label>

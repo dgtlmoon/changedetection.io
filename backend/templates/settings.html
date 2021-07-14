@@ -4,7 +4,7 @@
 {% from '_helpers.jinja' import render_field %}
 <script type="text/javascript" src="static/js/settings.js"></script>
 <div class="edit-form">
-    <form class="pure-form pure-form-stacked settings" action="/settings" method="POST">
+    <form class="pure-form pure-form-stacked settings" action="{{url_for('settings_page')}}" method="POST">
         <fieldset>
             <div class="pure-control-group">
                 {{ render_field(form.minutes_between_check, size=5) }}

@@ -4,7 +4,7 @@
 
 <div class="box">
 
-    <form class="pure-form" action="/api/add" method="POST" id="new-watch-form">
+    <form class="pure-form" action="{{ url_for('api_watch_add') }}" method="POST" id="new-watch-form">
         <fieldset>
             <legend>Add a new change detection watch</legend>
             <input type="url" placeholder="https://..." name="url"/>
