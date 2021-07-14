@@ -67,13 +67,12 @@ SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com
             </div>
             <br/>
             <div class="pure-control-group">
-                <a href="/" class="pure-button button-small button-cancel">Cancel</a>
-                <a href="/api/delete?uuid={{uuid}}"
+                <a href="{{url_for('index')}}" class="pure-button button-small button-cancel">Cancel</a>
+                <a href="{{url_for('api_delete', uuid=uuid)}}"
                    class="pure-button button-small button-error ">Delete</a>
             </div>
         </fieldset>
     </form>
-
 
 </div>
 

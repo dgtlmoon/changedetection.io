@@ -12,7 +12,7 @@
             </div>
             <div class="pure-control-group">
                 {% if current_user.is_authenticated %}
-                <a href="{{url_for('settings_page', removepassword='yes')}}" class="pure-button pure-button-primary">Remove password</a>
+                    <a href="{{url_for('settings_page', removepassword='yes')}}" class="pure-button pure-button-primary">Remove password</a>
                 {% else %}
                 {{ render_field(form.password, size=10) }}
                 <span class="pure-form-message-inline">Password protection for your changedetection.io application.</span>
@@ -97,11 +97,9 @@ SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com") }}
             </div>
             <br/>
             <div class="pure-control-group">
-                <a href="/" class="pure-button button-small button-cancel">Back</a>
-                <a href="/scrub" class="pure-button button-small button-cancel">Delete History Snapshot Data</a>
+                <a href="{{url_for('index')}}" class="pure-button button-small button-cancel">Back</a>
+                <a href="{{url_for('scrub_page')}}" class="pure-button button-small button-cancel">Delete History Snapshot Data</a>
             </div>
-
-
         </fieldset>
     </form>
 

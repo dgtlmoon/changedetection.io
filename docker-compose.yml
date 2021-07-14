@@ -17,8 +17,14 @@ services:
   #        Base URL of your changedetection.io install (Added to notification alert
   #      - BASE_URL="https://mysite.com"
 
+  #        Respect proxy_pass type settings, `proxy_set_header Host "localhost";` and `proxy_set_header X-Forwarded-Prefix /app;`
+  #        More here https://github.com/dgtlmoon/changedetection.io/wiki/Running-changedetection.io-behind-a-reverse-proxy-sub-directory
+  #      - USE_X_SETTINGS=1
+
+      # Comment out ports: when using behind a reverse proxy , enable networks: etc.
       ports:
         - 5000:5000
+
       restart: always
 
 volumes:
