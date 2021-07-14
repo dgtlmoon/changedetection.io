@@ -12,7 +12,7 @@
             </div>
             <div class="pure-control-group">
                 {% if current_user.is_authenticated %}
-                <a href="/settings?removepassword=true" class="pure-button pure-button-primary">Remove password</a>
+                <a href="{{url_for('settings_page', removepassword='yes')}}" class="pure-button pure-button-primary">Remove password</a>
                 {% else %}
                 {{ render_field(form.password, size=10) }}
                 <span class="pure-form-message-inline">Password protection for your changedetection.io application.</span>
