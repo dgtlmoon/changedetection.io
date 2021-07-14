@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Self hosted website change detection.">
     <title>Change Detection{{extra_title}}</title>
-    <link rel="stylesheet" href="/static/styles/pure-min.css">
-    <link rel="stylesheet" href="/static/styles/styles.css?ver=1000">
+    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}">
+    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}">
     {% if extra_stylesheets %}
         {% for m in extra_stylesheets %}
         <link rel="stylesheet" href="{{ m }}?ver=1000">
@@ -21,7 +21,7 @@
         {% if has_password and not current_user.is_authenticated %}
             <a class="pure-menu-heading" href="https://github.com/dgtlmoon/changedetection.io" rel="noopener"><strong>Change</strong>Detection.io</a>
         {% else %}
-            <a class="pure-menu-heading" href="/"><strong>Change</strong>Detection.io</a>
+            <a class="pure-menu-heading" href="{{url_for('index')}}"><strong>Change</strong>Detection.io</a>
         {% endif %}
         {% if current_diff_url %}
         <a class=current-diff-url href="{{ current_diff_url }}"><span style="max-width: 30%; overflow: hidden;">{{ current_diff_url }}</span></a>
@@ -35,13 +35,13 @@
         {% if current_user.is_authenticated or not has_password %}
             {% if not current_diff_url %}
             <li class="pure-menu-item">
-                <a href="/backup" class="pure-menu-link">BACKUP</a>
+                <a href="{{ url_for('get_backup')}}" class="pure-menu-link">BACKUP</a>
             </li>
             <li class="pure-menu-item">
-                <a href="/import" class="pure-menu-link">IMPORT</a>
+                <a href="{{ url_for('import_page')}}" class="pure-menu-link">IMPORT</a>
             </li>
             <li class="pure-menu-item">
-                <a href="/settings" class="pure-menu-link">SETTINGS</a>
+                <a href="{{ url_for('settings_page')}}" class="pure-menu-link">SETTINGS</a>
             </li>
             {% else %}
             <li class="pure-menu-item">
@@ -55,7 +55,7 @@
         {% endif %}
 
         {% if current_user.is_authenticated %}
-            <li class="pure-menu-item"><a href="/logout" class="pure-menu-link">LOG OUT</a></li>
+            <li class="pure-menu-item"><a href="{{url_for('logout')}}" class="pure-menu-link">LOG OUT</a></li>
         {% endif %}
             <li class="pure-menu-item"><a class="github-link" href="https://github.com/dgtlmoon/changedetection.io">
                 <svg class="octicon octicon-mark-github v-align-middle" height="32" viewBox="0 0 16 16"

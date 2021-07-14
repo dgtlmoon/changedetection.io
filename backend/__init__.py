@@ -468,11 +468,12 @@ def changedetection_app(config=None, datastore_o=None):
             form.notification_body.data = datastore.data['settings']['application']['notification_body']
 
             # Password unset is a GET
-            if request.values.get('removepassword') == 'true':
+            if request.values.get('removepassword') == 'yes':
                 from pathlib import Path
                 datastore.data['settings']['application']['password'] = False
                 flash("Password protection removed.", 'notice')
                 flask_login.logout_user()
+                return redirect(url_for('settings_page'))
 
         if request.method == 'POST' and form.validate():
 
@@ -577,7 +578,7 @@ def changedetection_app(config=None, datastore_o=None):
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
-        extra_stylesheets = ['/static/styles/diff.css']
+        extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
@@ -634,7 +635,7 @@ def changedetection_app(config=None, datastore_o=None):
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
-        extra_stylesheets = ['/static/styles/diff.css']
+        extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
 
         try:
             watch = datastore.data['watching'][uuid]

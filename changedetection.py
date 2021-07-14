@@ -65,6 +65,18 @@ def main(argv):
                     has_password=datastore.data['settings']['application']['password'] != False
                     )
 
+    # Proxy sub-directory support
+    # Set environment var USE_X_SETTINGS=1 on this script
+    # And then in your proxy_pass settings
+    #
+    #         proxy_set_header Host "localhost";
+    #         proxy_set_header X-Forwarded-Prefix /app;
+
+    if os.getenv('USE_X_SETTINGS'):
+        print ("USE_X_SETTINGS is ENABLED\n")
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_prefix=1, x_host=1)
+
     if ssl_mode:
         # @todo finalise SSL config, but this should get you in the right direction if you need it.
         eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen(('', port)),
