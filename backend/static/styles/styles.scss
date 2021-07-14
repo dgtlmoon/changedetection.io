@@ -312,6 +312,14 @@ footer {
   vertical-align: middle;
 }
 
+#top-right-menu {
+    position: absolute;
+    right: 0px;
+    background: linear-gradient(to right, #fff0, #fff 10%);
+    padding-left: 20px;
+    padding-right: 10px;
+}
+
 .sticky-tab {
   position: absolute;
   top: 80px;

@@ -97,18 +97,20 @@ class perform_site_check():
                     from jsonpath_ng import jsonpath, parse
 
                     json_data = json.loads(html)
-                    jsonpath_expression = parse(css_filter_rule.replace('json:',''))
+                    jsonpath_expression = parse(css_filter_rule.replace('json:', ''))
                     match = jsonpath_expression.find(json_data)
-                    if match:
-                        # @todo isnt there a better way to say this?
-                        if type(match[0].value) == int or type(match[0].value) == str or type(match[0].value) == float:
-                            # A single string, just use that as a string
-                            # Be sure it becomes str
-                            stripped_text_from_html = str(match[0].value)
-                        else:
-                            # JSON encoded struct as str
-                            stripped_text_from_html = json.dumps(match[0].value, indent=4)
+                    s = []
 
+                    # More than one result, we will return it as a JSON list.
+                    if len(match) > 1:
+                        for i in match:
+                            s.append(i.value)
+
+                    # Single value, use just the value, as it could be later used in a token in notifications.
+                    if len(match) == 1:
+                        s = match[0].value
+
+                    stripped_text_from_html = json.dumps(s, indent=4)
                     is_html = False
 
                 else:
