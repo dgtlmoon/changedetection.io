@@ -1,4 +1,4 @@
-name: Test, build and push to Docker Hub
+name: Test, build and push tagged release to Docker Hub
 
 on:
   push:
