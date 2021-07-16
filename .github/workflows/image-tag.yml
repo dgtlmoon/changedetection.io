@@ -16,6 +16,14 @@ jobs:
         with:
           python-version: 3.9
 
+      - uses: olegtarasov/get-tag@v2.1
+        id: tagName
+
+#        with:
+#          tagRegex: "foobar-(.*)"  # Optional. Returns specified group text as tag name. Full tag string is returned if regex is not defined.
+#          tagRegexGroup: 1 # Optional. Default is 1.
+
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -70,8 +78,7 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:${{ github.event.release.tag_name }}
-          #                ${{ secrets.DOCKER_HUB_USERNAME }}:/changedetection.io:${{ env.RELEASE_VERSION }}
+            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:${{ steps.tagName.outputs.tag }}
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
