@@ -59,13 +59,8 @@ jobs:
           version: latest
           driver-opts: image=moby/buildkit:master
 
-      - name: Branch name
-        id: branch_name
-        run: |
-          echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
-          echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
-          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
-
+      - name: tag
+        run : echo ${{ github.event.release.tag_name }}
 
       - name: Build and push tagged version
         id: docker_build
@@ -75,7 +70,7 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:$SOURCE_TAG
+            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:${{ github.event.release.tag_name }}
           #                ${{ secrets.DOCKER_HUB_USERNAME }}:/changedetection.io:${{ env.RELEASE_VERSION }}
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
