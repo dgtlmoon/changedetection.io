@@ -201,12 +201,13 @@ body:after, body:before {
   padding: 1em;
   border-radius: 10px;
   margin-bottom: 1em; }
-
-#new-watch-form legend {
-  color: #fff; }
-
-#new-watch-form input {
-  width: auto !important; }
+  #new-watch-form input {
+    width: auto !important;
+    display: inline-block; }
+  #new-watch-form .label {
+    display: none; }
+  #new-watch-form legend {
+    color: #fff; }
 
 #diff-col {
   padding-left: 40px; }
