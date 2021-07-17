@@ -372,7 +372,7 @@ footer {
 .pure-form {
     .pure-control-group, .pure-group, .pure-controls {
         padding-bottom: 1em;
-        dd {
+        div {
             margin: 0px;
         }
     }
@@ -382,7 +382,8 @@ footer {
         background-color: #ffebeb;
     }
   }
-   /* The list of errors */
+
+  /* The list of errors */
   ul.errors {
     padding: .5em .6em;
     border: 1px solid #dd0000;
