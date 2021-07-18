@@ -266,15 +266,20 @@ body:after, body:before {
   padding: 1em;
   border-radius: 10px;
   margin-bottom: 1em;
+  input {
+    width: auto !important;
+    display: inline-block;
+  }
+  .label {
+    display: none;
+  }
+  legend {
+    color: #fff;
+  }
 }
 
-#new-watch-form legend {
-  color: #fff;
-}
 
-#new-watch-form input {
-  width: auto !important;
-}
+
 
 #diff-col {
   padding-left: 40px;
@@ -367,7 +372,7 @@ footer {
 .pure-form {
     .pure-control-group, .pure-group, .pure-controls {
         padding-bottom: 1em;
-        dd {
+        div {
             margin: 0px;
         }
     }
@@ -377,7 +382,8 @@ footer {
         background-color: #ffebeb;
     }
   }
-   /* The list of errors */
+
+  /* The list of errors */
   ul.errors {
     padding: .5em .6em;
     border: 1px solid #dd0000;

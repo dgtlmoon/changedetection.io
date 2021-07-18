@@ -223,7 +223,6 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def index():
         limit_tag = request.args.get('tag')
-
         pause_uuid = request.args.get('pause')
 
         if pause_uuid:
@@ -279,7 +278,11 @@ def changedetection_app(config=None, datastore_o=None):
             return response
 
         else:
+            from backend import forms
+            form = forms.quickWatchForm(request.form)
+
             output = render_template("watch-overview.html",
+                                     form=form,
                                      watches=sorted_watches,
                                      tags=existing_tags,
                                      active_tag=limit_tag,
@@ -729,19 +732,26 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/api/add", methods=['POST'])
     @login_required
     def api_watch_add():
+        from backend import forms
+        form = forms.quickWatchForm(request.form)
 
-        url = request.form.get('url').strip()
-        if datastore.url_exists(url):
-            flash('The URL {} already exists'.format(url), "error")
+        if form.validate():
+
+            url = request.form.get('url').strip()
+            if datastore.url_exists(url):
+                flash('The URL {} already exists'.format(url), "error")
+                return redirect(url_for('index'))
+
+            # @todo add_watch should throw a custom Exception for validation etc
+            new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip())
+            # Straight into the queue.
+            update_q.put(new_uuid)
+
+            flash("Watch added.")
             return redirect(url_for('index'))
-
-        # @todo add_watch should throw a custom Exception for validation etc
-        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip())
-        # Straight into the queue.
-        update_q.put(new_uuid)
-
-        flash("Watch added.")
-        return redirect(url_for('index'))
+        else:
+            flash("Error")
+            return redirect(url_for('index'))
 
     @app.route("/api/delete", methods=['GET'])
     @login_required

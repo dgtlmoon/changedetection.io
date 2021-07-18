@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
-
 {% block content %}
+{% from '_helpers.jinja' import render_simple_field %}
 
 <div class="box">
 
     <form class="pure-form" action="{{ url_for('api_watch_add') }}" method="POST" id="new-watch-form">
         <fieldset>
             <legend>Add a new change detection watch</legend>
-            <input type="url" placeholder="https://..." name="url"/>
-            <input type="text" placeholder="tag" size="10" name="tag" value="{{active_tag if active_tag}}"/>
+                {{ render_simple_field(form.url, placeholder="https://...", size=30, required=true) }}
+                {{ render_simple_field(form.tag, size=10, value=active_tag if active_tag else '', placeholder="tag") }}
             <button type="submit" class="pure-button pure-button-primary">Watch</button>
         </fieldset>
         <!-- add extra stuff, like do a http POST and send headers -->

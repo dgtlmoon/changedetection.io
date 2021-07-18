@@ -124,13 +124,15 @@ class ValidateCSSJSONInput(object):
                 message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
                 raise ValidationError(message % (input, str(e)))
 
-
-class watchForm(Form):
+class quickWatchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
     # `require_tld` = False is needed even for the test harness "http://localhost:5005.." to run
 
     url = html5.URLField('URL', [validators.URL(require_tld=False)])
     tag = StringField('Tag', [validators.Optional(), validators.Length(max=35)])
+
+class watchForm(quickWatchForm):
+
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
     css_filter = StringField('CSS/JSON Filter', [ValidateCSSJSONInput()])
