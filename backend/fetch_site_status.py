@@ -63,7 +63,7 @@ class perform_site_check():
         extra_headers = self.datastore.get_val(uuid, 'headers')
 
         # Tweak the base config with the per-watch ones
-        request_headers = self.datastore.data['settings']['headers']
+        request_headers = self.datastore.data['settings']['headers'].copy()
         request_headers.update(extra_headers)
 
         # https://github.com/psf/requests/issues/4525
