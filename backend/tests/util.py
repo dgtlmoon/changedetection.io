@@ -13,7 +13,7 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
     return None
 
@@ -29,7 +29,7 @@ def set_modified_response():
      </html>
     """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
     return None
@@ -40,30 +40,21 @@ def live_server_setup(live_server):
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
         # Tried using a global var here but didn't seem to work, so reading from a file instead.
-        with open("test-datastore/output.txt", "r") as f:
+        with open("test-datastore/endpoint-content.txt", "r") as f:
             return f.read()
 
+    # Where we POST to as a notification
     @live_server.app.route('/test_notification_endpoint', methods=['POST'])
     def test_notification_endpoint():
         from flask import request
 
-        with open("test-datastore/count.txt", "w") as f:
-            f.write("we hit it\n")
+        with open("test-datastore/notification.txt", "wb") as f:
             # Debug method, dump all POST to file also, used to prove #65
             data = request.stream.read()
             if data != None:
-                f.write(str(data))
+                f.write(data)
 
         print("\n>> Test notification endpoint was hit.\n")
         return "Text was set"
-
-    # And this should return not zero.
-    @live_server.app.route('/test_notification_counter')
-    def test_notification_counter():
-        try:
-            with open("test-datastore/count.txt", "r") as f:
-                return f.read()
-        except FileNotFoundError:
-            return "nope :("
 
     live_server.start()

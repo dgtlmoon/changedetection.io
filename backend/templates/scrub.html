@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="edit-form">
-    <form class="pure-form pure-form-stacked" action="/scrub" method="POST">
+    <form class="pure-form pure-form-stacked" action="{{url_for('scrub_page')}}" method="POST">
         <fieldset>
             <div class="pure-control-group">
                 This will remove all version snapshots/data, but keep your list of URLs. <br/>
@@ -26,7 +26,7 @@
             </div>
             <br/>
             <div class="pure-control-group">
-                <a href="/" class="pure-button button-small button-cancel">Cancel</a>
+                <a href="{{url_for('index')}}" class="pure-button button-small button-cancel">Cancel</a>
             </div>
         </fieldset>
     </form>

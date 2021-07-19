@@ -65,7 +65,8 @@ class update_worker(threading.Thread):
                             if len(watch['notification_urls']):
                                 print("Processing notifications for UUID: {}".format(uuid))
                                 n_object = {'watch_url': watch['url'],
-                                            'notification_urls': watch['notification_urls']}
+                                            'notification_urls': watch['notification_urls'],
+                                            "current_snapshot":contents}
                                 self.notification_q.put(n_object)
 
                             # No? maybe theres a global setting, queue them all
@@ -73,7 +74,8 @@ class update_worker(threading.Thread):
                                 print("Processing GLOBAL notifications for UUID: {}".format(uuid))
                                 n_object = {'watch_url': watch['url'],
                                             'notification_urls': self.datastore.data['settings']['application'][
-                                                'notification_urls']}
+                                                'notification_urls'],
+                                            "current_snapshot":contents}
                                 self.notification_q.put(n_object)
 
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)

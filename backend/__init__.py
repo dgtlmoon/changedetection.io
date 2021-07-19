@@ -430,12 +430,17 @@ def changedetection_app(config=None, datastore_o=None):
 
             if form.trigger_check.data:
                 n_object = {'watch_url': form.url.data.strip(),
-                            'notification_urls': form.notification_urls.data}
+                            'notification_urls': form.notification_urls.data
+                            }
                 notification_q.put(n_object)
 
                 flash('Notifications queued.')
 
-            return redirect(url_for('index'))
+            # Diff page [edit] link should go back to diff page
+            if request.args.get("next") and request.args.get("next") == 'diff':
+                return redirect(url_for('diff_history_page', uuid=uuid))
+            else:
+                return redirect(url_for('index'))
 
         else:
             if request.method == 'POST' and not form.validate():
@@ -470,13 +475,16 @@ def changedetection_app(config=None, datastore_o=None):
             form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
             form.extract_title_as_title.data = datastore.data['settings']['application']['extract_title_as_title']
             form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
+            form.notification_title.data = datastore.data['settings']['application']['notification_title']
+            form.notification_body.data = datastore.data['settings']['application']['notification_body']
 
             # Password unset is a GET
-            if request.values.get('removepassword') == 'true':
+            if request.values.get('removepassword') == 'yes':
                 from pathlib import Path
                 datastore.data['settings']['application']['password'] = False
                 flash("Password protection removed.", 'notice')
                 flask_login.logout_user()
+                return redirect(url_for('settings_page'))
 
         if request.method == 'POST' and form.validate():
 
@@ -484,6 +492,8 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data
             datastore.data['settings']['application']['extract_title_as_title'] = form.extract_title_as_title.data
             datastore.data['settings']['application']['fetch_backend'] = form.fetch_backend.data
+            datastore.data['settings']['application']['notification_title'] = form.notification_title.data
+            datastore.data['settings']['application']['notification_body'] = form.notification_body.data
 
             if len(form.notification_urls.data):
                 import apprise
@@ -580,7 +590,7 @@ def changedetection_app(config=None, datastore_o=None):
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
-        extra_stylesheets = ['/static/styles/diff.css']
+        extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
@@ -637,7 +647,7 @@ def changedetection_app(config=None, datastore_o=None):
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
-        extra_stylesheets = ['/static/styles/diff.css']
+        extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
 
         try:
             watch = datastore.data['watching'][uuid]
@@ -831,39 +841,22 @@ def check_for_new_version():
         app.config.exit.wait(86400)
 
 def notification_runner():
-
     while not app.config.exit.is_set():
         try:
             # At the moment only one thread runs (single runner)
             n_object = notification_q.get(block=False)
         except queue.Empty:
             time.sleep(1)
-            pass
 
         else:
-            import apprise
-
-            # Create an Apprise instance
+            # Process notifications
             try:
-                apobj = apprise.Apprise()
-                for url in n_object['notification_urls']:
-                    apobj.add(url.strip())
-
-                n_body = n_object['watch_url']
-
-                # 65 - Append URL of instance to the notification if it is set.
-                base_url = os.getenv('BASE_URL')
-                if base_url != None:
-                    n_body += "\n" + base_url
-
-                apobj.notify(
-                    body=n_body,
-                    # @todo This should be configurable.
-                    title="ChangeDetection.io Notification - {}".format(n_object['watch_url'])
-                )
+                from backend import notification
+                notification.process_notification(n_object, datastore)
 
             except Exception as e:
-                print("Watch URL: {}  Error {}".format(n_object['watch_url'],e))
+                print("Watch URL: {}  Error {}".format(n_object['watch_url'], e))
+
 
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.

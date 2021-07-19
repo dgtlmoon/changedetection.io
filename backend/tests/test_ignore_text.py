@@ -41,7 +41,7 @@ def set_original_ignore_response():
 
     """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
 
@@ -57,7 +57,7 @@ def set_modified_original_ignore_response():
 
     """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
 
@@ -75,7 +75,7 @@ def set_modified_ignore_response():
 
     """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
 

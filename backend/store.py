@@ -40,7 +40,10 @@ class ChangeDetectionStore:
                     'password': False,
                     'extract_title_as_title': False,
                     'fetch_backend': 'html_requests',
-                    'notification_urls': [] # Apprise URL list
+                    'notification_urls': [], # Apprise URL list
+                    # Custom notification content
+                    'notification_title': 'ChangeDetection.io Notification - {watch_url}',
+                    'notification_body': '{base_url}'
                 }
             }
         }
@@ -116,7 +119,7 @@ class ChangeDetectionStore:
                 self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
                 self.add_watch(url='https://changedetection.io', tag='Tech news')
 
-        self.__data['version_tag'] = "0.37"
+        self.__data['version_tag'] = "0.38"
 
         # Helper to remove password protection
         password_reset_lockfile = "{}/removepassword.lock".format(self.datastore_path)
@@ -178,7 +181,6 @@ class ChangeDetectionStore:
 
     @property
     def data(self):
-
         has_unviewed = False
         for uuid, v in self.__data['watching'].items():
             self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
@@ -356,7 +358,7 @@ class ChangeDetectionStore:
             if self.stop_thread:
                 print("Shutting down datastore thread")
                 return
-            
+
             if self.needs_write:
                 self.sync_to_json()
             time.sleep(3)

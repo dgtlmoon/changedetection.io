@@ -80,10 +80,8 @@ class perform_site_check():
             timeout = self.datastore.data['settings']['requests']['timeout']
             url = self.datastore.get_val(uuid, 'url')
 
-
             # Pluggable content fetcher
             prefer_backend = self.datastore.data['watching'][uuid]['fetch_backend']
-
             if hasattr(content_fetcher, prefer_backend):
                 klass = getattr(content_fetcher, prefer_backend)
             else:
@@ -92,16 +90,47 @@ class perform_site_check():
 
             fetcher = klass()
             fetcher.run(url, timeout, request_headers)
+            # Fetching complete, now filters
+            # @todo move to class / maybe inside of fetcher abstract base?
 
-            html_content = fetcher.content
-
-            # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-
+            is_html = True
             css_filter_rule = self.datastore.data['watching'][uuid]['css_filter']
             if css_filter_rule and len(css_filter_rule.strip()):
-                html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=html_content)
+                if 'json:' in css_filter_rule:
+                    # POC hack, @todo rename vars, see how it fits in with the javascript version
+                    import json
+                    from jsonpath_ng import jsonpath, parse
 
-            stripped_text_from_html = get_text(html_content)
+                    json_data = json.loads(fetcher.content)
+                    jsonpath_expression = parse(css_filter_rule.replace('json:', ''))
+                    match = jsonpath_expression.find(json_data)
+                    s = []
+
+                    # More than one result, we will return it as a JSON list.
+                    if len(match) > 1:
+                        for i in match:
+                            s.append(i.value)
+
+                    # Single value, use just the value, as it could be later used in a token in notifications.
+                    if len(match) == 1:
+                        s = match[0].value
+
+                    stripped_text_from_html = json.dumps(s, indent=4)
+                    is_html = False
+
+                else:
+                    # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+                    stripped_text_from_html = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
+
+            if is_html:
+                # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+                html_content = fetcher.content
+                css_filter_rule = self.datastore.data['watching'][uuid]['css_filter']
+                if css_filter_rule and len(css_filter_rule.strip()):
+                    html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
+
+                # get_text() via inscriptis
+                stripped_text_from_html = get_text(html_content)
 
             # We rely on the actual text in the html output.. many sites have random script vars etc,
             # in the future we'll implement other mechanisms.
@@ -132,9 +161,9 @@ class perform_site_check():
                 update_obj["previous_md5"] = fetched_md5
 
             # Extract title as title
-            if self.datastore.data['settings']['application']['extract_title_as_title']:
+            if is_html and self.datastore.data['settings']['application']['extract_title_as_title']:
                 if not self.datastore.data['watching'][uuid]['title'] or not len(self.datastore.data['watching'][uuid]['title']):
-                    update_obj['title'] = html_tools.extract_element(find='title', html_content=html_content)
+                    update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
 
 
         return changed_detected, update_obj, stripped_text_from_html

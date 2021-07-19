@@ -22,7 +22,7 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
     return None
 
@@ -39,7 +39,7 @@ def set_modified_response():
      </html>
     """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
     return None

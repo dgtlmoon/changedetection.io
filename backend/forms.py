@@ -105,7 +105,7 @@ class ValidateContentFetcherIsReady(object):
 
 
 
-class ListRegex(object):
+class ValidateListRegex(object):
     """
     Validates that anything that looks like a regex passes as a regex
     """
@@ -125,6 +125,28 @@ class ListRegex(object):
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))
 
+class ValidateCSSJSONInput(object):
+    """
+    Filter validation
+    @todo CSS validator ;)
+    """
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        if 'json:' in field.data:
+            from jsonpath_ng.exceptions import JsonPathParserError
+            from jsonpath_ng import jsonpath, parse
+
+            input = field.data.replace('json:', '')
+
+            try:
+                parse(input)
+            except JsonPathParserError as e:
+                message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
+                raise ValidationError(message % (input, str(e)))
+
 
 class watchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
@@ -134,11 +156,12 @@ class watchForm(Form):
     tag = StringField('Tag', [validators.Optional(), validators.Length(max=35)])
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
-    css_filter = StringField('CSS Filter')
+    css_filter = StringField('CSS/JSON Filter', [ValidateCSSJSONInput()])
     title = StringField('Title')
+
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
 
-    ignore_text = StringListField('Ignore Text', [ListRegex()])
+    ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     notification_urls = StringListField('Notification URL List')
     headers = StringDictKeyValue('Request Headers')
     trigger_check = BooleanField('Send test notification on save')
@@ -157,3 +180,6 @@ class globalSettingsForm(Form):
 
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
     trigger_check = BooleanField('Send test notification on save')
+
+    notification_title = StringField('Notification Title')
+    notification_body = TextAreaField('Notification Body')
