@@ -278,7 +278,11 @@ def changedetection_app(config=None, datastore_o=None):
             return response
 
         else:
+            from backend import forms
+            form = forms.quickWatchForm(request.form)
+
             output = render_template("watch-overview.html",
+                                     form=form,
                                      watches=sorted_watches,
                                      tags=existing_tags,
                                      active_tag=limit_tag,
@@ -495,29 +499,10 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['notification_title'] = form.notification_title.data
             datastore.data['settings']['application']['notification_body'] = form.notification_body.data
 
-            if len(form.notification_urls.data):
-                import apprise
-                apobj = apprise.Apprise()
-                apobj.debug = True
-
-                # Add each notification
-                for n in datastore.data['settings']['application']['notification_urls']:
-                    apobj.add(n)
-                outcome = apobj.notify(
-                    body='Hello from the worlds best and simplest web page change detection and monitoring service!',
-                    title='Changedetection.io Notification Test',
-                )
-
-                if outcome:
-                    flash("{} Notification URLs reached.".format(len(form.notification_urls.data)), "notice")
-                else:
-                    flash("One or more Notification URLs failed", 'error')
-
-
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.needs_write = True
 
-            if form.trigger_check.data:
+            if form.trigger_check.data and len(form.notification_urls.data):
                 n_object = {'watch_url': "Test from changedetection.io!",
                             'notification_urls': form.notification_urls.data}
                 notification_q.put(n_object)
@@ -741,19 +726,26 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/api/add", methods=['POST'])
     @login_required
     def api_watch_add():
+        from backend import forms
+        form = forms.quickWatchForm(request.form)
 
-        url = request.form.get('url').strip()
-        if datastore.url_exists(url):
-            flash('The URL {} already exists'.format(url), "error")
+        if form.validate():
+
+            url = request.form.get('url').strip()
+            if datastore.url_exists(url):
+                flash('The URL {} already exists'.format(url), "error")
+                return redirect(url_for('index'))
+
+            # @todo add_watch should throw a custom Exception for validation etc
+            new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip())
+            # Straight into the queue.
+            update_q.put(new_uuid)
+
+            flash("Watch added.")
             return redirect(url_for('index'))
-
-        # @todo add_watch should throw a custom Exception for validation etc
-        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip())
-        # Straight into the queue.
-        update_q.put(new_uuid)
-
-        flash("Watch added.")
-        return redirect(url_for('index'))
+        else:
+            flash("Error")
+            return redirect(url_for('index'))
 
     @app.route("/api/delete", methods=['GET'])
     @login_required
