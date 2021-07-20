@@ -486,29 +486,10 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['notification_title'] = form.notification_title.data
             datastore.data['settings']['application']['notification_body'] = form.notification_body.data
 
-            if len(form.notification_urls.data):
-                import apprise
-                apobj = apprise.Apprise()
-                apobj.debug = True
-
-                # Add each notification
-                for n in datastore.data['settings']['application']['notification_urls']:
-                    apobj.add(n)
-                outcome = apobj.notify(
-                    body='Hello from the worlds best and simplest web page change detection and monitoring service!',
-                    title='Changedetection.io Notification Test',
-                )
-
-                if outcome:
-                    flash("{} Notification URLs reached.".format(len(form.notification_urls.data)), "notice")
-                else:
-                    flash("One or more Notification URLs failed", 'error')
-
-
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.needs_write = True
 
-            if form.trigger_check.data:
+            if form.trigger_check.data and len(form.notification_urls.data):
                 n_object = {'watch_url': "Test from changedetection.io!",
                             'notification_urls': form.notification_urls.data}
                 notification_q.put(n_object)
