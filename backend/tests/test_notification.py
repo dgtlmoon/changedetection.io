@@ -94,10 +94,13 @@ def test_check_notification(client, live_server):
         url_for("settings_page"),
         data={"notification_title": "New ChangeDetection.io Notification - {watch_url}",
               "notification_body": "{base_url}\n{watch_url}\n{preview_url}\n{diff_url}\n{current_snapshot}\n:-)",
+              "notification_urls": "json://foobar.com", #Re #143 should not see that it sent without [test checkbox]
               "minutes_between_check": 180},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
+    # Re #143 - should not see this if we didnt hit the test box
+    assert b"Notifications queued" not in res.data
 
     # Trigger a check
     client.get(url_for("api_watch_checknow"), follow_redirects=True)

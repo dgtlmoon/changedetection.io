@@ -86,11 +86,9 @@ SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com") }}
                         </span>
                     </div>
                 </div>
-
-                <span class="pure-form-message-inline"><label for="trigger-test-notification" class="pure-checkbox">
-                    <input type="checkbox" id="trigger-test-notification" name="trigger-test-notification"> Send test notification on save.</label>
-                </span>
-
+                <div class="pure-control-group">
+                    {{ render_field(form.trigger_check) }}
+                </div>
             </div>
             <div class="pure-control-group">
                 <button type="submit" class="pure-button pure-button-primary">Save</button>
