@@ -95,7 +95,7 @@ def test_check_notification(client, live_server):
         data={"notification_title": "New ChangeDetection.io Notification - {watch_url}",
               "notification_body": "{base_url}\n{watch_url}\n{preview_url}\n{diff_url}\n{current_snapshot}\n:-)",
               "notification_urls": "json://foobar.com", #Re #143 should not see that it sent without [test checkbox]
-              "minutes_between_check": 180}
+              "minutes_between_check": 180},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
