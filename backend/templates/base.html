@@ -26,7 +26,7 @@
         {% if current_diff_url %}
         <a class=current-diff-url href="{{ current_diff_url }}"><span style="max-width: 30%; overflow: hidden;">{{ current_diff_url }}</span></a>
         {% else %}
-        {% if new_version_available %}
+        {% if new_version_available and not (has_password and not current_user.is_authenticated) %}
         <span id="new-version-text" class="pure-menu-heading"><a href="https://github.com/dgtlmoon/changedetection.io">A new version is available</a></span>
         {% endif %}
         {% endif %}
