@@ -12,6 +12,21 @@ import os
 
 global app
 
+
+def cleanup(datastore_path):
+    # Unlink test output files
+    files = ['output.txt',
+             'url-watches.json',
+             'notification.txt',
+             'count.txt',
+             'endpoint-content.txt']
+    for file in files:
+        try:
+            os.unlink("{}/{}".format(datastore_path, file))
+            x = 1
+        except FileNotFoundError:
+            pass
+
 @pytest.fixture(scope='session')
 def app(request):
     """Create application for the tests."""
@@ -25,15 +40,7 @@ def app(request):
     # Enable a BASE_URL for notifications to work (so we can look for diff/ etc URLs)
     os.environ["BASE_URL"] = "http://mysite.com/"
 
-    # Unlink test output files
-    files = ['test-datastore/output.txt',
-             "{}/url-watches.json".format(datastore_path),
-             'test-datastore/notification.txt']
-    for file in files:
-        try:
-            os.unlink(file)
-        except FileNotFoundError:
-            pass
+    cleanup(datastore_path)
 
     app_config = {'datastore_path': datastore_path}
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], include_default_watches=False)
@@ -43,13 +50,8 @@ def app(request):
     def teardown():
         datastore.stop_thread = True
         app.config.exit.set()
-        for fname in ["url-watches.json", "count.txt", "output.txt"]:
-            try:
-                os.unlink("{}/{}".format(datastore_path, fname))
-            except FileNotFoundError:
-                # This is fine in the case of a failure.
-                pass
-
+        cleanup(datastore_path)
+        
     request.addfinalizer(teardown)
     yield app
 
