@@ -37,11 +37,25 @@ def set_modified_response():
 
 def live_server_setup(live_server):
 
+
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
         # Tried using a global var here but didn't seem to work, so reading from a file instead.
         with open("test-datastore/output.txt", "r") as f:
             return f.read()
+
+    # Just return the headers in the request
+    @live_server.app.route('/test-headers')
+    def test_headers():
+
+        from flask import request
+        output= []
+
+        for header in request.headers:
+             output.append("{}:{}".format(str(header[0]),str(header[1])   ))
+
+        return "\n".join(output)
+
 
     # Where we POST to as a notification
     @live_server.app.route('/test_notification_endpoint', methods=['POST'])
