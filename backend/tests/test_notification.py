@@ -52,11 +52,14 @@ def test_check_notification(client, live_server):
     # Because we hit 'send test notification on save'
     time.sleep(3)
 
+    notification_submission = None
+
     # Verify what was sent as a notification, this file should exist
     with open("test-datastore/notification.txt", "r") as f:
         notification_submission = f.read()
         # Did we see the URL that had a change, in the notification?
-        assert test_url in notification_submission
+
+    assert test_url in notification_submission
 
     os.unlink("test-datastore/notification.txt")
 
@@ -75,11 +78,13 @@ def test_check_notification(client, live_server):
 
     assert bytes("just now".encode('utf-8')) in res.data
 
+    notification_submission=None
     # Verify what was sent as a notification
     with open("test-datastore/notification.txt", "r") as f:
         notification_submission = f.read()
         # Did we see the URL that had a change, in the notification?
-        assert test_url in notification_submission
+
+    assert test_url in notification_submission
 
         # Re #65 - did we see our foobar.com BASE_URL ?
         #assert bytes("https://foobar.com".encode('utf-8')) in notification_submission
