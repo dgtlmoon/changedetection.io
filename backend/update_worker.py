@@ -46,28 +46,33 @@ class update_worker(threading.Thread):
                                     self.datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
                                     watch = self.datastore.data['watching'][uuid]
 
+                                    print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))
+
+                                    # Get the newest snapshot data to be possibily used in a notification
                                     newest_key = self.datastore.get_newest_history_key(uuid)
                                     if newest_key:
                                         with open(watch['history'][newest_key], 'r') as f:
                                             newest_version_file_contents = f.read().strip()
 
                                     n_object = {
-                                        'watch_url': self.datastore.data['watching'][uuid]['url'],
+                                        'watch_url': watch['url'],
                                         'uuid': uuid,
                                         'current_snapshot': newest_version_file_contents
                                     }
 
                                     # Did it have any notification alerts to hit?
                                     if len(watch['notification_urls']):
-                                        print("Processing notifications for UUID: {}".format(uuid))
+                                        print(">>> Notifications queued for UUID from watch {}".format(uuid))
                                         n_object['notification_urls'] = watch['notification_urls']
                                         self.notification_q.put(n_object)
 
                                     # No? maybe theres a global setting, queue them all
                                     elif len(self.datastore.data['settings']['application']['notification_urls']):
-                                        print("Processing GLOBAL notifications for UUID: {}".format(uuid))
+                                        print(">>> Watch notification URLs were empty, using GLOBAL notifications for UUID: {}".format(uuid))
                                         n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
                                         self.notification_q.put(n_object)
+                                    else:
+                                        print(">>> NO notifications queued, watch and global notification URLs were empty.")
 
                             except Exception as e:
                                 print("!!!! Exception in update_worker !!!\n", e)
