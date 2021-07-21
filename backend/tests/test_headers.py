@@ -33,8 +33,7 @@ def test_headers_in_request(client, live_server):
         data={
               "url": test_url,
               "tag": "",
-              "headers": "xxx:ooo\ncool:yeah\r\n",
-              "trigger_check": "n"},
+              "headers": "xxx:ooo\ncool:yeah\r\n"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
