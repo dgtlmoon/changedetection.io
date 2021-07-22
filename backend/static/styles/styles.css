@@ -297,7 +297,7 @@ footer {
       color: #dd0000; }
   .pure-form label {
     font-weight: bold; }
-  .pure-form input[type=url] {
+  .pure-form input {
     width: 100%; }
   .pure-form textarea {
     width: 100%; }
