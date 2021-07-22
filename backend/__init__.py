@@ -509,7 +509,10 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST' and not form.validate():
             flash("An error occurred, please see below.", "error")
 
-        output = render_template("settings.html", form=form)
+        # Same as notification.py
+        base_url = os.getenv('BASE_URL', '').strip('"')
+        output = render_template("settings.html", form=form, base_url=base_url)
+
         return output
 
     @app.route("/import", methods=['GET', "POST"])
