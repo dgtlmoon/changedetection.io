@@ -297,8 +297,6 @@ footer {
       color: #dd0000; }
   .pure-form label {
     font-weight: bold; }
-  .pure-form input {
-    width: 100%; }
   .pure-form textarea {
     width: 100%; }
 
@@ -307,7 +305,7 @@ footer {
     max-width: 95%; }
   .edit-form {
     padding: 0.5em;
-    margin: 0.5em; }
+    margin: 0; }
   #nav-menu {
     overflow-x: scroll; } }
 
@@ -354,3 +352,12 @@ and also iPads specifically.
       background-color: #eee; }
     .watch-table.pure-table-striped tr:nth-child(2n-1) td {
       background-color: inherit; } }
+
+/** Desktop vs mobile input field strategy
+- We dont use 'size' with <input> because `size` is too unreliable to override, and will often push-out
+- Rely always on width in CSS
+*/
+@media only screen and (min-width: 761px) {
+  /* m-d is medium-desktop */
+  .m-d {
+    min-width: 80%; } }

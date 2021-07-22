@@ -7,8 +7,8 @@
     <form class="pure-form" action="{{ url_for('api_watch_add') }}" method="POST" id="new-watch-form">
         <fieldset>
             <legend>Add a new change detection watch</legend>
-                {{ render_simple_field(form.url, placeholder="https://...", size=30, required=true) }}
-                {{ render_simple_field(form.tag, size=10, value=active_tag if active_tag else '', placeholder="tag") }}
+                {{ render_simple_field(form.url, placeholder="https://...", required=true) }}
+                {{ render_simple_field(form.tag, value=active_tag if active_tag else '', placeholder="tag") }}
             <button type="submit" class="pure-button pure-button-primary">Watch</button>
         </fieldset>
         <!-- add extra stuff, like do a http POST and send headers -->

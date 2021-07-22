@@ -7,14 +7,14 @@
     <form class="pure-form pure-form-stacked settings" action="{{url_for('settings_page')}}" method="POST">
         <fieldset>
             <div class="pure-control-group">
-                {{ render_field(form.minutes_between_check, size=5) }}
+                {{ render_field(form.minutes_between_check) }}
                 <span class="pure-form-message-inline">Default time for all watches, when the watch does not have a specific time setting.</span>
             </div>
             <div class="pure-control-group">
                 {% if current_user.is_authenticated %}
                     <a href="{{url_for('settings_page', removepassword='yes')}}" class="pure-button pure-button-primary">Remove password</a>
                 {% else %}
-                {{ render_field(form.password, size=10) }}
+                {{ render_field(form.password) }}
                 <span class="pure-form-message-inline">Password protection for your changedetection.io application.</span>
                 {% endif %}
             </div>
