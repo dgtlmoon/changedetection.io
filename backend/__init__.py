@@ -299,24 +299,27 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST':
             confirmtext = request.form.get('confirmtext')
             limit_date = request.form.get('limit_date')
+            limit_timestamp = 0
 
-            try:
-                limit_date = limit_date.replace('T', ' ')
-                # I noticed chrome will show '/' but actually submit '-'
-                limit_date = limit_date.replace('-', '/')
-                # In the case that :ss seconds are supplied
-                limit_date = re.sub('(\d\d:\d\d)(:\d\d)', '\\1', limit_date)
+            # Re #149 - allow empty/0 timestamp limit
+            if len(limit_date):
+                try:
+                    limit_date = limit_date.replace('T', ' ')
+                    # I noticed chrome will show '/' but actually submit '-'
+                    limit_date = limit_date.replace('-', '/')
+                    # In the case that :ss seconds are supplied
+                    limit_date = re.sub('(\d\d:\d\d)(:\d\d)', '\\1', limit_date)
 
-                str_to_dt = datetime.datetime.strptime(limit_date, '%Y/%m/%d %H:%M')
-                limit_timestamp = int(str_to_dt.timestamp())
+                    str_to_dt = datetime.datetime.strptime(limit_date, '%Y/%m/%d %H:%M')
+                    limit_timestamp = int(str_to_dt.timestamp())
 
-                if limit_timestamp > time.time():
-                    flash("Timestamp is in the future, cannot continue.", 'error')
+                    if limit_timestamp > time.time():
+                        flash("Timestamp is in the future, cannot continue.", 'error')
+                        return redirect(url_for('scrub_page'))
+
+                except ValueError:
+                    flash('Incorrect date format, cannot continue.', 'error')
                     return redirect(url_for('scrub_page'))
-
-            except ValueError:
-                flash('Incorrect date format, cannot continue.', 'error')
-                return redirect(url_for('scrub_page'))
 
             if confirmtext == 'scrub':
                 changes_removed = 0
