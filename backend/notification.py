@@ -39,11 +39,13 @@ def create_notification_parameters(n_object):
     base_url = os.getenv('BASE_URL', '').strip('"')
     watch_url = n_object['watch_url']
 
-    if base_url != '':
-        diff_url = "{}/diff/{}".format(base_url, uuid)
-        preview_url = "{}/preview/{}".format(base_url, uuid)
-    else:
-        diff_url = preview_url = ''
+    # Re #148 - Some people have just {base_url} in the body or title, but this may break some notification services
+    #           like 'Join', so it's always best to atleast set something obvious so that they are not broken.
+    if base_url == '':
+        base_url = "<base-url-env-var-not-set>"
+
+    diff_url = "{}/diff/{}".format(base_url, uuid)
+    preview_url = "{}/preview/{}".format(base_url, uuid)
 
     return {
         'base_url': base_url,
