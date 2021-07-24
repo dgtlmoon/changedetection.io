@@ -4,6 +4,42 @@ import time
 from flask import url_for
 from . util import live_server_setup
 
+def test_unittest_inline_html_extract():
+    # So lets pretend that the JSON we want is inside some HTML
+    content="""
+    <html>
+    
+    food and stuff and more
+    <script>
+    alert('nothing really good here');
+    </script>
+    
+    <script type="application/ld+json">
+  xx {"@context":"http://schema.org","@type":"Product","name":"Nan Optipro Stage 1 Baby Formula  800g","description":"During the first year of life, nutrition is critical for your baby. NAN OPTIPRO 1 is tailored to ensure your formula fed infant receives balanced, high quality nutrition.<br />Starter infant formula. The age optimised protein source (whey dominant) is from cow’s milk.<br />Backed by more than 150 years of Nestlé expertise.<br />For hygiene and convenience, it is available in an innovative packaging format with a separate storage area for the scoop, and a semi-transparent window which allows you to see how much powder is left in the can without having to open it.","image":"https://cdn0.woolworths.media/content/wowproductimages/large/155536.jpg","brand":{"@context":"http://schema.org","@type":"Organization","name":"Nan"},"gtin13":"7613287517388","offers":{"@context":"http://schema.org","@type":"Offer","potentialAction":{"@context":"http://schema.org","@type":"BuyAction"},"availability":"http://schema.org/InStock","itemCondition":"http://schema.org/NewCondition","price":23.5,"priceCurrency":"AUD"},"review":[],"sku":"155536"}
+</script>
+<body>
+and it can also be repeated
+<script type="application/ld+json">
+  {"@context":"http://schema.org","@type":"Product","name":"Nan Optipro Stage 1 Baby Formula  800g","description":"During the first year of life, nutrition is critical for your baby. NAN OPTIPRO 1 is tailored to ensure your formula fed infant receives balanced, high quality nutrition.<br />Starter infant formula. The age optimised protein source (whey dominant) is from cow’s milk.<br />Backed by more than 150 years of Nestlé expertise.<br />For hygiene and convenience, it is available in an innovative packaging format with a separate storage area for the scoop, and a semi-transparent window which allows you to see how much powder is left in the can without having to open it.","image":"https://cdn0.woolworths.media/content/wowproductimages/large/155536.jpg","brand":{"@context":"http://schema.org","@type":"Organization","name":"Nan"},"gtin13":"7613287517388","offers":{"@context":"http://schema.org","@type":"Offer","potentialAction":{"@context":"http://schema.org","@type":"BuyAction"},"availability":"http://schema.org/InStock","itemCondition":"http://schema.org/NewCondition","price":23.5,"priceCurrency":"AUD"},"review":[],"sku":"155536"}
+</script>
+<h4>ok</h4>
+</body>
+</html>
+
+    """
+    from .. import html_tools
+
+    # See that we can find the second <script> one, which is not broken, and matches our filter
+    text = html_tools.extract_json_as_string(content, "$.offers.price")
+    assert text == "23.5"
+
+    text = html_tools.extract_json_as_string('{"id":5}', "$.id")
+    assert text == "5"
+
+#    @todo how to test for exception raised
+#    text = html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "$.id")
+
+
 def test_setup(live_server):
     live_server_setup(live_server)
 
