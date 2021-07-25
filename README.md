@@ -102,7 +102,9 @@ This will re-parse the JSON and apply formatting to the text, making it super ea
 
 ![image](https://user-images.githubusercontent.com/275001/125165995-d9ea5580-e1dc-11eb-8030-f0deced2661a.png)
 
-When you enable a `json:` filter, you can even automatically extract and parse embedded JSON inside HTML! 
+#### Parse JSON embedded in HTML!
+
+When you enable a `json:` filter, you can even automatically extract and parse embedded JSON inside a HTML page! Amazingly handy for sites that build content based on JSON, such as many e-commerce websites. 
 
 ```
 <html>
