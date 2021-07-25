@@ -33,6 +33,7 @@ def test_headers_in_request(client, live_server):
         data={
               "url": test_url,
               "tag": "",
+              "fetch_backend": "html_requests",
               "headers": "xxx:ooo\ncool:yeah\r\n"},
         follow_redirects=True
     )

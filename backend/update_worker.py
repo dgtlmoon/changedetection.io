@@ -60,7 +60,12 @@ class update_worker(threading.Thread):
 
                                     # A change was detected
                                     newest_version_file_contents = ""
-                                    self.datastore.save_history_text(watch_uuid=uuid, contents=contents)
+                                    fname = self.datastore.save_history_text(watch_uuid=uuid, contents=contents)
+
+                                    # Update history with the stripped text for future reference, this will also mean we save the first
+                                    # Should always be keyed by string(timestamp)
+                                    self.datastore.update_watch(uuid, {"history": {str(update_obj["last_checked"]): fname}})
+
                                     watch = self.datastore.data['watching'][uuid]
 
                                     print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))

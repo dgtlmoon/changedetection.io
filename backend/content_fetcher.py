@@ -106,6 +106,7 @@ class html_webdriver(Fetcher):
 # "html_requests" is listed as the default fetcher in store.py!
 class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
+
     def run(self, url, timeout, request_headers):
         import requests
         try:
