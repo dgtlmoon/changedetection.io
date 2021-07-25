@@ -70,6 +70,10 @@ def extract_json_as_string(content, jsonpath_filter):
             raise JSONNotFound("No parsable JSON found in this document")
 
         for result in bs_result:
+            # Skip empty tags, and things that dont even look like JSON
+            if not result.string or not '{' in result.string:
+                continue
+                
             try:
                 json_data = json.loads(result.string)
             except json.JSONDecodeError:
@@ -79,5 +83,8 @@ def extract_json_as_string(content, jsonpath_filter):
                 stripped_text_from_html = _parse_json(json_data, jsonpath_filter)
                 if stripped_text_from_html:
                     break
+
+    if not stripped_text_from_html:
+        raise JSONNotFound("No JSON matching the rule '%s' found" % jsonpath_filter.replace('json:',''))
 
     return stripped_text_from_html
