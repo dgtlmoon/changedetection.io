@@ -102,6 +102,20 @@ This will re-parse the JSON and apply formatting to the text, making it super ea
 
 ![image](https://user-images.githubusercontent.com/275001/125165995-d9ea5580-e1dc-11eb-8030-f0deced2661a.png)
 
+#### Parse JSON embedded in HTML!
+
+When you enable a `json:` filter, you can even automatically extract and parse embedded JSON inside a HTML page! Amazingly handy for sites that build content based on JSON, such as many e-commerce websites. 
+
+```
+<html>
+...
+<script type="application/ld+json">
+  {"@context":"http://schema.org","@type":"Product","name":"Nan Optipro Stage 1 Baby Formula  800g","price": 23.50 }
+</script>
+```  
+
+`json:$.price` would give `23.50`, or you can extract the whole structure
+
 ### Proxy
 
 A proxy for ChangeDetection.io can be configured by setting environment the 

@@ -92,27 +92,8 @@ class perform_site_check():
             css_filter_rule = self.datastore.data['watching'][uuid]['css_filter']
             if css_filter_rule and len(css_filter_rule.strip()):
                 if 'json:' in css_filter_rule:
-                    # POC hack, @todo rename vars, see how it fits in with the javascript version
-                    import json
-                    from jsonpath_ng import jsonpath, parse
-
-                    json_data = json.loads(html)
-                    jsonpath_expression = parse(css_filter_rule.replace('json:', ''))
-                    match = jsonpath_expression.find(json_data)
-                    s = []
-
-                    # More than one result, we will return it as a JSON list.
-                    if len(match) > 1:
-                        for i in match:
-                            s.append(i.value)
-
-                    # Single value, use just the value, as it could be later used in a token in notifications.
-                    if len(match) == 1:
-                        s = match[0].value
-
-                    stripped_text_from_html = json.dumps(s, indent=4)
+                    stripped_text_from_html = html_tools.extract_json_as_string(html, css_filter_rule)
                     is_html = False
-
                 else:
                     # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                     html = html_tools.css_filter(css_filter=css_filter_rule, html_content=r.content)
