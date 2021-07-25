@@ -3,6 +3,7 @@
 import time
 from flask import url_for
 from . util import live_server_setup
+import pytest
 
 def test_unittest_inline_html_extract():
     # So lets pretend that the JSON we want is inside some HTML
@@ -36,8 +37,10 @@ and it can also be repeated
     text = html_tools.extract_json_as_string('{"id":5}', "$.id")
     assert text == "5"
 
-#    @todo how to test for exception raised
-#    text = html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "$.id")
+    # When nothing at all is found, it should throw JSONNOTFound
+    # Which is caught and shown to the user in the watch-overview table
+    with pytest.raises(html_tools.JSONNotFound) as e_info:
+        html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "$.id")
 
 
 def test_setup(live_server):
