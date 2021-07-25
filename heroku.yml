@@ -1,0 +1,5 @@
+build:
+  docker:
+    changedetection: Dockerfile
+run:
+  changedetection: python ./changedetection.py -d /datastore
