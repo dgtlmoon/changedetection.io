@@ -60,7 +60,7 @@ class update_worker(threading.Thread):
 
                                     # A change was detected
                                     newest_version_file_contents = ""
-                                    self.datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
+                                    self.datastore.save_history_text(watch_uuid=uuid, contents=contents)
                                     watch = self.datastore.data['watching'][uuid]
 
                                     print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))
