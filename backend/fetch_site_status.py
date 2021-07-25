@@ -88,6 +88,7 @@ class perform_site_check():
                 # If the klass doesnt exist, just use a default
                 klass = getattr(content_fetcher, "html_requests")
 
+
             fetcher = klass()
             fetcher.run(url, timeout, request_headers)
             # Fetching complete, now filters
@@ -97,8 +98,7 @@ class perform_site_check():
             css_filter_rule = self.datastore.data['watching'][uuid]['css_filter']
             if css_filter_rule and len(css_filter_rule.strip()):
                 if 'json:' in css_filter_rule:
-
-                    stripped_text_from_html = html_tools.extract_json_as_string(html, css_filter_rule)
+                    stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, jsonpath_filter=css_filter_rule)
                     is_html = False
                 else:
                     # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text

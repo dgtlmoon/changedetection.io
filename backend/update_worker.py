@@ -50,10 +50,12 @@ class update_worker(threading.Thread):
                     #@todo how to handle when it's thrown from webdriver connecting?
                     except Exception as e:
                         self.app.logger.error("Exception reached", uuid, str(e))
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
+
                     else:
-                        if result:
+                        if update_obj:
                             try:
-                                self.datastore.update_watch(uuid=uuid, update_obj=result)
+                                self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
                                 if changed_detected:
 
                                     # A change was detected
