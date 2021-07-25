@@ -5,19 +5,19 @@
     <form class="pure-form pure-form-stacked" action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next') ) }}" method="POST">
         <fieldset>
             <div class="pure-control-group">
-                {{ render_field(form.url, placeholder="https://...", size=30, required=true) }}
+                {{ render_field(form.url, placeholder="https://...", required=true, class="m-d") }}
             </div>
             <div class="pure-control-group">
-                {{ render_field(form.title, size=30) }}
+                {{ render_field(form.title, class="m-d") }}
             </div>
             <div class="pure-control-group">
                 {{ render_field(form.fetch_backend) }}
             </div>
             <div class="pure-control-group">
-                {{ render_field(form.tag, size=10) }}
+                {{ render_field(form.tag) }}
             </div>
             <div class="pure-control-group">
-                {{ render_field(form.minutes_between_check, size=5) }}
+                {{ render_field(form.minutes_between_check) }}
                 {% if using_default_minutes %}
                     <span class="pure-form-message-inline">Currently using the <a href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>, change to another value if you want to be specific.</span>
                 {% else %}
@@ -25,7 +25,7 @@
                 {% endif %}
             </div>
             <div class="pure-control-group">
-                {{ render_field(form.css_filter, size=25, placeholder=".class-name or #some-id, or other CSS selector rule.") }}
+                {{ render_field(form.css_filter, placeholder=".class-name or #some-id, or other CSS selector rule.", class="m-d") }}
                 <span class="pure-form-message-inline">
                     <ul>
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
@@ -60,6 +60,7 @@ AWS SNS - sns://AccessKeyID/AccessSecretKey/RegionName/+PhoneNo
 SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com
 ") }}
                 <span class="pure-form-message-inline">Use <a target=_new href="https://github.com/caronc/apprise">AppRise URLs</a> for notification to just about any service!</span>
+                <span class="pure-form-message-inline">Note: This overrides any global settings notification URLs</span>
             </div>
 
             <div class="pure-controls">

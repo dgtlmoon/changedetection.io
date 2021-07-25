@@ -296,8 +296,6 @@ footer {
       color: #dd0000; }
   .pure-form label {
     font-weight: bold; }
-  .pure-form input[type=url] {
-    width: 100%; }
   .pure-form textarea {
     width: 100%; }
   .pure-form ul#fetch_backend {
@@ -311,7 +309,7 @@ footer {
     max-width: 95%; }
   .edit-form {
     padding: 0.5em;
-    margin: 0.5em; }
+    margin: 0; }
   #nav-menu {
     overflow-x: scroll; } }
 
@@ -321,6 +319,8 @@ This query will take effect for any screen smaller than 760px
 and also iPads specifically.
 */
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
+  input[type='text'] {
+    width: 100%; }
   .watch-table {
     /* Force table to not be like tables anymore */
     /* Force table to not be like tables anymore */
@@ -358,3 +358,12 @@ and also iPads specifically.
       background-color: #eee; }
     .watch-table.pure-table-striped tr:nth-child(2n-1) td {
       background-color: inherit; } }
+
+/** Desktop vs mobile input field strategy
+- We dont use 'size' with <input> because `size` is too unreliable to override, and will often push-out
+- Rely always on width in CSS
+*/
+@media only screen and (min-width: 761px) {
+  /* m-d is medium-desktop */
+  .m-d {
+    min-width: 80%; } }

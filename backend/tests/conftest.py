@@ -26,7 +26,6 @@ def cleanup(datastore_path):
         except FileNotFoundError:
             pass
 
-
 @pytest.fixture(scope='session')
 def app(request):
     """Create application for the tests."""
@@ -39,6 +38,8 @@ def app(request):
 
     # Enable a BASE_URL for notifications to work (so we can look for diff/ etc URLs)
     os.environ["BASE_URL"] = "http://mysite.com/"
+    cleanup(datastore_path)
+
 
     app_config = {'datastore_path': datastore_path}
     cleanup(app_config['datastore_path'])
@@ -51,5 +52,6 @@ def app(request):
         app.config.exit.set()
         cleanup(app_config['datastore_path'])
 
+       
     request.addfinalizer(teardown)
     yield app

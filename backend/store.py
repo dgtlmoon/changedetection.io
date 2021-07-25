@@ -43,7 +43,7 @@ class ChangeDetectionStore:
                     'notification_urls': [], # Apprise URL list
                     # Custom notification content
                     'notification_title': 'ChangeDetection.io Notification - {watch_url}',
-                    'notification_body': '{base_url}'
+                    'notification_body': '{watch_url} had a change.'
                 }
             }
         }

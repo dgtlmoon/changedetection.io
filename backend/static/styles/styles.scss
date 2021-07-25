@@ -399,10 +399,6 @@ footer {
     font-weight: bold;
   }
 
-  input[type=url] {
-    width: 100%;
-  }
-
   textarea {
     width: 100%;
   }
@@ -423,7 +419,7 @@ footer {
   }
   .edit-form {
     padding: 0.5em;
-    margin: 0.5em;
+    margin: 0;
   }
   #nav-menu {
     overflow-x: scroll;
@@ -435,8 +431,13 @@ Max width before this PARTICULAR table gets nasty
 This query will take effect for any screen smaller than 760px
 and also iPads specifically.
 */
-@media only screen and (max-width: 760px),
-(min-device-width: 768px) and (max-device-width: 1024px) {
+
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
+
+  input[type='text'] {
+    width: 100%;
+  }
+    
   .watch-table {
     /* Force table to not be like tables anymore */
     thead, tbody, th, td, tr {
@@ -499,5 +500,17 @@ and also iPads specifically.
     }
 
   }
+}
+
+
+/** Desktop vs mobile input field strategy
+- We dont use 'size' with <input> because `size` is too unreliable to override, and will often push-out
+- Rely always on width in CSS
+*/
+@media only screen and (min-width: 761px) {
+/* m-d is medium-desktop */
+    .m-d {
+        min-width: 80%;
+    }
 }
 
