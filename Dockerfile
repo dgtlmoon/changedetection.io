@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxslt-dev \
     zlib1g-dev \
     g++
-    
+
 RUN mkdir /install
 WORKDIR /install
 

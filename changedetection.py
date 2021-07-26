@@ -14,7 +14,7 @@ from backend import store
 
 def main(argv):
     ssl_mode = False
-    port = 5000
+    port = os.environ.get('PORT') or 5000
     do_cleanup = False
 
     # Must be absolute so that send_from_directory doesnt try to make it relative to backend/
