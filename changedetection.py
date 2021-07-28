@@ -85,7 +85,7 @@ def main(argv):
                                                server_side=True), app)
 
     else:
-        eventlet.wsgi.server(eventlet.listen(('', port)), app)
+        eventlet.wsgi.server(eventlet.listen(('', int(port))), app)
 
 
 if __name__ == '__main__':
