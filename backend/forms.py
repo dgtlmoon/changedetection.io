@@ -75,7 +75,7 @@ class StringDictKeyValue(StringField):
             # Remove empty strings
             cleaned = list(filter(None, valuelist[0].split("\n")))
             for s in cleaned:
-                parts = s.strip().split(':')
+                parts = s.strip().split(':', 1)
                 if len(parts) == 2:
                     self.data.update({parts[0].strip(): parts[1].strip()})
 
