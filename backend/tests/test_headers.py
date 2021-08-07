@@ -26,6 +26,8 @@ def test_headers_in_request(client, live_server):
     )
     assert b"1 Imported" in res.data
 
+    cookie_header = '_ga=GA1.2.1022228332; cookie-preferences=analytics:accepted;'
+
 
     # Add some headers to a request
     res = client.post(
@@ -33,7 +35,7 @@ def test_headers_in_request(client, live_server):
         data={
               "url": test_url,
               "tag": "",
-              "headers": "xxx:ooo\ncool:yeah\r\n"},
+              "headers": "xxx:ooo\ncool:yeah\r\ncookie:"+cookie_header},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -51,6 +53,10 @@ def test_headers_in_request(client, live_server):
     # Flask will convert the header key to uppercase
     assert b"Xxx:ooo" in res.data
     assert b"Cool:yeah" in res.data
+
+    # The test call service will return the headers as the body
+    from html import escape
+    assert escape(cookie_header).encode('utf-8') in res.data
 
     time.sleep(5)
 
