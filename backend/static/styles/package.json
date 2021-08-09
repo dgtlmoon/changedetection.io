@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "node-sass": "^6.0.1",
+    "tar": "^6.1.6",
     "trim-newlines": "^3.0.1"
   }
 }
