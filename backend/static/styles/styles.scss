@@ -170,13 +170,6 @@ body:after, body:before {
   display: block;
 }
 
-.edit-form {
-  background: #fff;
-  padding: 2em;
-  margin: 1em;
-  border-radius: 5px;
-  min-width: 70%;
-}
 
 .button-secondary {
   color: white;
@@ -505,5 +498,64 @@ and also iPads specifically.
     .m-d {
         min-width: 80%;
     }
+}
+
+
+
+.tabs {
+  ul {
+    margin: 0px;
+    padding: 0px;
+    display:block;
+    li {
+      margin-right: 3px;
+      display: inline-block;
+      color: #fff;
+      padding: 0.8em;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      background-color: rgba(255, 255, 255, 0.2);
+
+      &.active,:target {
+        background-color: #fff;
+        a {
+          color: #222;
+          font-weight: bold;
+        }
+      }
+      a {
+        color: #fff;
+      }
+    }
+  }
+}
+
+$form-edge-padding: 20px;
+
+.edit-form {
+  min-width: 70%;
+  .inner {
+    display:none;
+    &#general:target, &#notifications:target {
+      display: block;
+    }
+  }
+  .box-wrap {
+    position: relative;
+  }
+  .inner {
+    background: white;
+    padding-left: $form-edge-padding;
+    padding-right: $form-edge-padding;
+    padding-top: $form-edge-padding;
+    min-height: 250px;
+  }
+  #actions {
+    display: block;
+    background: #fff;
+    padding-left: $form-edge-padding;
+    padding-right: $form-edge-padding;
+    padding-bottom: $form-edge-padding;
+  }
 }
 

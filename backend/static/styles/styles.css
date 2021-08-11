@@ -129,13 +129,6 @@ body:after, body:before {
   max-width: 400px;
   display: block; }
 
-.edit-form {
-  background: #fff;
-  padding: 2em;
-  margin: 1em;
-  border-radius: 5px;
-  min-width: 70%; }
-
 .button-secondary {
   color: white;
   border-radius: 4px;
@@ -363,3 +356,44 @@ and also iPads specifically.
   /* m-d is medium-desktop */
   .m-d {
     min-width: 80%; } }
+
+.tabs ul {
+  margin: 0px;
+  padding: 0px;
+  display: block; }
+  .tabs ul li {
+    margin-right: 3px;
+    display: inline-block;
+    color: #fff;
+    padding: 0.8em;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.2); }
+    .tabs ul li.active, .tabs ul li :target {
+      background-color: #fff; }
+      .tabs ul li.active a, .tabs ul li :target a {
+        color: #222;
+        font-weight: bold; }
+    .tabs ul li a {
+      color: #fff; }
+
+.edit-form {
+  min-width: 70%; }
+  .edit-form .inner {
+    display: none; }
+    .edit-form .inner#general:target, .edit-form .inner#notifications:target {
+      display: block; }
+  .edit-form .box-wrap {
+    position: relative; }
+  .edit-form .inner {
+    background: white;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 20px;
+    min-height: 250px; }
+  .edit-form #actions {
+    display: block;
+    background: #fff;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px; }
