@@ -511,7 +511,6 @@ and also iPads specifically.
       margin-right: 3px;
       display: inline-block;
       color: #fff;
-      padding: 0.8em;
       border-top-left-radius: 5px;
       border-top-right-radius: 5px;
       background-color: rgba(255, 255, 255, 0.2);
@@ -524,6 +523,8 @@ and also iPads specifically.
         }
       }
       a {
+        display: block;
+        padding: 0.8em;
         color: #fff;
       }
     }
@@ -536,7 +537,7 @@ $form-edge-padding: 20px;
   min-width: 70%;
   .inner {
     display:none;
-    &#general:target, &#notifications:target {
+    &:target {
       display: block;
     }
   }

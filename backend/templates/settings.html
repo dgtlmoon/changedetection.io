@@ -3,11 +3,13 @@
 {% block content %}
 {% from '_helpers.jinja' import render_field %}
 
-<script type="text/javascript" src="static/js/settings.js"></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='settings.js')}}" defer></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+
 <div class="edit-form">
     <div class="tabs">
         <ul>
-            <li id='default-tab' class="tab"><a href="#general">General</a></li>
+            <li class="tab" id="default-tab"><a href="#general">General</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
         </ul>
     </div>
@@ -37,7 +39,6 @@
             <div class="inner" id="notifications">
                 <fieldset>
                     <div class="field-group">
-
                         <div class="pure-control-group">
                             {{ render_field(form.notification_urls, rows=5, placeholder="Examples:
     Gitter - gitter://token/room
@@ -124,22 +125,4 @@
     </div>
 </div>
 
-<script type="text/javascript">
-    if (document.location.hash == "" || document.location.hash == "#") {
-        document.location.hash = "#general";
-        document.getElementById("default-tab").className = "active";
-    }
-
-    window.addEventListener('hashchange', function() {
-
-      var tabs = document.getElementsByClassName('active');
-      while (tabs[0]) {
-        tabs[0].classList.remove('active')
-      }
-      var tab=document.querySelectorAll("a[href='"+location.hash+"']");
-      if (tab.length) {
-        tab[0].parentElement.className="active";
-      }
-    }, false);
-</script>
 {% endblock %}
