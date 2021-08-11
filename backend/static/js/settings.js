@@ -14,3 +14,4 @@ window.addEventListener("load", (event) => {
     toggleVisible("notification-customisation");
   };
 });
+
