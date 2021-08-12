@@ -124,6 +124,8 @@ User-Agent: wonderbra 1.0") }}
                     <button type="submit" class="pure-button pure-button-primary">Save</button>
                     <a href="{{url_for('api_delete', uuid=uuid)}}"
                        class="pure-button button-small button-error ">Delete</a>
+                    <a href="{{url_for('api_clone', uuid=uuid)}}"
+                       class="pure-button button-small ">Create Copy</a>
                 </div>
             </div>
         </form>
