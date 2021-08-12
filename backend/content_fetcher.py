@@ -94,7 +94,7 @@ class html_webdriver(Fetcher):
         from selenium.common.exceptions import WebDriverException
 
         driver = webdriver.Remote(
-            command_executor='http://browser-chrome:4444/wd/hub',
+            command_executor=self.command_executor,
             desired_capabilities=DesiredCapabilities.CHROME)
 
         # driver.quit() seems to cause better exceptions
