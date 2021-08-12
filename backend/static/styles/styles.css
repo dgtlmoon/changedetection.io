@@ -129,13 +129,6 @@ body:after, body:before {
   max-width: 400px;
   display: block; }
 
-.edit-form {
-  background: #fff;
-  padding: 2em;
-  margin: 1em;
-  border-radius: 5px;
-  min-width: 70%; }
-
 .button-secondary {
   color: white;
   border-radius: 4px;
@@ -221,15 +214,14 @@ body:after, body:before {
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
   box-shadow: 5px 0 5px -2px #888; }
-
-#diff-jump a {
-  color: #1b98f8;
-  cursor: grabbing;
-  -moz-user-select: none;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  -o-user-select: none; }
+  #diff-jump a {
+    color: #1b98f8;
+    cursor: grabbing;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -o-user-select: none; }
 
 footer {
   padding: 10px;
@@ -299,6 +291,11 @@ footer {
     font-weight: bold; }
   .pure-form textarea {
     width: 100%; }
+  .pure-form ul#fetch_backend {
+    margin: 0px;
+    list-style: none; }
+    .pure-form ul#fetch_backend > li > * {
+      display: inline-block; }
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
   .box {
@@ -363,3 +360,44 @@ and also iPads specifically.
   /* m-d is medium-desktop */
   .m-d {
     min-width: 80%; } }
+
+.tabs ul {
+  margin: 0px;
+  padding: 0px;
+  display: block; }
+  .tabs ul li {
+    margin-right: 3px;
+    display: inline-block;
+    color: #fff;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.2); }
+    .tabs ul li.active, .tabs ul li :target {
+      background-color: #fff; }
+      .tabs ul li.active a, .tabs ul li :target a {
+        color: #222;
+        font-weight: bold; }
+    .tabs ul li a {
+      display: block;
+      padding: 0.8em;
+      color: #fff; }
+
+.pure-form-stacked > div:first-child {
+  display: block; }
+
+.edit-form {
+  min-width: 70%; }
+  .edit-form .tab-pane-inner {
+    padding: 0px; }
+    .edit-form .tab-pane-inner:not(:target) {
+      display: none; }
+    .edit-form .tab-pane-inner:target {
+      display: block; }
+  .edit-form .box-wrap {
+    position: relative; }
+  .edit-form .inner {
+    background: #fff;
+    padding: 20px; }
+  .edit-form #actions {
+    display: block;
+    background: #fff; }

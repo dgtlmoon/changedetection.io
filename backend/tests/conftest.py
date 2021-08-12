@@ -5,7 +5,6 @@ from backend import changedetection_app
 from backend import store
 import os
 
-
 # https://github.com/pallets/flask/blob/1.1.2/examples/tutorial/tests/test_auth.py
 # Much better boilerplate than the docs
 # https://www.python-boilerplate.com/py3+flask+pytest/
@@ -39,10 +38,11 @@ def app(request):
 
     # Enable a BASE_URL for notifications to work (so we can look for diff/ etc URLs)
     os.environ["BASE_URL"] = "http://mysite.com/"
-
     cleanup(datastore_path)
 
+
     app_config = {'datastore_path': datastore_path}
+    cleanup(app_config['datastore_path'])
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], include_default_watches=False)
     app = changedetection_app(app_config, datastore)
     app.config['STOP_THREADS'] = True
@@ -50,8 +50,8 @@ def app(request):
     def teardown():
         datastore.stop_thread = True
         app.config.exit.set()
-        cleanup(datastore_path)
-        
+        cleanup(app_config['datastore_path'])
+
+       
     request.addfinalizer(teardown)
     yield app
-

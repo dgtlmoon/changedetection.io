@@ -39,6 +39,7 @@ class ChangeDetectionStore:
                 'application': {
                     'password': False,
                     'extract_title_as_title': False,
+                    'fetch_backend': 'html_requests',
                     'notification_urls': [], # Apprise URL list
                     # Custom notification content
                     'notification_title': 'ChangeDetection.io Notification - {watch_url}',
@@ -67,6 +68,7 @@ class ChangeDetectionStore:
             'ignore_text': [], # List of text to ignore when calculating the comparison checksum
             'notification_urls': [], # List of URLs to add to the notification Queue (Usually AppRise)
             'css_filter': "",
+            'fetch_backend': None,
         }
 
         if path.isfile('backend/source.txt'):
@@ -193,6 +195,10 @@ class ChangeDetectionStore:
             if not self.__data['watching'][uuid]['title']:
                 self.__data['watching'][uuid]['title'] = None
 
+            # Default var for fetch_backend
+            if not self.__data['watching'][uuid]['fetch_backend']:
+                self.__data['watching'][uuid]['fetch_backend'] = self.__data['settings']['application']['fetch_backend']
+
         self.__data['has_unviewed'] = has_unviewed
 
         return self.__data
@@ -315,17 +321,14 @@ class ChangeDetectionStore:
 
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
-    def save_history_text(self, uuid, result_obj, contents):
+    def save_history_text(self, watch_uuid, contents):
+        import uuid
 
-        output_path = "{}/{}".format(self.datastore_path, uuid)
-        fname = "{}/{}-{}.stripped.txt".format(output_path, result_obj['previous_md5'], str(time.time()))
-        with open(fname, 'w') as f:
+        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
+        fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
+        with open(fname, 'wb') as f:
             f.write(contents)
             f.close()
-
-        # Update history with the stripped text for future reference, this will also mean we save the first
-        # Should always be keyed by string(timestamp)
-        self.update_watch(uuid, {"history": {str(result_obj["last_checked"]): fname}})
 
         return fname
 

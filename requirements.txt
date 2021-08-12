@@ -14,10 +14,10 @@ urllib3
 wtforms ~= 2.3.3
 jsonpath-ng ~= 1.5.3
 
-
 # Notification library
 apprise ~= 0.9
 
 # Used for CSS filtering, replace with soupsieve and lxml for xpath
 bs4
 
+selenium ~= 3.141

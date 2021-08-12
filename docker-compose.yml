@@ -6,12 +6,14 @@ services:
       hostname: changedetection.io
       volumes:
         - changedetection-data:/datastore
+
   #    environment:
   #        Default listening port, can also be changed with the -p option
   #      - PORT=5000
 
   #      - PUID=1000
   #      - PGID=1000
+  #      - WEBDRIVER_URL="http://browser-chrome:4444/wd/hub"
   #        Proxy support example.
   #      - HTTP_PROXY="socks5h://10.10.1.10:1080"
   #      - HTTPS_PROXY="socks5h://10.10.1.10:1080"
@@ -27,8 +29,21 @@ services:
       # Comment out ports: when using behind a reverse proxy , enable networks: etc.
       ports:
         - 5000:5000
+      restart: unless-stopped
 
-      restart: always
+     # Used for fetching pages via WebDriver+Chrome where you need Javascript support.
+     # Does not work on rPi, https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver
+
+#    browser-chrome:
+#        hostname: browser-chrome
+#        image: selenium/standalone-chrome-debug:3.141.59
+#        environment:
+#            - VNC_NO_PASSWORD=1
+#        volumes:
+#            # Workaround to avoid the browser crashing inside a docker container
+#            # See https://github.com/SeleniumHQ/docker-selenium#quick-start
+#            - /dev/shm:/dev/shm
+#        restart: unless-stopped
 
 volumes:
   changedetection-data:

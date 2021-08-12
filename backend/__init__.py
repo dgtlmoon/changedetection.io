@@ -378,6 +378,7 @@ def changedetection_app(config=None, datastore_o=None):
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
+
         if request.method == 'GET':
             if not uuid in datastore.data['watching']:
                 flash("No watch with the UUID %s found." % (uuid), "error")
@@ -385,17 +386,25 @@ def changedetection_app(config=None, datastore_o=None):
 
             populate_form_from_watch(form, datastore.data['watching'][uuid])
 
+            if datastore.data['watching'][uuid]['fetch_backend'] is None:
+                form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
+
         if request.method == 'POST' and form.validate():
 
             # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
             if form.minutes_between_check.data == datastore.data['settings']['requests']['minutes_between_check']:
                 form.minutes_between_check.data = None
 
+            if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
+                form.fetch_backend.data = None
+
+
             update_obj = {'url': form.url.data.strip(),
                           'minutes_between_check': form.minutes_between_check.data,
                           'tag': form.tag.data.strip(),
                           'title': form.title.data.strip(),
-                          'headers': form.headers.data
+                          'headers': form.headers.data,
+                          'fetch_backend': form.fetch_backend.data
                           }
 
             # Notification URLs
@@ -428,8 +437,8 @@ def changedetection_app(config=None, datastore_o=None):
 
             if form.trigger_check.data:
                 n_object = {'watch_url': form.url.data.strip(),
-                            'notification_urls': form.notification_urls.data,
-                            'uuid': uuid}
+                            'notification_urls': form.notification_urls.data
+                            }
                 notification_q.put(n_object)
 
                 flash('Notifications queued.')
@@ -464,12 +473,15 @@ def changedetection_app(config=None, datastore_o=None):
     def settings_page():
 
         from backend import forms
+        from backend import content_fetcher
+
         form = forms.globalSettingsForm(request.form)
 
         if request.method == 'GET':
             form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'])
             form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
             form.extract_title_as_title.data = datastore.data['settings']['application']['extract_title_as_title']
+            form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
             form.notification_title.data = datastore.data['settings']['application']['notification_title']
             form.notification_body.data = datastore.data['settings']['application']['notification_body']
 
@@ -486,6 +498,7 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data
             datastore.data['settings']['application']['extract_title_as_title'] = form.extract_title_as_title.data
+            datastore.data['settings']['application']['fetch_backend'] = form.fetch_backend.data
             datastore.data['settings']['application']['notification_title'] = form.notification_title.data
             datastore.data['settings']['application']['notification_body'] = form.notification_body.data
 

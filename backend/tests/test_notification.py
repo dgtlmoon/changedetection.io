@@ -37,6 +37,7 @@ def test_check_notification(client, live_server):
               "url": test_url,
               "tag": "",
               "headers": "",
+              "fetch_backend": "html_requests",
               "trigger_check": "y"},
         follow_redirects=True
     )
@@ -90,9 +91,8 @@ def test_check_notification(client, live_server):
         #assert bytes("https://foobar.com".encode('utf-8')) in notification_submission
 
 
-    ##  Now configure something clever, we go into custom config (non-default) mode
-
-    with open("test-datastore/output.txt", "w") as f:
+    ##  Now configure something clever, we go into custom config (non-default) mode, this is returned by the endpoint
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(";jasdhflkjadshf kjhsdfkjl ahslkjf haslkjd hfaklsj hf\njl;asdhfkasj stuff we will detect\n")
 
     res = client.post(
@@ -100,7 +100,9 @@ def test_check_notification(client, live_server):
         data={"notification_title": "New ChangeDetection.io Notification - {watch_url}",
               "notification_body": "{base_url}\n{watch_url}\n{preview_url}\n{diff_url}\n{current_snapshot}\n:-)",
               "notification_urls": "json://foobar.com", #Re #143 should not see that it sent without [test checkbox]
-              "minutes_between_check": 180},
+              "minutes_between_check": 180,
+              "fetch_backend": "html_requests",
+              },
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
@@ -121,6 +123,8 @@ def test_check_notification(client, live_server):
 
     with open("test-datastore/notification.txt", "r") as f:
         notification_submission = f.read()
+
+        # @todo regex that diff/uuid-31123-123-etc
 
         assert "diff/" in notification_submission
         assert "preview/" in notification_submission

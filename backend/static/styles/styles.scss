@@ -7,7 +7,6 @@ body {
   color: #333;
   background: #262626;
 }
-
 .pure-table-even {
   background: #fff;
 }
@@ -170,13 +169,6 @@ body:after, body:before {
   display: block;
 }
 
-.edit-form {
-  background: #fff;
-  padding: 2em;
-  margin: 1em;
-  border-radius: 5px;
-  min-width: 70%;
-}
 
 .button-secondary {
   color: white;
@@ -294,16 +286,15 @@ body:after, body:before {
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
   box-shadow: 5px 0 5px -2px #888;
-}
-
-#diff-jump a {
-  color: #1b98f8;
-  cursor: grabbing;
-  -moz-user-select: none;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  -o-user-select: none;
+     a {
+      color: #1b98f8;
+      cursor: grabbing;
+      -moz-user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -o-user-select: none;
+    }
 }
 
 footer {
@@ -404,6 +395,15 @@ footer {
   textarea {
     width: 100%;
   }
+  ul#fetch_backend {
+    margin: 0px;
+    list-style: none;
+    > li {
+        > * {
+            display: inline-block;
+        }
+    }
+  }
 }
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
@@ -417,7 +417,6 @@ footer {
   #nav-menu {
     overflow-x: scroll;
   }
-
 }
 
 /*
@@ -425,6 +424,7 @@ Max width before this PARTICULAR table gets nasty
 This query will take effect for any screen smaller than 760px
 and also iPads specifically.
 */
+
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
 
   input[type='text'] {
@@ -505,5 +505,67 @@ and also iPads specifically.
     .m-d {
         min-width: 80%;
     }
+}
+
+
+
+.tabs {
+  ul {
+    margin: 0px;
+    padding: 0px;
+    display:block;
+    li {
+      margin-right: 3px;
+      display: inline-block;
+      color: #fff;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      background-color: rgba(255, 255, 255, 0.2);
+
+      &.active,:target {
+        background-color: #fff;
+        a {
+          color: #222;
+          font-weight: bold;
+        }
+      }
+      a {
+        display: block;
+        padding: 0.8em;
+        color: #fff;
+      }
+    }
+  }
+}
+
+$form-edge-padding: 20px;
+.pure-form-stacked {
+  >div:first-child {
+    display: block;
+  }
+}
+.edit-form {
+  min-width: 70%;
+  .tab-pane-inner {
+    &:not(:target) {
+        display: none;
+    }
+    &:target {
+      display: block;
+    }
+    // doesnt need padding because theres another row of buttons/activity
+    padding: 0px;
+  }
+  .box-wrap {
+    position: relative;
+  }
+  .inner {
+    background: #fff;;
+    padding: $form-edge-padding;
+  }
+  #actions {
+    display: block;
+    background: #fff;
+  }
 }
 

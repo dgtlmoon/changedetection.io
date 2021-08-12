@@ -41,7 +41,7 @@ def set_original_ignore_response():
 
     """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
 
@@ -57,7 +57,7 @@ def set_modified_original_ignore_response():
 
     """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
 
@@ -75,7 +75,7 @@ def set_modified_ignore_response():
 
     """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
 
@@ -107,7 +107,7 @@ def test_check_ignore_text_functionality(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"ignore_text": ignore_text, "url": test_url},
+        data={"ignore_text": ignore_text, "url": test_url, 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data

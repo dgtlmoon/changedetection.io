@@ -13,7 +13,7 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
     return None
 
@@ -29,7 +29,7 @@ def set_modified_response():
      </html>
     """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
     return None
@@ -41,7 +41,7 @@ def live_server_setup(live_server):
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
         # Tried using a global var here but didn't seem to work, so reading from a file instead.
-        with open("test-datastore/output.txt", "r") as f:
+        with open("test-datastore/endpoint-content.txt", "r") as f:
             return f.read()
 
     # Just return the headers in the request

@@ -43,9 +43,6 @@ and it can also be repeated
         html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "$.id")
 
 
-def test_setup(live_server):
-    live_server_setup(live_server)
-
 def set_original_response():
     test_return_data = """
     {
@@ -66,7 +63,7 @@ def set_original_response():
       }
     }
     """
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
     return None
 
@@ -91,7 +88,7 @@ def set_modified_response():
     }
         """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
     return None
@@ -99,6 +96,7 @@ def set_modified_response():
 
 
 def test_check_json_filter(client, live_server):
+    live_server_setup(live_server)
 
     json_filter = 'json:boss.name'
 
@@ -126,7 +124,12 @@ def test_check_json_filter(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": json_filter, "url": test_url, "tag": "", "headers": ""},
+        data={"css_filter": json_filter,
+              "url": test_url,
+              "tag": "",
+              "headers": "",
+              "fetch_backend": "html_requests"
+              },
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -148,7 +151,7 @@ def test_check_json_filter(client, live_server):
     # Trigger a check
     client.get(url_for("api_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
-    time.sleep(3)
+    time.sleep(4)
 
     # It should have 'unviewed' still
     res = client.get(url_for("index"))

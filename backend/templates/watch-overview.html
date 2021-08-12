@@ -49,6 +49,8 @@
 
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
                     <a class="external" target="_blank" rel="noopener" href="{{ watch.url }}"></a>
+                    {%if watch.fetch_backend == "html_webdriver" %}<img style="height: 1em; display:inline-block;" src="/static/images/Google-Chrome-icon.png" />{% endif %}
+
                     {% if watch.last_error is defined and watch.last_error != False %}
                     <div class="fetch-error">{{ watch.last_error }}</div>
                     {% endif %}

@@ -1,8 +1,8 @@
-name: Test, build and push to Docker Hub
+name: Javascript/Webdriver support - Test, build and push to Docker Hub :javascript tag
 
 on:
   push:
-    branches: [ master, arm-build ]
+    branches: [  javascript-browser ]
 
 jobs:
   build:
@@ -67,7 +67,7 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io
+            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:javascript-dev
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache

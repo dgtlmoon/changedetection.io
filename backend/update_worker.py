@@ -1,5 +1,6 @@
 import threading
 import queue
+import time
 
 # Requests for checking on the site use a pool of thread Workers managed by a Queue.
 class update_worker(threading.Thread):
@@ -26,24 +27,45 @@ class update_worker(threading.Thread):
 
             else:
                 self.current_uuid = uuid
+                from backend import content_fetcher
 
                 if uuid in list(self.datastore.data['watching'].keys()):
+
+                    changed_detected = False
+                    contents = ""
+                    update_obj= {}
+
                     try:
-                        changed_detected, result, contents = update_handler.run(uuid)
+                        now = time.time()
+                        changed_detected, update_obj, contents = update_handler.run(uuid)
+
+                        # Always record that we atleast tried
+                        self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3)})
 
                     except PermissionError as e:
                         self.app.logger.error("File permission error updating", uuid, str(e))
+                    except content_fetcher.EmptyReply as e:
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error':str(e)})
+
+                    #@todo how to handle when it's thrown from webdriver connecting?
                     except Exception as e:
                         self.app.logger.error("Exception reached", uuid, str(e))
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
+
                     else:
-                        if result:
+                        if update_obj:
                             try:
-                                self.datastore.update_watch(uuid=uuid, update_obj=result)
+                                self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
                                 if changed_detected:
 
                                     # A change was detected
                                     newest_version_file_contents = ""
-                                    self.datastore.save_history_text(uuid=uuid, contents=contents, result_obj=result)
+                                    fname = self.datastore.save_history_text(watch_uuid=uuid, contents=contents)
+
+                                    # Update history with the stripped text for future reference, this will also mean we save the first
+                                    # Should always be keyed by string(timestamp)
+                                    self.datastore.update_watch(uuid, {"history": {str(update_obj["last_checked"]): fname}})
+
                                     watch = self.datastore.data['watching'][uuid]
 
                                     print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))

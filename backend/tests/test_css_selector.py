@@ -22,7 +22,7 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
     return None
 
@@ -39,7 +39,7 @@ def set_modified_response():
      </html>
     """
 
-    with open("test-datastore/output.txt", "w") as f:
+    with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
     return None
@@ -98,7 +98,7 @@ def test_check_markup_css_filter_restriction(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": css_filter, "url": test_url, "tag": "", "headers": ""},
+        data={"css_filter": css_filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data

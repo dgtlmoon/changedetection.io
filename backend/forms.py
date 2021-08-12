@@ -1,9 +1,9 @@
-from wtforms import Form, BooleanField, StringField, PasswordField, validators, IntegerField, fields, TextAreaField, \
+from wtforms import Form, SelectField, RadioField, BooleanField, StringField, PasswordField, validators, IntegerField, fields, TextAreaField, \
     Field
 from wtforms import widgets
 from wtforms.validators import ValidationError
 from wtforms.fields import html5
-
+from backend import content_fetcher
 
 class StringListField(StringField):
     widget = widgets.TextArea()
@@ -82,6 +82,40 @@ class StringDictKeyValue(StringField):
         else:
             self.data = {}
 
+class ValidateContentFetcherIsReady(object):
+    """
+    Validates that anything that looks like a regex passes as a regex
+    """
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        from backend import content_fetcher
+        import urllib3.exceptions
+
+        # Better would be a radiohandler that keeps a reference to each class
+        if field.data is not None:
+            klass = getattr(content_fetcher, field.data)
+            some_object = klass()
+            try:
+                ready = some_object.is_ready()
+
+            except urllib3.exceptions.MaxRetryError as e:
+                driver_url = some_object.command_executor
+                message = field.gettext('Content fetcher \'%s\' did not respond.' % (field.data))
+                message += '<br/>'+field.gettext('Be sure that the selenium/webdriver runner is running and accessible via network from this container/host.')
+                message += '<br/>' + field.gettext('Did you follow the instructions in the wiki?')
+                message += '<br/><br/>' + field.gettext('WebDriver Host: %s' % (driver_url))
+                message += '<br/><a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">Go here for more information</a>'
+
+                raise ValidationError(message)
+
+            except Exception as e:
+                message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.\n %s')
+                raise ValidationError(message % (field.data, e))
+
+
+
 class ValidateListRegex(object):
     """
     Validates that anything that looks like a regex passes as a regex
@@ -138,6 +172,8 @@ class watchForm(quickWatchForm):
     css_filter = StringField('CSS/JSON Filter', [ValidateCSSJSONInput()])
     title = StringField('Title')
 
+    fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     notification_urls = StringListField('Notification URL List')
     headers = StringDictKeyValue('Request Headers')
@@ -152,6 +188,9 @@ class globalSettingsForm(Form):
                                                [validators.NumberRange(min=1)])
 
     notification_urls = StringListField('Notification URL List')
+
+    fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
     trigger_check = BooleanField('Send test notification on save')
 

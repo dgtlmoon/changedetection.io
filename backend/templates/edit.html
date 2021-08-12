@@ -1,80 +1,112 @@
 {% extends 'base.html' %}
 {% block content %}
 {% from '_helpers.jinja' import render_field %}
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+
 <div class="edit-form monospaced-textarea">
-    <form class="pure-form pure-form-stacked" action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next') ) }}" method="POST">
-        <fieldset>
-            <div class="pure-control-group">
-                {{ render_field(form.url, placeholder="https://...", required=true, class="m-d") }}
+
+    <div class="tabs">
+        <ul>
+            <li class="tab" id="default-tab"><a href="#general">General</a></li>
+            <li class="tab"><a href="#notifications">Notifications</a></li>
+            <li class="tab"><a href="#filters">Filters</a></li>
+        </ul>
+    </div>
+
+    <div class="box-wrap inner">
+        <form class="pure-form pure-form-stacked"
+              action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next') ) }}" method="POST">
+
+            <div class="tab-pane-inner" id="general">
+                <fieldset>
+                    <div class="pure-control-group">
+                        {{ render_field(form.url, placeholder="https://...", required=true, class="m-d") }}
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.title, class="m-d") }}
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.tag) }}
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.minutes_between_check) }}
+                        {% if using_default_minutes %}
+                        <span class="pure-form-message-inline">Currently using the <a
+                                href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>, change to another value if you want to be specific.</span>
+                        {% else %}
+                        <span class="pure-form-message-inline">Set to blank to use the <a
+                                href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>.</span>
+                        {% endif %}
+                    </div>
+                    <fieldset class="pure-group">
+                        {{ render_field(form.headers, rows=5, placeholder="Example
+                        Cookie: foobar
+                        User-Agent: wonderbra 1.0") }}
+                        <span class="pure-form-message-inline">
+                            Note: ONLY used by Basic fast Plaintext/HTTP Client
+                          </span>
+                    </fieldset>
+                </fieldset>
             </div>
-            <div class="pure-control-group">
-                {{ render_field(form.title, class="m-d") }}
+            <div class="tab-pane-inner" id="notifications">
+                <fieldset>
+                    <div class="pure-control-group">
+                        {{ render_field(form.notification_urls, rows=5, placeholder="Examples:
+    Gitter - gitter://token/room
+    Office365 - o365://TenantID:AccountEmail/ClientID/ClientSecret/TargetEmail
+    AWS SNS - sns://AccessKeyID/AccessSecretKey/RegionName/+PhoneNo
+    SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com
+                        ") }}
+                        <span class="pure-form-message-inline">Use <a target=_new
+                                                                      href="https://github.com/caronc/apprise">AppRise URLs</a> for notification to just about any service!</span>
+                        <span class="pure-form-message-inline">Note: This overrides any global settings notification URLs</span>
+                    </div>
+
+                    <div class="pure-controls">
+                        {{ render_field(form.trigger_check, rows=5) }}
+                    </div>
+                </fieldset>
             </div>
-            <div class="pure-control-group">
-                {{ render_field(form.tag) }}
-            </div>
-            <div class="pure-control-group">
-                {{ render_field(form.minutes_between_check) }}
-                {% if using_default_minutes %}
-                    <span class="pure-form-message-inline">Currently using the <a href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>, change to another value if you want to be specific.</span>
-                {% else %}
-                    <span class="pure-form-message-inline">Set to blank to use the <a href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>.</span>
-                {% endif %}
-            </div>
-            <div class="pure-control-group">
-                {{ render_field(form.css_filter, placeholder=".class-name or #some-id, or other CSS selector rule.", class="m-d") }}
-                <span class="pure-form-message-inline">
+            <div class="tab-pane-inner" id="filters">
+                <fieldset>
+                    <div class="pure-control-group">
+                        {{ render_field(form.css_filter, placeholder=".class-name or #some-id, or other CSS selector rule.",
+                        class="m-d") }}
+                        <span class="pure-form-message-inline">
                     <ul>
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
-                        <li>JSON - Limit text to this JSON rule, using <a href="https://pypi.org/project/jsonpath-ng/">JSONPath</a>, prefix with <b>"json:"</b>, <a href="https://jsonpath.com/" target="new">test your JSONPath here</a></li>
+                        <li>JSON - Limit text to this JSON rule, using <a href="https://pypi.org/project/jsonpath-ng/">JSONPath</a>, prefix with <b>"json:"</b>, <a
+                                href="https://jsonpath.com/" target="new">test your JSONPath here</a></li>
                     </ul>
-                    Please be sure that you thoroughly understand how to write CSS or JSONPath selector rules before filing an issue on GitHub! <a href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
+                    Please be sure that you thoroughly understand how to write CSS or JSONPath selector rules before filing an issue on GitHub! <a
+                                href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
                 </span>
-            </div>
-            <!-- @todo: move to tabs --->
-            <fieldset class="pure-group">
-                {{ render_field(form.ignore_text, rows=5,  placeholder="Some text to ignore in a line
-/some.regex\d{2}/   for case-INsensitive regex
-") }}
-                <span class="pure-form-message-inline">
+                    </div>
+
+                </fieldset>
+                <fieldset class="pure-group">
+                    {{ render_field(form.ignore_text, rows=5, placeholder="Some text to ignore in a line
+/some.regex\d{2}/ for case-INsensitive regex
+                    ") }}
+                    <span class="pure-form-message-inline">
                     Each line processed separately, any line matching will be ignored.<br/>
                     Regular Expression support, wrap the line in forward slash <b>/regex/</b>.
                 </span>
 
             </fieldset>
 
-            <fieldset class="pure-group">
-                {{ render_field(form.headers, rows=5, placeholder="Example
-Cookie: foobar
-User-Agent: wonderbra 1.0") }}
-            </fieldset>
 
-            <div class="pure-control-group">
-                {{ render_field(form.notification_urls, rows=5, placeholder="Examples:
-Gitter - gitter://token/room
-Office365 - o365://TenantID:AccountEmail/ClientID/ClientSecret/TargetEmail
-AWS SNS - sns://AccessKeyID/AccessSecretKey/RegionName/+PhoneNo
-SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com
-") }}
-                <span class="pure-form-message-inline">Use <a target=_new href="https://github.com/caronc/apprise">AppRise URLs</a> for notification to just about any service!</span>
-                <span class="pure-form-message-inline">Note: This overrides any global settings notification URLs</span>
             </div>
+            <div id="actions">
+                <div class="pure-control-group">
 
-            <div class="pure-controls">
-                {{ render_field(form.trigger_check, rows=5) }}
+                    <button type="submit" class="pure-button pure-button-primary">Save</button>
+                    <a href="{{url_for('api_delete', uuid=uuid)}}"
+                       class="pure-button button-small button-error ">Delete</a>
+                </div>
             </div>
-            <div class="pure-control-group">
-                <button type="submit" class="pure-button pure-button-primary">Save</button>
-            </div>
-            <br/>
-            <div class="pure-control-group">
-                <a href="{{url_for('index')}}" class="pure-button button-small button-cancel">Cancel</a>
-                <a href="{{url_for('api_delete', uuid=uuid)}}"
-                   class="pure-button button-small button-error ">Delete</a>
-            </div>
-        </fieldset>
-    </form>
-
+        </form>
+    </div>
 </div>
 
 {% endblock %}
