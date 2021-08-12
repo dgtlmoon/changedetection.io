@@ -109,24 +109,14 @@ class html_requests(Fetcher):
 
     def run(self, url, timeout, request_headers):
         import requests
-        try:
-            r = requests.get(url,
-                             headers=request_headers,
-                             timeout=timeout,
-                             verify=False)
 
-            html = r.text
+        r = requests.get(url,
+                         headers=request_headers,
+                         timeout=timeout,
+                         verify=False)
 
-        # Usually from networkIO/requests level
-        except (
-                requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout,
-                requests.exceptions.MissingSchema) as e:
-            self.error = str(e)
-            return None
+        html = r.text
 
-        except Exception as e:
-            self.error = "Other exception" + str(e)
-            return None
 
         # @todo test this
         if not r or not html or not len(html):
