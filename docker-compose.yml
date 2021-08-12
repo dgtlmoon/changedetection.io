@@ -1,7 +1,7 @@
 version: '2'
 services:
     changedetection.io:
-      image: dgtlmoon/changedetection.io:javascript-dev
+      image: dgtlmoon/changedetection.io
       container_name: changedetection.io
       hostname: changedetection.io
       volumes:
@@ -31,19 +31,22 @@ services:
         - 5000:5000
       restart: unless-stopped
 
-    browser-chrome:
-        hostname: browser-chrome
-        image: selenium/standalone-chrome-debug:3.141.59
+     # Used for fetching pages via WebDriver+Chrome where you need Javascript support.
+     # Does not work on rPi, https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver
+
+#    browser-chrome:
+#        hostname: browser-chrome
+#        image: selenium/standalone-chrome-debug:3.141.59
 #       Doesnt need to be exposed on the host
 #        ports:
 #          - 4444:4444
-        environment:
-            - VNC_NO_PASSWORD=1
-        volumes:
-            # Workaround to avoid the browser crashing inside a docker container
-            # See https://github.com/SeleniumHQ/docker-selenium#quick-start
-            - /dev/shm:/dev/shm
-        restart: unless-stopped
+#        environment:
+#            - VNC_NO_PASSWORD=1
+#        volumes:
+#            # Workaround to avoid the browser crashing inside a docker container
+#            # See https://github.com/SeleniumHQ/docker-selenium#quick-start
+#            - /dev/shm:/dev/shm
+#        restart: unless-stopped
 
 volumes:
   changedetection-data:
