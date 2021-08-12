@@ -9,6 +9,7 @@
         <ul>
             <li class="tab" id="default-tab"><a href="#general">General</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
+            <li class="tab"><a href="#fetching">Fetching</a></li>
             <li class="tab"><a href="#filters">Filters</a></li>
         </ul>
     </div>
@@ -66,6 +67,15 @@
                         {{ render_field(form.trigger_check, rows=5) }}
                     </div>
                 </fieldset>
+            </div>
+             <div class="tab-pane-inner" id="fetching">
+                <div class="pure-control-group">
+                    {{ render_field(form.fetch_backend) }}
+                    <span class="pure-form-message-inline">
+                        <p>Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render.</p>
+                        <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server. </p>
+                    </span>
+                </div>
             </div>
             <div class="tab-pane-inner" id="filters">
                 <fieldset>
