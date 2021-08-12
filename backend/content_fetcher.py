@@ -1,3 +1,4 @@
+import os
 import time
 from abc import ABC, abstractmethod
 from selenium import webdriver
@@ -57,12 +58,17 @@ def available_fetchers():
         return p
 
 class html_webdriver(Fetcher):
-    fetcher_description = "Chrome/Javascript"
+    fetcher_description = "WebDriver Chrome/Javascript"
+    command_executor = ''
+
+    def __init__(self):
+        self.command_executor = os.getenv("WEBDRIVER_URL",'http://browser-chrome:4444/wd/hub')
+
     def run(self, url, timeout, request_headers):
 
         # check env for WEBDRIVER_URL
         driver = webdriver.Remote(
-            command_executor='http://browser-chrome:4444/wd/hub',
+            command_executor=self.command_executor,
             desired_capabilities=DesiredCapabilities.CHROME)
 
         try:
@@ -87,19 +93,13 @@ class html_webdriver(Fetcher):
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
         from selenium.common.exceptions import WebDriverException
 
-        try:
-            driver = webdriver.Remote(
-                command_executor='http://browser-chrome:4444/wd/hub',
-                desired_capabilities=DesiredCapabilities.CHROME)
+        driver = webdriver.Remote(
+            command_executor='http://browser-chrome:4444/wd/hub',
+            desired_capabilities=DesiredCapabilities.CHROME)
 
-            # driver.quit() seems to cause better exceptions
-            driver.quit()
+        # driver.quit() seems to cause better exceptions
+        driver.quit()
 
-        # @todo be more specific, return better information. MaxRetryError
-        except urllib3.exceptions.MaxRetryError:
-            return False
-        except Exception as e:
-            return False
 
         return True
 

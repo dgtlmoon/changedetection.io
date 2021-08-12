@@ -382,23 +382,22 @@ and also iPads specifically.
       padding: 0.8em;
       color: #fff; }
 
+.pure-form-stacked > div:first-child {
+  display: block; }
+
 .edit-form {
   min-width: 70%; }
-  .edit-form .inner {
-    display: none; }
-    .edit-form .inner:target {
+  .edit-form .tab-pane-inner {
+    padding: 0px; }
+    .edit-form .tab-pane-inner:not(:target) {
+      display: none; }
+    .edit-form .tab-pane-inner:target {
       display: block; }
   .edit-form .box-wrap {
     position: relative; }
   .edit-form .inner {
-    background: white;
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-top: 20px;
-    min-height: 250px; }
+    background: #fff;
+    padding: 20px; }
   .edit-form #actions {
     display: block;
-    background: #fff;
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 20px; }
+    background: #fff; }

@@ -2,6 +2,8 @@
 
 {% block content %}
 <div class="edit-form">
+
+ <div class="inner">
     <form class="pure-form pure-form-stacked" action="{{url_for('login')}}" method="POST">
         <fieldset>
             <div class="pure-control-group">
@@ -15,6 +17,7 @@
             </div>
         </fieldset>
     </form>
-</div>
+  </div>
+ </div>
 
 {% endblock %}

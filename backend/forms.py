@@ -91,17 +91,27 @@ class ValidateContentFetcherIsReady(object):
 
     def __call__(self, form, field):
         from backend import content_fetcher
+        import urllib3.exceptions
 
         # Better would be a radiohandler that keeps a reference to each class
         if field.data is not None:
             klass = getattr(content_fetcher, field.data)
             some_object = klass()
+            try:
+                ready = some_object.is_ready()
 
-            ready = some_object.is_ready()
+            except urllib3.exceptions.MaxRetryError as e:
+                driver_url = some_object.command_executor
+                message = field.gettext('Content fetcher \'%s\' did not respond.' % (field.data))
+                message += '<br/>'+field.gettext('Be sure that the selenium/webdriver runner is running and accessible via network from this container/host.')
+                message += '<br/><br/>' + field.gettext('WebDriver Host: %s' % (driver_url))
+                message += '<br/><a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">Go here for more information</a>'
 
-            if not ready:
-                message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.')
-                raise ValidationError(message % (field.data))
+                raise ValidationError(message)
+
+            except Exception as e:
+                message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.\n %s')
+                raise ValidationError(message % (field.data, e))
 
 
 

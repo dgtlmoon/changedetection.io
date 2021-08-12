@@ -539,31 +539,33 @@ and also iPads specifically.
 }
 
 $form-edge-padding: 20px;
-
+.pure-form-stacked {
+  >div:first-child {
+    display: block;
+  }
+}
 .edit-form {
   min-width: 70%;
-  .inner {
-    display:none;
+  .tab-pane-inner {
+    &:not(:target) {
+        display: none;
+    }
     &:target {
       display: block;
     }
+    // doesnt need padding because theres another row of buttons/activity
+    padding: 0px;
   }
   .box-wrap {
     position: relative;
   }
   .inner {
-    background: white;
-    padding-left: $form-edge-padding;
-    padding-right: $form-edge-padding;
-    padding-top: $form-edge-padding;
-    min-height: 250px;
+    background: #fff;;
+    padding: $form-edge-padding;
   }
   #actions {
     display: block;
     background: #fff;
-    padding-left: $form-edge-padding;
-    padding-right: $form-edge-padding;
-    padding-bottom: $form-edge-padding;
   }
 }
 

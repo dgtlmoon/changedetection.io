@@ -13,11 +13,11 @@
         </ul>
     </div>
 
-    <div class="box-wrap">
+    <div class="box-wrap inner">
         <form class="pure-form pure-form-stacked"
               action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next') ) }}" method="POST">
 
-            <div class="inner" id="general">
+            <div class="tab-pane-inner" id="general">
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.url, placeholder="https://...", required=true, class="m-d") }}
@@ -48,7 +48,7 @@
                     </fieldset>
                 </fieldset>
             </div>
-            <div class="inner" id="notifications">
+            <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.notification_urls, rows=5, placeholder="Examples:
@@ -67,7 +67,7 @@
                     </div>
                 </fieldset>
             </div>
-            <div class="inner" id="filters">
+            <div class="tab-pane-inner" id="filters">
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.css_filter, placeholder=".class-name or #some-id, or other CSS selector rule.",
