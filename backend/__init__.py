@@ -29,6 +29,8 @@ from flask import make_response
 import datetime
 import pytz
 
+__version__ = '0.38.2'
+
 datastore = None
 
 # Local
@@ -157,7 +159,8 @@ def changedetection_app(config=None, datastore_o=None):
     global datastore
     datastore = datastore_o
 
-    app.config.update(dict(DEBUG=True))
+    app.template_folder ="/var/www/changedetection.io/backend/templates"
+
     #app.config.update(config or {})
 
     login_manager = flask_login.LoginManager(app)
