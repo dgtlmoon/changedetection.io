@@ -50,7 +50,7 @@ def app(request):
     def teardown():
         datastore.stop_thread = True
         app.config.exit.set()
-        cleanup(app_config['datastore_path'])
+        #cleanup(app_config['datastore_path'])
 
        
     request.addfinalizer(teardown)
