@@ -108,8 +108,9 @@ User-Agent: wonderbra 1.0") }}
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.trigger_text, placeholder="Text or /regex/") }}<br/>
-                        <span class="pure-form-message-inline">Text to wait for before triggering a change/notification, all text and regex are tested <i>case-insensitive</i></span><br/>
-                        <span class="pure-form-message-inline">Note: Wrap in forward slash / to use regex  example: <span style="monospace">/foo\d/</span>  </span>
+                        <span class="pure-form-message-inline">Text to wait for before triggering a change/notification, all text and regex are tested <i>case-insensitive</i>.</span><br/>
+                        <span class="pure-form-message-inline">Trigger text is processed from the result-text that comes out of any <a href="#filters">CSS/JSON Filters</a> for this watch</span>.<br/>
+                        <span class="pure-form-message-inline">Note: Wrap in forward slash / to use regex  example: <span style="monospace">/foo\d/</span>.</span>
                     </div>
                 </fieldset>
             </div>
