@@ -10,6 +10,7 @@
             <li class="tab" id="default-tab"><a href="#general">General</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
             <li class="tab"><a href="#filters">Filters</a></li>
+            <li class="tab"><a href="#triggers">Triggers</a></li>
         </ul>
     </div>
 
@@ -101,8 +102,16 @@ User-Agent: wonderbra 1.0") }}
                 </span>
 
             </fieldset>
+            </div>
 
-
+            <div class="tab-pane-inner" id="triggers">
+                <fieldset>
+                    <div class="pure-control-group">
+                        {{ render_field(form.trigger_text, placeholder="Text or /regex/") }}<br/>
+                        <span class="pure-form-message-inline">Text to wait for before triggering a change, all text and regex are tested <i>case-insensitive</i></span><br/>
+                        <span class="pure-form-message-inline">Note: Wrap in forward slash / to use regex  example: <span style="monospace">/foo\d/</span>  </span>
+                    </div>
+                </fieldset>
             </div>
             <div id="actions">
                 <div class="pure-control-group">

@@ -4,6 +4,7 @@ from wtforms import widgets
 from wtforms.validators import ValidationError
 from wtforms.fields import html5
 from backend import content_fetcher
+import re
 
 class StringListField(StringField):
     widget = widgets.TextArea()
@@ -124,7 +125,6 @@ class ValidateListRegex(object):
         self.message = message
 
     def __call__(self, form, field):
-        import re
 
         for line in field.data:
             if line[0] == '/' and line[-1] == '/':
@@ -135,6 +135,25 @@ class ValidateListRegex(object):
                 except re.error:
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))
+
+class ValidateRegexText(object):
+    """
+    Validates that anything that looks like a regex passes as a regex
+    """
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+
+
+        if field.data[0] == '/' and field.data[-1] == '/':
+            # Because internally we dont wrap in /
+            line = field.data.strip('/')
+            try:
+                re.compile(line)
+            except re.error:
+                message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
+                raise ValidationError(message % (line))
 
 class ValidateCSSJSONInput(object):
     """
@@ -178,6 +197,7 @@ class watchForm(quickWatchForm):
     notification_urls = StringListField('Notification URL List')
     headers = StringDictKeyValue('Request Headers')
     trigger_check = BooleanField('Send test notification on save')
+    trigger_text = StringField('Trigger/wait for text', [validators.Optional(), ValidateRegexText()])
 
 
 class globalSettingsForm(Form):

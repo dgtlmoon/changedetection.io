@@ -6,8 +6,6 @@ import urllib3
 from . import html_tools
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-from selenium import webdriver
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 
 # Some common stuff here that can be moved to a base class
@@ -94,6 +92,13 @@ class perform_site_check():
             # Fetching complete, now filters
             # @todo move to class / maybe inside of fetcher abstract base?
 
+            # @note: I feel like the following should be in a more obvious chain system
+            #  - Check filter text
+            #  - Is the checksum different?
+            #  - Do we convert to JSON?
+            # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
+            # return content().textfilter().jsonextract().checksumcompare() ?
+
             is_html = True
             css_filter_rule = self.datastore.data['watching'][uuid]['css_filter']
             if css_filter_rule and len(css_filter_rule.strip()):
@@ -132,8 +137,25 @@ class perform_site_check():
 
             fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
+            blocked_by_not_found_trigger_text = False
+            trigger_text = self.datastore.data['watching'][uuid]['trigger_text']
+            if len(trigger_text):
+                blocked_by_not_found_trigger_text = True
+                # Because JSON wont serialize a re.compile object
+                if trigger_text[0] == '/' and trigger_text[-1] == '/':
+                    import re
+                    regex = re.compile(trigger_text.trim('/'))
+                    # Found it? so we don't wait for it anymore
+                    if re.search(regex, blocked_by_not_found_trigger_text, re.IGNORECASE):
+                        blocked_by_not_found_trigger_text = False
+
+                elif trigger_text.lower() in str(stripped_text_from_html).lower():
+                    # We found it don't wait for it.
+                    blocked_by_not_found_trigger_text = False
+
+
             # could be None or False depending on JSON type
-            if self.datastore.data['watching'][uuid]['previous_md5'] != fetched_md5:
+            if not blocked_by_not_found_trigger_text and self.datastore.data['watching'][uuid]['previous_md5'] != fetched_md5:
                 changed_detected = True
 
                 # Don't confuse people by updating as last-changed, when it actually just changed from None..
