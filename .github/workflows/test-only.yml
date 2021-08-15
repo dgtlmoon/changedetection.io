@@ -30,7 +30,7 @@ jobs:
       - name: Test with pytest
         run: |
           # Each test is totally isolated and performs its own cleanup/reset
-          cd backend; ./run_all_tests.sh
+          cd changedetectionio; ./run_all_tests.sh
 
       - name: Test that pip builds without error
         run: |
