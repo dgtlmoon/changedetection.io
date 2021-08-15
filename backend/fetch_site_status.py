@@ -55,6 +55,8 @@ class perform_site_check():
         changed_detected = False
         stripped_text_from_html = ""
 
+        watch = self.datastore.data['watching'][uuid]
+
         update_obj = {'previous_md5': self.datastore.data['watching'][uuid]['previous_md5'],
                       'history': {},
                       "last_checked": timestamp
@@ -79,7 +81,7 @@ class perform_site_check():
             url = self.datastore.get_val(uuid, 'url')
 
             # Pluggable content fetcher
-            prefer_backend = self.datastore.data['watching'][uuid]['fetch_backend']
+            prefer_backend = watch['fetch_backend']
             if hasattr(content_fetcher, prefer_backend):
                 klass = getattr(content_fetcher, prefer_backend)
             else:
@@ -100,7 +102,7 @@ class perform_site_check():
             # return content().textfilter().jsonextract().checksumcompare() ?
 
             is_html = True
-            css_filter_rule = self.datastore.data['watching'][uuid]['css_filter']
+            css_filter_rule = watch['css_filter']
             if css_filter_rule and len(css_filter_rule.strip()):
                 if 'json:' in css_filter_rule:
                     stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, jsonpath_filter=css_filter_rule)
@@ -112,7 +114,6 @@ class perform_site_check():
             if is_html:
                 # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                 html_content = fetcher.content
-                css_filter_rule = self.datastore.data['watching'][uuid]['css_filter']
                 if css_filter_rule and len(css_filter_rule.strip()):
                     html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
 
@@ -128,9 +129,8 @@ class perform_site_check():
 
             # If there's text to skip
             # @todo we could abstract out the get_text() to handle this cleaner
-            if len(self.datastore.data['watching'][uuid]['ignore_text']):
-                stripped_text_from_html = self.strip_ignore_text(stripped_text_from_html,
-                                                 self.datastore.data['watching'][uuid]['ignore_text'])
+            if len(watch['ignore_text']):
+                stripped_text_from_html = self.strip_ignore_text(stripped_text_from_html, watch['ignore_text'])
             else:
                 stripped_text_from_html = stripped_text_from_html.encode('utf8')
 
@@ -138,24 +138,25 @@ class perform_site_check():
             fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
             blocked_by_not_found_trigger_text = False
-            trigger_text = self.datastore.data['watching'][uuid]['trigger_text']
-            if len(trigger_text):
+
+            if len(watch['trigger_text']):
                 blocked_by_not_found_trigger_text = True
+
                 # Because JSON wont serialize a re.compile object
-                if trigger_text[0] == '/' and trigger_text[-1] == '/':
+                if watch['trigger_text'][0] == '/' and watch['trigger_text'][-1] == '/':
                     import re
-                    regex = re.compile(trigger_text.trim('/'))
+                    regex = re.compile(watch['trigger_text'].trim('/'))
                     # Found it? so we don't wait for it anymore
                     if re.search(regex, blocked_by_not_found_trigger_text, re.IGNORECASE):
                         blocked_by_not_found_trigger_text = False
 
-                elif trigger_text.lower() in str(stripped_text_from_html).lower():
+                elif watch['trigger_text'].lower() in str(stripped_text_from_html).lower():
                     # We found it don't wait for it.
                     blocked_by_not_found_trigger_text = False
 
 
             # could be None or False depending on JSON type
-            if not blocked_by_not_found_trigger_text and self.datastore.data['watching'][uuid]['previous_md5'] != fetched_md5:
+            if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:
                 changed_detected = True
 
                 # Don't confuse people by updating as last-changed, when it actually just changed from None..
@@ -166,7 +167,7 @@ class perform_site_check():
 
             # Extract title as title
             if is_html and self.datastore.data['settings']['application']['extract_title_as_title']:
-                if not self.datastore.data['watching'][uuid]['title'] or not len(self.datastore.data['watching'][uuid]['title']):
+                if not watch['title'] or not len(watch['title']):
                     update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
 
 
