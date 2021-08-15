@@ -4,6 +4,7 @@ import hashlib
 from inscriptis import get_text
 import urllib3
 from . import html_tools
+import re
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -141,18 +142,20 @@ class perform_site_check():
 
             if len(watch['trigger_text']):
                 blocked_by_not_found_trigger_text = True
+                for line in watch['trigger_text']:
 
-                # Because JSON wont serialize a re.compile object
-                if watch['trigger_text'][0] == '/' and watch['trigger_text'][-1] == '/':
-                    import re
-                    regex = re.compile(watch['trigger_text'].trim('/'))
-                    # Found it? so we don't wait for it anymore
-                    if re.search(regex, blocked_by_not_found_trigger_text, re.IGNORECASE):
+                    # Because JSON wont serialize a re.compile object
+                    if line[0] == '/' and line[-1] == '/':
+                        regex = re.compile(line.trim('/'))
+                        # Found it? so we don't wait for it anymore
+                        if re.search(regex, blocked_by_not_found_trigger_text, re.IGNORECASE):
+                            blocked_by_not_found_trigger_text = False
+                            break
+
+                    elif line.lower() in str(stripped_text_from_html).lower():
+                        # We found it don't wait for it.
                         blocked_by_not_found_trigger_text = False
-
-                elif watch['trigger_text'].lower() in str(stripped_text_from_html).lower():
-                    # We found it don't wait for it.
-                    blocked_by_not_found_trigger_text = False
+                        break
 
 
             # could be None or False depending on JSON type

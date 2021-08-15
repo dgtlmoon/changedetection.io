@@ -405,7 +405,7 @@ def changedetection_app(config=None, datastore_o=None):
                           'title': form.title.data.strip(),
                           'headers': form.headers.data,
                           'fetch_backend': form.fetch_backend.data,
-                          'trigger_text': form.trigger_text.data.strip()
+                          'trigger_text': form.trigger_text.data
                           }
 
             # Notification URLs

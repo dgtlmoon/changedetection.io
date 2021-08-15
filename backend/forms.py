@@ -197,7 +197,7 @@ class watchForm(quickWatchForm):
     notification_urls = StringListField('Notification URL List')
     headers = StringDictKeyValue('Request Headers')
     trigger_check = BooleanField('Send test notification on save')
-    trigger_text = StringField('Trigger/wait for text', [validators.Optional(), ValidateRegexText()])
+    trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
 
 class globalSettingsForm(Form):
