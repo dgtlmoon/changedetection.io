@@ -35,6 +35,7 @@ jobs:
       - name: Test that pip builds without error
         run: |
           pip3 --version
+          python3 -m pip install wheel
           python3 setup.py bdist_wheel
 
 # test the dockerfile build works
