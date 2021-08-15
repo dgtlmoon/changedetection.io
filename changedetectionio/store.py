@@ -71,8 +71,8 @@ class ChangeDetectionStore:
             'fetch_backend': None,
         }
 
-        if path.isfile('backend/source.txt'):
-            with open('backend/source.txt') as f:
+        if path.isfile('changedetectionio/source.txt'):
+            with open('changedetectionio/source.txt') as f:
                 # Should be set in Dockerfile to look for /source.txt , this will give us the git commit #
                 # So when someone gives us a backup file to examine, we know exactly what code they were running.
                 self.__data['build_sha'] = f.read()

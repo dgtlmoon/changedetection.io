@@ -8,9 +8,9 @@ import sys
 
 import eventlet
 import eventlet.wsgi
-import backend
+import changedetectionio
 
-from backend import store
+from changedetectionio import store
 
 def main():
     ssl_mode = False
@@ -54,7 +54,7 @@ def main():
         sys.exit(2)
 
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'])
-    app = backend.changedetection_app(app_config, datastore)
+    app = changedetectionio.changedetection_app(app_config, datastore)
 
     # Go into cleanup mode
     if do_cleanup:

@@ -31,3 +31,8 @@ jobs:
           # Each test is totally isolated and performs its own cleanup/reset
           cd backend; ./run_all_tests.sh
 
+# test the dockerfile build works
+# test the pip install builds
+# 2160  python3 setup.py bdist_wheel
+# 2161  python3 -m pip install dist/changedetection.io-0.38.2-py3-none-any.whl --force
+

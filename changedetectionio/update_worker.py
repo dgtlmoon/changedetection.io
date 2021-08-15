@@ -14,7 +14,7 @@ class update_worker(threading.Thread):
         super().__init__(*args, **kwargs)
 
     def run(self):
-        from backend import fetch_site_status
+        from changedetectionio import fetch_site_status
 
         update_handler = fetch_site_status.perform_site_check(datastore=self.datastore)
 
@@ -27,7 +27,7 @@ class update_worker(threading.Thread):
 
             else:
                 self.current_uuid = uuid
-                from backend import content_fetcher
+                from changedetectionio import content_fetcher
 
                 if uuid in list(self.datastore.data['watching'].keys()):
 

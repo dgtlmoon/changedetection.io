@@ -10,7 +10,7 @@ def test_setup(live_server):
 # Unit test of the stripper
 # Always we are dealing in utf-8
 def test_strip_regex_text_func():
-    from backend import fetch_site_status
+    from changedetectionio import fetch_site_status
 
     test_content = """
     but sometimes we want to remove the lines.
