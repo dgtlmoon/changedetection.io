@@ -44,9 +44,10 @@ update_q = queue.Queue()
 notification_q = queue.Queue()
 
 # Needs to be set this way because we also build and publish via pip
+base_path = os.path.dirname(os.path.realpath(__file__))
 app = Flask(__name__,
-            static_url_path="{}/static".format(os.path.realpath(__file__)),
-            template_folder="{}/templates".format(os.path.realpath(__file__)))
+            static_url_path="{}/static".format(base_path),
+            template_folder="{}/templates".format(base_path))
 
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -725,11 +726,8 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
         # These files should be in our subdirectory
-        full_path = os.path.realpath(__file__)
-        p = os.path.dirname(full_path)
-
         try:
-            return send_from_directory("{}/static/{}".format(p, group), filename=filename)
+            return send_from_directory("static/{}".format(group), filename=filename)
         except FileNotFoundError:
             abort(404)
 
