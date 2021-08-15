@@ -44,7 +44,9 @@ update_q = queue.Queue()
 notification_q = queue.Queue()
 
 # Needs to be set this way because we also build and publish via pip
-app = Flask(__name__, static_url_path="{}/static".format(os.path.realpath(__file__)))
+app = Flask(__name__,
+            static_url_path="{}/static".format(os.path.realpath(__file__)),
+            root_path=os.path.realpath(__file__))
 
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -159,8 +161,6 @@ class User(flask_login.UserMixin):
 def changedetection_app(config=None, datastore_o=None):
     global datastore
     datastore = datastore_o
-
-    app.template_folder ="/var/www/changedetection.io/backend/templates"
 
     #app.config.update(config or {})
 
