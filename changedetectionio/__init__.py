@@ -822,7 +822,7 @@ def check_for_new_version():
     while not app.config.exit.is_set():
         try:
             r = requests.post("https://changedetection.io/check-ver.php",
-                              data={'version': datastore.data['version_tag'],
+                              data={'version': __version__,
                                     'app_guid': datastore.data['app_guid'],
                                     'watch_count': len(datastore.data['watching'])
                                     },
