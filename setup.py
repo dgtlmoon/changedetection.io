@@ -26,7 +26,7 @@ install_requires = open('requirements.txt').readlines()
 
 setup(
     name='changedetection.io',
-    version=find_version("backend", "__init__.py"),
+    version=find_version("changedetectionio", "__init__.py"),
     description='Website change detection and monitoring service',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
@@ -37,7 +37,7 @@ setup(
     author='dgtlmoon',
     url='https://changedetection.io',
     scripts=[],
-    packages=['.', 'backend'],
+    packages=['.', 'changedetectionio'],
     include_package_data=True,
     install_requires=install_requires,
     license="Apache License 2.0",
