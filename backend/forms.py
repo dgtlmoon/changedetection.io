@@ -163,7 +163,7 @@ class quickWatchForm(Form):
     # `require_tld` = False is needed even for the test harness "http://localhost:5005.." to run
 
     url = html5.URLField('URL', [validators.URL(require_tld=False)])
-    tag = StringField('Tag', [validators.Optional(), validators.Length(max=35)])
+    tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
 class watchForm(quickWatchForm):
 
