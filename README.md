@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/github/v/release/dgtlmoon/changedetection.io" alt="Change detection latest tag version"/> 
 </a>
 
-## Self-hosted change monitoring of web pages.
+## Self-hosted open source change monitoring of web pages.
 
 _Know when web pages change! Stay ontop of new information!_ 
 
