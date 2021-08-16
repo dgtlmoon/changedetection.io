@@ -28,7 +28,7 @@ setup(
     name='changedetection.io',
     version=find_version("changedetectionio", "__init__.py"),
     description='Website change detection and monitoring service',
-    long_description=open('README.md').read(),
+    long_description=open('README-pip.md').read(),
     long_description_content_type='text/markdown',
     keywords='website change monitor for changes notification change detection '
              'alerts tracking website tracker change alert website and monitoring',
