@@ -136,25 +136,6 @@ class ValidateListRegex(object):
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))
 
-class ValidateRegexText(object):
-    """
-    Validates that anything that looks like a regex passes as a regex
-    """
-    def __init__(self, message=None):
-        self.message = message
-
-    def __call__(self, form, field):
-
-
-        if field.data[0] == '/' and field.data[-1] == '/':
-            # Because internally we dont wrap in /
-            line = field.data.strip('/')
-            try:
-                re.compile(line)
-            except re.error:
-                message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
-                raise ValidationError(message % (line))
-
 class ValidateCSSJSONInput(object):
     """
     Filter validation
