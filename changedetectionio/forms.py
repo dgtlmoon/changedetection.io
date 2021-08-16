@@ -4,6 +4,7 @@ from wtforms import widgets
 from wtforms.validators import ValidationError
 from wtforms.fields import html5
 from changedetectionio import content_fetcher
+import re
 
 class StringListField(StringField):
     widget = widgets.TextArea()
@@ -124,7 +125,6 @@ class ValidateListRegex(object):
         self.message = message
 
     def __call__(self, form, field):
-        import re
 
         for line in field.data:
             if line[0] == '/' and line[-1] == '/':
@@ -163,7 +163,7 @@ class quickWatchForm(Form):
     # `require_tld` = False is needed even for the test harness "http://localhost:5005.." to run
 
     url = html5.URLField('URL', [validators.URL(require_tld=False)])
-    tag = StringField('Tag', [validators.Optional(), validators.Length(max=35)])
+    tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
 class watchForm(quickWatchForm):
 
@@ -178,6 +178,7 @@ class watchForm(quickWatchForm):
     notification_urls = StringListField('Notification URL List')
     headers = StringDictKeyValue('Request Headers')
     trigger_check = BooleanField('Send test notification on save')
+    trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
 
 class globalSettingsForm(Form):
