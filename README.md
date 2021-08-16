@@ -37,7 +37,11 @@ _Need an actual Chrome runner with Javascript support? We support fetching via W
 
 Run the python code on your own machine by cloning this repository, or with <a href="https://docs.docker.com/get-docker/">docker</a> and/or <a href="https://www.digitalocean.com/community/tutorial_collections/how-to-install-docker-compose">docker-compose</a>
 
-**Docker**
+## Installation
+
+### Docker
+
+Check out our Docker hub page https://hub.docker.com/r/dgtlmoon/changedetection.io
 
 With Docker composer, just clone this repository and
 ```bash
@@ -48,7 +52,10 @@ Docker standalone
 $ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
 ```
 
-**Python PIP**
+### Python Pip
+
+Check out our pypi page https://pypi.org/project/changedetection.io/
+
 ```bash
 $ pip3 install changedetection.io
 $ changedetection.io -d /path/to/empty/data/dir -p 5000
