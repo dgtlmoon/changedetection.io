@@ -4,6 +4,7 @@ from wtforms import widgets
 from wtforms.validators import ValidationError
 from wtforms.fields import html5
 from backend import content_fetcher
+import re
 
 class StringListField(StringField):
     widget = widgets.TextArea()
@@ -124,7 +125,6 @@ class ValidateListRegex(object):
         self.message = message
 
     def __call__(self, form, field):
-        import re
 
         for line in field.data:
             if line[0] == '/' and line[-1] == '/':
@@ -178,6 +178,7 @@ class watchForm(quickWatchForm):
     notification_urls = StringListField('Notification URL List')
     headers = StringDictKeyValue('Request Headers')
     trigger_check = BooleanField('Send test notification on save')
+    trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
 
 class globalSettingsForm(Form):

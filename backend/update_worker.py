@@ -47,9 +47,8 @@ class update_worker(threading.Thread):
                     except content_fetcher.EmptyReply as e:
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error':str(e)})
 
-                    #@todo how to handle when it's thrown from webdriver connecting?
                     except Exception as e:
-                        self.app.logger.error("Exception reached", uuid, str(e))
+                        self.app.logger.error("Exception reached processing watch UUID:%s - %s", uuid, str(e))
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
 
                     else:

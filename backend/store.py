@@ -68,6 +68,7 @@ class ChangeDetectionStore:
             'ignore_text': [], # List of text to ignore when calculating the comparison checksum
             'notification_urls': [], # List of URLs to add to the notification Queue (Usually AppRise)
             'css_filter': "",
+            'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'fetch_backend': None,
         }
 
