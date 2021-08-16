@@ -29,6 +29,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8 pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
       - name: Lint with flake8
         run: |
@@ -39,14 +40,14 @@ jobs:
 
       - name: Create release metadata
         run: |
-          # COPY'ed by Dockerfile into backend/ of the image, then read by the server in store.py
-          echo ${{ github.sha }} > backend/source.txt
-          echo ${{ github.ref }} > backend/tag.txt
+          # COPY'ed by Dockerfile into changedetectionio/ of the image, then read by the server in store.py
+          echo ${{ github.sha }} > changedetectionio/source.txt
+          echo ${{ github.ref }} > changedetectionio/tag.txt
 
       - name: Test with pytest
         run: |
           # Each test is totally isolated and performs its own cleanup/reset
-          cd backend; ./run_all_tests.sh
+          cd changedetectionio; ./run_all_tests.sh
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1

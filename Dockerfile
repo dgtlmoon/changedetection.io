@@ -47,7 +47,7 @@ COPY --from=builder /dependencies /usr/local
 ENV PYTHONPATH=/usr/local
 
 # The actual flask app
-COPY backend /app/backend
+COPY changedetectionio /app/changedetectionio
 # The eventlet server wrapper
 COPY changedetection.py /app/changedetection.py
 

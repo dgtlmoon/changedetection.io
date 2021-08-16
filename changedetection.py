@@ -8,11 +8,11 @@ import sys
 
 import eventlet
 import eventlet.wsgi
-import backend
+import changedetectionio
 
-from backend import store
+from changedetectionio import store
 
-def main(argv):
+def main():
     ssl_mode = False
     port = os.environ.get('PORT') or 5000
     do_cleanup = False
@@ -21,7 +21,7 @@ def main(argv):
     datastore_path = os.path.join(os.getcwd(), "datastore")
 
     try:
-        opts, args = getopt.getopt(argv, "csd:p:", "port")
+        opts, args = getopt.getopt(sys.argv[1:], "csd:p:", "port")
     except getopt.GetoptError:
         print('backend.py -s SSL enable -p [port] -d [datastore path]')
         sys.exit(2)
@@ -48,8 +48,13 @@ def main(argv):
     # isnt there some @thingy to attach to each route to tell it, that this route needs a datastore
     app_config = {'datastore_path': datastore_path}
 
-    datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'])
-    app = backend.changedetection_app(app_config, datastore)
+    if not os.path.isdir(app_config['datastore_path']):
+        print ("ERROR: Directory path for the datastore '{}' does not exist, cannot start, please make sure the directory exists.\n"
+               "Alternatively, use the -d parameter.".format(app_config['datastore_path']),file=sys.stderr)
+        sys.exit(2)
+
+    datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=changedetectionio.__version__)
+    app = changedetectionio.changedetection_app(app_config, datastore)
 
     # Go into cleanup mode
     if do_cleanup:
@@ -89,4 +94,4 @@ def main(argv):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()

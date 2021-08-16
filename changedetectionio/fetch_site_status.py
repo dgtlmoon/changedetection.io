@@ -1,5 +1,5 @@
 import time
-from backend import content_fetcher
+from changedetectionio import content_fetcher
 import hashlib
 from inscriptis import get_text
 import urllib3

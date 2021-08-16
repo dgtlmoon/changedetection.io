@@ -3,7 +3,7 @@ from wtforms import Form, SelectField, RadioField, BooleanField, StringField, Pa
 from wtforms import widgets
 from wtforms.validators import ValidationError
 from wtforms.fields import html5
-from backend import content_fetcher
+from changedetectionio import content_fetcher
 import re
 
 class StringListField(StringField):
@@ -91,7 +91,7 @@ class ValidateContentFetcherIsReady(object):
         self.message = message
 
     def __call__(self, form, field):
-        from backend import content_fetcher
+        from changedetectionio import content_fetcher
         import urllib3.exceptions
 
         # Better would be a radiohandler that keeps a reference to each class

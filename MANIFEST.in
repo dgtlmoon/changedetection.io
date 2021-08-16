@@ -1,0 +1,4 @@
+recursive-include changedetectionio/templates *
+recursive-include changedetectionio/static *
+include changedetection.py
+global-exclude *.pyc

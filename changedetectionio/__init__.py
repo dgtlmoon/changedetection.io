@@ -29,6 +29,8 @@ from flask import make_response
 import datetime
 import pytz
 
+__version__ = '0.39'
+
 datastore = None
 
 # Local
@@ -41,7 +43,11 @@ update_q = queue.Queue()
 
 notification_q = queue.Queue()
 
-app = Flask(__name__, static_url_path="/var/www/change-detection/backend/static")
+# Needs to be set this way because we also build and publish via pip
+base_path = os.path.dirname(os.path.realpath(__file__))
+app = Flask(__name__,
+            static_url_path="{}/static".format(base_path),
+            template_folder="{}/templates".format(base_path))
 
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -157,7 +163,6 @@ def changedetection_app(config=None, datastore_o=None):
     global datastore
     datastore = datastore_o
 
-    app.config.update(dict(DEBUG=True))
     #app.config.update(config or {})
 
     login_manager = flask_login.LoginManager(app)
@@ -278,7 +283,7 @@ def changedetection_app(config=None, datastore_o=None):
             return response
 
         else:
-            from backend import forms
+            from changedetectionio import forms
             form = forms.quickWatchForm(request.form)
 
             output = render_template("watch-overview.html",
@@ -344,7 +349,7 @@ def changedetection_app(config=None, datastore_o=None):
     def get_current_checksum_include_ignore_text(uuid):
 
         import hashlib
-        from backend import fetch_site_status
+        from changedetectionio import fetch_site_status
 
         # Get the most recent one
         newest_history_key = datastore.get_val(uuid, 'newest_history_key')
@@ -371,7 +376,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     @login_required
     def edit_page(uuid):
-        from backend import forms
+        from changedetectionio import forms
         form = forms.watchForm(request.form)
 
         # More for testing, possible to return the first/only
@@ -473,8 +478,8 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def settings_page():
 
-        from backend import forms
-        from backend import content_fetcher
+        from changedetectionio import forms
+        from changedetectionio import content_fetcher
 
         form = forms.globalSettingsForm(request.form)
 
@@ -722,18 +727,15 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
         # These files should be in our subdirectory
-        full_path = os.path.realpath(__file__)
-        p = os.path.dirname(full_path)
-
         try:
-            return send_from_directory("{}/static/{}".format(p, group), filename=filename)
+            return send_from_directory("static/{}".format(group), filename=filename)
         except FileNotFoundError:
             abort(404)
 
     @app.route("/api/add", methods=['POST'])
     @login_required
     def api_watch_add():
-        from backend import forms
+        from changedetectionio import forms
         form = forms.quickWatchForm(request.form)
 
         if form.validate():
@@ -821,7 +823,7 @@ def check_for_new_version():
     while not app.config.exit.is_set():
         try:
             r = requests.post("https://changedetection.io/check-ver.php",
-                              data={'version': datastore.data['version_tag'],
+                              data={'version': __version__,
                                     'app_guid': datastore.data['app_guid'],
                                     'watch_count': len(datastore.data['watching'])
                                     },
@@ -850,7 +852,7 @@ def notification_runner():
         else:
             # Process notifications
             try:
-                from backend import notification
+                from changedetectionio import notification
                 notification.process_notification(n_object, datastore)
 
             except Exception as e:
@@ -860,7 +862,7 @@ def notification_runner():
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
-    from backend import update_worker
+    from changedetectionio import update_worker
 
     # Spin up Workers.
     for _ in range(datastore.data['settings']['requests']['workers']):

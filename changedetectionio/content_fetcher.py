@@ -45,7 +45,7 @@ class Fetcher():
 
 def available_fetchers():
         import inspect
-        from backend import content_fetcher
+        from changedetectionio import content_fetcher
         p=[]
         for name, obj in inspect.getmembers(content_fetcher):
             if inspect.isclass(obj):

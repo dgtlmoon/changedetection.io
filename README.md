@@ -13,6 +13,8 @@ _Know when web pages change! Stay ontop of new information!_
 
 Live your data-life *pro-actively* instead of *re-actively*, do not rely on manipulative social media for consuming important information.
 
+Open source web page monitoring, notification and change detection.
+
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />
 
@@ -29,32 +31,34 @@ Know when ...
 - Detect and monitor changes in JSON API responses 
 - API monitoring and alerting
 
-_Need an actual Chrome runner with Javascript support? see the experimental <a href="https://github.com/dgtlmoon/changedetection.io/tree/javascript-browser">Javascript/Chrome support changedetection.io branch!</a>_
+_Need an actual Chrome runner with Javascript support? We support fetching via WebDriver!</a>_
 
 **Get monitoring now! super simple, one command!**
 
 Run the python code on your own machine by cloning this repository, or with <a href="https://docs.docker.com/get-docker/">docker</a> and/or <a href="https://www.digitalocean.com/community/tutorial_collections/how-to-install-docker-compose">docker-compose</a>
 
-With one docker-compose command
+**Docker**
 
+With Docker composer, just clone this repository and
 ```bash
-docker-compose up -d
+$ docker-compose up -d
+```
+Docker standalone
+```bash
+$ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
+```
+
+**Python PIP**
+```bash
+$ pip3 install changedetection.io
+$ changedetection.io -d /path/to/empty/data/dir -p 5000
 ```
 
 Then visit http://127.0.0.1:5000 , You should now be able to access the UI.
 
 _Now with per-site configurable support for using a fast built in HTTP fetcher or use a Chrome based fetcher for monitoring of JavaScript websites!_
 
-
-#### Updating to the latest version
-
-Highly recommended :)
-
-```bash
-docker pull dgtlmoon/changedetection.io
-docker-compose up -d
-```
-  
+ 
 ### Screenshots
 
 Examining differences in content.
@@ -129,15 +133,6 @@ With `docker-compose`, see the `Proxy support example` in <a href="https://githu
 For more information see https://docs.python-requests.org/en/master/user/advanced/#proxies
 
 This proxy support also extends to the notifications https://github.com/caronc/apprise/issues/387#issuecomment-841718867
-
-
-### Notes
-
-- ~~Does not yet support Javascript~~
-- ~~Wont work with Cloudfare type "Please turn on javascript" protected pages~~
-- You can use the 'headers' section to monitor password protected web page changes
-
-See the experimental <a href="https://github.com/dgtlmoon/changedetection.io/tree/javascript-browser">Javascript/Chrome browser support!</a>
 
 
 ### RaspberriPi support?

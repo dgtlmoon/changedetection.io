@@ -15,7 +15,7 @@ import threading
 class ChangeDetectionStore:
     lock = Lock()
 
-    def __init__(self, datastore_path="/datastore", include_default_watches=True):
+    def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         self.needs_write = False
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
@@ -72,8 +72,8 @@ class ChangeDetectionStore:
             'fetch_backend': None,
         }
 
-        if path.isfile('backend/source.txt'):
-            with open('backend/source.txt') as f:
+        if path.isfile('changedetectionio/source.txt'):
+            with open('changedetectionio/source.txt') as f:
                 # Should be set in Dockerfile to look for /source.txt , this will give us the git commit #
                 # So when someone gives us a backup file to examine, we know exactly what code they were running.
                 self.__data['build_sha'] = f.read()
@@ -120,7 +120,7 @@ class ChangeDetectionStore:
                 self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
                 self.add_watch(url='https://changedetection.io', tag='Tech news')
 
-        self.__data['version_tag'] = "0.38.2"
+        self.__data['version_tag'] = version_tag
 
         # Helper to remove password protection
         password_reset_lockfile = "{}/removepassword.lock".format(self.datastore_path)

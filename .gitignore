@@ -5,3 +5,5 @@ datastore/url-watches.json
 datastore/*
 __pycache__
 .pytest_cache
+build
+dist
