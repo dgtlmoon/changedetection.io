@@ -59,7 +59,6 @@ def test_trigger_functionality(client, live_server):
 
     live_server_setup(live_server)
 
-
     sleep_time_for_fetch_thread = 3
     trigger_text = "foobar123"
     set_original_ignore_response()
@@ -133,3 +132,30 @@ def test_trigger_functionality(client, live_server):
 
 #@todo - test it only triggers on changes inside the json: or css selector
 #@todo - test regex trigger
+
+    ### test regex
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write("some new noise")
+
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"trigger_text": "/something \\d{3}/",
+              "url": test_url,
+              "fetch_backend": "html_requests"},
+        follow_redirects=True
+    )
+
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    time.sleep(sleep_time_for_fetch_thread)
+
+    # It should report nothing found (nothing should match the regex)
+    res = client.get(url_for("index"))
+    assert b'unviewed' not in res.data
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write("regex test123<br/>\nsomething 123")
+
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    time.sleep(sleep_time_for_fetch_thread)
+    assert b'unviewed' in res.data

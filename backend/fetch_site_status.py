@@ -143,12 +143,12 @@ class perform_site_check():
             if len(watch['trigger_text']):
                 blocked_by_not_found_trigger_text = True
                 for line in watch['trigger_text']:
-
                     # Because JSON wont serialize a re.compile object
                     if line[0] == '/' and line[-1] == '/':
-                        regex = re.compile(line.trim('/'))
+                        regex = re.compile(line.strip('/'), re.IGNORECASE)
                         # Found it? so we don't wait for it anymore
-                        if re.search(regex, blocked_by_not_found_trigger_text, re.IGNORECASE):
+                        r = re.search(regex, str(stripped_text_from_html))
+                        if r:
                             blocked_by_not_found_trigger_text = False
                             break
 
@@ -159,6 +159,7 @@ class perform_site_check():
 
 
             # could be None or False depending on JSON type
+            # On the first run of a site, watch['previous_md5'] will be an empty string
             if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:
                 changed_detected = True
 
