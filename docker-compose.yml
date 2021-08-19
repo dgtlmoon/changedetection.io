@@ -16,12 +16,12 @@ services:
   #       # Alternative WebDriver/selenium URL, do not use "'s or 's!
   #      - WEBDRIVER_URL=http://browser-chrome:4444/wd/hub
   #        Proxy support example.
-  #      - HTTP_PROXY="socks5h://10.10.1.10:1080"
-  #      - HTTPS_PROXY="socks5h://10.10.1.10:1080"
+  #      - HTTP_PROXY=socks5h://10.10.1.10:1080
+  #      - HTTPS_PROXY=socks5h://10.10.1.10:1080
   #        An exclude list (useful for notification URLs above) can be specified by with
   #      - NO_PROXY="localhost,192.168.0.0/24"
   #        Base URL of your changedetection.io install (Added to the notification alert)
-  #      - BASE_URL="https://mysite.com"
+  #      - BASE_URL=https://mysite.com
 
   #        Respect proxy_pass type settings, `proxy_set_header Host "localhost";` and `proxy_set_header X-Forwarded-Prefix /app;`
   #        More here https://github.com/dgtlmoon/changedetection.io/wiki/Running-changedetection.io-behind-a-reverse-proxy-sub-directory
