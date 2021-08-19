@@ -58,11 +58,15 @@ def available_fetchers():
         return p
 
 class html_webdriver(Fetcher):
-    fetcher_description = "WebDriver Chrome/Javascript"
+    if os.getenv("WEBDRIVER_URL"):
+        fetcher_description = "WebDriver Chrome/Javascript via '{}'".format(os.getenv("WEBDRIVER_URL"))
+    else:
+        fetcher_description = "WebDriver Chrome/Javascript"
+
     command_executor = ''
 
     def __init__(self):
-        self.command_executor = os.getenv("WEBDRIVER_URL",'http://browser-chrome:4444/wd/hub')
+        self.command_executor = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub')
 
     def run(self, url, timeout, request_headers):
 
