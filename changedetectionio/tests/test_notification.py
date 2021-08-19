@@ -132,3 +132,16 @@ def test_check_notification(client, live_server):
         assert "New ChangeDetection.io Notification - {}".format(test_url) in notification_submission
         # This should insert the {current_snapshot}
         assert "stuff we will detect" in notification_submission
+
+    # Prove that "content constantly being marked as Changed with no Updating causes notification" is not a thing
+    # https://github.com/dgtlmoon/changedetection.io/discussions/192
+    os.unlink("test-datastore/notification.txt")
+
+    # Trigger a check
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    time.sleep(3)
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    time.sleep(3)
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    time.sleep(3)
+    assert os.path.exists("test-datastore/notification.txt") == False
