@@ -120,6 +120,8 @@ class perform_site_check():
 
                 # get_text() via inscriptis
                 stripped_text_from_html = get_text(html_content)
+                # make sure stripped_text_from_html is not empty regardless of whether the element has its own text or not
+                if not stripped_text_from_html: stripped_text_from_html = html_content.strip()
 
             # We rely on the actual text in the html output.. many sites have random script vars etc,
             # in the future we'll implement other mechanisms.
