@@ -146,6 +146,9 @@ This proxy support also extends to the notifications https://github.com/caronc/a
 
 RaspberriPi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! 
 
+### Windows native support?
+
+Sorry not yet :( https://github.com/dgtlmoon/changedetection.io/labels/windows
 
 ### Support us
 
