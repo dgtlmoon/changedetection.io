@@ -1,6 +1,15 @@
 import os
 import apprise
 
+valid_tokens = {
+    'base_url': '',
+    'watch_url': '',
+    'diff_url': '',
+    'preview_url': '',
+    'current_snapshot': ''
+}
+
+
 def process_notification(n_object, datastore):
     apobj = apprise.Apprise()
     for url in n_object['notification_urls']:
@@ -31,7 +40,7 @@ def process_notification(n_object, datastore):
 
 # Notification title + body content parameters get created here.
 def create_notification_parameters(n_object):
-
+    from copy import deepcopy
     # in the case we send a test notification from the main settings, there is no UUID.
     uuid = n_object['uuid'] if 'uuid' in n_object else ''
 
@@ -47,11 +56,19 @@ def create_notification_parameters(n_object):
     diff_url = "{}/diff/{}".format(base_url, uuid)
     preview_url = "{}/preview/{}".format(base_url, uuid)
 
-    return {
+    # Not sure deepcopy is needed here, but why not
+    tokens = deepcopy(valid_tokens)
+
+    # Valid_tokens also used as a field validator
+    tokens.update(
+    {
         'base_url': base_url,
         'watch_url': watch_url,
         'diff_url': diff_url,
         'preview_url': preview_url,
         'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else ''
-    }
+    })
+
+    return tokens
+
 
