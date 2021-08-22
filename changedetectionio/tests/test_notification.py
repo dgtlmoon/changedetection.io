@@ -103,7 +103,6 @@ def test_check_notification(client, live_server):
                                    "Preview: {preview_url}\n"
                                    "Diff URL: {diff_url}\n"
                                    "Snapshot: {current_snapshot}\n"
-                                   "Something unexpected: {unexpected}"
                                    ":-)",
               "notification_urls": "json://foobar.com", #Re #143 should not see that it sent without [test checkbox]
               "minutes_between_check": 180,
