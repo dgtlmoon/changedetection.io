@@ -1,5 +1,6 @@
 import os
 import time
+import re
 from flask import url_for
 from . util import set_original_response, set_modified_response, live_server_setup
 
@@ -133,7 +134,7 @@ def test_check_notification(client, live_server):
     with open("test-datastore/notification.txt", "r") as f:
         notification_submission = f.read()
 
-        # @todo regex that diff/uuid-31123-123-etc
+        assert re.search('Watch UUID: [0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}', notification_submission, re.IGNORECASE)
         assert "Watch title: my title" in notification_submission
         assert "Watch tag: my tag" in notification_submission
         assert "diff/" in notification_submission
