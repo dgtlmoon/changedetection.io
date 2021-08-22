@@ -9,9 +9,5 @@ window.addEventListener("load", (event) => {
       x.style.display = "block";
     }
   }
-
-  document.getElementById("toggle-customise-notifications").onclick = function () {
-    toggleVisible("notification-customisation");
-  };
 });
 

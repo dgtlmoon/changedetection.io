@@ -116,6 +116,20 @@ class ValidateContentFetcherIsReady(object):
                 raise ValidationError(message % (field.data, e))
 
 
+class ValidateTokensList(object):
+    """
+    Validates that a {token} is from a valid set
+    """
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        from changedetectionio import notification
+        regex = re.compile('{.*?}')
+        for p in re.findall(regex, field.data):
+            if not p.strip('{}') in notification.valid_tokens:
+                message = field.gettext('Token \'%s\' is not a valid token.')
+                raise ValidationError(message % (p))
 
 class ValidateListRegex(object):
     """
@@ -195,5 +209,5 @@ class globalSettingsForm(Form):
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
     trigger_check = BooleanField('Send test notification on save')
 
-    notification_title = StringField('Notification Title')
-    notification_body = TextAreaField('Notification Body')
+    notification_title = StringField('Notification Title', validators=[validators.Optional(), ValidateTokensList()])
+    notification_body = TextAreaField('Notification Body', validators=[validators.Optional(), ValidateTokensList()])
