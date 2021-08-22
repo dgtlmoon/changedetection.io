@@ -150,3 +150,18 @@ def test_check_notification(client, live_server):
     client.get(url_for("api_watch_checknow"), follow_redirects=True)
     time.sleep(3)
     assert os.path.exists("test-datastore/notification.txt") == False
+
+
+    # Now adding a wrong token should give us an error
+    res = client.post(
+        url_for("settings_page"),
+        data={"notification_title": "New ChangeDetection.io Notification - {watch_url}",
+              "notification_body": "Rubbish: {rubbish}\n",
+              "notification_urls": "json://foobar.com",
+              "minutes_between_check": 180,
+              "fetch_backend": "html_requests"
+              },
+        follow_redirects=True
+    )
+
+    assert bytes("is not a valid token".encode('utf-8')) in res.data
