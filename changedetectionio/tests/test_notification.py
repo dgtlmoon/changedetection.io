@@ -35,7 +35,8 @@ def test_check_notification(client, live_server):
         url_for("edit_page", uuid="first"),
         data={"notification_urls": notification_url,
               "url": test_url,
-              "tag": "",
+              "tag": "my tag",
+              "title": "my title",
               "headers": "",
               "fetch_backend": "html_requests",
               "trigger_check": "y"},
@@ -133,7 +134,8 @@ def test_check_notification(client, live_server):
         notification_submission = f.read()
 
         # @todo regex that diff/uuid-31123-123-etc
-
+        assert "Watch title: my title" in notification_submission
+        assert "Watch tag: my tag" in notification_submission
         assert "diff/" in notification_submission
         assert "preview/" in notification_submission
         assert ":-)" in notification_submission
