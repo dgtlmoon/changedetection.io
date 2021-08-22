@@ -1,5 +1,6 @@
 import os
 import time
+import re
 from flask import url_for
 from . util import set_original_response, set_modified_response, live_server_setup
 
@@ -35,7 +36,8 @@ def test_check_notification(client, live_server):
         url_for("edit_page", uuid="first"),
         data={"notification_urls": notification_url,
               "url": test_url,
-              "tag": "",
+              "tag": "my tag",
+              "title": "my title",
               "headers": "",
               "fetch_backend": "html_requests",
               "trigger_check": "y"},
@@ -100,6 +102,9 @@ def test_check_notification(client, live_server):
         data={"notification_title": "New ChangeDetection.io Notification - {watch_url}",
               "notification_body": "BASE URL: {base_url}\n"
                                    "Watch URL: {watch_url}\n"
+                                   "Watch UUID: {watch_uuid}\n"
+                                   "Watch title: {watch_title}\n"
+                                   "Watch tag: {watch_tag}\n"
                                    "Preview: {preview_url}\n"
                                    "Diff URL: {diff_url}\n"
                                    "Snapshot: {current_snapshot}\n"
@@ -129,8 +134,9 @@ def test_check_notification(client, live_server):
     with open("test-datastore/notification.txt", "r") as f:
         notification_submission = f.read()
 
-        # @todo regex that diff/uuid-31123-123-etc
-
+        assert re.search('Watch UUID: [0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}', notification_submission, re.IGNORECASE)
+        assert "Watch title: my title" in notification_submission
+        assert "Watch tag: my tag" in notification_submission
         assert "diff/" in notification_submission
         assert "preview/" in notification_submission
         assert ":-)" in notification_submission

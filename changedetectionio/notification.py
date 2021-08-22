@@ -4,6 +4,9 @@ import apprise
 valid_tokens = {
     'base_url': '',
     'watch_url': '',
+    'watch_uuid': '',
+    'watch_title': '',
+    'watch_tag': '',
     'diff_url': '',
     'preview_url': '',
     'current_snapshot': ''
@@ -22,7 +25,7 @@ def process_notification(n_object, datastore):
     n_title = datastore.data['settings']['application']['notification_title']
 
     # Insert variables into the notification content
-    notification_parameters = create_notification_parameters(n_object)
+    notification_parameters = create_notification_parameters(n_object, datastore)
     raw_notification_text = [n_body, n_title]
 
     parameterised_notification_text = dict(
@@ -39,10 +42,18 @@ def process_notification(n_object, datastore):
 
 
 # Notification title + body content parameters get created here.
-def create_notification_parameters(n_object):
+def create_notification_parameters(n_object, datastore):
     from copy import deepcopy
+
     # in the case we send a test notification from the main settings, there is no UUID.
     uuid = n_object['uuid'] if 'uuid' in n_object else ''
+
+    if uuid != '':
+        watch_title = datastore.data['watching'][uuid]['title']
+        watch_tag = datastore.data['watching'][uuid]['tag']
+    else:
+        watch_title = 'Change Detection'
+        watch_tag = ''
 
     # Create URLs to customise the notification with
     base_url = os.getenv('BASE_URL', '').strip('"')
@@ -64,11 +75,12 @@ def create_notification_parameters(n_object):
     {
         'base_url': base_url,
         'watch_url': watch_url,
+        'watch_uuid': uuid,
+        'watch_title': watch_title,
+        'watch_tag': watch_tag,
         'diff_url': diff_url,
         'preview_url': preview_url,
         'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else ''
     })
 
     return tokens
-
-
