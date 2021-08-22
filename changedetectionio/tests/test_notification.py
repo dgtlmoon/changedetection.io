@@ -98,10 +98,16 @@ def test_check_notification(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={"notification_title": "New ChangeDetection.io Notification - {watch_url}",
-              "notification_body": "{base_url}\n{watch_url}\n{preview_url}\n{diff_url}\n{current_snapshot}\n:-)",
+              "notification_body": "BASE URL: {base_url}\n"
+                                   "Watch URL: {watch_url}\n"
+                                   "Preview: {preview_url}\n"
+                                   "Diff URL: {diff_url}\n"
+                                   "Snapshot: {current_snapshot}\n"
+                                   "Something unexpected: {unexpected}"
+                                   ":-)",
               "notification_urls": "json://foobar.com", #Re #143 should not see that it sent without [test checkbox]
               "minutes_between_check": 180,
-              "fetch_backend": "html_requests",
+              "fetch_backend": "html_requests"
               },
         follow_redirects=True
     )
