@@ -157,7 +157,15 @@ class ValidateCSSJSONInput(object):
             except JsonPathParserError as e:
                 message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
                 raise ValidationError(message % (input, str(e)))
-
+        elif 'xpath:' in field.data:
+            import lxml.etree
+            from lxml.etree import XPathSyntaxError
+            input = field.data.replace('xpath:', '')
+            try:
+                lxml.etree.XPath(input)
+            except XPathSyntaxError as e:
+                message = field.gettext('\'%s\' is not a valid XPATH expression. (%s)')
+                raise ValidationError(message % (input, str(e)))
 class quickWatchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
     # `require_tld` = False is needed even for the test harness "http://localhost:5005.." to run

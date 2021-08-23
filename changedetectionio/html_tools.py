@@ -1,6 +1,8 @@
 import json
 from bs4 import BeautifulSoup
 from jsonpath_ng import parse
+from io import StringIO
+from lxml import etree
 
 
 class JSONNotFound(ValueError):
@@ -73,7 +75,7 @@ def extract_json_as_string(content, jsonpath_filter):
             # Skip empty tags, and things that dont even look like JSON
             if not result.string or not '{' in result.string:
                 continue
-                
+
             try:
                 json_data = json.loads(result.string)
             except json.JSONDecodeError:
@@ -88,3 +90,8 @@ def extract_json_as_string(content, jsonpath_filter):
         raise JSONNotFound("No JSON matching the rule '%s' found" % jsonpath_filter.replace('json:',''))
 
     return stripped_text_from_html
+
+def extract_xpath_as_string(content, xpath_filter):
+    tree = etree.parse(StringIO(content), etree.HTMLParser())
+    xpath_expression = xpath_filter.replace('xpath:', '')
+    return "\n".join(tree.xpath(xpath_expression))

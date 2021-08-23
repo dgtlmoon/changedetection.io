@@ -108,6 +108,9 @@ class perform_site_check():
                 if 'json:' in css_filter_rule:
                     stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, jsonpath_filter=css_filter_rule)
                     is_html = False
+                elif 'xpath:' in css_filter_rule:
+                    stripped_text_from_html = html_tools.extract_xpath_as_string(content=fetcher.content, xpath_filter=css_filter_rule)
+                    is_html = False
                 else:
                     # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                     stripped_text_from_html = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
