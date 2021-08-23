@@ -122,6 +122,16 @@ When you enable a `json:` filter, you can even automatically extract and parse e
 
 `json:$.price` would give `23.50`, or you can extract the whole structure
 
+### XPATH API Monitoring
+
+Detect changes and monitor data in XAPTH API's by using the built-in XPATH selectors.
+
+![image](https://user-images.githubusercontent.com/27769580/130420561-0251d8da-9cad-49e4-b20e-5f5e9b72c100.png)
+
+This making it super easy to monitor and detect changes in XPATH API results
+
+![image](https://user-images.githubusercontent.com/27769580/130420737-dfa740c1-b90f-4a4e-a57d-bbac3b0964be.png)
+
 ### Proxy
 
 A proxy for ChangeDetection.io can be configured by setting environment the 
