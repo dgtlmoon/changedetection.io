@@ -177,7 +177,7 @@ class watchForm(quickWatchForm):
 
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
-    css_filter = StringField('CSS/JSON Filter', [ValidateCSSJSONInput()])
+    css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONInput()])
     title = StringField('Title')
 
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
