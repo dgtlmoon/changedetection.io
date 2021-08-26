@@ -766,6 +766,16 @@ def changedetection_app(config=None, datastore_o=None):
 
         return redirect(url_for('index'))
 
+    @app.route("/api/clone", methods=['GET'])
+    @login_required
+    def api_clone():
+
+        uuid = request.args.get('uuid')
+        datastore.clone(uuid)
+        flash('Cloned.')
+
+        return redirect(url_for('index'))
+
     @app.route("/api/checknow", methods=['GET'])
     @login_required
     def api_watch_checknow():
