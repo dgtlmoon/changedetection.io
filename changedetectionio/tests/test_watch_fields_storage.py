@@ -20,7 +20,7 @@ def test_check_watch_field_storage(client, live_server):
 
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={ "notification_urls": "http://myapi.com",
+        data={ "notification_urls": "json://myapi.com",
                "minutes_between_check": 126,
                "css_filter" : ".fooclass",
                "title" : "My title",
@@ -39,7 +39,7 @@ def test_check_watch_field_storage(client, live_server):
         follow_redirects=True
     )
 
-    assert b"http://myapi.com" in res.data
+    assert b"json://myapi.com" in res.data
     assert b"126" in res.data
     assert b".fooclass" in res.data
     assert b"My title" in res.data

@@ -116,6 +116,23 @@ class ValidateContentFetcherIsReady(object):
                 raise ValidationError(message % (field.data, e))
 
 
+class ValidateAppRiseServers(object):
+    """
+       Validates that each URL given is compatible with AppRise
+       """
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        import apprise
+        apobj = apprise.Apprise()
+
+        for server_url in field.data:
+            if not apobj.add(server_url):
+                message = field.gettext('\'%s\' is not a valid AppRise URL.' % (server_url))
+                raise ValidationError(message)
+
 class ValidateTokensList(object):
     """
     Validates that a {token} is from a valid set
@@ -172,42 +189,40 @@ class ValidateCSSJSONInput(object):
                 message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
                 raise ValidationError(message % (input, str(e)))
 
+
 class quickWatchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
     # `require_tld` = False is needed even for the test harness "http://localhost:5005.." to run
-
     url = html5.URLField('URL', [validators.URL(require_tld=False)])
     tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
-class watchForm(quickWatchForm):
+class commonSettingsForm(Form):
+
+    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers()])
+    notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {watch_url}', validators=[validators.Optional(), ValidateTokensList()])
+    notification_body = TextAreaField('Notification Body', default='{watch_url} had a change.', validators=[validators.Optional(), ValidateTokensList()])
+    trigger_check = BooleanField('Send test notification on save')
+    fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+
+class watchForm(commonSettingsForm):
+
+    url = html5.URLField('URL', [validators.URL(require_tld=False)])
+    tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
     css_filter = StringField('CSS/JSON Filter', [ValidateCSSJSONInput()])
     title = StringField('Title')
 
-    fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
-
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
-    notification_urls = StringListField('Notification URL List')
     headers = StringDictKeyValue('Request Headers')
-    trigger_check = BooleanField('Send test notification on save')
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
 
-class globalSettingsForm(Form):
+class globalSettingsForm(commonSettingsForm):
 
     password = SaltyPasswordField()
 
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.NumberRange(min=1)])
-
-    notification_urls = StringListField('Notification URL List')
-
-    fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
-
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
-    trigger_check = BooleanField('Send test notification on save')
-
-    notification_title = StringField('Notification Title', validators=[validators.Optional(), ValidateTokensList()])
-    notification_body = TextAreaField('Notification Body', validators=[validators.Optional(), ValidateTokensList()])

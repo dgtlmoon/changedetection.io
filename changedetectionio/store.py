@@ -42,8 +42,8 @@ class ChangeDetectionStore:
                     'fetch_backend': 'html_requests',
                     'notification_urls': [], # Apprise URL list
                     # Custom notification content
-                    'notification_title': 'ChangeDetection.io Notification - {watch_url}',
-                    'notification_body': '{watch_url} had a change.'
+                    'notification_title': None,
+                    'notification_body': None,
                 }
             }
         }
@@ -66,7 +66,10 @@ class ChangeDetectionStore:
             'headers': {},  # Extra headers to send
             'history': {},  # Dict of timestamp and output stripped filename
             'ignore_text': [], # List of text to ignore when calculating the comparison checksum
+            # Custom notification content
             'notification_urls': [], # List of URLs to add to the notification Queue (Usually AppRise)
+            'notification_title': None,
+            'notification_body': None,
             'css_filter': "",
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'fetch_backend': None,

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 {% from '_helpers.jinja' import render_field %}
+{% from '_common_fields.jinja' import render_notifications_field %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 
 <div class="edit-form monospaced-textarea">
@@ -57,25 +58,12 @@ User-Agent: wonderbra 1.0") }}
                     </div>
                 </fieldset>
             </div>
-            <div class="tab-pane-inner" id="notifications">
-                <fieldset>
-                    <div class="pure-control-group">
-                        {{ render_field(form.notification_urls, rows=5, placeholder="Examples:
-    Gitter - gitter://token/room
-    Office365 - o365://TenantID:AccountEmail/ClientID/ClientSecret/TargetEmail
-    AWS SNS - sns://AccessKeyID/AccessSecretKey/RegionName/+PhoneNo
-    SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com
-                        ") }}
-                        <span class="pure-form-message-inline">Use <a target=_new
-                                                                      href="https://github.com/caronc/apprise">AppRise URLs</a> for notification to just about any service!</span>
-                        <span class="pure-form-message-inline">Note: This overrides any global settings notification URLs</span>
-                    </div>
 
-                    <div class="pure-controls">
-                        {{ render_field(form.trigger_check, rows=5) }}
-                    </div>
-                </fieldset>
+            <div class="tab-pane-inner" id="notifications">
+                <strong>Note: <i>These settings override the global settings.</i></strong>
+                {{ render_notifications_field(form) }}
             </div>
+
             <div class="tab-pane-inner" id="filters">
                 <fieldset>
                     <div class="pure-control-group">
