@@ -29,7 +29,7 @@ from flask import make_response
 import datetime
 import pytz
 
-__version__ = '0.39'
+__version__ = '0.39.1'
 
 datastore = None
 
