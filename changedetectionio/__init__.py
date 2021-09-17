@@ -444,8 +444,10 @@ def changedetection_app(config=None, datastore_o=None):
 
             if form.trigger_check.data:
                 n_object = {'watch_url': form.url.data.strip(),
-                            'notification_urls': form.notification_urls.data
-                            }
+                            'notification_urls': form.notification_urls.data,
+                            'notification_title': form.notification_title.data,
+                            'notification_body' :  form.notification_body.data
+                }
                 notification_q.put(n_object)
 
                 flash('Notifications queued.')
@@ -514,7 +516,10 @@ def changedetection_app(config=None, datastore_o=None):
 
             if form.trigger_check.data and len(form.notification_urls.data):
                 n_object = {'watch_url': "Test from changedetection.io!",
-                            'notification_urls': form.notification_urls.data}
+                            'notification_urls': form.notification_urls.data,
+                            'notification_title': form.notification_title.data,
+                            'notification_body': form.notification_body.data
+                            }
                 notification_q.put(n_object)
                 flash('Notifications queued.')
 

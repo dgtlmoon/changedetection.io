@@ -35,6 +35,16 @@ def test_check_notification(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"notification_urls": notification_url,
+              "notification_title": "New ChangeDetection.io Notification - {watch_url}",
+              "notification_body": "BASE URL: {base_url}\n"
+                                   "Watch URL: {watch_url}\n"
+                                   "Watch UUID: {watch_uuid}\n"
+                                   "Watch title: {watch_title}\n"
+                                   "Watch tag: {watch_tag}\n"
+                                   "Preview: {preview_url}\n"
+                                   "Diff URL: {diff_url}\n"
+                                   "Snapshot: {current_snapshot}\n"
+                                   ":-)",
               "url": test_url,
               "tag": "my tag",
               "title": "my title",
@@ -65,7 +75,6 @@ def test_check_notification(client, live_server):
     assert test_url in notification_submission
 
     os.unlink("test-datastore/notification.txt")
-
 
     set_modified_response()
 
@@ -100,18 +109,9 @@ def test_check_notification(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={"notification_title": "New ChangeDetection.io Notification - {watch_url}",
-              "notification_body": "BASE URL: {base_url}\n"
-                                   "Watch URL: {watch_url}\n"
-                                   "Watch UUID: {watch_uuid}\n"
-                                   "Watch title: {watch_title}\n"
-                                   "Watch tag: {watch_tag}\n"
-                                   "Preview: {preview_url}\n"
-                                   "Diff URL: {diff_url}\n"
-                                   "Snapshot: {current_snapshot}\n"
-                                   ":-)",
               "notification_urls": "json://foobar.com", #Re #143 should not see that it sent without [test checkbox]
               "minutes_between_check": 180,
-              "fetch_backend": "html_requests"
+              "fetch_backend": "html_requests",
               },
         follow_redirects=True
     )

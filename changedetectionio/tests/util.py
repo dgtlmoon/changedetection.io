@@ -58,7 +58,7 @@ def live_server_setup(live_server):
 
 
     # Where we POST to as a notification
-    @live_server.app.route('/test_notification_endpoint', methods=['POST'])
+    @live_server.app.route('/test_notification_endpoint', methods=['POST', 'GET'])
     def test_notification_endpoint():
         from flask import request
 
