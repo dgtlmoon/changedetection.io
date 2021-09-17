@@ -14,7 +14,11 @@ valid_tokens = {
 
 
 def process_notification(n_object, datastore):
-    apobj = apprise.Apprise()
+    import logging
+    log = logging.getLogger('apprise')
+    log.setLevel('TRACE')
+    apobj = apprise.Apprise(debug=True)
+
     for url in n_object['notification_urls']:
         print (">> Process Notification: AppRise notifying {}".format(url.strip()))
         apobj.add(url.strip())
@@ -26,18 +30,17 @@ def process_notification(n_object, datastore):
 
     # Insert variables into the notification content
     notification_parameters = create_notification_parameters(n_object, datastore)
-    raw_notification_text = [n_body, n_title]
 
-    parameterised_notification_text = dict(
-        [
-            (i, n.replace(n, n.format(**notification_parameters)))
-            for i, n in zip(['body', 'title'], raw_notification_text)
-        ]
-    )
+    for n_k in notification_parameters:
+        token = '{' + n_k + '}'
+        val = notification_parameters[n_k]
+        n_title = n_title.replace(token, val)
+        n_body = n_body.replace(token, val)
+
 
     apobj.notify(
-        body=parameterised_notification_text["body"],
-        title=parameterised_notification_text["title"]
+        body=n_body,
+        title=n_title
     )
 
 
@@ -73,11 +76,11 @@ def create_notification_parameters(n_object, datastore):
     # Valid_tokens also used as a field validator
     tokens.update(
     {
-        'base_url': base_url,
+        'base_url': base_url if base_url is not None else '',
         'watch_url': watch_url,
         'watch_uuid': uuid,
-        'watch_title': watch_title,
-        'watch_tag': watch_tag,
+        'watch_title': watch_title if watch_title is not None else '',
+        'watch_tag': watch_tag if watch_tag is not None else '',
         'diff_url': diff_url,
         'preview_url': preview_url,
         'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else ''
