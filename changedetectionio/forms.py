@@ -220,6 +220,7 @@ class watchForm(commonSettingsForm):
 
 
 class globalSettingsForm(commonSettingsForm):
+    import os
 
     password = SaltyPasswordField()
 
@@ -228,4 +229,4 @@ class globalSettingsForm(commonSettingsForm):
 
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
 
-    base_url = StringField('Base URL', [validators.Optional()])
+    base_url = StringField('Base URL', default=os.getenv('BASE_URL', '').strip('"'), validators=[validators.Optional()])
