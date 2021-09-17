@@ -20,8 +20,9 @@ def process_notification(n_object, datastore):
     apobj = apprise.Apprise(debug=True)
 
     for url in n_object['notification_urls']:
-        print (">> Process Notification: AppRise notifying {}".format(url.strip()))
-        apobj.add(url.strip())
+        url = url.strip()
+        print (">> Process Notification: AppRise notifying {}".format(url))
+        apobj.add(url)
 
     # Get the notification body from datastore
     n_body = n_object['notification_body']

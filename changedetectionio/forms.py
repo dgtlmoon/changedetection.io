@@ -116,6 +116,23 @@ class ValidateContentFetcherIsReady(object):
                 raise ValidationError(message % (field.data, e))
 
 
+class ValidateAppRiseServers(object):
+    """
+       Validates that a {token} is from a valid set
+       """
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        import apprise
+        apobj = apprise.Apprise()
+
+        for server_url in field.data:
+            if not apobj.add(server_url):
+                message = field.gettext('\'%s\' is not a valid AppRise URL.' % (server_url))
+                raise ValidationError(message)
+
 class ValidateTokensList(object):
     """
     Validates that a {token} is from a valid set
@@ -181,7 +198,7 @@ class quickWatchForm(Form):
 
 class commonSettingsForm(Form):
 
-    notification_urls = StringListField('Notification URL List')
+    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers()])
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {watch_url}', validators=[validators.Optional(), ValidateTokensList()])
     notification_body = TextAreaField('Notification Body', default='{watch_url} had a change.', validators=[validators.Optional(), ValidateTokensList()])
     trigger_check = BooleanField('Send test notification on save')
