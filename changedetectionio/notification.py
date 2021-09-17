@@ -24,9 +24,8 @@ def process_notification(n_object, datastore):
         apobj.add(url.strip())
 
     # Get the notification body from datastore
-    n_body = datastore.data['settings']['application']['notification_body']
-    # Get the notification title from the datastore
-    n_title = datastore.data['settings']['application']['notification_title']
+    n_body = n_object['notification_body']
+    n_title = n_object['notification_title']
 
     # Insert variables into the notification content
     notification_parameters = create_notification_parameters(n_object, datastore)
@@ -37,12 +36,10 @@ def process_notification(n_object, datastore):
         n_title = n_title.replace(token, val)
         n_body = n_body.replace(token, val)
 
-
     apobj.notify(
         body=n_body,
         title=n_title
     )
-
 
 # Notification title + body content parameters get created here.
 def create_notification_parameters(n_object, datastore):
