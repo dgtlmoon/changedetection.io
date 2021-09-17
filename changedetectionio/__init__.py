@@ -403,14 +403,15 @@ def changedetection_app(config=None, datastore_o=None):
             if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
                 form.fetch_backend.data = None
 
-
             update_obj = {'url': form.url.data.strip(),
                           'minutes_between_check': form.minutes_between_check.data,
                           'tag': form.tag.data.strip(),
                           'title': form.title.data.strip(),
                           'headers': form.headers.data,
                           'fetch_backend': form.fetch_backend.data,
-                          'trigger_text': form.trigger_text.data
+                          'trigger_text': form.trigger_text.data,
+                          'notification_title': form.notification_title.data,
+                          'notification_body': form.notification_body.data
                           }
 
             # Notification URLs
