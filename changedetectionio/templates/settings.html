@@ -40,7 +40,17 @@
             </div>
 
             <div class="tab-pane-inner" id="notifications">
-                {{ render_notifications_field(form) }}
+                <fieldset>
+                    <div class="field-group">
+                        {{ render_notifications_field(form) }}
+
+                    <div class="pure-control-group">
+                        {{ render_field(form.base_url, placeholder="http://yoursite.com:5000/",
+                        class="m-d") }}
+                        <span class="pure-form-message-inline">Base URL used for the {base_url} token in notifications.</span>
+                    </div>
+                    </div>
+                </fieldset>
             </div>
 
             <div class="tab-pane-inner" id="fetching">
