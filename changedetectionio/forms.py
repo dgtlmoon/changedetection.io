@@ -118,7 +118,7 @@ class ValidateContentFetcherIsReady(object):
 
 class ValidateAppRiseServers(object):
     """
-       Validates that a {token} is from a valid set
+       Validates that each URL given is compatible with AppRise
        """
 
     def __init__(self, message=None):
