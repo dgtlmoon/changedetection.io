@@ -95,24 +95,3 @@ jobs:
 
       - name: Image digest
         run: echo step SHA ${{ steps.vars.outputs.sha_short }} tag ${{steps.vars.outputs.tag}} branch ${{steps.vars.outputs.branch}} digest ${{ steps.docker_build.outputs.digest }}
-
-
-
-
-
-      - name: Build and push tagged version
-        id: docker_build
-        uses: docker/build-push-action@v2
-        with:
-          context: ./
-          file: ./Dockerfile
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:${{ steps.tagName.outputs.tag }}
-          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
-        env:
-            SOURCE_NAME: ${{ steps.branch_name.outputs.SOURCE_NAME }}
-            SOURCE_BRANCH: ${{ steps.branch_name.outputs.SOURCE_BRANCH }}
-            SOURCE_TAG: ${{ steps.branch_name.outputs.SOURCE_TAG }}
