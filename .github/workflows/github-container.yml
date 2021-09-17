@@ -4,7 +4,8 @@ on:
   push:
     tags:
       - '*.*'
-      - 'master'
+    branches:
+      - master
 
 jobs:
   build:
