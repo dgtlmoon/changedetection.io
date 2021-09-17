@@ -1,4 +1,4 @@
-name: Test, build and push tagged release to Docker Hub
+name: Build and Push > Docker Hub Container Repo
 
 on:
   push:

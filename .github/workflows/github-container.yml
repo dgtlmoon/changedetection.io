@@ -1,4 +1,4 @@
-name: Test, build and push tagged release to GitHub container repo
+name: Build and Push > GitHub Container Repo
 
 on:
   push:
