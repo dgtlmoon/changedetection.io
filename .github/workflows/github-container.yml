@@ -6,6 +6,7 @@ on:
       - '*.*'
     branches:
       - master
+      - gcr
 
 jobs:
   build:
@@ -80,8 +81,8 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true # Will only build if this is not here
+#            ghcr.io/${{ github.repository }}:${{ github.ref }}
           tags: |
-            ghcr.io/${{ github.repository }}:${{ github.ref }}
             ghcr.io/${{ github.repository }}:latest
           context: ./
           file: ./Dockerfile
