@@ -203,6 +203,7 @@ class commonSettingsForm(Form):
     notification_body = TextAreaField('Notification Body', default='{watch_url} had a change.', validators=[validators.Optional(), ValidateTokensList()])
     trigger_check = BooleanField('Send test notification on save')
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
 
 class watchForm(commonSettingsForm):
 
@@ -225,4 +226,3 @@ class globalSettingsForm(commonSettingsForm):
 
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.NumberRange(min=1)])
-    extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')

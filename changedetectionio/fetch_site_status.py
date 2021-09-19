@@ -170,9 +170,10 @@ class perform_site_check():
                 update_obj["previous_md5"] = fetched_md5
 
             # Extract title as title
-            if is_html and self.datastore.data['settings']['application']['extract_title_as_title']:
-                if not watch['title'] or not len(watch['title']):
-                    update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
+            if is_html:
+                if self.datastore.data['settings']['application']['extract_title_as_title'] or watch['extract_title_as_title']:
+                    if not watch['title'] or not len(watch['title']):
+                        update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
 
 
         return changed_detected, update_obj, stripped_text_from_html
