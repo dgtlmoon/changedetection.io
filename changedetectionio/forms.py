@@ -209,8 +209,13 @@ class watchForm(commonSettingsForm):
     url = html5.URLField('URL', [validators.URL(require_tld=False)])
     tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
-    minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
-                                               [validators.Optional(), validators.NumberRange(min=1)])
+    # always store a string instead?
+    # needs custom validator for single value, or one of @type of cron syntax
+    # "minutes_between_check": "1",  <-- check passing a single str val works
+    #... mmmmm nahh a separate field is going to be way simpler, with a css toggle or something (convert existing time to crontime?)
+    minutes_between_check = StringField('Maximum time in minutes until recheck',
+                                               [validators.Optional()])
+
     css_filter = StringField('CSS/JSON Filter', [ValidateCSSJSONInput()])
     title = StringField('Title')
 

@@ -20,3 +20,5 @@ apprise ~= 0.9
 bs4
 
 selenium ~= 3.141
+
+python-crontab
