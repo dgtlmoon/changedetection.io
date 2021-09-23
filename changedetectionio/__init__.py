@@ -28,6 +28,7 @@ from feedgen.feed import FeedGenerator
 from flask import make_response
 import datetime
 import pytz
+from copy import deepcopy
 
 __version__ = '0.39.1'
 
@@ -896,15 +897,19 @@ def ticker_thread_check_time_launch_checks():
             if t.current_uuid:
                 running_uuids.append(t.current_uuid)
 
+        # Re #232 - Deepcopy the data incase it changes while we're iterating through it all
+        copied_datastore = deepcopy(datastore)
+
         # Check for watches outside of the time threshold to put in the thread queue.
-        for uuid, watch in datastore.data['watching'].items():
+        for uuid, watch in copied_datastore.data['watching'].items():
 
             # If they supplied an individual entry minutes to threshold.
             if 'minutes_between_check' in watch and watch['minutes_between_check'] is not None:
-                max_time = watch['minutes_between_check'] * 60
+                # Cast to int just incase
+                max_time = int(watch['minutes_between_check']) * 60
             else:
                 # Default system wide.
-                max_time = datastore.data['settings']['requests']['minutes_between_check'] * 60
+                max_time = int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60
 
             threshold = time.time() - max_time
 
