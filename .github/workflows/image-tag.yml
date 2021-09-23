@@ -59,6 +59,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
         id: buildx
@@ -80,6 +86,7 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:${{ steps.tagName.outputs.tag }}
+            ghcr.io/dgtlmoon/changedetection.io:${{ steps.tagName.outputs.tag }}
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
