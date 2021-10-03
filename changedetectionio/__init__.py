@@ -270,7 +270,7 @@ def changedetection_app(config=None, datastore_o=None):
 
             for watch in sorted_watches:
                 if not watch['viewed']:
-                    # Re #240 - GUID needs to be individual for each event
+                    # Re #239 - GUID needs to be individual for each event
                     # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
                     guid = "{}/{}".format(watch['uuid'], watch['last_changed'])
                     fe = fg.add_entry()
