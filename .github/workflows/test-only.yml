@@ -44,11 +44,21 @@ jobs:
           killall -9 changedetection.io
 
       # https://github.com/docker/build-push-action/blob/master/docs/advanced/test-before-push.md ?
-      - name: Test docker build
+      # https://github.com/docker/buildx/issues/59 ? Needs to be one platform?
+      - name: Test docker build amd64
         id: docker_build
         uses: docker/build-push-action@v2
         with:
           context: .
           load: true
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
+          platforms: linux/amd64
+
+      - name: Test docker build linux/arm/v7
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          load: true
+          file: ./Dockerfile
+          platforms: linux/arm/v7
