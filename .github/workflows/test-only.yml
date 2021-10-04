@@ -55,7 +55,7 @@ jobs:
           platforms: linux/amd64
 
       - name: Test docker build linux/arm/v7
-        id: docker_build
+        id: docker_build_arm
         uses: docker/build-push-action@v2
         with:
           context: .
