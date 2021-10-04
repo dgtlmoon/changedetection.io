@@ -4,7 +4,7 @@ name: ChangeDetection.io Test
 on: [push, pull_request]
 
 jobs:
-  build:
+  test-build:
     runs-on: ubuntu-latest
     steps:
 
@@ -43,4 +43,11 @@ jobs:
           curl http://127.0.0.1:10000/static/styles/pure-min.css >/dev/null
           killall -9 changedetection.io
 
-
+      - name: Test build
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./Dockerfile
+          push: false
+          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
