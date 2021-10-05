@@ -6,6 +6,9 @@ on:
     branches: [master]
     tags: '*.*'
     types: [completed]
+    release:
+      types:
+        - created
 
 jobs:
   on-success:
