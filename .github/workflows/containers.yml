@@ -1,14 +1,17 @@
-name: Test, build and push to Docker Hub
+name: Build and push containers
 
 on:
-  push:
-    branches: [ master, arm-build ]
+  workflow_run:
+    workflows: ["ChangeDetection.io Test"]
+    branches: [master]
+    tags: '*.*'
+    types: [completed]
 
 jobs:
-  build:
+  on-success:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' && ( 1 || 1) }}
     steps:
-
       - uses: actions/checkout@v2
       - name: Set up Python 3.9
         uses: actions/setup-python@v2
@@ -22,23 +25,13 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
-      - name: Lint with flake8
-        run: |
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
       - name: Create release metadata
         run: |
           # COPY'ed by Dockerfile into changedetectionio/ of the image, then read by the server in store.py
           echo ${{ github.sha }} > changedetectionio/source.txt
           echo ${{ github.ref }} > changedetectionio/tag.txt
-
-      - name: Test with pytest
-        run: |
-          # Each test is totally isolated and performs its own cleanup/reset
-          cd changedetectionio; ./run_all_tests.sh
+          echo Event name: ${{ github.event_name }}
+          set
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -46,7 +39,14 @@ jobs:
           image: tonistiigi/binfmt:latest
           platforms: all
 
-      - name: Login to Docker Hub
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub Container Registry
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
@@ -60,29 +60,46 @@ jobs:
           version: latest
           driver-opts: image=moby/buildkit:master
 
-      - name: Build and push
+      - name: Build and push :latest
         id: docker_build
+        if: ${{ github.event_name != 'release'}}
         uses: docker/build-push-action@v2
         with:
           context: ./
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io
+            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:latest
+            ghcr.io/${{ github.repository }}:latest
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 
+      - name: Build and push :tag
+        id: docker_build_tag_release
+        if: ${{ github.event_name == 'release'}}
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:${{ steps.tagName.outputs.tag }}
+            ghcr.io/dgtlmoon/changedetection.io:${{ steps.tagName.outputs.tag }}
+          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+
+
       - name: Image digest
         run: echo step SHA ${{ steps.vars.outputs.sha_short }} tag ${{steps.vars.outputs.tag}} branch ${{steps.vars.outputs.branch}} digest ${{ steps.docker_build.outputs.digest }}
 
-# failed: Cache service responded with 503
-#      - name: Cache Docker layers
-#        uses: actions/cache@v2
-#        with:
-#          path: /tmp/.buildx-cache
-#          key: ${{ runner.os }}-buildx-${{ github.sha }}
-#          restore-keys: |
-#            ${{ runner.os }}-buildx-
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
 

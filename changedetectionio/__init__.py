@@ -28,6 +28,7 @@ from feedgen.feed import FeedGenerator
 from flask import make_response
 import datetime
 import pytz
+from copy import deepcopy
 
 __version__ = '0.39.1'
 
@@ -88,8 +89,7 @@ def populate_form_from_watch(form, watch):
         if i[0] != '_':
             p = getattr(form, i)
             if hasattr(p, 'data') and i in watch:
-                if not p.data:
-                    setattr(p, "data", watch[i])
+                setattr(p, "data", watch[i])
 
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
@@ -269,11 +269,14 @@ def changedetection_app(config=None, datastore_o=None):
 
             for watch in sorted_watches:
                 if not watch['viewed']:
+                    # Re #239 - GUID needs to be individual for each event
+                    # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
+                    guid = "{}/{}".format(watch['uuid'], watch['last_changed'])
                     fe = fg.add_entry()
                     fe.title(watch['url'])
                     fe.link(href=watch['url'])
                     fe.description(watch['url'])
-                    fe.guid(watch['uuid'], permalink=False)
+                    fe.guid(guid, permalink=False)
                     dt = datetime.datetime.fromtimestamp(int(watch['newest_history_key']))
                     dt = dt.replace(tzinfo=pytz.UTC)
                     fe.pubDate(dt)
@@ -411,7 +414,9 @@ def changedetection_app(config=None, datastore_o=None):
                           'fetch_backend': form.fetch_backend.data,
                           'trigger_text': form.trigger_text.data,
                           'notification_title': form.notification_title.data,
-                          'notification_body': form.notification_body.data
+                          'notification_body': form.notification_body.data,
+                          'extract_title_as_title': form.extract_title_as_title.data
+
                           }
 
             # Notification URLs
@@ -434,9 +439,8 @@ def changedetection_app(config=None, datastore_o=None):
                 if len(datastore.data['watching'][uuid]['history']):
                     update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
-
             datastore.data['watching'][uuid].update(update_obj)
-            datastore.needs_write = True
+
             flash("Updated watch.")
 
             # Queue the watch for immediate recheck
@@ -894,15 +898,19 @@ def ticker_thread_check_time_launch_checks():
             if t.current_uuid:
                 running_uuids.append(t.current_uuid)
 
+        # Re #232 - Deepcopy the data incase it changes while we're iterating through it all
+        copied_datastore = deepcopy(datastore)
+
         # Check for watches outside of the time threshold to put in the thread queue.
-        for uuid, watch in datastore.data['watching'].items():
+        for uuid, watch in copied_datastore.data['watching'].items():
 
             # If they supplied an individual entry minutes to threshold.
             if 'minutes_between_check' in watch and watch['minutes_between_check'] is not None:
-                max_time = watch['minutes_between_check'] * 60
+                # Cast to int just incase
+                max_time = int(watch['minutes_between_check']) * 60
             else:
                 # Default system wide.
-                max_time = datastore.data['settings']['requests']['minutes_between_check'] * 60
+                max_time = int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60
 
             threshold = time.time() - max_time
 

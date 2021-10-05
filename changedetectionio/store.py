@@ -73,6 +73,7 @@ class ChangeDetectionStore:
             'css_filter': "",
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'fetch_backend': None,
+            'extract_title_as_title': False
         }
 
         if path.isfile('changedetectionio/source.txt'):

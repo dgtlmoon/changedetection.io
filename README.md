@@ -65,8 +65,23 @@ Then visit http://127.0.0.1:5000 , You should now be able to access the UI.
 
 _Now with per-site configurable support for using a fast built in HTTP fetcher or use a Chrome based fetcher for monitoring of JavaScript websites!_
 
- 
-### Screenshots
+## Updating changedetection.io
+
+### Docker
+```
+docker pull dgtlmoon/changedetection.io
+docker kill $(docker ps -a|grep changedetection.io|awk '{print $1}')
+docker rm $(docker ps -a|grep changedetection.io|awk '{print $1}')
+docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
+```
+
+### docker-compose
+
+```bash
+docker-compose pull && docker-compose up -d
+```
+
+## Screenshots
 
 Examining differences in content.
 
