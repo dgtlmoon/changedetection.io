@@ -117,7 +117,8 @@ def test_check_notification(client, live_server):
         # Re #65 - did we see our BASE_URl ?
         logging.debug (">>> BASE_URL checking in notification: %s", env_base_url)
         assert env_base_url in notification_submission
-
+    else:
+        logging.debug(">>> Skipping BASE_URL check")
 
     ##  Now configure something clever, we go into custom config (non-default) mode, this is returned by the endpoint
     with open("test-datastore/endpoint-content.txt", "w") as f:
