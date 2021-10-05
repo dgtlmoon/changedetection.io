@@ -52,13 +52,4 @@ jobs:
           context: .
           load: true
           file: ./Dockerfile
-          platforms: linux/amd64
-
-      - name: Test docker build linux/arm/v7
-        id: docker_build_arm
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          load: true
-          file: ./Dockerfile
-          platforms: linux/arm/v7
+          platforms: linux/amd64,linux/arm/v7
