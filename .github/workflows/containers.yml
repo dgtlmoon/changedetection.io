@@ -9,6 +9,8 @@ on:
     release:
       types:
         - created
+        - edited
+        - published
 
 jobs:
   on-success:
