@@ -1,0 +1,44 @@
+name: PyPi Test and Push tagged release
+
+# Triggers the workflow on push or pull request events
+on:
+  workflow_run:
+    workflows: ["ChangeDetection.io Test"]
+    tags: '*.*'
+    types: [completed]
+
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+#      - name: Install dependencies
+#        run: |
+#          python -m pip install --upgrade pip
+#          pip install flake8 pytest
+#          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+#          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+
+      - name: Test that pip builds without error
+        run: |
+          pip3 --version
+          python3 -m pip install wheel
+          python3 setup.py bdist_wheel
+          python3 -m pip install dist/changedetection.io-*-none-any.whl --force
+          changedetection.io -d /tmp -p 10000 &
+          sleep 3
+          curl http://127.0.0.1:10000/static/styles/pure-min.css >/dev/null
+          killall -9 changedetection.io
+
+      # https://github.com/docker/build-push-action/blob/master/docs/advanced/test-before-push.md ?
+      # https://github.com/docker/buildx/issues/59 ? Needs to be one platform?
+
+      # https://github.com/docker/buildx/issues/495#issuecomment-918925854
+#if: ${{ github.event_name == 'release'}}

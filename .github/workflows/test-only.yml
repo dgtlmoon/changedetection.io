@@ -32,16 +32,6 @@ jobs:
           # Each test is totally isolated and performs its own cleanup/reset
           cd changedetectionio; ./run_all_tests.sh
 
-      - name: Test that pip builds without error
-        run: |
-          pip3 --version
-          python3 -m pip install wheel
-          python3 setup.py bdist_wheel
-          python3 -m pip install dist/changedetection.io-*-none-any.whl --force
-          changedetection.io -d /tmp -p 10000 &
-          sleep 3
-          curl http://127.0.0.1:10000/static/styles/pure-min.css >/dev/null
-          killall -9 changedetection.io
 
       # https://github.com/docker/build-push-action/blob/master/docs/advanced/test-before-push.md ?
       # https://github.com/docker/buildx/issues/59 ? Needs to be one platform?
