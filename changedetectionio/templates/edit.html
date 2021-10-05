@@ -64,7 +64,11 @@ User-Agent: wonderbra 1.0") }}
 
             <div class="tab-pane-inner" id="notifications">
                 <strong>Note: <i>These settings override the global settings.</i></strong>
-                {{ render_notifications_field(form) }}
+                <fieldset>
+                    <div class="field-group">
+                        {{ render_notifications_field(form) }}
+                    </div>
+                </fieldset>
             </div>
 
             <div class="tab-pane-inner" id="filters">

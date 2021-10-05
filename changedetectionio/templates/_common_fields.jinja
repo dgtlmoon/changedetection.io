@@ -3,9 +3,6 @@
 
 {% macro render_notifications_field(form) %}
 
-
-<fieldset>
-                    <div class="field-group">
                         <div class="pure-control-group">
                             {{ render_field(form.notification_urls, rows=5, placeholder="Examples:
     Gitter - gitter://token/room
@@ -84,7 +81,4 @@
                         <div class="pure-control-group">
                             {{ render_field(form.trigger_check) }}
                         </div>
-                    </div>
-
-                </fieldset>
 {% endmacro %}

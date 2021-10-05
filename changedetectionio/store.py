@@ -7,7 +7,7 @@ from copy import deepcopy
 import logging
 import time
 import threading
-
+import os
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
@@ -38,6 +38,7 @@ class ChangeDetectionStore:
                 },
                 'application': {
                     'password': False,
+                    'base_url' : None,
                     'extract_title_as_title': False,
                     'fetch_backend': 'html_requests',
                     'notification_urls': [], # Apprise URL list
@@ -197,12 +198,14 @@ class ChangeDetectionStore:
                 has_unviewed = True
 
             # #106 - Be sure this is None on empty string, False, None, etc
-            if not self.__data['watching'][uuid]['title']:
-                self.__data['watching'][uuid]['title'] = None
-
             # Default var for fetch_backend
             if not self.__data['watching'][uuid]['fetch_backend']:
                 self.__data['watching'][uuid]['fetch_backend'] = self.__data['settings']['application']['fetch_backend']
+
+        # Re #152, Return env base_url if not overriden, @todo also prefer the proxy pass url
+        env_base_url = os.getenv('BASE_URL','')
+        if self.__data['settings']['application']['base_url'] is None and len(env_base_url) >0:
+            self.__data['settings']['application']['base_url'] = env_base_url.strip('" ')
 
         self.__data['has_unviewed'] = has_unviewed
 

@@ -3,6 +3,7 @@ import time
 import re
 from flask import url_for
 from . util import set_original_response, set_modified_response, live_server_setup
+import logging
 
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
@@ -14,8 +15,16 @@ def test_check_notification(client, live_server):
     # Give the endpoint time to spin up
     time.sleep(3)
 
-    # re #242 - when you edited an existing new entry, it would not correctly show the notification settings
+    # When test mode is in BASE_URL env mode, we should see this already configured
+    env_base_url = os.getenv('BASE_URL', '').strip()
+    if len(env_base_url):
+        logging.debug(">>> BASE_URL enabled, looking for %s", env_base_url)
+        res = client.get(url_for("settings_page"))
+        assert bytes(env_base_url.encode('utf-8')) in res.data
+    else:
+        logging.debug(">>> SKIPPING BASE_URL check")
 
+    # re #242 - when you edited an existing new entry, it would not correctly show the notification settings
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -104,9 +113,12 @@ def test_check_notification(client, live_server):
 
     assert test_url in notification_submission
 
-        # Re #65 - did we see our foobar.com BASE_URL ?
-        #assert bytes("https://foobar.com".encode('utf-8')) in notification_submission
-
+    if env_base_url:
+        # Re #65 - did we see our BASE_URl ?
+        logging.debug (">>> BASE_URL checking in notification: %s", env_base_url)
+        assert env_base_url in notification_submission
+    else:
+        logging.debug(">>> Skipping BASE_URL check")
 
     ##  Now configure something clever, we go into custom config (non-default) mode, this is returned by the endpoint
     with open("test-datastore/endpoint-content.txt", "w") as f:

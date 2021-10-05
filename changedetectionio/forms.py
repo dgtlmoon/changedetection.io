@@ -223,6 +223,7 @@ class watchForm(commonSettingsForm):
 class globalSettingsForm(commonSettingsForm):
 
     password = SaltyPasswordField()
-
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.NumberRange(min=1)])
+    extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
+    base_url = StringField('Base URL', validators=[validators.Optional()])

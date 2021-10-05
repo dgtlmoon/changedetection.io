@@ -9,11 +9,15 @@
 # exit when any command fails
 set -e
 
-# Re #65 - Ability to include a link back to the installation, in the notification.
-export BASE_URL="https://foobar.com"
 
 find tests/test_*py -type f|while read test_name
 do
   echo "TEST RUNNING $test_name"
   pytest $test_name
 done
+
+
+# Now re-run some tests with BASE_URL enabled
+# Re #65 - Ability to include a link back to the installation, in the notification.
+export BASE_URL="https://really-unique-domain.io"
+pytest tests/test_notification.py
