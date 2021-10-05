@@ -28,6 +28,8 @@ jobs:
           # COPY'ed by Dockerfile into changedetectionio/ of the image, then read by the server in store.py
           echo ${{ github.sha }} > changedetectionio/source.txt
           echo ${{ github.ref }} > changedetectionio/tag.txt
+          echo Event name: ${{ github.event_name }}
+          set
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -49,8 +51,9 @@ jobs:
           version: latest
           driver-opts: image=moby/buildkit:master
 
-      - name: Build and push
+      - name: Build and push :latest
         id: docker_build
+        if: ${{ github.event_name != 'release'}}
         uses: docker/build-push-action@v2
         with:
           context: ./
@@ -58,12 +61,26 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:latest
-            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:${{ steps.tagName.outputs.tag }}
             ghcr.io/${{ github.repository }}:latest
+          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+
+      - name: Build and push :tag
+        id: docker_build_tag_release
+        if: ${{ github.event_name == 'release'}}
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:${{ steps.tagName.outputs.tag }}
             ghcr.io/dgtlmoon/changedetection.io:${{ steps.tagName.outputs.tag }}
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
+
 
       - name: Image digest
         run: echo step SHA ${{ steps.vars.outputs.sha_short }} tag ${{steps.vars.outputs.tag}} branch ${{steps.vars.outputs.branch}} digest ${{ steps.docker_build.outputs.digest }}
