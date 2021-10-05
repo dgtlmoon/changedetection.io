@@ -1,8 +1,9 @@
-name: Test, build and push to Docker Hub
+name: Build and Push > Docker Hub Container Repo by Tag
 
 on:
   push:
-    branches: [ master, arm-build ]
+    tags:
+      - '*.*'
 
 jobs:
   build:
@@ -14,6 +15,14 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
+
+      - uses: olegtarasov/get-tag@v2.1
+        id: tagName
+
+#        with:
+#          tagRegex: "foobar-(.*)"  # Optional. Returns specified group text as tag name. Full tag string is returned if regex is not defined.
+#          tagRegexGroup: 1 # Optional. Default is 1.
+
 
       - name: Install dependencies
         run: |
@@ -45,7 +54,6 @@ jobs:
         with:
           image: tonistiigi/binfmt:latest
           platforms: all
-
       - name: Login to Docker Hub
         uses: docker/login-action@v1
         with:
@@ -60,7 +68,10 @@ jobs:
           version: latest
           driver-opts: image=moby/buildkit:master
 
-      - name: Build and push
+      - name: tag
+        run : echo ${{ github.event.release.tag_name }}
+
+      - name: Build and push tagged version
         id: docker_build
         uses: docker/build-push-action@v2
         with:
@@ -68,21 +79,14 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io
+            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:${{ steps.tagName.outputs.tag }}
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
+        env:
+            SOURCE_NAME: ${{ steps.branch_name.outputs.SOURCE_NAME }}
+            SOURCE_BRANCH: ${{ steps.branch_name.outputs.SOURCE_BRANCH }}
+            SOURCE_TAG: ${{ steps.branch_name.outputs.SOURCE_TAG }}
 
       - name: Image digest
         run: echo step SHA ${{ steps.vars.outputs.sha_short }} tag ${{steps.vars.outputs.tag}} branch ${{steps.vars.outputs.branch}} digest ${{ steps.docker_build.outputs.digest }}
-
-# failed: Cache service responded with 503
-#      - name: Cache Docker layers
-#        uses: actions/cache@v2
-#        with:
-#          path: /tmp/.buildx-cache
-#          key: ${{ runner.os }}-buildx-${{ github.sha }}
-#          restore-keys: |
-#            ${{ runner.os }}-buildx-
-
-
