@@ -19,5 +19,5 @@ done
 
 # Now re-run some tests with BASE_URL enabled
 # Re #65 - Ability to include a link back to the installation, in the notification.
-export BASE_URL="https://foobar.com"
+export BASE_URL="https://really-unique-domain.io"
 pytest tests/test_notification.py
