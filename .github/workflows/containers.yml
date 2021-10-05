@@ -3,12 +3,14 @@ name: Build and push containers
 on:
   workflow_run:
     workflows: ["ChangeDetection.io Test"]
+    branches: [master]
+    tags: '*.*'
     types: [completed]
 
 jobs:
   on-success:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && ( 1 || 1) }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 3.9
