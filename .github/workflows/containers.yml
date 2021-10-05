@@ -31,6 +31,7 @@ jobs:
           echo ${{ github.sha }} > changedetectionio/source.txt
           echo ${{ github.ref }} > changedetectionio/tag.txt
           echo Event name: ${{ github.event_name }}
+          echo Ref ${{ github.ref }}
           set
 
       - name: Set up QEMU
@@ -62,7 +63,7 @@ jobs:
 
       - name: Build and push :latest
         id: docker_build
-        if: ${{ github.event_name != 'release'}}
+        if: ${{ github.ref == 'master'}}
         uses: docker/build-push-action@v2
         with:
           context: ./
@@ -77,7 +78,7 @@ jobs:
 
       - name: Build and push :tag
         id: docker_build_tag_release
-        if: ${{ github.event_name == 'release'}}
+        if: startsWith(github.ref, 'refs/tags/0.')
         uses: docker/build-push-action@v2
         with:
           context: ./
