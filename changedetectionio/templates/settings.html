@@ -33,6 +33,12 @@
                         {% endif %}
                     </div>
                     <div class="pure-control-group">
+                        {{ render_field(form.base_url, placeholder="http://yoursite.com:5000/",
+                        class="m-d") }}
+                        <span class="pure-form-message-inline">Base URL used for the {base_url} token in notifications, RSS feeds and more.</span>
+                    </div>
+
+                    <div class="pure-control-group">
                         {{ render_field(form.extract_title_as_title) }}
                         <span class="pure-form-message-inline">Note: This will automatically apply to all existing watches.</span>
                     </div>
@@ -43,12 +49,6 @@
                 <fieldset>
                     <div class="field-group">
                         {{ render_notifications_field(form) }}
-
-                    <div class="pure-control-group">
-                        {{ render_field(form.base_url, placeholder="http://yoursite.com:5000/",
-                        class="m-d") }}
-                        <span class="pure-form-message-inline">Base URL used for the {base_url} token in notifications.</span>
-                    </div>
                     </div>
                 </fieldset>
             </div>
