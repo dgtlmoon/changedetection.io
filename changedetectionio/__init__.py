@@ -89,8 +89,7 @@ def populate_form_from_watch(form, watch):
         if i[0] != '_':
             p = getattr(form, i)
             if hasattr(p, 'data') and i in watch:
-                if not p.data:
-                    setattr(p, "data", watch[i])
+                setattr(p, "data", watch[i])
 
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
@@ -440,9 +439,8 @@ def changedetection_app(config=None, datastore_o=None):
                 if len(datastore.data['watching'][uuid]['history']):
                     update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
-
             datastore.data['watching'][uuid].update(update_obj)
-            datastore.needs_write = True
+
             flash("Updated watch.")
 
             # Queue the watch for immediate recheck
