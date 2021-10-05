@@ -37,7 +37,7 @@ def app(request):
         pass
 
     # Enable a BASE_URL for notifications to work (so we can look for diff/ etc URLs)
-    os.environ["BASE_URL"] = "http://mysite.com/"
+#    os.environ["BASE_URL"] = "http://mysite.com/"
     cleanup(datastore_path)
 
 

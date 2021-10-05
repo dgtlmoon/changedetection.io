@@ -57,7 +57,8 @@ def create_notification_parameters(n_object, datastore):
         watch_tag = ''
 
     # Create URLs to customise the notification with
-    base_url = os.getenv('BASE_URL', '').strip('"')
+    base_url = datastore.data['settings']['application']['base_url']
+
     watch_url = n_object['watch_url']
 
     # Re #148 - Some people have just {base_url} in the body or title, but this may break some notification services

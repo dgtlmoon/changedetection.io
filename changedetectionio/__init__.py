@@ -497,6 +497,7 @@ def changedetection_app(config=None, datastore_o=None):
             form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
             form.notification_title.data = datastore.data['settings']['application']['notification_title']
             form.notification_body.data = datastore.data['settings']['application']['notification_body']
+            form.base_url.data = datastore.data['settings']['application']['base_url']
 
             # Password unset is a GET
             if request.values.get('removepassword') == 'yes':
@@ -514,9 +515,8 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['fetch_backend'] = form.fetch_backend.data
             datastore.data['settings']['application']['notification_title'] = form.notification_title.data
             datastore.data['settings']['application']['notification_body'] = form.notification_body.data
-
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
-            datastore.needs_write = True
+            datastore.data['settings']['application']['base_url'] = form.base_url.data
 
             if form.trigger_check.data and len(form.notification_urls.data):
                 n_object = {'watch_url': "Test from changedetection.io!",
@@ -533,14 +533,13 @@ def changedetection_app(config=None, datastore_o=None):
                 flask_login.logout_user()
                 return redirect(url_for('index'))
 
+            datastore.needs_write = True
             flash("Settings updated.")
 
         if request.method == 'POST' and not form.validate():
             flash("An error occurred, please see below.", "error")
 
-        # Same as notification.py
-        base_url = os.getenv('BASE_URL', '').strip('"')
-        output = render_template("settings.html", form=form, base_url=base_url)
+        output = render_template("settings.html", form=form)
 
         return output
 
