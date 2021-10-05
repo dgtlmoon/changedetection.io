@@ -3,14 +3,10 @@ name: Build and push containers
 on:
   workflow_run:
     workflows: ["ChangeDetection.io Test"]
-    branches: [master]
-    tags: '*.*'
     types: [completed]
+
   release:
-    types:
-      - created
-      - edited
-      - published
+    types: [created]
 
 jobs:
   on-success:
