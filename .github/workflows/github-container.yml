@@ -1,18 +1,14 @@
 name: Build and Push > GitHub Container Repo
-
 on:
-  push:
-    tags:
-      - '*.*'
-    branches:
-      - master
-      - gcr
+  workflow_run:
+    workflows: ["ChangeDetection.io Test"]
+    types: [completed]
 
 jobs:
-  build:
+  on-success:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-
       - uses: actions/checkout@v2
       - name: Set up Python 3.9
         uses: actions/setup-python@v2
@@ -34,23 +30,11 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
-      - name: Lint with flake8
-        run: |
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
       - name: Create release metadata
         run: |
           # COPY'ed by Dockerfile into changedetectionio/ of the image, then read by the server in store.py
           echo ${{ github.sha }} > changedetectionio/source.txt
           echo ${{ github.ref }} > changedetectionio/tag.txt
-
-      - name: Test with pytest
-        run: |
-          # Each test is totally isolated and performs its own cleanup/reset
-          cd changedetectionio; ./run_all_tests.sh
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -81,10 +65,10 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true # Will only build if this is not here
-#            ghcr.io/${{ github.repository }}:${{ github.ref }}
           tags: |
             ghcr.io/${{ github.repository }}:latest
-          context: ./
+            ghcr.io/dgtlmoon/changedetection.io:${{ steps.tagName.outputs.tag }}
+          context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
