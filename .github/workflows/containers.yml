@@ -85,7 +85,7 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:${{ steps.tagName.outputs.tag }}
-            ghcr.io/dgtlmoon/changedetection.io
+            ghcr.io/dgtlmoon/changedetection.io:${{ steps.tagName.outputs.tag }}
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
