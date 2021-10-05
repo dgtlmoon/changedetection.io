@@ -4,7 +4,7 @@ name: ChangeDetection.io Test
 on: [push, pull_request]
 
 jobs:
-  build:
+  test-build:
     runs-on: ubuntu-latest
     steps:
 
@@ -43,4 +43,7 @@ jobs:
           curl http://127.0.0.1:10000/static/styles/pure-min.css >/dev/null
           killall -9 changedetection.io
 
+      # https://github.com/docker/build-push-action/blob/master/docs/advanced/test-before-push.md ?
+      # https://github.com/docker/buildx/issues/59 ? Needs to be one platform?
 
+      # https://github.com/docker/buildx/issues/495#issuecomment-918925854
