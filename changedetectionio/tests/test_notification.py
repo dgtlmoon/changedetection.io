@@ -14,14 +14,16 @@ def test_check_notification(client, live_server):
     # Give the endpoint time to spin up
     time.sleep(3)
 
+    # re #242 - when you edited an existing new entry, it would not correctly show the notification settings
+
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
-        data={"urls": test_url},
+        url_for("api_watch_add"),
+        data={"url": test_url, "tag": ''},
         follow_redirects=True
     )
-    assert b"1 Imported" in res.data
+    assert b"Watch added" in res.data
 
     # Give the thread time to pick up the first version
     time.sleep(3)
@@ -60,6 +62,10 @@ def test_check_notification(client, live_server):
     res = client.get(
         url_for("edit_page", uuid="first"))
     assert bytes(notification_url.encode('utf-8')) in res.data
+
+    # Re #242 - wasnt saving?
+    assert bytes("New ChangeDetection.io Notification".encode('utf-8')) in res.data
+
 
 
     # Because we hit 'send test notification on save'
