@@ -6,12 +6,27 @@ on:
     types: [completed]
 
   release:
-    types: [created]
+    types: [created, published, edited]
 
 jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Show metadata
+      run: |
+        echo SHA ${{ github.sha }}
+        echo github.ref:  ${{ github.ref }}
+        echo github_ref: $GITHUB_REF
+        echo Event name: ${{ github.event_name }}
+        echo Ref ${{ github.ref }}
+        echo c: ${{ github.event.workflow_run.conclusion }}
+        echo r: ${{ github.event.workflow_run }}
+        echo tname: ${{ github.event.release.tag_name }}
+        set
+
   on-success:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || ${{ github.event.release.tag_name }} != '' }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 3.9
@@ -31,9 +46,6 @@ jobs:
           # COPY'ed by Dockerfile into changedetectionio/ of the image, then read by the server in store.py
           echo ${{ github.sha }} > changedetectionio/source.txt
           echo ${{ github.ref }} > changedetectionio/tag.txt
-          echo Event name: ${{ github.event_name }}
-          echo Ref ${{ github.ref }}
-          set
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
