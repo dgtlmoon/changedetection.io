@@ -81,7 +81,7 @@ jobs:
       # master always builds :latest
       - name: Build and push :latest
         id: docker_build
-        if: ${{ github.ref == 'refs/heads/master'}}
+        if: ${{ github.ref }} == "refs/heads/master"
         uses: docker/build-push-action@v2
         with:
           context: ./
