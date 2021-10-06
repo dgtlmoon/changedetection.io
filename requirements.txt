@@ -1,15 +1,18 @@
-chardet==2.3.0
 flask~= 1.0
 
 eventlet>=0.31.0
-requests[socks] ~= 2.15
 validators
 timeago ~=1.0
 inscriptis ~= 1.2
 feedgen ~= 0.9
 flask-login ~= 0.5
 pytz
-urllib3
+
+# Set these versions together to avoid a RequestsDependencyWarning
+requests[socks] ~= 2.26
+urllib3 > 1.26
+chardet > 2.3.0
+
 wtforms ~= 2.3.3
 jsonpath-ng ~= 1.5.3
 
