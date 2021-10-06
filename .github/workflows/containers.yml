@@ -5,7 +5,10 @@ on:
   workflow_run:
     workflows: ["ChangeDetection.io Test"]
     types: [completed]
-
+    branches:
+      - master
+    tags: '*.*'
+    
   # Or a new tagged release
   release:
     types: [published, edited]
