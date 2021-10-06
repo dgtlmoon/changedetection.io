@@ -8,7 +8,7 @@ on:
 
   # Or a new tagged release
   release:
-    types: [created, published, edited]
+    types: [published, edited]
 
 jobs:
   metadata:
