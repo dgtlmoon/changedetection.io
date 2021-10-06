@@ -41,15 +41,15 @@ Run the python code on your own machine by cloning this repository, or with <a h
 
 ### Docker
 
-Check out our Docker hub page https://hub.docker.com/r/dgtlmoon/changedetection.io
+_Note:_ We also use GitHub's container repository, because DockerHub has limited pull/downloads.
 
-With Docker composer, just clone this repository and
+With Docker composer, just clone this repository and..
 ```bash
 $ docker-compose up -d
 ```
 Docker standalone
 ```bash
-$ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
+$ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io ghcr.io/dgtlmoon/changedetection.io
 ```
 
 ### Python Pip
@@ -69,10 +69,10 @@ _Now with per-site configurable support for using a fast built in HTTP fetcher o
 
 ### Docker
 ```
-docker pull dgtlmoon/changedetection.io
+docker pull ghcr.io/dgtlmoon/changedetection.io
 docker kill $(docker ps -a|grep changedetection.io|awk '{print $1}')
 docker rm $(docker ps -a|grep changedetection.io|awk '{print $1}')
-docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
+docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io ghcr.io/dgtlmoon/changedetection.io
 ```
 
 ### docker-compose
