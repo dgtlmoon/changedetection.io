@@ -26,6 +26,7 @@ jobs:
         echo c: ${{ github.event.workflow_run.conclusion }}
         echo r: ${{ github.event.workflow_run }}
         echo tname: "${{ github.event.release.tag_name }}"
+        echo headbranch: -${{ github.event.workflow_run.head_branch }}-
         set
 
   build-push-containers:
