@@ -4,11 +4,10 @@ on:
   # Automatically triggered by a testing workflow passing
   workflow_run:
     workflows: ["ChangeDetection.io Test"]
+    branches: [main]
+    tags: ['0.*']
     types: [completed]
-    branches:
-      - master
-    tags: '*.*'
-    
+
   # Or a new tagged release
   release:
     types: [published, edited]
