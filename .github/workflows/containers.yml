@@ -23,7 +23,7 @@ jobs:
         echo Ref ${{ github.ref }}
         echo c: ${{ github.event.workflow_run.conclusion }}
         echo r: ${{ github.event.workflow_run }}
-        echo tname: ${{ github.event.release.tag_name }}
+        echo tname: "${{ github.event.release.tag_name }}"
         set
 
   build-push-containers:
@@ -97,7 +97,7 @@ jobs:
       # A new tagged release is required, which builds :tag
       - name: Build and push :tag
         id: docker_build_tag_release
-        if: ${{ github.event.release.tag_name }} != ''
+        if: github.event_name == 'release' && startsWith(github.event.release.tag_name, '0.')
         uses: docker/build-push-action@v2
         with:
           context: ./
@@ -109,7 +109,6 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
-
 
       - name: Image digest
         run: echo step SHA ${{ steps.vars.outputs.sha_short }} tag ${{steps.vars.outputs.tag}} branch ${{steps.vars.outputs.branch}} digest ${{ steps.docker_build.outputs.digest }}
