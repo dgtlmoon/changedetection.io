@@ -5,6 +5,10 @@ from flask import url_for
 from . util import live_server_setup
 import pytest
 
+
+def test_setup(live_server):
+    live_server_setup(live_server)
+
 def test_unittest_inline_html_extract():
     # So lets pretend that the JSON we want is inside some HTML
     content="""
@@ -60,7 +64,8 @@ def set_original_response():
       ],
       "boss": {
         "name": "Fat guy"
-      }
+      },
+      "available": true
     }
     """
     with open("test-datastore/endpoint-content.txt", "w") as f:
@@ -84,7 +89,8 @@ def set_modified_response():
       ],
       "boss": {
         "name": "Foobar"
-      }
+      },
+      "available": false
     }
         """
 
@@ -93,11 +99,7 @@ def set_modified_response():
 
     return None
 
-
-
 def test_check_json_filter(client, live_server):
-    live_server_setup(live_server)
-
     json_filter = 'json:boss.name'
 
     set_original_response()
@@ -161,3 +163,53 @@ def test_check_json_filter(client, live_server):
     res = client.get(url_for("diff_history_page", uuid="first"))
     # But the change should be there, tho its hard to test the change was detected because it will show old and new versions
     assert b'Foobar' in res.data
+
+
+def test_check_json_filter_bool_val(client, live_server):
+    json_filter = "json:$['available']"
+
+    set_original_response()
+
+    # Give the endpoint time to spin up
+    time.sleep(1)
+
+    test_url = url_for('test_endpoint', _external=True)
+
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+
+    # Goto the edit page, add our ignore text
+    # Add our URL to the import page
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"css_filter": json_filter,
+              "url": test_url,
+              "tag": "",
+              "headers": "",
+              "fetch_backend": "html_requests"
+              },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+
+
+    # Trigger a check
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+
+    # Give the thread time to pick it up
+    time.sleep(3)
+    #  Make a change
+    set_modified_response()
+
+    # Trigger a check
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    # Give the thread time to pick it up
+    time.sleep(3)
+
+    res = client.get(url_for("diff_history_page", uuid="first"))
+    # But the change should be there, tho its hard to test the change was detected because it will show old and new versions
+    assert b'false' in res.data
