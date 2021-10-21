@@ -95,9 +95,7 @@ def set_modified_response():
 
     return None
 
-
-
-def xtest_check_json_filter(client, live_server):
+def test_check_json_filter(client, live_server):
     live_server_setup(live_server)
 
     json_filter = 'json:boss.name'
