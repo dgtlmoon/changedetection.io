@@ -5,6 +5,10 @@ from flask import url_for
 from . util import live_server_setup
 import pytest
 
+
+def test_setup(live_server):
+    live_server_setup(live_server)
+
 def test_unittest_inline_html_extract():
     # So lets pretend that the JSON we want is inside some HTML
     content="""
@@ -96,8 +100,6 @@ def set_modified_response():
     return None
 
 def test_check_json_filter(client, live_server):
-    live_server_setup(live_server)
-
     json_filter = 'json:boss.name'
 
     set_original_response()
@@ -163,10 +165,7 @@ def test_check_json_filter(client, live_server):
     assert b'Foobar' in res.data
 
 
-
 def test_check_json_filter_bool_val(client, live_server):
-    live_server_setup(live_server)
-
     json_filter = "json:$['available']"
 
     set_original_response()
