@@ -1,6 +1,6 @@
 import json
 from bs4 import BeautifulSoup
-from jsonpath_ng import parse
+from jsonpath_ng.ext import parse
 
 
 class JSONNotFound(ValueError):

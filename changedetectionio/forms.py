@@ -179,7 +179,7 @@ class ValidateCSSJSONInput(object):
     def __call__(self, form, field):
         if 'json:' in field.data:
             from jsonpath_ng.exceptions import JsonPathParserError, JsonPathLexerError
-            from jsonpath_ng import jsonpath, parse
+            from jsonpath_ng.ext import parse
 
             input = field.data.replace('json:', '')
 
