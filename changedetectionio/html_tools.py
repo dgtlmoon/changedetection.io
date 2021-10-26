@@ -45,7 +45,9 @@ def _parse_json(json_data, jsonpath_filter):
     if len(match) == 1:
         s = match[0].value
 
-    if not s:
+    # Re #257 - Better handling where it does not exist, in the case the original 's' value was False..
+    if not match:
+        # Maybe better to just allow it through, maybe they are waiting on a value to become available?
         raise JSONNotFound("No Matching JSON could be found for the rule {}".format(jsonpath_filter.replace('json:', '')))
 
     stripped_text_from_html = json.dumps(s, indent=4)
