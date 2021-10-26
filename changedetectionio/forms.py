@@ -178,14 +178,14 @@ class ValidateCSSJSONInput(object):
 
     def __call__(self, form, field):
         if 'json:' in field.data:
-            from jsonpath_ng.exceptions import JsonPathParserError
+            from jsonpath_ng.exceptions import JsonPathParserError, JsonPathLexerError
             from jsonpath_ng import jsonpath, parse
 
             input = field.data.replace('json:', '')
 
             try:
                 parse(input)
-            except JsonPathParserError as e:
+            except (JsonPathParserError, JsonPathLexerError) as e:
                 message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
                 raise ValidationError(message % (input, str(e)))
 
