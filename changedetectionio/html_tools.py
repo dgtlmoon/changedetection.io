@@ -1,6 +1,6 @@
 import json
 from bs4 import BeautifulSoup
-from jsonpath_ng import parse
+from jsonpath_ng.ext import parse
 
 
 class JSONNotFound(ValueError):
@@ -47,8 +47,8 @@ def _parse_json(json_data, jsonpath_filter):
 
     # Re #257 - Better handling where it does not exist, in the case the original 's' value was False..
     if not match:
-        # Maybe better to just allow it through, maybe they are waiting on a value to become available?
-        raise JSONNotFound("No Matching JSON could be found for the rule {}".format(jsonpath_filter.replace('json:', '')))
+        # Re 265 - Just return an empty string when filter not found
+        return ''
 
     stripped_text_from_html = json.dumps(s, indent=4)
 
@@ -87,6 +87,7 @@ def extract_json_as_string(content, jsonpath_filter):
                     break
 
     if not stripped_text_from_html:
-        raise JSONNotFound("No JSON matching the rule '%s' found" % jsonpath_filter.replace('json:',''))
+        # Re 265 - Just return an empty string when filter not found
+        return ''
 
     return stripped_text_from_html
