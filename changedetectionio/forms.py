@@ -189,6 +189,8 @@ class ValidateCSSJSONInput(object):
                 message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
                 raise ValidationError(message % (input, str(e)))
 
+            # Re #265 - maybe in the future fetch the page and offer a
+            # warning/notice that its possible the rule doesnt yet match anything?
 
 class quickWatchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5

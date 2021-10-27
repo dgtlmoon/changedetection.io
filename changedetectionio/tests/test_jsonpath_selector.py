@@ -46,6 +46,45 @@ and it can also be repeated
     with pytest.raises(html_tools.JSONNotFound) as e_info:
         html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "$.id")
 
+def set_original_ext_response():
+    data = """
+        [
+        {
+            "isPriceLowered": false,
+            "status": "ForSale",
+            "statusOrig": "for sale"
+        },
+        {
+            "_id": "5e7b3e1fb3262d306323ff1e",
+            "listingsType": "consumer",
+            "status": "ForSale",
+            "statusOrig": "for sale"
+        }
+    ]
+        """
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(data)
+
+def set_modified_ext_response():
+    data = """
+    [
+    {
+        "isPriceLowered": false,
+        "status": "Sold",
+        "statusOrig": "sold"
+    },
+    {
+        "_id": "5e7b3e1fb3262d306323ff1e",
+        "listingsType": "consumer",
+        "isPriceLowered": false,
+        "status": "Sold"
+    }
+]
+    """
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(data)
 
 def set_original_response():
     test_return_data = """
@@ -213,3 +252,76 @@ def test_check_json_filter_bool_val(client, live_server):
     res = client.get(url_for("diff_history_page", uuid="first"))
     # But the change should be there, tho its hard to test the change was detected because it will show old and new versions
     assert b'false' in res.data
+
+# Re #265 - Extended JSON selector test
+# Stuff to consider here
+# - Selector should be allowed to return empty when it doesnt match (people might wait for some condition)
+# - The 'diff' tab could show the old and new content
+# - Form should let us enter a selector that doesnt (yet) match anything
+def test_check_json_ext_filter(client, live_server):
+    json_filter = 'json:$[?(@.status==Sold)]'
+
+    set_original_ext_response()
+
+    # Give the endpoint time to spin up
+    time.sleep(1)
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+
+    # Trigger a check
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+
+    # Give the thread time to pick it up
+    time.sleep(3)
+
+    # Goto the edit page, add our ignore text
+    # Add our URL to the import page
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"css_filter": json_filter,
+              "url": test_url,
+              "tag": "",
+              "headers": "",
+              "fetch_backend": "html_requests"
+              },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+
+    # Check it saved
+    res = client.get(
+        url_for("edit_page", uuid="first"),
+    )
+    assert bytes(json_filter.encode('utf-8')) in res.data
+
+    # Trigger a check
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+
+    # Give the thread time to pick it up
+    time.sleep(3)
+    #  Make a change
+    set_modified_ext_response()
+
+    # Trigger a check
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    # Give the thread time to pick it up
+    time.sleep(4)
+
+    # It should have 'unviewed'
+    res = client.get(url_for("index"))
+    assert b'unviewed' in res.data
+
+    res = client.get(url_for("diff_history_page", uuid="first"))
+
+    # We should never see 'ForSale' because we are selecting on 'Sold' in the rule,
+    # But we should know it triggered ('unviewed' assert above)
+    assert b'ForSale' not in res.data
+    assert b'Sold' in res.data
+
