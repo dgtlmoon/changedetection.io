@@ -251,24 +251,10 @@ class ChangeDetectionStore:
 
     # Clone a watch by UUID
     def clone(self, uuid):
-        with self.lock:
-            new_uuid = str(uuid_builder.uuid4())
-            _clone = deepcopy(self.data['watching'][uuid])
-            _clone.update({'uuid': new_uuid})
-
-            attributes_to_reset = [
-                'last_checked',
-                'last_changed',
-                'last_viewed',
-                'newest_history_key',
-                'previous_md5',
-                'history'
-            ]
-            for attribute in attributes_to_reset:
-                _clone.update({attribute: self.generic_definition[attribute]})
-
-            self.data['watching'][new_uuid] = _clone
-            self.needs_write = True
+        url = self.data['watching'][uuid]['url']
+        tag = self.data['watching'][uuid]['tag']
+        new_uuid = self.add_watch(url=url, tag=tag)
+        return new_uuid
 
     def url_exists(self, url):
 
