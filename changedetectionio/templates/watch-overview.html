@@ -2,6 +2,8 @@
 {% block content %}
 {% from '_helpers.jinja' import render_simple_field %}
 
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='tblsort.js')}}"></script>
+
 <div class="box">
 
     <form class="pure-form" action="{{ url_for('api_watch_add') }}" method="POST" id="new-watch-form">
@@ -24,15 +26,18 @@
     </div>
 
     <div id="watch-table-wrapper">
-        <table class="pure-table pure-table-striped watch-table">
+        <table class="pure-table pure-table-striped watch-table" id="watch-table">
             <thead>
             <tr>
-                <th>#</th>
-                <th></th>
-                <th></th>
-                <th>Last Checked</th>
-                <th>Last Changed</th>
-                <th></th>
+                <th onclick="sortTable(0)"><span id="clickable">#</span></th>
+				<th></th> <!-- col 1 pause/play -->
+                <th onclick="sortTable(3)"><span id="clickable">Title</span></th>
+				<th id="hidden"></th> <!-- col 3 title sorting -->
+                <th onclick="sortTable(5)"><span id="clickable">Last Checked</span></th>
+				<th id="hidden"></th> <!-- col 5 last checked sorting -->
+                <th onclick="sortTable(7)"><span id="clickable">Last Changed</span></th>
+				<th id="hidden"></th> <!-- col 7 last changed sorting -->
+                <th></th> <!-- col 8 recheck/edit/diff -->
             </tr>
             </thead>
             <tbody>
@@ -58,13 +63,16 @@
                     <span class="watch-tag-list">{{ watch.tag}}</span>
                     {% endif %}
                 </td>
-                <td class="last-checked">{{watch|format_last_checked_time}}</td>
-                <td class="last-changed">{% if watch.history|length >= 2 and watch.last_changed %}
+				<td id="hidden">{{ watch.title }}</td>			<!-- col 3 for title sorting -->
+				<td class="last-checked">{{watch|format_last_checked_time}}</td>
+				<td id="hidden">{{ watch.last_checked }}</td>	<!-- col 5 for last_checked sorting -->
+				<td class="last-changed">{% if watch.history|length >= 2 and watch.last_changed %}
                     {{watch.last_changed|format_timestamp_timeago}}
                     {% else %}
                     Not yet
                     {% endif %}
                 </td>
+				<td id="hidden">{{ watch.last_changed }}</td>	<!-- col 7 for last_changed sorting -->
                 <td>
                     <a href="{{ url_for('api_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
                        class="pure-button button-small pure-button-primary">Recheck</a>
