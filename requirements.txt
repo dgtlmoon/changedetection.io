@@ -16,8 +16,9 @@ chardet > 2.3.0
 wtforms ~= 2.3.3
 jsonpath-ng ~= 1.5.3
 
-# Notification library
+# Notification libraries
 apprise ~= 0.9
+jinja2 ~= 2.11.3
 
 # Pinned version of cryptography otherwise
 # ERROR: Could not build wheels for cryptography which use PEP 517 and cannot be installed directly

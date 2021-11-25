@@ -1,5 +1,5 @@
-import os
 import apprise
+from jinja2 import Environment, BaseLoader
 
 valid_tokens = {
     'base_url': '',
@@ -24,18 +24,13 @@ def process_notification(n_object, datastore):
         print (">> Process Notification: AppRise notifying {}".format(url))
         apobj.add(url)
 
-    # Get the notification body from datastore
-    n_body = n_object['notification_body']
-    n_title = n_object['notification_title']
-
     # Insert variables into the notification content
     notification_parameters = create_notification_parameters(n_object, datastore)
 
-    for n_k in notification_parameters:
-        token = '{' + n_k + '}'
-        val = notification_parameters[n_k]
-        n_title = n_title.replace(token, val)
-        n_body = n_body.replace(token, val)
+    # Get the notification body from datastore
+    jinja2_env = Environment(loader=BaseLoader)
+    n_body = jinja2_env.from_string(n_object['notification_body']).render(**notification_parameters)
+    n_title = jinja2_env.from_string(n_object['notification_title']).render(**notification_parameters)
 
     apobj.notify(
         body=n_body,
@@ -61,7 +56,7 @@ def create_notification_parameters(n_object, datastore):
 
     watch_url = n_object['watch_url']
 
-    # Re #148 - Some people have just {base_url} in the body or title, but this may break some notification services
+    # Re #148 - Some people have just {{ base_url }} in the body or title, but this may break some notification services
     #           like 'Join', so it's always best to atleast set something obvious so that they are not broken.
     if base_url == '':
         base_url = "<base-url-env-var-not-set>"

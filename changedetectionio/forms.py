@@ -133,7 +133,7 @@ class ValidateAppRiseServers(object):
                 message = field.gettext('\'%s\' is not a valid AppRise URL.' % (server_url))
                 raise ValidationError(message)
 
-class ValidateTokensList(object):
+class ValidateJinja2Template(object):
     """
     Validates that a {token} is from a valid set
     """
@@ -142,11 +142,22 @@ class ValidateTokensList(object):
 
     def __call__(self, form, field):
         from changedetectionio import notification
-        regex = re.compile('{.*?}')
-        for p in re.findall(regex, field.data):
-            if not p.strip('{}') in notification.valid_tokens:
-                message = field.gettext('Token \'%s\' is not a valid token.')
-                raise ValidationError(message % (p))
+        from jinja2 import Environment, BaseLoader, TemplateSyntaxError
+        from jinja2.meta import find_undeclared_variables
+
+        try:
+            jinja2_env = Environment(loader=BaseLoader)
+            jinja2_env.globals.update(notification.valid_tokens)
+            rendered = jinja2_env.from_string(field.data).render()
+        except TemplateSyntaxError as e:
+            raise ValidationError(f"This is not a valid Jinja2 template: {e}") from e
+
+        ast = jinja2_env.parse(field.data)
+        undefined = ", ".join(find_undeclared_variables(ast))
+        if undefined:
+            raise ValidationError(
+                f"The following tokens used in the notification are not valid: {undefined}"
+            )
 
 class ValidateListRegex(object):
     """
@@ -201,8 +212,8 @@ class quickWatchForm(Form):
 class commonSettingsForm(Form):
 
     notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers()])
-    notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {watch_url}', validators=[validators.Optional(), ValidateTokensList()])
-    notification_body = TextAreaField('Notification Body', default='{watch_url} had a change.', validators=[validators.Optional(), ValidateTokensList()])
+    notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
+    notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
     trigger_check = BooleanField('Send test notification on save')
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)

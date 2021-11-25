@@ -46,15 +46,15 @@ def test_check_notification(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"notification_urls": notification_url,
-              "notification_title": "New ChangeDetection.io Notification - {watch_url}",
-              "notification_body": "BASE URL: {base_url}\n"
-                                   "Watch URL: {watch_url}\n"
-                                   "Watch UUID: {watch_uuid}\n"
-                                   "Watch title: {watch_title}\n"
-                                   "Watch tag: {watch_tag}\n"
-                                   "Preview: {preview_url}\n"
-                                   "Diff URL: {diff_url}\n"
-                                   "Snapshot: {current_snapshot}\n"
+              "notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
+              "notification_body": "BASE URL: {{ base_url }}\n"
+                                   "Watch URL: {{ watch_url }}\n"
+                                   "Watch UUID: {{ watch_uuid }}\n"
+                                   "Watch title: {{ watch_title }}\n"
+                                   "Watch tag: {{ watch_tag }}\n"
+                                   "Preview: {{ preview_url }}\n"
+                                   "Diff URL: {{ diff_url }}\n"
+                                   "Snapshot: {{ current_snapshot }}\n"
                                    ":-)",
               "url": test_url,
               "tag": "my tag",
@@ -126,7 +126,7 @@ def test_check_notification(client, live_server):
 
     res = client.post(
         url_for("settings_page"),
-        data={"notification_title": "New ChangeDetection.io Notification - {watch_url}",
+        data={"notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
               "notification_urls": "json://foobar.com", #Re #143 should not see that it sent without [test checkbox]
               "minutes_between_check": 180,
               "fetch_backend": "html_requests",
@@ -179,13 +179,27 @@ def test_check_notification(client, live_server):
     # Now adding a wrong token should give us an error
     res = client.post(
         url_for("settings_page"),
-        data={"notification_title": "New ChangeDetection.io Notification - {watch_url}",
-              "notification_body": "Rubbish: {rubbish}\n",
+        data={"notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
+              "notification_body": "Rubbish: {{ rubbish }}\n",
               "notification_urls": "json://foobar.com",
               "minutes_between_check": 180,
               "fetch_backend": "html_requests"
               },
         follow_redirects=True
     )
+    assert bytes("The following tokens used in the notification are not valid".encode('utf-8')) in res.data
 
-    assert bytes("is not a valid token".encode('utf-8')) in res.data
+
+    # And trying to define an invalid Jinja2 template should also throw an error
+    res = client.post(
+        url_for("settings_page"),
+        data={"notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
+              "notification_body": "Rubbish: {{ rubbish }\n",
+              "notification_urls": "json://foobar.com",
+              "minutes_between_check": 180,
+              "fetch_backend": "html_requests"
+              },
+        follow_redirects=True
+    )
+    assert bytes("This is not a valid Jinja2 template".encode('utf-8')) in res.data
+
