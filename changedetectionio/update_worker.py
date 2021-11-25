@@ -87,6 +87,7 @@ class update_worker(threading.Thread):
                                         n_object['notification_urls'] = watch['notification_urls']
                                         n_object['notification_title'] = watch['notification_title']
                                         n_object['notification_body'] = watch['notification_body']
+                                        n_object['notification_format'] = watch['notification_format']
                                         self.notification_q.put(n_object)
 
                                     # No? maybe theres a global setting, queue them all
@@ -95,6 +96,7 @@ class update_worker(threading.Thread):
                                         n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
                                         n_object['notification_title'] = self.datastore.data['settings']['application']['notification_title']
                                         n_object['notification_body'] = self.datastore.data['settings']['application']['notification_body']
+                                        n_object['notification_format'] = self.datastore.data['settings']['application']['notification_format']
                                         self.notification_q.put(n_object)
                                     else:
                                         print(">>> NO notifications queued, watch and global notification URLs were empty.")

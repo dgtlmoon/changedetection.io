@@ -415,6 +415,7 @@ def changedetection_app(config=None, datastore_o=None):
                           'trigger_text': form.trigger_text.data,
                           'notification_title': form.notification_title.data,
                           'notification_body': form.notification_body.data,
+                          'notification_format': form.notification_format.data,
                           'extract_title_as_title': form.extract_title_as_title.data
 
                           }
@@ -450,7 +451,8 @@ def changedetection_app(config=None, datastore_o=None):
                 n_object = {'watch_url': form.url.data.strip(),
                             'notification_urls': form.notification_urls.data,
                             'notification_title': form.notification_title.data,
-                            'notification_body' :  form.notification_body.data
+                            'notification_body' :  form.notification_body.data,
+                            'notification_format' :  form.notification_format.data,
                 }
                 notification_q.put(n_object)
 
@@ -497,6 +499,7 @@ def changedetection_app(config=None, datastore_o=None):
             form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
             form.notification_title.data = datastore.data['settings']['application']['notification_title']
             form.notification_body.data = datastore.data['settings']['application']['notification_body']
+            form.notification_format.data = datastore.data['settings']['application']['notification_format']
             form.base_url.data = datastore.data['settings']['application']['base_url']
 
             # Password unset is a GET
@@ -515,6 +518,7 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['fetch_backend'] = form.fetch_backend.data
             datastore.data['settings']['application']['notification_title'] = form.notification_title.data
             datastore.data['settings']['application']['notification_body'] = form.notification_body.data
+            datastore.data['settings']['application']['notification_format'] = form.notification_format.data
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.data['settings']['application']['base_url'] = form.base_url.data
 
@@ -522,7 +526,8 @@ def changedetection_app(config=None, datastore_o=None):
                 n_object = {'watch_url': "Test from changedetection.io!",
                             'notification_urls': form.notification_urls.data,
                             'notification_title': form.notification_title.data,
-                            'notification_body': form.notification_body.data
+                            'notification_body': form.notification_body.data,
+                            'notification_format': form.notification_format.data,
                             }
                 notification_q.put(n_object)
                 flash('Notifications queued.')
