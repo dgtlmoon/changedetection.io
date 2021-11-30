@@ -443,6 +443,10 @@ def changedetection_app(config=None, datastore_o=None):
 
             flash("Updated watch.")
 
+            # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
+            # But in the case something is added we should save straight away
+            datastore.sync_to_json()
+
             # Queue the watch for immediate recheck
             update_q.put(uuid)
 
