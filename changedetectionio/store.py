@@ -357,7 +357,7 @@ class ChangeDetectionStore:
         except RuntimeError as e:
             # Try again in 15 seconds
             time.sleep(15)
-            logging.error ("! Data changed when writing to JSON, trying again.."+str(e))
+            logging.error ("! Data changed when writing to JSON, trying again.. %s", str(e))
             self.sync_to_json()
             return
         else:
@@ -370,7 +370,7 @@ class ChangeDetectionStore:
                     json.dump(data, json_file, indent=4)
 
             except Exception as e:
-                logging.error("Error writing JSON!! (Main JSON file save was skipped) : "+str(e))
+                logging.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
 
             else:
                 os.rename(self.json_store_path+".tmp", self.json_store_path)
