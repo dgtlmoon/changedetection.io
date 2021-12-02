@@ -16,6 +16,8 @@ class ChangeDetectionStore:
     lock = Lock()
 
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
+        # Should only be active for docker
+        # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
         self.needs_write = False
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
@@ -348,20 +350,30 @@ class ChangeDetectionStore:
         return fname
 
     def sync_to_json(self):
-        print("Saving..")
-        data ={}
+        logging.info("Saving JSON..")
 
         try:
             data = deepcopy(self.__data)
-        except RuntimeError:
-            time.sleep(0.5)
-            print ("! Data changed when writing to JSON, trying again..")
+        except RuntimeError as e:
+            # Try again in 15 seconds
+            time.sleep(15)
+            logging.error ("! Data changed when writing to JSON, trying again.. %s", str(e))
             self.sync_to_json()
             return
         else:
-            with open(self.json_store_path, 'w') as json_file:
-                json.dump(data, json_file, indent=4)
-                logging.info("Re-saved index")
+
+            try:
+                # Re #286  - First write to a temp file, then confirm it looks OK and rename it
+                # This is a fairly basic strategy to deal with the case that the file is corrupted,
+                # system was out of memory, out of RAM etc
+                with open(self.json_store_path+".tmp", 'w') as json_file:
+                    json.dump(data, json_file, indent=4)
+
+            except Exception as e:
+                logging.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
+
+            else:
+                os.rename(self.json_store_path+".tmp", self.json_store_path)
 
             self.needs_write = False
 
@@ -376,7 +388,9 @@ class ChangeDetectionStore:
 
             if self.needs_write:
                 self.sync_to_json()
-            time.sleep(3)
+
+            # Once per minute is enough, more and it can cause high CPU usage
+            time.sleep(60)
 
     # Go through the datastore path and remove any snapshots that are not mentioned in the index
     # This usually is not used, but can be handy.
