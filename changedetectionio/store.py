@@ -16,6 +16,7 @@ class ChangeDetectionStore:
     lock = Lock()
 
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
+        logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
         self.needs_write = False
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
@@ -368,7 +369,8 @@ class ChangeDetectionStore:
                     json.dump(data, json_file, indent=4)
 
             except Exception as e:
-                logging.error("Error writing JSON!!"+str(e))
+                logging.error("Error writing JSON!! (Main JSON file save was skipped) : "+str(e))
+
             else:
                 os.rename(self.json_store_path+".tmp", self.json_store_path)
 
