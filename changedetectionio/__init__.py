@@ -30,7 +30,7 @@ import datetime
 import pytz
 from copy import deepcopy
 
-__version__ = '0.39.3'
+__version__ = '0.39.4'
 
 datastore = None
 
