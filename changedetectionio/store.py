@@ -16,7 +16,8 @@ class ChangeDetectionStore:
     lock = Lock()
 
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
-        logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
+        # Should only be active for docker
+        # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
         self.needs_write = False
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
