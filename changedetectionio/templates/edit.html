@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 {% from '_helpers.jinja' import render_field %}
-{% from '_common_fields.jinja' import render_notifications_field %}
+{% from '_common_fields.jinja' import render_common_settings_form %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 
 <div class="edit-form monospaced-textarea">
@@ -66,7 +66,7 @@ User-Agent: wonderbra 1.0") }}
                 <strong>Note: <i>These settings override the global settings.</i></strong>
                 <fieldset>
                     <div class="field-group">
-                        {{ render_notifications_field(form) }}
+                        {{ render_common_settings_form(form, current_base_url) }}
                     </div>
                 </fieldset>
             </div>

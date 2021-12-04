@@ -2,7 +2,7 @@
 
 {% block content %}
 {% from '_helpers.jinja' import render_field %}
-{% from '_common_fields.jinja' import render_notifications_field %}
+{% from '_common_fields.jinja' import render_common_settings_form %}
 
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='settings.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
@@ -36,7 +36,7 @@
                         {{ render_field(form.base_url, placeholder="http://yoursite.com:5000/",
                         class="m-d") }}
                         <span class="pure-form-message-inline">
-                            Base URL used for the {base_url} token in notifications, default value is the ENV var 'BASE_URL',
+                            Base URL used for the {base_url} token in notifications, default value is the ENV var 'BASE_URL' (Currently "{{current_base_url}}"),
                             <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Configurable-BASE_URL-setting">read more here</a>.
                         </span>
                     </div>
@@ -51,7 +51,7 @@
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div class="field-group">
-                        {{ render_notifications_field(form) }}
+                        {{ render_common_settings_form(form, current_base_url) }}
                     </div>
                 </fieldset>
             </div>
