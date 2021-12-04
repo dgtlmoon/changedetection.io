@@ -157,6 +157,7 @@ class ChangeDetectionStore:
 
         dates = list(self.__data['watching'][uuid]['history'].keys())
         # Convert to int, sort and back to str again
+        # @todo replace datastore getter that does this automatically
         dates = [int(i) for i in dates]
         dates.sort(reverse=True)
         if len(dates):

@@ -8,6 +8,8 @@ valid_tokens = {
     'watch_uuid': '',
     'watch_title': '',
     'watch_tag': '',
+    'diff': '',
+    'diff_full': '',
     'diff_url': '',
     'preview_url': '',
     'current_snapshot': ''

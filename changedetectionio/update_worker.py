@@ -71,14 +71,25 @@ class update_worker(threading.Thread):
 
                                     # Get the newest snapshot data to be possibily used in a notification
                                     newest_key = self.datastore.get_newest_history_key(uuid)
-                                    if newest_key:
-                                        with open(watch['history'][newest_key], 'r') as f:
-                                            newest_version_file_contents = f.read().strip()
+                                    with open(watch['history'][newest_key], 'r') as f:
+                                        newest_version_file_contents = f.read().strip()
 
+                                    dates = list(watch['history'].keys())
+                                    # Convert to int, sort and back to str again
+                                    # @todo replace datastore getter that does this automatically
+                                    dates = [int(i) for i in dates]
+                                    dates.sort(reverse=True)
+                                    dates = [str(i) for i in dates]
+
+                                    from changedetectionio import diff
+
+                                    #@todo - if it's HTML mode, then use '<br/>' instead of '\n'
                                     n_object = {
                                         'watch_url': watch['url'],
                                         'uuid': uuid,
-                                        'current_snapshot': newest_version_file_contents
+                                        'current_snapshot': newest_version_file_contents,
+                                        'diff_full': '\n'.join(diff.render_diff(watch['history'][dates[1]], watch['history'][newest_key])),
+                                        'diff': '\n'.join(diff.render_diff(watch['history'][dates[1]], watch['history'][newest_key], True))
                                     }
 
                                     # Did it have any notification alerts to hit?

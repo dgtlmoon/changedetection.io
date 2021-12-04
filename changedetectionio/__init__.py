@@ -459,7 +459,6 @@ def changedetection_app(config=None, datastore_o=None):
                             'notification_format' :  form.notification_format.data,
                 }
                 notification_q.put(n_object)
-
                 flash('Notifications queued.')
 
             # Diff page [edit] link should go back to diff page
@@ -615,6 +614,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         dates = list(watch['history'].keys())
         # Convert to int, sort and back to str again
+        # @todo replace datastore getter that does this automatically
         dates = [int(i) for i in dates]
         dates.sort(reverse=True)
         dates = [str(i) for i in dates]
@@ -625,25 +625,20 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, dates[0])
-
         newest_file = watch['history'][dates[0]]
-        with open(newest_file, 'r') as f:
-            newest_version_file_contents = f.read()
 
         previous_version = request.args.get('previous_version')
-
         try:
             previous_file = watch['history'][previous_version]
         except KeyError:
             # Not present, use a default value, the second one in the sorted list.
             previous_file = watch['history'][dates[1]]
 
-        with open(previous_file, 'r') as f:
-            previous_version_file_contents = f.read()
+        from changedetectionio import diff
+        rendered_diff = diff.render_diff(previous_file, newest_file)
 
         output = render_template("diff.html", watch_a=watch,
-                                 newest=newest_version_file_contents,
-                                 previous=previous_version_file_contents,
+                                 rendered_diff=rendered_diff,
                                  extra_stylesheets=extra_stylesheets,
                                  versions=dates[1:],
                                  uuid=uuid,
@@ -654,6 +649,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  left_sticky= True )
 
         return output
+
 
     @app.route("/preview/<string:uuid>", methods=['GET'])
     @login_required
