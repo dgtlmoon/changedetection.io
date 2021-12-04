@@ -208,8 +208,8 @@ class ChangeDetectionStore:
 
         # Re #152, Return env base_url if not overriden, @todo also prefer the proxy pass url
         env_base_url = os.getenv('BASE_URL','')
-        if self.__data['settings']['application']['base_url'] is None and len(env_base_url) >0:
-            self.__data['settings']['application']['base_url'] = env_base_url.strip('" ')
+        if not self.__data['settings']['application']['base_url']:
+          self.__data['settings']['application']['base_url'] = env_base_url.strip('" ')
 
         self.__data['has_unviewed'] = has_unviewed
 

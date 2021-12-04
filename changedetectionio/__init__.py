@@ -482,7 +482,8 @@ def changedetection_app(config=None, datastore_o=None):
                                      uuid=uuid,
                                      watch=datastore.data['watching'][uuid],
                                      form=form,
-                                     using_default_minutes=using_default_minutes
+                                     using_default_minutes=using_default_minutes,
+                                     current_base_url = datastore.data['settings']['application']['base_url']
                                      )
 
         return output
@@ -548,7 +549,7 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST' and not form.validate():
             flash("An error occurred, please see below.", "error")
 
-        output = render_template("settings.html", form=form)
+        output = render_template("settings.html", form=form, current_base_url = datastore.data['settings']['application']['base_url'])
 
         return output
 
