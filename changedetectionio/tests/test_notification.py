@@ -56,6 +56,7 @@ def test_check_notification(client, live_server):
                                    "Diff URL: {diff_url}\n"
                                    "Snapshot: {current_snapshot}\n"
                                    ":-)",
+              "notification_format": "Text",
               "url": test_url,
               "tag": "my tag",
               "title": "my title",
@@ -181,6 +182,7 @@ def test_check_notification(client, live_server):
         url_for("settings_page"),
         data={"notification_title": "New ChangeDetection.io Notification - {watch_url}",
               "notification_body": "Rubbish: {rubbish}\n",
+              "notification_format": "Text",
               "notification_urls": "json://foobar.com",
               "minutes_between_check": 180,
               "fetch_backend": "html_requests"

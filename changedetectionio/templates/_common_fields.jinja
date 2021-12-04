@@ -24,6 +24,10 @@
                                 {{ render_field(form.notification_body , rows=5) }}
                                 <span class="pure-form-message-inline">Body for all notifications</span>
                             </div>
+                            <div class="pure-control-group">
+                                {{ render_field(form.notification_format , rows=5) }}
+                                <span class="pure-form-message-inline">Format for all notifications</span>
+                            </div>
                             <div class="pure-controls">
                             <span class="pure-form-message-inline">
                                 These tokens can be used in the notification body and title to

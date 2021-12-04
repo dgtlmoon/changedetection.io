@@ -47,6 +47,7 @@ class ChangeDetectionStore:
                     # Custom notification content
                     'notification_title': None,
                     'notification_body': None,
+                    'notification_format': None,
                 }
             }
         }
@@ -73,6 +74,7 @@ class ChangeDetectionStore:
             'notification_urls': [], # List of URLs to add to the notification Queue (Usually AppRise)
             'notification_title': None,
             'notification_body': None,
+            'notification_format': None,
             'css_filter': "",
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'fetch_backend': None,
