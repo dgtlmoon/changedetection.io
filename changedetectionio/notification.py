@@ -1,5 +1,6 @@
 import os
 import apprise
+from apprise import NotifyFormat
 
 valid_tokens = {
     'base_url': '',
@@ -12,6 +13,13 @@ valid_tokens = {
     'current_snapshot': ''
 }
 
+valid_notification_formats = {
+    'Text': NotifyFormat.TEXT,
+    'Markdown': NotifyFormat.MARKDOWN,
+    'HTML': NotifyFormat.HTML,
+}
+
+default_notification_format = 'Text'
 
 def process_notification(n_object, datastore):
     import logging
@@ -27,6 +35,11 @@ def process_notification(n_object, datastore):
     # Get the notification body from datastore
     n_body = n_object['notification_body']
     n_title = n_object['notification_title']
+    n_format = valid_notification_formats.get(
+        n_object['notification_format'],
+        valid_notification_formats[default_notification_format],
+    )
+
 
     # Insert variables into the notification content
     notification_parameters = create_notification_parameters(n_object, datastore)
@@ -39,7 +52,8 @@ def process_notification(n_object, datastore):
 
     apobj.notify(
         body=n_body,
-        title=n_title
+        title=n_title,
+        body_format=n_format,
     )
 
 # Notification title + body content parameters get created here.
