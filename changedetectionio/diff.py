@@ -1,9 +1,10 @@
+# used for the notifications, the front-end is using a JS library
+
 import difflib
 
 # Can go via a nice Jinja2?
 # only_differences - only return info about the differences, no context
 def render_diff(previous_file, newest_file, only_differences=False):
-
 
     with open(newest_file, 'r') as f:
         newest_version_file_contents = f.read()
