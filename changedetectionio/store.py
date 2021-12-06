@@ -151,8 +151,8 @@ class ChangeDetectionStore:
 
                 # Reinitialise each `watching` with our generic object in the case that we add a new var in the future.
                 for uuid, watch in self.__data['watching'].items():
-                    _blank = url_watch()
-                    _blank.update(watch)
+                    _blank = url_watch(watch)
+                    # override the main struct
                     self.__data['watching'].update({uuid: _blank})
                     print("Watching:", uuid, self.__data['watching'][uuid]['url'])
 
