@@ -15,8 +15,8 @@ import os
 # try as a normal object?
 class url_watch(collections.MutableMapping,dict):
 
-    def __init__(self):
-        d={
+    def __init__(self, init_data=None):
+        default={
             'url': None,
             'tag': None,
             'last_checked': 0,
@@ -43,7 +43,10 @@ class url_watch(collections.MutableMapping,dict):
             'fetch_backend': None,
             'extract_title_as_title': False
         }
-        super().__init__(d)
+        super().__init__(default)
+
+        if init_data:
+            self.update(init_data)
 
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
     @property
@@ -117,9 +120,6 @@ class ChangeDetectionStore:
             }
         }
 
-        # Base definition for all watchers
-        self.generic_definition = url_watch()
-
         if path.isfile('changedetectionio/source.txt'):
             with open('changedetectionio/source.txt') as f:
                 # Should be set in Dockerfile to look for /source.txt , this will give us the git commit #
@@ -149,7 +149,7 @@ class ChangeDetectionStore:
                     if 'application' in from_disk['settings']:
                         self.__data['settings']['application'].update(from_disk['settings']['application'])
 
-                # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
+                # Reinitialise each `watching` with our generic object in the case that we add a new var in the future.
                 for uuid, watch in self.__data['watching'].items():
                     _blank = url_watch()
                     _blank.update(watch)
@@ -315,26 +315,22 @@ class ChangeDetectionStore:
 
     def add_watch(self, url, tag):
         with self.lock:
-            # @todo use a common generic version of this
-            new_uuid = str(uuid_builder.uuid4())
-            _blank = deepcopy(url_watch())
-            _blank.update({
+            _blank = url_watch({
                 'url': url,
-                'tag': tag,
-                'uuid': new_uuid
+                'tag': tag
             })
 
-            self.data['watching'][new_uuid] = _blank
+            self.data['watching'][_blank['uuid']] = _blank
 
         # Get the directory ready
-        output_path = "{}/{}".format(self.datastore_path, new_uuid)
+        output_path = "{}/{}".format(self.datastore_path, _blank['uuid'])
         try:
             mkdir(output_path)
         except FileExistsError:
             print(output_path, "already exists.")
 
         self.sync_to_json()
-        return new_uuid
+        return _blank['uuid']
 
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
