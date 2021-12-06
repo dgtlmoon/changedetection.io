@@ -628,7 +628,7 @@ def changedetection_app(config=None, datastore_o=None):
         newest_file = watch['history'][dates[0]]
         with open(newest_file, 'r') as f:
             newest_version_file_contents = f.read()
-            
+
         previous_version = request.args.get('previous_version')
         try:
             previous_file = watch['history'][previous_version]

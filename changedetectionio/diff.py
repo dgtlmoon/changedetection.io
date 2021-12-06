@@ -10,11 +10,14 @@ def render_diff(previous_file, newest_file, only_differences=False):
         newest_version_file_contents = f.read()
         newest_version_file_contents = [line.rstrip() for line in newest_version_file_contents.splitlines()]
 
-    with open(previous_file, 'r') as f:
-        previous_version_file_contents = f.read()
-        previous_version_file_contents = [line.rstrip() for line in previous_version_file_contents.splitlines()]
+    if previous_file:
+        with open(previous_file, 'r') as f:
+            previous_version_file_contents = f.read()
+            previous_version_file_contents = [line.rstrip() for line in previous_version_file_contents.splitlines()]
+    else:
+        previous_version_file_contents=""
 
     rendered_diff = difflib.Differ().compare(previous_version_file_contents,
                                              newest_version_file_contents)
 
-    return rendered_diff
+    return "\n".join(rendered_diff)

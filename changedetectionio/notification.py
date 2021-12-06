@@ -22,6 +22,8 @@ valid_notification_formats = {
 }
 
 default_notification_format = 'Text'
+default_notification_body = '{watch_url} had a change.\n---\n{diff}\n---\n'
+default_notification_title = 'ChangeDetection.io Notification - {watch_url}'
 
 def process_notification(n_object, datastore):
     import logging

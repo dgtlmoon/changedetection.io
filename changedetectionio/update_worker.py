@@ -56,9 +56,8 @@ class update_worker(threading.Thread):
                             try:
                                 self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
                                 if changed_detected:
-
+                                    n_object = {}
                                     # A change was detected
-                                    newest_version_file_contents = ""
                                     fname = self.datastore.save_history_text(watch_uuid=uuid, contents=contents)
 
                                     # Update history with the stripped text for future reference, this will also mean we save the first
@@ -69,48 +68,50 @@ class update_worker(threading.Thread):
 
                                     print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))
 
-                                    # Get the newest snapshot data to be possibily used in a notification
-                                    newest_key = self.datastore.get_newest_history_key(uuid)
-                                    with open(watch['history'][newest_key], 'r') as f:
-                                        newest_version_file_contents = f.read().strip()
+                                    # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
+                                    if len(watch['history']) > 1:
 
-                                    dates = list(watch['history'].keys())
-                                    # Convert to int, sort and back to str again
-                                    # @todo replace datastore getter that does this automatically
-                                    dates = [int(i) for i in dates]
-                                    dates.sort(reverse=True)
-                                    dates = [str(i) for i in dates]
+                                        dates = list(watch['history'].keys())
+                                        # Convert to int, sort and back to str again
+                                        # @todo replace datastore getter that does this automatically
+                                        dates = [int(i) for i in dates]
+                                        dates.sort(reverse=True)
+                                        dates = [str(i) for i in dates]
 
-                                    from changedetectionio import diff
+                                        prev_fname = watch['history'][dates[1]]
 
-                                    #@todo - if it's HTML mode, then use '<br/>' instead of '\n'
-                                    n_object = {
-                                        'watch_url': watch['url'],
-                                        'uuid': uuid,
-                                        'current_snapshot': newest_version_file_contents,
-                                        'diff_full': '\n'.join(diff.render_diff(watch['history'][dates[1]], watch['history'][newest_key])),
-                                        'diff': '\n'.join(diff.render_diff(watch['history'][dates[1]], watch['history'][newest_key], True))
-                                    }
 
-                                    # Did it have any notification alerts to hit?
-                                    if len(watch['notification_urls']):
-                                        print(">>> Notifications queued for UUID from watch {}".format(uuid))
-                                        n_object['notification_urls'] = watch['notification_urls']
-                                        n_object['notification_title'] = watch['notification_title']
-                                        n_object['notification_body'] = watch['notification_body']
-                                        n_object['notification_format'] = watch['notification_format']
-                                        self.notification_q.put(n_object)
+                                        # Did it have any notification alerts to hit?
+                                        if len(watch['notification_urls']):
+                                            print(">>> Notifications queued for UUID from watch {}".format(uuid))
+                                            n_object['notification_urls'] = watch['notification_urls']
+                                            n_object['notification_title'] = watch['notification_title']
+                                            n_object['notification_body'] = watch['notification_body']
+                                            n_object['notification_format'] = watch['notification_format']
 
-                                    # No? maybe theres a global setting, queue them all
-                                    elif len(self.datastore.data['settings']['application']['notification_urls']):
-                                        print(">>> Watch notification URLs were empty, using GLOBAL notifications for UUID: {}".format(uuid))
-                                        n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
-                                        n_object['notification_title'] = self.datastore.data['settings']['application']['notification_title']
-                                        n_object['notification_body'] = self.datastore.data['settings']['application']['notification_body']
-                                        n_object['notification_format'] = self.datastore.data['settings']['application']['notification_format']
-                                        self.notification_q.put(n_object)
-                                    else:
-                                        print(">>> NO notifications queued, watch and global notification URLs were empty.")
+                                        # No? maybe theres a global setting, queue them all
+                                        elif len(self.datastore.data['settings']['application']['notification_urls']):
+                                            print(">>> Watch notification URLs were empty, using GLOBAL notifications for UUID: {}".format(uuid))
+                                            n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
+                                            n_object['notification_title'] = self.datastore.data['settings']['application']['notification_title']
+                                            n_object['notification_body'] = self.datastore.data['settings']['application']['notification_body']
+                                            n_object['notification_format'] = self.datastore.data['settings']['application']['notification_format']
+                                        else:
+                                            print(">>> NO notifications queued, watch and global notification URLs were empty.")
+
+                                        # Only prepare to notify if the rules above matched
+                                        if 'notification_urls' in n_object:
+                                            # @todo - if it's HTML mode, then use '<br/>' instead of '\n'
+                                            from changedetectionio import diff
+                                            n_object.update({
+                                                'watch_url': watch['url'],
+                                                'uuid': uuid,
+                                                'current_snapshot': str(contents),
+                                                'diff_full': diff.render_diff(prev_fname, fname),
+                                                'diff': diff.render_diff(prev_fname, fname, True)
+                                            })
+
+                                            self.notification_q.put(n_object)
 
                             except Exception as e:
                                 print("!!!! Exception in update_worker !!!\n", e)
