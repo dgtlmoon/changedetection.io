@@ -55,6 +55,7 @@ def test_check_notification(client, live_server):
                                    "Preview: {preview_url}\n"
                                    "Diff URL: {diff_url}\n"
                                    "Snapshot: {current_snapshot}\n"
+                                   "Diff: {diff}\n"
                                    ":-)",
               "notification_format": "Text",
               "url": test_url,

@@ -20,4 +20,5 @@ def render_diff(previous_file, newest_file, only_differences=False):
     rendered_diff = difflib.Differ().compare(previous_version_file_contents,
                                              newest_version_file_contents)
 
+    # Don't use strip() here because it is offsetting the chars for the control letters + - etc
     return "\n".join(rendered_diff)
