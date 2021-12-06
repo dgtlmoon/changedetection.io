@@ -31,6 +31,8 @@ class update_worker(threading.Thread):
 
                 if uuid in list(self.datastore.data['watching'].keys()):
 
+                    watch = self.datastore.data['watching'][uuid]
+
                     changed_detected = False
                     contents = ""
                     update_obj= {}
@@ -38,23 +40,24 @@ class update_worker(threading.Thread):
                     try:
                         now = time.time()
                         changed_detected, update_obj, contents = update_handler.run(uuid)
-
                         # Always record that we atleast tried
-                        self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3)})
+                        watch['fetch_time']= round(time.time() - now, 3)
 
                     except PermissionError as e:
                         self.app.logger.error("File permission error updating", uuid, str(e))
                     except content_fetcher.EmptyReply as e:
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error':str(e)})
+                        watch['last_error'] = str(e)
 
                     except Exception as e:
                         self.app.logger.error("Exception reached processing watch UUID:%s - %s", uuid, str(e))
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
+                        watch['last_error'] = str(e)
 
                     else:
+
                         if update_obj:
                             try:
-                                self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
+                                watch.update(update_obj)
+
                                 if changed_detected:
 
                                     # A change was detected
@@ -63,14 +66,13 @@ class update_worker(threading.Thread):
 
                                     # Update history with the stripped text for future reference, this will also mean we save the first
                                     # Should always be keyed by string(timestamp)
-                                    self.datastore.update_watch(uuid, {"history": {str(update_obj["last_checked"]): fname}})
-
-                                    watch = self.datastore.data['watching'][uuid]
+                                    timestamp = str(update_obj["last_checked"])
+                                    watch['history'].update({timestamp: fname})
 
                                     print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))
 
                                     # Get the newest snapshot data to be possibily used in a notification
-                                    newest_key = self.datastore.get_newest_history_key(uuid)
+                                    newest_key = watch.newest_history_key
                                     if newest_key:
                                         with open(watch['history'][newest_key], 'r') as f:
                                             newest_version_file_contents = f.read().strip()

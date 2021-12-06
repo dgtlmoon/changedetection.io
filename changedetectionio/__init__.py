@@ -277,7 +277,7 @@ def changedetection_app(config=None, datastore_o=None):
                     fe.link(href=watch['url'])
                     fe.description(watch['url'])
                     fe.guid(guid, permalink=False)
-                    dt = datetime.datetime.fromtimestamp(int(watch['newest_history_key']))
+                    dt = datetime.datetime.fromtimestamp(int(watch.newest_history_key))
                     dt = dt.replace(tzinfo=pytz.UTC)
                     fe.pubDate(dt)
 
@@ -355,7 +355,7 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio import fetch_site_status
 
         # Get the most recent one
-        newest_history_key = datastore.get_val(uuid, 'newest_history_key')
+        newest_history_key = datastore.data['watching'][uuid].newest_history_key
 
         # 0 means that theres only one, so that there should be no 'unviewed' history availabe
         if newest_history_key == 0:
@@ -593,7 +593,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Save the current newest history as the most recently viewed
         for watch_uuid, watch in datastore.data['watching'].items():
-            datastore.set_last_viewed(watch_uuid, watch['newest_history_key'])
+            datastore.set_last_viewed(watch_uuid, watch.newest_history_key)
 
         flash("Cleared all statuses.")
         return redirect(url_for('index'))
@@ -613,12 +613,7 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
-        dates = list(watch['history'].keys())
-        # Convert to int, sort and back to str again
-        dates = [int(i) for i in dates]
-        dates.sort(reverse=True)
-        dates = [str(i) for i in dates]
-
+        dates = watch.sorted_history()
         if len(dates) < 2:
             flash("Not enough saved change detection snapshots to produce a report.", "error")
             return redirect(url_for('index'))

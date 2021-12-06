@@ -1,6 +1,8 @@
+import collections
 from os import unlink, path, mkdir
 import json
 import uuid as uuid_builder
+
 from threading import Lock
 from copy import deepcopy
 
@@ -8,6 +10,69 @@ import logging
 import time
 import threading
 import os
+
+# https://stackoverflow.com/questions/7760916/correct-usage-of-a-getter-setter-for-dictionary-values
+# try as a normal object?
+class url_watch(collections.MutableMapping,dict):
+
+    def __init__(self):
+        d={
+            'url': None,
+            'tag': None,
+            'last_checked': 0,
+            'last_changed': 0,
+            'paused': False,
+            'last_viewed': 0,  # history key value of the last viewed via the [diff] link
+            'newest_history_key': "",
+            'title': None,
+            # Re #110, so then if this is set to None, we know to use the default value instead
+            # Requires setting to None on submit if it's the same as the default
+            'minutes_between_check': None,
+            'previous_md5': "",
+            'uuid': str(uuid_builder.uuid4()),
+            'headers': {},  # Extra headers to send
+            'history': {},  # Dict of timestamp and output stripped filename
+            'ignore_text': [], # List of text to ignore when calculating the comparison checksum
+            # Custom notification content
+            'notification_urls': [], # List of URLs to add to the notification Queue (Usually AppRise)
+            'notification_title': None,
+            'notification_body': None,
+            'notification_format': None,
+            'css_filter': "",
+            'trigger_text': [],  # List of text or regex to wait for until a change is detected
+            'fetch_backend': None,
+            'extract_title_as_title': False
+        }
+        super().__init__(d)
+
+    # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
+    @property
+    def newest_history_key(self):
+        if len(self.sorted_history()) == 1:
+            return 0
+        return self.sorted_history()[0]
+
+    def sorted_history(self):
+        dates = list(self['history'].keys())
+        # Convert to int, sort and back to str again
+        dates = [int(i) for i in dates]
+        dates.sort(reverse=True)
+        dates = [str(i) for i in dates]
+        return dates
+
+#    def __getitem__(self, key):
+#        return dict.__getitem__(self, key)
+
+
+
+    def __setitem__(self, *args, **kwargs):
+        (k,v)=tuple(args)
+        self[k]=v
+#        value = int(value)
+#        if not 1 <= value <= 10:
+#            raise ValueError('{v} not in range [1,10]'.format(v=value))
+
+
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
@@ -53,33 +118,7 @@ class ChangeDetectionStore:
         }
 
         # Base definition for all watchers
-        self.generic_definition = {
-            'url': None,
-            'tag': None,
-            'last_checked': 0,
-            'last_changed': 0,
-            'paused': False,
-            'last_viewed': 0,  # history key value of the last viewed via the [diff] link
-            'newest_history_key': "",
-            'title': None,
-            # Re #110, so then if this is set to None, we know to use the default value instead
-            # Requires setting to None on submit if it's the same as the default
-            'minutes_between_check': None,
-            'previous_md5': "",
-            'uuid': str(uuid_builder.uuid4()),
-            'headers': {},  # Extra headers to send
-            'history': {},  # Dict of timestamp and output stripped filename
-            'ignore_text': [], # List of text to ignore when calculating the comparison checksum
-            # Custom notification content
-            'notification_urls': [], # List of URLs to add to the notification Queue (Usually AppRise)
-            'notification_title': None,
-            'notification_body': None,
-            'notification_format': None,
-            'css_filter': "",
-            'trigger_text': [],  # List of text or regex to wait for until a change is detected
-            'fetch_backend': None,
-            'extract_title_as_title': False
-        }
+        self.generic_definition = url_watch()
 
         if path.isfile('changedetectionio/source.txt'):
             with open('changedetectionio/source.txt') as f:
@@ -111,12 +150,10 @@ class ChangeDetectionStore:
                         self.__data['settings']['application'].update(from_disk['settings']['application'])
 
                 # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
-                # @todo pretty sure theres a python we todo this with an abstracted(?) object!
                 for uuid, watch in self.__data['watching'].items():
-                    _blank = deepcopy(self.generic_definition)
+                    _blank = url_watch()
                     _blank.update(watch)
                     self.__data['watching'].update({uuid: _blank})
-                    self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
                     print("Watching:", uuid, self.__data['watching'][uuid]['url'])
 
         # First time ran, doesnt exist.
@@ -150,51 +187,16 @@ class ChangeDetectionStore:
         # Finally start the thread that will manage periodic data saves to JSON
         save_data_thread = threading.Thread(target=self.save_datastore).start()
 
-    # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
-    def get_newest_history_key(self, uuid):
-        if len(self.__data['watching'][uuid]['history']) == 1:
-            return 0
-
-        dates = list(self.__data['watching'][uuid]['history'].keys())
-        # Convert to int, sort and back to str again
-        dates = [int(i) for i in dates]
-        dates.sort(reverse=True)
-        if len(dates):
-            # always keyed as str
-            return str(dates[0])
-
-        return 0
 
     def set_last_viewed(self, uuid, timestamp):
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
-        self.needs_write = True
-
-    def update_watch(self, uuid, update_obj):
-
-        # Skip if 'paused' state
-        if self.__data['watching'][uuid]['paused']:
-            return
-
-        with self.lock:
-
-            # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
-            for dict_key, d in self.generic_definition.items():
-                if isinstance(d, dict):
-                    if update_obj is not None and dict_key in update_obj:
-                        self.__data['watching'][uuid][dict_key].update(update_obj[dict_key])
-                        del (update_obj[dict_key])
-
-            self.__data['watching'][uuid].update(update_obj)
-            self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
-
         self.needs_write = True
 
     @property
     def data(self):
         has_unviewed = False
         for uuid, v in self.__data['watching'].items():
-            self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
-            if int(v['newest_history_key']) <= int(v['last_viewed']):
+            if int(v.newest_history_key) <= int(v['last_viewed']):
                 self.__data['watching'][uuid]['viewed'] = True
 
             else:
@@ -269,10 +271,6 @@ class ChangeDetectionStore:
 
         return False
 
-    def get_val(self, uuid, val):
-        # Probably their should be dict...
-        return self.data['watching'][uuid].get(val)
-
     # Remove a watchs data but keep the entry (URL etc)
     def scrub_watch(self, uuid, limit_timestamp = False):
 
@@ -299,7 +297,7 @@ class ChangeDetectionStore:
             # If there was a limitstamp, we need to reset some meta data about the entry
             # This has to happen after we remove the others from the list
             if limit_timestamp:
-                newest_key = self.get_newest_history_key(uuid)
+                newest_key = self.data['watching'][uuid].newest_history_key
                 if newest_key:
                     self.data['watching'][uuid]['last_checked'] = int(newest_key)
                     # @todo should be the original value if it was less than newest key
@@ -319,7 +317,7 @@ class ChangeDetectionStore:
         with self.lock:
             # @todo use a common generic version of this
             new_uuid = str(uuid_builder.uuid4())
-            _blank = deepcopy(self.generic_definition)
+            _blank = deepcopy(url_watch())
             _blank.update({
                 'url': url,
                 'tag': tag,

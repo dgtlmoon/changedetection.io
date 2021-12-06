@@ -63,7 +63,7 @@ class perform_site_check():
                       "last_checked": timestamp
                       }
 
-        extra_headers = self.datastore.get_val(uuid, 'headers')
+        extra_headers = watch['headers']
 
         # Tweak the base config with the per-watch ones
         request_headers = self.datastore.data['settings']['headers'].copy()
@@ -79,7 +79,7 @@ class perform_site_check():
 
         else:
             timeout = self.datastore.data['settings']['requests']['timeout']
-            url = self.datastore.get_val(uuid, 'url')
+            url = watch['url']
 
             # Pluggable content fetcher
             prefer_backend = watch['fetch_backend']
@@ -164,7 +164,7 @@ class perform_site_check():
                 changed_detected = True
 
                 # Don't confuse people by updating as last-changed, when it actually just changed from None..
-                if self.datastore.get_val(uuid, 'previous_md5'):
+                if watch['previous_md5']:
                     update_obj["last_changed"] = timestamp
 
                 update_obj["previous_md5"] = fetched_md5
