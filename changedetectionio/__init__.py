@@ -685,7 +685,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/favicon.ico", methods=['GET'])
     def favicon():
-        return send_from_directory("/app/static/images", filename="favicon.ico")
+        return send_from_directory("static/images", path="favicon.ico")
 
     # We're good but backups are even better!
     @app.route("/backup", methods=['GET'])
@@ -747,7 +747,7 @@ def changedetection_app(config=None, datastore_o=None):
     def static_content(group, filename):
         # These files should be in our subdirectory
         try:
-            return send_from_directory("static/{}".format(group), filename=filename)
+            return send_from_directory("static/{}".format(group), path=filename)
         except FileNotFoundError:
             abort(404)
 
