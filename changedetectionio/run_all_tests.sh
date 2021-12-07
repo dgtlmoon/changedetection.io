@@ -20,7 +20,3 @@ done
 export BASE_URL="https://really-unique-domain.io"
 pytest tests/test_notification.py
 
-cd ..
-# Now unit tests
-python3 -m unittest changedetectionio.tests.unit.test_notification_diff
-
