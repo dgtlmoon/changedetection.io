@@ -539,7 +539,7 @@ def changedetection_app(config=None, datastore_o=None):
                                 'notification_format': form.notification_format.data,
                                 }
                     notification_q.put(n_object)
-                    flash('Test notifications queued.')
+                    flash('Test notification queued.')
                 else:
                     flash('No notification URLs set, cannot send test.', 'error')
 
