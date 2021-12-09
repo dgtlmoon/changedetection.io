@@ -891,8 +891,6 @@ def notification_runner():
             except Exception as e:
                 print("Watch URL: {}  Error {}".format(n_object['watch_url'], e))
 
-
-
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     from changedetectionio import update_worker
