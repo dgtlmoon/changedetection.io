@@ -8,6 +8,7 @@ import os
 
 from changedetectionio import diff
 
+# mostly
 class TestDiffBuilder(unittest.TestCase):
 
     def test_expected_diff_output(self):
