@@ -13,10 +13,13 @@ class TestDiffBuilder(unittest.TestCase):
 
     def test_expected_diff_output(self):
         base_dir=os.path.dirname(__file__)
+        output = diff.render_diff(base_dir+"/test-content/before.txt", base_dir+"/test-content/after.txt")
+        output = output.split("\n")
+        self.assertIn("(changed) ok", output)
+        self.assertIn("(-> into) xok", output)
+        self.assertIn("(added) and something new", output)
 
-        output = diff.render_diff(base_dir+"/test-content/before.txt", base_dir+"/test-content/after.txt"),
-        print (output[0])
-        self.assertIn('foo'.upper(), 'FOO')
-
+        # @todo test blocks of changed, blocks of added, blocks of removed
+        
 if __name__ == '__main__':
     unittest.main()
