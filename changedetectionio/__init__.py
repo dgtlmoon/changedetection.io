@@ -452,14 +452,17 @@ def changedetection_app(config=None, datastore_o=None):
             update_q.put(uuid)
 
             if form.trigger_check.data:
-                n_object = {'watch_url': form.url.data.strip(),
-                            'notification_urls': form.notification_urls.data,
-                            'notification_title': form.notification_title.data,
-                            'notification_body' :  form.notification_body.data,
-                            'notification_format' :  form.notification_format.data,
-                }
-                notification_q.put(n_object)
-                flash('Notifications queued.')
+                if len(form.notification_urls.data):
+                    n_object = {'watch_url': form.url.data.strip(),
+                                'notification_urls': form.notification_urls.data,
+                                'notification_title': form.notification_title.data,
+                                'notification_body': form.notification_body.data,
+                                'notification_format': form.notification_format.data,
+                                }
+                    notification_q.put(n_object)
+                    flash('Test notification queued.')
+                else:
+                    flash('No notification URLs set, cannot send test.', 'error')
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff':
@@ -526,15 +529,18 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.data['settings']['application']['base_url'] = form.base_url.data
 
-            if form.trigger_check.data and len(form.notification_urls.data):
-                n_object = {'watch_url': "Test from changedetection.io!",
-                            'notification_urls': form.notification_urls.data,
-                            'notification_title': form.notification_title.data,
-                            'notification_body': form.notification_body.data,
-                            'notification_format': form.notification_format.data,
-                            }
-                notification_q.put(n_object)
-                flash('Notifications queued.')
+            if form.trigger_check.data:
+                if len(form.notification_urls.data):
+                    n_object = {'watch_url': "Test from changedetection.io!",
+                                'notification_urls': form.notification_urls.data,
+                                'notification_title': form.notification_title.data,
+                                'notification_body': form.notification_body.data,
+                                'notification_format': form.notification_format.data,
+                                }
+                    notification_q.put(n_object)
+                    flash('Test notification queued.')
+                else:
+                    flash('No notification URLs set, cannot send test.', 'error')
 
             if form.password.encrypted_password:
                 datastore.data['settings']['application']['password'] = form.password.encrypted_password
@@ -683,7 +689,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/favicon.ico", methods=['GET'])
     def favicon():
-        return send_from_directory("/app/static/images", filename="favicon.ico")
+        return send_from_directory("static/images", path="favicon.ico")
 
     # We're good but backups are even better!
     @app.route("/backup", methods=['GET'])
@@ -745,7 +751,7 @@ def changedetection_app(config=None, datastore_o=None):
     def static_content(group, filename):
         # These files should be in our subdirectory
         try:
-            return send_from_directory("static/{}".format(group), filename=filename)
+            return send_from_directory("static/{}".format(group), path=filename)
         except FileNotFoundError:
             abort(404)
 
