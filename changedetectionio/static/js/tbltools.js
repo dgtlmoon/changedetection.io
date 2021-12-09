@@ -1,5 +1,8 @@
 // table tools
 
+// must be a var for keyChar and keyCode use
+var CONSTANT_ESCAPE_KEY = 27;
+
 // sorting
 function sortTable(n) {
   var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
@@ -61,13 +64,11 @@ function sortTable(n) {
       }
     }
   }
-
   // hide all asc/desc sort arrows
   sortimgs = document.querySelectorAll('[id^="sort-"]');
   for (var i = 0; i < sortimgs.length; i++) {
 	sortimgs[i].style.display = "none";
   }
-
   // show current asc/desc sort arrow
   if (dir == "asc") {
     document.getElementById("sort-" + n + "a").style.display = "";
@@ -75,16 +76,13 @@ function sortTable(n) {
   else {
 	document.getElementById("sort-" + n + "d").style.display = "";
   }
-
   // show all sortable indicators
   sortableimgs = document.querySelectorAll('[id^="sortable-"]');
   for (var i = 0; i < sortableimgs.length; i++) {
     sortableimgs[i].style.display = "";
   }
-  
   // hide sortable indicator from current column
   document.getElementById("sortable-" + n).style.display = "none";
-
 }
 
 // check/uncheck all checkboxes
@@ -117,25 +115,37 @@ function checkChange(){
 }
 
 // search watches in Title column
-function tblSearch(evt, input) {
+function tblSearch(evt) {
 
   var code = evt.charCode || evt.keyCode;
-  if (code == 27) {
+  if (code == CONSTANT_ESCAPE_KEY) {
     document.getElementById("txtInput").value = '';
   }
+  
   var input, filter, table, tr, td, i, txtValue;
+
   input = document.getElementById("txtInput");
   filter = input.value.toUpperCase();
   table = document.getElementById("watch-table");
   tr = table.getElementsByTagName("tr");
+
   for (i = 0; i < tr.length; i++) {
+
     td = tr[i].getElementsByTagName("td")[4]; // [4] is Title column
+
     if (td) {
+
       txtValue = td.textContent || td.innerText;
+
       if (txtValue.toUpperCase().indexOf(filter) > -1) {
+
         tr[i].style.display = "";
-      } else {
-        tr[i].style.display = "none";
+
+      } 
+	  else {
+      
+		tr[i].style.display = "none";
+
       }
     }       
   }
@@ -178,7 +188,7 @@ function getChecked(items) {
 // process selected watches 
 function processChecked(func, tag) {
 
-	if ( func == 'mark_all_unviewed' ) {
+	if ( func == 'mark_all_notviewed' ) {
 		uuids = getChecked('all');
 	}
 	else {
@@ -201,13 +211,13 @@ function processChecked(func, tag) {
 
 	if ( uuids != '' ) {
 		
-		if ( func == 'mark_selected_unviewed' ) {
+		if ( func == 'mark_selected_notviewed' ) {
 			// fall through and submit
 		}
 		else if ( func == 'mark_selected_viewed' ) {
 			// fall through and submit
 		}
-		else if ( func == 'mark_all_unviewed' ) {
+		else if ( func == 'mark_all_notviewed' ) {
 			// fall through and submit
 		}
 		else if ( func == 'recheck_selected' ) {
@@ -235,6 +245,8 @@ function processChecked(func, tag) {
 }
 
 function clearSearch() {
+	
 	document.getElementById("txtInput").value = '';
-	tblSearch(27, this);
+	
+	tblSearch(CONSTANT_ESCAPE_KEY);
 }

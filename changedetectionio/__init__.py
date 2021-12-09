@@ -621,16 +621,14 @@ def changedetection_app(config=None, datastore_o=None):
             for watch_uuid, watch in datastore.data['watching'].items():
                 if datastore.data['watching'][watch_uuid]['tag'] == limit_tag or limit_tag is None :
                     datastore.set_last_viewed(watch_uuid, watch['newest_history_key'])
+                    # set viewed to true
+                    datastore.data['watching'][watch_uuid]['viewed'] = True
+            
             datastore.needs_write = True
 
             return redirect(url_for('index', tag = limit_tag))
         except KeyError:
             pass
-
-        if limit_tag == None :
-            return redirect(url_for('index'))
-        else :
-            return redirect(url_for('index', tag = limit_tag))
 
     # process selected
     @app.route("/api/process-selected", methods=['GET', "POST"])
@@ -649,7 +647,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         if uuids == '' :
             flash("No watches selected.")
-                
+        
         else :
 
             if func == 'recheck_selected' :
@@ -669,7 +667,7 @@ def changedetection_app(config=None, datastore_o=None):
                 except KeyError :
                     pass
 
-                flash("Rechecking " + str((uuids.count(",") + 1)) + " watch" + ("." if (uuids.count(",") + 1) == 1 else "es."))
+                flash("Rechecking {0} watch{1}.".format(i, "" if i == 1 else "es"))
             
             # Clear selected statuses, so we do not see the 'unviewed' class
             elif func == 'mark_selected_viewed' :
@@ -678,6 +676,9 @@ def changedetection_app(config=None, datastore_o=None):
                     for uuid in uuids.split(',') :
                         datastore.data['watching'][uuid]['last_viewed'] = datastore.data['watching'][uuid]['newest_history_key']
                 
+                    # set viewed to false
+                    datastore.data['watching'][uuid]['viewed'] = False
+               
                 except KeyError :
                     pass
 
@@ -685,7 +686,7 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Reset selected statuses, so we see the 'unviewed' class
             # both funcs will contain the uuid list from the processChecked javascript function
-            elif func == 'mark_selected_unviewed' or func == 'mark_all_unviewed' :
+            elif func == 'mark_selected_notviewed' or func == 'mark_all_notviewed' :
 
                 # count within limit_tag and count successes and capture unchanged
                 tagged = 0
@@ -702,12 +703,15 @@ def changedetection_app(config=None, datastore_o=None):
                         dates.sort(reverse=True)
                         dates = [str(i) for i in dates]
 
-                        # must be more than 1 history to mark unviewed
+                        # must be more than 1 history to mark as not viewed
                         if len(dates) > 1 :
                             # Save the next earliest history as the most recently viewed
                             datastore.set_last_viewed(uuid, dates[1])
+                            # set viewed to false
+                            datastore.data['watching'][uuid]['viewed'] = False
                             # increment successes
                             marked += 1
+                            
                         else : 
                             if datastore.data['watching'][uuid]['title'] :
                                 unchanged.append(datastore.data['watching'][uuid]['title'])
@@ -720,7 +724,7 @@ def changedetection_app(config=None, datastore_o=None):
                 datastore.needs_write = True
 
                 if marked < tagged :
-                    flash("The following " + ("watch does " if len(unchanged) == 1 else "watches do ") + "not have enough history to be remarked:", "notice")
+                    flash("The following {} not have enough history to be remarked.".format("watch does" if len(unchanged) == 1 else "watches do"), "notice")
                     for i in range(len(unchanged)):
                         flash(unchanged[i], "notice")
                 
@@ -737,8 +741,8 @@ def changedetection_app(config=None, datastore_o=None):
                     pass
 
                 datastore.needs_write = True
-
-                flash("{}".format(i) + (" watch was " if (i) == 1 else " watches were ") + "deleted.") 
+                
+                flash("{0} {1} deleted.".format(i, "watch was" if (i) == 1 else "watches were")) 
             
             else :
                 
@@ -910,7 +914,7 @@ def changedetection_app(config=None, datastore_o=None):
         if form.validate():
 
             # get action parameter (add paused button value is 'add', watch button value is 'watch'
-            action = request.form.get('action').strip()
+            action = request.form.get('action')
             
             url = request.form.get('url').strip()
             if datastore.url_exists(url):
@@ -920,17 +924,17 @@ def changedetection_app(config=None, datastore_o=None):
             # @todo add_watch should throw a custom Exception for validation etc
             new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip())
             
-            if action == 'add' :
+            if action == 'add-paused' :
                 datastore.data['watching'][new_uuid]['paused'] = True
                 datastore.needs_write = True
                 flash("Watch added in a paused state.")
-                return redirect(url_for('index'))
                                 
-            else : #watch
+            else : # watch now
                 # Straight into the queue. 
                 update_q.put(new_uuid)
                 flash("Watch added.")
-                return redirect(url_for('index'))
+            return redirect(url_for('index'))
+
         else:
             flash("Error")
             return redirect(url_for('index'))
