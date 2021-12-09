@@ -91,17 +91,17 @@ def create_notification_parameters(n_object, datastore):
 
     # Valid_tokens also used as a field validator
     tokens.update(
-    {
-        'base_url': base_url if base_url is not None else '',
-        'watch_url': watch_url,
-        'watch_uuid': uuid,
-        'watch_title': watch_title if watch_title is not None else '',
-        'watch_tag': watch_tag if watch_tag is not None else '',
-        'diff_url': diff_url,
-        'diff' : n_object['diff'],
-        'diff_full': n_object['diff_full'],
-        'preview_url': preview_url,
-        'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else ''
-    })
+        {
+            'base_url': base_url if base_url is not None else '',
+            'watch_url': watch_url,
+            'watch_uuid': uuid,
+            'watch_title': watch_title if watch_title is not None else '',
+            'watch_tag': watch_tag if watch_tag is not None else '',
+            'diff_url': diff_url,
+            'diff': n_object['diff'],
+            'diff_full': n_object['diff_full'],
+            'preview_url': preview_url,
+            'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else ''
+        })
 
     return tokens
