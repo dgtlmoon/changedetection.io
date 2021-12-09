@@ -13,6 +13,7 @@ find tests/test_*py -type f|while read test_name
 do
   echo "TEST RUNNING $test_name"
   pytest $test_name
+  sleep 3
 done
 
 # Now re-run some tests with BASE_URL enabled
