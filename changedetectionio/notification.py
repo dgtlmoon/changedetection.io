@@ -36,8 +36,8 @@ def process_notification(n_object, datastore):
         apobj.add(url)
 
     # Get the notification body from datastore
-    n_body = n_object['notification_body']
-    n_title = n_object['notification_title']
+    n_body = n_object.get('notification_body', default_notification_body)
+    n_title = n_object.get('notification_title', default_notification_title)
     n_format = valid_notification_formats.get(
         n_object['notification_format'],
         valid_notification_formats[default_notification_format],

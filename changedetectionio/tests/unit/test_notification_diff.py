@@ -20,6 +20,6 @@ class TestDiffBuilder(unittest.TestCase):
         self.assertIn("(added) and something new", output)
 
         # @todo test blocks of changed, blocks of added, blocks of removed
-        
+
 if __name__ == '__main__':
     unittest.main()
