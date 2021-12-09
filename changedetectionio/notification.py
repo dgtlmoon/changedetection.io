@@ -1,4 +1,3 @@
-import os
 import apprise
 from apprise import NotifyFormat
 
@@ -99,6 +98,8 @@ def create_notification_parameters(n_object, datastore):
         'watch_title': watch_title if watch_title is not None else '',
         'watch_tag': watch_tag if watch_tag is not None else '',
         'diff_url': diff_url,
+        'diff' : n_object['diff'],
+        'diff_full': n_object['diff_full'],
         'preview_url': preview_url,
         'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else ''
     })
