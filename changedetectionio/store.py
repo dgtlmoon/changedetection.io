@@ -392,7 +392,11 @@ class ChangeDetectionStore:
                 self.sync_to_json()
 
             # Once per minute is enough, more and it can cause high CPU usage
-            time.sleep(60)
+            # better here is to use something like self.app.config.exit.wait(1), but we cant get to 'app' from here
+            for i in range(30):
+                time.sleep(2)
+                if self.stop_thread:
+                    break
 
     # Go through the datastore path and remove any snapshots that are not mentioned in the index
     # This usually is not used, but can be handy.
