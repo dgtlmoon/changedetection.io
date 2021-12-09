@@ -33,6 +33,7 @@ section.content {
 	border-radius: 50%;
 	background-color: #0078e7;
 	color: white;
+	cursor: pointer;
 }
 .watch-table {
     width: 100%;
