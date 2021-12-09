@@ -27,12 +27,22 @@
 				<!-- user/pass r = requests.get('https://api.github.com/user', auth=('user', 'pass')) -->
 			</form>
 		</div>
-		<div id="search">
+<!-- 		<div id="search">
 			<form class="pure-form search-wrapper" id="search-form">
 				<fieldset>
 					<legend>Search watches</legend> 
 					<input type="text" class="search-box" name="focus" id="txtInput" onkeyup="tblSearch(event)" placeholder="Title" />
 					<button class="close-icon" type="reset" onclick="clearSearch();"></button>
+			   </fieldset>
+			</form>
+		</div>
+ -->
+		<div id="search">
+			<form class="pure-form" id="search-form">
+				<fieldset>
+					<legend>Search watches</legend> 
+					<input type="text" name="focus" id="txtInput" onkeyup="tblSearch(event)" placeholder="Title" />
+					<button ype="reset" onclick="clearSearch();">X</button>
 			   </fieldset>
 			</form>
 		</div>

@@ -28,49 +28,12 @@ section.content {
     align-items: center;
     justify-content: center;
 }
-/* for search box clear X button */
- .search-box,.close-icon,.search-wrapper {
-	position: relative;
-}
-.search-wrapper {
-	width: 225px;
-	margin: auto;
-}
-.search-box {
-	width: 175px;
-}
-.close-icon {
-	border:1px solid transparent;
-	background-color: transparent;
-	display: inline-block;
-	vertical-align: middle;
-    outline: 0;
-    cursor: pointer;
-}
-.close-icon:after {
-	content: "X";
-	display: block;
-	width: 15px;
-	height: 15px;
-	position: absolute;
-	background-color: #0078e7;
-	z-index:1;
-	right: 20px;
-	top: 0;
-	bottom: 0;
-	margin: auto;
-	padding: 2px;
+#search-form button {
+	border: none;
 	border-radius: 50%;
-	text-align: center;
+	background-color: #0078e7;
 	color: white;
-	font-weight: normal;
-	font-size: 12px;
-	cursor: pointer;
 }
-.search-box:placeholder-shown ~ .close-icon {
-	display: none;
-}
-/* end search box X clear button */
 .watch-table {
     width: 100%;
 }
