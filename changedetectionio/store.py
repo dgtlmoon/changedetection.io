@@ -13,17 +13,16 @@ import os
 
 # https://stackoverflow.com/questions/7760916/correct-usage-of-a-getter-setter-for-dictionary-values
 # try as a normal object?
-class url_watch(collections.MutableMapping,dict):
+class url_watch(dict):
 
     def __init__(self, init_data=None):
-        default={
+        self.__data = {
             'url': None,
             'tag': None,
             'last_checked': 0,
             'last_changed': 0,
             'paused': False,
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
-            'newest_history_key': "",
             'title': None,
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
@@ -40,40 +39,43 @@ class url_watch(collections.MutableMapping,dict):
             'notification_format': None,
             'css_filter': "",
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
-            'fetch_backend': None,
+            'fetch_backend': 'html_requests', #106
             'extract_title_as_title': False
         }
-        super().__init__(default)
+        super().__init__(self.__data)
 
         if init_data:
-            self.update(init_data)
+            self.__data.update(init_data)
 
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
     @property
     def newest_history_key(self):
-        if len(self.sorted_history()) == 1:
+        if not self.__data['history'] or len(self.sorted_history()) == 1:
             return 0
         return self.sorted_history()[0]
 
+    @property
+    def viewed(self):
+        if int(self.newest_history_key) <= int(self.__data['last_viewed']):
+            return True
+        return False
+
     def sorted_history(self):
-        dates = list(self['history'].keys())
+        dates = list(self.__data['history'].keys())
         # Convert to int, sort and back to str again
         dates = [int(i) for i in dates]
         dates.sort(reverse=True)
         dates = [str(i) for i in dates]
         return dates
 
-#    def __getitem__(self, key):
-#        return dict.__getitem__(self, key)
+    def __getitem__(self, key):
+        if key not in self.__data:
+            raise KeyError
 
+        return self.__data[key]
 
-
-    def __setitem__(self, *args, **kwargs):
-        (k,v)=tuple(args)
-        self[k]=v
-#        value = int(value)
-#        if not 1 <= value <= 10:
-#            raise ValueError('{v} not in range [1,10]'.format(v=value))
+    def __setitem__(self, key, value):
+        self.__data[key] = value
 
 
 
@@ -195,18 +197,10 @@ class ChangeDetectionStore:
     @property
     def data(self):
         has_unviewed = False
-        for uuid, v in self.__data['watching'].items():
-            if int(v.newest_history_key) <= int(v['last_viewed']):
-                self.__data['watching'][uuid]['viewed'] = True
-
-            else:
-                self.__data['watching'][uuid]['viewed'] = False
+        for uuid, watch in self.__data['watching'].items():
+            if not watch.viewed:
                 has_unviewed = True
-
-            # #106 - Be sure this is None on empty string, False, None, etc
-            # Default var for fetch_backend
-            if not self.__data['watching'][uuid]['fetch_backend']:
-                self.__data['watching'][uuid]['fetch_backend'] = self.__data['settings']['application']['fetch_backend']
+                break
 
         # Re #152, Return env base_url if not overriden, @todo also prefer the proxy pass url
         env_base_url = os.getenv('BASE_URL','')
@@ -320,7 +314,7 @@ class ChangeDetectionStore:
                 'tag': tag
             })
 
-            self.data['watching'][_blank['uuid']] = _blank
+            self.__data['watching'][_blank['uuid']] = _blank
 
         # Get the directory ready
         output_path = "{}/{}".format(self.datastore_path, _blank['uuid'])
@@ -347,31 +341,30 @@ class ChangeDetectionStore:
 
     def sync_to_json(self):
         logging.info("Saving JSON..")
-
-        try:
-            data = deepcopy(self.__data)
-        except RuntimeError as e:
-            # Try again in 15 seconds
-            time.sleep(15)
-            logging.error ("! Data changed when writing to JSON, trying again.. %s", str(e))
-            self.sync_to_json()
-            return
-        else:
+        with self.lock:
 
             try:
                 # Re #286  - First write to a temp file, then confirm it looks OK and rename it
                 # This is a fairly basic strategy to deal with the case that the file is corrupted,
                 # system was out of memory, out of RAM etc
-                with open(self.json_store_path+".tmp", 'w') as json_file:
-                    json.dump(data, json_file, indent=4)
+                with open(self.json_store_path + ".tmp", 'w') as json_file:
+                    json.dump(self.__data, json_file, indent=1)
 
+
+            # In the case something changed during write, and the lock() didnt work
+            except RuntimeError as e:
+                # Try again in 15 seconds
+                time.sleep(15)
+                logging.error("! Data changed when writing to JSON, trying again.. %s", str(e))
+                self.sync_to_json()
             except Exception as e:
+                # Something else, disk full, etc
                 logging.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
-
             else:
+                # All went well, move the temp one ontop of the correct one
                 os.rename(self.json_store_path+".tmp", self.json_store_path)
 
-            self.needs_write = False
+                self.needs_write = True
 
     # Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
     # by just running periodically in one thread, according to python, dict updates are threadsafe.
