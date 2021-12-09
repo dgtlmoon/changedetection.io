@@ -1,4 +1,4 @@
-flask~= 1.0
+flask~= 2.0
 
 eventlet>=0.31.0
 validators
