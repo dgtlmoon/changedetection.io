@@ -13,7 +13,6 @@ find tests/test_*py -type f|while read test_name
 do
   echo "TEST RUNNING $test_name"
   pytest $test_name
-  sleep 3
 done
 
 echo "RUNNING WITH BASE_URL SET"
