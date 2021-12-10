@@ -9,6 +9,8 @@ import time
 import threading
 import os
 
+from changedetectionio.notification import default_notification_format, default_notification_body, default_notification_title
+
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change
@@ -157,6 +159,7 @@ class ChangeDetectionStore:
 
         dates = list(self.__data['watching'][uuid]['history'].keys())
         # Convert to int, sort and back to str again
+        # @todo replace datastore getter that does this automatically
         dates = [int(i) for i in dates]
         dates.sort(reverse=True)
         if len(dates):

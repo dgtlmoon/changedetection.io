@@ -464,7 +464,6 @@ def changedetection_app(config=None, datastore_o=None):
                 else:
                     flash('No notification URLs set, cannot send test.', 'error')
 
-
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff':
                 return redirect(url_for('diff_history_page', uuid=uuid))
@@ -621,6 +620,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         dates = list(watch['history'].keys())
         # Convert to int, sort and back to str again
+        # @todo replace datastore getter that does this automatically
         dates = [int(i) for i in dates]
         dates.sort(reverse=True)
         dates = [str(i) for i in dates]
@@ -631,13 +631,11 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, dates[0])
-
         newest_file = watch['history'][dates[0]]
         with open(newest_file, 'r') as f:
             newest_version_file_contents = f.read()
 
         previous_version = request.args.get('previous_version')
-
         try:
             previous_file = watch['history'][previous_version]
         except KeyError:
@@ -843,8 +841,10 @@ def changedetection_app(config=None, datastore_o=None):
 
     threading.Thread(target=notification_runner).start()
 
-    # Check for new release version
-    threading.Thread(target=check_for_new_version).start()
+    # Check for new release version, but not when running in test/build
+    if not os.getenv("GITHUB_REF", False):
+        threading.Thread(target=check_for_new_version).start()
+
     return app
 
 
@@ -892,8 +892,6 @@ def notification_runner():
 
             except Exception as e:
                 print("Watch URL: {}  Error {}".format(n_object['watch_url'], e))
-
-
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
