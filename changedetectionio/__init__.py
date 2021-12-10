@@ -227,41 +227,27 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/", methods=['GET'])
     @login_required
     def index():
+
+        import uuid
+
         limit_tag = request.args.get('tag')
         pause_uuid = request.args.get('pause')
-
-        if ( pause_uuid == 'resume-all' ) :
-
-            try: 
-                for watch_uuid, watch in datastore.data['watching'].items():
-                    if datastore.data['watching'][watch_uuid]['tag'] == limit_tag or limit_tag is None :
-                        datastore.data['watching'][watch_uuid]['paused'] = False 
-                datastore.needs_write = True
-
-                return redirect(url_for('index', tag = limit_tag))
-            except KeyError:
-                pass
-
-        if ( pause_uuid == 'pause-all' ) :
         
-            try: 
-                for watch_uuid, watch in datastore.data['watching'].items():
-                    if datastore.data['watching'][watch_uuid]['tag'] == limit_tag or limit_tag is None  :
-                        datastore.data['watching'][watch_uuid]['paused'] = True 
-                datastore.needs_write = True
-
-                return redirect(url_for('index', tag = limit_tag))
-            except KeyError:
-                pass
-
-        if pause_uuid:
+        if pause_uuid :
             try:
+                # import uuid added above
+                val = uuid.UUID(str(pause_uuid))
                 datastore.data['watching'][pause_uuid]['paused'] ^= True
-                datastore.needs_write = True
+            except ValueError:
+        
+                action = True if pause_uuid == 'pause-all' else False
 
-                return redirect(url_for('index', tag = limit_tag))
-            except KeyError:
-                pass
+                for watch_uuid, watch in datastore.data['watching'].items():
+                            if datastore.data['watching'][watch_uuid]['tag'] == limit_tag or limit_tag is None :
+                                datastore.data['watching'][watch_uuid]['paused'] = action
+
+            datastore.needs_write = True
+            return redirect(url_for('index', tag = limit_tag))
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
@@ -627,8 +613,6 @@ def changedetection_app(config=None, datastore_o=None):
             for watch_uuid, watch in datastore.data['watching'].items():
                 if datastore.data['watching'][watch_uuid]['tag'] == limit_tag or limit_tag is None :
                     datastore.set_last_viewed(watch_uuid, watch['newest_history_key'])
-                    # set viewed to true
-                    datastore.data['watching'][watch_uuid]['viewed'] = True
             
             datastore.needs_write = True
 
@@ -681,9 +665,6 @@ def changedetection_app(config=None, datastore_o=None):
                 try :
                     for uuid in uuids.split(',') :
                         datastore.data['watching'][uuid]['last_viewed'] = datastore.data['watching'][uuid]['newest_history_key']
-                
-                    # set viewed to false
-                    datastore.data['watching'][uuid]['viewed'] = False
                
                 except KeyError :
                     pass
@@ -713,8 +694,6 @@ def changedetection_app(config=None, datastore_o=None):
                         if len(dates) > 1 :
                             # Save the next earliest history as the most recently viewed
                             datastore.set_last_viewed(uuid, dates[1])
-                            # set viewed to false
-                            datastore.data['watching'][uuid]['viewed'] = False
                             # increment successes
                             marked += 1
                             
@@ -730,7 +709,7 @@ def changedetection_app(config=None, datastore_o=None):
                 datastore.needs_write = True
 
                 if marked < tagged :
-                    flash("The following {} not have enough history to be remarked.".format("watch does" if len(unchanged) == 1 else "watches do"), "notice")
+                    flash("The following {} not have enough history to be remarked:".format("watch does" if len(unchanged) == 1 else "watches do"), "notice")
                     for i in range(len(unchanged)):
                         flash(unchanged[i], "notice")
                 
