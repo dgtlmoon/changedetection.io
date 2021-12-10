@@ -316,7 +316,7 @@ def changedetection_app(config=None, datastore_o=None):
                     # I noticed chrome will show '/' but actually submit '-'
                     limit_date = limit_date.replace('-', '/')
                     # In the case that :ss seconds are supplied
-                    limit_date = re.sub('(\d\d:\d\d)(:\d\d)', '\\1', limit_date)
+                    limit_date = re.sub(r'(\d\d:\d\d)(:\d\d)', '\\1', limit_date)
 
                     str_to_dt = datetime.datetime.strptime(limit_date, '%Y/%m/%d %H:%M')
                     limit_timestamp = int(str_to_dt.timestamp())
