@@ -101,14 +101,19 @@ class update_worker(threading.Thread):
 
                                         # Only prepare to notify if the rules above matched
                                         if 'notification_urls' in n_object:
-                                            # @todo - if it's HTML mode, then use '<br/>' instead of '\n'
+                                            # HTML needs linebreak, but MarkDown and Text can use a linefeed
+                                            if n_object['notification_format'] == 'HTML':
+                                                line_feed_sep = "</br>"
+                                            else:
+                                                line_feed_sep = "\n"
+
                                             from changedetectionio import diff
                                             n_object.update({
                                                 'watch_url': watch['url'],
                                                 'uuid': uuid,
                                                 'current_snapshot': str(contents),
-                                                'diff_full': diff.render_diff(prev_fname, fname),
-                                                'diff': diff.render_diff(prev_fname, fname, True)
+                                                'diff_full': diff.render_diff(prev_fname, fname, line_feed_sep=line_feed_sep),
+                                                'diff': diff.render_diff(prev_fname, fname, True, line_feed_sep=line_feed_sep)
                                             })
 
                                             self.notification_q.put(n_object)
