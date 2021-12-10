@@ -841,8 +841,10 @@ def changedetection_app(config=None, datastore_o=None):
 
     threading.Thread(target=notification_runner).start()
 
-    # Check for new release version
-    threading.Thread(target=check_for_new_version).start()
+    # Check for new release version, but not when running in test/build
+    if not os.getenv("GITHUB_REF", False):
+        threading.Thread(target=check_for_new_version).start()
+
     return app
 
 
