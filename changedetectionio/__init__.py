@@ -316,7 +316,7 @@ def changedetection_app(config=None, datastore_o=None):
                     # I noticed chrome will show '/' but actually submit '-'
                     limit_date = limit_date.replace('-', '/')
                     # In the case that :ss seconds are supplied
-                    limit_date = re.sub('(\d\d:\d\d)(:\d\d)', '\\1', limit_date)
+                    limit_date = re.sub(r'(\d\d:\d\d)(:\d\d)', '\\1', limit_date)
 
                     str_to_dt = datetime.datetime.strptime(limit_date, '%Y/%m/%d %H:%M')
                     limit_timestamp = int(str_to_dt.timestamp())
@@ -452,15 +452,17 @@ def changedetection_app(config=None, datastore_o=None):
             update_q.put(uuid)
 
             if form.trigger_check.data:
-                n_object = {'watch_url': form.url.data.strip(),
-                            'notification_urls': form.notification_urls.data,
-                            'notification_title': form.notification_title.data,
-                            'notification_body' :  form.notification_body.data,
-                            'notification_format' :  form.notification_format.data,
-                }
-                notification_q.put(n_object)
-
-                flash('Notifications queued.')
+                if len(form.notification_urls.data):
+                    n_object = {'watch_url': form.url.data.strip(),
+                                'notification_urls': form.notification_urls.data,
+                                'notification_title': form.notification_title.data,
+                                'notification_body': form.notification_body.data,
+                                'notification_format': form.notification_format.data,
+                                }
+                    notification_q.put(n_object)
+                    flash('Test notification queued.')
+                else:
+                    flash('No notification URLs set, cannot send test.', 'error')
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff':
@@ -527,15 +529,18 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.data['settings']['application']['base_url'] = form.base_url.data
 
-            if form.trigger_check.data and len(form.notification_urls.data):
-                n_object = {'watch_url': "Test from changedetection.io!",
-                            'notification_urls': form.notification_urls.data,
-                            'notification_title': form.notification_title.data,
-                            'notification_body': form.notification_body.data,
-                            'notification_format': form.notification_format.data,
-                            }
-                notification_q.put(n_object)
-                flash('Notifications queued.')
+            if form.trigger_check.data:
+                if len(form.notification_urls.data):
+                    n_object = {'watch_url': "Test from changedetection.io!",
+                                'notification_urls': form.notification_urls.data,
+                                'notification_title': form.notification_title.data,
+                                'notification_body': form.notification_body.data,
+                                'notification_format': form.notification_format.data,
+                                }
+                    notification_q.put(n_object)
+                    flash('Test notification queued.')
+                else:
+                    flash('No notification URLs set, cannot send test.', 'error')
 
             if form.password.encrypted_password:
                 datastore.data['settings']['application']['password'] = form.password.encrypted_password
@@ -620,13 +625,11 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, dates[0])
-
         newest_file = watch['history'][dates[0]]
         with open(newest_file, 'r') as f:
             newest_version_file_contents = f.read()
 
         previous_version = request.args.get('previous_version')
-
         try:
             previous_file = watch['history'][previous_version]
         except KeyError:
@@ -680,7 +683,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/favicon.ico", methods=['GET'])
     def favicon():
-        return send_from_directory("/app/static/images", filename="favicon.ico")
+        return send_from_directory("static/images", path="favicon.ico")
 
     # We're good but backups are even better!
     @app.route("/backup", methods=['GET'])
@@ -742,7 +745,7 @@ def changedetection_app(config=None, datastore_o=None):
     def static_content(group, filename):
         # These files should be in our subdirectory
         try:
-            return send_from_directory("static/{}".format(group), filename=filename)
+            return send_from_directory("static/{}".format(group), path=filename)
         except FileNotFoundError:
             abort(404)
 
@@ -832,8 +835,10 @@ def changedetection_app(config=None, datastore_o=None):
 
     threading.Thread(target=notification_runner).start()
 
-    # Check for new release version
-    threading.Thread(target=check_for_new_version).start()
+    # Check for new release version, but not when running in test/build
+    if not os.getenv("GITHUB_REF", False):
+        threading.Thread(target=check_for_new_version).start()
+
     return app
 
 
@@ -881,8 +886,6 @@ def notification_runner():
 
             except Exception as e:
                 print("Watch URL: {}  Error {}".format(n_object['watch_url'], e))
-
-
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():

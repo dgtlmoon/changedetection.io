@@ -59,9 +59,8 @@ class update_worker(threading.Thread):
                                 watch.update(update_obj)
 
                                 if changed_detected:
-
+                                    n_object = {}
                                     # A change was detected
-                                    newest_version_file_contents = ""
                                     fname = self.datastore.save_history_text(watch_uuid=uuid, contents=contents)
 
                                     # Update history with the stripped text for future reference, this will also mean we save the first

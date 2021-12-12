@@ -10,6 +10,7 @@ import logging
 import time
 import threading
 import os
+from changedetectionio.notification import default_notification_format, default_notification_body, default_notification_title
 
 # https://stackoverflow.com/questions/7760916/correct-usage-of-a-getter-setter-for-dictionary-values
 # try as a normal object?
@@ -76,8 +77,6 @@ class url_watch(dict):
 
     def __setitem__(self, key, value):
         self.__data[key] = value
-
-
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
@@ -188,7 +187,6 @@ class ChangeDetectionStore:
 
         # Finally start the thread that will manage periodic data saves to JSON
         save_data_thread = threading.Thread(target=self.save_datastore).start()
-
 
     def set_last_viewed(self, uuid, timestamp):
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
@@ -379,7 +377,11 @@ class ChangeDetectionStore:
                 self.sync_to_json()
 
             # Once per minute is enough, more and it can cause high CPU usage
-            time.sleep(60)
+            # better here is to use something like self.app.config.exit.wait(1), but we cant get to 'app' from here
+            for i in range(30):
+                time.sleep(2)
+                if self.stop_thread:
+                    break
 
     # Go through the datastore path and remove any snapshots that are not mentioned in the index
     # This usually is not used, but can be handy.

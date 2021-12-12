@@ -55,6 +55,8 @@ def test_check_notification(client, live_server):
                                    "Preview: {preview_url}\n"
                                    "Diff URL: {diff_url}\n"
                                    "Snapshot: {current_snapshot}\n"
+                                   "Diff: {diff}\n"
+                                   "Diff Full: {diff_full}\n"
                                    ":-)",
               "notification_format": "Text",
               "url": test_url,
@@ -66,7 +68,7 @@ def test_check_notification(client, live_server):
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-    assert b"Notifications queued" in res.data
+    assert b"Test notification queued" in res.data
 
     # Hit the edit page, be sure that we saved it
     res = client.get(
@@ -114,6 +116,11 @@ def test_check_notification(client, live_server):
 
     assert test_url in notification_submission
 
+    # Diff was correctly executed
+    assert "Diff Full: (changed) Which is across multiple lines" in notification_submission
+    assert "(-> into) which has this one new line" in notification_submission
+
+
     if env_base_url:
         # Re #65 - did we see our BASE_URl ?
         logging.debug (">>> BASE_URL checking in notification: %s", env_base_url)
@@ -136,7 +143,7 @@ def test_check_notification(client, live_server):
     )
     assert b"Settings updated." in res.data
     # Re #143 - should not see this if we didnt hit the test box
-    assert b"Notifications queued" not in res.data
+    assert b"Test notification queued" not in res.data
 
     # Trigger a check
     client.get(url_for("api_watch_checknow"), follow_redirects=True)
