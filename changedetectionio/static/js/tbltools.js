@@ -188,60 +188,51 @@ function getChecked(items) {
 // process selected watches 
 function processChecked(func, tag) {
 
-	if ( func == 'mark_all_notviewed' ) {
+	if ( func == 'mark_all_notviewed' ) { 
 		uuids = getChecked('all');
 	}
 	else {
 		uuids = getChecked();
 	}
-	
-	var frm = document.getElementById("process-selected");
 
-	var func_field = document.getElementById("func");
-	
-	var tag_field = document.getElementById("tag");
-
-	var uuid_field = document.getElementById("uuids");
-	
-	func_field.value = func;
-	
-	tag_field.value = tag;
-
-	uuid_field.value = uuids;
-
-	if ( uuids != '' ) {
+	// confirm if deleting
+	if ( func == 'delete_selected' && uuids.length > 0 ) {
 		
-		if ( func == 'mark_selected_notviewed' ) {
-			// fall through and submit
-		}
-		else if ( func == 'mark_selected_viewed' ) {
-			// fall through and submit
-		}
-		else if ( func == 'mark_all_notviewed' ) {
-			// fall through and submit
-		}
-		else if ( func == 'recheck_selected' ) {
-			// fall through and submit
-		}
-		else if ( func == 'delete_selected' ) {
-	
-			// confirm deletion
-			result = confirm('Deletions cannot be undone.\n\nAre you sure you want to continue?');
-			
-			if ( result == false) {
-				return;
-			}
-		}
-		else {
-			// invalid input
+		result = confirm('Deletions cannot be undone.\n\nAre you sure you want to continue?');
+		
+		if ( result == false) {
 			return;
 		}
-
 	}
-	
-	// api will either process or flash 'no uuids selected'
-	frm.submit();
 
+	// href locations
+	var currenturl = window.location;
+ 	var posturl = location.protocol + '//' + location.host +  '/api/process-selected';
+
+	// posting vars
+	const XHR = new XMLHttpRequest(),
+    FD  = new FormData();
+
+	// fill form data
+	FD.append('func', func);
+	FD.append('tag', tag);
+	FD.append('uuids', uuids);
+
+	// success
+	XHR.addEventListener( 'load', function( event ) {
+		window.location = currenturl;
+	});
+
+	// error
+	XHR.addEventListener(' error', function( event ) {
+		alert( 'Error posting request.' );
+	});
+
+	// set up request
+	XHR.open( 'POST', posturl );
+
+	// send
+	XHR.send( FD );
 }
 
 function clearSearch() {

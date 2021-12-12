@@ -4,13 +4,6 @@
 
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tbltools.js')}}"></script>
 
-<!--  hidden for posting checked uuids. values are set with javascript processChecked function -->
-<form style="display: none;" id="process-selected" action="{{ url_for('process_selected') }}" method="POST">
-	<input type="hidden" id="func" name="func" value="" />
-	<input type="hidden" id="tag" name="tag" value="" />
-	<input type="hidden" id="uuids" name="uuids" value="" />
-</form>
- 
  <div class="box">
 
 	<div id="flexlayout">
@@ -21,22 +14,12 @@
 						{{ render_simple_field(form.url, placeholder="https://...", required=true) }}
 						{{ render_simple_field(form.tag, value=active_tag if active_tag else '', placeholder="tag") }}
 					<button type="submit" class="pure-button pure-button-primary" name="action" value="watch">Watch Now</button>
-					<button type="submit" class="pure-button pure-button-primary" name="action" value="add">Add Paused</button>
+					<button type="submit" class="pure-button pure-button-primary" name="action" value="add-paused">Add Paused</button>
 			   </fieldset>
 				<!-- add extra stuff, like do a http POST and send headers -->
 				<!-- user/pass r = requests.get('https://api.github.com/user', auth=('user', 'pass')) -->
 			</form>
 		</div>
-<!-- 		<div id="search">
-			<form class="pure-form search-wrapper" id="search-form">
-				<fieldset>
-					<legend>Search watches</legend> 
-					<input type="text" class="search-box" name="focus" id="txtInput" onkeyup="tblSearch(event)" placeholder="Title" />
-					<button class="close-icon" type="reset" onclick="clearSearch();"></button>
-			   </fieldset>
-			</form>
-		</div>
- -->
 		<div id="search">
 			<form class="pure-form" id="search-form">
 				<fieldset>

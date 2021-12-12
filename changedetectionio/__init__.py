@@ -235,8 +235,7 @@ def changedetection_app(config=None, datastore_o=None):
         
         if pause_uuid :
             try:
-                # import uuid added above
-                val = uuid.UUID(str(pause_uuid))
+                validate = uuid.UUID(str(pause_uuid))
                 datastore.data['watching'][pause_uuid]['paused'] ^= True
             except ValueError:
         
@@ -325,7 +324,7 @@ def changedetection_app(config=None, datastore_o=None):
                     # I noticed chrome will show '/' but actually submit '-'
                     limit_date = limit_date.replace('-', '/')
                     # In the case that :ss seconds are supplied
-                    limit_date = re.sub('(\d\d:\d\d)(:\d\d)', '\\1', limit_date)
+                    limit_date = re.sub(r'(\d\d:\d\d)(:\d\d)', '\\1', limit_date)
 
                     str_to_dt = datetime.datetime.strptime(limit_date, '%Y/%m/%d %H:%M')
                     limit_timestamp = int(str_to_dt.timestamp())
@@ -624,8 +623,8 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/api/process-selected", methods=['GET', "POST"])
     @login_required
     def process_selected():
-    
-        if request.method == 'POST':
+
+        if request.method == 'POST' :
             func = request.form.get('func')
             limit_tag = request.form.get('tag')
             uuids = request.form.get('uuids')
@@ -637,7 +636,8 @@ def changedetection_app(config=None, datastore_o=None):
 
         if uuids == '' :
             flash("No watches selected.")
-        
+            return render_template('index')
+            
         else :
 
             if func == 'recheck_selected' :
