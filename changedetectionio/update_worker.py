@@ -75,6 +75,10 @@ class update_worker(threading.Thread):
                                     if newest_key:
                                         with open(watch['history'][newest_key], 'r') as f:
                                             newest_version_file_contents = f.read().strip()
+                                    else:
+                                        # On the first time, .newest_history_key will report 0
+                                        with open(fname, 'r') as f:
+                                            newest_version_file_contents = f.read().strip()
 
                                     n_object = {
                                         'watch_url': watch['url'],
