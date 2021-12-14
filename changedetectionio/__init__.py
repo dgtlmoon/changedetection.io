@@ -899,7 +899,8 @@ def changedetection_app(config=None, datastore_o=None):
         if form.validate():
 
             # get action parameter (add paused button value is 'add', watch button value is 'watch'
-            action = request.form.get('action')
+            #action = request.form.get('action')
+            add_paused = request.form.get('add-paused')
             
             url = request.form.get('url').strip()
             if datastore.url_exists(url):
@@ -909,7 +910,7 @@ def changedetection_app(config=None, datastore_o=None):
             # @todo add_watch should throw a custom Exception for validation etc
             new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip())
             
-            if action == 'add-paused' :
+            if add_paused :
                 datastore.data['watching'][new_uuid]['paused'] = True
                 datastore.needs_write = True
                 flash("Watch added in a paused state.")

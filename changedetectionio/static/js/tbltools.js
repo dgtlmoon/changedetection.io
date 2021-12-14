@@ -88,29 +88,48 @@ function sortTable(n) {
 // check/uncheck all checkboxes
 function checkAll(e) {
 	var checkboxes = document.getElementsByName('check');
+	var checkboxFunctions = document.querySelectorAll('[id=checkbox-functions]');
 	
 	if (e.checked) {
 		for (var i = 0; i < checkboxes.length; i++) {  
 			checkboxes[i].checked = true;
 		}
-	} else {
+		for (var i = 0; i < checkboxFunctions.length; i++) {
+			checkboxFunctions[i].style.display = "";
+		}
+	}
+	else {
 		for (var i = 0; i < checkboxes.length; i++) {
 			checkboxes[i].checked = false;
+		}
+		for (var i = 0; i < checkboxFunctions.length; i++) {
+			checkboxFunctions[i].style.display = "none";
 		}
 	}
 }
 
-// check/uncheck the checkall checkbox if the all checkboxes are checked or unchecked
+// check/uncheck checkall checkbox if all other checkboxes are checked/unchecked
 function checkChange(){
 	
 	var totalCheckbox = document.querySelectorAll('input[name="check"]').length;
 	var totalChecked = document.querySelectorAll('input[name="check"]:checked').length;
+	var checkboxFunctions = document.querySelectorAll('[id=checkbox-functions]');
 	
-	// Total checkboxes equals to total checked checkboxes
 	if(totalCheckbox == totalChecked) {
 		document.getElementsByName("showhide")[0].checked=true;
-	} else {
+	}
+	else {
 		document.getElementsByName("showhide")[0].checked=false;
+	}
+	if(totalChecked == 0) {
+		for (var i = 0; i < checkboxFunctions.length; i++) {
+			checkboxFunctions[i].style.display = "none";
+		}
+	}
+	else {
+		for (var i = 0; i < checkboxFunctions.length; i++) {
+			checkboxFunctions[i].style.display = "";
+		}
 	}
 }
 
@@ -131,7 +150,7 @@ function tblSearch(evt) {
 
   for (i = 0; i < tr.length; i++) {
 
-    td = tr[i].getElementsByTagName("td")[4]; // [4] is Title column
+    td = tr[i].getElementsByTagName("td")[5]; // col 5 is the hidden title/url column
 
     if (td) {
 
