@@ -55,6 +55,8 @@ def test_check_notification(client, live_server):
                                    "Preview: {preview_url}\n"
                                    "Diff URL: {diff_url}\n"
                                    "Snapshot: {current_snapshot}\n"
+                                   "Diff: {diff}\n"
+                                   "Diff Full: {diff_full}\n"
                                    ":-)",
               "notification_format": "Text",
               "url": test_url,
@@ -113,6 +115,11 @@ def test_check_notification(client, live_server):
         # Did we see the URL that had a change, in the notification?
 
     assert test_url in notification_submission
+
+    # Diff was correctly executed
+    assert "Diff Full: (changed) Which is across multiple lines" in notification_submission
+    assert "(-> into) which has this one new line" in notification_submission
+
 
     if env_base_url:
         # Re #65 - did we see our BASE_URl ?

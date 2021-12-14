@@ -22,7 +22,6 @@ def cleanup(datastore_path):
     for file in files:
         try:
             os.unlink("{}/{}".format(datastore_path, file))
-            x = 1
         except FileNotFoundError:
             pass
 
