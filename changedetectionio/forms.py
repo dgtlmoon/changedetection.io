@@ -6,6 +6,8 @@ from wtforms.fields import html5
 from changedetectionio import content_fetcher
 import re
 
+from changedetectionio.notification import default_notification_format, valid_notification_formats, default_notification_body, default_notification_title
+
 class StringListField(StringField):
     widget = widgets.TextArea()
 
@@ -178,17 +180,19 @@ class ValidateCSSJSONInput(object):
 
     def __call__(self, form, field):
         if 'json:' in field.data:
-            from jsonpath_ng.exceptions import JsonPathParserError
-            from jsonpath_ng import jsonpath, parse
+            from jsonpath_ng.exceptions import JsonPathParserError, JsonPathLexerError
+            from jsonpath_ng.ext import parse
 
             input = field.data.replace('json:', '')
 
             try:
                 parse(input)
-            except JsonPathParserError as e:
+            except (JsonPathParserError, JsonPathLexerError) as e:
                 message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
                 raise ValidationError(message % (input, str(e)))
 
+            # Re #265 - maybe in the future fetch the page and offer a
+            # warning/notice that its possible the rule doesnt yet match anything?
 
 class quickWatchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
@@ -199,8 +203,9 @@ class quickWatchForm(Form):
 class commonSettingsForm(Form):
 
     notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers()])
-    notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {watch_url}', validators=[validators.Optional(), ValidateTokensList()])
-    notification_body = TextAreaField('Notification Body', default='{watch_url} had a change.', validators=[validators.Optional(), ValidateTokensList()])
+    notification_title = StringField('Notification Title', default=default_notification_title, validators=[validators.Optional(), ValidateTokensList()])
+    notification_body = TextAreaField('Notification Body', default=default_notification_body, validators=[validators.Optional(), ValidateTokensList()])
+    notification_format = SelectField('Notification Format', choices=valid_notification_formats.keys(), default=default_notification_format)
     trigger_check = BooleanField('Send test notification on save')
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)

@@ -9,6 +9,8 @@ import time
 import threading
 import os
 
+from changedetectionio.notification import default_notification_format, default_notification_body, default_notification_title
+
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change
@@ -16,6 +18,8 @@ class ChangeDetectionStore:
     lock = Lock()
 
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
+        # Should only be active for docker
+        # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
         self.needs_write = False
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
@@ -45,6 +49,7 @@ class ChangeDetectionStore:
                     # Custom notification content
                     'notification_title': None,
                     'notification_body': None,
+                    'notification_format': None,
                 }
             }
         }
@@ -71,6 +76,7 @@ class ChangeDetectionStore:
             'notification_urls': [], # List of URLs to add to the notification Queue (Usually AppRise)
             'notification_title': None,
             'notification_body': None,
+            'notification_format': None,
             'css_filter': "",
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'fetch_backend': None,
@@ -153,6 +159,7 @@ class ChangeDetectionStore:
 
         dates = list(self.__data['watching'][uuid]['history'].keys())
         # Convert to int, sort and back to str again
+        # @todo replace datastore getter that does this automatically
         dates = [int(i) for i in dates]
         dates.sort(reverse=True)
         if len(dates):
@@ -204,8 +211,8 @@ class ChangeDetectionStore:
 
         # Re #152, Return env base_url if not overriden, @todo also prefer the proxy pass url
         env_base_url = os.getenv('BASE_URL','')
-        if self.__data['settings']['application']['base_url'] is None and len(env_base_url) >0:
-            self.__data['settings']['application']['base_url'] = env_base_url.strip('" ')
+        if not self.__data['settings']['application']['base_url']:
+          self.__data['settings']['application']['base_url'] = env_base_url.strip('" ')
 
         self.__data['has_unviewed'] = has_unviewed
 
@@ -251,24 +258,10 @@ class ChangeDetectionStore:
 
     # Clone a watch by UUID
     def clone(self, uuid):
-        with self.lock:
-            new_uuid = str(uuid_builder.uuid4())
-            _clone = deepcopy(self.data['watching'][uuid])
-            _clone.update({'uuid': new_uuid})
-
-            attributes_to_reset = [
-                'last_checked',
-                'last_changed',
-                'last_viewed',
-                'newest_history_key',
-                'previous_md5',
-                'history'
-            ]
-            for attribute in attributes_to_reset:
-                _clone.update({attribute: self.generic_definition[attribute]})
-
-            self.data['watching'][new_uuid] = _clone
-            self.needs_write = True
+        url = self.data['watching'][uuid]['url']
+        tag = self.data['watching'][uuid]['tag']
+        new_uuid = self.add_watch(url=url, tag=tag)
+        return new_uuid
 
     def url_exists(self, url):
 
@@ -362,20 +355,30 @@ class ChangeDetectionStore:
         return fname
 
     def sync_to_json(self):
-        print("Saving..")
-        data ={}
+        logging.info("Saving JSON..")
 
         try:
             data = deepcopy(self.__data)
-        except RuntimeError:
-            time.sleep(0.5)
-            print ("! Data changed when writing to JSON, trying again..")
+        except RuntimeError as e:
+            # Try again in 15 seconds
+            time.sleep(15)
+            logging.error ("! Data changed when writing to JSON, trying again.. %s", str(e))
             self.sync_to_json()
             return
         else:
-            with open(self.json_store_path, 'w') as json_file:
-                json.dump(data, json_file, indent=4)
-                logging.info("Re-saved index")
+
+            try:
+                # Re #286  - First write to a temp file, then confirm it looks OK and rename it
+                # This is a fairly basic strategy to deal with the case that the file is corrupted,
+                # system was out of memory, out of RAM etc
+                with open(self.json_store_path+".tmp", 'w') as json_file:
+                    json.dump(data, json_file, indent=4)
+
+            except Exception as e:
+                logging.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
+
+            else:
+                os.rename(self.json_store_path+".tmp", self.json_store_path)
 
             self.needs_write = False
 
@@ -390,7 +393,13 @@ class ChangeDetectionStore:
 
             if self.needs_write:
                 self.sync_to_json()
-            time.sleep(3)
+
+            # Once per minute is enough, more and it can cause high CPU usage
+            # better here is to use something like self.app.config.exit.wait(1), but we cant get to 'app' from here
+            for i in range(30):
+                time.sleep(2)
+                if self.stop_thread:
+                    break
 
     # Go through the datastore path and remove any snapshots that are not mentioned in the index
     # This usually is not used, but can be handy.
