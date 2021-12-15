@@ -260,7 +260,8 @@ class ChangeDetectionStore:
     def clone(self, uuid):
         url = self.data['watching'][uuid]['url']
         tag = self.data['watching'][uuid]['tag']
-        new_uuid = self.add_watch(url=url, tag=tag)
+        extras = self.data['watching'][uuid]
+        new_uuid = self.add_watch(url=url, tag=tag, extras=extras)
         return new_uuid
 
     def url_exists(self, url):
@@ -318,16 +319,26 @@ class ChangeDetectionStore:
         self.needs_write = True
         return changes_removed
 
-    def add_watch(self, url, tag):
+    def add_watch(self, url, tag, extras=None):
+        if extras is None:
+            extras = {}
+
         with self.lock:
             # @todo use a common generic version of this
             new_uuid = str(uuid_builder.uuid4())
             _blank = deepcopy(self.generic_definition)
             _blank.update({
                 'url': url,
-                'tag': tag,
-                'uuid': new_uuid
+                'tag': tag
             })
+
+            # Incase these are copied across, assume it's a reference and deepcopy()
+            apply_extras = deepcopy(extras)
+            for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
+                if k in apply_extras:
+                    del apply_extras[k]
+
+            _blank.update(apply_extras)
 
             self.data['watching'][new_uuid] = _blank
 
