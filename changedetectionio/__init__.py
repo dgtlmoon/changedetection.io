@@ -286,6 +286,10 @@ def changedetection_app(config=None, datastore_o=None):
         limit_tag = request.args.get('tag')
         pause_uuid = request.args.get('pause')
 
+        # Redirect for the old rss path which used the /?rss=true
+        if request.args.get('rss'):
+            return redirect(url_for('rss', tag=limit_tag))
+
         if pause_uuid:
             try:
                 datastore.data['watching'][pause_uuid]['paused'] ^= True
