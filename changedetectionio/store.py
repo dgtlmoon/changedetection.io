@@ -49,7 +49,7 @@ class ChangeDetectionStore:
                     # Custom notification content
                     'notification_title': None,
                     'notification_body': None,
-                    'notification_format': None,
+                    'notification_format': None
                 }
             }
         }
@@ -146,6 +146,12 @@ class ChangeDetectionStore:
                 self.__data['app_guid'] = "test-" + str(uuid_builder.uuid4())
             else:
                 self.__data['app_guid'] = str(uuid_builder.uuid4())
+
+        # Generate the URL access token for RSS feeds
+        if not 'rss_access_token' in self.__data['settings']['application']:
+            import secrets
+            secret = secrets.token_hex(16)
+            self.__data['settings']['application']['rss_access_token'] = secret
 
         self.needs_write = True
 

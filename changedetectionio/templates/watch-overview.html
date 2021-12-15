@@ -92,7 +92,7 @@
                 all {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
             </li>
             <li>
-                <a href="{{ url_for('index', tag=active_tag , rss=true)}}"><img id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15px"></a>
+                <a href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"><img id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15px"></a>
             </li>
         </ul>
     </div>
