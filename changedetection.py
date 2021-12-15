@@ -21,10 +21,12 @@ def main():
     datastore_path = os.path.join(os.getcwd(), "datastore")
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "csd:p:", "port")
+        opts, args = getopt.getopt(sys.argv[1:], "Ccsd:p:", "port")
     except getopt.GetoptError:
         print('backend.py -s SSL enable -p [port] -d [datastore path]')
         sys.exit(2)
+
+    create_datastore_dir = False
 
     for opt, arg in opts:
         #        if opt == '--purge':
@@ -45,13 +47,20 @@ def main():
         if opt == '-c':
             do_cleanup = True
 
+        # Create the datadir if it doesnt exist
+        if opt == '-C':
+            create_datastore_dir = True
+
     # isnt there some @thingy to attach to each route to tell it, that this route needs a datastore
     app_config = {'datastore_path': datastore_path}
 
     if not os.path.isdir(app_config['datastore_path']):
-        print ("ERROR: Directory path for the datastore '{}' does not exist, cannot start, please make sure the directory exists.\n"
-               "Alternatively, use the -d parameter.".format(app_config['datastore_path']),file=sys.stderr)
-        sys.exit(2)
+        if create_datastore_dir:
+            os.mkdir(app_config['datastore_path'])
+        else:
+            print ("ERROR: Directory path for the datastore '{}' does not exist, cannot start, please make sure the directory exists.\n"
+                   "Alternatively, use the -d parameter.".format(app_config['datastore_path']),file=sys.stderr)
+            sys.exit(2)
 
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=changedetectionio.__version__)
     app = changedetectionio.changedetection_app(app_config, datastore)
