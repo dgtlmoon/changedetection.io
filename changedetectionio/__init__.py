@@ -793,6 +793,10 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def api_clone():
         uuid = request.args.get('uuid')
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
         new_uuid = datastore.clone(uuid)
         update_q.put(new_uuid)
         flash('Cloned.')
