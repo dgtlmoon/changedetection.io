@@ -69,12 +69,12 @@
                 <th onclick="sortTable(0)"><span id="clickable" title="Sort by Index">#&nbsp;&nbsp;<span id="sortable-0"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span id="sortarrow"><span id="sort-0a" style="display:none;">&#9650;</span><span id="sort-0d" style="display:none;">&#9660;</span></span></span></th>
 				<th><input type="checkbox" name="showhide" onchange="checkAll(this)" title="Check/Uncheck All"></th>
 				<th id="play-pause">
-					<a href="{{url_for('index', pause='resume-all', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="Resume" title="Resume All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>
 					<a href="{{url_for('index', pause='pause-all', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause" title="Pause All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>
+					<a href="{{url_for('index', pause='resume-all', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="Resume" title="Resume All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>
 				</th>
 				<th>
-					<a href="javascript:processChecked('mark_all_notviewed', '{{ active_tag }}');"><img src="{{url_for('static_content', group='images', filename='viewed.svg')}}" alt="Unviewed" title="Mark All{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%} as Unviewed"/></a>
-					<a href="{{url_for('mark_all_viewed', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='notviewed.svg')}}" alt="Viewed" title="Mark All{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%} as Viewed"/></a>
+					<a href="javascript:processChecked('mark_all_notviewed', '{{ active_tag }}');"><img src="{{url_for('static_content', group='images', filename='notviewed.svg')}}" alt="Uniewed" title="Mark All{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%} as Unviewed"/></a>
+					<a href="{{url_for('mark_all_viewed', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='viewed.svg')}}" alt="Viewed" title="Mark All{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%} as Viewed"/></a>
 				</th>
 				<th onclick="sortTable(5)"><span id="clickable" title="Sort by Title">Title&nbsp;&nbsp;<span id="sortable-5"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span id="sortarrow"><span id="sort-5a" style="display:none;">&#9650;</span><span id="sort-5d" style="display:none;">&#9660;</span></span></span></th>
 				<th id="hidden"></th>
@@ -105,7 +105,7 @@
 							{% if watch.newest_history_key| int > watch.last_viewed| int %}
 								<a href="{{url_for('process_selected', func='mark_selected_viewed', uuids=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='viewed.svg')}}" alt="Viewed" title="Mark as Viewed"/></a>
 							{% else %}
-								<a href="{{url_for('process_selected', func='mark_selected_notviewed', uuids=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='notviewed.svg')}}" alt="Un-viewed" title="Mark as Unviewed"/></a>
+								<a href="{{url_for('process_selected', func='mark_selected_notviewed', uuids=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='notviewed.svg')}}" alt="Unviewed" title="Mark as Unviewed"/></a>
 							{% endif %}
 						</td>
 						<td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
