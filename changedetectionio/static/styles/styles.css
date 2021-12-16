@@ -90,8 +90,14 @@ section.content {
 	padding-left: 48px;
 	color: #333;
 }
+.box {
+    max-width: 80%; /*changed to width to prevent resizing during search */
+	flex-direction: column;
+    display: flex;
+    justify-content: center;
+}
 .watch-table {
-    width: 100%;
+	width:100%
 }
 #header {
 	text-align: center;
@@ -110,8 +116,8 @@ section.content {
 #play-pause {
 	line-height: .8em;
 }
-#recheck .pure-button, #checkbox-functions .pure-button  {
-	background:  #0078e7; /*#1a87c3;*/
+#checkbox-functions .pure-button  {
+	background:  #0078e7;
 }
 .watch-table td.title-col, #actions {
 	/*text-align: left;*/
@@ -153,31 +159,8 @@ section.content {
     color: #e70069;
     white-space: nowrap;
 }
-.box {
-    /*max-width: 80%; changed to width to prevent resizing during search */
-	width: 80%;
-    flex-direction: column;
-    display: flex;
-    justify-content: center;
-}
 #watch-actions {
 	display: inline-block;
-}
-#flexlayout {
-	display: flex;
-	justify-content: space-between;
-}
-#categories {
-    text-align: left;
-}
-#control {
-    text-align: right;
-}
-#chkFuncs {
-	color: blue !important;
-}
-#quickwatch {
-    text-align: left;
 }
 #post-list-buttons, #post-list-buttons-top {
     padding: 0;
@@ -185,6 +168,26 @@ section.content {
 }
 #post-list-buttons li, #post-list-buttons-top li {
     display: inline-block;
+}
+#flexlayout {
+	display: flex;
+	justify-content: space-between;
+}
+#categories {
+	text-align: left;
+	margin-top: auto;
+}
+#controls-top {
+	text-align: right;
+	margin-top: auto;
+}
+#recheck-and-rss {
+	display: inline-flex;
+}
+#controls-bottom {
+	text-align: right;
+	margin-bottom: auto;
+	direction: rtl;
 }
 #post-list-buttons-top a {
 	border-top-left-radius: 5px;
@@ -637,6 +640,9 @@ footer {
     display: inline-block;
 }
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
+    .box {
+        max-width: 95%;
+    }
 	.watch-table td.low-res {
 		display: inline-block;
 		padding: 5px;
@@ -647,9 +653,6 @@ footer {
 	.pure-form fieldset {
 		padding: 0;
 	}
-    .box {
-        max-width: 95%;
-    }
     .edit-form {
         padding: 0.5em;
         margin: 0;
@@ -665,6 +668,9 @@ footer {
 	}
 	#watch-actions {
 		margin-top: 3px;
+	}
+	#checkbox-functions {
+		display: inline-block;
 	}
 }
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
@@ -689,14 +695,6 @@ footer {
         color: #555;
         content: "Changed ";
     }
-    /*.watch-table td.inline {
-        display: inline-block;
-    }*/
-    ./*watch-table thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-    }*/
 	.watch-table th:nth-child(0) {
 		display: none;
 	}
