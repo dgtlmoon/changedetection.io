@@ -51,7 +51,7 @@ $ docker-compose up -d
 ```
 Docker standalone
 ```bash
-$ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io ghcr.io/dgtlmoon/changedetection.io
+$ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
 ```
 
 ### Python Pip
@@ -71,10 +71,10 @@ _Now with per-site configurable support for using a fast built in HTTP fetcher o
 
 ### Docker
 ```
-docker pull ghcr.io/dgtlmoon/changedetection.io
+docker pull dgtlmoon/changedetection.io
 docker kill $(docker ps -a|grep changedetection.io|awk '{print $1}')
 docker rm $(docker ps -a|grep changedetection.io|awk '{print $1}')
-docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io ghcr.io/dgtlmoon/changedetection.io
+docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
 ```
 
 ### docker-compose
