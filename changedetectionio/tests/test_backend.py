@@ -59,7 +59,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
     assert b'unviewed' in res.data
 
     # #75, and it should be in the RSS feed
-    res = client.get(url_for("index", rss="true"))
+    res = client.get(url_for("rss"))
     expected_url = url_for('test_endpoint', _external=True)
     assert b'<rss' in res.data
     assert expected_url.encode('utf-8') in res.data

@@ -224,11 +224,71 @@ def changedetection_app(config=None, datastore_o=None):
         # Disable password  loginif there is not one set
         app.config['LOGIN_DISABLED'] = datastore.data['settings']['application']['password'] == False
 
+        # For the RSS path, allow access via a token
+        if request.path == '/rss' and request.args.get('token'):
+            app_rss_token = datastore.data['settings']['application']['rss_access_token']
+            rss_url_token = request.args.get('token')
+            if app_rss_token == rss_url_token:
+                app.config['LOGIN_DISABLED'] = True
+
+    @app.route("/rss", methods=['GET'])
+    @login_required
+    def rss():
+
+        limit_tag = request.args.get('tag')
+
+        # Sort by last_changed and add the uuid which is usually the key..
+        sorted_watches = []
+
+        # @todo needs a .itemsWithTag() or something
+        for uuid, watch in datastore.data['watching'].items():
+
+            if limit_tag != None:
+                # Support for comma separated list of tags.
+                for tag_in_watch in watch['tag'].split(','):
+                    tag_in_watch = tag_in_watch.strip()
+                    if tag_in_watch == limit_tag:
+                        watch['uuid'] = uuid
+                        sorted_watches.append(watch)
+
+            else:
+                watch['uuid'] = uuid
+                sorted_watches.append(watch)
+
+        sorted_watches.sort(key=lambda x: x['last_changed'], reverse=True)
+
+        fg = FeedGenerator()
+        fg.title('changedetection.io')
+        fg.description('Feed description')
+        fg.link(href='https://changedetection.io')
+
+        for watch in sorted_watches:
+            if not watch['viewed']:
+                # Re #239 - GUID needs to be individual for each event
+                # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
+                guid = "{}/{}".format(watch['uuid'], watch['last_changed'])
+                fe = fg.add_entry()
+                fe.title(watch['url'])
+                fe.link(href=watch['url'])
+                fe.description(watch['url'])
+                fe.guid(guid, permalink=False)
+                dt = datetime.datetime.fromtimestamp(int(watch['newest_history_key']))
+                dt = dt.replace(tzinfo=pytz.UTC)
+                fe.pubDate(dt)
+
+        response = make_response(fg.rss_str())
+        response.headers.set('Content-Type', 'application/rss+xml')
+        return response
+
     @app.route("/", methods=['GET'])
     @login_required
     def index():
         limit_tag = request.args.get('tag')
         pause_uuid = request.args.get('pause')
+
+        # Redirect for the old rss path which used the /?rss=true
+        if request.args.get('rss'):
+            return redirect(url_for('rss', tag=limit_tag))
 
         if pause_uuid:
             try:
@@ -238,7 +298,6 @@ def changedetection_app(config=None, datastore_o=None):
                 return redirect(url_for('index', tag = limit_tag))
             except KeyError:
                 pass
-
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
@@ -259,42 +318,17 @@ def changedetection_app(config=None, datastore_o=None):
         sorted_watches.sort(key=lambda x: x['last_changed'], reverse=True)
 
         existing_tags = datastore.get_all_tags()
-        rss = request.args.get('rss')
 
-        if rss:
-            fg = FeedGenerator()
-            fg.title('changedetection.io')
-            fg.description('Feed description')
-            fg.link(href='https://changedetection.io')
+        from changedetectionio import forms
+        form = forms.quickWatchForm(request.form)
 
-            for watch in sorted_watches:
-                if not watch['viewed']:
-                    # Re #239 - GUID needs to be individual for each event
-                    # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
-                    guid = "{}/{}".format(watch['uuid'], watch['last_changed'])
-                    fe = fg.add_entry()
-                    fe.title(watch['url'])
-                    fe.link(href=watch['url'])
-                    fe.description(watch['url'])
-                    fe.guid(guid, permalink=False)
-                    dt = datetime.datetime.fromtimestamp(int(watch['newest_history_key']))
-                    dt = dt.replace(tzinfo=pytz.UTC)
-                    fe.pubDate(dt)
-
-            response = make_response(fg.rss_str())
-            response.headers.set('Content-Type', 'application/rss+xml')
-            return response
-
-        else:
-            from changedetectionio import forms
-            form = forms.quickWatchForm(request.form)
-
-            output = render_template("watch-overview.html",
-                                     form=form,
-                                     watches=sorted_watches,
-                                     tags=existing_tags,
-                                     active_tag=limit_tag,
-                                     has_unviewed=datastore.data['has_unviewed'])
+        output = render_template("watch-overview.html",
+                                 form=form,
+                                 watches=sorted_watches,
+                                 tags=existing_tags,
+                                 active_tag=limit_tag,
+                                 app_rss_token=datastore.data['settings']['application']['rss_access_token'],
+                                 has_unviewed=datastore.data['has_unviewed'])
 
         return output
 
