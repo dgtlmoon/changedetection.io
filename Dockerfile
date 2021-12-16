@@ -42,7 +42,7 @@ ENV PYTHONUNBUFFERED=1
 
 RUN [ ! -d "/datastore" ] && mkdir /datastore
 
-# set SECLEVEL=1 in openssl.conf to allow monitoring sites with weak/old cipher suites
+# Re #80, sets SECLEVEL=1 in openssl.conf to allow monitoring sites with weak/old cipher suites
 RUN sed -i 's/^CipherString = .*/CipherString = DEFAULT@SECLEVEL=1/' /etc/ssl/openssl.cnf
 
 # Copy modules over to the final image and add their dir to PYTHONPATH
