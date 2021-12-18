@@ -14,6 +14,9 @@ jobs:
         with:
           python-version: 3.9
 
+      - name: Show env vars
+        run: set
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -27,11 +30,14 @@ jobs:
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
+      - name: Unit tests
+        run: |
+          python3 -m unittest changedetectionio.tests.unit.test_notification_diff
+
       - name: Test with pytest
         run: |
           # Each test is totally isolated and performs its own cleanup/reset
           cd changedetectionio; ./run_all_tests.sh
-
 
       # https://github.com/docker/build-push-action/blob/master/docs/advanced/test-before-push.md ?
       # https://github.com/docker/buildx/issues/59 ? Needs to be one platform?

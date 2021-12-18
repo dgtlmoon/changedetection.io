@@ -6,7 +6,7 @@ from wtforms.fields import html5
 from changedetectionio import content_fetcher
 import re
 
-from changedetectionio.notification import default_notification_format, valid_notification_formats
+from changedetectionio.notification import default_notification_format, valid_notification_formats, default_notification_body, default_notification_title
 
 class StringListField(StringField):
     widget = widgets.TextArea()
@@ -203,8 +203,8 @@ class quickWatchForm(Form):
 class commonSettingsForm(Form):
 
     notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers()])
-    notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {watch_url}', validators=[validators.Optional(), ValidateTokensList()])
-    notification_body = TextAreaField('Notification Body', default='{watch_url} had a change.', validators=[validators.Optional(), ValidateTokensList()])
+    notification_title = StringField('Notification Title', default=default_notification_title, validators=[validators.Optional(), ValidateTokensList()])
+    notification_body = TextAreaField('Notification Body', default=default_notification_body, validators=[validators.Optional(), ValidateTokensList()])
     notification_format = SelectField('Notification Format', choices=valid_notification_formats.keys(), default=default_notification_format)
     trigger_check = BooleanField('Send test notification on save')
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
