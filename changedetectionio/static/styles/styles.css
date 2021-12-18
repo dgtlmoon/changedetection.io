@@ -110,8 +110,9 @@ section.content {
 	user-select: none; /* Non-prefixed version, currently
                           supported by Chrome, Edge, Opera and Firefox */
 }
-#add-paused {
+#add-paused > label {
 	color: #fff;
+	font-weight: normal;
 }
 #play-pause {
 	line-height: .8em;
