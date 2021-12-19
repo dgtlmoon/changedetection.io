@@ -41,8 +41,6 @@ Run the python code on your own machine by cloning this repository, or with <a h
 
 ### Docker
 
-_Note:_ We also use GitHub's container repository, because DockerHub has limited pull/downloads.
-
 With Docker composer, just clone this repository and..
 ```bash
 $ docker-compose up -d
