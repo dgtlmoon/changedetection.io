@@ -360,14 +360,15 @@ class ChangeDetectionStore:
 
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
+    # Since we are basically writing once and never looking at it again except for when we want to perform a JS UI diff
+    # write it as gzip
     def save_history_text(self, watch_uuid, contents):
         import uuid
-
+        import gzip
         output_path = "{}/{}".format(self.datastore_path, watch_uuid)
-        fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
-        with open(fname, 'wb') as f:
+        fname = "{}/{}.stripped.txt.gz".format(output_path, uuid.uuid4())
+        with gzip.open(fname, 'wb') as f:
             f.write(contents)
-            f.close()
 
         return fname
 

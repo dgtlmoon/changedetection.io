@@ -640,6 +640,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/diff/<string:uuid>", methods=['GET'])
     @login_required
     def diff_history_page(uuid):
+        import gzip
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
@@ -666,8 +667,13 @@ def changedetection_app(config=None, datastore_o=None):
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, dates[0])
         newest_file = watch['history'][dates[0]]
-        with open(newest_file, 'r') as f:
-            newest_version_file_contents = f.read()
+        try:
+            with gzip.open(newest_file, 'rb') as f:
+                newest_version_file_contents = f.read().decode("utf-8")
+        except gzip.BadGzipFile:
+            # Not a gzip? re-read as text
+            with open(newest_file, 'r') as f:
+                newest_version_file_contents = f.read()
 
         previous_version = request.args.get('previous_version')
         try:
@@ -675,9 +681,15 @@ def changedetection_app(config=None, datastore_o=None):
         except KeyError:
             # Not present, use a default value, the second one in the sorted list.
             previous_file = watch['history'][dates[1]]
+            
+        try:
+            with gzip.open(previous_file, 'rb') as f:
+                previous_version_file_contents = f.read().decode("utf-8")
+        except gzip.BadGzipFile:
+            # Not a gzip? re-read as text
+            with open(previous_file, 'r') as f:
+                previous_version_file_contents = f.read()
 
-        with open(previous_file, 'r') as f:
-            previous_version_file_contents = f.read()
 
         output = render_template("diff.html", watch_a=watch,
                                  newest=newest_version_file_contents,
