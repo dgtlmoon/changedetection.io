@@ -190,7 +190,7 @@ class ChangeDetectionStore:
                 contents = f.read()
         except FileNotFoundError:
             contents ="Filepath {} missing or cannot read.".format(filepath)
-            
+
         return contents
 
     def update_watch(self, uuid, update_obj):
@@ -329,11 +329,12 @@ class ChangeDetectionStore:
                     self.data['watching'][uuid]['last_checked'] = int(newest_key)
                     # @todo should be the original value if it was less than newest key
                     self.data['watching'][uuid]['last_changed'] = int(newest_key)
-                    try:
-                        with open(self.data['watching'][uuid]['history'][str(newest_key)], "rb") as fp:
-                            content = fp.read()
+                    filepath = self.data['watching'][uuid]['history'][str(newest_key)]
+
+                    if os.path.isfile(filepath):
+                        content = self.read_text_file(filepath)
                         self.data['watching'][uuid]['previous_md5'] = hashlib.md5(content).hexdigest()
-                    except (FileNotFoundError, IOError):
+                    else:
                         self.data['watching'][uuid]['previous_md5'] = False
                         pass
 

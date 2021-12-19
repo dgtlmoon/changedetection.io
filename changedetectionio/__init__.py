@@ -396,16 +396,13 @@ def changedetection_app(config=None, datastore_o=None):
             newest_history_key = list(datastore.data['watching'][uuid]['history'].keys())[0]
 
         if newest_history_key:
-            with open(datastore.data['watching'][uuid]['history'][newest_history_key],
-                      encoding='utf-8') as file:
-                raw_content = file.read()
+            content = datastore.read_text_file(datastore.data['watching'][uuid]['history'][newest_history_key])
+            handler = fetch_site_status.perform_site_check(datastore=datastore)
+            stripped_content = handler.strip_ignore_text(content,
+                                                         datastore.data['watching'][uuid]['ignore_text'])
 
-                handler = fetch_site_status.perform_site_check(datastore=datastore)
-                stripped_content = handler.strip_ignore_text(raw_content,
-                                                             datastore.data['watching'][uuid]['ignore_text'])
-
-                checksum = hashlib.md5(stripped_content).hexdigest()
-                return checksum
+            checksum = hashlib.md5(stripped_content).hexdigest()
+            return checksum
 
         return datastore.data['watching'][uuid]['previous_md5']
 

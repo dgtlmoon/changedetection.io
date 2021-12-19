@@ -3,6 +3,9 @@
 import difflib
 
 # like .compare but a little different output
+from changedetectionio import datastore
+
+
 def customSequenceMatcher(before, after, include_equal=False):
     cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \\t", a=before, b=after)
 
@@ -23,14 +26,12 @@ def customSequenceMatcher(before, after, include_equal=False):
 # only_differences - only return info about the differences, no context
 # line_feed_sep could be "<br/>" or "<li>" or "\n" etc
 def render_diff(previous_file, newest_file, include_equal=False, line_feed_sep="\n"):
-    with open(newest_file, 'r') as f:
-        newest_version_file_contents = f.read()
-        newest_version_file_contents = [line.rstrip() for line in newest_version_file_contents.splitlines()]
+    newest_version_file_contents = datastore.read_text_file(newest_file)
+    newest_version_file_contents = [line.rstrip() for line in newest_version_file_contents.splitlines()]
 
     if previous_file:
-        with open(previous_file, 'r') as f:
-            previous_version_file_contents = f.read()
-            previous_version_file_contents = [line.rstrip() for line in previous_version_file_contents.splitlines()]
+        previous_version_file_contents = datastore.read_text_file(previous_file)
+        previous_version_file_contents = [line.rstrip() for line in previous_version_file_contents.splitlines()]
     else:
         previous_version_file_contents = ""
 
