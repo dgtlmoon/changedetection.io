@@ -9,6 +9,8 @@ import time
 import threading
 import os
 
+from changedetectionio.notification import default_notification_format, default_notification_body, default_notification_title
+
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change
@@ -157,6 +159,7 @@ class ChangeDetectionStore:
 
         dates = list(self.__data['watching'][uuid]['history'].keys())
         # Convert to int, sort and back to str again
+        # @todo replace datastore getter that does this automatically
         dates = [int(i) for i in dates]
         dates.sort(reverse=True)
         if len(dates):
@@ -392,7 +395,11 @@ class ChangeDetectionStore:
                 self.sync_to_json()
 
             # Once per minute is enough, more and it can cause high CPU usage
-            time.sleep(60)
+            # better here is to use something like self.app.config.exit.wait(1), but we cant get to 'app' from here
+            for i in range(30):
+                time.sleep(2)
+                if self.stop_thread:
+                    break
 
     # Go through the datastore path and remove any snapshots that are not mentioned in the index
     # This usually is not used, but can be handy.
