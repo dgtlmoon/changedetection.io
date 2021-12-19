@@ -1,13 +1,9 @@
 #  changedetection.io
-![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master)
-<a href="https://hub.docker.com/r/dgtlmoon/changedetection.io" target="_blank" title="Change detection docker hub">
-  <img src="https://img.shields.io/docker/pulls/dgtlmoon/changedetection.io" alt="Docker Pulls"/>
-</a>
-<a href="https://hub.docker.com/r/dgtlmoon/changedetection.io" target="_blank" title="Change detection docker hub">
-  <img src="https://img.shields.io/github/v/release/dgtlmoon/changedetection.io" alt="Change detection latest tag version"/> 
-</a>
+[![Release Version][release-shield]][release-link] [![Docker Pulls][docker-pulls]][docker-link] [![License][license-shield]](LICENSE.md)
 
-## Self-hosted open source change monitoring of web pages.
+![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master)
+
+## Self-Hosted, Open Source, Change Monitoring of Web Pages
 
 _Know when web pages change! Stay ontop of new information!_ 
 
@@ -32,7 +28,9 @@ Know when ...
 - COVID related news from government websites
 - Detect and monitor changes in JSON API responses 
 - API monitoring and alerting
-
+- Trigger API calls via notifications when text appears on a website
+- Glue together API's using the JSON filter and JSON notifications
+ 
 _Need an actual Chrome runner with Javascript support? We support fetching via WebDriver!</a>_
 
 **Get monitoring now! super simple, one command!**
@@ -158,7 +156,6 @@ For more information see https://docs.python-requests.org/en/master/user/advance
 
 This proxy support also extends to the notifications https://github.com/caronc/apprise/issues/387#issuecomment-841718867
 
-
 ### RaspberriPi support?
 
 RaspberriPi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! 
@@ -176,3 +173,12 @@ Please support us, even small amounts help a LOT.
 BTC `1PLFN327GyUarpJd7nVe7Reqg9qHx5frNn`
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/btc-support.png" style="max-width:50%;" alt="Support us!"  />
+
+
+[release-shield]: https://img.shields.io/github/v/release/dgtlmoon/changedetection.io?style=for-the-badge
+[docker-pulls]: https://img.shields.io/docker/pulls/dgtlmoon/changedetection.io?style=for-the-badge
+[test-shield]: https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master
+
+[license-shield]: https://img.shields.io/github/license/dgtlmoon/changedetection.io.svg?style=for-the-badge
+[release-link]: https://github.com/dgtlmoon.com/changedetection.io/releases
+[docker-link]: https://hub.docker.com/r/dgtlmoon/changedetection.io
