@@ -178,21 +178,6 @@ class ChangeDetectionStore:
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
         self.needs_write = True
 
-    # Read a textfile from disk, try it as gzip first
-    def read_text_file(self, filepath):
-        import gzip
-        try:
-            with gzip.open(filepath, 'rb') as f:
-                contents = f.read().decode("utf-8")
-        except gzip.BadGzipFile:
-            # Not a gzip? re-read as text
-            with open(filepath, 'r') as f:
-                contents = f.read()
-        except FileNotFoundError:
-            contents ="Filepath {} missing or cannot read.".format(filepath)
-
-        return contents
-
     def update_watch(self, uuid, update_obj):
 
         # Skip if 'paused' state
@@ -451,3 +436,19 @@ class ChangeDetectionStore:
             if not str(item) in index:
                 print ("Removing",item)
                 unlink(item)
+
+
+# Read a textfile from disk, try it as gzip first
+def read_text_file(self, filepath):
+    import gzip
+    try:
+        with gzip.open(filepath, 'rb') as f:
+            contents = f.read().decode("utf-8")
+    except gzip.BadGzipFile:
+        # Not a gzip? re-read as text
+        with open(filepath, 'r') as f:
+            contents = f.read()
+    except FileNotFoundError:
+        contents ="Filepath {} missing or cannot read.".format(filepath)
+
+    return contents
