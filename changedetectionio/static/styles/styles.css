@@ -91,13 +91,13 @@ section.content {
 	color: #333;
 }
 .box {
-    max-width: 80%; /*changed to width to prevent resizing during search */
+    width: 80%; /*changed to width to prevent resizing during search */
 	flex-direction: column;
     display: flex;
     justify-content: center;
 }
 .watch-table {
-	width:100%
+    width: 100%;
 }
 #header {
 	text-align: center;
@@ -163,7 +163,14 @@ section.content {
 #watch-actions {
 	display: inline-block;
 }
+.box {
+    max-width: 80%;
+    flex-direction: column;
+    display: flex;
+    justify-content: center;
+}
 #post-list-buttons, #post-list-buttons-top {
+					  
     padding: 0;
     margin: 0;
 }
@@ -189,6 +196,10 @@ section.content {
 	text-align: right;
 	margin-bottom: auto;
 	direction: rtl;
+}
+.watch-table tfoot {
+	bottom: 0;
+	position: fixed;
 }
 #post-list-buttons-top a {
 	border-top-left-radius: 5px;
@@ -221,7 +232,7 @@ body::after {
 }
 body::before {
     content: "";
-    background-image: url(/static/images/gradient-border.png);
+    background-image: url(../images/gradient-border.png);
 }
 body:before {
     background-size: cover;
@@ -576,7 +587,7 @@ footer {
 .sticky-tab {
     position: absolute;
     top: 80px;
-    font-size: 8px;
+    font-size: 11px;
     background: #fff;
     padding: 10px;
 }
@@ -589,10 +600,10 @@ footer {
 #new-version-text a {
     color: #e07171;
 }
-.hover-img img {
+.paused-state.state-False img {
     opacity: 0.2;
 }
-.hover-img:hover img {
+.paused-state.state-False:hover img {
     opacity: 0.8;
 }
 .monospaced-textarea textarea {
@@ -681,7 +692,7 @@ footer {
 	.search-box input {
 		width: 32px;
 	}
-	.watch-table thead,
+    .watch-table thead,
     .watch-table tbody,
     .watch-table th,
     .watch-table td,
@@ -696,6 +707,14 @@ footer {
         color: #555;
         content: "Changed ";
     }
+/*    .watch-table td.inline {
+        display: inline-block;
+    }
+    .watch-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }*/
 	.watch-table th:nth-child(0) {
 		display: none;
 	}
