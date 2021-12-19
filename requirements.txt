@@ -19,6 +19,9 @@ jsonpath-ng ~= 1.5.3
 # Notification library
 apprise ~= 0.9
 
+# apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
+paho-mqtt
+
 # Pinned version of cryptography otherwise
 # ERROR: Could not build wheels for cryptography which use PEP 517 and cannot be installed directly
 cryptography ~= 3.4
