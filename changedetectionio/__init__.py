@@ -666,14 +666,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, dates[0])
-        newest_file = watch['history'][dates[0]]
-        try:
-            with gzip.open(newest_file, 'rb') as f:
-                newest_version_file_contents = f.read().decode("utf-8")
-        except gzip.BadGzipFile:
-            # Not a gzip? re-read as text
-            with open(newest_file, 'r') as f:
-                newest_version_file_contents = f.read()
+        newest_version_file_contents = datastore.read_text_file(watch['history'][dates[0]])
 
         previous_version = request.args.get('previous_version')
         try:
@@ -681,14 +674,8 @@ def changedetection_app(config=None, datastore_o=None):
         except KeyError:
             # Not present, use a default value, the second one in the sorted list.
             previous_file = watch['history'][dates[1]]
-            
-        try:
-            with gzip.open(previous_file, 'rb') as f:
-                previous_version_file_contents = f.read().decode("utf-8")
-        except gzip.BadGzipFile:
-            # Not a gzip? re-read as text
-            with open(previous_file, 'r') as f:
-                previous_version_file_contents = f.read()
+
+        previous_version_file_contents = datastore.read_text_file(previous_file)
 
 
         output = render_template("diff.html", watch_a=watch,
@@ -722,8 +709,7 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         newest = list(watch['history'].keys())[-1]
-        with open(watch['history'][newest], 'r') as f:
-            content = f.readlines()
+        content = datastore.read_text_file(watch['history'][newest])
 
         output = render_template("preview.html",
                                  content=content,
