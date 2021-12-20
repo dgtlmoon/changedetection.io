@@ -13,7 +13,7 @@
         {% endfor %}
     {% endif %}
 </head>
-<body>
+<body onload="load_functions()">
 
 <div class="header">
 
@@ -23,7 +23,7 @@
         {% else %}
             <a class="pure-menu-heading" href="{{url_for('index')}}"><strong>Change</strong>Detection.io</a>
         {% endif %}
-        {% if current_diff_url %}
+		{% if current_diff_url %}
         <a class=current-diff-url href="{{ current_diff_url }}"><span style="max-width: 30%; overflow: hidden;">{{ current_diff_url }}</span></a>
         {% else %}
         {% if new_version_available and not (has_password and not current_user.is_authenticated) %}
@@ -34,6 +34,9 @@
         <ul class="pure-menu-list"  id="top-right-menu">
         {% if current_user.is_authenticated or not has_password %}
             {% if not current_diff_url %}
+			<li class="pure-menu-item">
+				<span class="search-box"><input type="text" id="txtInput" onkeyup="tblSearch(event)" onmouseup="clearSearch(event)" placeholder="Title..." /></span>
+			</li>
             <li class="pure-menu-item">
                 <a href="{{ url_for('get_backup')}}" class="pure-menu-link">BACKUP</a>
             </li>

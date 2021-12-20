@@ -283,6 +283,8 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/", methods=['GET'])
     @login_required
     def index():
+        import uuid
+
         limit_tag = request.args.get('tag')
         pause_uuid = request.args.get('pause')
 
@@ -292,13 +294,18 @@ def changedetection_app(config=None, datastore_o=None):
 
         if pause_uuid:
             try:
+                validate = uuid.UUID(str(pause_uuid))
                 datastore.data['watching'][pause_uuid]['paused'] ^= True
-                datastore.needs_write = True
+            except ValueError:
+        
+                action = True if pause_uuid == 'pause-all' else False
 
-                return redirect(url_for('index', tag = limit_tag))
-            except KeyError:
-                pass
+                for watch_uuid, watch in datastore.data['watching'].items():
+                            if datastore.data['watching'][watch_uuid]['tag'] == limit_tag or limit_tag is None :
+                                datastore.data['watching'][watch_uuid]['paused'] = action
 
+            datastore.needs_write = True
+            return redirect(url_for('index', tag = limit_tag))
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
         for uuid, watch in datastore.data['watching'].items():
@@ -630,13 +637,139 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def mark_all_viewed():
 
+        limit_tag = request.args.get('tag')
+
         # Save the current newest history as the most recently viewed
-        for watch_uuid, watch in datastore.data['watching'].items():
-            datastore.set_last_viewed(watch_uuid, watch['newest_history_key'])
+        try: 
+            for watch_uuid, watch in datastore.data['watching'].items():
+                if datastore.data['watching'][watch_uuid]['tag'] == limit_tag or limit_tag is None :
+                    datastore.set_last_viewed(watch_uuid, watch['newest_history_key'])
+            
+            datastore.needs_write = True
 
-        flash("Cleared all statuses.")
-        return redirect(url_for('index'))
+            return redirect(url_for('index', tag = limit_tag))
+        except KeyError:
+            pass
 
+    # process selected
+    @app.route("/api/process-selected", methods=['GET', "POST"])
+    @login_required
+    def process_selected():
+
+        if request.method == 'POST' :
+            func = request.form.get('func')
+            limit_tag = request.form.get('tag')
+            uuids = request.form.get('uuids')
+
+        if request.method == 'GET' :
+            func = request.args.get('func')
+            limit_tag = request.args.get('tag')
+            uuids = request.args.get('uuids')
+
+        if uuids == '' :
+            flash("No watches selected.")
+            return render_template('index')
+            
+        else :
+
+            if func == 'recheck_selected' :
+
+                i = 0
+
+                running_uuids = []
+                for t in running_update_threads:
+                    running_uuids.append(t.current_uuid)
+
+                try :
+                    for uuid in uuids.split(',') :
+                        if uuid not in running_uuids and not datastore.data['watching'][uuid]['paused']:
+                            update_q.put(uuid)
+                            i += 1
+                    
+                except KeyError :
+                    pass
+
+                flash("Rechecking {0} watch{1}.".format(i, "" if i == 1 else "es"))
+            
+            # Clear selected statuses, so we do not see the 'unviewed' class
+            elif func == 'mark_selected_viewed' :
+
+                try :
+                    for uuid in uuids.split(',') :
+                        datastore.data['watching'][uuid]['last_viewed'] = datastore.data['watching'][uuid]['newest_history_key']
+               
+                except KeyError :
+                    pass
+
+                datastore.needs_write = True
+
+            # Reset selected statuses, so we see the 'unviewed' class
+            # both funcs will contain the uuid list from the processChecked javascript function
+            elif func == 'mark_selected_notviewed' or func == 'mark_all_notviewed' :
+
+                # count within limit_tag and count successes and capture unchanged
+                tagged = 0
+                marked = 0
+                unchanged = []
+                
+                try :
+                    for uuid in uuids.split(',') :
+                        # increment count with limit_tag
+                        tagged += 1
+                        dates = list(datastore.data['watching'][uuid]['history'].keys())
+                        # Convert to int, sort and back to str again
+                        dates = [int(i) for i in dates]
+                        dates.sort(reverse=True)
+                        dates = [str(i) for i in dates]
+
+                        # must be more than 1 history to mark as not viewed
+                        if len(dates) > 1 :
+                            # Save the next earliest history as the most recently viewed
+                            datastore.set_last_viewed(uuid, dates[1])
+                            # increment successes
+                            marked += 1
+                            
+                        else : 
+                            if datastore.data['watching'][uuid]['title'] :
+                                unchanged.append(datastore.data['watching'][uuid]['title'])
+                            else :
+                                unchanged.append(datastore.data['watching'][uuid]['url'])
+
+                except KeyError :
+                        pass
+
+                datastore.needs_write = True
+
+                if marked < tagged :
+                    flash("The following {} not have enough history to be remarked:".format("watch does" if len(unchanged) == 1 else "watches do"), "notice")
+                    for i in range(len(unchanged)):
+                        flash(unchanged[i], "notice")
+                
+            elif func == 'delete_selected' :
+
+                # reachable only after confirmation in javascript processChecked(func, tag) function
+                try :
+                    i = 0
+                    for uuid in uuids.split(',') :
+                        datastore.delete(uuid)
+                        i += 1
+                        
+                except KeyError :
+                    pass
+
+                datastore.needs_write = True
+                
+                flash("{0} {1} deleted.".format(i, "watch was" if (i) == 1 else "watches were")) 
+            
+            else :
+                
+                flash("Invalid parameter received.")
+        
+        if limit_tag == None or limit_tag == 'None' :
+            return redirect(url_for('index'))
+        else :
+            return redirect(url_for('index', tag = limit_tag))
+        
     @app.route("/diff/<string:uuid>", methods=['GET'])
     @login_required
     def diff_history_page(uuid):
@@ -797,6 +930,10 @@ def changedetection_app(config=None, datastore_o=None):
 
         if form.validate():
 
+            # get action parameter (add paused button value is 'add', watch button value is 'watch'
+            #action = request.form.get('action')
+            add_paused = request.form.get('add-paused')
+            
             url = request.form.get('url').strip()
             if datastore.url_exists(url):
                 flash('The URL {} already exists'.format(url), "error")
@@ -804,10 +941,17 @@ def changedetection_app(config=None, datastore_o=None):
 
             # @todo add_watch should throw a custom Exception for validation etc
             new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip())
-            # Straight into the queue.
-            update_q.put(new_uuid)
+            
+            if add_paused :
+                datastore.data['watching'][new_uuid]['paused'] = True
+                datastore.needs_write = True
+                flash("Watch added in a paused state.")
+                                
+            else : # watch now
+                # Straight into the queue. 
+                update_q.put(new_uuid)
 
-            flash("Watch added.")
+                flash("Watch added.")
             return redirect(url_for('index'))
         else:
             flash("Error")
