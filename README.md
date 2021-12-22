@@ -33,7 +33,7 @@ Know when ...
  
 _Need an actual Chrome runner with Javascript support? We support fetching via WebDriver!</a>_
 
-**Get monitoring now! super simple, one command!**
+**Get monitoring now! super simple.**
 
 <a href="https://dashboard.heroku.com/new?template=https%3A%2F%2Fgithub.com%2Fdgtlmoon%2Fchangedetection.io%2Ftree%2Fmaster">Deploy to Heroku for free</a>, Run this python directly, or with <a href="https://docs.docker.com/get-docker/">docker</a> and/or <a href="https://www.digitalocean.com/community/tutorial_collections/how-to-install-docker-compose">docker-compose</a>
 
