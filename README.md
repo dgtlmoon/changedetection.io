@@ -35,7 +35,16 @@ _Need an actual Chrome runner with Javascript support? We support fetching via W
 
 **Get monitoring now! super simple, one command!**
 
-Run the python code on your own machine by cloning this repository, or with <a href="https://docs.docker.com/get-docker/">docker</a> and/or <a href="https://www.digitalocean.com/community/tutorial_collections/how-to-install-docker-compose">docker-compose</a>
+<a href="https://dashboard.heroku.com/new?template=https%3A%2F%2Fgithub.com%2Fdgtlmoon%2Fchangedetection.io%2Ftree%2Fmaster">Deploy to Heroku for free</a>, Run this python directly, or with <a href="https://docs.docker.com/get-docker/">docker</a> and/or <a href="https://www.digitalocean.com/community/tutorial_collections/how-to-install-docker-compose">docker-compose</a>
+
+## Screenshots
+
+Examining differences in content.
+
+<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
+
+Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
+
 
 ## Installation
 
@@ -78,14 +87,6 @@ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/dat
 ```bash
 docker-compose pull && docker-compose up -d
 ```
-
-## Screenshots
-
-Examining differences in content.
-
-<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
-
-Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
 
 ### Notifications
 
