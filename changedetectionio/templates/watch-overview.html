@@ -27,31 +27,27 @@
 					{% endif %}
 				{% endfor %}
 			</div>
-			&nbsp;
-			&nbsp;
-			<div id="controls-top">
+ -->			<div id="controls-top">
 				<ul id="post-list-buttons-top">
 					<span id="checkbox-functions" style="display: none;">
 						<li>
-						   <a href="javascript:processChecked('recheck_selected', '{{ active_tag }}');" class="pure-button button-tag ">Recheck
-							Selected {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
+							<a href="javascript:processChecked('recheck_selected', '{{ active_tag }}');" class="pure-button button-tag " title="Recheck Selected{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%}">Recheck</a>
 						</li>
 						<li>
-						   <a href="javascript:processChecked('mark_selected_notviewed', '{{ active_tag }}');" class="pure-button button-tag ">Mark
-							Selected as Unviewed {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
+							<a href="javascript:processChecked('mark_selected_notviewed', '{{ active_tag }}');" class="pure-button button-tag " title="Mark Selected as Unviewed{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%}">Unviewed</a>
 						</li>
 						<li>
-						   <a href="javascript:processChecked('mark_selected_viewed', '{{ active_tag }}');" class="pure-button button-tag ">Mark
-							Selected as Viewed {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
+							<a href="javascript:processChecked('mark_selected_viewed', '{{ active_tag }}');" class="pure-button button-tag " title="Mark Selected as Viewed{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%}">Viewed</a>
 						</li>
-						<li>
-						   <a href="javascript:processChecked('delete_selected', '{{ active_tag }}');" class="pure-button button-tag ">Delete
-							Selected {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
-						</li>
+						<span id="danger">
+							<li>
+								<a href="javascript:processChecked('delete_selected', '{{ active_tag }}');" class="pure-button button-tag " title="Delete Selected{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%}">Delete</a>
+							</li>
+						</span>
 					</span>
 					<span id="recheck-and-rss">
 						<li>
-						   <a href="{{ url_for('api_watch_checknow', tag=active_tag) }}" class="pure-button button-tag ">Recheck
+							<a href="{{ url_for('api_watch_checknow', tag=active_tag) }}" class="pure-button button-tag ">Recheck
 							All {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
 						</li>
 						<li>
@@ -66,16 +62,10 @@
 			<table class="pure-table pure-table-striped watch-table" id="watch-table">
 				<thead>
 				<tr id="header">
-					<th onclick="sortTable(0)"><span id="clickable" title="Sort by Index">#&nbsp;&nbsp;<span id="sortable-0"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span id="sortarrow"><span id="sort-0a" style="display:none;">&#9650;</span><span id="sort-0d" style="display:none;">&#9660;</span></span></span></th>
-					<th><input type="checkbox" name="showhide" onchange="checkAll(this)" title="Check/Uncheck All"></th>
-					<th id="play-pause">
-						<a href="{{url_for('index', pause='pause-all', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause" title="Pause All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>
-						<a href="{{url_for('index', pause='resume-all', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="Resume" title="Resume All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>
-					</th>
-					<th>
-						<a href="javascript:processChecked('mark_all_notviewed', '{{ active_tag }}');"><img src="{{url_for('static_content', group='images', filename='notviewed.svg')}}" alt="Uniewed" title="Mark All{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%} as Unviewed"/></a>
-						<a href="{{url_for('mark_all_viewed', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='viewed.svg')}}" alt="Viewed" title="Mark All{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%} as Viewed"/></a>
-					</th>
+					<th>#</th>
+					<th onclick="sortTable(1)"><span id="clickable" title="Sort by Checked"><input type="checkbox" name="showhide" onchange="checkAll(this)" title="Check/Uncheck All">&nbsp;&nbsp;<span id="sortable-1"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span id="sortarrow"><span id="sort-1a" style="display:none;">&#9650;</span><span id="sort-1d" style="display:none;">&#9660;</span></span></span></th>
+					<th id="play-pause" onclick="sortTable(2)"><span id="clickable" title="Sort by Pause/Resume"><a href="{{url_for('index', pause='pause-all', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause" title="Pause All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>&nbsp;<a href="{{url_for('index', pause='resume-all', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="Resume" title="Resume All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>&nbsp;&nbsp;<span id="sortable-2"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span id="sortarrow"><span id="sort-2a" style="display:none;">&#9650;</span><span id="sort-2d" style="display:none;">&#9660;</span></span></span></th>
+					<th id="play-pause" onclick="sortTable(3)"><span id="clickable" title="Sort by Viewed/Unviewed"><a href="javascript:processChecked('mark_all_notviewed', '{{ active_tag }}');"><img src="{{url_for('static_content', group='images', filename='notviewed.svg')}}" alt="Uniewed" title="Mark All{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%} as Unviewed"/></a>&nbsp;<a href="{{url_for('mark_all_viewed', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='viewed.svg')}}" alt="Viewed" title="Mark All{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%} as Viewed"/></a>&nbsp;&nbsp;<span id="sortable-3"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span id="sortarrow"><span id="sort-3a" style="display:none;">&#9650;</span><span id="sort-3d" style="display:none;">&#9660;</span></span></span></th>
 					<th onclick="sortTable(5)"><span id="clickable" title="Sort by Title">Title&nbsp;&nbsp;<span id="sortable-5"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span id="sortarrow"><span id="sort-5a" style="display:none;">&#9650;</span><span id="sort-5d" style="display:none;">&#9660;</span></span></span></th>
 					<th id="hidden"></th>
 					<th onclick="sortTable(7)"><span id="clickable" title="Sort by Last Checked">Checked&nbsp;&nbsp;<span id="sortable-7"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span id="sortarrow"><span id="sort-7a" style="display:none;">&#9650;</span><span id="sort-7d" style="display:none;">&#9660;</span></span></span></th>
@@ -156,24 +146,6 @@
 				<li>
 				   <a href="{{ url_for('api_watch_checknow', tag=active_tag) }}" class="pure-button button-tag ">Recheck
 					All {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
-				</li>
-				</span>
-				<span id="checkbox-functions" style="display: none;">
-				<li>
-				   <a href="javascript:processChecked('delete_selected', '{{ active_tag }}');" class="pure-button button-tag ">Delete
-					Selected {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
-				</li>
-				<li>
-				   <a href="javascript:processChecked('mark_selected_viewed', '{{ active_tag }}');" class="pure-button button-tag ">Mark
-					Selected as Viewed {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
-				</li>
-				<li>
-				   <a href="javascript:processChecked('mark_selected_notviewed', '{{ active_tag }}');" class="pure-button button-tag ">Mark
-					Selected as Unviewed {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
-				</li>
-				<li>
-				   <a href="javascript:processChecked('recheck_selected', '{{ active_tag }}');" class="pure-button button-tag ">Recheck
-					Selected {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
 				</li>
 				</span>
 			</ul>

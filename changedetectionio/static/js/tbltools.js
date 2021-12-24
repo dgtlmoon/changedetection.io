@@ -38,8 +38,10 @@ function load_functions() {
 	checkChange();
 	// retrieve saved sorting
 	getSort();
-	// sort
+	// sort if not default
+	//if (sort_column != 9 || sort_order != 1) {
 	sortTable(sort_column);
+	//}
 	// search
 	if (isSessionStorageSupported()) {
 		// retrieve search
@@ -58,7 +60,6 @@ function sortTable(n) {
   //Set the sorting direction, either default 9, 1 or saved
   if (loading) {
 	getSort();
-	n = sort_column;
 	dir = (sort_order == 0) ? "asc" : "desc";
 	loading = false;
   }
@@ -82,10 +83,17 @@ function sortTable(n) {
       y = rows[i + 1].getElementsByTagName("TD")[n];
       x = x.innerHTML.toLowerCase();
       y = y.innerHTML.toLowerCase();
-	  /* handle # columns */
-	  if (!isNaN(x)) { 
+	  if (!isNaN(x)) { // handle numeric columns
 		x = parseFloat(x);
 		y = parseFloat(y);
+	  }
+	  if (n == 1) { // handle the checkbox column
+		  x = rows[i].querySelector('input[type=checkbox]').checked;
+		  y = rows[i + 1].querySelector('input[type=checkbox]').checked;
+	  }
+	  if (n == 2 || n == 3) { // handle the play/pause and viewed/unviewed columns
+		x = rows[i].getElementsByTagName("TD")[n].getElementsByTagName("img")[0].src;
+		y = rows[i + 1].getElementsByTagName("TD")[n].getElementsByTagName("img")[0].src;
 	  }
 	  /*check if the two rows should switch place,
       based on the direction, asc or desc:*/
@@ -216,13 +224,13 @@ function tblSearch(evt) {
   restripe();
 }
 
-// restripe after searching
+// restripe after searching or sorting
 function restripe () {
 	var visrows = [];
 	var table = document.getElementById("watch-table");
 	var rows = table.getElementsByTagName("tr");
 	
-	for (i = 0; i < rows.length; i++) {
+	for (i = 0; i < rows.length; i++) { // skip thead row 0
  		if (rows[i].style.display !== "none") {
 			visrows.push(rows[i]);
 		}
@@ -237,6 +245,7 @@ function restripe () {
 				cells[j].style.background = "#f2f2f2";
 			}
 		}
+		//cells[0].innerText = i+1;
 	}
 }
 

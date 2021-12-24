@@ -201,6 +201,7 @@ class ChangeDetectionStore:
     @property
     def data(self):
         has_unviewed = False
+        unviewed_count = 0
         for uuid, v in self.__data['watching'].items():
             self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
             if int(v['newest_history_key']) <= int(v['last_viewed']):
@@ -209,6 +210,7 @@ class ChangeDetectionStore:
             else:
                 self.__data['watching'][uuid]['viewed'] = False
                 has_unviewed = True
+                unviewed_count += 1
 
             # #106 - Be sure this is None on empty string, False, None, etc
             # Default var for fetch_backend
@@ -221,6 +223,7 @@ class ChangeDetectionStore:
           self.__data['settings']['application']['base_url'] = env_base_url.strip('" ')
 
         self.__data['has_unviewed'] = has_unviewed
+        self.__data['unviewed_count'] = unviewed_count
 
         return self.__data
 

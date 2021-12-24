@@ -91,7 +91,7 @@ section.content {
 	color: #333;
 }
 .box {
-    width: 80%; /*changed to width to prevent resizing during search */
+    width: 80%;
 	flex-direction: column;
     display: flex;
     justify-content: center;
@@ -117,11 +117,23 @@ section.content {
 #play-pause {
 	line-height: .8em;
 }
-#checkbox-functions .pure-button  {
+#checkbox-functions {
+	position: fixed;
+	left: 10%;
+ 	text-align: left;
+	display: inline-grid;
+}
+#checkbox-functions	.pure-button  {
 	background:  #0078e7;
+	border-top-left-radius: 0px;
+	border-bottom-left-radius: 0px;
+	border-top-right-radius: 5px;
+	border-bottom-right-radius: 5px;
+}
+#danger .pure-button {
+	background: #e7096e;
 }
 .watch-table td.title-col, #actions {
-	/*text-align: left;*/
 	text-align: center;
 }
 .watch-table #clickable {
@@ -681,9 +693,6 @@ footer {
 	#watch-actions {
 		margin-top: 3px;
 	}
-	#checkbox-functions {
-		display: inline-block;
-	}
 }
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
     input[type="text"] {
@@ -707,28 +716,20 @@ footer {
         color: #555;
         content: "Changed ";
     }
-/*    .watch-table td.inline {
-        display: inline-block;
-    }
-    .watch-table thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-    }*/
 	.watch-table th:nth-child(0) {
-		display: none;
+		display: inline-block;
 	}
 	.watch-table th:nth-child(1) {
-		display: none;
+		display: inline-block;
 	}
 	.watch-table th:nth-child(2) {
-		display: none;
+		display: inline-block;
 	}
 	.watch-table th:nth-child(3) {
-		display: none;
+		display: inline-block;
 	}
 	.watch-table th:nth-child(4) {
-		display: none;
+		display: inline-block;
 	}
 	.watch-table th:nth-child(5) {
 		display: inline-block;
@@ -765,9 +766,6 @@ footer {
         width: 45%;
         padding-right: 10px;
         white-space: nowrap;
-    }
-    .watch-table.pure-table-striped tr {
-        background-color: #fff;
     }
     .watch-table.pure-table-striped tr:nth-child(2n-1) {
         background-color: #eee;

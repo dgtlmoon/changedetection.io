@@ -335,7 +335,9 @@ def changedetection_app(config=None, datastore_o=None):
                                  tags=existing_tags,
                                  active_tag=limit_tag,
                                  app_rss_token=datastore.data['settings']['application']['rss_access_token'],
-                                 has_unviewed=datastore.data['has_unviewed'])
+                                 has_unviewed=datastore.data['has_unviewed'],
+                                 extra_title="{}".format(" ({})".format(str(datastore.data['unviewed_count'])) if datastore.data['unviewed_count'] > 0 else "")
+                                )
 
         return output
 
