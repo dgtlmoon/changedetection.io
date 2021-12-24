@@ -121,7 +121,7 @@ section.content {
 	position: fixed;
 	left: 10%;
  	text-align: left;
-	display: inline-grid;
+	/*display: grid;*/
 }
 #checkbox-functions	.pure-button  {
 	background:  #0078e7;

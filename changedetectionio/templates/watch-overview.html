@@ -27,18 +27,18 @@
 					{% endif %}
 				{% endfor %}
 			</div>
- -->			<div id="controls-top">
+			<div id="controls-top">
 				<ul id="post-list-buttons-top">
 					<span id="checkbox-functions" style="display: none;">
 						<li>
 							<a href="javascript:processChecked('recheck_selected', '{{ active_tag }}');" class="pure-button button-tag " title="Recheck Selected{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%}">Recheck</a>
-						</li>
+						</li><br>
 						<li>
 							<a href="javascript:processChecked('mark_selected_notviewed', '{{ active_tag }}');" class="pure-button button-tag " title="Mark Selected as Unviewed{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%}">Unviewed</a>
-						</li>
+						</li><br>
 						<li>
 							<a href="javascript:processChecked('mark_selected_viewed', '{{ active_tag }}');" class="pure-button button-tag " title="Mark Selected as Viewed{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%}">Viewed</a>
-						</li>
+						</li><br>
 						<span id="danger">
 							<li>
 								<a href="javascript:processChecked('delete_selected', '{{ active_tag }}');" class="pure-button button-tag " title="Delete Selected{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%}">Delete</a>
