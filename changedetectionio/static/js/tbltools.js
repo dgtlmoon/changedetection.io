@@ -39,9 +39,7 @@ function load_functions() {
 	// retrieve saved sorting
 	getSort();
 	// sort if not default
-	//if (sort_column != 9 || sort_order != 1) {
 	sortTable(sort_column);
-	//}
 	// search
 	if (isSessionStorageSupported()) {
 		// retrieve search
@@ -54,7 +52,7 @@ function load_functions() {
 
 // sorting
 function sortTable(n) {
-  var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+  var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0, sortimgs, sortableimgs;
   table = document.getElementById("watch-table");
   switching = true;
   //Set the sorting direction, either default 9, 1 or saved
@@ -129,7 +127,7 @@ function sortTable(n) {
   }
   // hide all asc/desc sort arrows
   sortimgs = document.querySelectorAll('[id^="sort-"]');
-  for (var i = 0; i < sortimgs.length; i++) {
+  for (i = 0; i < sortimgs.length; i++) {
 	sortimgs[i].style.display = "none";
   }
   // show current asc/desc sort arrow and set sort_order var
@@ -141,7 +139,7 @@ function sortTable(n) {
   }
   // show all sortable indicators
   sortableimgs = document.querySelectorAll('[id^="sortable-"]');
-  for (var i = 0; i < sortableimgs.length; i++) {
+  for (i = 0; i < sortableimgs.length; i++) {
     sortableimgs[i].style.display = "";
   }
   // hide sortable indicator from current column
@@ -155,21 +153,22 @@ function sortTable(n) {
 
 // check/uncheck all checkboxes
 function checkAll(e) {
+	var i;
 	var checkboxes = document.getElementsByName('check');
 	var checkboxFunctions = document.querySelectorAll('[id=checkbox-functions]');
 	if (e.checked) {
-		for (var i = 0; i < checkboxes.length; i++) {  
+		for (i = 0; i < checkboxes.length; i++) {  
 			checkboxes[i].checked = true;
 		}
-		for (var i = 0; i < checkboxFunctions.length; i++) {
+		for (i = 0; i < checkboxFunctions.length; i++) {
 			checkboxFunctions[i].style.display = "";
 		}
 	}
 	else {
-		for (var i = 0; i < checkboxes.length; i++) {
+		for (i = 0; i < checkboxes.length; i++) {
 			checkboxes[i].checked = false;
 		}
-		for (var i = 0; i < checkboxFunctions.length; i++) {
+		for (i = 0; i < checkboxFunctions.length; i++) {
 			checkboxFunctions[i].style.display = "none";
 		}
 	}
@@ -177,6 +176,7 @@ function checkAll(e) {
 
 // check/uncheck checkall checkbox if all other checkboxes are checked/unchecked
 function checkChange(){
+	var i;
 	var totalCheckbox = document.querySelectorAll('input[name="check"]').length;
 	var totalChecked = document.querySelectorAll('input[name="check"]:checked').length;
 	var checkboxFunctions = document.querySelectorAll('[id=checkbox-functions]');
@@ -187,12 +187,12 @@ function checkChange(){
 		document.getElementsByName("showhide")[0].checked=false;
 	}
 	if(totalChecked == 0) {
-		for (var i = 0; i < checkboxFunctions.length; i++) {
+		for (i = 0; i < checkboxFunctions.length; i++) {
 			checkboxFunctions[i].style.display = "none";
 		}
 	}
 	else {
-		for (var i = 0; i < checkboxFunctions.length; i++) {
+		for (i = 0; i < checkboxFunctions.length; i++) {
 			checkboxFunctions[i].style.display = "";
 		}
 	}
@@ -226,7 +226,7 @@ function tblSearch(evt) {
 
 // restripe after searching or sorting
 function restripe () {
-	var visrows = [];
+	var i, visrows = [];
 	var table = document.getElementById("watch-table");
 	var rows = table.getElementsByTagName("tr");
 	
@@ -235,7 +235,7 @@ function restripe () {
 			visrows.push(rows[i]);
 		}
 	}
-	for (var i=0 ; i<visrows.length; i++) {
+	for (i=0 ; i<visrows.length; i++) {
 		var row = visrows[i];
 		var cells = row.getElementsByTagName("td");
 		for(var j=0; j<cells.length; j++) {
@@ -245,39 +245,40 @@ function restripe () {
 				cells[j].style.background = "#f2f2f2";
 			}
 		}
-		//cells[0].innerText = i+1;
+		//uncomment to re-number rows ascending: cells[0].innerText = i+1;
 	}
 }
 
 // get checked or all uuids
 function getChecked(items) {
+	var i, checkedArr, uuids = '';
+	
 	if ( items === undefined ) {
-		var checkedArr = document.querySelectorAll('input[name="check"]:checked');
+		checkedArr = document.querySelectorAll('input[name="check"]:checked');
 	}
 	else {
-		var checkedArr = document.querySelectorAll('input[name="check"]');
+		checkedArr = document.querySelectorAll('input[name="check"]');
 	}
 	if ( checkedArr.length > 0 ) {
 		let output = [];
-		for (var i = 0; i < checkedArr.length; i++  ) {
+		for (i = 0; i < checkedArr.length; i++  ) {
 			output.push( checkedArr[i].parentNode.parentNode.getAttribute("id") );
 		}
-	var uuids = "";
-		for (var i = 0; i < checkedArr.length; i++  ) {
+		for (i = 0; i < checkedArr.length; i++  ) {
 			if (i < checkedArr.length - 1 ) {
 				uuids += output[i] + ",";
 			} else {
 				uuids += output[i];
 			}
 		}
-	} else {
-		uuids = '';
 	}
 	return uuids;
 }
 
 // process selected watches 
 function processChecked(func, tag) {
+	var uuids, result;
+	
 	if ( func == 'mark_all_notviewed' ) { 
 		uuids = getChecked('all');
 	}
