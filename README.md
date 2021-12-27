@@ -19,7 +19,7 @@ Open source web page monitoring, notification and change detection.
 #### Example use cases
 
 Know when ...
-
+- Products and services have a change in pricing
 - Government department updates (changes are often only on their websites)
 - Local government news (changes are often only on their websites)
 - New software releases, security advisories when you're not on their mailing list.
