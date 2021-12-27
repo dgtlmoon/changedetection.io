@@ -73,7 +73,8 @@ class html_webdriver(Fetcher):
         # check env for WEBDRIVER_URL
         driver = webdriver.Remote(
             command_executor=self.command_executor,
-            desired_capabilities=DesiredCapabilities.CHROME)
+            desired_capabilities=DesiredCapabilities.CHROME,
+            proxy=os.getenv("HTTP_PROXY", None))
 
         try:
             driver.get(url)
