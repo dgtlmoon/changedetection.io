@@ -204,6 +204,24 @@ class ValidateCSSJSONInput(object):
             # Re #265 - maybe in the future fetch the page and offer a
             # warning/notice that its possible the rule doesnt yet match anything?
 
+class ValidateJSONInput(object):
+    """
+    Validates that a JSON is properly formatted
+    """
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        from json import loads
+        from json import JSONDecodeError
+
+        try:
+            loads(field.data)
+        except JSONDecodeError as e:
+            message = field.gettext('\'%s\' is not valid json string. (%s)')
+            raise ValidationError(message % (field.data, str(e)))
+
 class quickWatchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
     # `require_tld` = False is needed even for the test harness "http://localhost:5005.." to run
@@ -232,7 +250,7 @@ class watchForm(commonSettingsForm):
 
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     headers = StringDictKeyValue('Request Headers')
-    body = TextAreaField('Request Body', [validators.Optional(), validators.Length(max=2097152)])
+    body = TextAreaField('Request Body', [validators.Optional(), ValidateJSONInput()])
     method = SelectField('Request Method', choices=valid_method, default=default_method)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
