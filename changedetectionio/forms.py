@@ -232,8 +232,8 @@ class watchForm(commonSettingsForm):
 
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     headers = StringDictKeyValue('Request Headers')
-    body = TextAreaField('Request body', [validators.Optional(), validators.Length(max=2097152)])
-    method = SelectField('Request method', choices=valid_method, default=default_method)
+    body = TextAreaField('Request Body', [validators.Optional(), validators.Length(max=2097152)])
+    method = SelectField('Request Method', choices=valid_method, default=default_method)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
 
