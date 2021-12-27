@@ -3,6 +3,7 @@ import time
 from abc import ABC, abstractmethod
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
 from selenium.common.exceptions import WebDriverException
 import urllib3.exceptions
 
@@ -64,9 +65,31 @@ class html_webdriver(Fetcher):
         fetcher_description = "WebDriver Chrome/Javascript"
 
     command_executor = ''
+    selenium_proxy_settings_mappings = ['ftpProxy', 'httpProxy', 'noProxy',
+                                        'proxyAutoconfigUrl', 'sslProxy', 'autodetect',
+                                        'socksProxy', 'socksUsername', 'socksPassword']
+    proxy=None
 
     def __init__(self):
         self.command_executor = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub')
+        setup_proxy = False
+
+        # If any proxy settings are enabled, then we should setup the proxy object
+        for k in self.selenium_proxy_settings_mappings:
+            if os.getenv('webdriver_' + k, False):
+                setup_proxy = True
+                break
+
+        if setup_proxy:
+            proxy_args = {}
+            for k in self.selenium_proxy_settings_mappings:
+                v = os.getenv('webdriver_' + k, False)
+                if v:
+                    proxy_args[k] = v
+
+            self.proxy = SeleniumProxy(raw=proxy_args)
+
+
 
     def run(self, url, timeout, request_headers):
 
@@ -74,7 +97,7 @@ class html_webdriver(Fetcher):
         driver = webdriver.Remote(
             command_executor=self.command_executor,
             desired_capabilities=DesiredCapabilities.CHROME,
-            proxy=os.getenv("HTTP_PROXY", None))
+            proxy=self.proxy)
 
         try:
             driver.get(url)
