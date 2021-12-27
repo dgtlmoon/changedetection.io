@@ -445,6 +445,8 @@ def changedetection_app(config=None, datastore_o=None):
                           'tag': form.tag.data.strip(),
                           'title': form.title.data.strip(),
                           'headers': form.headers.data,
+                          'body': form.body.data,
+                          'method': form.method.data,
                           'fetch_backend': form.fetch_backend.data,
                           'trigger_text': form.trigger_text.data,
                           'notification_title': form.notification_title.data,

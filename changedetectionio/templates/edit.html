@@ -50,6 +50,14 @@ User-Agent: wonderbra 1.0") }}
                           </span>
                     </fieldset>
                     <div class="pure-control-group">
+                        {{ render_field(form.body, rows=5, placeholder="{\"name\":\"John\", \"age\":30, \"car\":null}") }}
+                        <span class="pure-form-message-inline">Note: ONLY used by Basic fast Plaintext/HTTP Client</span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.method) }}
+                        <span class="pure-form-message-inline">Note: ONLY used by Basic fast Plaintext/HTTP Client</span>
+                    </div>
+                    <div class="pure-control-group">
                         {{ render_field(form.fetch_backend) }}
                         <span class="pure-form-message-inline">
                             <p>Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render.</p>

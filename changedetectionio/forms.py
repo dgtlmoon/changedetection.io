@@ -8,6 +8,16 @@ import re
 
 from changedetectionio.notification import default_notification_format, valid_notification_formats, default_notification_body, default_notification_title
 
+valid_method = {
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+}
+
+default_method = 'GET'
+
 class StringListField(StringField):
     widget = widgets.TextArea()
 
@@ -222,6 +232,8 @@ class watchForm(commonSettingsForm):
 
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     headers = StringDictKeyValue('Request Headers')
+    body = TextAreaField('Request body', [validators.Optional(), validators.Length(max=2097152)])
+    method = SelectField('Request method', choices=valid_method, default=default_method)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
 
