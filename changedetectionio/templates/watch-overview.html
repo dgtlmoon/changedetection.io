@@ -86,16 +86,16 @@
 								<span class="watch-tag-list">{{ watch.tag}}</span>
 								{% endif %}
 							</td>
-							<td class="hidden-col">{{ watch.title if watch.title else watch.url }}</td> <!-- col 5, title sorting -->
+							<td class="hidden-col">{{ watch.title if watch.title else watch.url }}</td> <!-- for title sorting -->
 							<td class="last-checked">{{watch|format_last_checked_time}}</td>
-							<td class="hidden-col">{{ watch.last_checked }}</td> <!-- col 7, last_checked sorting -->
+							<td class="hidden-col">{{ watch.last_checked }}</td> <!-- for last_checked sorting -->
 							<td class="last-changed">{% if watch.history|length >= 2 and watch.last_changed %}
 								{{watch.last_changed|format_timestamp_timeago}}
 								{% else %}
 								Not yet
 								{% endif %}
 							</td>
-							<td class="hidden-col">{{ watch.last_changed }}</td> <!-- col 9, last_changed sorting -->
+							<td class="hidden-col">{{ watch.last_changed }}</td> <!-- for last_changed sorting -->
 							<td id="actions">
 								<a href="{{ url_for('api_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
 								   class="pure-button button-small pure-button-primary">Recheck</a>
