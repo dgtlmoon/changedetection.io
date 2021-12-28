@@ -30,7 +30,7 @@ import datetime
 import pytz
 from copy import deepcopy
 
-__version__ = '0.39.5'
+__version__ = '0.39.4'
 
 datastore = None
 
@@ -671,7 +671,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         if uuids == '' :
             flash("No watches selected.")
-            return render_template('index')
             
         else :
 
@@ -692,7 +691,7 @@ def changedetection_app(config=None, datastore_o=None):
                 except KeyError :
                     pass
 
-                flash("Rechecking {0} watch{1}.".format(i, "" if i == 1 else "es"))
+                flash("{0} watch{1} {2} rechecking.".format(i, "" if i == 1 else "es", "is" if i == 1 else "are"))
             
             # Clear selected statuses, so we do not see the 'unviewed' class
             elif func == 'mark_selected_viewed' :
@@ -767,6 +766,8 @@ def changedetection_app(config=None, datastore_o=None):
             else :
                 
                 flash("Invalid parameter received.")
+        
+        render_template('index') #ensure flash msgs are seen
         
         if limit_tag == None or limit_tag == 'None' :
             return redirect(url_for('index'))
@@ -1018,7 +1019,7 @@ def changedetection_app(config=None, datastore_o=None):
                 if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                     update_q.put(watch_uuid)
                     i += 1
-        flash("{} watches are rechecking.".format(i))
+        flash("{0} watch{1} {2} rechecking.".format(i, "" if i == 1 else "es", "is" if i == 1 else "are"))
         return redirect(url_for('index', tag=tag))
 
     # @todo handle ctrl break

@@ -41,6 +41,10 @@ document.onkeyup=function(e){
 }
 
 // page load functions
+window.addEventListener('DOMContentLoaded', (event) => {
+    load_functions();
+});
+
 function load_functions() {
 	// loading
 	loading = true;
@@ -359,7 +363,7 @@ function getSort() {
 			sort_order =  sessionStorage.getItem("sort_order");
 		}
 		else {
-			sort_column = 9; // last changed
+			sort_column = 7; // last changed
 			sort_order = 1;  // desc
 			//alert("Your web browser does not support retaining sorting and page position.");
 		}
