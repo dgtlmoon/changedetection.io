@@ -94,19 +94,7 @@ def test_body_in_request(client, live_server):
 
     body_value = '{"name":"John", "age":30, "car":null}'
 
-    # Attempt to add a body which is not a JSON formatted string
-    res = client.post(
-        url_for("edit_page", uuid="first"),
-        data={
-              "url": test_url,
-              "tag": "",
-              "fetch_backend": "html_requests",
-              "body": "invalid"},
-        follow_redirects=True
-    )
-    assert b"'invalid' is not valid json string." in res.data
-
-    # Add a properly formatted body
+    # Add a request body
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={
