@@ -65,6 +65,9 @@ class html_webdriver(Fetcher):
         fetcher_description = "WebDriver Chrome/Javascript"
 
     command_executor = ''
+    
+    # Configs for Proxy setup
+    # In the ENV vars, is prefixed with "webdriver_", so it is for example "webdriver_sslProxy"
     selenium_proxy_settings_mappings = ['ftpProxy', 'httpProxy', 'noProxy',
                                         'proxyAutoconfigUrl', 'sslProxy', 'autodetect',
                                         'socksProxy', 'socksUsername', 'socksPassword']
