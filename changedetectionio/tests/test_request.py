@@ -75,7 +75,15 @@ def test_headers_in_request(client, live_server):
 
 def test_body_in_request(client, live_server):
     # Add our URL to the import page
-    test_url = url_for('test_endpoint', _external=True)
+    test_url = url_for('test_body', _external=True)
+
+    # Add the test URL twice, we will check
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
 
     res = client.post(
         url_for("import_page"),
@@ -83,6 +91,8 @@ def test_body_in_request(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
+
+    body_value = '{"name":"John", "age":30, "car":null}'
 
     # Attempt to add a body which is not a JSON formatted string
     res = client.post(
@@ -103,18 +113,28 @@ def test_body_in_request(client, live_server):
               "url": test_url,
               "tag": "",
               "fetch_backend": "html_requests",
-              "body": "{\"name\":\"John\", \"age\":30, \"car\":null}"},
+              "body": body_value},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
 
+    # Give the thread time to pick up the first version
     time.sleep(5)
+
+    # The service should echo back the body
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    # Check if body returned contains the specified data
+    assert str.encode(body_value.replace('"', '&#34;')) in res.data
 
     watches_with_body = 0
     with open('test-datastore/url-watches.json') as f:
         app_struct = json.load(f)
         for uuid in app_struct['watching']:
-            if (app_struct['watching'][uuid]['body']=='{"name":"John", "age":30, "car":null}'):
+            if app_struct['watching'][uuid]['body']==body_value:
                 watches_with_body += 1
 
     # Should be only one with body set
@@ -122,7 +142,15 @@ def test_body_in_request(client, live_server):
 
 def test_method_in_request(client, live_server):
     # Add our URL to the import page
-    test_url = url_for('test_endpoint', _external=True)
+    test_url = url_for('test_method', _external=True)
+
+    # Add the test URL twice, we will check
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
 
     res = client.post(
         url_for("import_page"),
@@ -131,14 +159,14 @@ def test_method_in_request(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    # Attempt to add a body which is not a JSON formatted string
+    # Attempt to add a method which is not valid
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={
-              "url": test_url,
-              "tag": "",
-              "fetch_backend": "html_requests",
-              "method": "invalid"},
+            "url": test_url,
+            "tag": "",
+            "fetch_backend": "html_requests",
+            "method": "invalid"},
         follow_redirects=True
     )
     assert b"Not a valid choice" in res.data
@@ -147,13 +175,25 @@ def test_method_in_request(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={
-              "url": test_url,
-              "tag": "",
-              "fetch_backend": "html_requests",
-              "method": "POST"},
+            "url": test_url,
+            "tag": "",
+            "fetch_backend": "html_requests",
+            "method": "PATCH"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
+
+    # Give the thread time to pick up the first version
+    time.sleep(5)
+
+    # The service should echo back the request verb
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    # The test call service will return the verb as the body
+    assert b"PATCH" in res.data
 
     time.sleep(5)
 
@@ -161,8 +201,9 @@ def test_method_in_request(client, live_server):
     with open('test-datastore/url-watches.json') as f:
         app_struct = json.load(f)
         for uuid in app_struct['watching']:
-            if (app_struct['watching'][uuid]['method']=='POST'):
+            if app_struct['watching'][uuid]['method'] == 'PATCH':
                 watches_with_method += 1
 
-    # Should be only one with body set
-    assert watches_with_method==1
+    # Should be only one with method set to PATCH
+    assert watches_with_method == 1
+
