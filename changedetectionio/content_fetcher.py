@@ -3,6 +3,7 @@ import time
 from abc import ABC, abstractmethod
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
 from selenium.common.exceptions import WebDriverException
 import urllib3.exceptions
 
@@ -65,15 +66,34 @@ class html_webdriver(Fetcher):
 
     command_executor = ''
 
+    # Configs for Proxy setup
+    # In the ENV vars, is prefixed with "webdriver_", so it is for example "webdriver_sslProxy"
+    selenium_proxy_settings_mappings = ['ftpProxy', 'httpProxy', 'noProxy',
+                                        'proxyAutoconfigUrl', 'sslProxy', 'autodetect',
+                                        'socksProxy', 'socksUsername', 'socksPassword']
+    proxy=None
+
     def __init__(self):
-        self.command_executor = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub')
+        # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
+        self.command_executor = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub').strip('"')
+
+        # If any proxy settings are enabled, then we should setup the proxy object
+        proxy_args = {}
+        for k in self.selenium_proxy_settings_mappings:
+            v = os.getenv('webdriver_' + k, False)
+            if v:
+                proxy_args[k] = v.strip('"')
+
+        if proxy_args:
+            self.proxy = SeleniumProxy(raw=proxy_args)
 
     def run(self, url, timeout, request_headers):
 
         # check env for WEBDRIVER_URL
         driver = webdriver.Remote(
             command_executor=self.command_executor,
-            desired_capabilities=DesiredCapabilities.CHROME)
+            desired_capabilities=DesiredCapabilities.CHROME,
+            proxy=self.proxy)
 
         try:
             driver.get(url)
