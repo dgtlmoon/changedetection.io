@@ -29,6 +29,7 @@ Know when ...
 - API monitoring and alerting
 - Trigger API calls via notifications when text appears on a website
 - Glue together APIs using the JSON filter and JSON notifications
+- Create RSS feeds based on changes in web content
 
 _Need an actual Chrome runner with Javascript support? We support fetching via WebDriver!</a>_
 
