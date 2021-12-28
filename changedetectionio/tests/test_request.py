@@ -92,14 +92,28 @@ def test_body_in_request(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    body_value = '{"name":"John", "age":30, "car":null}'
+    body_value = 'Test Body Value'
 
-    # Add a request body
+    # Attempt to add a body with a GET method
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={
               "url": test_url,
               "tag": "",
+              "method": "GET",
+              "fetch_backend": "html_requests",
+              "body": "invalid"},
+        follow_redirects=True
+    )
+    assert b"Body must be empty when Request Method is set to GET" in res.data
+
+    # Add a properly formatted body with a proper method
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={
+              "url": test_url,
+              "tag": "",
+              "method": "POST",
               "fetch_backend": "html_requests",
               "body": body_value},
         follow_redirects=True
@@ -116,7 +130,7 @@ def test_body_in_request(client, live_server):
     )
 
     # Check if body returned contains the specified data
-    assert str.encode(body_value.replace('"', '&#34;')) in res.data
+    assert str.encode(body_value) in res.data
 
     watches_with_body = 0
     with open('test-datastore/url-watches.json') as f:

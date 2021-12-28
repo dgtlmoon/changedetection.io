@@ -57,7 +57,7 @@ def live_server_setup(live_server):
         return "\n".join(output)
 
     # Just return the body in the request
-    @live_server.app.route('/test-body')
+    @live_server.app.route('/test-body', methods=['POST', 'GET'])
     def test_body():
 
         from flask import request

@@ -236,6 +236,18 @@ class watchForm(commonSettingsForm):
     method = SelectField('Request Method', choices=valid_method, default=default_method)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
+    def validate(self, **kwargs):
+        if not super().validate():
+            return False
+
+        result = True
+
+        # Fail form validation when a body is set for a GET
+        if self.method.data == 'GET' and self.body.data:
+            self.body.errors.append('Body must be empty when Request Method is set to GET')
+            result = False
+
+        return result
 
 class globalSettingsForm(commonSettingsForm):
 
