@@ -136,24 +136,9 @@ When you enable a `json:` filter, you can even automatically extract and parse e
 
 `json:$.price` would give `23.50`, or you can extract the whole structure
 
-### Proxy
+### Proxy configuration
 
-A proxy for ChangeDetection.io can be configured by setting environment the 
-`HTTP_PROXY`, `HTTPS_PROXY` variables, examples are also in the `docker-compose.yml`
-
-`NO_PROXY` exclude list can be specified by following `"localhost,192.168.0.0/24"`
-
-as `docker run` with `-e`
-
-```
-docker run -d --restart always -e HTTPS_PROXY="socks5h://10.10.1.10:1080" -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
-```
-
-With `docker-compose`, see the `Proxy support example` in <a href="https://github.com/dgtlmoon/changedetection.io/blob/master/docker-compose.yml">docker-compose.yml</a>.
-
-For more information see https://docs.python-requests.org/en/master/user/advanced/#proxies
-
-This proxy support also extends to the notifications https://github.com/caronc/apprise/issues/387#issuecomment-841718867
+See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration
 
 ### RaspberriPi support?
 
