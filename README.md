@@ -19,9 +19,8 @@ Open source web page monitoring, notification and change detection.
 #### Example use cases
 
 Know when ...
-
-- Government department updates (changes are often only on their websites)
-- Local government news (changes are often only on their websites)
+- Products and services have a change in pricing
+- Governmental department updates (changes are often only on their websites)
 - New software releases, security advisories when you're not on their mailing list.
 - Festivals with changes
 - Realestate listing changes
@@ -29,8 +28,9 @@ Know when ...
 - Detect and monitor changes in JSON API responses 
 - API monitoring and alerting
 - Trigger API calls via notifications when text appears on a website
-- Glue together API's using the JSON filter and JSON notifications
- 
+- Glue together APIs using the JSON filter and JSON notifications
+- Create RSS feeds based on changes in web content
+
 _Need an actual Chrome runner with Javascript support? We support fetching via WebDriver!</a>_
 
 **Get monitoring now! super simple.**
