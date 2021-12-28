@@ -65,7 +65,7 @@ class html_webdriver(Fetcher):
         fetcher_description = "WebDriver Chrome/Javascript"
 
     command_executor = ''
-    
+
     # Configs for Proxy setup
     # In the ENV vars, is prefixed with "webdriver_", so it is for example "webdriver_sslProxy"
     selenium_proxy_settings_mappings = ['ftpProxy', 'httpProxy', 'noProxy',
@@ -74,25 +74,18 @@ class html_webdriver(Fetcher):
     proxy=None
 
     def __init__(self):
-        self.command_executor = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub')
-        setup_proxy = False
+        # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
+        self.command_executor = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub').strip('"')
 
         # If any proxy settings are enabled, then we should setup the proxy object
+        proxy_args = {}
         for k in self.selenium_proxy_settings_mappings:
-            if os.getenv('webdriver_' + k, False):
-                setup_proxy = True
-                break
+            v = os.getenv('webdriver_' + k, False)
+            if v:
+                proxy_args[k] = v.strip('"')
 
-        if setup_proxy:
-            proxy_args = {}
-            for k in self.selenium_proxy_settings_mappings:
-                v = os.getenv('webdriver_' + k, False)
-                if v:
-                    proxy_args[k] = v
-
+        if proxy_args:
             self.proxy = SeleniumProxy(raw=proxy_args)
-
-
 
     def run(self, url, timeout, request_headers):
 
