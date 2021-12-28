@@ -2,6 +2,8 @@
 
 // must be a var for keyChar and keyCode use
 var CONSTANT_ESCAPE_KEY = 27;
+var CONSTANT_S_KEY = 83;
+var CONSTANT_s_KEY = 115;
 
 // global sorting vars (new window is always last_changed, descending)
 var loading;
@@ -28,6 +30,14 @@ else {
 function storeScrollAndSearch() {
 	sessionStorage.setItem('scrollpos', window.pageYOffset);
 	sessionStorage.setItem('searchtxt', document.getElementById("txtInput").value);
+}
+// (ctl)-alt-s search hotkey
+document.onkeyup=function(e){
+  var e = e || window.event; // for IE to cover IEs window event-object
+  if(e.altKey && (e.which == CONSTANT_S_KEY || e.which == CONSTANT_s_KEY)) {
+	document.getElementById("txtInput").focus();
+    return false;
+  }
 }
 
 // page load functions
@@ -85,11 +95,7 @@ function sortTable(n) {
 		x = parseFloat(x);
 		y = parseFloat(y);
 	  }
-	  if (n == 1) { // handle the checkbox column
-		  x = rows[i].querySelector('input[type=checkbox]').checked;
-		  y = rows[i + 1].querySelector('input[type=checkbox]').checked;
-	  }
-	  if (n == 2 || n == 3) { // handle the play/pause and viewed/unviewed columns
+	  if (n == 1) { // handle play/pause column
 		x = rows[i].getElementsByTagName("TD")[n].getElementsByTagName("img")[0].src;
 		y = rows[i + 1].getElementsByTagName("TD")[n].getElementsByTagName("img")[0].src;
 	  }
@@ -147,7 +153,7 @@ function sortTable(n) {
   // save sorting
   sessionStorage.setItem("sort_column", n);
   sessionStorage.setItem("sort_order", (dir == "asc") ? 0 : 1);
-  // restripe
+  // restripe rows
   restripe();
 }
 
@@ -209,8 +215,8 @@ function tblSearch(evt) {
   filter = input.value.toUpperCase();
   table = document.getElementById("watch-table");
   tr = table.getElementsByTagName("tr");
-  for (i = 0; i < tr.length; i++) {
-    td = tr[i].getElementsByTagName("td")[5]; // col 5 is the hidden title/url column
+  for (i = 1; i < tr.length; i++) { // skip header
+    td = tr[i].getElementsByTagName("td")[3]; // col 3 is the hidden title/url column
     if (td) {
       txtValue = td.textContent || td.innerText;
       if (txtValue.toUpperCase().indexOf(filter) > -1) {
@@ -219,9 +225,13 @@ function tblSearch(evt) {
 	  else {
 		tr[i].style.display = "none";
       }
-    }       
+	}       
   }
+  // restripe rows
   restripe();
+  if (code == CONSTANT_ESCAPE_KEY) {
+	document.getElementById("watch-table-wrapper").focus();
+  }
 }
 
 // restripe after searching or sorting
@@ -230,22 +240,31 @@ function restripe () {
 	var table = document.getElementById("watch-table");
 	var rows = table.getElementsByTagName("tr");
 	
-	for (i = 0; i < rows.length; i++) { // skip thead row 0
+	for (i = 1; i < rows.length; i++) { // skip header
  		if (rows[i].style.display !== "none") {
 			visrows.push(rows[i]);
 		}
 	}
 	for (i=0 ; i<visrows.length; i++) {
 		var row = visrows[i];
+		if( i%2==0 ) {
+			row.classList.remove('pure-table-odd');
+			row.classList.add('pure-table-even');
+		}
+		else {
+			row.classList.remove('pure-table-even');
+			row.classList.add('pure-table-odd');
+		}
 		var cells = row.getElementsByTagName("td");
 		for(var j=0; j<cells.length; j++) {
 			if( i%2==0 ) {
-				cells[j].style.background = "#ffffff";
-			} else {
 				cells[j].style.background = "#f2f2f2";
+			} else {
+				cells[j].style.background = "#ffffff";
 			}
 		}
-		//uncomment to re-number rows ascending: cells[0].innerText = i+1;
+		// uncomment to renumber rows ascending:	var cells = row.getElementsByTagName("td");
+ 		// uncomment to renumber rows ascending:	cells[0].innerText = i+1;
 	}
 }
 

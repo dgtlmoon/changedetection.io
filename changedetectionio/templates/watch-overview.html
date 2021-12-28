@@ -17,28 +17,15 @@
 		<!-- add extra stuff, like do a http POST and send headers -->
 		<!-- user/pass r = requests.get('https://api.github.com/user', auth=('user', 'pass')) -->
 	</form>
-    <div id="watch-table-wrapper">
-		<div id="flexlayout">
-			<div id="categories">
-				<a href="{{url_for('index')}}" class="pure-button button-tag {{'active' if not active_tag }}">All</a>
-				{% for tag in tags %}
-					{% if tag != "" %}
-						<a href="{{url_for('index', tag=tag) }}" class="pure-button button-tag {{'active' if active_tag == tag }}">{{ tag }}</a>
-					{% endif %}
-				{% endfor %}
-			</div>
-			<div id="recheck-and-rss">
-				<ul id="post-list-buttons">
-					<li>
-						<a href="{{ url_for('api_watch_checknow', tag=active_tag) }}" class="pure-button button-tag ">Recheck
-						All {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
-					</li>
-					<li>
-						<a href="{{ url_for('index', tag=active_tag , rss=true)}}"><img id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15px"></a>
-					</li>
-				</ul>
-			</div>
-		</div>	
+    <div id="watch-table-wrapper" tabindex="-1">
+		<div id="categories">
+			<a href="{{url_for('index')}}" class="pure-button button-tag {{'active' if not active_tag }}">All</a>
+			{% for tag in tags %}
+				{% if tag != "" %}
+					<a href="{{url_for('index', tag=tag) }}" class="pure-button button-tag {{'active' if active_tag == tag }}">{{ tag }}</a>
+				{% endif %}
+			{% endfor %}
+		</div>
 			
 		<div id="controls-top">
 			<div id="checkbox-functions" style="display: none;">
@@ -63,16 +50,14 @@
 			<table class="pure-table pure-table-striped watch-table" id="watch-table">
 				<thead>
 				<tr id="header">
-					<th>#</th>
-					<th onclick="sortTable(1)"><span class="clickable" title="Sort by Checked"><input type="checkbox" name="showhide" onchange="checkAll(this)" title="Check/Uncheck All">&nbsp;&nbsp;<span id="sortable-1"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span class="sortarrow"><span id="sort-1a" style="display:none;">&#9650;</span><span id="sort-1d" style="display:none;">&#9660;</span></span></span></th>
-					<th onclick="sortTable(2)"><span class="clickable" title="Sort by Pause/Resume"><a href="{{url_for('index', pause='pause-all', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause" title="Pause All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>&nbsp;<a href="{{url_for('index', pause='resume-all', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="Resume" title="Resume All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>&nbsp;&nbsp;<span id="sortable-2"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span class="sortarrow"><span id="sort-2a" style="display:none;">&#9650;</span><span id="sort-2d" style="display:none;">&#9660;</span></span></span></th>
-					<th onclick="sortTable(3)"><span class="clickable" title="Sort by Viewed/Unviewed"><a href="javascript:processChecked('mark_all_notviewed', '{{ active_tag }}');"><img src="{{url_for('static_content', group='images', filename='notviewed.svg')}}" alt="Uniewed" title="Mark All{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%} as Unviewed"/></a>&nbsp;<a href="{{url_for('mark_all_viewed', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='viewed.svg')}}" alt="Viewed" title="Mark All{%if active_tag%} in &quot;{{active_tag}}&quot;{%endif%} as Viewed"/></a>&nbsp;&nbsp;<span id="sortable-3"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span class="sortarrow"><span id="sort-3a" style="display:none;">&#9650;</span><span id="sort-3d" style="display:none;">&#9660;</span></span></span></th>
-					<th onclick="sortTable(5)"><span class="clickable" title="Sort by Title">Title&nbsp;&nbsp;<span id="sortable-5"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span class="sortarrow"><span id="sort-5a" style="display:none;">&#9650;</span><span id="sort-5d" style="display:none;">&#9660;</span></span></span></th>
-					<th class="hidden"></th>
-					<th onclick="sortTable(7)"><span class="clickable" title="Sort by Last Checked">Checked&nbsp;&nbsp;<span id="sortable-7"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span class="sortarrow"><span id="sort-7a" style="display:none;">&#9650;</span><span id="sort-7d" style="display:none;">&#9660;</span></span></span></th>
-					<th class="hidden"></th>
-					<th onclick="sortTable(9)"><span class="clickable" title="Sort by Last Changed">Changed&nbsp;&nbsp;<span id="sortable-9" style="display:none;"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span class="sortarrow"><span id="sort-9a" style="display:none;">&#9650;</span><span id="sort-9d">&#9660;</span></span></span></th>
-					<th class="hidden"></th>
+					<th class="inline chkbox-header"><input type="checkbox" name="showhide" onchange="checkAll(this)" title="Check/Uncheck All">&nbsp;&nbsp;#</th>
+					<th class="pause-resume-header" onclick="sortTable(1)"><span class="clickable" title="Sort by Pause/Resume"><a href="{{url_for('index', pause='pause-all', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause" title="Pause All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>&nbsp;<a href="{{url_for('index', pause='resume-all', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="Resume" title="Resume All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>&nbsp;&nbsp;<span id="sortable-1"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span class="sortarrow"><span id="sort-1a" style="display:none;">&#9650;</span><span id="sort-1d" style="display:none;">&#9660;</span></span></span></th>
+					<th onclick="sortTable(3)"><span class="clickable" title="Sort by Title">Title&nbsp;&nbsp;<span id="sortable-3"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span class="sortarrow"><span id="sort-3a" style="display:none;">&#9650;</span><span id="sort-3d" style="display:none;">&#9660;</span></span></span></th>
+					<th class="hidden-col"></th>
+					<th onclick="sortTable(5)"><span class="clickable" title="Sort by Last Checked">Checked&nbsp;&nbsp;<span id="sortable-5"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span class="sortarrow"><span id="sort-5a" style="display:none;">&#9650;</span><span id="sort-5d" style="display:none;">&#9660;</span></span></span></th>
+					<th class="hidden-col"></th>
+					<th onclick="sortTable(7)"><span class="clickable" title="Sort by Last Changed">Changed&nbsp;&nbsp;<span id="sortable-7" style="display:none;"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" /></span><span class="sortarrow"><span id="sort-7a" style="display:none;">&#9650;</span><span id="sort-7d">&#9660;</span></span></span></th>
+					<th class="hidden-col"></th>
 					<th>Actions</th>
 				</tr>
 				</thead>
@@ -83,26 +68,17 @@
 							{% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
 							{% if watch.paused is defined and watch.paused != False %}paused{% endif %}
 							{% if watch.newest_history_key| int > watch.last_viewed| int %}unviewed{% endif %}">
-							<td class="inline low-res">{{ loop.index }}</td> <!-- col 0, sort by index -->
-							<td class="inline low-res"><input id="{{watch.uuid}}" type="checkbox" name="check" onchange="checkChange();"></td>
-							<td class="inline low-res">
-								{% if watch.paused %}
-									<a href="{{url_for('index', pause=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="Resume" title="Resume"/></a>
-								{% else %}
-									<a href="{{url_for('index', pause=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause" title="Pause"/></a>
-								{% endif %}
-							</td>
-							<td class="inline low-res">
-								{% if watch.newest_history_key| int > watch.last_viewed| int %}
-									<a href="{{url_for('process_selected', func='mark_selected_viewed', uuids=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='viewed.svg')}}" alt="Viewed" title="Mark as Viewed"/></a>
-								{% else %}
-									<a href="{{url_for('process_selected', func='mark_selected_notviewed', uuids=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='notviewed.svg')}}" alt="Unviewed" title="Mark as Unviewed"/></a>
-								{% endif %}
+							<td class="inline chkbox"><input id="{{watch.uuid}}" type="checkbox" name="check" onchange="checkChange();">&nbsp;&nbsp;{{ loop.index }}</td>
+							<td class="inline pause-resume">
+							{% if watch.paused %}
+								<a href="{{url_for('index', pause=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="Resume" title="Resume"/></a>
+							{% else %}
+								<a href="{{url_for('index', pause=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause" title="Pause"/></a>
+							{% endif %}
 							</td>
 							<td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
 								<a class="external inline-hover-img" target="_blank" rel="noopener" href="{{ watch.url }}"></a>
 								{%if watch.fetch_backend == "html_webdriver" %}<img style="height: 1em; display:inline-block;" src="/static/images/Google-Chrome-icon.png" />{% endif %}
-
 								{% if watch.last_error is defined and watch.last_error != False %}
 								<div class="fetch-error">{{ watch.last_error }}</div>
 								{% endif %}
@@ -110,16 +86,16 @@
 								<span class="watch-tag-list">{{ watch.tag}}</span>
 								{% endif %}
 							</td>
-							<td class="hidden">{{ watch.title if watch.title else watch.url }}</td> <!-- col 5, title sorting -->
+							<td class="hidden-col">{{ watch.title if watch.title else watch.url }}</td> <!-- col 5, title sorting -->
 							<td class="last-checked">{{watch|format_last_checked_time}}</td>
-							<td class="hidden">{{ watch.last_checked }}</td> <!-- col 7, last_checked sorting -->
+							<td class="hidden-col">{{ watch.last_checked }}</td> <!-- col 7, last_checked sorting -->
 							<td class="last-changed">{% if watch.history|length >= 2 and watch.last_changed %}
 								{{watch.last_changed|format_timestamp_timeago}}
 								{% else %}
 								Not yet
 								{% endif %}
 							</td>
-							<td class="hidden">{{ watch.last_changed }}</td> <!-- col 9, last_changed sorting -->
+							<td class="hidden-col">{{ watch.last_changed }}</td> <!-- col 9, last_changed sorting -->
 							<td id="actions">
 								<a href="{{ url_for('api_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
 								   class="pure-button button-small pure-button-primary">Recheck</a>
@@ -136,22 +112,21 @@
 					{% endfor %}
 				</tbody>
 			</table>
+			<ul id="post-list-buttons">
+				{% if has_unviewed %}
+				<li>
+					<a href="{{url_for('mark_all_viewed', tag=request.args.get('tag')) }}" class="pure-button button-tag ">Mark all viewed</a>
+				</li>
+				{% endif %}
+				<li>
+				   <a href="{{ url_for('api_watch_checknow', tag=active_tag) }}" class="pure-button button-tag ">Recheck
+					all {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
+				</li>
+				<li>
+					<a href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"><img id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15px"></a>
+				</li>
+			</ul>
 		</div>
-		
-		<div id="flexlayout-bottom">
-			<div id="controls-bottom">
-				<ul id="post-list-buttons">
-					<li>
-						<a href="{{ url_for('index', tag=active_tag , rss=true)}}"><img id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15px"></a>
-					</li>
-					<li>
-					   <a href="{{ url_for('api_watch_checknow', tag=active_tag) }}" class="pure-button button-tag ">Recheck
-						All {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
-					</li>
-				</ul>
-			</div>
-		</div>
-
 	</div>
 
 </div>
