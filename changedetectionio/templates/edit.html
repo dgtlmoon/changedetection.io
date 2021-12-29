@@ -10,9 +10,8 @@
         <ul>
             <li class="tab" id="default-tab"><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
+            <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
-            <li class="tab"><a href="#filters">Filters</a></li>
-            <li class="tab"><a href="#triggers">Triggers</a></li>
         </ul>
     </div>
 
@@ -52,13 +51,16 @@
                     <div class="pure-control-group">
                         {{ render_field(form.fetch_backend) }}
                         <span class="pure-form-message-inline">
-                            <p>Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render.</p>
+                            <p>Use the <strong>Basic</strong> method (default) where your watched site doesn't need Javascript to render.</p>
                             <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
                         </span>
                     </div>
 
                 <fieldset class="pure-group">
-                    <strong>Note: <i>Request Headers and Body settings are ONLY used by Basic fast Plaintext/HTTP Client.</i></strong>
+                                    <div class="pure-control-group">
+                    {{ render_field(form.method) }}
+                </div>
+                    <strong>Note: <i>Request Headers and Body settings are ONLY used by Basic fast Plaintext/HTTP Client fetch method.</i></strong>
                     {{ render_field(form.headers, rows=5, placeholder="Example
 Cookie: foobar
 User-Agent: wonderbra 1.0") }}
@@ -71,9 +73,7 @@ User-Agent: wonderbra 1.0") }}
    \"car\":null
 }") }}
                 </div>
-                <div class="pure-control-group">
-                    {{ render_field(form.method) }}
-                </div>
+
             </div>
 
             <div class="tab-pane-inner" id="notifications">
@@ -85,7 +85,7 @@ User-Agent: wonderbra 1.0") }}
                 </fieldset>
             </div>
 
-            <div class="tab-pane-inner" id="filters">
+            <div class="tab-pane-inner" id="filters-and-triggers">
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.css_filter, placeholder=".class-name or #some-id, or other CSS selector rule.",
@@ -112,9 +112,6 @@ User-Agent: wonderbra 1.0") }}
                 </span>
 
             </fieldset>
-            </div>
-
-            <div class="tab-pane-inner" id="triggers">
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.trigger_text, rows=5, placeholder="Some text to wait for in a line
@@ -127,6 +124,7 @@ User-Agent: wonderbra 1.0") }}
                     </div>
                 </fieldset>
             </div>
+
             <div id="actions">
                 <div class="pure-control-group">
 
