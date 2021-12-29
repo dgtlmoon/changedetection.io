@@ -70,6 +70,8 @@ class ChangeDetectionStore:
             'previous_md5': "",
             'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send
+            'body': None,
+            'method': 'GET',
             'history': {},  # Dict of timestamp and output stripped filename
             'ignore_text': [], # List of text to ignore when calculating the comparison checksum
             # Custom notification content

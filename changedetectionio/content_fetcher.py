@@ -131,10 +131,12 @@ class html_webdriver(Fetcher):
 class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
 
-    def run(self, url, timeout, request_headers):
+    def run(self, url, timeout, request_headers, request_body, request_method):
         import requests
 
-        r = requests.get(url,
+        r = requests.request(method=request_method,
+                         data=request_body,
+                         url=url,
                          headers=request_headers,
                          timeout=timeout,
                          verify=False)

@@ -9,6 +9,7 @@
     <div class="tabs">
         <ul>
             <li class="tab" id="default-tab"><a href="#general">General</a></li>
+            <li class="tab"><a href="#request">Request</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
             <li class="tab"><a href="#filters">Filters</a></li>
             <li class="tab"><a href="#triggers">Triggers</a></li>
@@ -41,14 +42,6 @@
                                 href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>.</span>
                         {% endif %}
                     </div>
-                    <fieldset class="pure-group">
-                        {{ render_field(form.headers, rows=5, placeholder="Example
-Cookie: foobar
-User-Agent: wonderbra 1.0") }}
-                        <span class="pure-form-message-inline">
-                            Note: ONLY used by Basic fast Plaintext/HTTP Client
-                          </span>
-                    </fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.fetch_backend) }}
                         <span class="pure-form-message-inline">
@@ -60,6 +53,26 @@ User-Agent: wonderbra 1.0") }}
                         {{ render_field(form.extract_title_as_title) }}
                     </div>
                 </fieldset>
+            </div>
+
+            <div class="tab-pane-inner" id="request">
+                <strong>Note: <i>These settings are ONLY used by Basic fast Plaintext/HTTP Client.</i></strong>
+                <fieldset class="pure-group">
+                    {{ render_field(form.headers, rows=5, placeholder="Example
+Cookie: foobar
+User-Agent: wonderbra 1.0") }}
+                </fieldset>
+                <div class="pure-control-group">
+                    {{ render_field(form.body, rows=5, placeholder="Example
+{
+   \"name\":\"John\",
+   \"age\":30,
+   \"car\":null
+}") }}
+                </div>
+                <div class="pure-control-group">
+                    {{ render_field(form.method) }}
+                </div>
             </div>
 
             <div class="tab-pane-inner" id="notifications">

@@ -8,6 +8,16 @@ import re
 
 from changedetectionio.notification import default_notification_format, valid_notification_formats, default_notification_body, default_notification_title
 
+valid_method = {
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+}
+
+default_method = 'GET'
+
 class StringListField(StringField):
     widget = widgets.TextArea()
 
@@ -224,8 +234,22 @@ class watchForm(commonSettingsForm):
 
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     headers = StringDictKeyValue('Request Headers')
+    body = TextAreaField('Request Body', [validators.Optional()])
+    method = SelectField('Request Method', choices=valid_method, default=default_method)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
+    def validate(self, **kwargs):
+        if not super().validate():
+            return False
+
+        result = True
+
+        # Fail form validation when a body is set for a GET
+        if self.method.data == 'GET' and self.body.data:
+            self.body.errors.append('Body must be empty when Request Method is set to GET')
+            result = False
+
+        return result
 
 class globalSettingsForm(commonSettingsForm):
 
