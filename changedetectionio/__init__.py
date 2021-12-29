@@ -275,12 +275,15 @@ def changedetection_app(config=None, datastore_o=None):
                 base_url = datastore.data['settings']['application']['base_url']
                 if base_url == '':
                     base_url = "<base-url-env-var-not-set>"
-                diff_link = "{}{}".format(base_url, url_for('diff_history_page', uuid=watch['uuid']))
-                
+
+                diff_link = {'href': "{}{}".format(base_url, url_for('diff_history_page', uuid=watch['uuid']))}
+
                 # @todo use title if it exists
-                fe.link(diff_link)
-                fe.title(watch['url'])
-                fe.description(href=watch['url'])
+                fe.link(link=diff_link)
+                fe.title(title=watch['url'])
+
+                # @todo in the future <description><![CDATA[<html><body>Any code html is valid.</body></html>]]></description>
+                fe.description(description=watch['url'])
 
                 fe.guid(guid, permalink=False)
                 dt = datetime.datetime.fromtimestamp(int(watch['newest_history_key']))
