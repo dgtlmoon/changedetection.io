@@ -23,7 +23,7 @@ class Fetcher():
         return self.error
 
     @abstractmethod
-    def run(self, url, timeout, request_headers):
+    def run(self, url, timeout, request_headers, request_body, request_method):
         # Should set self.error, self.status_code and self.content
         pass
 
@@ -87,7 +87,9 @@ class html_webdriver(Fetcher):
         if proxy_args:
             self.proxy = SeleniumProxy(raw=proxy_args)
 
-    def run(self, url, timeout, request_headers):
+    def run(self, url, timeout, request_headers, request_body, request_method):
+
+        # request_body, request_method unused for now, until some magic in the future happens.
 
         # check env for WEBDRIVER_URL
         driver = webdriver.Remote(
