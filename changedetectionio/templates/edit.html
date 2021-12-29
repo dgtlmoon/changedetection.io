@@ -43,21 +43,22 @@
                         {% endif %}
                     </div>
                     <div class="pure-control-group">
-                        {{ render_field(form.fetch_backend) }}
-                        <span class="pure-form-message-inline">
-                            <p>Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render.</p>
-                            <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
-                        </span>
-                    </div>
-                    <div class="pure-control-group">
                         {{ render_field(form.extract_title_as_title) }}
                     </div>
                 </fieldset>
             </div>
 
             <div class="tab-pane-inner" id="request">
-                <strong>Note: <i>These settings are ONLY used by Basic fast Plaintext/HTTP Client.</i></strong>
+                    <div class="pure-control-group">
+                        {{ render_field(form.fetch_backend) }}
+                        <span class="pure-form-message-inline">
+                            <p>Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render.</p>
+                            <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
+                        </span>
+                    </div>
+
                 <fieldset class="pure-group">
+                    <strong>Note: <i>Request Headers and Body settings are ONLY used by Basic fast Plaintext/HTTP Client.</i></strong>
                     {{ render_field(form.headers, rows=5, placeholder="Example
 Cookie: foobar
 User-Agent: wonderbra 1.0") }}
