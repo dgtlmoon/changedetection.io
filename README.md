@@ -24,6 +24,7 @@ Open source web page monitoring, notification and change detection.
 - Festivals with changes
 - Realestate listing changes
 - COVID related news from government websites
+- University/organisation news from their website
 - Detect and monitor changes in JSON API responses 
 - API monitoring and alerting
 - Trigger API calls via notifications when text appears on a website
