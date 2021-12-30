@@ -80,6 +80,8 @@ class perform_site_check():
         else:
             timeout = self.datastore.data['settings']['requests']['timeout']
             url = self.datastore.get_val(uuid, 'url')
+            request_body = self.datastore.get_val(uuid, 'body')
+            request_method = self.datastore.get_val(uuid, 'method')
 
             # Pluggable content fetcher
             prefer_backend = watch['fetch_backend']
@@ -91,7 +93,7 @@ class perform_site_check():
 
 
             fetcher = klass()
-            fetcher.run(url, timeout, request_headers)
+            fetcher.run(url, timeout, request_headers, request_body, request_method)
             # Fetching complete, now filters
             # @todo move to class / maybe inside of fetcher abstract base?
 

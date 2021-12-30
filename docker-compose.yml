@@ -13,13 +13,23 @@ services:
 
   #      - PUID=1000
   #      - PGID=1000
-  #       # Alternative WebDriver/selenium URL, do not use "'s or 's!
+  #
+  #       Alternative WebDriver/selenium URL, do not use "'s or 's!
   #      - WEBDRIVER_URL=http://browser-chrome:4444/wd/hub
-  #        Proxy support example.
+  #
+  #       WebDriver proxy settings webdriver_ftpProxy, webdriver_httpProxy, webdriver_noProxy,
+  #                                webdriver_proxyAutoconfigUrl, webdriver_sslProxy, webdriver_autodetect,
+  #                                webdriver_socksProxy, webdriver_socksUsername, webdriver_socksPassword
+  #
+  #             https://selenium-python.readthedocs.io/api.html#module-selenium.webdriver.common.proxy
+  #
+  #        Plain requsts - proxy support example.
   #      - HTTP_PROXY=socks5h://10.10.1.10:1080
   #      - HTTPS_PROXY=socks5h://10.10.1.10:1080
+  #
   #        An exclude list (useful for notification URLs above) can be specified by with
   #      - NO_PROXY="localhost,192.168.0.0/24"
+  #
   #        Base URL of your changedetection.io install (Added to the notification alert)
   #      - BASE_URL=https://mysite.com
 

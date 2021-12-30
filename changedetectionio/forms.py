@@ -8,6 +8,16 @@ import re
 
 from changedetectionio.notification import default_notification_format, valid_notification_formats, default_notification_body, default_notification_title
 
+valid_method = {
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+}
+
+default_method = 'GET'
+
 class StringListField(StringField):
     widget = widgets.TextArea()
 
@@ -106,10 +116,12 @@ class ValidateContentFetcherIsReady(object):
             except urllib3.exceptions.MaxRetryError as e:
                 driver_url = some_object.command_executor
                 message = field.gettext('Content fetcher \'%s\' did not respond.' % (field.data))
-                message += '<br/>'+field.gettext('Be sure that the selenium/webdriver runner is running and accessible via network from this container/host.')
+                message += '<br/>' + field.gettext(
+                    'Be sure that the selenium/webdriver runner is running and accessible via network from this container/host.')
                 message += '<br/>' + field.gettext('Did you follow the instructions in the wiki?')
                 message += '<br/><br/>' + field.gettext('WebDriver Host: %s' % (driver_url))
                 message += '<br/><a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">Go here for more information</a>'
+                message += '<br/>'+field.gettext('Content fetcher did not respond properly, unable to use it.\n %s' % (str(e)))
 
                 raise ValidationError(message)
 
@@ -222,8 +234,22 @@ class watchForm(commonSettingsForm):
 
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     headers = StringDictKeyValue('Request Headers')
+    body = TextAreaField('Request Body', [validators.Optional()])
+    method = SelectField('Request Method', choices=valid_method, default=default_method)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
+    def validate(self, **kwargs):
+        if not super().validate():
+            return False
+
+        result = True
+
+        # Fail form validation when a body is set for a GET
+        if self.method.data == 'GET' and self.body.data:
+            self.body.errors.append('Body must be empty when Request Method is set to GET')
+            result = False
+
+        return result
 
 class globalSettingsForm(commonSettingsForm):
 

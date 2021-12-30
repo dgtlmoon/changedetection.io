@@ -56,6 +56,21 @@ def live_server_setup(live_server):
 
         return "\n".join(output)
 
+    # Just return the body in the request
+    @live_server.app.route('/test-body', methods=['POST', 'GET'])
+    def test_body():
+
+        from flask import request
+
+        return request.data
+
+    # Just return the verb in the request
+    @live_server.app.route('/test-method', methods=['POST', 'GET', 'PATCH'])
+    def test_method():
+
+        from flask import request
+
+        return request.method
 
     # Where we POST to as a notification
     @live_server.app.route('/test_notification_endpoint', methods=['POST', 'GET'])

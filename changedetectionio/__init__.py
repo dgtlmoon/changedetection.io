@@ -268,9 +268,23 @@ def changedetection_app(config=None, datastore_o=None):
                 # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
                 guid = "{}/{}".format(watch['uuid'], watch['last_changed'])
                 fe = fg.add_entry()
-                fe.title(watch['url'])
-                fe.link(href=watch['url'])
-                fe.description(watch['url'])
+
+
+                # Include a link to the diff page, they will have to login here to see if password protection is enabled.
+                # Description is the page you watch, link takes you to the diff JS UI page
+                base_url = datastore.data['settings']['application']['base_url']
+                if base_url == '':
+                    base_url = "<base-url-env-var-not-set>"
+
+                diff_link = {'href': "{}{}".format(base_url, url_for('diff_history_page', uuid=watch['uuid']))}
+
+                # @todo use title if it exists
+                fe.link(link=diff_link)
+                fe.title(title=watch['url'])
+
+                # @todo in the future <description><![CDATA[<html><body>Any code html is valid.</body></html>]]></description>
+                fe.description(description=watch['url'])
+
                 fe.guid(guid, permalink=False)
                 dt = datetime.datetime.fromtimestamp(int(watch['newest_history_key']))
                 dt = dt.replace(tzinfo=pytz.UTC)
@@ -454,6 +468,8 @@ def changedetection_app(config=None, datastore_o=None):
                           'tag': form.tag.data.strip(),
                           'title': form.title.data.strip(),
                           'headers': form.headers.data,
+                          'body': form.body.data,
+                          'method': form.method.data,
                           'fetch_backend': form.fetch_backend.data,
                           'trigger_text': form.trigger_text.data,
                           'notification_title': form.notification_title.data,
