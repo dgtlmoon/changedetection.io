@@ -68,7 +68,7 @@
 							{% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
 							{% if watch.paused is defined and watch.paused != False %}paused{% endif %}
 							{% if watch.newest_history_key| int > watch.last_viewed| int %}unviewed{% endif %}">
-							<td class="inline chkbox"><input id="chk-{{ loop.index }}"type="checkbox" name="check" onchange="checkChange(this);">&nbsp;&nbsp;{{ loop.index }}</td>
+							<td class="inline chkbox"><input id="chk-{{ loop.index }}" type="checkbox" name="check" onchange="checkChange(this);">&nbsp;&nbsp;{{ loop.index }}</td>
 							<td class="inline pause-resume">
 							{% if watch.paused %}
 								<a href="{{url_for('index', pause=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="Resume" title="Resume"/></a>
