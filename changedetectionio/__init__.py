@@ -30,7 +30,7 @@ import datetime
 import pytz
 from copy import deepcopy
 
-__version__ = '0.39.4'
+__version__ = '0.39.5'
 
 datastore = None
 
@@ -294,17 +294,16 @@ def changedetection_app(config=None, datastore_o=None):
 
         if pause_uuid:
             try:
-                validate = uuid.UUID(str(pause_uuid))
-                datastore.data['watching'][pause_uuid]['paused'] ^= True
-            except ValueError:
-        
-                action = True if pause_uuid == 'pause-all' else False
-
-                for watch_uuid, watch in datastore.data['watching'].items():
-                            if datastore.data['watching'][watch_uuid]['tag'] == limit_tag or limit_tag is None :
-                                datastore.data['watching'][watch_uuid]['paused'] = action
-
-            datastore.needs_write = True
+                if pause_uuid == 'pause-all' or pause_uuid == 'resume-all':
+                    action = True if pause_uuid == 'pause-all' else False
+                    for watch_uuid, watch in datastore.data['watching'].items():
+                        if datastore.data['watching'][watch_uuid]['tag'] == limit_tag or limit_tag is None :
+                            datastore.data['watching'][watch_uuid]['paused'] = action
+                else :
+                    datastore.data['watching'][pause_uuid]['paused'] ^= True
+                datastore.needs_write = True
+            except KeyError:
+                flash("No watch by that UUID found, or error setting paused state.", 'error');
             return redirect(url_for('index', tag = limit_tag))
 
         # Sort by last_changed and add the uuid which is usually the key..
@@ -655,19 +654,13 @@ def changedetection_app(config=None, datastore_o=None):
             pass
 
     # process selected
-    @app.route("/api/process-selected", methods=['GET', "POST"])
+    @app.route("/api/process-selected", methods=["POST"])
     @login_required
     def process_selected():
 
-        if request.method == 'POST' :
-            func = request.form.get('func')
-            limit_tag = request.form.get('tag')
-            uuids = request.form.get('uuids')
-
-        if request.method == 'GET' :
-            func = request.args.get('func')
-            limit_tag = request.args.get('tag')
-            uuids = request.args.get('uuids')
+        func = request.form.get('func')
+        limit_tag = request.form.get('tag')
+        uuids = request.form.get('uuids')
 
         if uuids == '' :
             flash("No watches selected.")
@@ -766,14 +759,9 @@ def changedetection_app(config=None, datastore_o=None):
             else :
                 
                 flash("Invalid parameter received.")
-        
-        render_template('index') #ensure flash msgs are seen
-        
-        if limit_tag == None or limit_tag == 'None' :
-            return redirect(url_for('index'))
-        else :
-            return redirect(url_for('index', tag = limit_tag))
-        
+
+        render_template(url_for('index'), tag = limit_tag)
+
     @app.route("/diff/<string:uuid>", methods=['GET'])
     @login_required
     def diff_history_page(uuid):

@@ -1,12 +1,1 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 25.4.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 width="15px" height="15px" viewBox="0 0 15 15" style="enable-background:new 0 0 15 15;" xml:space="preserve">
-<style type="text/css">
-	.st0{fill:#0078E7;}
-	.st1{fill:#FFFFFF;}
-</style>
-<path id="path2" class="st0" d="M7.5,0C3.4,0.1,0,3.4,0,7.5S3.4,15,7.5,15S15,11.6,15,7.5c0-2.8-1.6-5.4-4.1-6.7
-	C9.9,0.3,8.7,0.1,7.5,0z"/>
-<polygon class="st1" points="11.4,8 5.8,4.8 5.8,11.3 "/>
-</svg>
+<svg id="Capa_1" data-name="Capa 1" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 15 15"><path id="path2" d="M7.5,0A7.62,7.62,0,0,0,0,7.5,7.55,7.55,0,0,0,7.5,15,7.55,7.55,0,0,0,15,7.5,7.6,7.6,0,0,0,10.9.8,9.42,9.42,0,0,0,7.5,0Z" transform="translate(0 0)" style="fill:#0078e7"/><polygon points="11.4 8 5.8 4.8 5.8 11.3 11.4 8" style="fill:#fff"/></svg>
