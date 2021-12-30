@@ -9,11 +9,10 @@ var CONSTANT_s_KEY = 115;
 var loading;
 var sort_column; // new window or tab is always last_changed
 var sort_order;  // new window or tab is always descending
-var coordX;
-var coordY;
 
 // restore scroll position on submit/reload 
 document.addEventListener("DOMContentLoaded", function(event) {
+	load_functions();
 	var scrollpos = sessionStorage.getItem('scrollpos');
 	if (scrollpos) window.scrollTo(0, scrollpos);
 });
@@ -34,6 +33,17 @@ function storeScrollAndSearch() {
 	sessionStorage.setItem('searchtxt', document.getElementById("txtInput").value);
 }
 
+// mobile positioning of checkbox-controls grid popup
+document.addEventListener("touchstart", touchStartHandler, false);
+var touchXY = {};
+function touchStartHandler(event) {
+	var touches = event.changedTouches;
+	touchXY = {
+		clientX : touches[0].clientX,
+		clientY : touches[0].clientY
+	};
+}
+
 // (ctl)-alt-s search hotkey
 document.onkeyup = function(e) {
 	var e = e || window.event; // for IE to cover IEs window event-object
@@ -43,18 +53,7 @@ document.onkeyup = function(e) {
 	}
 }
 
-// keep track of click position for placement of checkbox-functions grid display
-document.addEventListener("click", clickPos);
-function clickPos(event) {
-	coordX = event.clientX;
-	coordY = event.clientY;
-}
-
-// page load functions
-window.addEventListener('DOMContentLoaded', (event) => {
-	load_functions();
-});
-
+// new window or tab loading
 function load_functions() {
 	// loading
 	loading = true;
@@ -172,6 +171,18 @@ function sortTable(n) {
 
 // check/uncheck all checkboxes
 function checkAll(e) {
+	var elemID = event.srcElement.id;
+	if (!elemID) return;
+	var elem = document.getElementById(elemID);
+	var rect = elem.getBoundingClientRect();
+	var offsetLeft = document.documentElement.scrollLeft + rect.left;
+	var offsetTop;
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+		offsetTop = touchXY.clientY; // + rect.top;
+	}
+	else {
+		offsetTop = document.documentElement.scrollTop + rect.top;
+	}
 	var i;
 	var checkboxes = document.getElementsByName('check');
 	var checkboxFunctions = document.getElementById('checkbox-functions');
@@ -179,9 +190,9 @@ function checkAll(e) {
 		for (i = 0; i < checkboxes.length; i++) {
 			checkboxes[i].checked = true;
 		}
-		checkboxFunctions.style.left = coordX + 25 + "px";
-		checkboxFunctions.style.top = coordY + "px";
 		checkboxFunctions.style.display = "";
+		checkboxFunctions.style.left = offsetLeft + 30 + "px";
+		checkboxFunctions.style.top = offsetTop + "px";
 	} else {
 		for (i = 0; i < checkboxes.length; i++) {
 			checkboxes[i].checked = false;
@@ -190,25 +201,32 @@ function checkAll(e) {
 	}
 }
 
-// check/uncheck checkall checkbox if all other checkboxes are checked/unchecked
-function checkChange() {
+// show/hide checkbox controls grid popup and check/uncheck checkall checkbox if all other checkboxes are checked/unchecked
+function checkChange(e) {
+	var elemID = event.srcElement.id;
+	if (!elemID) return;
+	var elem = document.getElementById(elemID);
+	var rect = elem.getBoundingClientRect();
+	var offsetLeft = document.documentElement.scrollLeft + rect.left;
+	var offsetTop;
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+		offsetTop = touchXY.clientY; // + rect.top;
+	}
+	else {
+		offsetTop = document.documentElement.scrollTop + rect.top;
+	}
 	var i;
 	var totalCheckbox = document.querySelectorAll('input[name="check"]').length;
 	var totalChecked = document.querySelectorAll('input[name="check"]:checked').length;
 	var checkboxFunctions = document.getElementById('checkbox-functions'); //document.querySelectorAll('[id=checkbox-functions]');
-	if (totalCheckbox == totalChecked) {
-		document.getElementsByName("showhide")[0].checked = true;
-	} else {
-		document.getElementsByName("showhide")[0].checked = false;
-	}
 	if (totalChecked > 0) {
 		checkboxFunctions.style.display = "";
-		checkboxFunctions.style.left = coordX + 25 + "px";
-		if ( coordY > ( window.innerHeight - checkboxFunctions.offsetHeight) ) {
+		checkboxFunctions.style.left = offsetLeft + 30 + "px";
+		if ( offsetTop > ( window.innerHeight - checkboxFunctions.offsetHeight) ) {
 			checkboxFunctions.style.top = (window.innerHeight - checkboxFunctions.offsetHeight) + "px";
 		}
 		else {
-			checkboxFunctions.style.top = coordY + "px";
+			checkboxFunctions.style.top = offsetTop + "px";
 		}
 	} else {
 		checkboxFunctions.style.display = "none";
