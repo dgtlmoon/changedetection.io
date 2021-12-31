@@ -15,6 +15,7 @@ class Fetcher():
     error = None
     status_code = None
     content = None # Should always be bytes.
+    headers = None
 
     fetcher_description ="No description"
 
@@ -113,6 +114,7 @@ class html_webdriver(Fetcher):
         # @todo - dom wait loaded?
         time.sleep(5)
         self.content = driver.page_source
+        self.headers = {}
 
         driver.quit()
 
@@ -156,4 +158,5 @@ class html_requests(Fetcher):
 
         self.status_code = r.status_code
         self.content = html
+        self.headers = r.headers
 
