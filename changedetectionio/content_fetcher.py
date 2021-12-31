@@ -70,7 +70,7 @@ class html_webdriver(Fetcher):
     # In the ENV vars, is prefixed with "webdriver_", so it is for example "webdriver_sslProxy"
     selenium_proxy_settings_mappings = ['ftpProxy', 'httpProxy', 'noProxy',
                                         'proxyAutoconfigUrl', 'sslProxy', 'autodetect',
-                                        'socksProxy', 'socksUsername', 'socksPassword']
+                                        'socksProxy', 'socksVersion', 'socksUsername', 'socksPassword']
     proxy=None
 
     def __init__(self):
