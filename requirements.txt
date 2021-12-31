@@ -29,4 +29,4 @@ cryptography ~= 3.4
 # Used for CSS filtering, replace with soupsieve and lxml for xpath
 bs4
 
-selenium ~= 3.141
+selenium ~= 3.150
