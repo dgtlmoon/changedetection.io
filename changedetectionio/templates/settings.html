@@ -13,6 +13,7 @@
             <li class="tab" id="default-tab"><a href="#general">General</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
             <li class="tab"><a href="#fetching">Fetching</a></li>
+            <li class="tab"><a href="#filters">Global Filters</a></li>
         </ul>
     </div>
     <div class="box-wrap inner">
@@ -65,6 +66,20 @@
                     </span>
                 </div>
             </div>
+
+
+            <div class="tab-pane-inner" id="filters">
+                <span class="pure-form-message-inline">Note: This is applied globally in addition to the per-watch rules.</span>
+                            <fieldset class="pure-group">
+                    {{ render_field(form.global_ignore_text, rows=5, placeholder="Some text to ignore in a line
+/some.regex\d{2}/ for case-INsensitive regex
+                    ") }}
+                    <span class="pure-form-message-inline">
+                    Each line processed separately, any line matching will be ignored.<br/>
+                    Regular Expression support, wrap the line in forward slash <b>/regex/</b>.
+                </span>
+           </div>
+
             <div id="actions">
                 <div class="pure-control-group">
                     <button type="submit" class="pure-button pure-button-primary">Save</button>
