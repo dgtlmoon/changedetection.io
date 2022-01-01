@@ -27,6 +27,7 @@ Open source web page monitoring, notification and change detection.
 - University/organisation news from their website
 - Detect and monitor changes in JSON API responses 
 - API monitoring and alerting
+- Changes in legal and other documents
 - Trigger API calls via notifications when text appears on a website
 - Glue together APIs using the JSON filter and JSON notifications
 - Create RSS feeds based on changes in web content
