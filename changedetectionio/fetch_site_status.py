@@ -129,11 +129,11 @@ class perform_site_check():
             update_obj["last_check_status"] = fetcher.get_last_status_code()
             update_obj["last_error"] = False
 
-
             # If there's text to skip
             # @todo we could abstract out the get_text() to handle this cleaner
-            if len(watch['ignore_text']):
-                stripped_text_from_html = self.strip_ignore_text(stripped_text_from_html, watch['ignore_text'])
+            text_to_ignore = watch.get('ignore_text', []) + self.datastore.data['settings']['application'].get('global_ignore_text', [])
+            if len(text_to_ignore):
+                stripped_text_from_html = self.strip_ignore_text(stripped_text_from_html, text_to_ignore)
             else:
                 stripped_text_from_html = stripped_text_from_html.encode('utf8')
 

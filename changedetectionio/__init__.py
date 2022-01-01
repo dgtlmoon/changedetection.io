@@ -552,6 +552,7 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'GET':
             form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'])
             form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
+            form.global_ignore_text.data = datastore.data['settings']['application']['global_ignore_text']
             form.extract_title_as_title.data = datastore.data['settings']['application']['extract_title_as_title']
             form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
             form.notification_title.data = datastore.data['settings']['application']['notification_title']
@@ -578,7 +579,8 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['notification_format'] = form.notification_format.data
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.data['settings']['application']['base_url'] = form.base_url.data
-
+            datastore.data['settings']['application']['global_ignore_text'] =  form.global_ignore_text.data
+            
             if form.trigger_check.data:
                 if len(form.notification_urls.data):
                     n_object = {'watch_url': "Test from changedetection.io!",
