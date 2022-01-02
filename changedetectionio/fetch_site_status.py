@@ -137,8 +137,11 @@ class perform_site_check():
             else:
                 stripped_text_from_html = stripped_text_from_html.encode('utf8')
 
-
-            fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
+            # Re #133 - if we should strip whitespaces from triggering the change detected comparison
+            if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
+                fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\n\t ')).hexdigest()
+            else:
+                fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
             blocked_by_not_found_trigger_text = False
 
