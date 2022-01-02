@@ -405,7 +405,7 @@ def changedetection_app(config=None, datastore_o=None):
         # Get the most recent one
         newest_history_key = datastore.get_val(uuid, 'newest_history_key')
 
-        # 0 means that theres only one, so that there should be no 'unviewed' history availabe
+        # 0 means that theres only one, so that there should be no 'unviewed' history available
         if newest_history_key == 0:
             newest_history_key = list(datastore.data['watching'][uuid]['history'].keys())[0]
 
@@ -418,7 +418,11 @@ def changedetection_app(config=None, datastore_o=None):
                 stripped_content = handler.strip_ignore_text(raw_content,
                                                              datastore.data['watching'][uuid]['ignore_text'])
 
-                checksum = hashlib.md5(stripped_content).hexdigest()
+                if datastore.data['settings']['application'].get('ignore_whitespace', False):
+                    checksum = hashlib.md5(stripped_content.translate(None, b'\r\n\t ')).hexdigest()
+                else:
+                    checksum = hashlib.md5(stripped_content).hexdigest()
+
                 return checksum
 
         return datastore.data['watching'][uuid]['previous_md5']
@@ -553,6 +557,7 @@ def changedetection_app(config=None, datastore_o=None):
             form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'])
             form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
             form.global_ignore_text.data = datastore.data['settings']['application']['global_ignore_text']
+            form.ignore_whitespace.data = datastore.data['settings']['application']['ignore_whitespace']
             form.extract_title_as_title.data = datastore.data['settings']['application']['extract_title_as_title']
             form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
             form.notification_title.data = datastore.data['settings']['application']['notification_title']
@@ -580,7 +585,8 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.data['settings']['application']['base_url'] = form.base_url.data
             datastore.data['settings']['application']['global_ignore_text'] =  form.global_ignore_text.data
-            
+            datastore.data['settings']['application']['ignore_whitespace'] = form.ignore_whitespace.data
+
             if form.trigger_check.data:
                 if len(form.notification_urls.data):
                     n_object = {'watch_url': "Test from changedetection.io!",

@@ -46,6 +46,7 @@ class ChangeDetectionStore:
                     'extract_title_as_title': False,
                     'fetch_backend': 'html_requests',
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
+                    'ignore_whitespace': False,
                     'notification_urls': [], # Apprise URL list
                     # Custom notification content
                     'notification_title': None,

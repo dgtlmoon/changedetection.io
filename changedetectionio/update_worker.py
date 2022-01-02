@@ -64,74 +64,77 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
 
                     else:
-                        if update_obj:
-                            try:
-                                self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
-                                if changed_detected:
-                                    n_object = {}
-                                    # A change was detected
-                                    fname = self.datastore.save_history_text(watch_uuid=uuid, contents=contents)
+                        try:
+                            watch = self.datastore.data['watching'][uuid]
 
-                                    # Update history with the stripped text for future reference, this will also mean we save the first
-                                    # Should always be keyed by string(timestamp)
-                                    self.datastore.update_watch(uuid, {"history": {str(update_obj["last_checked"]): fname}})
+                            # For the FIRST time we check a site, or a change detected, save the snapshot.
+                            if changed_detected or not watch['last_checked']:
+                                # A change was detected
+                                fname = self.datastore.save_history_text(watch_uuid=uuid, contents=contents)
+                                # Should always be keyed by string(timestamp)
+                                self.datastore.update_watch(uuid, {"history": {str(update_obj["last_checked"]): fname}})
 
-                                    watch = self.datastore.data['watching'][uuid]
+                            # Generally update anything interesting returned
+                            self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
-                                    print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))
+                            # A change was detected
+                            if changed_detected:
+                                n_object = {}
+                                print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))
 
-                                    # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
-                                    if len(watch['history']) > 1:
+                                # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
+                                if len(watch['history']) > 1:
 
-                                        dates = list(watch['history'].keys())
-                                        # Convert to int, sort and back to str again
-                                        # @todo replace datastore getter that does this automatically
-                                        dates = [int(i) for i in dates]
-                                        dates.sort(reverse=True)
-                                        dates = [str(i) for i in dates]
+                                    dates = list(watch['history'].keys())
+                                    # Convert to int, sort and back to str again
+                                    # @todo replace datastore getter that does this automatically
+                                    dates = [int(i) for i in dates]
+                                    dates.sort(reverse=True)
+                                    dates = [str(i) for i in dates]
 
-                                        prev_fname = watch['history'][dates[1]]
+                                    prev_fname = watch['history'][dates[1]]
 
 
-                                        # Did it have any notification alerts to hit?
-                                        if len(watch['notification_urls']):
-                                            print(">>> Notifications queued for UUID from watch {}".format(uuid))
-                                            n_object['notification_urls'] = watch['notification_urls']
-                                            n_object['notification_title'] = watch['notification_title']
-                                            n_object['notification_body'] = watch['notification_body']
-                                            n_object['notification_format'] = watch['notification_format']
+                                    # Did it have any notification alerts to hit?
+                                    if len(watch['notification_urls']):
+                                        print(">>> Notifications queued for UUID from watch {}".format(uuid))
+                                        n_object['notification_urls'] = watch['notification_urls']
+                                        n_object['notification_title'] = watch['notification_title']
+                                        n_object['notification_body'] = watch['notification_body']
+                                        n_object['notification_format'] = watch['notification_format']
 
-                                        # No? maybe theres a global setting, queue them all
-                                        elif len(self.datastore.data['settings']['application']['notification_urls']):
-                                            print(">>> Watch notification URLs were empty, using GLOBAL notifications for UUID: {}".format(uuid))
-                                            n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
-                                            n_object['notification_title'] = self.datastore.data['settings']['application']['notification_title']
-                                            n_object['notification_body'] = self.datastore.data['settings']['application']['notification_body']
-                                            n_object['notification_format'] = self.datastore.data['settings']['application']['notification_format']
+                                    # No? maybe theres a global setting, queue them all
+                                    elif len(self.datastore.data['settings']['application']['notification_urls']):
+                                        print(">>> Watch notification URLs were empty, using GLOBAL notifications for UUID: {}".format(uuid))
+                                        n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
+                                        n_object['notification_title'] = self.datastore.data['settings']['application']['notification_title']
+                                        n_object['notification_body'] = self.datastore.data['settings']['application']['notification_body']
+                                        n_object['notification_format'] = self.datastore.data['settings']['application']['notification_format']
+                                    else:
+                                        print(">>> NO notifications queued, watch and global notification URLs were empty.")
+
+                                    # Only prepare to notify if the rules above matched
+                                    if 'notification_urls' in n_object:
+                                        # HTML needs linebreak, but MarkDown and Text can use a linefeed
+                                        if n_object['notification_format'] == 'HTML':
+                                            line_feed_sep = "</br>"
                                         else:
-                                            print(">>> NO notifications queued, watch and global notification URLs were empty.")
+                                            line_feed_sep = "\n"
 
-                                        # Only prepare to notify if the rules above matched
-                                        if 'notification_urls' in n_object:
-                                            # HTML needs linebreak, but MarkDown and Text can use a linefeed
-                                            if n_object['notification_format'] == 'HTML':
-                                                line_feed_sep = "</br>"
-                                            else:
-                                                line_feed_sep = "\n"
+                                        from changedetectionio import diff
+                                        n_object.update({
+                                            'watch_url': watch['url'],
+                                            'uuid': uuid,
+                                            'current_snapshot': contents.decode('utf-8'),
+                                            'diff_full': diff.render_diff(prev_fname, fname, line_feed_sep=line_feed_sep),
+                                            'diff': diff.render_diff(prev_fname, fname, True, line_feed_sep=line_feed_sep)
+                                        })
 
-                                            from changedetectionio import diff
-                                            n_object.update({
-                                                'watch_url': watch['url'],
-                                                'uuid': uuid,
-                                                'current_snapshot': contents.decode('utf-8'),
-                                                'diff_full': diff.render_diff(prev_fname, fname, line_feed_sep=line_feed_sep),
-                                                'diff': diff.render_diff(prev_fname, fname, True, line_feed_sep=line_feed_sep)
-                                            })
+                                        self.notification_q.put(n_object)
 
-                                            self.notification_q.put(n_object)
-
-                            except Exception as e:
-                                print("!!!! Exception in update_worker !!!\n", e)
+                        except Exception as e:
+                            # Catch everything possible here, so that if a worker crashes, we don't lose it until restart!
+                            print("!!!! Exception in update_worker !!!\n", e)
 
                 self.current_uuid = None  # Done
                 self.q.task_done()
