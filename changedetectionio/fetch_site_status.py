@@ -122,6 +122,9 @@ class perform_site_check():
                 # get_text() via inscriptis
                 stripped_text_from_html = get_text(html_content)
 
+            # Re #340 - return the content before the 'ignore text' was applied
+            text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
+
             # We rely on the actual text in the html output.. many sites have random script vars etc,
             # in the future we'll implement other mechanisms.
 
@@ -181,4 +184,4 @@ class perform_site_check():
                         update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
 
 
-        return changed_detected, update_obj, stripped_text_from_html
+        return changed_detected, update_obj, text_content_before_ignored_filter
