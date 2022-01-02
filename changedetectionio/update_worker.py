@@ -133,6 +133,7 @@ class update_worker(threading.Thread):
                                         self.notification_q.put(n_object)
 
                         except Exception as e:
+                            # Catch everything possible here, so that if a worker crashes, we don't lose it until restart!
                             print("!!!! Exception in update_worker !!!\n", e)
 
                 self.current_uuid = None  # Done
