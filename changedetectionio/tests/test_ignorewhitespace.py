@@ -78,6 +78,12 @@ def test_check_ignore_whitespace(client, live_server):
     )
     assert b"1 Imported" in res.data
 
+    time.sleep(sleep_time_for_fetch_thread)
+    # Trigger a check
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+
+    set_original_ignore_response_but_with_whitespace()
+    time.sleep(sleep_time_for_fetch_thread)
     # Trigger a check
     client.get(url_for("api_watch_checknow"), follow_redirects=True)
 
@@ -88,15 +94,3 @@ def test_check_ignore_whitespace(client, live_server):
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
     assert b'/test-endpoint' in res.data
-
-    #set_original_ignore_response_but_with_whitespace()
-
-    # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
-
-    # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
-
-    # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
-    assert b'unviewed' not in res.data

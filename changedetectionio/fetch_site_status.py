@@ -163,8 +163,10 @@ class perform_site_check():
                         break
 
 
-            # could be None or False depending on JSON type
-            # On the first run of a site, watch['previous_md5'] will be an empty string
+            # On the first run of a site, watch['previous_md5'] will be an empty string, set it the current one.
+            if not watch['previous_md5']:
+                update_obj["previous_md5"] = fetched_md5
+
             if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:
                 changed_detected = True
 
@@ -172,7 +174,6 @@ class perform_site_check():
                 if self.datastore.get_val(uuid, 'previous_md5'):
                     update_obj["last_changed"] = timestamp
 
-                update_obj["previous_md5"] = fetched_md5
 
             # Extract title as title
             if is_html:
