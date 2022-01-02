@@ -70,14 +70,15 @@
 
             <div class="tab-pane-inner" id="filters">
                 <span class="pure-form-message-inline">Note: This is applied globally in addition to the per-watch rules.</span>
-                            <fieldset class="pure-group">
+                    <fieldset class="pure-group">
                     {{ render_field(form.global_ignore_text, rows=5, placeholder="Some text to ignore in a line
 /some.regex\d{2}/ for case-INsensitive regex
                     ") }}
                     <span class="pure-form-message-inline">
                     Each line processed separately, any line matching will be ignored.<br/>
                     Regular Expression support, wrap the line in forward slash <b>/regex/</b>.
-                </span>
+                     </span>
+                    </fieldset>
            </div>
 
             <div id="actions">
