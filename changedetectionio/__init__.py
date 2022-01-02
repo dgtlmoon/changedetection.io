@@ -418,7 +418,11 @@ def changedetection_app(config=None, datastore_o=None):
                 stripped_content = handler.strip_ignore_text(raw_content,
                                                              datastore.data['watching'][uuid]['ignore_text'])
 
-                checksum = hashlib.md5(stripped_content).hexdigest()
+                if datastore.data['settings']['application'].get('ignore_whitespace', False):
+                    checksum = hashlib.md5(stripped_content.translate(None, b'\r\n\t ')).hexdigest()
+                else:
+                    checksum = hashlib.md5(stripped_content).hexdigest()
+
                 return checksum
 
         return datastore.data['watching'][uuid]['previous_md5']
