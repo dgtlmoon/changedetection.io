@@ -2,7 +2,12 @@ import threading
 import queue
 import time
 
-# Requests for checking on the site use a pool of thread Workers managed by a Queue.
+# A single update worker
+#
+# Requests for checking on a single site(watch) from a queue of watches
+# (another process inserts watches into the queue that are time-ready for checking)
+
+
 class update_worker(threading.Thread):
     current_uuid = None
 
@@ -38,6 +43,13 @@ class update_worker(threading.Thread):
                     try:
                         now = time.time()
                         changed_detected, update_obj, contents = update_handler.run(uuid)
+
+                        # Re #342
+                        # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
+                        # We then convert/.decode('utf-8') for the notification etc
+                        if not isinstance(contents, (bytes, bytearray)):
+                            raise Exception("Error - returned data from the fetch handler SHOULD be bytes")
+
 
                         # Always record that we atleast tried
                         self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3)})
@@ -111,7 +123,7 @@ class update_worker(threading.Thread):
                                             n_object.update({
                                                 'watch_url': watch['url'],
                                                 'uuid': uuid,
-                                                'current_snapshot': str(contents),
+                                                'current_snapshot': contents.decode('utf-8'),
                                                 'diff_full': diff.render_diff(prev_fname, fname, line_feed_sep=line_feed_sep),
                                                 'diff': diff.render_diff(prev_fname, fname, True, line_feed_sep=line_feed_sep)
                                             })

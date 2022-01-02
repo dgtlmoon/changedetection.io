@@ -14,7 +14,7 @@ class EmptyReply(Exception):
 class Fetcher():
     error = None
     status_code = None
-    content = None # Should be bytes?
+    content = None # Should always be bytes.
 
     fetcher_description ="No description"
 
@@ -129,7 +129,6 @@ class html_webdriver(Fetcher):
         # driver.quit() seems to cause better exceptions
         driver.quit()
 
-
         return True
 
 # "html_requests" is listed as the default fetcher in store.py!
@@ -146,6 +145,8 @@ class html_requests(Fetcher):
                          timeout=timeout,
                          verify=False)
 
+        # https://stackoverflow.com/questions/44203397/python-requests-get-returns-improperly-decoded-text-instead-of-utf-8
+        # Return bytes here
         html = r.text
 
 
