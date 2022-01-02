@@ -58,8 +58,7 @@ class perform_site_check():
 
         watch = self.datastore.data['watching'][uuid]
 
-        update_obj = {'previous_md5': self.datastore.data['watching'][uuid]['previous_md5'],
-                      'history': {},
+        update_obj = {
                       "last_checked": timestamp
                       }
 
@@ -137,8 +136,16 @@ class perform_site_check():
             else:
                 stripped_text_from_html = stripped_text_from_html.encode('utf8')
 
+            # Re #133 - if we should strip whitespaces from triggering the change detected comparison
+            if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
+                fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
+            else:
+                fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
-            fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
+            # On the first run of a site, watch['previous_md5'] will be an empty string, set it the current one.
+            if not len(watch['previous_md5']):
+                watch['previous_md5'] = fetched_md5
+                update_obj["previous_md5"] = fetched_md5
 
             blocked_by_not_found_trigger_text = False
 
@@ -160,16 +167,12 @@ class perform_site_check():
                         break
 
 
-            # could be None or False depending on JSON type
-            # On the first run of a site, watch['previous_md5'] will be an empty string
+
             if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:
                 changed_detected = True
-
-                # Don't confuse people by updating as last-changed, when it actually just changed from None..
-                if self.datastore.get_val(uuid, 'previous_md5'):
-                    update_obj["last_changed"] = timestamp
-
                 update_obj["previous_md5"] = fetched_md5
+                update_obj["last_changed"] = timestamp
+
 
             # Extract title as title
             if is_html:
