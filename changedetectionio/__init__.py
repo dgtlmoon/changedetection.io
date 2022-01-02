@@ -405,7 +405,7 @@ def changedetection_app(config=None, datastore_o=None):
         # Get the most recent one
         newest_history_key = datastore.get_val(uuid, 'newest_history_key')
 
-        # 0 means that theres only one, so that there should be no 'unviewed' history availabe
+        # 0 means that theres only one, so that there should be no 'unviewed' history available
         if newest_history_key == 0:
             newest_history_key = list(datastore.data['watching'][uuid]['history'].keys())[0]
 

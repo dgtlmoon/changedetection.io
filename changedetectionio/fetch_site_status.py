@@ -58,8 +58,7 @@ class perform_site_check():
 
         watch = self.datastore.data['watching'][uuid]
 
-        update_obj = {'previous_md5': self.datastore.data['watching'][uuid]['previous_md5'],
-                      'history': {},
+        update_obj = {
                       "last_checked": timestamp
                       }
 
@@ -143,6 +142,11 @@ class perform_site_check():
             else:
                 fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
+            # On the first run of a site, watch['previous_md5'] will be an empty string, set it the current one.
+            if not len(watch['previous_md5']):
+                watch['previous_md5'] = fetched_md5
+                update_obj["previous_md5"] = fetched_md5
+
             blocked_by_not_found_trigger_text = False
 
             if len(watch['trigger_text']):
@@ -163,16 +167,11 @@ class perform_site_check():
                         break
 
 
-            # On the first run of a site, watch['previous_md5'] will be an empty string, set it the current one.
-            if not watch['previous_md5']:
-                update_obj["previous_md5"] = fetched_md5
 
             if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:
                 changed_detected = True
-
-                # Don't confuse people by updating as last-changed, when it actually just changed from None..
-                if self.datastore.get_val(uuid, 'previous_md5'):
-                    update_obj["last_changed"] = timestamp
+                update_obj["previous_md5"] = fetched_md5
+                update_obj["last_changed"] = timestamp
 
 
             # Extract title as title

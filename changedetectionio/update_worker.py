@@ -66,18 +66,21 @@ class update_worker(threading.Thread):
                     else:
                         if update_obj:
                             try:
-                                self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
-                                if changed_detected:
-                                    n_object = {}
+                                watch = self.datastore.data['watching'][uuid]
+
+                                # For the FIRST time we check a site, or a change detected, save the snapshot.
+                                if changed_detected or not watch['last_checked']:
                                     # A change was detected
                                     fname = self.datastore.save_history_text(watch_uuid=uuid, contents=contents)
-
-                                    # Update history with the stripped text for future reference, this will also mean we save the first
                                     # Should always be keyed by string(timestamp)
                                     self.datastore.update_watch(uuid, {"history": {str(update_obj["last_checked"]): fname}})
 
-                                    watch = self.datastore.data['watching'][uuid]
+                                # Generally update anything interesting returned
+                                self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
+                                # A change was detected
+                                if changed_detected:
+                                    n_object = {}
                                     print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))
 
                                     # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
