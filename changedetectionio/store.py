@@ -17,7 +17,7 @@ from changedetectionio.notification import default_notification_format, default_
 class ChangeDetectionStore:
     lock = Lock()
 
-    def __init__(self, datastore_path="/datastore", include_default_watches=False, version_tag="0.0.0"):
+    def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         # Should only be active for docker
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
         self.needs_write = False
@@ -421,8 +421,8 @@ class ChangeDetectionStore:
 
             # Once per minute is enough, more and it can cause high CPU usage
             # better here is to use something like self.app.config.exit.wait(1), but we cant get to 'app' from here
-            for i in range(1):
-                time.sleep(0.2)
+            for i in range(30):
+                time.sleep(2)
                 if self.stop_thread:
                     break
 
