@@ -15,10 +15,10 @@ global app
 def cleanup(datastore_path):
     # Unlink test output files
     files = ['output.txt',
-#             'url-watches.json',
+             'url-watches.json',
              'notification.txt',
              'count.txt',
-#             'endpoint-content.txt'
+             'endpoint-content.txt'
                  ]
     for file in files:
         try:
