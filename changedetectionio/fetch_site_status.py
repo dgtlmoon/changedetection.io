@@ -103,9 +103,16 @@ class perform_site_check():
             # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
             # return content().textfilter().jsonextract().checksumcompare() ?
 
-            is_html = True
+            is_json = fetcher.headers.get('Content-Type', '') == 'application/json'
+            is_html = not is_json
             css_filter_rule = watch['css_filter']
-            if css_filter_rule and len(css_filter_rule.strip()):
+
+            has_filter_rule = css_filter_rule and len(css_filter_rule.strip())
+            if is_json and not has_filter_rule:
+                css_filter_rule = "json:$"
+                has_filter_rule = True
+
+            if has_filter_rule:
                 if 'json:' in css_filter_rule:
                     stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, jsonpath_filter=css_filter_rule)
                     is_html = False
@@ -116,7 +123,7 @@ class perform_site_check():
             if is_html:
                 # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                 html_content = fetcher.content
-                if css_filter_rule and len(css_filter_rule.strip()):
+                if has_filter_rule:
                     html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
 
                 # get_text() via inscriptis
