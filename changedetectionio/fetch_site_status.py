@@ -139,7 +139,7 @@ class perform_site_check():
 
             # Re #133 - if we should strip whitespaces from triggering the change detected comparison
             if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
-                fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\n\t ')).hexdigest()
+                fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
             else:
                 fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
