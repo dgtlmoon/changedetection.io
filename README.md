@@ -16,6 +16,8 @@ Open source web page monitoring, notification and change detection.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new?template=https%3A%2F%2Fgithub.com%2Fdgtlmoon%2Fchangedetection.io%2Ftree%2Fmaster)
 
+Read the [Heroku notes and limitations wiki page first](https://github.com/dgtlmoon/changedetection.io/wiki/Heroku-notes)
+
 #### Example use cases
 
 - Products and services have a change in pricing
