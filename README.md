@@ -144,9 +144,9 @@ When you enable a `json:` filter, you can even automatically extract and parse e
 
 See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration
 
-### RaspberriPi support?
+### Raspberry Pi support?
 
-RaspberriPi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! 
+Raspberry Pi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! 
 
 ### Windows native support?
 
