@@ -14,7 +14,8 @@ class EmptyReply(Exception):
 class Fetcher():
     error = None
     status_code = None
-    content = None # Should be bytes?
+    content = None # Should always be bytes.
+    headers = None
 
     fetcher_description ="No description"
 
@@ -68,9 +69,12 @@ class html_webdriver(Fetcher):
 
     # Configs for Proxy setup
     # In the ENV vars, is prefixed with "webdriver_", so it is for example "webdriver_sslProxy"
-    selenium_proxy_settings_mappings = ['ftpProxy', 'httpProxy', 'noProxy',
+    selenium_proxy_settings_mappings = ['proxyType', 'ftpProxy', 'httpProxy', 'noProxy',
                                         'proxyAutoconfigUrl', 'sslProxy', 'autodetect',
-                                        'socksProxy', 'socksUsername', 'socksPassword']
+                                        'socksProxy', 'socksVersion', 'socksUsername', 'socksPassword']
+
+
+
     proxy=None
 
     def __init__(self):
@@ -110,6 +114,7 @@ class html_webdriver(Fetcher):
         # @todo - dom wait loaded?
         time.sleep(5)
         self.content = driver.page_source
+        self.headers = {}
 
         driver.quit()
 
@@ -125,7 +130,6 @@ class html_webdriver(Fetcher):
 
         # driver.quit() seems to cause better exceptions
         driver.quit()
-
 
         return True
 
@@ -143,6 +147,8 @@ class html_requests(Fetcher):
                          timeout=timeout,
                          verify=False)
 
+        # https://stackoverflow.com/questions/44203397/python-requests-get-returns-improperly-decoded-text-instead-of-utf-8
+        # Return bytes here
         html = r.text
 
 
@@ -152,4 +158,5 @@ class html_requests(Fetcher):
 
         self.status_code = r.status_code
         self.content = html
+        self.headers = r.headers
 

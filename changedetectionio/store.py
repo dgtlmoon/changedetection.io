@@ -45,6 +45,8 @@ class ChangeDetectionStore:
                     'base_url' : None,
                     'extract_title_as_title': False,
                     'fetch_backend': 'html_requests',
+                    'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
+                    'ignore_whitespace': False,
                     'notification_urls': [], # Apprise URL list
                     # Custom notification content
                     'notification_title': None,
@@ -368,6 +370,10 @@ class ChangeDetectionStore:
         import uuid
 
         output_path = "{}/{}".format(self.datastore_path, watch_uuid)
+        # Incase the operator deleted it, check and create.
+        if not os.path.isdir(output_path):
+            mkdir(output_path)
+
         fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
         with open(fname, 'wb') as f:
             f.write(contents)

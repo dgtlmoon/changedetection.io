@@ -44,6 +44,16 @@ def live_server_setup(live_server):
         with open("test-datastore/endpoint-content.txt", "r") as f:
             return f.read()
 
+    @live_server.app.route('/test-endpoint-json')
+    def test_endpoint_json():
+
+        from flask import make_response
+
+        with open("test-datastore/endpoint-content.txt", "r") as f:
+            resp = make_response(f.read())
+            resp.headers['Content-Type'] = 'application/json'
+            return resp
+
     # Just return the headers in the request
     @live_server.app.route('/test-headers')
     def test_headers():
