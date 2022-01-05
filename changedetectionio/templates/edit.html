@@ -109,8 +109,11 @@ User-Agent: wonderbra 1.0") }}
 /some.regex\d{2}/ for case-INsensitive regex
                     ") }}
                     <span class="pure-form-message-inline">
-                    Each line processed separately, any line matching will be ignored.<br/>
-                    Regular Expression support, wrap the line in forward slash <b>/regex/</b>.
+                        <ul>
+                            <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
+                            <li>Regular Expression support, wrap the line in forward slash <b>/regex/</b></li>
+                            <li>Changing this will affect the comparison checksum which may trigger an alert</li>
+                        </ul>
                 </span>
 
             </fieldset>
