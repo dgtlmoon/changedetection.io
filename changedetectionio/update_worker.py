@@ -65,6 +65,7 @@ class update_worker(threading.Thread):
                     else:
                         try:
                             watch = self.datastore.data['watching'][uuid]
+                            fname = "" # Saved history text filename
 
                             # For the FIRST time we check a site, or a change detected, save the snapshot.
                             if changed_detected or not watch['last_checked']:
