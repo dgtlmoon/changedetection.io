@@ -114,15 +114,17 @@ class perform_site_check():
                 if 'json:' in css_filter_rule:
                     stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, jsonpath_filter=css_filter_rule)
                     is_html = False
-                else:
-                    # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-                    stripped_text_from_html = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
 
             if is_html:
                 # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                 html_content = fetcher.content
                 if has_filter_rule:
-                    html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
+                    # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
+                    if css_filter_rule[0] == '/':
+                        html_content = html_tools.xpath_filter(xpath_filter=css_filter_rule, html_content=fetcher.content)
+                    else:
+                        # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+                        html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
 
                 # get_text() via inscriptis
                 stripped_text_from_html = get_text(html_content)

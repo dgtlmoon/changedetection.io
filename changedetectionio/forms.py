@@ -181,7 +181,7 @@ class ValidateListRegex(object):
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))
 
-class ValidateCSSJSONInput(object):
+class ValidateCSSJSONXPATHInput(object):
     """
     Filter validation
     @todo CSS validator ;)
@@ -191,6 +191,24 @@ class ValidateCSSJSONInput(object):
         self.message = message
 
     def __call__(self, form, field):
+
+        # Nothing to see here
+        if not len(field.data.strip()):
+            return
+
+        # Does it look like XPath?
+        if field.data.strip()[0] == '/':
+            from lxml import html, etree
+            tree = html.fromstring("<html></html>")
+
+            try:
+                tree.xpath(field.data.strip())
+            except etree.XPathEvalError as e:
+                message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
+                raise ValidationError(message % (field.data, str(e)))
+            except:
+                raise ValidationError("A system-error occurred when validating your XPath expression")
+
         if 'json:' in field.data:
             from jsonpath_ng.exceptions import JsonPathParserError, JsonPathLexerError
             from jsonpath_ng.ext import parse
@@ -202,6 +220,8 @@ class ValidateCSSJSONInput(object):
             except (JsonPathParserError, JsonPathLexerError) as e:
                 message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
                 raise ValidationError(message % (input, str(e)))
+            except:
+                raise ValidationError("A system-error occurred when validating your JSONPath expression")
 
             # Re #265 - maybe in the future fetch the page and offer a
             # warning/notice that its possible the rule doesnt yet match anything?
@@ -229,7 +249,7 @@ class watchForm(commonSettingsForm):
 
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
-    css_filter = StringField('CSS/JSON Filter', [ValidateCSSJSONInput()])
+    css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()])
     title = StringField('Title')
 
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])

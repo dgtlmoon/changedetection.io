@@ -91,6 +91,8 @@ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/dat
 ```bash
 docker-compose pull && docker-compose up -d
 ```
+### Filters
+XPath, JSONPath and CSS support comes baked in! You can be as specific as you need, use XPath exported from various XPath element query creation tools.
 
 ### Notifications
 
