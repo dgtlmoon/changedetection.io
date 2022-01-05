@@ -35,3 +35,4 @@ def test_error_handler(client, live_server):
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
     assert b'Status Code 403' in res.data
+    assert bytes("just now".encode('utf-8')) in res.data
