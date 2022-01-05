@@ -71,7 +71,7 @@ class update_worker(threading.Thread):
                                 # A change was detected
                                 fname = self.datastore.save_history_text(watch_uuid=uuid, contents=contents)
                                 # Should always be keyed by string(timestamp)
-                                self.datastore.update_watch(uuid, {"history": {str(update_obj["last_checked"]): fname}})
+                                self.datastore.update_watch(uuid, {"history": {str(round(time.time())): fname}})
 
                             # Generally update anything interesting returned
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
