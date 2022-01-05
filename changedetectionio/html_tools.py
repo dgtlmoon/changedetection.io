@@ -16,18 +16,6 @@ def css_filter(css_filter, html_content):
 
     return html_block + "\n"
 
-def xpath_filter(xpath_filter, html_content):
-    from lxml import html
-    from lxml import etree
-
-    tree = html.fromstring(html_content)
-    html_block = ""
-
-    for item in tree.xpath(xpath_filter):
-        html_block += etree.tostring(item, pretty_print=True)
-
-    return html_block
-
 # Extract/find element
 def extract_element(find='title', html_content=''):
 
