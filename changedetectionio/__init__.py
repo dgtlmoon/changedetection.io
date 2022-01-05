@@ -809,6 +809,7 @@ def changedetection_app(config=None, datastore_o=None):
         for f in Path(datastore_o.datastore_path).rglob('*.*'):
             hmm+=";"+str(f)
 
+        hmm+="\ndatastore: {} name: {}".format(datastore_o.datastore_path, backupname)
         return "I see "+hmm
         return send_from_directory(datastore_o.datastore_path, backupname, as_attachment=True)
 
