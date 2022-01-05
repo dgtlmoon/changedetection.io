@@ -754,6 +754,7 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def get_backup():
 
+        return "why heroku, why"
         import zipfile
         from pathlib import Path
 
