@@ -123,8 +123,7 @@ class html_webdriver(Fetcher):
         time.sleep(5)
         self.content = driver.page_source
         self.headers = {}
-
-
+    
         driver.quit()
 
 
