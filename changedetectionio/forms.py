@@ -196,7 +196,8 @@ class ValidateCSSJSONXPATHInput(object):
         if not len(field.data.strip()):
             return
 
-        if field.data[0]=='/':
+        # Does it look like XPath?
+        if field.data.strip()[0] == '/':
             from lxml import html, etree
             tree = html.fromstring("<html></html>")
 
@@ -206,7 +207,7 @@ class ValidateCSSJSONXPATHInput(object):
                 message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
                 raise ValidationError(message % (field.data, str(e)))
             except:
-                raise ValidationError("A system-error occured when validating your xpath expression")
+                raise ValidationError("A system-error occurred when validating your XPath expression")
 
         if 'json:' in field.data:
             from jsonpath_ng.exceptions import JsonPathParserError, JsonPathLexerError
@@ -219,6 +220,8 @@ class ValidateCSSJSONXPATHInput(object):
             except (JsonPathParserError, JsonPathLexerError) as e:
                 message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
                 raise ValidationError(message % (input, str(e)))
+            except:
+                raise ValidationError("A system-error occurred when validating your JSONPath expression")
 
             # Re #265 - maybe in the future fetch the page and offer a
             # warning/notice that its possible the rule doesnt yet match anything?
