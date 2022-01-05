@@ -9,6 +9,12 @@ import urllib3.exceptions
 
 
 class EmptyReply(Exception):
+    def __init__(self, status_code, url):
+        # Set this so we can use it in other parts of the app
+        self.status_code = status_code
+        self.url = url
+        return
+
     pass
 
 class Fetcher():
@@ -110,6 +116,8 @@ class html_webdriver(Fetcher):
 
         # @todo - how to check this? is it possible?
         self.status_code = 200
+        # @todo somehow we should try to get this working for WebDriver
+        # raise EmptyReply(url=url, status_code=r.status_code)
 
         # @todo - dom wait loaded?
         time.sleep(5)
@@ -151,10 +159,10 @@ class html_requests(Fetcher):
         # Return bytes here
         html = r.text
 
-
         # @todo test this
+        # @todo maybe you really want to test zero-byte return pages?
         if not r or not html or not len(html):
-            raise EmptyReply(url)
+            raise EmptyReply(url=url, status_code=r.status_code)
 
         self.status_code = r.status_code
         self.content = html

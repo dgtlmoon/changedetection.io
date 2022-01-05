@@ -16,7 +16,6 @@ def css_filter(css_filter, html_content):
 
     return html_block + "\n"
 
-
 # Extract/find element
 def extract_element(find='title', html_content=''):
 

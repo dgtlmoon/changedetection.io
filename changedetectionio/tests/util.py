@@ -54,6 +54,13 @@ def live_server_setup(live_server):
             resp.headers['Content-Type'] = 'application/json'
             return resp
 
+    @live_server.app.route('/test-403')
+    def test_endpoint_403_error():
+
+        from flask import make_response
+        resp = make_response('', 403)
+        return resp
+
     # Just return the headers in the request
     @live_server.app.route('/test-headers')
     def test_headers():
