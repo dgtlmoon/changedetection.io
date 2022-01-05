@@ -55,6 +55,7 @@ class update_worker(threading.Thread):
                     except PermissionError as e:
                         self.app.logger.error("File permission error updating", uuid, str(e))
                     except content_fetcher.EmptyReply as e:
+                        # Some kind of custom to-str handler in the exception handler that does this?
                         err_text = "EmptyReply: Status Code {}".format(e.status_code)
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
