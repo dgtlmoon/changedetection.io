@@ -39,9 +39,10 @@ class update_worker(threading.Thread):
                     changed_detected = False
                     contents = ""
                     update_obj= {}
+                    now = time.time()
 
                     try:
-                        now = time.time()
+
                         changed_detected, update_obj, contents = update_handler.run(uuid)
 
                         # Re #342
@@ -51,14 +52,12 @@ class update_worker(threading.Thread):
                             raise Exception("Error - returned data from the fetch handler SHOULD be bytes")
 
 
-                        # Always record that we atleast tried
-                        self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3)})
-
                     except PermissionError as e:
                         self.app.logger.error("File permission error updating", uuid, str(e))
                     except content_fetcher.EmptyReply as e:
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error':str(e)})
-
+                        err_text = "EmptyReply: Status Code {}".format(e.status_code)
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                           'last_check_status': e.status_code})
                     except Exception as e:
                         self.app.logger.error("Exception reached processing watch UUID:%s - %s", uuid, str(e))
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
@@ -135,6 +134,11 @@ class update_worker(threading.Thread):
                         except Exception as e:
                             # Catch everything possible here, so that if a worker crashes, we don't lose it until restart!
                             print("!!!! Exception in update_worker !!!\n", e)
+
+                    finally:
+                        # Always record that we atleast tried
+                        self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
+                                                                           'last_checked': round(time.time())})
 
                 self.current_uuid = None  # Done
                 self.q.task_done()

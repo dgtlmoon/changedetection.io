@@ -58,9 +58,7 @@ class perform_site_check():
 
         watch = self.datastore.data['watching'][uuid]
 
-        update_obj = {
-                      "last_checked": timestamp
-                      }
+        update_obj = {}
 
         extra_headers = self.datastore.get_val(uuid, 'headers')
 
