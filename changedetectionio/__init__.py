@@ -804,7 +804,11 @@ def changedetection_app(config=None, datastore_o=None):
                          compress_type=zipfile.ZIP_DEFLATED,
                          compresslevel=8)
 
-        return "why heroku, why, after zip.."
+        hmm=""
+        for previous_backup_filename in Path(datastore_o.datastore_path).rglob('*.zip'):
+            hmm+=";"+previous_backup_filename
+
+        return "I see "+hmm
         return send_from_directory(datastore_o.datastore_path, backupname, as_attachment=True)
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
