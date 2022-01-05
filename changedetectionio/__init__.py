@@ -754,7 +754,6 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def get_backup():
 
-        return "why heroku, why"
         import zipfile
         from pathlib import Path
 
@@ -805,6 +804,7 @@ def changedetection_app(config=None, datastore_o=None):
                          compress_type=zipfile.ZIP_DEFLATED,
                          compresslevel=8)
 
+        return "why heroku, why, after zip.."
         return send_from_directory(datastore_o.datastore_path, backupname, as_attachment=True)
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
