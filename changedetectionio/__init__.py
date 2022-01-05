@@ -804,14 +804,8 @@ def changedetection_app(config=None, datastore_o=None):
                          compress_type=zipfile.ZIP_DEFLATED,
                          compresslevel=8)
 
-        hmm=""
-        f=""
-        for f in Path(datastore_o.datastore_path).rglob('*.*'):
-            hmm+=";"+str(f)
-
-        hmm+="\ndatastore: {} name: {}".format(datastore_o.datastore_path, backupname)
-        return "I see "+hmm
-        return send_from_directory(datastore_o.datastore_path, backupname, as_attachment=True)
+        # Send_from_directory needs to be the full absolute path
+        return send_from_directory(os.path.abspath(datastore_o.datastore_path), backupname, as_attachment=True)
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
