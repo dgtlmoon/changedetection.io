@@ -805,8 +805,9 @@ def changedetection_app(config=None, datastore_o=None):
                          compresslevel=8)
 
         hmm=""
-        for previous_backup_filename in Path(datastore_o.datastore_path).rglob('*.zip'):
-            hmm+=";"+previous_backup_filename
+        f=""
+        for f in Path(datastore_o.datastore_path).rglob('*.*'):
+            hmm+=";"+str(f)
 
         return "I see "+hmm
         return send_from_directory(datastore_o.datastore_path, backupname, as_attachment=True)
