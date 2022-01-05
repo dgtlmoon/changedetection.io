@@ -191,9 +191,13 @@ class ValidateCSSJSONXPATHInput(object):
         self.message = message
 
     def __call__(self, form, field):
+
+        # Nothing to see here
+        if not len(field.data.strip()):
+            return
+
         if field.data[0]=='/':
             from lxml import html, etree
-
             tree = html.fromstring("<html></html>")
 
             try:
