@@ -663,7 +663,7 @@ def changedetection_app(config=None, datastore_o=None):
         uuids = request.form.get('uuids')
 
         if uuids == '' :
-            flash("No watches selected.")
+            flash("No watches selected.", "notice")
             
         else :
 
@@ -684,8 +684,9 @@ def changedetection_app(config=None, datastore_o=None):
                 except KeyError :
                     pass
 
-                flash("{0} watch{1} {2} rechecking.".format(i, "" if i == 1 else "es", "is" if i == 1 else "are"))
-            
+                flash("{} watch{} {} rechecking.".format(i, "" if (i == 1) else "es", "is" if (i == 1) else "are"), "notice")
+                #flash("{} watches are rechecking.".format(i))
+ 
             # Clear selected statuses, so we do not see the 'unviewed' class
             elif func == 'mark_selected_viewed' :
 
@@ -754,14 +755,15 @@ def changedetection_app(config=None, datastore_o=None):
 
                 datastore.needs_write = True
                 
-                flash("{0} {1} deleted.".format(i, "watch was" if (i) == 1 else "watches were")) 
+                flash("{} {} deleted.".format(i, "watch was" if (i) == 1 else "watches were"), "notice") 
             
             else :
                 
-                flash("Invalid parameter received.")
+                flash("Invalid parameter received.", "error")
 
         render_template(url_for('index'), tag = limit_tag)
-
+        return index()
+        
     @app.route("/diff/<string:uuid>", methods=['GET'])
     @login_required
     def diff_history_page(uuid):
@@ -937,7 +939,7 @@ def changedetection_app(config=None, datastore_o=None):
             if add_paused :
                 datastore.data['watching'][new_uuid]['paused'] = True
                 datastore.needs_write = True
-                flash("Watch added in a paused state.")
+                flash("Watch added in a paused state.", "notice")
                                 
             else : # watch now
                 # Straight into the queue. 
@@ -1003,11 +1005,12 @@ def changedetection_app(config=None, datastore_o=None):
         else:
             # No tag, no uuid, add everything.
             for watch_uuid, watch in datastore.data['watching'].items():
-
                 if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                     update_q.put(watch_uuid)
                     i += 1
-        flash("{0} watch{1} {2} rechecking.".format(i, "" if i == 1 else "es", "is" if i == 1 else "are"))
+
+        #flash("{} watch{} {} rechecking.".format(i, "" if (i == 1) else "es", "is" if (i == 1) else "are"), "notice")
+        flash("{} watches are rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
 
     # @todo handle ctrl break
@@ -1020,7 +1023,6 @@ def changedetection_app(config=None, datastore_o=None):
         threading.Thread(target=check_for_new_version).start()
 
     return app
-
 
 # Check for new version and anonymous stats
 def check_for_new_version():
