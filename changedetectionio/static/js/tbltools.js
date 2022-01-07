@@ -218,7 +218,13 @@ function checkChange(e) {
 	var i;
 	var totalCheckbox = document.querySelectorAll('input[name="check"]').length;
 	var totalChecked = document.querySelectorAll('input[name="check"]:checked').length;
-	var checkboxFunctions = document.getElementById('checkbox-functions'); //document.querySelectorAll('[id=checkbox-functions]');
+	var checkboxFunctions = document.getElementById('checkbox-functions');
+	if(totalCheckbox == totalChecked) {
+		document.getElementsByName("showhide")[0].checked=true;
+	}
+	else {
+		document.getElementsByName("showhide")[0].checked=false;
+	}
 	if (totalChecked > 0) {
 		checkboxFunctions.style.display = "";
 		checkboxFunctions.style.left = offsetLeft + 30 + "px";
@@ -388,4 +394,13 @@ function getSort() {
 			//alert("Your web browser does not support retaining sorting and page position.");
 		}
 	}
+}
+
+function closeGridDisplay() {
+	document.getElementsByName("showhide")[0].checked = false;
+	var checkboxes = document.getElementsByName('check');
+	for (var i = 0; i < checkboxes.length; i++) {
+		checkboxes[i].checked = false;
+	}
+	document.getElementById("checkbox-functions").style.display = "none";
 }
