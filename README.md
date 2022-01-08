@@ -91,6 +91,8 @@ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/dat
 ```bash
 docker-compose pull && docker-compose up -d
 ```
+### Filters
+XPath, JSONPath and CSS support comes baked in! You can be as specific as you need, use XPath exported from various XPath element query creation tools.
 
 ### Notifications
 
@@ -144,9 +146,9 @@ When you enable a `json:` filter, you can even automatically extract and parse e
 
 See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration
 
-### RaspberriPi support?
+### Raspberry Pi support?
 
-RaspberriPi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! 
+Raspberry Pi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! 
 
 ### Windows native support?
 

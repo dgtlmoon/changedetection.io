@@ -30,7 +30,7 @@ import datetime
 import pytz
 from copy import deepcopy
 
-__version__ = '0.39.5'
+__version__ = '0.39.6'
 
 datastore = None
 
@@ -806,7 +806,8 @@ def changedetection_app(config=None, datastore_o=None):
                          compress_type=zipfile.ZIP_DEFLATED,
                          compresslevel=8)
 
-        return send_from_directory(datastore_o.datastore_path, backupname, as_attachment=True)
+        # Send_from_directory needs to be the full absolute path
+        return send_from_directory(os.path.abspath(datastore_o.datastore_path), backupname, as_attachment=True)
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
