@@ -456,7 +456,8 @@ def changedetection_app(config=None, datastore_o=None):
 
             update_obj = {'url': form.url.data.strip(),
                           'minutes_between_check': form.minutes_between_check.data,
-                          'use_seconds': form.use_seconds.data,
+                          'seconds_between_check': form.seconds_between_check.data,
+                          'minutes_or_seconds': form.minutes_or_seconds.data,
                           'tag': form.tag.data.strip(),
                           'title': form.title.data.strip(),
                           'headers': form.headers.data,
@@ -974,7 +975,7 @@ def ticker_thread_check_time_launch_checks():
             # If they supplied an individual entry minutes to threshold.
             if 'minutes_between_check' in watch and watch['minutes_between_check'] is not None:
                 # Cast to int just incase                        #160, kluge for checks in seconds
-                max_time = int(watch['minutes_between_check']) * (1 if watch['use_seconds'] else 60)
+                max_time = int(watch['minutes_between_check']) * 60 #(1 if watch['use_seconds'] else 60)
             else:
                 # Default system wide.
                 max_time = int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60
