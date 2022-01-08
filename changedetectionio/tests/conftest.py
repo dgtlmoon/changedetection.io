@@ -18,7 +18,8 @@ def cleanup(datastore_path):
              'url-watches.json',
              'notification.txt',
              'count.txt',
-             'endpoint-content.txt']
+             'endpoint-content.txt'
+                 ]
     for file in files:
         try:
             os.unlink("{}/{}".format(datastore_path, file))

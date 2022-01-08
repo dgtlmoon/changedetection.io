@@ -17,9 +17,9 @@ services:
   #       Alternative WebDriver/selenium URL, do not use "'s or 's!
   #      - WEBDRIVER_URL=http://browser-chrome:4444/wd/hub
   #
-  #       WebDriver proxy settings webdriver_ftpProxy, webdriver_httpProxy, webdriver_noProxy,
+  #       WebDriver proxy settings webdriver_proxyType, webdriver_ftpProxy, webdriver_httpProxy, webdriver_noProxy,
   #                                webdriver_proxyAutoconfigUrl, webdriver_sslProxy, webdriver_autodetect,
-  #                                webdriver_socksProxy, webdriver_socksUsername, webdriver_socksPassword
+  #                                webdriver_socksProxy, webdriver_socksUsername, webdriver_socksVersion, webdriver_socksPassword
   #
   #             https://selenium-python.readthedocs.io/api.html#module-selenium.webdriver.common.proxy
   #
@@ -43,7 +43,8 @@ services:
       restart: unless-stopped
 
      # Used for fetching pages via WebDriver+Chrome where you need Javascript support.
-     # Does not work on rPi, https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver
+     # Now working on arm64 (needs testing on rPi - tested on Oracle ARM instance)
+     # replace image with seleniarm/standalone-chromium:4.0.0-20211213
 
 #    browser-chrome:
 #        hostname: browser-chrome

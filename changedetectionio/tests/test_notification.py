@@ -159,6 +159,9 @@ def test_check_notification(client, live_server):
 
     with open("test-datastore/notification.txt", "r") as f:
         notification_submission = f.read()
+        print ("Notification submission was:", notification_submission)
+        # Re #342 - check for accidental python byte encoding of non-utf8/string
+        assert "b'" not in notification_submission
 
         assert re.search('Watch UUID: [0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}', notification_submission, re.IGNORECASE)
         assert "Watch title: my title" in notification_submission

@@ -13,6 +13,7 @@
             <li class="tab" id="default-tab"><a href="#general">General</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
             <li class="tab"><a href="#fetching">Fetching</a></li>
+            <li class="tab"><a href="#filters">Global Filters</a></li>
         </ul>
     </div>
     <div class="box-wrap inner">
@@ -65,6 +66,34 @@
                     </span>
                 </div>
             </div>
+
+
+            <div class="tab-pane-inner" id="filters">
+
+                    <fieldset class="pure-group">
+                    {{ render_field(form.ignore_whitespace) }}
+                    <span class="pure-form-message-inline">Ignore whitespace, tabs and new-lines/line-feeds when considering if a change was detected.<br/>
+                    <i>Note:</i> Changing this will change the status of your existing watches, possibily trigger alerts etc.
+                    </span>
+                    </fieldset>
+
+
+                    <fieldset class="pure-group">
+                    {{ render_field(form.global_ignore_text, rows=5, placeholder="Some text to ignore in a line
+/some.regex\d{2}/ for case-INsensitive regex
+                    ") }}
+                    <span class="pure-form-message-inline">Note: This is applied globally in addition to the per-watch rules.</span><br/>
+                    <span class="pure-form-message-inline">
+                        <ul>
+                            <li>Note: This is applied globally in addition to the per-watch rules.</li>
+                            <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
+                            <li>Regular Expression support, wrap the line in forward slash <b>/regex/</b></li>
+                            <li>Changing this will affect the comparison checksum which may trigger an alert</li>
+                        </ul>
+                     </span>
+                    </fieldset>
+           </div>
+
             <div id="actions">
                 <div class="pure-control-group">
                     <button type="submit" class="pure-button pure-button-primary">Save</button>

@@ -17,6 +17,20 @@ def css_filter(css_filter, html_content):
     return html_block + "\n"
 
 
+# Return str Utf-8 of matched rules
+def xpath_filter(xpath_filter, html_content):
+    from lxml import html
+    from lxml import etree
+
+    tree = html.fromstring(html_content)
+    html_block = ""
+
+    for item in tree.xpath(xpath_filter.strip()):
+        html_block+= etree.tostring(item, pretty_print=True).decode('utf-8')+"<br/>"
+
+    return html_block
+
+
 # Extract/find element
 def extract_element(find='title', html_content=''):
 

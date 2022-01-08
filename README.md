@@ -16,6 +16,8 @@ Open source web page monitoring, notification and change detection.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new?template=https%3A%2F%2Fgithub.com%2Fdgtlmoon%2Fchangedetection.io%2Ftree%2Fmaster)
 
+Read the [Heroku notes and limitations wiki page first](https://github.com/dgtlmoon/changedetection.io/wiki/Heroku-notes)
+
 #### Example use cases
 
 - Products and services have a change in pricing
@@ -27,6 +29,7 @@ Open source web page monitoring, notification and change detection.
 - University/organisation news from their website
 - Detect and monitor changes in JSON API responses 
 - API monitoring and alerting
+- Changes in legal and other documents
 - Trigger API calls via notifications when text appears on a website
 - Glue together APIs using the JSON filter and JSON notifications
 - Create RSS feeds based on changes in web content
@@ -88,6 +91,8 @@ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/dat
 ```bash
 docker-compose pull && docker-compose up -d
 ```
+### Filters
+XPath, JSONPath and CSS support comes baked in! You can be as specific as you need, use XPath exported from various XPath element query creation tools.
 
 ### Notifications
 
@@ -141,9 +146,9 @@ When you enable a `json:` filter, you can even automatically extract and parse e
 
 See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration
 
-### RaspberriPi support?
+### Raspberry Pi support?
 
-RaspberriPi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! 
+Raspberry Pi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! 
 
 ### Windows native support?
 
