@@ -1108,8 +1108,8 @@ def ticker_thread_check_time_launch_checks():
         for uuid, watch in copied_datastore.data['watching'].items():
             # If they supplied an individual entry minutes to threshold.
             if 'minutes_between_check' in watch and watch['minutes_between_check'] is not None:
-                # Cast to int just incase                        #160, kluge for checks in seconds
-                max_time = int(watch['minutes_between_check']) * 60 #(1 if watch['use_seconds'] else 60)
+                # Cast to int just incase
+                max_time = int(watch['minutes_between_check']) * 60
             else:
                 # Default system wide.
                 max_time = int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60

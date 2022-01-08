@@ -69,9 +69,6 @@ class ChangeDetectionStore:
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
             'minutes_between_check': None,
-            # #160
-            'seconds_between_check': None,
-            'minutes_or_seconds': 'minutes',
             'previous_md5': "",
             'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send

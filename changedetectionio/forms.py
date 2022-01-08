@@ -249,9 +249,6 @@ class watchForm(commonSettingsForm):
 
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
-    seconds_between_check = html5.IntegerField('Maximum time in seconds until recheck',
-                                               [validators.Optional(), validators.NumberRange(min=1,max=59)])
-    minutes_or_seconds = RadioField('Minutes or Seconds', choices=[('minutes','Minutes'),('seconds','Seconds')])
     css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()])
     title = StringField('Title')
 

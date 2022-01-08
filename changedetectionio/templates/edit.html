@@ -34,7 +34,6 @@
                     <div class="pure-control-group">
                         <span id="duration">
 							{{ render_field(form.minutes_between_check) }}
-							{{ render_field(form.minutes_or_seconds, onchange="minutes_or_seconds_change()") }}
 							</span>
                         {% if using_default_minutes %}
                         <span id="minutes-message-default" class="pure-form-message-inline">Currently using the <a
