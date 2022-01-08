@@ -399,7 +399,7 @@ function getSort() {
 function closeGridDisplay() {
 	document.getElementsByName("showhide")[0].checked = false;
 	var checkboxes = document.getElementsByName('check');
-	for (var i = 0; i < checkboxes.length; i++) {
+	for (i = 0; i < checkboxes.length; i++) {
 		checkboxes[i].checked = false;
 	}
 	document.getElementById("checkbox-functions").style.display = "none";

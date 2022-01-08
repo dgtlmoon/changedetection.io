@@ -48,39 +48,3 @@ function focus_error_tab() {
     }
     return false;
 }
-
-function use_seconds_change() {
-	// var isChecked = document.querySelectorAll('input[id="use_seconds"]:checked').length
-	// var labelIntegerField = document.querySelector("label[for=minutes_between_check]");
-	// var msgDefault = document.getElementById("minutes-message-default");
-	// var msgNonDefault = document.getElementById("minutes-message-non-default");
-    // var msgWarning = document.getElementById("seconds-warning");
-	// if (isChecked) {
-		// labelIntegerField.innerHTML = "Maximum time in seconds until recheck";
-		// try {
-			// msgDefault.style.display = "none";
-		// } catch(error) {
-			//continue, won't be present if not default interval
-		// }
-		// try {
-			// msgNonDefault.style.display = "none";
-		// } catch(error) {
-			//continue, won't be present if not default interval
-		// }
-		// msgWarning.style.display = "";
-	// }
-    // else {
-		// labelIntegerField.innerHTML = "Maximum time in minutes until recheck";
-		// try {
-			// msgDefault.style.display = "";
-		// } catch(error) {
-			//continue, won't be present if not default interval
-		// }
-		// try {
-			// msgNonDefault.style.display = "";
-		// } catch(error) {
-			//continue, won't be present if not default interval
-		// }
-		// msgWarning.style.display = "none";
-    // }
-}
