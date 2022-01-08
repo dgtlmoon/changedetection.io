@@ -199,6 +199,7 @@ section.content {
 	z-index: 1;
 	text-align: left;
 	font-family: monospace;
+	font-size: 12pt;
 	display: grid;
 	display: -ms-grid;     /* IE grid support */
 	-ms-grid-columns: 1fr; /* IE grid support */
