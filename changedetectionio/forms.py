@@ -261,3 +261,5 @@ class globalSettingsForm(commonSettingsForm):
                                                [validators.NumberRange(min=1)])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
     base_url = StringField('Base URL', validators=[validators.Optional()])
+    global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
+    ignore_whitespace = BooleanField('Ignore whitespace')

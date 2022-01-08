@@ -405,7 +405,7 @@ def changedetection_app(config=None, datastore_o=None):
         # Get the most recent one
         newest_history_key = datastore.get_val(uuid, 'newest_history_key')
 
-        # 0 means that theres only one, so that there should be no 'unviewed' history availabe
+        # 0 means that theres only one, so that there should be no 'unviewed' history available
         if newest_history_key == 0:
             newest_history_key = list(datastore.data['watching'][uuid]['history'].keys())[0]
 
@@ -418,7 +418,11 @@ def changedetection_app(config=None, datastore_o=None):
                 stripped_content = handler.strip_ignore_text(raw_content,
                                                              datastore.data['watching'][uuid]['ignore_text'])
 
-                checksum = hashlib.md5(stripped_content).hexdigest()
+                if datastore.data['settings']['application'].get('ignore_whitespace', False):
+                    checksum = hashlib.md5(stripped_content.translate(None, b'\r\n\t ')).hexdigest()
+                else:
+                    checksum = hashlib.md5(stripped_content).hexdigest()
+
                 return checksum
 
         return datastore.data['watching'][uuid]['previous_md5']
@@ -554,6 +558,8 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'GET':
             form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'])
             form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
+            form.global_ignore_text.data = datastore.data['settings']['application']['global_ignore_text']
+            form.ignore_whitespace.data = datastore.data['settings']['application']['ignore_whitespace']
             form.extract_title_as_title.data = datastore.data['settings']['application']['extract_title_as_title']
             form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
             form.notification_title.data = datastore.data['settings']['application']['notification_title']
@@ -580,6 +586,8 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['notification_format'] = form.notification_format.data
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.data['settings']['application']['base_url'] = form.base_url.data
+            datastore.data['settings']['application']['global_ignore_text'] =  form.global_ignore_text.data
+            datastore.data['settings']['application']['ignore_whitespace'] = form.ignore_whitespace.data
 
             if form.trigger_check.data:
                 if len(form.notification_urls.data):
@@ -752,7 +760,8 @@ def changedetection_app(config=None, datastore_o=None):
         from pathlib import Path
 
         # Remove any existing backup file, for now we just keep one file
-        for previous_backup_filename in Path(app.config['datastore_path']).rglob('changedetection-backup-*.zip'):
+
+        for previous_backup_filename in Path(datastore_o.datastore_path).rglob('changedetection-backup-*.zip'):
             os.unlink(previous_backup_filename)
 
         # create a ZipFile object
@@ -760,7 +769,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # We only care about UUIDS from the current index file
         uuids = list(datastore.data['watching'].keys())
-        backup_filepath = os.path.join(app.config['datastore_path'], backupname)
+        backup_filepath = os.path.join(datastore_o.datastore_path, backupname)
 
         with zipfile.ZipFile(backup_filepath, "w",
                              compression=zipfile.ZIP_DEFLATED,
@@ -770,22 +779,22 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.sync_to_json()
 
             # Add the index
-            zipObj.write(os.path.join(app.config['datastore_path'], "url-watches.json"), arcname="url-watches.json")
+            zipObj.write(os.path.join(datastore_o.datastore_path, "url-watches.json"), arcname="url-watches.json")
 
             # Add the flask app secret
-            zipObj.write(os.path.join(app.config['datastore_path'], "secret.txt"), arcname="secret.txt")
+            zipObj.write(os.path.join(datastore_o.datastore_path, "secret.txt"), arcname="secret.txt")
 
             # Add any snapshot data we find, use the full path to access the file, but make the file 'relative' in the Zip.
-            for txt_file_path in Path(app.config['datastore_path']).rglob('*.txt'):
+            for txt_file_path in Path(datastore_o.datastore_path).rglob('*.txt'):
                 parent_p = txt_file_path.parent
                 if parent_p.name in uuids:
                     zipObj.write(txt_file_path,
-                                 arcname=str(txt_file_path).replace(app.config['datastore_path'], ''),
+                                 arcname=str(txt_file_path).replace(datastore_o.datastore_path, ''),
                                  compress_type=zipfile.ZIP_DEFLATED,
                                  compresslevel=8)
 
             # Create a list file with just the URLs, so it's easier to port somewhere else in the future
-            list_file = os.path.join(app.config['datastore_path'], "url-list.txt")
+            list_file = os.path.join(datastore_o.datastore_path, "url-list.txt")
             with open(list_file, "w") as f:
                 for uuid in datastore.data['watching']:
                     url = datastore.data['watching'][uuid]['url']
@@ -797,7 +806,7 @@ def changedetection_app(config=None, datastore_o=None):
                          compress_type=zipfile.ZIP_DEFLATED,
                          compresslevel=8)
 
-        return send_from_directory(app.config['datastore_path'], backupname, as_attachment=True)
+        return send_from_directory(datastore_o.datastore_path, backupname, as_attachment=True)
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):

@@ -111,6 +111,21 @@ def set_original_response():
         f.write(test_return_data)
     return None
 
+
+def set_response_with_html():
+    test_return_data = """
+    {
+      "test": [
+        {
+          "html": "<b>"
+        }
+      ]
+    }
+    """
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+    return None
+
 def set_modified_response():
     test_return_data = """
     {
@@ -137,6 +152,37 @@ def set_modified_response():
         f.write(test_return_data)
 
     return None
+
+def test_check_json_without_filter(client, live_server):
+    # Request a JSON document from a application/json source containing HTML
+    # and be sure it doesn't get chewed up by instriptis
+    set_response_with_html()
+
+    # Give the endpoint time to spin up
+    time.sleep(1)
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint_json', _external=True)
+    client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+
+    # Trigger a check
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+
+    # Give the thread time to pick it up
+    time.sleep(3)
+
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    assert b'&#34;&lt;b&gt;' in res.data
+    assert res.data.count(b'{\n') >= 2
+
 
 def test_check_json_filter(client, live_server):
     json_filter = 'json:boss.name'
