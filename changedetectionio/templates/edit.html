@@ -121,11 +121,15 @@ User-Agent: wonderbra 1.0") }}
                     <div class="pure-control-group">
                         {{ render_field(form.trigger_text, rows=5, placeholder="Some text to wait for in a line
 /some.regex\d{2}/ for case-INsensitive regex
-                    ") }}</br>
-                        <span class="pure-form-message-inline">Text to wait for before triggering a change/notification, all text and regex are tested <i>case-insensitive</i>.</span><br/>
-                        <span class="pure-form-message-inline">Trigger text is processed from the result-text that comes out of any <a href="#filters">CSS/JSON Filters</a> for this watch</span>.<br/>
-                        <span class="pure-form-message-inline">Each line is process separately (think of each line as "OR")</span><br/>
-                        <span class="pure-form-message-inline">Note: Wrap in forward slash / to use regex  example: <span style="font-family: monospace; background: #eee">/foo\d/</span> </span>
+                    ") }}
+                        <span class="pure-form-message-inline">
+                    <ul>
+                        <li>Text to wait for before triggering a change/notification, all text and regex are tested <i>case-insensitive</i>.</li>
+                        <li>Trigger text is processed from the result-text that comes out of any CSS/JSON Filters for this watch</li>
+                        <li>Each line is process separately (think of each line as "OR")</li>
+                        <li>Note: Wrap in forward slash / to use regex  example: <span style="font-family: monospace; background: #eee">/foo\d/</span></li>
+                    </ul>
+                        </span>
                     </div>
                 </fieldset>
             </div>
