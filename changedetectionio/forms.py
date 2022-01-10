@@ -130,6 +130,21 @@ class ValidateContentFetcherIsReady(object):
                 raise ValidationError(message % (field.data, e))
 
 
+class ValidateNotificationBodyAndTitleWhenURLisSet(object):
+    """
+       Validates that they entered something in both notification title+body when the URL is set
+       Due to https://github.com/dgtlmoon/changedetection.io/issues/360
+       """
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        if len(field.data):
+            if not len(form.notification_title.data) or not len(form.notification_body.data):
+                message = field.gettext('Notification Body and Title is required when a Notification URL is used')
+                raise ValidationError(message)
+
 class ValidateAppRiseServers(object):
     """
        Validates that each URL given is compatible with AppRise
@@ -234,7 +249,7 @@ class quickWatchForm(Form):
 
 class commonSettingsForm(Form):
 
-    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers()])
+    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateNotificationBodyAndTitleWhenURLisSet(), ValidateAppRiseServers()])
     notification_title = StringField('Notification Title', default=default_notification_title, validators=[validators.Optional(), ValidateTokensList()])
     notification_body = TextAreaField('Notification Body', default=default_notification_body, validators=[validators.Optional(), ValidateTokensList()])
     notification_format = SelectField('Notification Format', choices=valid_notification_formats.keys(), default=default_notification_format)
