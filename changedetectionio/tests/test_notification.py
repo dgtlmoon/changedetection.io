@@ -4,6 +4,7 @@ import re
 from flask import url_for
 from . util import set_original_response, set_modified_response, live_server_setup
 import logging
+from changedetectionio.notification import default_notification_body, default_notification_title
 
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
@@ -14,6 +15,11 @@ def test_check_notification(client, live_server):
 
     # Give the endpoint time to spin up
     time.sleep(3)
+
+    # Re 360 - new install should have defaults set
+    res = client.get(url_for("settings_page"))
+    assert default_notification_body.encode() in res.data
+    assert default_notification_title.encode() in res.data
 
     # When test mode is in BASE_URL env mode, we should see this already configured
     env_base_url = os.getenv('BASE_URL', '').strip()
