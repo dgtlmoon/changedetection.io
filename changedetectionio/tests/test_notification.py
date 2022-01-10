@@ -201,3 +201,21 @@ def test_check_notification(client, live_server):
     )
 
     assert bytes("is not a valid token".encode('utf-8')) in res.data
+
+    # Re #360 some validation
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"notification_urls": notification_url,
+              "notification_title": "",
+              "notification_body": "",
+              "notification_format": "Text",
+              "url": test_url,
+              "tag": "my tag",
+              "title": "my title",
+              "headers": "",
+              "fetch_backend": "html_requests",
+              "trigger_check": "y"},
+        follow_redirects=True
+    )
+    assert b"Notification Body and Title is required when a Notification URL is used" in res.data
+
