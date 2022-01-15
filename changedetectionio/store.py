@@ -301,10 +301,10 @@ class ChangeDetectionStore:
                 del_timestamps.append(timestamp)
                 changes_removed += 1
 
-                if not limit_timestamp:
-                    self.data['watching'][uuid]['last_checked'] = 0
-                    self.data['watching'][uuid]['last_changed'] = 0
-                    self.data['watching'][uuid]['previous_md5'] = 0
+        if not limit_timestamp:
+            self.data['watching'][uuid]['last_checked'] = 0
+            self.data['watching'][uuid]['last_changed'] = 0
+            self.data['watching'][uuid]['previous_md5'] = ""
 
 
         for timestamp in del_timestamps:
@@ -323,7 +323,7 @@ class ChangeDetectionStore:
                             content = fp.read()
                         self.data['watching'][uuid]['previous_md5'] = hashlib.md5(content).hexdigest()
                     except (FileNotFoundError, IOError):
-                        self.data['watching'][uuid]['previous_md5'] = False
+                        self.data['watching'][uuid]['previous_md5'] = ""
                         pass
 
         self.needs_write = True
