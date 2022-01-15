@@ -11,14 +11,22 @@ def test_basic_auth(client, live_server):
     time.sleep(1)
 
     # Add our URL to the import page
-    test_url = url_for('test_basicauth_method', _external=True)
+    test_url = url_for('test_basicauth_method', _external=True).replace("//","//myuser:mypass@")
 
     res = client.post(
         url_for("import_page"),
-        data={"urls": test_url.replace("//","//myuser:mypass@")},
+        data={"urls": test_url},
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
+
+    # Check form validation
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"css_filter": "", "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
 
     # Trigger a check
     client.get(url_for("api_watch_checknow"), follow_redirects=True)
