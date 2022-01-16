@@ -130,6 +130,21 @@ class ValidateContentFetcherIsReady(object):
                 raise ValidationError(message % (field.data, e))
 
 
+class ValidateNotificationBodyAndTitleWhenURLisSet(object):
+    """
+       Validates that they entered something in both notification title+body when the URL is set
+       Due to https://github.com/dgtlmoon/changedetection.io/issues/360
+       """
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        if len(field.data):
+            if not len(form.notification_title.data) or not len(form.notification_body.data):
+                message = field.gettext('Notification Body and Title is required when a Notification URL is used')
+                raise ValidationError(message)
+
 class ValidateAppRiseServers(object):
     """
        Validates that each URL given is compatible with AppRise
@@ -161,7 +176,24 @@ class ValidateTokensList(object):
             if not p.strip('{}') in notification.valid_tokens:
                 message = field.gettext('Token \'%s\' is not a valid token.')
                 raise ValidationError(message % (p))
+            
+class validateURL(object):
+    
+    """
+       Flask wtform validators wont work with basic auth
+    """
 
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        import validators
+        try:
+            validators.url(field.data.strip())
+        except validators.ValidationFailure:
+            message = field.gettext('\'%s\' is not a valid URL.' % (field.data.strip()))
+            raise ValidationError(message)
+        
 class ValidateListRegex(object):
     """
     Validates that anything that looks like a regex passes as a regex
@@ -229,12 +261,12 @@ class ValidateCSSJSONXPATHInput(object):
 class quickWatchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
     # `require_tld` = False is needed even for the test harness "http://localhost:5005.." to run
-    url = html5.URLField('URL', [validators.URL(require_tld=False)])
+    url = html5.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
 class commonSettingsForm(Form):
 
-    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers()])
+    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateNotificationBodyAndTitleWhenURLisSet(), ValidateAppRiseServers()])
     notification_title = StringField('Notification Title', default=default_notification_title, validators=[validators.Optional(), ValidateTokensList()])
     notification_body = TextAreaField('Notification Body', default=default_notification_body, validators=[validators.Optional(), ValidateTokensList()])
     notification_format = SelectField('Notification Format', choices=valid_notification_formats.keys(), default=default_notification_format)
@@ -244,7 +276,7 @@ class commonSettingsForm(Form):
 
 class watchForm(commonSettingsForm):
 
-    url = html5.URLField('URL', [validators.URL(require_tld=False)])
+    url = html5.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
