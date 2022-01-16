@@ -103,4 +103,14 @@ def live_server_setup(live_server):
         print("\n>> Test notification endpoint was hit.\n")
         return "Text was set"
 
+
+    # Just return the verb in the request
+    @live_server.app.route('/test-basicauth', methods=['GET'])
+    def test_basicauth_method():
+
+        from flask import request
+        auth = request.authorization
+        ret = " ".join([auth.username, auth.password, auth.type])
+        return ret
+
     live_server.start()
