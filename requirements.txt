@@ -34,3 +34,6 @@ lxml
 
 # 3.141 was missing socksVersion, 3.150 was not in pypi, so we try 4.1.0
 selenium ~= 4.1.0
+
+# Used for cron expression validation and next check calculation
+croniter ~= 1.1.0

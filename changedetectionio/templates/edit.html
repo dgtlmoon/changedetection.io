@@ -3,7 +3,6 @@
 {% from '_helpers.jinja' import render_field %}
 {% from '_common_fields.jinja' import render_common_settings_form %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
-
 <div class="edit-form monospaced-textarea">
 
     <div class="tabs">
@@ -33,23 +32,31 @@
                         <span class="pure-form-message-inline">Organisational tag/group name used in the main listing page</span>
                     </div>
                     <div class="pure-control-group">
-                        <span id="duration">
-							{{ render_field(form.minutes_between_check) }}
-							{{ render_field(form.minutes_or_seconds, onchange="minutes_or_seconds_change()") }}
-							</span>
+						<div id="interval">
+							{{ render_field(form.time_between_check) }}
+							{{ render_field(form.time_interval) }}
+							{% if watch.time_interval == "seconds" %}
+								<script>document.getElementById("time_interval-1").checked = true;</script>
+							{% endif %}
+						</div>
                         {% if using_default_minutes %}
-                        <span id="minutes-message-default" class="pure-form-message-inline">Currently using the <a
+                        <span class="pure-form-message-inline">Currently using the <a
                                 href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>, change to another value if you want to be specific.</span>
                         {% else %}
-                        <span id="minutes-message-non-default" class="pure-form-message-inline">Set to blank to use the <a
+                        <span class="pure-form-message-inline">Set to blank to use the <a
                                 href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>.</span>
                         {% endif %}
                     </div>
                     <div class="pure-control-group">
-                        
-                        <!-- <span id="seconds-warning" class="pure-form-message-inline" style="display:{{'' if watch.use_seconds == True else 'none'}};">Warning: Setting the recheck duration too short can overload the queue and lead to
-unstable performance and application crashes. Test and adjust the duration to ensure
-it allows sufficent time to check the target website before queing the watch again.</span> -->
+                        {{ render_field(form.cron_expression) }}
+						{% if watch.cron_next_check != 0 %}
+							<span class="pure-form-message cron-message">Next check: {{ watch.cron_next_check|format_timestamp }}</span>
+							<span class="pure-form-message cron-message">Set to blank to use time between checks</span>
+						{% endif %}
+                        <span class="pure-form-message-inline">Cron help: <a href='https://crontab.guru/' target='_blank'>https://crontab.guru</a></span>
+					</div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.extract_title_as_title) }}
                     </div>
                 </fieldset>
             </div>

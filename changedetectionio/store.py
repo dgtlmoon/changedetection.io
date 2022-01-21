@@ -37,7 +37,7 @@ class ChangeDetectionStore:
                 },
                 'requests': {
                     'timeout': 15,  # Default 15 seconds
-                    'minutes_between_check': 3 * 60,  # Default 3 hours
+                    'time_between_check': 3 * 60,  # Default 3 hours
                     'workers': 10  # Number of threads, lower is better for slow connections
                 },
                 'application': {
@@ -68,10 +68,12 @@ class ChangeDetectionStore:
             'title': None,
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
-            'minutes_between_check': None,
-            # #160
-            'seconds_between_check': None,
-            'minutes_or_seconds': 'minutes',
+            # #160, seconds feature
+            'time_between_check': None,
+            'time_interval': "minutes",
+            # #164, cron feature
+            'cron_expression': "",
+            'cron_next_check': 0,
             'previous_md5': "",
             'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send

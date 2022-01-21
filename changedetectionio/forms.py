@@ -8,6 +8,8 @@ import re
 
 from changedetectionio.notification import default_notification_format, valid_notification_formats, default_notification_body, default_notification_title
 
+from croniter import croniter
+
 valid_method = {
     'GET',
     'POST',
@@ -258,6 +260,27 @@ class ValidateCSSJSONXPATHInput(object):
             # Re #265 - maybe in the future fetch the page and offer a
             # warning/notice that its possible the rule doesnt yet match anything?
 
+class ValidateCronExpression(object):
+    """
+    Validates cron expression with cronitor
+    """
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+
+        # Nothing to see here
+        if not len(field.data.strip()):
+            return
+
+        if field.data.strip() == "@reboot" :
+            raise ValueError("@reboot is not supported")
+            
+        try:
+            croniter(field.data.strip())
+        except ValueError:
+            raise ValueError("Please provide a valid cron entry")
+
 class quickWatchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
     # `require_tld` = False is needed even for the test harness "http://localhost:5005.." to run
@@ -279,11 +302,10 @@ class watchForm(commonSettingsForm):
     url = html5.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
-    minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
+    time_between_check = html5.IntegerField('Time between rechecks',
                                                [validators.Optional(), validators.NumberRange(min=1)])
-    seconds_between_check = html5.IntegerField('Maximum time in seconds until recheck',
-                                               [validators.Optional(), validators.NumberRange(min=1,max=59)])
-    minutes_or_seconds = RadioField('Minutes or Seconds', choices=[('minutes','Minutes'),('seconds','Seconds')])
+    time_interval = RadioField('',[validators.DataRequired()], choices=[('minutes', 'minutes'), ('seconds', 'seconds')], default='minutes')
+    cron_expression = StringField('Cron expression (overrides time between rechecks)', [ValidateCronExpression()])
     css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()])
     title = StringField('Title')
 
@@ -309,7 +331,7 @@ class watchForm(commonSettingsForm):
 class globalSettingsForm(commonSettingsForm):
 
     password = SaltyPasswordField()
-    minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
+    time_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.NumberRange(min=1)])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
     base_url = StringField('Base URL', validators=[validators.Optional()])

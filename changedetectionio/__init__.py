@@ -119,7 +119,10 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     # return timeago.format(timestamp, time.time())
     # return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
 
-
+@app.template_filter('format_timestamp')
+def format_timestamp(value, format="%Y-%m-%d %H:%M"):
+    return datetime.datetime.fromtimestamp(value).strftime(format)
+    
 class User(flask_login.UserMixin):
     id=None
 
@@ -431,6 +434,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     @login_required
     def edit_page(uuid):
+        import croniter
         from changedetectionio import forms
         form = forms.watchForm(request.form)
 
@@ -452,16 +456,16 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST' and form.validate():
 
             # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
-            if form.minutes_between_check.data == datastore.data['settings']['requests']['minutes_between_check']:
-                form.minutes_between_check.data = None
+            if form.time_between_check.data == datastore.data['settings']['requests']['time_between_check']:
+                form.time_between_check.data = None
 
             if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
                 form.fetch_backend.data = None
 
             update_obj = {'url': form.url.data.strip(),
-                          'minutes_between_check': form.minutes_between_check.data,
-                          'seconds_between_check': form.seconds_between_check.data,
-                          'minutes_or_seconds': form.minutes_or_seconds.data,
+                          'time_between_check': form.time_between_check.data,
+                          'time_interval': form.time_interval.data,
+                          'cron_expression': form.cron_expression.data.strip(),
                           'tag': form.tag.data.strip(),
                           'title': form.title.data.strip(),
                           'headers': form.headers.data,
@@ -496,6 +500,14 @@ def changedetection_app(config=None, datastore_o=None):
                 if len(datastore.data['watching'][uuid]['history']):
                     update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
+            # Store next cron event
+            if update_obj['cron_expression']:
+                now = datetime.datetime.now()
+                cron = croniter.croniter(update_obj['cron_expression'], now)
+                datastore.data['watching'][uuid]['cron_next_check'] = round(cron.get_next(datetime.datetime).timestamp())
+            else:
+                datastore.data['watching'][uuid]['cron_next_check'] = 0
+            
             datastore.data['watching'][uuid].update(update_obj)
 
             flash("Updated watch.")
@@ -532,8 +544,8 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Re #110 offer the default minutes
             using_default_minutes = False
-            if form.minutes_between_check.data == None:
-                form.minutes_between_check.data = datastore.data['settings']['requests']['minutes_between_check']
+            if form.time_between_check.data == None:
+                form.time_between_check.data = datastore.data['settings']['requests']['time_between_check']
                 using_default_minutes = True
 
             output = render_template("edit.html",
@@ -556,7 +568,7 @@ def changedetection_app(config=None, datastore_o=None):
         form = forms.globalSettingsForm(request.form)
 
         if request.method == 'GET':
-            form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'])
+            form.time_between_check.data = int(datastore.data['settings']['requests']['time_between_check'])
             form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
             form.global_ignore_text.data = datastore.data['settings']['application']['global_ignore_text']
             form.ignore_whitespace.data = datastore.data['settings']['application']['ignore_whitespace']
@@ -578,7 +590,7 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST' and form.validate():
 
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
-            datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data
+            datastore.data['settings']['requests']['time_between_check'] = form.time_between_check.data
             datastore.data['settings']['application']['extract_title_as_title'] = form.extract_title_as_title.data
             datastore.data['settings']['application']['fetch_backend'] = form.fetch_backend.data
             datastore.data['settings']['application']['notification_title'] = form.notification_title.data
@@ -1003,15 +1015,25 @@ def ticker_thread_check_time_launch_checks():
 
         # Check for watches outside of the time threshold to put in the thread queue.
         for uuid, watch in copied_datastore.data['watching'].items():
-            # If they supplied an individual entry minutes to threshold.
-            if 'minutes_between_check' in watch and watch['minutes_between_check'] is not None:
-                # Cast to int just incase                        #160, kluge for checks in seconds
-                max_time = int(watch['minutes_between_check']) * 60 #(1 if watch['use_seconds'] else 60)
-            else:
-                # Default system wide.
-                max_time = int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60
+            # If they supplied a cron entry it overrides time to recheck settings
+            if watch['cron_next_check'] != 0:
+                # Cast to int just in case
+                threshold = time.time() - int(watch['cron_next_check'])
+            else:           
+                # If they supplied seconds
+                if watch['time_interval'] == "seconds" :
+                    # Cast to int just in case
+                    max_time = int(watch['time_between_check'])
+                else:
+                    # If they supplied an individual entry minutes to threshold.
+                    if 'time_between_check' in watch and watch['time_between_check'] is not None:
+                        # Cast to int just incase
+                        max_time = int(watch['time_between_check']) * 60
+                    else:
+                        # Default system wide.
+                        max_time = int(copied_datastore.data['settings']['requests']['time_between_check']) * 60
 
-            threshold = time.time() - max_time
+                threshold = time.time() - max_time
 
             # Yeah, put it in the queue, it's more than time.
             if not watch['paused'] and watch['last_checked'] <= threshold:

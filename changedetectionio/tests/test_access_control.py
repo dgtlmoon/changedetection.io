@@ -13,7 +13,7 @@ def test_check_access_control(app, client):
         res = c.post(
             url_for("settings_page"),
             data={"password": "foobar",
-                  "minutes_between_check": 180,
+                  "time_between_check": 180,
                   'fetch_backend': "html_requests"},
             follow_redirects=True
         )
@@ -69,7 +69,7 @@ def test_check_access_control_no_blank_password(app, client):
         res = c.post(
             url_for("settings_page"),
             data={"password": "",
-                  "minutes_between_check": 180,
+                  "time_between_check": 180,
                   'fetch_backend': "html_requests"},
 
         follow_redirects=True
@@ -91,7 +91,7 @@ def test_check_access_no_remote_access_to_remove_password(app, client):
         # Enable password check.
         res = c.post(
             url_for("settings_page"),
-            data={"password": "password", "minutes_between_check": 180,
+            data={"password": "password", "time_between_check": 180,
                   'fetch_backend': "html_requests"},
             follow_redirects=True
         )
