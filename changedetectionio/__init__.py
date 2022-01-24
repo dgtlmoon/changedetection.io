@@ -23,7 +23,17 @@ import flask_login
 import pytz
 import timeago
 from feedgen.feed import FeedGenerator
-from flask import Flask, abort, flash, make_response, redirect, render_template, request, send_from_directory, url_for
+from flask import (
+    Flask,
+    abort,
+    flash,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
 from flask_login import login_required
 
 __version__ = '0.39.7'
@@ -627,7 +637,7 @@ def changedetection_app(config=None, datastore_o=None):
                 url, *tags = url.split(" ")
                 # Flask wtform validators wont work with basic auth, use validators package
                 if len(url) and validators.url(url):
-                    new_uuid = datastore.add_watch(url=url.strip(), tag=",".join(tags))
+                    new_uuid = datastore.add_watch(url=url.strip(), tag=" ".join(tags))
                     # Straight into the queue.
                     update_q.put(new_uuid)
                     good += 1
@@ -810,17 +820,33 @@ def changedetection_app(config=None, datastore_o=None):
                                  compresslevel=8)
 
             # Create a list file with just the URLs, so it's easier to port somewhere else in the future
-            list_file = os.path.join(datastore_o.datastore_path, "url-list.txt")
-            with open(list_file, "w") as f:
-                for uuid in datastore.data['watching']:
-                    url = datastore.data['watching'][uuid]['url']
+            list_file = "url-list.txt"
+            with open(os.path.join(datastore_o.datastore_path, list_file), "w") as f:
+                for uuid in datastore.data["watching"]:
+                    url = datastore.data["watching"][uuid]["url"]
                     f.write("{}\r\n".format(url))
+            list_with_tags_file = "url-list-with-tags.txt"
+            with open(
+                os.path.join(datastore_o.datastore_path, list_with_tags_file), "w"
+            ) as f:
+                for uuid in datastore.data["watching"]:
+                    url = datastore.data["watching"][uuid]["url"]
+                    tag = datastore.data["watching"][uuid]["tag"]
+                    f.write("{} {}\r\n".format(url, tag))
 
             # Add it to the Zip
-            zipObj.write(list_file,
-                         arcname="url-list.txt",
-                         compress_type=zipfile.ZIP_DEFLATED,
-                         compresslevel=8)
+            zipObj.write(
+                os.path.join(datastore_o.datastore_path, list_file),
+                arcname=list_file,
+                compress_type=zipfile.ZIP_DEFLATED,
+                compresslevel=8,
+            )
+            zipObj.write(
+                os.path.join(datastore_o.datastore_path, list_with_tags_file),
+                arcname=list_with_tags_file,
+                compress_type=zipfile.ZIP_DEFLATED,
+                compresslevel=8,
+            )
 
         # Send_from_directory needs to be the full absolute path
         return send_from_directory(os.path.abspath(datastore_o.datastore_path), backupname, as_attachment=True)
