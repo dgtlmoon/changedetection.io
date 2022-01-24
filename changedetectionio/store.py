@@ -49,9 +49,9 @@ class ChangeDetectionStore:
                     'ignore_whitespace': False,
                     'notification_urls': [], # Apprise URL list
                     # Custom notification content
-                    'notification_title': None,
-                    'notification_body': None,
-                    'notification_format': None
+                    'notification_title': default_notification_title,
+                    'notification_body': default_notification_body,
+                    'notification_format': default_notification_format,
                 }
             }
         }
@@ -78,9 +78,9 @@ class ChangeDetectionStore:
             'ignore_text': [], # List of text to ignore when calculating the comparison checksum
             # Custom notification content
             'notification_urls': [], # List of URLs to add to the notification Queue (Usually AppRise)
-            'notification_title': None,
-            'notification_body': None,
-            'notification_format': None,
+            'notification_title': default_notification_title,
+            'notification_body': default_notification_body,
+            'notification_format': default_notification_format,
             'css_filter': "",
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'fetch_backend': None,
@@ -304,10 +304,10 @@ class ChangeDetectionStore:
                 del_timestamps.append(timestamp)
                 changes_removed += 1
 
-                if not limit_timestamp:
-                    self.data['watching'][uuid]['last_checked'] = 0
-                    self.data['watching'][uuid]['last_changed'] = 0
-                    self.data['watching'][uuid]['previous_md5'] = 0
+        if not limit_timestamp:
+            self.data['watching'][uuid]['last_checked'] = 0
+            self.data['watching'][uuid]['last_changed'] = 0
+            self.data['watching'][uuid]['previous_md5'] = ""
 
 
         for timestamp in del_timestamps:
@@ -326,7 +326,7 @@ class ChangeDetectionStore:
                             content = fp.read()
                         self.data['watching'][uuid]['previous_md5'] = hashlib.md5(content).hexdigest()
                     except (FileNotFoundError, IOError):
-                        self.data['watching'][uuid]['previous_md5'] = False
+                        self.data['watching'][uuid]['previous_md5'] = ""
                         pass
 
         self.needs_write = True

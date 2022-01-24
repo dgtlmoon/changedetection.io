@@ -30,7 +30,7 @@ import datetime
 import pytz
 from copy import deepcopy
 
-__version__ = '0.39.6'
+__version__ = '0.39.7'
 
 datastore = None
 
@@ -636,6 +636,7 @@ def changedetection_app(config=None, datastore_o=None):
             urls = request.values.get('urls').split("\n")
             for url in urls:
                 url = url.strip()
+                # Flask wtform validators wont work with basic auth, use validators package
                 if len(url) and validators.url(url):
                     new_uuid = datastore.add_watch(url=url.strip(), tag="")
                     # Straight into the queue.
@@ -870,6 +871,26 @@ def changedetection_app(config=None, datastore_o=None):
                                  uuid=uuid)
         return output
 
+    @app.route("/api/<string:uuid>/snapshot/current", methods=['GET'])
+    @login_required
+    def api_snapshot(uuid):
+
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            return abort(400, "No history found for the specified link, bad link?")
+
+        newest = list(watch['history'].keys())[-1]
+        with open(watch['history'][newest], 'r') as f:
+            content = f.read()
+
+        resp = make_response(content)
+        resp.headers['Content-Type'] = 'text/plain'
+        return resp
 
     @app.route("/favicon.ico", methods=['GET'])
     def favicon():

@@ -60,7 +60,7 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                     except Exception as e:
-                        self.app.logger.error("Exception reached processing watch UUID:%s - %s", uuid, str(e))
+                        self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
 
                     else:
@@ -127,8 +127,8 @@ class update_worker(threading.Thread):
                                             'watch_url': watch['url'],
                                             'uuid': uuid,
                                             'current_snapshot': contents.decode('utf-8'),
-                                            'diff_full': diff.render_diff(prev_fname, fname, line_feed_sep=line_feed_sep),
-                                            'diff': diff.render_diff(prev_fname, fname, True, line_feed_sep=line_feed_sep)
+                                            'diff': diff.render_diff(prev_fname, fname, line_feed_sep=line_feed_sep),
+                                            'diff_full': diff.render_diff(prev_fname, fname, True, line_feed_sep=line_feed_sep)
                                         })
 
                                         self.notification_q.put(n_object)
