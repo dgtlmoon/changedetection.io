@@ -629,7 +629,7 @@ def changedetection_app(config=None, datastore_o=None):
             for url in urls:
                 url = url.strip()
                 # Flask wtform validators wont work with basic auth, use validators package
-                if len(url) and validators.url(url):
+                if len(url) and validators.url(url) and not datastore.url_exists(url):
                     new_uuid = datastore.add_watch(url=url.strip(), tag="")
                     # Straight into the queue.
                     update_q.put(new_uuid)
