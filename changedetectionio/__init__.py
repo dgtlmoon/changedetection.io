@@ -11,24 +11,30 @@
 # proxy per check
 #  - flask_cors, itsdangerous,MarkupSafe
 
-import time
+import datetime
 import os
-import timeago
-import flask_login
-from flask_login import login_required
-
+import queue
 import threading
+import time
+from copy import deepcopy
 from threading import Event
 
-import queue
-
-from flask import Flask, render_template, request, send_from_directory, abort, redirect, url_for, flash
-
-from feedgen.feed import FeedGenerator
-from flask import make_response
-import datetime
+import flask_login
 import pytz
-from copy import deepcopy
+import timeago
+from feedgen.feed import FeedGenerator
+from flask import (
+    Flask,
+    abort,
+    flash,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
+from flask_login import login_required
 
 __version__ = '0.39.7'
 
@@ -139,8 +145,8 @@ class User(flask_login.UserMixin):
 
     def check_password(self, password):
 
-        import hashlib
         import base64
+        import hashlib
 
         # Getting the values back out
         raw_salt_pass = base64.b64decode(datastore.data['settings']['application']['password'])
@@ -400,6 +406,7 @@ def changedetection_app(config=None, datastore_o=None):
     def get_current_checksum_include_ignore_text(uuid):
 
         import hashlib
+
         from changedetectionio import fetch_site_status
 
         # Get the most recent one
@@ -548,8 +555,7 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def settings_page():
 
-        from changedetectionio import forms
-        from changedetectionio import content_fetcher
+        from changedetectionio import content_fetcher, forms
 
         form = forms.globalSettingsForm(request.form)
 
@@ -628,9 +634,10 @@ def changedetection_app(config=None, datastore_o=None):
             urls = request.values.get('urls').split("\n")
             for url in urls:
                 url = url.strip()
+                url, *tags = url.split(" ")
                 # Flask wtform validators wont work with basic auth, use validators package
                 if len(url) and validators.url(url):
-                    new_uuid = datastore.add_watch(url=url.strip(), tag="")
+                    new_uuid = datastore.add_watch(url=url.strip(), tag=" ".join(tags))
                     # Straight into the queue.
                     update_q.put(new_uuid)
                     good += 1
@@ -813,17 +820,33 @@ def changedetection_app(config=None, datastore_o=None):
                                  compresslevel=8)
 
             # Create a list file with just the URLs, so it's easier to port somewhere else in the future
-            list_file = os.path.join(datastore_o.datastore_path, "url-list.txt")
-            with open(list_file, "w") as f:
-                for uuid in datastore.data['watching']:
-                    url = datastore.data['watching'][uuid]['url']
+            list_file = "url-list.txt"
+            with open(os.path.join(datastore_o.datastore_path, list_file), "w") as f:
+                for uuid in datastore.data["watching"]:
+                    url = datastore.data["watching"][uuid]["url"]
                     f.write("{}\r\n".format(url))
+            list_with_tags_file = "url-list-with-tags.txt"
+            with open(
+                os.path.join(datastore_o.datastore_path, list_with_tags_file), "w"
+            ) as f:
+                for uuid in datastore.data["watching"]:
+                    url = datastore.data["watching"][uuid]["url"]
+                    tag = datastore.data["watching"][uuid]["tag"]
+                    f.write("{} {}\r\n".format(url, tag))
 
             # Add it to the Zip
-            zipObj.write(list_file,
-                         arcname="url-list.txt",
-                         compress_type=zipfile.ZIP_DEFLATED,
-                         compresslevel=8)
+            zipObj.write(
+                os.path.join(datastore_o.datastore_path, list_file),
+                arcname=list_file,
+                compress_type=zipfile.ZIP_DEFLATED,
+                compresslevel=8,
+            )
+            zipObj.write(
+                os.path.join(datastore_o.datastore_path, list_with_tags_file),
+                arcname=list_with_tags_file,
+                compress_type=zipfile.ZIP_DEFLATED,
+                compresslevel=8,
+            )
 
         # Send_from_directory needs to be the full absolute path
         return send_from_directory(os.path.abspath(datastore_o.datastore_path), backupname, as_attachment=True)
@@ -936,7 +959,6 @@ def changedetection_app(config=None, datastore_o=None):
 # Check for new version and anonymous stats
 def check_for_new_version():
     import requests
-
     import urllib3
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
