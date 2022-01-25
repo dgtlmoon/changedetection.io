@@ -20,13 +20,6 @@ def test_headers_in_request(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    res = client.post(
-        url_for("import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
-
     cookie_header = '_ga=GA1.2.1022228332; cookie-preferences=analytics:accepted;'
 
 
@@ -41,7 +34,6 @@ def test_headers_in_request(client, live_server):
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-
 
     # Give the thread time to pick up the first version
     time.sleep(5)
@@ -76,14 +68,6 @@ def test_headers_in_request(client, live_server):
 def test_body_in_request(client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_body', _external=True)
-
-    # Add the test URL twice, we will check
-    res = client.post(
-        url_for("import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
 
     res = client.post(
         url_for("import_page"),
@@ -145,14 +129,6 @@ def test_body_in_request(client, live_server):
 def test_method_in_request(client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_method', _external=True)
-
-    # Add the test URL twice, we will check
-    res = client.post(
-        url_for("import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
 
     res = client.post(
         url_for("import_page"),
