@@ -143,6 +143,7 @@ class User(flask_login.UserMixin):
     def get_id(self):
         return str(self.id)
 
+    # Compare given password against JSON store or Env var
     def check_password(self, password):
 
         import base64
@@ -234,9 +235,10 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.before_request
     def do_something_whenever_a_request_comes_in():
-        # Disable password  loginif there is not one set
-        app.config['LOGIN_DISABLED'] = datastore.data['settings']['application']['password'] == False
-        app.config['LOGIN_DISABLED']=False
+
+        # Disable password login if there is not one set
+        # (No password in settings or env var)
+        app.config['LOGIN_DISABLED'] = datastore.data['settings']['application']['password'] == False and os.getenv("SALTED_PASS", False) == False
 
         # For the RSS path, allow access via a token
         if request.path == '/rss' and request.args.get('token'):
@@ -579,7 +581,7 @@ def changedetection_app(config=None, datastore_o=None):
             form.notification_format.data = datastore.data['settings']['application']['notification_format']
             form.base_url.data = datastore.data['settings']['application']['base_url']
 
-            # Password unset is a GET
+            # Password unset is a GET, but we can lock the session to always need the password
             if not os.getenv("SALTED_PASS", False) and request.values.get('removepassword') == 'yes':
                 from pathlib import Path
                 datastore.data['settings']['application']['password'] = False
