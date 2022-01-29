@@ -148,8 +148,15 @@ class User(flask_login.UserMixin):
         import base64
         import hashlib
 
-        # Getting the values back out
-        raw_salt_pass = base64.b64decode(datastore.data['settings']['application']['password'])
+        # Can be stored in env (for deployments) or in the general configs
+        raw_salt_pass = os.getenv("SALTED_PASS", False)
+
+        if not raw_salt_pass:
+            raw_salt_pass = datastore.data['settings']['application']['password']
+
+        raw_salt_pass = base64.b64decode(raw_salt_pass)
+
+
         salt_from_storage = raw_salt_pass[:32]  # 32 is the length of the salt
 
         # Use the exact same setup you used to generate the key, but this time put in the password to check
@@ -200,7 +207,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route('/login', methods=['GET', 'POST'])
     def login():
 
-        if not datastore.data['settings']['application']['password']:
+        if not datastore.data['settings']['application']['password'] and not os.getenv("SALTED_PASS", False):
             flash("Login not required, no password enabled.", "notice")
             return redirect(url_for('index'))
 
@@ -229,6 +236,7 @@ def changedetection_app(config=None, datastore_o=None):
     def do_something_whenever_a_request_comes_in():
         # Disable password  loginif there is not one set
         app.config['LOGIN_DISABLED'] = datastore.data['settings']['application']['password'] == False
+        app.config['LOGIN_DISABLED']=False
 
         # For the RSS path, allow access via a token
         if request.path == '/rss' and request.args.get('token'):
@@ -572,7 +580,7 @@ def changedetection_app(config=None, datastore_o=None):
             form.base_url.data = datastore.data['settings']['application']['base_url']
 
             # Password unset is a GET
-            if request.values.get('removepassword') == 'yes':
+            if not os.getenv("SALTED_PASS", False) and request.values.get('removepassword') == 'yes':
                 from pathlib import Path
                 datastore.data['settings']['application']['password'] = False
                 flash("Password protection removed.", 'notice')
@@ -606,7 +614,7 @@ def changedetection_app(config=None, datastore_o=None):
                 else:
                     flash('No notification URLs set, cannot send test.', 'error')
 
-            if form.password.encrypted_password:
+            if not os.getenv("SALTED_PASS", False) and form.password.encrypted_password:
                 datastore.data['settings']['application']['password'] = form.password.encrypted_password
                 flash("Password protection enabled.", 'notice')
                 flask_login.logout_user()
@@ -618,7 +626,10 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST' and not form.validate():
             flash("An error occurred, please see below.", "error")
 
-        output = render_template("settings.html", form=form, current_base_url = datastore.data['settings']['application']['base_url'])
+        output = render_template("settings.html",
+                                 form=form,
+                                 current_base_url = datastore.data['settings']['application']['base_url'],
+                                 hide_remove_pass=os.getenv("SALTED_PASS", False))
 
         return output
 
@@ -999,6 +1010,8 @@ def notification_runner():
 
             except Exception as e:
                 print("Watch URL: {}  Error {}".format(n_object['watch_url'], e))
+                datastore.update_watch(uuid=n_object['uuid'], update_obj={'last_error': "Notification error: " + str(e)})
+
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
