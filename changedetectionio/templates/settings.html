@@ -25,12 +25,16 @@
                         <span class="pure-form-message-inline">Default time for all watches, when the watch does not have a specific time setting.</span>
                     </div>
                     <div class="pure-control-group">
-                        {% if current_user.is_authenticated %}
-                        <a href="{{url_for('settings_page', removepassword='yes')}}"
-                           class="pure-button pure-button-primary">Remove password</a>
+                        {% if not hide_remove_pass %}
+                            {% if current_user.is_authenticated %}
+                            <a href="{{url_for('settings_page', removepassword='yes')}}"
+                               class="pure-button pure-button-primary">Remove password</a>
+                            {% else %}
+                            {{ render_field(form.password) }}
+                            <span class="pure-form-message-inline">Password protection for your changedetection.io application.</span>
+                            {% endif %}
                         {% else %}
-                        {{ render_field(form.password) }}
-                        <span class="pure-form-message-inline">Password protection for your changedetection.io application.</span>
+                            <span class="pure-form-message-inline">Password is locked.</span>
                         {% endif %}
                     </div>
                     <div class="pure-control-group">
