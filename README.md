@@ -79,7 +79,7 @@ _Now with per-site configurable support for using a fast built in HTTP fetcher o
 
 ## Updating changedetection.io
 
-## Docker
+### Docker
 ```
 docker pull dgtlmoon/changedetection.io
 docker kill $(docker ps -a|grep changedetection.io|awk '{print $1}')
