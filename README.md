@@ -7,16 +7,21 @@
 
 _Know when web pages change! Stay ontop of new information!_ 
 
-Live your data-life *pro-actively* instead of *re-actively*, do not rely on manipulative social media for consuming important information.
+Live your data-life *pro-actively* instead of *re-actively*.
 
 Open source web page monitoring, notification and change detection.
 
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new?template=https%3A%2F%2Fgithub.com%2Fdgtlmoon%2Fchangedetection.io%2Ftree%2Fmaster)
 
-Read the [Heroku notes and limitations wiki page first](https://github.com/dgtlmoon/changedetection.io/wiki/Heroku-notes)
+**Get your own instance now on Lemonade!**
+
+[![Deploy to Lemonade](https://lemonade.changedetection.io/static/images/lemonade.svg)](https://lemonade.changedetection.io/start)
+
+- Automatic Updates, Automatic Backups, No Heroku "paused application", don't miss a change!
+- Javascript browser included
+- Pay with Bitcoin
 
 #### Example use cases
 
