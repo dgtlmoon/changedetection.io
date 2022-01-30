@@ -10,9 +10,11 @@
     AWS SNS - sns://AccessKeyID/AccessSecretKey/RegionName/+PhoneNo
     SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com")
                             }}
-                            <div class="pure-form-message-inline">Use <a target=_new
-                                                                         href="https://github.com/caronc/apprise">AppRise
-                                URLs</a> for notification to just about any service! <i><a target=_new href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes">Please read the notification services wiki here for important configuration notes</a></i>
+                            <div class="pure-form-message-inline">
+                              <ul>
+                                <li>Use <a target=_new href="https://github.com/caronc/apprise">AppRise URLs</a> for notification to just about any service! <i><a target=_new href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes">Please read the notification services wiki here for important configuration notes</a></i>.</li>
+                                <li><code>discord://</code> will silently fail if the total message length is more than 2000 chars.</li>
+                              </ul>
                             </div>
                         </div>
                         <div id="notification-customisation">
