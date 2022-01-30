@@ -42,10 +42,6 @@ Open source web page monitoring, notification and change detection.
  
 _Need an actual Chrome runner with Javascript support? We support fetching via WebDriver!</a>_
 
-**Get monitoring now! super simple.**
-
-<a href="https://dashboard.heroku.com/new?template=https%3A%2F%2Fgithub.com%2Fdgtlmoon%2Fchangedetection.io%2Ftree%2Fmaster">Deploy to Heroku for free</a>, Run this python directly, or with <a href="https://docs.docker.com/get-docker/">docker</a> and/or <a href="https://www.digitalocean.com/community/tutorial_collections/how-to-install-docker-compose">docker-compose</a>
-
 ## Screenshots
 
 Examining differences in content.
@@ -83,7 +79,7 @@ _Now with per-site configurable support for using a fast built in HTTP fetcher o
 
 ## Updating changedetection.io
 
-### Docker
+## Docker
 ```
 docker pull dgtlmoon/changedetection.io
 docker kill $(docker ps -a|grep changedetection.io|awk '{print $1}')
@@ -96,10 +92,14 @@ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/dat
 ```bash
 docker-compose pull && docker-compose up -d
 ```
-### Filters
+
+See the wiki for more information https://github.com/dgtlmoon/changedetection.io/wiki
+
+
+## Filters
 XPath, JSONPath and CSS support comes baked in! You can be as specific as you need, use XPath exported from various XPath element query creation tools.
 
-### Notifications
+## Notifications
 
 ChangeDetection.io supports a massive amount of notifications (including email, office365, custom APIs, etc) when a web-page has a change detected thanks to the <a href="https://github.com/caronc/apprise">apprise</a> library.
 Simply set one or more notification URL's in the _[edit]_ tab of that watch.
@@ -123,7 +123,7 @@ Just some examples
 
 Now you can also customise your notification content!
 
-### JSON API Monitoring
+## JSON API Monitoring
 
 Detect changes and monitor data in JSON API's by using the built-in JSONPath selectors as a filter / selector.
 
@@ -133,7 +133,7 @@ This will re-parse the JSON and apply formatting to the text, making it super ea
 
 ![image](https://user-images.githubusercontent.com/275001/125165995-d9ea5580-e1dc-11eb-8030-f0deced2661a.png)
 
-#### Parse JSON embedded in HTML!
+### Parse JSON embedded in HTML!
 
 When you enable a `json:` filter, you can even automatically extract and parse embedded JSON inside a HTML page! Amazingly handy for sites that build content based on JSON, such as many e-commerce websites. 
 
@@ -147,19 +147,19 @@ When you enable a `json:` filter, you can even automatically extract and parse e
 
 `json:$.price` would give `23.50`, or you can extract the whole structure
 
-### Proxy configuration
+## Proxy configuration
 
 See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration
 
-### Raspberry Pi support?
+## Raspberry Pi support?
 
-Raspberry Pi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! 
+Raspberry Pi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! See the wiki for
 
-### Windows native support?
+## Windows native support?
 
 Sorry not yet :( https://github.com/dgtlmoon/changedetection.io/labels/windows
 
-### Support us
+## Support us
 
 Do you use changedetection.io to make money? does it save you time or money? Does it make your life easier? less stressful? Remember, we write this software when we should be doing actual paid work, we have to buy food and pay rent just like you.
 
@@ -169,7 +169,7 @@ BTC `1PLFN327GyUarpJd7nVe7Reqg9qHx5frNn`
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/btc-support.png" style="max-width:50%;" alt="Support us!"  />
 
-### Commercial Support
+## Commercial Support
 
 I offer commercial support, this software is depended on by network security, aerospace , data-science and data-journalist professionals just to name a few, please reach out at dgtlmoon@gmail.com for any enquiries, I am more than glad to work with your organisation to further the possibilities of what can be done with changedetection.io
 
