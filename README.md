@@ -153,7 +153,7 @@ See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configura
 
 ## Raspberry Pi support?
 
-Raspberry Pi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! See the wiki for
+Raspberry Pi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! See the wiki for [details](https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver)
 
 ## Windows native support?
 
