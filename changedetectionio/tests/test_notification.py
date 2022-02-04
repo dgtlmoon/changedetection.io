@@ -254,5 +254,6 @@ def test_check_notification(client, live_server):
     # And it should be listed on the watch overview
     res = client.get(
         url_for("index"))
+    logging.debug(res.data)
     assert bytes("Notification error detected".encode('utf-8')) in res.data
 
