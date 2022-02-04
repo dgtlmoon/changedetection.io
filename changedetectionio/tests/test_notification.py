@@ -244,6 +244,14 @@ def test_check_notification(client, live_server):
     )
 
     time.sleep(3)
+
+    # The error should show in the notification logs
     res = client.get(
         url_for("notification_logs"))
     assert bytes("Name or service not known".encode('utf-8')) in res.data
+
+    # And it should be listed on the watch overview
+    res = client.get(
+        url_for("index"))
+    assert bytes("Notification error detected".encode('utf-8')) in res.data
+
