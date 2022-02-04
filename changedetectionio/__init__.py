@@ -909,7 +909,6 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/api/delete", methods=['GET'])
     @login_required
     def api_delete():
-
         uuid = request.args.get('uuid')
         datastore.delete(uuid)
         flash('Deleted.')
@@ -1026,13 +1025,15 @@ def notification_runner():
 
                 # UUID wont be present when we submit a 'test' from the global settings
                 if 'uuid' in n_object:
-                    datastore.update_watch(uuid=n_object['uuid'], update_obj={'last_error': "Notification error detected, please see logs."})
+                    datastore.update_watch(uuid=n_object['uuid'],
+                                           update_obj={'last_notification_error': "Notification error detected, please see logs."})
 
                 log_lines = str(e).splitlines()
                 notification_debug_log += log_lines
 
                 # Trim the log length
                 notification_debug_log = notification_debug_log[-100:]
+
 
 
 

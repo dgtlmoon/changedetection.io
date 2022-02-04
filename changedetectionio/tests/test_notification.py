@@ -225,33 +225,3 @@ def test_check_notification(client, live_server):
         follow_redirects=True
     )
     assert b"Notification Body and Title is required when a Notification URL is used" in res.data
-
-
-    # Check we capture the failure, we can just use trigger_check = y here
-    res = client.post(
-        url_for("edit_page", uuid="first"),
-        data={"notification_urls": "jsons://broken-url.changedetection.io/test",
-              "notification_title": "xxx",
-              "notification_body": "xxxxx",
-              "notification_format": "Text",
-              "url": test_url,
-              "tag": "my tag",
-              "title": "my title",
-              "headers": "",
-              "fetch_backend": "html_requests",
-              "trigger_check": "y"},
-        follow_redirects=True
-    )
-
-    time.sleep(3)
-
-    # The error should show in the notification logs
-    res = client.get(
-        url_for("notification_logs"))
-    assert bytes("Name or service not known".encode('utf-8')) in res.data
-
-    # And it should be listed on the watch overview
-    res = client.get(
-        url_for("index"))
-    assert bytes("Notification error detected".encode('utf-8')) in res.data
-
