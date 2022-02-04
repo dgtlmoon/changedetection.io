@@ -530,6 +530,7 @@ def changedetection_app(config=None, datastore_o=None):
                                 'notification_title': form.notification_title.data,
                                 'notification_body': form.notification_body.data,
                                 'notification_format': form.notification_format.data,
+                                'uuid': uuid
                                 }
                     notification_q.put(n_object)
                     flash('Test notification queued.')
@@ -1022,7 +1023,11 @@ def notification_runner():
 
             except Exception as e:
                 print("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
-                datastore.update_watch(uuid=n_object['uuid'], update_obj={'last_error': "Notification error detected, please see logs."})
+
+                # UUID wont be present when we submit a 'test' from the global settings
+                if 'uuid' in n_object:
+                    datastore.update_watch(uuid=n_object['uuid'], update_obj={'last_error': "Notification error detected, please see logs."})
+
                 log_lines = str(e).splitlines()
                 notification_debug_log += log_lines
 
