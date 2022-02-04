@@ -13,18 +13,16 @@ def test_check_notification_error_handling(client, live_server):
     # Give the endpoint time to spin up
     time.sleep(3)
 
-    # re #242 - when you edited an existing new entry, it would not correctly show the notification settings
-    # Add our URL to the import page
+    # use a different URL so that it doesnt interfere with the actual check until we are ready
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("api_watch_add"),
-        data={"url": test_url, "tag": ''},
+        data={"url": "https://changedetection.io/CHANGELOG.txt", "tag": ''},
         follow_redirects=True
     )
     assert b"Watch added" in res.data
 
-    # wait for the backend do the initial fetch
-    time.sleep(3)
+    time.sleep(10)
 
     # Check we capture the failure, we can just use trigger_check = y here
     res = client.post(
@@ -43,12 +41,20 @@ def test_check_notification_error_handling(client, live_server):
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-    time.sleep(6)
 
-    res = client.get(
-        url_for("index"))
-    logging.debug(res.data)
-    assert bytes("Notification error detected".encode('utf-8')) in res.data
+    found=False
+    for i in range(1, 10):
+        time.sleep(1)
+        logging.debug("Fetching watch overview....")
+        res = client.get(
+            url_for("index"))
+
+        if bytes("Notification error detected".encode('utf-8')) in res.data:
+            found=True
+            break
+
+
+    assert found
 
 
     # The error should show in the notification logs
