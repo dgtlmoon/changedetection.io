@@ -238,6 +238,7 @@ def test_check_notification(client, live_server):
               "tag": "my tag",
               "title": "my title",
               "headers": "",
+              "minutes_between_check": "180",
               "fetch_backend": "html_requests",
               "trigger_check": "y"},
         follow_redirects=True
