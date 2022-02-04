@@ -70,6 +70,7 @@ app.config['LOGIN_DISABLED'] = False
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
+notification_debug_log=[]
 
 def init_app_secret(datastore_path):
     secret = ""
@@ -529,6 +530,7 @@ def changedetection_app(config=None, datastore_o=None):
                                 'notification_title': form.notification_title.data,
                                 'notification_body': form.notification_body.data,
                                 'notification_format': form.notification_format.data,
+                                'uuid': uuid
                                 }
                     notification_q.put(n_object)
                     flash('Test notification queued.')
@@ -765,6 +767,14 @@ def changedetection_app(config=None, datastore_o=None):
                                  uuid=uuid)
         return output
 
+    @app.route("/settings/notification-logs", methods=['GET'])
+    @login_required
+    def notification_logs():
+        global notification_debug_log
+        output = render_template("notification-log.html",
+                                 logs=notification_debug_log if len(notification_debug_log) else ["No errors or warnings detected"])
+
+        return output
     @app.route("/api/<string:uuid>/snapshot/current", methods=['GET'])
     @login_required
     def api_snapshot(uuid):
@@ -997,6 +1007,7 @@ def check_for_new_version():
         app.config.exit.wait(86400)
 
 def notification_runner():
+    global notification_debug_log
     while not app.config.exit.is_set():
         try:
             # At the moment only one thread runs (single runner)
@@ -1011,8 +1022,18 @@ def notification_runner():
                 notification.process_notification(n_object, datastore)
 
             except Exception as e:
-                print("Watch URL: {}  Error {}".format(n_object['watch_url'], e))
-                datastore.update_watch(uuid=n_object['uuid'], update_obj={'last_error': "Notification error: " + str(e)})
+                print("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
+
+                # UUID wont be present when we submit a 'test' from the global settings
+                if 'uuid' in n_object:
+                    datastore.update_watch(uuid=n_object['uuid'], update_obj={'last_error': "Notification error detected, please see logs."})
+
+                log_lines = str(e).splitlines()
+                notification_debug_log += log_lines
+
+                # Trim the log length
+                notification_debug_log = notification_debug_log[-100:]
+
 
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
