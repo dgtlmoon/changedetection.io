@@ -57,8 +57,9 @@ class perform_site_check():
         stripped_text_from_html = ""
 
         watch = self.datastore.data['watching'][uuid]
+        # Unset any existing notification error
 
-        update_obj = {}
+        update_obj = {'last_notification_error': False, 'last_error': False}
 
         extra_headers = self.datastore.get_val(uuid, 'headers')
 
@@ -141,7 +142,6 @@ class perform_site_check():
             # in the future we'll implement other mechanisms.
 
             update_obj["last_check_status"] = fetcher.get_last_status_code()
-            update_obj["last_error"] = False
 
             # If there's text to skip
             # @todo we could abstract out the get_text() to handle this cleaner

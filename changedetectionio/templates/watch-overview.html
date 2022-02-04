@@ -42,6 +42,7 @@
             <tr id="{{ watch.uuid }}"
                 class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }}
                 {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
+                {% if watch.last_notification_error is defined and watch.last_notification_error != False %}error{% endif %}
                 {% if watch.paused is defined and watch.paused != False %}paused{% endif %}
                 {% if watch.newest_history_key| int > watch.last_viewed| int %}unviewed{% endif %}">
                 <td class="inline">{{ loop.index }}</td>
@@ -53,6 +54,9 @@
 
                     {% if watch.last_error is defined and watch.last_error != False %}
                     <div class="fetch-error">{{ watch.last_error }}</div>
+                    {% endif %}
+                    {% if watch.last_notification_error is defined and watch.last_notification_error != False %}
+                    <div class="fetch-error notification-error">{{ watch.last_notification_error }}</div>
                     {% endif %}
                     {% if not active_tag %}
                     <span class="watch-tag-list">{{ watch.tag}}</span>
