@@ -21,7 +21,7 @@ def test_check_watch_field_storage(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={ "notification_urls": "json://myapi.com",
-               "time_between_check": 126,
+               "minutes_between_check": 126,
                "css_filter" : ".fooclass",
                "title" : "My title",
                "ignore_text" : "ignore this",
@@ -56,7 +56,7 @@ def test_check_recheck_global_setting(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={
-               "time_between_check": 1566,
+               "minutes_between_check": 1566,
                'fetch_backend': "html_requests"
                },
         follow_redirects=True
@@ -88,7 +88,7 @@ def test_check_recheck_global_setting(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={
-               "time_between_check": 222,
+               "minutes_between_check": 222,
                 'fetch_backend': "html_requests"
                },
         follow_redirects=True
@@ -108,7 +108,7 @@ def test_check_recheck_global_setting(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"url": test_url,
-              "time_between_check": 55,
+              "minutes_between_check": 55,
               'fetch_backend': "html_requests"
               },
         follow_redirects=True
@@ -124,7 +124,7 @@ def test_check_recheck_global_setting(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={
-               "time_between_check": 666,
+               "minutes_between_check": 666,
                 'fetch_backend': "html_requests"
                },
         follow_redirects=True
@@ -134,7 +134,7 @@ def test_check_recheck_global_setting(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"url": test_url,
-              "time_between_check": "",
+              "minutes_between_check": "",
               'fetch_backend': "html_requests"
               },
         follow_redirects=True

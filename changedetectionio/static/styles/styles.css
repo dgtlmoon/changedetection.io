@@ -527,8 +527,14 @@ footer {
 	padding-left: 0px;
 	margin: 0px;
 }
-.cron-message {
+.cron-message, .minutes-message, .history-message {
   padding-left: .3em;
+}
+.history-message {
+	font-weight: bold;
+}
+#queue-status {
+	color: #000;
 }
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
     .box {

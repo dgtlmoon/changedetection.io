@@ -37,13 +37,14 @@ class ChangeDetectionStore:
                 },
                 'requests': {
                     'timeout': 15,  # Default 15 seconds
-                    'time_between_check': 3 * 60,  # Default 3 hours
+                    'minutes_between_check': 3 * 60,  # Default 3 hours
                     'workers': 10  # Number of threads, lower is better for slow connections
                 },
                 'application': {
                     'password': False,
                     'base_url' : None,
                     'extract_title_as_title': False,
+                    'max_history': 0,
                     'fetch_backend': 'html_requests',
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
                     'ignore_whitespace': False,
@@ -68,12 +69,11 @@ class ChangeDetectionStore:
             'title': None,
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
-            # #160, seconds feature
-            'time_between_check': None,
-            'time_interval': "minutes",
-            # #164, cron feature
+            'minutes_between_check': None,
+            # #164 - cron feature, and #160 - seconds feature
             'cron_expression': "",
-            'cron_next_check': 0,
+            # Store next_check for all watches as timestamps
+            'next_check': 0,
             'previous_md5': "",
             'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send
@@ -89,7 +89,8 @@ class ChangeDetectionStore:
             'css_filter': "",
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'fetch_backend': None,
-            'extract_title_as_title': False
+            'extract_title_as_title': False,
+            'max_history': 0
         }
 
         if path.isfile('changedetectionio/source.txt'):
@@ -334,6 +335,44 @@ class ChangeDetectionStore:
         self.needs_write = True
         return changes_removed
 
+    # Remove oldest history exceeding max_history, or do nothing for "unlimited"
+    def prune_history(self, uuid):
+        
+        # get default cutoff
+        global_max_history = int(self.data['settings']['application']['max_history'])
+        # If watch doesn't have an individual max_history setting
+        if int(self.data['watching'][uuid]['max_history']) == 0:
+            max_history = global_max_history
+        else: # individual max_history
+            max_history = int(self.data['watching'][uuid]['max_history'])
+        print(max_history)
+        if len(self.data['watching'][uuid]['history'].items()) > max_history:
+            # get timestamps, convert to int, sort, retain max_history including
+            # last_checked, last_changed, last_viewed, and newest_history_key
+            dates = list(self.data['watching'][uuid]['history'].keys())
+            print(len(dates))
+            print(*dates)
+            dates = [int(i) for i in dates]
+            dates.sort(reverse=True)
+            if (int(self.data['watching'][uuid]['newest_history_key']) in dates):
+                dates.insert(0, dates.pop(dates.index(int(self.data['watching'][uuid]['newest_history_key']))))
+            if (int(self.data['watching'][uuid]['last_viewed']) in dates):
+                dates.insert(0, dates.pop(dates.index(int(self.data['watching'][uuid]['last_viewed']))))
+            if (int(self.data['watching'][uuid]['last_changed']) in dates):
+                dates.insert(0, dates.pop(dates.index(int(self.data['watching'][uuid]['last_changed']))))
+            if (int(self.data['watching'][uuid]['last_checked']) in dates):
+                dates.insert(0, dates.pop(dates.index(int(self.data['watching'][uuid]['last_checked']))))
+            dates = dates[0:max_history] # slice leaving max_history elements 
+            print(len(dates))
+            print(*dates)
+            # delete history
+            del_timestamps = []
+            for timestamp in self.data['watching'][uuid]['history'].items():
+                if int(timestamp) not in dates:
+                    del self.data['watching'][uuid]['history'][str(timestamp)]
+        
+            # needs_write called in __init__ ticker function
+                
     def add_watch(self, url, tag, extras=None):
         if extras is None:
             extras = {}
@@ -389,6 +428,7 @@ class ChangeDetectionStore:
 
         try:
             data = deepcopy(self.__data)
+            #data = self.prune_history(data)
         except RuntimeError as e:
             # Try again in 15 seconds
             time.sleep(15)

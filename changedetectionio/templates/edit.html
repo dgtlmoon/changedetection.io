@@ -32,13 +32,10 @@
                         <span class="pure-form-message-inline">Organisational tag/group name used in the main listing page</span>
                     </div>
                     <div class="pure-control-group">
-						<div id="interval">
-							{{ render_field(form.time_between_check) }}
-							{{ render_field(form.time_interval) }}
-							{% if watch.time_interval == "seconds" %}
-								<script>document.getElementById("time_interval-1").checked = true;</script>
-							{% endif %}
-						</div>
+                        {{ render_field(form.minutes_between_check) }}
+						{% if watch.cron_expression == "" %}
+							<span class="pure-form-message minutes-message">Next check: {{ watch.next_check|format_timestamp }}</span>
+						{% endif %}
                         {% if using_default_minutes %}
                         <span class="pure-form-message-inline">Currently using the <a
                                 href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>, change to another value if you want to be specific.</span>
@@ -49,14 +46,19 @@
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.cron_expression) }}
-						{% if watch.cron_next_check != 0 %}
-							<span class="pure-form-message cron-message">Next check: {{ watch.cron_next_check|format_timestamp }}</span>
+						{% if watch.cron_expression %}
+							<span class="pure-form-message cron-message">Next check: {{ watch.next_check|format_timestamp }}</span>
 							<span class="pure-form-message cron-message">Set to blank to use time between checks</span>
 						{% endif %}
-                        <span class="pure-form-message-inline">Cron help: <a href='https://crontab.guru/' target='_blank'>https://crontab.guru</a></span>
+                        <span class="pure-form-message cron-message">For seconds add a 6th field, e.g. * * * * * */10 rechecks every 10 seconds</span>
+                        <span class="pure-form-message cron-message">Cron help: <a href='https://crontab.guru/' target='_blank'>https://crontab.guru</a></span>
 					</div>
                     <div class="pure-control-group">
                         {{ render_field(form.extract_title_as_title) }}
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.max_history) }}
+						<span class="pure-form-message history-message">IMPORTANT: Consider reducing history retention when setting short recheck intervals</span>
                     </div>
                 </fieldset>
             </div>

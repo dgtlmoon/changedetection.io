@@ -8,6 +8,7 @@ import re
 
 from changedetectionio.notification import default_notification_format, valid_notification_formats, default_notification_body, default_notification_title
 
+from datetime import datetime
 from croniter import croniter
 
 valid_method = {
@@ -273,13 +274,23 @@ class ValidateCronExpression(object):
         if not len(field.data.strip()):
             return
 
-        if field.data.strip() == "@reboot" :
-            raise ValueError("@reboot is not supported")
-            
+        # Validate
         try:
             croniter(field.data.strip())
         except ValueError:
             raise ValueError("Please provide a valid cron entry")
+
+        # Reboot not supported
+        if field.data.strip() == "@reboot" :
+            raise ValueError("@reboot is not supported")
+
+        # Minimum 3 seconds matches ticker thread checks in __init__
+        now = datetime.now()
+        cron = croniter(field.data.strip(), now)
+        next_0 = int(cron.get_next(datetime).timestamp())
+        next_1 = int(cron.get_next(datetime).timestamp())
+        if (next_1 - next_0) < 3 :
+            raise ValueError("Minimum time between checks is 3 seconds")
 
 class quickWatchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
@@ -302,9 +313,8 @@ class watchForm(commonSettingsForm):
     url = html5.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
-    time_between_check = html5.IntegerField('Time between rechecks',
+    minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
-    time_interval = RadioField('',[validators.DataRequired()], choices=[('minutes', 'minutes'), ('seconds', 'seconds')], default='minutes')
     cron_expression = StringField('Cron expression (overrides time between rechecks)', [ValidateCronExpression()])
     css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()])
     title = StringField('Title')
@@ -314,6 +324,7 @@ class watchForm(commonSettingsForm):
     body = TextAreaField('Request Body', [validators.Optional()])
     method = SelectField('Request Method', choices=valid_method, default=default_method)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
+    max_history = SelectField('Maximum history and snapshot retention', choices=[('0', 'Unlimited'), ('10', '10'), ('50', '50'), ('100', '100')], coerce=int, default=0)
 
     def validate(self, **kwargs):
         if not super().validate():
@@ -331,9 +342,10 @@ class watchForm(commonSettingsForm):
 class globalSettingsForm(commonSettingsForm):
 
     password = SaltyPasswordField()
-    time_between_check = html5.IntegerField('Maximum time in minutes until recheck',
+    minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.NumberRange(min=1)])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
     base_url = StringField('Base URL', validators=[validators.Optional()])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     ignore_whitespace = BooleanField('Ignore whitespace')
+    max_history = SelectField('Maximum history and snapshot retention', choices=[('0', 'Unlimited'), ('10', '10'), ('50', '50'), ('100', '100')], coerce=int, default=0)

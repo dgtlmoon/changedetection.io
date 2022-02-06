@@ -120,7 +120,7 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     # return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
 
 @app.template_filter('format_timestamp')
-def format_timestamp(value, format="%Y-%m-%d %H:%M"):
+def format_timestamp(value, format="%Y-%m-%d %H:%M:%S"):
     return datetime.datetime.fromtimestamp(value).strftime(format)
     
 class User(flask_login.UserMixin):
@@ -345,7 +345,8 @@ def changedetection_app(config=None, datastore_o=None):
                                  tags=existing_tags,
                                  active_tag=limit_tag,
                                  app_rss_token=datastore.data['settings']['application']['rss_access_token'],
-                                 has_unviewed=datastore.data['has_unviewed'])
+                                 has_unviewed=datastore.data['has_unviewed'],
+                                 left_sticky= True)
 
         return output
 
@@ -456,15 +457,14 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST' and form.validate():
 
             # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
-            if form.time_between_check.data == datastore.data['settings']['requests']['time_between_check']:
-                form.time_between_check.data = None
+            if form.minutes_between_check.data == datastore.data['settings']['requests']['minutes_between_check']:
+                form.minutes_between_check.data = None
 
             if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
                 form.fetch_backend.data = None
 
             update_obj = {'url': form.url.data.strip(),
-                          'time_between_check': form.time_between_check.data,
-                          'time_interval': form.time_interval.data,
+                          'minutes_between_check': form.minutes_between_check.data,
                           'cron_expression': form.cron_expression.data.strip(),
                           'tag': form.tag.data.strip(),
                           'title': form.title.data.strip(),
@@ -476,8 +476,8 @@ def changedetection_app(config=None, datastore_o=None):
                           'notification_title': form.notification_title.data,
                           'notification_body': form.notification_body.data,
                           'notification_format': form.notification_format.data,
-                          'extract_title_as_title': form.extract_title_as_title.data
-
+                          'extract_title_as_title': form.extract_title_as_title.data,
+                          'max_history': form.max_history.data
                           }
 
             # Notification URLs
@@ -500,14 +500,17 @@ def changedetection_app(config=None, datastore_o=None):
                 if len(datastore.data['watching'][uuid]['history']):
                     update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
-            # Store next cron event
+            # If not default minutes, store minutes as timestamp in next_check
+            if update_obj['minutes_between_check'] is not None:
+                datastore.data['watching'][uuid]['next_check'] = round(datetime.datetime.now().timestamp() + (int(update_obj['minutes_between_check']) * 60))
+                
+            # If cron expression present, store cron.get_next as timestamp in next_check 
             if update_obj['cron_expression']:
-                now = datetime.datetime.now()
-                cron = croniter.croniter(update_obj['cron_expression'], now)
-                datastore.data['watching'][uuid]['cron_next_check'] = round(cron.get_next(datetime.datetime).timestamp())
+                cron = croniter.croniter(update_obj['cron_expression'], datetime.datetime.now())
+                datastore.data['watching'][uuid]['next_check'] = round(cron.get_next(datetime.datetime).timestamp())
             else:
-                datastore.data['watching'][uuid]['cron_next_check'] = 0
-            
+                datastore.data['watching'][uuid]['next_check'] = 0
+
             datastore.data['watching'][uuid].update(update_obj)
 
             flash("Updated watch.")
@@ -544,8 +547,8 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Re #110 offer the default minutes
             using_default_minutes = False
-            if form.time_between_check.data == None:
-                form.time_between_check.data = datastore.data['settings']['requests']['time_between_check']
+            if form.minutes_between_check.data == None:
+                form.minutes_between_check.data = datastore.data['settings']['requests']['minutes_between_check']
                 using_default_minutes = True
 
             output = render_template("edit.html",
@@ -568,11 +571,12 @@ def changedetection_app(config=None, datastore_o=None):
         form = forms.globalSettingsForm(request.form)
 
         if request.method == 'GET':
-            form.time_between_check.data = int(datastore.data['settings']['requests']['time_between_check'])
+            form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'])
             form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
             form.global_ignore_text.data = datastore.data['settings']['application']['global_ignore_text']
             form.ignore_whitespace.data = datastore.data['settings']['application']['ignore_whitespace']
             form.extract_title_as_title.data = datastore.data['settings']['application']['extract_title_as_title']
+            form.max_history.data = datastore.data['settings']['application']['max_history']
             form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
             form.notification_title.data = datastore.data['settings']['application']['notification_title']
             form.notification_body.data = datastore.data['settings']['application']['notification_body']
@@ -590,8 +594,9 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST' and form.validate():
 
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
-            datastore.data['settings']['requests']['time_between_check'] = form.time_between_check.data
+            datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data
             datastore.data['settings']['application']['extract_title_as_title'] = form.extract_title_as_title.data
+            datastore.data['settings']['application']['max_history'] = form.max_history.data
             datastore.data['settings']['application']['fetch_backend'] = form.fetch_backend.data
             datastore.data['settings']['application']['notification_title'] = form.notification_title.data
             datastore.data['settings']['application']['notification_body'] = form.notification_body.data
@@ -664,6 +669,12 @@ def changedetection_app(config=None, datastore_o=None):
                                  )
         return output
 
+    # Queue status on base.html template
+    @app.route("/api/queue-status", methods=["GET"])
+    @login_required
+    def queue_status():
+        return str(update_q.qsize())
+        
     # Clear all statuses, so we do not see the 'unviewed' class
     @app.route("/api/mark-all-viewed", methods=['GET'])
     @login_required
@@ -995,7 +1006,8 @@ def notification_runner():
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     from changedetectionio import update_worker
-
+    import croniter
+    
     # Spin up Workers.
     for _ in range(datastore.data['settings']['requests']['workers']):
         new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
@@ -1015,30 +1027,26 @@ def ticker_thread_check_time_launch_checks():
 
         # Check for watches outside of the time threshold to put in the thread queue.
         for uuid, watch in copied_datastore.data['watching'].items():
-            # If they supplied a cron entry it overrides time to recheck settings
-            if watch['cron_next_check'] != 0:
-                # Cast to int just in case
-                threshold = time.time() - int(watch['cron_next_check'])
-            else:           
-                # If they supplied seconds
-                if watch['time_interval'] == "seconds" :
-                    # Cast to int just in case
-                    max_time = int(watch['time_between_check'])
-                else:
-                    # If they supplied an individual entry minutes to threshold.
-                    if 'time_between_check' in watch and watch['time_between_check'] is not None:
-                        # Cast to int just incase
-                        max_time = int(watch['time_between_check']) * 60
-                    else:
-                        # Default system wide.
-                        max_time = int(copied_datastore.data['settings']['requests']['time_between_check']) * 60
-
-                threshold = time.time() - max_time
-
-            # Yeah, put it in the queue, it's more than time.
-            if not watch['paused'] and watch['last_checked'] <= threshold:
+            if not watch['paused'] and (time.time() >= int(watch['next_check'])):
                 if not uuid in running_uuids and uuid not in update_q.queue:
                     update_q.put(uuid)
+                    # Store next_check
+                    now = datetime.datetime.now()
+                    # If this was a cron job, store next_check
+                    if watch['cron_expression'] :
+                        cron = croniter.croniter(watch['cron_expression'], now)
+                        datastore.data['watching'][uuid]['next_check'] = round(cron.get_next(datetime.datetime).timestamp())
+                    else:
+                        if watch['minutes_between_check'] is not None:
+                            # Individual entry supplied
+                            datastore.data['watching'][uuid]['next_check'] = round(now.timestamp() + (int(watch['minutes_between_check']) * 60))
+                        else:
+                            # Default system wide
+                            datastore.data['watching'][uuid]['next_check'] = round(now.timestamp() + (int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60))
+                    
+                    datastore.prune_history(uuid)
+                
+                    datastore.needs_write = True
 
         # Wait a few seconds before checking the list again
         time.sleep(3)

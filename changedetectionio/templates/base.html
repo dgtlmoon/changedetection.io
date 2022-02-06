@@ -12,6 +12,7 @@
         <link rel="stylesheet" href="{{ m }}?ver=1000">
         {% endfor %}
     {% endif %}
+	<script src="{{url_for('static_content', group='js', filename='base.js')}}"></script>
 </head>
 <body>
 
@@ -68,8 +69,7 @@
         </ul>
     </div>
 </div>
-
-{% if left_sticky %}<div class="sticky-tab" id="left-sticky"><a href="{{url_for('preview_page', uuid=uuid)}}">Show current snapshot</a></div> {% endif %}
+{% if left_sticky %}<div class="sticky-tab" id="left-sticky"><span id="queue-status"></span></div> {% endif %}
 {% if right_sticky %}<div class="sticky-tab" id="right-sticky">{{ right_sticky }}</div> {% endif %}
 <section class="content">
     <header>
@@ -88,6 +88,7 @@
     {% block content %}
 
     {% endblock %}
+
 </section>
 
 </body>
