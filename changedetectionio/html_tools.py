@@ -1,4 +1,6 @@
 import json
+import re
+
 from bs4 import BeautifulSoup
 from jsonpath_ng.ext import parse
 
@@ -16,11 +18,29 @@ def css_filter(css_filter, html_content):
 
     return html_block + "\n"
 
+def subtractive_css_filter(css_filter, html_content):
+    soup = BeautifulSoup(html_content, "html.parser")
+    for item in soup.select(css_filter, separator=""):
+        item.decompose()
+    return str(soup)
+
+
+stock_keywords = ["stock", "bourse", "aktie"]
+
+def stock_filter(html_content):
+    regex = re.compile(fr"(\b({'|'.join(stock_keywords)})[\w-]*\b)")
+    soup = BeautifulSoup(html_content, "html.parser")
+    selectors = set(map(lambda x: x[0], regex.findall(str(soup))))
+
+    css_filter = ",".join([f".{x}" for x in selectors]) + "," + ",".join([f"#{x}" for x in selectors])
+    for item in soup.select(css_filter, separator=""):
+        item.decompose()
+    return str(soup)
+    
 
 # Return str Utf-8 of matched rules
 def xpath_filter(xpath_filter, html_content):
-    from lxml import html
-    from lxml import etree
+    from lxml import etree, html
 
     tree = html.fromstring(html_content)
     html_block = ""
