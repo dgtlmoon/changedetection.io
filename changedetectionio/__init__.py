@@ -1041,8 +1041,10 @@ def notification_runner():
 def ticker_thread_check_time_launch_checks():
     from changedetectionio import update_worker
 
-    # Spin up Workers.
-    for _ in range(datastore.data['settings']['requests']['workers']):
+    # Spin up Workers that do the fetching
+    # Can be overriden by ENV or use the default settings
+    n_workers = os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers'])
+    for _ in range(n_workers):
         new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
         running_update_threads.append(new_worker)
         new_worker.start()
