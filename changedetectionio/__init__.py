@@ -224,10 +224,18 @@ def changedetection_app(config=None, datastore_o=None):
 
         if (user.check_password(password)):
             flask_login.login_user(user, remember=True)
-            next = request.args.get('next')
+
+            # For now there's nothing else interesting here other than the index/list page
+            # It's more reliable and safe to ignore the 'next' redirect
+            # When we used...
+            # next = request.args.get('next')
+            # return redirect(next or url_for('index'))
+            # We would sometimes get login loop errors on sites hosted in sub-paths
+
+            # note for the future:
             #            if not is_safe_url(next):
             #                return flask.abort(400)
-            return redirect(next or url_for('index'))
+            return redirect(url_for('index'))
 
         else:
             flash('Incorrect password', 'error')
