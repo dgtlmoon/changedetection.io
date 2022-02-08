@@ -1043,7 +1043,7 @@ def ticker_thread_check_time_launch_checks():
 
     # Spin up Workers that do the fetching
     # Can be overriden by ENV or use the default settings
-    n_workers = os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers'])
+    n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
     for _ in range(n_workers):
         new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
         running_update_threads.append(new_worker)
