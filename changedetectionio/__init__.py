@@ -36,7 +36,7 @@ from flask import (
 )
 from flask_login import login_required
 
-__version__ = '0.39.7'
+__version__ = '0.39.8'
 
 datastore = None
 
