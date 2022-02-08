@@ -963,7 +963,7 @@ def changedetection_app(config=None, datastore_o=None):
                 if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                     update_q.put(watch_uuid)
                     i += 1
-        flash("{} watches are rechecking.".format(i))
+        flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
 
     # @todo handle ctrl break
