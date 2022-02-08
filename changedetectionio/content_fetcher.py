@@ -120,7 +120,7 @@ class html_webdriver(Fetcher):
         # raise EmptyReply(url=url, status_code=r.status_code)
 
         # @todo - dom wait loaded?
-        time.sleep(5)
+        time.sleep(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
         self.content = driver.page_source
         self.headers = {}
 
