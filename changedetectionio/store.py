@@ -139,7 +139,7 @@ class ChangeDetectionStore:
                 self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
                 self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
                 self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
-                self.add_watch(url='https://changedetection.io', tag='Tech news')
+                self.add_watch(url='https://changedetection.io/CHANGELOG.txt')
 
         self.__data['version_tag'] = version_tag
 
@@ -335,6 +335,7 @@ class ChangeDetectionStore:
         self.needs_write = True
         return changes_removed
 
+<<<<<<< HEAD
     # Remove oldest history exceeding max_history, or do nothing for "unlimited"
     def prune_history(self):
         # get default cutoff
@@ -370,6 +371,9 @@ class ChangeDetectionStore:
                         del self.data['watching'][uuid]['history'][str(timestamp)]
 
     def add_watch(self, url, tag, extras=None):
+=======
+    def add_watch(self, url, tag="", extras=None):
+>>>>>>> master
         if extras is None:
             extras = {}
 

@@ -14,6 +14,7 @@ from changedetectionio import store
 
 def main():
     ssl_mode = False
+    host = ''
     port = os.environ.get('PORT') or 5000
     do_cleanup = False
 
@@ -21,9 +22,9 @@ def main():
     datastore_path = os.path.join(os.getcwd(), "datastore")
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "Ccsd:p:", "port")
+        opts, args = getopt.getopt(sys.argv[1:], "Ccsd:h:p:", "port")
     except getopt.GetoptError:
-        print('backend.py -s SSL enable -p [port] -d [datastore path]')
+        print('backend.py -s SSL enable -h [host] -p [port] -d [datastore path]')
         sys.exit(2)
 
     create_datastore_dir = False
@@ -36,6 +37,9 @@ def main():
 
         if opt == '-s':
             ssl_mode = True
+
+        if opt == '-h':
+            host = arg
 
         if opt == '-p':
             port = int(arg)
@@ -59,7 +63,7 @@ def main():
             os.mkdir(app_config['datastore_path'])
         else:
             print ("ERROR: Directory path for the datastore '{}' does not exist, cannot start, please make sure the directory exists.\n"
-                   "Alternatively, use the -d parameter.".format(app_config['datastore_path']),file=sys.stderr)
+                   "Alternatively, use the -C parameter.".format(app_config['datastore_path']),file=sys.stderr)
             sys.exit(2)
 
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=changedetectionio.__version__)
@@ -93,13 +97,13 @@ def main():
 
     if ssl_mode:
         # @todo finalise SSL config, but this should get you in the right direction if you need it.
-        eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen(('', port)),
+        eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen((host, port)),
                                                certfile='cert.pem',
                                                keyfile='privkey.pem',
                                                server_side=True), app)
 
     else:
-        eventlet.wsgi.server(eventlet.listen(('', int(port))), app)
+        eventlet.wsgi.server(eventlet.listen((host, int(port))), app)
 
 
 if __name__ == '__main__':

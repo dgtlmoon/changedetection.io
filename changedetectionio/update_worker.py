@@ -127,8 +127,8 @@ class update_worker(threading.Thread):
                                             'watch_url': watch['url'],
                                             'uuid': uuid,
                                             'current_snapshot': contents.decode('utf-8'),
-                                            'diff_full': diff.render_diff(prev_fname, fname, line_feed_sep=line_feed_sep),
-                                            'diff': diff.render_diff(prev_fname, fname, True, line_feed_sep=line_feed_sep)
+                                            'diff': diff.render_diff(prev_fname, fname, line_feed_sep=line_feed_sep),
+                                            'diff_full': diff.render_diff(prev_fname, fname, True, line_feed_sep=line_feed_sep)
                                         })
 
                                         self.notification_q.put(n_object)

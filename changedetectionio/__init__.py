@@ -11,26 +11,32 @@
 # proxy per check
 #  - flask_cors, itsdangerous,MarkupSafe
 
-import time
+import datetime
 import os
-import timeago
-import flask_login
-from flask_login import login_required
-
+import queue
 import threading
+import time
+from copy import deepcopy
 from threading import Event
 
-import queue
-
-from flask import Flask, render_template, request, send_from_directory, abort, redirect, url_for, flash
-
-from feedgen.feed import FeedGenerator
-from flask import make_response
-import datetime
+import flask_login
 import pytz
-from copy import deepcopy
+import timeago
+from feedgen.feed import FeedGenerator
+from flask import (
+    Flask,
+    abort,
+    flash,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
+from flask_login import login_required
 
-__version__ = '0.39.7'
+__version__ = '0.39.8'
 
 datastore = None
 
@@ -64,6 +70,7 @@ app.config['LOGIN_DISABLED'] = False
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
+notification_debug_log=[]
 
 def init_app_secret(datastore_path):
     secret = ""
@@ -140,13 +147,21 @@ class User(flask_login.UserMixin):
     def get_id(self):
         return str(self.id)
 
+    # Compare given password against JSON store or Env var
     def check_password(self, password):
 
-        import hashlib
         import base64
+        import hashlib
 
-        # Getting the values back out
-        raw_salt_pass = base64.b64decode(datastore.data['settings']['application']['password'])
+        # Can be stored in env (for deployments) or in the general configs
+        raw_salt_pass = os.getenv("SALTED_PASS", False)
+
+        if not raw_salt_pass:
+            raw_salt_pass = datastore.data['settings']['application']['password']
+
+        raw_salt_pass = base64.b64decode(raw_salt_pass)
+
+
         salt_from_storage = raw_salt_pass[:32]  # 32 is the length of the salt
 
         # Use the exact same setup you used to generate the key, but this time put in the password to check
@@ -197,7 +212,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route('/login', methods=['GET', 'POST'])
     def login():
 
-        if not datastore.data['settings']['application']['password']:
+        if not datastore.data['settings']['application']['password'] and not os.getenv("SALTED_PASS", False):
             flash("Login not required, no password enabled.", "notice")
             return redirect(url_for('index'))
 
@@ -212,10 +227,18 @@ def changedetection_app(config=None, datastore_o=None):
 
         if (user.check_password(password)):
             flask_login.login_user(user, remember=True)
-            next = request.args.get('next')
+
+            # For now there's nothing else interesting here other than the index/list page
+            # It's more reliable and safe to ignore the 'next' redirect
+            # When we used...
+            # next = request.args.get('next')
+            # return redirect(next or url_for('index'))
+            # We would sometimes get login loop errors on sites hosted in sub-paths
+
+            # note for the future:
             #            if not is_safe_url(next):
             #                return flask.abort(400)
-            return redirect(next or url_for('index'))
+            return redirect(url_for('index'))
 
         else:
             flash('Incorrect password', 'error')
@@ -224,8 +247,10 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.before_request
     def do_something_whenever_a_request_comes_in():
-        # Disable password  loginif there is not one set
-        app.config['LOGIN_DISABLED'] = datastore.data['settings']['application']['password'] == False
+
+        # Disable password login if there is not one set
+        # (No password in settings or env var)
+        app.config['LOGIN_DISABLED'] = datastore.data['settings']['application']['password'] == False and os.getenv("SALTED_PASS", False) == False
 
         # For the RSS path, allow access via a token
         if request.path == '/rss' and request.args.get('token'):
@@ -404,6 +429,7 @@ def changedetection_app(config=None, datastore_o=None):
     def get_current_checksum_include_ignore_text(uuid):
 
         import hashlib
+
         from changedetectionio import fetch_site_status
 
         # Get the most recent one
@@ -529,6 +555,7 @@ def changedetection_app(config=None, datastore_o=None):
                                 'notification_title': form.notification_title.data,
                                 'notification_body': form.notification_body.data,
                                 'notification_format': form.notification_format.data,
+                                'uuid': uuid
                                 }
                     notification_q.put(n_object)
                     flash('Test notification queued.')
@@ -565,8 +592,7 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def settings_page():
 
-        from changedetectionio import forms
-        from changedetectionio import content_fetcher
+        from changedetectionio import content_fetcher, forms
 
         form = forms.globalSettingsForm(request.form)
 
@@ -583,8 +609,8 @@ def changedetection_app(config=None, datastore_o=None):
             form.notification_format.data = datastore.data['settings']['application']['notification_format']
             form.base_url.data = datastore.data['settings']['application']['base_url']
 
-            # Password unset is a GET
-            if request.values.get('removepassword') == 'yes':
+            # Password unset is a GET, but we can lock the session to always need the password
+            if not os.getenv("SALTED_PASS", False) and request.values.get('removepassword') == 'yes':
                 from pathlib import Path
                 datastore.data['settings']['application']['password'] = False
                 flash("Password protection removed.", 'notice')
@@ -619,7 +645,7 @@ def changedetection_app(config=None, datastore_o=None):
                 else:
                     flash('No notification URLs set, cannot send test.', 'error')
 
-            if form.password.encrypted_password:
+            if not os.getenv("SALTED_PASS", False) and form.password.encrypted_password:
                 datastore.data['settings']['application']['password'] = form.password.encrypted_password
                 flash("Password protection enabled.", 'notice')
                 flask_login.logout_user()
@@ -631,7 +657,10 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST' and not form.validate():
             flash("An error occurred, please see below.", "error")
 
-        output = render_template("settings.html", form=form, current_base_url = datastore.data['settings']['application']['base_url'])
+        output = render_template("settings.html",
+                                 form=form,
+                                 current_base_url = datastore.data['settings']['application']['base_url'],
+                                 hide_remove_pass=os.getenv("SALTED_PASS", False))
 
         return output
 
@@ -647,9 +676,10 @@ def changedetection_app(config=None, datastore_o=None):
             urls = request.values.get('urls').split("\n")
             for url in urls:
                 url = url.strip()
+                url, *tags = url.split(" ")
                 # Flask wtform validators wont work with basic auth, use validators package
                 if len(url) and validators.url(url):
-                    new_uuid = datastore.add_watch(url=url.strip(), tag="")
+                    new_uuid = datastore.add_watch(url=url.strip(), tag=" ".join(tags))
                     # Straight into the queue.
                     update_q.put(new_uuid)
                     good += 1
@@ -770,6 +800,14 @@ def changedetection_app(config=None, datastore_o=None):
                                  uuid=uuid)
         return output
 
+    @app.route("/settings/notification-logs", methods=['GET'])
+    @login_required
+    def notification_logs():
+        global notification_debug_log
+        output = render_template("notification-log.html",
+                                 logs=notification_debug_log if len(notification_debug_log) else ["No errors or warnings detected"])
+
+        return output
     @app.route("/api/<string:uuid>/snapshot/current", methods=['GET'])
     @login_required
     def api_snapshot(uuid):
@@ -838,17 +876,33 @@ def changedetection_app(config=None, datastore_o=None):
                                  compresslevel=8)
 
             # Create a list file with just the URLs, so it's easier to port somewhere else in the future
-            list_file = os.path.join(datastore_o.datastore_path, "url-list.txt")
-            with open(list_file, "w") as f:
-                for uuid in datastore.data['watching']:
-                    url = datastore.data['watching'][uuid]['url']
+            list_file = "url-list.txt"
+            with open(os.path.join(datastore_o.datastore_path, list_file), "w") as f:
+                for uuid in datastore.data["watching"]:
+                    url = datastore.data["watching"][uuid]["url"]
                     f.write("{}\r\n".format(url))
+            list_with_tags_file = "url-list-with-tags.txt"
+            with open(
+                os.path.join(datastore_o.datastore_path, list_with_tags_file), "w"
+            ) as f:
+                for uuid in datastore.data["watching"]:
+                    url = datastore.data["watching"][uuid]["url"]
+                    tag = datastore.data["watching"][uuid]["tag"]
+                    f.write("{} {}\r\n".format(url, tag))
 
             # Add it to the Zip
-            zipObj.write(list_file,
-                         arcname="url-list.txt",
-                         compress_type=zipfile.ZIP_DEFLATED,
-                         compresslevel=8)
+            zipObj.write(
+                os.path.join(datastore_o.datastore_path, list_file),
+                arcname=list_file,
+                compress_type=zipfile.ZIP_DEFLATED,
+                compresslevel=8,
+            )
+            zipObj.write(
+                os.path.join(datastore_o.datastore_path, list_with_tags_file),
+                arcname=list_with_tags_file,
+                compress_type=zipfile.ZIP_DEFLATED,
+                compresslevel=8,
+            )
 
         # Send_from_directory needs to be the full absolute path
         return send_from_directory(os.path.abspath(datastore_o.datastore_path), backupname, as_attachment=True)
@@ -888,7 +942,6 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/api/delete", methods=['GET'])
     @login_required
     def api_delete():
-
         uuid = request.args.get('uuid')
         datastore.delete(uuid)
         flash('Deleted.')
@@ -943,7 +996,7 @@ def changedetection_app(config=None, datastore_o=None):
                 if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                     update_q.put(watch_uuid)
                     i += 1
-        flash("{} watches are rechecking.".format(i))
+        flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
 
     # @todo handle ctrl break
@@ -961,7 +1014,6 @@ def changedetection_app(config=None, datastore_o=None):
 # Check for new version and anonymous stats
 def check_for_new_version():
     import requests
-
     import urllib3
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -987,6 +1039,7 @@ def check_for_new_version():
         app.config.exit.wait(86400)
 
 def notification_runner():
+    global notification_debug_log
     while not app.config.exit.is_set():
         try:
             # At the moment only one thread runs (single runner)
@@ -1001,11 +1054,26 @@ def notification_runner():
                 notification.process_notification(n_object, datastore)
 
             except Exception as e:
-                print("Watch URL: {}  Error {}".format(n_object['watch_url'], e))
+                print("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
+
+                # UUID wont be present when we submit a 'test' from the global settings
+                if 'uuid' in n_object:
+                    datastore.update_watch(uuid=n_object['uuid'],
+                                           update_obj={'last_notification_error': "Notification error detected, please see logs."})
+
+                log_lines = str(e).splitlines()
+                notification_debug_log += log_lines
+
+                # Trim the log length
+                notification_debug_log = notification_debug_log[-100:]
+
+
+
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     from changedetectionio import update_worker
+<<<<<<< HEAD
     import croniter
     
     # prune history now to avoid data change conflicts after deepcopy
@@ -1013,6 +1081,13 @@ def ticker_thread_check_time_launch_checks():
     
     # Spin up Workers.
     for _ in range(datastore.data['settings']['requests']['workers']):
+=======
+
+    # Spin up Workers that do the fetching
+    # Can be overriden by ENV or use the default settings
+    n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
+    for _ in range(n_workers):
+>>>>>>> master
         new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
         running_update_threads.append(new_worker)
         new_worker.start()
