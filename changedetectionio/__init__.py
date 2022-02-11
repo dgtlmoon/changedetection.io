@@ -1008,6 +1008,9 @@ def ticker_thread_check_time_launch_checks():
     from changedetectionio import update_worker
     import croniter
     
+    # prune history now to avoid data change conflicts after deepcopy
+    datastore.prune_history()
+    
     # Spin up Workers.
     for _ in range(datastore.data['settings']['requests']['workers']):
         new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
@@ -1043,9 +1046,7 @@ def ticker_thread_check_time_launch_checks():
                         else:
                             # Default system wide
                             datastore.data['watching'][uuid]['next_check'] = round(now.timestamp() + (int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60))
-                    
-                    datastore.prune_history(uuid)
-                
+
                     datastore.needs_write = True
 
         # Wait a few seconds before checking the list again
