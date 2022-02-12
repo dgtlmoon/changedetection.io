@@ -125,7 +125,7 @@ class perform_site_check():
             if has_filter_rule:
                 if 'json:' in css_filter_rule:
                     stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, jsonpath_filter=css_filter_rule)
-                    original_content_before_filters = stripped_text_from_html
+                    original_content_before_filters = stripped_text_from_html.encode('utf-8')
                     is_text_or_html = False
 
             if is_text_or_html:
