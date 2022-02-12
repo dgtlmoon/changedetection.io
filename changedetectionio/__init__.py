@@ -696,6 +696,10 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def diff_history_page(uuid):
         from changedetectionio import content_fetcher
+
+        newest_version_file_contents = ""
+        previous_version_file_contents = ""
+
         # More for testing, possible to return the first/only
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
@@ -720,23 +724,24 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, dates[0])
-        newest_file = watch['history'][dates[0]]
-        with open(newest_file, 'r') as f:
-            newest_version_file_contents = f.read()
 
         previous_version = request.args.get('previous_version')
-        try:
-            previous_file = watch['history'][previous_version]
-        except KeyError:
-            # Not present, use a default value, the second one in the sorted list.
-            previous_file = watch['history'][dates[1]]
-
-        with open(previous_file, 'r') as f:
-            previous_version_file_contents = f.read()
-
         if ('content-type' in watch and content_fetcher.supported_binary_type(watch['content-type'])):
             template = "diff-image.html"
         else:
+            newest_file = watch['history'][dates[0]]
+            with open(newest_file, 'r') as f:
+                newest_version_file_contents = f.read()
+
+            try:
+                previous_file = watch['history'][previous_version]
+            except KeyError:
+                # Not present, use a default value, the second one in the sorted list.
+                previous_file = watch['history'][dates[1]]
+
+            with open(previous_file, 'r') as f:
+                previous_version_file_contents = f.read()
+
             template = "diff.html"
 
         output = render_template(template,
