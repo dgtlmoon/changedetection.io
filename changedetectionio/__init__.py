@@ -695,7 +695,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/diff/<string:uuid>", methods=['GET'])
     @login_required
     def diff_history_page(uuid):
-
+        from changedetectionio import content_fetcher
         # More for testing, possible to return the first/only
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
@@ -734,7 +734,13 @@ def changedetection_app(config=None, datastore_o=None):
         with open(previous_file, 'r') as f:
             previous_version_file_contents = f.read()
 
-        output = render_template("diff.html", watch_a=watch,
+        if ('content-type' in watch and content_fetcher.supported_binary_type(watch['content-type'])):
+            template = "diff-image.html"
+        else:
+            template = "diff.html"
+
+        output = render_template(template,
+                                 watch_a=watch,
                                  newest=newest_version_file_contents,
                                  previous=previous_version_file_contents,
                                  extra_stylesheets=extra_stylesheets,
@@ -751,6 +757,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/preview/<string:uuid>", methods=['GET'])
     @login_required
     def preview_page(uuid):
+        from changedetectionio import content_fetcher
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
@@ -765,14 +772,25 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         newest = list(watch['history'].keys())[-1]
-        with open(watch['history'][newest], 'r') as f:
-            content = f.readlines()
+        fname = watch['history'][newest]
+
+        if ('content-type' in watch and content_fetcher.supported_binary_type(watch['content-type'])):
+            template = "preview-image.html"
+            content = fname
+        else:
+            template = "preview.html"
+            try:
+                with open(fname, 'r') as f:
+                    content = f.read()
+            except:
+                content = "Cant read {}".format(fname)
 
         output = render_template("preview.html",
                                  content=content,
                                  extra_stylesheets=extra_stylesheets,
                                  current_diff_url=watch['url'],
-                                 uuid=uuid)
+                                 uuid=uuid,
+                                 watch=watch)
         return output
 
     @app.route("/settings/notification-logs", methods=['GET'])

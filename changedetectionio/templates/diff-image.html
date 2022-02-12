@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div id="settings">
+    <h1>Differences</h1>
+    <form class="pure-form " action="" method="GET">
+        <fieldset>
+            {% if versions|length >= 1 %}
+            <label for="diff-version">Compare newest (<span id="current-v-date"></span>) with</label>
+            <select id="diff-version" name="previous_version">
+                {% for version in versions %}
+                <option value="{{version}}" {% if version== current_previous_version %} selected="" {% endif %}>
+                    {{version}}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="pure-button pure-button-primary">Go</button>
+            {% endif %}
+        </fieldset>
+    </form>
+
+</div>
+
+<div id="diff-ui">
+
+</div>
+
+
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff.js')}}"></script>
+
+
+{% endblock %}
