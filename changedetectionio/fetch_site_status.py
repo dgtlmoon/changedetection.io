@@ -112,27 +112,28 @@ class perform_site_check():
 
             is_text_or_html = 'text' in update_obj['content-type']
             is_binary = content_fetcher.supported_binary_type(update_obj['content-type'])
-
             css_filter_rule = watch['css_filter']
-
             has_filter_rule = css_filter_rule and len(css_filter_rule.strip())
 
-            # Make it reformat the JSON to something nice
+            # Auto-detect application/json, make it reformat the JSON to something nice
             if is_json and not has_filter_rule:
                 css_filter_rule = "json:$"
                 has_filter_rule = True
 
-            if has_filter_rule:
-                if 'json:' in css_filter_rule:
-                    stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, jsonpath_filter=css_filter_rule)
-                    original_content_before_filters = stripped_text_from_html.encode('utf-8')
-                    is_text_or_html = False
+            ##### CONVERT THE INPUT TO TEXT, EXTRACT THE PARTS THAT NEED TO BE FILTERED
+
+            # Dont depend on the content-type header here, maybe it's not present
+            if 'json:' in css_filter_rule:
+                rule = css_filter_rule.replace('json:', '')
+                stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content,
+                                                                            jsonpath_filter=rule).encode('utf-8')
+                is_text_or_html = False
+                original_content_before_filters = stripped_text_from_html
 
             if is_text_or_html:
                 # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                 html_content = fetcher.content
                 if not fetcher.headers.get('Content-Type', '') == 'text/plain':
-
                     if has_filter_rule:
                         # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
                         if css_filter_rule[0] == '/':
@@ -140,9 +141,14 @@ class perform_site_check():
                         else:
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                             html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
-
                     # get_text() via inscriptis
                     stripped_text_from_html = get_text(html_content)
+
+                # Extract title as title
+                if self.datastore.data['settings']['application']['extract_title_as_title'] or watch['extract_title_as_title']:
+                    if not watch['title'] or not len(watch['title']):
+                        update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
+
                 else:
                     # Don't run get_text or xpath/css filters on plaintext
                     stripped_text_from_html = html_content
@@ -150,14 +156,13 @@ class perform_site_check():
                 # Re #340 - return the content before the 'ignore text' was applied
                 original_content_before_filters = stripped_text_from_html.encode('utf-8')
 
+
             # We rely on the actual text in the html output.. many sites have random script vars etc,
             # in the future we'll implement other mechanisms.
 
             update_obj["last_check_status"] = fetcher.get_last_status_code()
 
-            # If there's text to skip
-            # @todo we could abstract out the get_text() to handle this cleaner
-
+            ######## AFTER FILTERING, STRIP OUT IGNORE TEXT
             if is_text_or_html:
                 text_to_ignore = watch.get('ignore_text', []) + self.datastore.data['settings']['application'].get('global_ignore_text', [])
                 if len(text_to_ignore):
@@ -165,16 +170,11 @@ class perform_site_check():
                 else:
                     stripped_text_from_html = stripped_text_from_html.encode('utf8')
 
-                # Re #133 - if we should strip whitespaces from triggering the change detected comparison
-                if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
-                    fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
-                else:
-                    fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
-
-                # Extract title as title
-                if self.datastore.data['settings']['application']['extract_title_as_title'] or watch['extract_title_as_title']:
-                    if not watch['title'] or not len(watch['title']):
-                        update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
+            # Re #133 - if we should strip whitespaces from triggering the change detected comparison
+            if is_text_or_html and self.datastore.data['settings']['application'].get('ignore_whitespace', False):
+                fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
+            else:
+                fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
             # Goal here in the future is to be able to abstract out different content type checks into their own class
 
