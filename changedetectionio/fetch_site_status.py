@@ -198,7 +198,9 @@ class perform_site_check():
                 update_obj["previous_md5"] = fetched_md5
 
             blocked_by_not_found_trigger_text = False
-            if is_text_or_html:
+
+            # Trigger text can apply to JSON parsed documents too
+            if is_text_or_html or is_json:
                 if len(watch['trigger_text']):
                     blocked_by_not_found_trigger_text = True
                     for line in watch['trigger_text']:
