@@ -366,13 +366,19 @@ class ChangeDetectionStore:
     # result_obj from fetch_site_status.run()
     def save_history_text(self, watch_uuid, contents):
         import uuid
+        import content_fetcher
 
         output_path = "{}/{}".format(self.datastore_path, watch_uuid)
         # Incase the operator deleted it, check and create.
         if not os.path.isdir(output_path):
             mkdir(output_path)
 
-        fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
+        if (content_fetcher.supported_binary_type(self.data['watching'][watch_uuid]['content-type'])):
+            suffix = ".bin"
+        else:
+            suffix = "stripped.txt"
+
+        fname = "{}/{}.{}".format(output_path, uuid.uuid4(), suffix)
         with open(fname, 'wb') as f:
             f.write(contents)
             f.close()
