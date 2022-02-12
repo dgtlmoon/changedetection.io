@@ -807,6 +807,26 @@ def changedetection_app(config=None, datastore_o=None):
 
         return output
 
+
+    # render an image which contains the diff of two images
+    # We always compare the newest against whatever compare_date we are given
+    @app.route("/diff/show-image/<string:uuid>/<string:datestr>")
+    def show_single_image(uuid, datestr):
+
+        from flask import make_response
+        watch = datastore.data['watching'][uuid]
+
+        if datestr == 'None' or datestr is None:
+            datestr = list(watch['history'].keys())[0]
+
+        fname = watch['history'][datestr]
+        with open(fname, 'rb') as f:
+            resp = make_response(f.read())
+            
+        # @todo assumption here about the type, re-encode? detect?
+        resp.headers['Content-Type'] = 'image/jpeg'
+        return resp
+
     # render an image which contains the diff of two images
     # We always compare the newest against whatever compare_date we are given
     @app.route("/diff/image/<string:uuid>/<string:compare_date>")
@@ -819,10 +839,10 @@ def changedetection_app(config=None, datastore_o=None):
 
         # @todo this is weird
         if compare_date == 'None' or compare_date is None:
-            second_date = list(watch['history'].keys())[0]
+            compare_date = list(watch['history'].keys())[0]
 
         new_img = watch['history'][newest]
-        prev_img = watch['history'][second_date]
+        prev_img = watch['history'][compare_date]
         img = image_diff.render_diff(new_img, prev_img)
 
         resp = make_response(img)

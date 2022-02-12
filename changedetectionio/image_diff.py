@@ -38,4 +38,4 @@ def render_diff(fpath_imageA, fpath_imageB):
 		cv2.rectangle(imageB, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
 	#return cv2.imencode('.jpg', imageB)[1].tobytes()
-	return cv2.imencode('.jpg', imageB)[1].tobytes()
+	return cv2.imencode('.jpg', imageA)[1].tobytes()

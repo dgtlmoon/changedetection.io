@@ -24,6 +24,15 @@
 
 <div id="diff-ui">
   <img style="max-width: 100%" src="{{ url_for('render_diff_image', uuid=uuid, compare_date=current_previous_version) }}" />
+
+    <div>
+        <span style="width: 50%">
+            <img style="max-width: 100%" src="{{ url_for('show_single_image', uuid=uuid, datestr=newest_version_timestamp) }}" />
+        </span>
+        <span style="width: 50%">
+            <img style="max-width: 100%" src="{{ url_for('show_single_image', uuid=uuid, datestr=current_previous_version) }}" />
+        </span>
+    </div>
 </div>
 
 
