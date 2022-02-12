@@ -801,6 +801,16 @@ def changedetection_app(config=None, datastore_o=None):
                                  logs=notification_debug_log if len(notification_debug_log) else ["No errors or warnings detected"])
 
         return output
+
+    # render an image which contains the diff of two images
+    @app.route("/diff/image/<string:uuid>/<string:first_date>/<string:second_date>")
+    def render_diff_image(uuid, first_date, second_date):
+        from flask import make_response
+        resp = make_response("xxxxx")
+        resp.headers['Content-Type'] = 'image/jpeg'
+        return resp
+
+
     @app.route("/api/<string:uuid>/snapshot/current", methods=['GET'])
     @login_required
     def api_snapshot(uuid):
