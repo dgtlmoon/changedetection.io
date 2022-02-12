@@ -109,9 +109,8 @@ class perform_site_check():
             
             # Could be 'application/json; charset=utf-8' etc
             is_json = 'application/json' in update_obj['content-type']
-
-            is_text_or_html = 'text' in update_obj['content-type']
-            is_binary = content_fetcher.supported_binary_type(update_obj['content-type'])
+            is_text_or_html = 'text/' in update_obj['content-type'] # text/plain , text/html etc
+            is_binary = not is_text_or_html and content_fetcher.supported_binary_type(update_obj['content-type'])
             css_filter_rule = watch['css_filter']
             has_filter_rule = css_filter_rule and len(css_filter_rule.strip())
 
@@ -134,7 +133,11 @@ class perform_site_check():
             if is_text_or_html:
                 # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                 html_content = fetcher.content
-                if not fetcher.headers.get('Content-Type', '') == 'text/plain':
+                if 'text/plain' in update_obj['content-type']:
+                    stripped_text_from_html = html_content
+
+                # Assume it's HTML if it's not text/plain
+                if not 'text/plain' in update_obj['content-type']:
                     if has_filter_rule:
                         # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
                         if css_filter_rule[0] == '/':
@@ -145,14 +148,10 @@ class perform_site_check():
                     # get_text() via inscriptis
                     stripped_text_from_html = get_text(html_content)
 
-                # Extract title as title
-                if self.datastore.data['settings']['application']['extract_title_as_title'] or watch['extract_title_as_title']:
-                    if not watch['title'] or not len(watch['title']):
-                        update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
-
-                else:
-                    # Don't run get_text or xpath/css filters on plaintext
-                    stripped_text_from_html = html_content
+                    # Extract title as title
+                    if self.datastore.data['settings']['application']['extract_title_as_title'] or watch['extract_title_as_title']:
+                        if not watch['title'] or not len(watch['title']):
+                            update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
 
                 # Re #340 - return the content before the 'ignore text' was applied
                 original_content_before_filters = stripped_text_from_html.encode('utf-8')
