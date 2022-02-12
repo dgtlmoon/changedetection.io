@@ -106,8 +106,10 @@ class perform_site_check():
             # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
             # return content().textfilter().jsonextract().checksumcompare() ?
             update_obj['content-type'] = fetcher.headers.get('Content-Type', '').lower().strip()
+            
+            # Could be 'application/json; charset=utf-8' etc
+            is_json = 'application/json' in update_obj['content-type']
 
-            is_json = update_obj['content-type'] == 'application/json'
             is_text_or_html = 'text' in update_obj['content-type']
             is_binary = content_fetcher.supported_binary_type(update_obj['content-type'])
 
