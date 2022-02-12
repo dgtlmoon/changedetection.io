@@ -105,6 +105,8 @@ def test_check_basic_change_detection_functionality(client, live_server):
     res = client.get(url_for("preview_page", uuid="first"))
     assert b'<html>' not in res.data
 
+    res = client.get(url_for("preview_page", uuid="first"))
+    assert b'Some initial text' in res.data
 
     #
     # Cleanup everything
