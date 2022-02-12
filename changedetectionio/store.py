@@ -335,7 +335,6 @@ class ChangeDetectionStore:
         self.needs_write = True
         return changes_removed
 
-<<<<<<< HEAD
     # Remove oldest history exceeding max_history, or do nothing for "unlimited"
     def prune_history(self):
         # get default cutoff
@@ -370,10 +369,7 @@ class ChangeDetectionStore:
                     if int(timestamp) not in dates:
                         del self.data['watching'][uuid]['history'][str(timestamp)]
 
-    def add_watch(self, url, tag, extras=None):
-=======
     def add_watch(self, url, tag="", extras=None):
->>>>>>> master
         if extras is None:
             extras = {}
 
