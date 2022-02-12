@@ -42,7 +42,6 @@ class update_worker(threading.Thread):
                     now = time.time()
 
                     try:
-
                         changed_detected, update_obj, contents = update_handler.run(uuid)
 
                         # Re #342
