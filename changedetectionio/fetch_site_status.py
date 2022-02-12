@@ -57,7 +57,7 @@ class perform_site_check():
         stripped_text_from_html = ""
         fetched_md5 = ""
 
-        text_content_before_ignored_filter = False
+        original_content_before_filters = False
 
         watch = self.datastore.data['watching'][uuid]
 
@@ -106,13 +106,16 @@ class perform_site_check():
             # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
             # return content().textfilter().jsonextract().checksumcompare() ?
             update_obj['content-type'] = fetcher.headers.get('Content-Type', '').lower().strip()
+
             is_json = update_obj['content-type'] == 'application/json'
             is_text_or_html = 'text' in update_obj['content-type']
-            is_binary = 'image' in update_obj['content-type']
+            is_binary = content_fetcher.supported_binary_type(update_obj['content-type'])
 
             css_filter_rule = watch['css_filter']
 
             has_filter_rule = css_filter_rule and len(css_filter_rule.strip())
+
+            # Make it reformat the JSON to something nice
             if is_json and not has_filter_rule:
                 css_filter_rule = "json:$"
                 has_filter_rule = True
@@ -120,7 +123,7 @@ class perform_site_check():
             if has_filter_rule:
                 if 'json:' in css_filter_rule:
                     stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, jsonpath_filter=css_filter_rule)
-                    is_html = False
+                    is_text_or_html = False
 
             if is_text_or_html:
                 # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
@@ -142,7 +145,7 @@ class perform_site_check():
                     stripped_text_from_html = html_content
 
                 # Re #340 - return the content before the 'ignore text' was applied
-                text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
+                original_content_before_filters = stripped_text_from_html.encode('utf-8')
 
             # We rely on the actual text in the html output.. many sites have random script vars etc,
             # in the future we'll implement other mechanisms.
@@ -159,8 +162,6 @@ class perform_site_check():
                 else:
                     stripped_text_from_html = stripped_text_from_html.encode('utf8')
 
-
-            if is_text_or_html:
                 # Re #133 - if we should strip whitespaces from triggering the change detected comparison
                 if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
                     fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
@@ -175,8 +176,11 @@ class perform_site_check():
             # Goal here in the future is to be able to abstract out different content type checks into their own class
 
             if is_binary:
-                fetched_md5 = hashlib.md5(fetcher.content)
-                text_content_before_ignored_filter = fetcher.content
+                # @todo - use some actual image hash here where possible, audio hash, etc etc
+                m = hashlib.sha256()
+                m.update(fetcher.content)
+                fetched_md5 = m.hexdigest()
+                original_content_before_filters = fetcher.content
 
             # On the first run of a site, watch['previous_md5'] will be an empty string, set it the current one.
             if not len(watch['previous_md5']):
@@ -208,5 +212,5 @@ class perform_site_check():
                 update_obj["last_changed"] = timestamp
 
 
-        # text_content_before_ignored_filter is returned for saving the data to disk
-        return changed_detected, update_obj, text_content_before_ignored_filter
+        # original_content_before_filters is returned for saving the data to disk
+        return changed_detected, update_obj, original_content_before_filters

@@ -37,6 +37,16 @@ def set_modified_response():
 
 def live_server_setup(live_server):
 
+    @live_server.app.route('/test-binary-endpoint')
+    def test_binaryfile_endpoint():
+
+        from flask import make_response
+
+        # Tried using a global var here but didn't seem to work, so reading from a file instead.
+        with open("test-datastore/test.bin", "rb") as f:
+            resp = make_response(f.read())
+            resp.headers['Content-Type'] = 'image/jpeg'
+            return resp
 
     @live_server.app.route('/test-endpoint')
     def test_endpoint():

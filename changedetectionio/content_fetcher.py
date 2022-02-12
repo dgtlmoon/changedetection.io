@@ -5,8 +5,9 @@ from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
 from selenium.common.exceptions import WebDriverException
-import urllib3.exceptions
 
+# image/jpeg etc
+supported_binary_types = ['image']
 
 class EmptyReply(Exception):
     def __init__(self, status_code, url):
@@ -50,6 +51,15 @@ class Fetcher():
 #    @abstractmethod
 #    def return_diff(self, stream_a, stream_b):
 #        return
+
+# Assume we dont support it as binary if its not in our list
+def supported_binary_type(content_type):
+    # Not a binary thing we support? then use text (also used for JSON/XML etc)
+    # @todo - future - use regex for matching
+    if content_type and content_type.lower().strip().split('/')[0] not in (string.lower() for string in supported_binary_types):
+        return False
+
+    return True
 
 def available_fetchers():
         import inspect
@@ -156,15 +166,18 @@ class html_requests(Fetcher):
                          verify=False)
 
         # https://stackoverflow.com/questions/44203397/python-requests-get-returns-improperly-decoded-text-instead-of-utf-8
-        # Return bytes here
-        html = r.text
+
+        if not supported_binary_type(r.headers.get('Content-Type', '')):
+            content = r.text
+        else:
+            content = r.content
 
         # @todo test this
         # @todo maybe you really want to test zero-byte return pages?
-        if not r or not html or not len(html):
+        if not r or not content or not len(content):
             raise EmptyReply(url=url, status_code=r.status_code)
 
         self.status_code = r.status_code
-        self.content = html
+        self.content = content
         self.headers = r.headers
 
