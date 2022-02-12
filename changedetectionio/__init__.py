@@ -808,10 +808,24 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     # render an image which contains the diff of two images
-    @app.route("/diff/image/<string:uuid>/<string:first_date>/<string:second_date>")
-    def render_diff_image(uuid, first_date, second_date):
+    # We always compare the newest against whatever compare_date we are given
+    @app.route("/diff/image/<string:uuid>/<string:compare_date>")
+    def render_diff_image(uuid, compare_date):
+        from changedetectionio import image_diff
+
         from flask import make_response
-        resp = make_response("xxxxx")
+        watch = datastore.data['watching'][uuid]
+        newest = list(watch['history'].keys())[-1]
+
+        # @todo this is weird
+        if compare_date == 'None' or compare_date is None:
+            second_date = list(watch['history'].keys())[0]
+
+        new_img = watch['history'][newest]
+        prev_img = watch['history'][second_date]
+        img = image_diff.render_diff(new_img, prev_img)
+
+        resp = make_response(img)
         resp.headers['Content-Type'] = 'image/jpeg'
         return resp
 

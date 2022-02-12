@@ -23,11 +23,28 @@
 </div>
 
 <div id="diff-ui">
-  <img src="{{ url_for('render_diff_image', uuid=uuid, first_date=versions[0], second_date=current_previous_version) }}" />
+  <img style="max-width: 100%" src="{{ url_for('render_diff_image', uuid=uuid, compare_date=current_previous_version) }}" />
 </div>
 
 
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff.js')}}"></script>
 
+<script defer="">
+window.onload = function() {
+    /* Set current version date as local time in the browser also */
+    var current_v = document.getElementById("current-v-date");
+    var dateObject = new Date({{ newest_version_timestamp }}*1000);
+    current_v.innerHTML=dateObject.toLocaleString();
+
+    /* Convert what is options from UTC time.time() to local browser time */
+    var diffList=document.getElementById("diff-version");
+    if (typeof(diffList) != 'undefined' && diffList != null) {
+        for (var option of diffList.options) {
+          var dateObject = new Date(option.value*1000);
+          option.label=dateObject.toLocaleString();
+        }
+    }
+}
+</script>
 
 {% endblock %}
