@@ -124,6 +124,7 @@ class perform_site_check():
 
             # Dont depend on the content-type header here, maybe it's not present
             if 'json:' in css_filter_rule:
+                is_json = True
                 rule = css_filter_rule.replace('json:', '')
                 stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content,
                                                                             jsonpath_filter=rule).encode('utf-8')
@@ -170,10 +171,16 @@ class perform_site_check():
                 else:
                     stripped_text_from_html = stripped_text_from_html.encode('utf8')
 
+
+            ######## CALCULATE CHECKSUM FOR DIFF DETECTION
             # Re #133 - if we should strip whitespaces from triggering the change detected comparison
-            if is_text_or_html and self.datastore.data['settings']['application'].get('ignore_whitespace', False):
-                fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
-            else:
+            if is_text_or_html:
+                if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
+                    fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
+                else:
+                    fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
+
+            if is_json:
                 fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
             # Goal here in the future is to be able to abstract out different content type checks into their own class
