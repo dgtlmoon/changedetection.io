@@ -100,6 +100,12 @@ def test_check_basic_change_detection_functionality(client, live_server):
     # It should have picked up the <title>
     assert b'head title' in res.data
 
+
+    # be sure the HTML converter worked
+    res = client.get(url_for("preview_page", uuid="first"))
+    assert b'<html>' not in res.data
+
+
     #
     # Cleanup everything
     res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
