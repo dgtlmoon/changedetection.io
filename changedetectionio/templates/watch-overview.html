@@ -68,7 +68,9 @@
 					{% for watch in watches %}
 						<tr id="{{ watch.uuid }}"
 							class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }}
+																								  
 							{% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
+							{% if watch.last_notification_error is defined and watch.last_notification_error != False %}error{% endif %}
 							{% if watch.paused is defined and watch.paused != False %}paused{% endif %}
 							{% if watch.newest_history_key| int > watch.last_viewed| int %}unviewed{% endif %}">
 							<td class="inline chkbox"><input id="chk-{{ loop.index }}" type="checkbox" name="check" onchange="checkChange(this);">&nbsp;&nbsp;{{ loop.index }}</td>
@@ -81,15 +83,21 @@
 							</td>
 							<td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
 								<a class="external inline-hover-img" target="_blank" rel="noopener" href="{{ watch.url }}"></a>
-								{%if watch.fetch_backend == "html_webdriver" %}<img style="height: 1em; display:inline-block;" src="/static/images/Google-Chrome-icon.png" />{% endif %}
+								{%if watch.fetch_backend == "html_webdriver" %}<img style="height: 1em; display:inline-block;" src="{{url_for('static_content', group='images', filename='Google-Chrome-icon.png')}}" />{% endif %}
+
 								{% if watch.last_error is defined and watch.last_error != False %}
 								<div class="fetch-error">{{ watch.last_error }}</div>
+								{% endif %}
+								{% if watch.last_notification_error is defined and watch.last_notification_error != False %}
+								<div class="fetch-error notification-error">{{ watch.last_notification_error }}</div>
 								{% endif %}
 								{% if not active_tag %}
 								<span class="watch-tag-list">{{ watch.tag}}</span>
 								{% endif %}
 							</td>
 							<td class="hidden-col">{{ watch.title if watch.title else watch.url }}</td>
+							   
+					 
 							<td class="last-checked">{{watch|format_last_checked_time}}</td>
 							<td class="hidden-col">{{ watch.last_checked }}</td>
 							<td class="last-changed">{% if watch.history|length >= 2 and watch.last_changed %}
@@ -126,11 +134,10 @@
 					all {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
 				</li>
 				<li>
-					<a href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"><img id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" alt="" style="height:15px"></a>
+					<a href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>
 				</li>
 			</ul>
 		</div>
 	</div>
-
 </div>
 {% endblock %}

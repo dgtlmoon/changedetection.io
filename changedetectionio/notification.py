@@ -25,9 +25,7 @@ default_notification_body = '{watch_url} had a change.\n---\n{diff}\n---\n'
 default_notification_title = 'ChangeDetection.io Notification - {watch_url}'
 
 def process_notification(n_object, datastore):
-    import logging
-    log = logging.getLogger('apprise')
-    log.setLevel('TRACE')
+
     apobj = apprise.Apprise(debug=True)
 
     for url in n_object['notification_urls']:
@@ -53,11 +51,22 @@ def process_notification(n_object, datastore):
         n_title = n_title.replace(token, val)
         n_body = n_body.replace(token, val)
 
-    apobj.notify(
+    # https://github.com/caronc/apprise/wiki/Development_LogCapture
+    # Anything higher than or equal to WARNING (which covers things like Connection errors)
+    # raise it as an exception
+
+    with apprise.LogCapture(level=apprise.logging.DEBUG) as logs:
+        apobj.notify(
         body=n_body,
         title=n_title,
-        body_format=n_format,
-    )
+        body_format=n_format)
+
+        # Returns empty string if nothing found, multi-line string otherwise
+        log_value = logs.getvalue()
+        if log_value and 'WARNING' in log_value or 'ERROR' in log_value:
+            raise Exception(log_value)
+
+
 
 # Notification title + body content parameters get created here.
 def create_notification_parameters(n_object, datastore):
