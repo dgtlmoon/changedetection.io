@@ -335,40 +335,6 @@ class ChangeDetectionStore:
         self.needs_write = True
         return changes_removed
 
-    # Remove oldest history exceeding max_history, or do nothing for "unlimited"
-    def prune_history(self):
-        # get default cutoff
-        global_max_history = int(self.data['settings']['application']['max_history'])
-        for uuid in self.data['watching']:
-            # If watch doesn't have an individual max_history setting
-            if int(self.data['watching'][uuid]['max_history']) == 0:
-                max_history = global_max_history
-            else: # individual max_history
-                max_history = int(self.data['watching'][uuid]['max_history'])
-            if len(self.data['watching'][uuid]['history'].items()) > max_history:
-                # get timestamps, convert to int, sort, retain max_history including
-                # last_checked, last_changed, last_viewed, and newest_history_key
-                dates = list(self.data['watching'][uuid]['history'].keys())
-                dates = [int(i) for i in dates]
-                print(len(dates))
-                dates.sort(reverse=True)
-                print(*dates, sep="\n")
-                if (int(self.data['watching'][uuid]['newest_history_key']) in dates):
-                    dates.insert(0, dates.pop(dates.index(int(self.data['watching'][uuid]['newest_history_key']))))
-                if (int(self.data['watching'][uuid]['last_viewed']) in dates):
-                    dates.insert(0, dates.pop(dates.index(int(self.data['watching'][uuid]['last_viewed']))))
-                if (int(self.data['watching'][uuid]['last_changed']) in dates):
-                    dates.insert(0, dates.pop(dates.index(int(self.data['watching'][uuid]['last_changed']))))
-                if (int(self.data['watching'][uuid]['last_checked']) in dates):
-                    dates.insert(0, dates.pop(dates.index(int(self.data['watching'][uuid]['last_checked']))))
-                dates = dates[0:max_history] # slice leaving max_history elements 
-                print(len(dates))
-                print(*dates, sep="\n")
-                # delete history
-                for timestamp in self.data['watching'][uuid]['history'].keys():
-                    if int(timestamp) not in dates:
-                        del self.data['watching'][uuid]['history'][str(timestamp)]
-
     def add_watch(self, url, tag="", extras=None):
         if extras is None:
             extras = {}

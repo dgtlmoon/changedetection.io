@@ -1074,9 +1074,7 @@ def notification_runner():
 def ticker_thread_check_time_launch_checks():
     from changedetectionio import update_worker
     import croniter
-    
-    # prune history now to avoid data change conflicts after deepcopy
-    datastore.prune_history()
+    import pathlib
     
     # Spin up Workers that do the fetching
     # Can be overriden by ENV or use the default settings
@@ -1115,9 +1113,50 @@ def ticker_thread_check_time_launch_checks():
                         else:
                             # Default system wide
                             datastore.data['watching'][uuid]['next_check'] = round(now.timestamp() + (int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60))
-
-                    datastore.needs_write = True
-
+                    # Prune this uuid's history if greater than max_history
+                    # Get list of all snapshot files now to prevent deleting if there are new writes 
+                    uuid_path = "{}{}".format(copied_datastore.datastore_path, uuid)
+                    p = pathlib.Path(uuid_path).rglob("*txt")
+                    all_snapshots = [x for x in p if x.is_file()]
+                    # Get global max_history setting
+                    global_max_history = int(copied_datastore.data['settings']['application']['max_history'])
+                    # If watch doesn't have an individual max_history setting use global
+                    if int(copied_datastore.data['watching'][uuid]['max_history']) == 0:
+                        max_history = global_max_history
+                    else: # Use individual max_history
+                        max_history = int(copied_datastore.data['watching'][uuid]['max_history'])
+                    if len(copied_datastore.data['watching'][uuid]['history'].items()) > max_history:
+                        # Get snapshot timestamps, convert to int, sort reverse, retain max_history
+                        # including last_checked, last_changed, last_viewed, and newest_history_key
+                        dates = list(copied_datastore.data['watching'][uuid]['history'].keys())
+                        dates = [int(i) for i in dates]
+                        dates.sort(reverse=True)
+                        if (int(copied_datastore.data['watching'][uuid]['newest_history_key']) in dates):
+                            dates.insert(0, dates.pop(dates.index(int(copied_datastore.data['watching'][uuid]['newest_history_key']))))
+                        if (int(copied_datastore.data['watching'][uuid]['last_viewed']) in dates):
+                            dates.insert(0, dates.pop(dates.index(int(copied_datastore.data['watching'][uuid]['last_viewed']))))
+                        if (int(copied_datastore.data['watching'][uuid]['last_changed']) in dates):
+                            dates.insert(0, dates.pop(dates.index(int(copied_datastore.data['watching'][uuid]['last_changed']))))
+                        if (int(copied_datastore.data['watching'][uuid]['last_checked']) in dates):
+                            dates.insert(0, dates.pop(dates.index(int(copied_datastore.data['watching'][uuid]['last_checked']))))
+                        dates = dates[0:max_history] # slice leaving max_history elements 
+                        # Remove excess history from datastore
+                        valid_snapshots = []
+                        for timestamp, path in copied_datastore.data['watching'][uuid]['history'].items():
+                            if int(timestamp) not in dates:
+                                del datastore.data['watching'][uuid]['history'][str(timestamp)]
+                            else:
+                                valid_snapshots.append(path.replace('//', '/'))
+                        # Re-sort dates to find and delete snapshots older than oldest valid snapshot
+                        dates.sort(reverse=True)
+                        for snapshot in all_snapshots:
+                            try:
+                                if os.path.getmtime(snapshot) < dates[len(dates)-1]:
+                                    os.unlink(snapshot)
+                            except:
+                                pass
+                        datastore.needs_write = True
+                        
         # Wait a few seconds before checking the list again
         time.sleep(3)
 
