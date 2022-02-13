@@ -656,8 +656,8 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST':
             urls = request.values.get('urls').split("\n")
             for url in urls:
-                url = url.strip()
                 url, *tags = url.split(" ")
+
                 # Flask wtform validators wont work with basic auth, use validators package
                 if len(url) and validators.url(url):
                     new_uuid = datastore.add_watch(url=url.strip(), tag=" ".join(tags))
@@ -901,6 +901,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  logs=notification_debug_log if len(notification_debug_log) else ["No errors or warnings detected"])
 
         return output
+
     @app.route("/api/<string:uuid>/snapshot/current", methods=['GET'])
     @login_required
     def api_snapshot(uuid):
