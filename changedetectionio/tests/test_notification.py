@@ -225,4 +225,3 @@ def test_check_notification(client, live_server):
         follow_redirects=True
     )
     assert b"Notification Body and Title is required when a Notification URL is used" in res.data
-

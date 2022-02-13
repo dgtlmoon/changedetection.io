@@ -36,7 +36,7 @@ from flask import (
 )
 from flask_login import login_required
 
-__version__ = '0.39.7'
+__version__ = '0.39.8'
 
 datastore = None
 
@@ -224,10 +224,18 @@ def changedetection_app(config=None, datastore_o=None):
 
         if (user.check_password(password)):
             flask_login.login_user(user, remember=True)
-            next = request.args.get('next')
+
+            # For now there's nothing else interesting here other than the index/list page
+            # It's more reliable and safe to ignore the 'next' redirect
+            # When we used...
+            # next = request.args.get('next')
+            # return redirect(next or url_for('index'))
+            # We would sometimes get login loop errors on sites hosted in sub-paths
+
+            # note for the future:
             #            if not is_safe_url(next):
             #                return flask.abort(400)
-            return redirect(next or url_for('index'))
+            return redirect(url_for('index'))
 
         else:
             flash('Incorrect password', 'error')
@@ -656,7 +664,9 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST':
             urls = request.values.get('urls').split("\n")
             for url in urls:
+              
                 url, *tags = url.split(" ")
+                url = url.strip()
 
                 # Flask wtform validators wont work with basic auth, use validators package
                 if len(url) and validators.url(url):
@@ -1102,8 +1112,8 @@ def changedetection_app(config=None, datastore_o=None):
                     update_q.put(watch_uuid)
                     i += 1
 
-        #flash("{} watch{} {} rechecking.".format(i, "" if (i == 1) else "es", "is" if (i == 1) else "are"), "notice")
-        flash("{} watches are rechecking.".format(i))
+        flash("{} watches are queued for rechecking.".format(i))
+
         return redirect(url_for('index', tag=tag))
 
     # @todo handle ctrl break
@@ -1181,8 +1191,10 @@ def notification_runner():
 def ticker_thread_check_time_launch_checks():
     from changedetectionio import update_worker
 
-    # Spin up Workers.
-    for _ in range(datastore.data['settings']['requests']['workers']):
+    # Spin up Workers that do the fetching
+    # Can be overriden by ENV or use the default settings
+    n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
+    for _ in range(n_workers):
         new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
         running_update_threads.append(new_worker)
         new_worker.start()
