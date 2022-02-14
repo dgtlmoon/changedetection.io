@@ -1125,7 +1125,7 @@ def ticker_thread_check_time_launch_checks():
                         max_history = global_max_history
                     else: # Use individual max_history
                         max_history = int(copied_datastore.data['watching'][uuid]['max_history'])
-                    if len(copied_datastore.data['watching'][uuid]['history'].items()) > max_history:
+                    if len(copied_datastore.data['watching'][uuid]['history'].items()) > max_history and max_history != 0:
                         # Get snapshot timestamps, convert to int, sort reverse, retain max_history
                         # including last_checked, last_changed, last_viewed, and newest_history_key
                         dates = list(copied_datastore.data['watching'][uuid]['history'].keys())
@@ -1141,13 +1141,10 @@ def ticker_thread_check_time_launch_checks():
                             dates.insert(0, dates.pop(dates.index(int(copied_datastore.data['watching'][uuid]['last_checked']))))
                         dates = dates[0:max_history] # slice leaving max_history elements 
                         # Remove excess history from datastore
-                        valid_snapshots = []
                         for timestamp, path in copied_datastore.data['watching'][uuid]['history'].items():
                             if int(timestamp) not in dates:
                                 del datastore.data['watching'][uuid]['history'][str(timestamp)]
-                            else:
-                                valid_snapshots.append(path.replace('//', '/'))
-                        # Re-sort dates to find and delete snapshots older than oldest valid snapshot
+                        # Re-sort dates to find and delete snapshots older than oldest retained snapshot date
                         dates.sort(reverse=True)
                         for snapshot in all_snapshots:
                             try:
