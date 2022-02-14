@@ -2,6 +2,7 @@ import time
 from changedetectionio import content_fetcher
 import hashlib
 from inscriptis import get_text
+from inscriptis.model.config import ParserConfig
 import urllib3
 from . import html_tools
 import re
@@ -129,8 +130,18 @@ class perform_site_check():
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                             html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
 
-                    # get_text() via inscriptis
-                    stripped_text_from_html = get_text(html_content)
+                    # get text and annotations via inscriptis. A config is
+                    # passed so that hyperlinks can also be included in the
+                    # text and diffed on
+                    config = ParserConfig(
+                        annotation_rules={'a': ['hyperlink']},
+                        display_links=True
+                    )
+
+                    stripped_text_from_html = get_text(
+                        html_content, config=config
+                    )
+
                 else:
                     # Don't run get_text or xpath/css filters on plaintext
                     stripped_text_from_html = html_content
