@@ -3,6 +3,7 @@
 import time
 from flask import url_for
 from . util import live_server_setup
+from changedetectionio import html_tools
 
 def test_setup(live_server):
     live_server_setup(live_server)
@@ -23,7 +24,7 @@ def test_strip_text_func():
     ignore_lines = ["sometimes"]
 
     fetcher = fetch_site_status.perform_site_check(datastore=False)
-    stripped_content = fetcher.strip_ignore_text(test_content, ignore_lines)
+    stripped_content = html_tools.strip_ignore_text(test_content, ignore_lines)
 
     assert b"sometimes" not in stripped_content
     assert b"Some content" in stripped_content

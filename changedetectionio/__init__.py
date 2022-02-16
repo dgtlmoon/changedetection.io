@@ -35,6 +35,7 @@ from flask import (
     url_for,
 )
 from flask_login import login_required
+from changedetectionio import html_tools
 
 __version__ = '0.39.8'
 
@@ -441,7 +442,7 @@ def changedetection_app(config=None, datastore_o=None):
                 raw_content = file.read()
 
                 handler = fetch_site_status.perform_site_check(datastore=datastore)
-                stripped_content = handler.strip_ignore_text(raw_content,
+                stripped_content = html_tools.strip_ignore_text(raw_content,
                                                              datastore.data['watching'][uuid]['ignore_text'])
 
                 if datastore.data['settings']['application'].get('ignore_whitespace', False):
@@ -765,8 +766,11 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         newest = list(watch['history'].keys())[-1]
+
         with open(watch['history'][newest], 'r') as f:
             content = f.readlines()
+
+        from fetch_site_status import perform_site_check
 
         output = render_template("preview.html",
                                  content=content,
