@@ -772,16 +772,19 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
-        newest = list(watch['history'].keys())[-1]
+        if len(watch['history']):
+            newest = list(watch['history'].keys())[-1]
 
-        with open(watch['history'][newest], 'r') as f:
-            content = f.readlines()
+            with open(watch['history'][newest], 'r') as f:
+                content = f.readlines()
 
-        # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
-        ignored_line_numbers = html_tools.strip_ignore_text("".join(content),
-                                                            watch.get('ignore_text', []),
-                                                            'line numbers'
-                                                            )
+            # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
+            ignored_line_numbers = html_tools.strip_ignore_text("".join(content),
+                                                                watch.get('ignore_text', []),
+                                                                'line numbers'
+                                                                )
+        else:
+            content = "No history found"
 
         output = render_template("preview.html",
                                  content=content,
