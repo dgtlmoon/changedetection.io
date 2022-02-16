@@ -722,8 +722,12 @@ def changedetection_app(config=None, datastore_o=None):
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, dates[0])
         newest_file = watch['history'][dates[0]]
-        with open(newest_file, 'r') as f:
-            newest_version_file_contents = f.read()
+
+        try:
+            with open(newest_file, 'r') as f:
+                newest_version_file_contents = f.read()
+        except Exception as e:
+            newest_version_file_contents = "Unable to read {}.\n".format(newest_file)
 
         previous_version = request.args.get('previous_version')
         try:
@@ -732,8 +736,11 @@ def changedetection_app(config=None, datastore_o=None):
             # Not present, use a default value, the second one in the sorted list.
             previous_file = watch['history'][dates[1]]
 
-        with open(previous_file, 'r') as f:
-            previous_version_file_contents = f.read()
+        try:
+            with open(previous_file, 'r') as f:
+                previous_version_file_contents = f.read()
+        except Exception as e:
+            previous_version_file_contents = "Unable to read {}.\n".format(previous_file)
 
         output = render_template("diff.html", watch_a=watch,
                                  newest=newest_version_file_contents,
@@ -770,11 +777,16 @@ def changedetection_app(config=None, datastore_o=None):
         with open(watch['history'][newest], 'r') as f:
             content = f.readlines()
 
-        from fetch_site_status import perform_site_check
+        # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
+        ignored_line_numbers = html_tools.strip_ignore_text("".join(content),
+                                                            watch.get('ignore_text', []),
+                                                            'line numbers'
+                                                            )
 
         output = render_template("preview.html",
                                  content=content,
                                  extra_stylesheets=extra_stylesheets,
+                                 ignored_line_numbers=ignored_line_numbers,
                                  current_diff_url=watch['url'],
                                  uuid=uuid)
         return output

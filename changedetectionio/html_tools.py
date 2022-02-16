@@ -118,11 +118,11 @@ def strip_ignore_text(content, list_ignore_text, mode="content"):
         else:
             ignore.append(k)
 
-    i = 1
+    i = 0
     output = []
     ignored_line_numbers = []
     for line in content.splitlines():
-
+        i += 1
         # Always ignore blank lines in this mode. (when this function gets called)
         if len(line.strip()):
             regex_matches = False
@@ -140,7 +140,7 @@ def strip_ignore_text(content, list_ignore_text, mode="content"):
             else:
                 ignored_line_numbers.append(i)
 
-        i += 1
+
 
     # Used for finding out what to highlight
     if mode == "line numbers":
