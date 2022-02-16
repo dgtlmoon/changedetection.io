@@ -11,7 +11,8 @@
         <tbody>
         <tr>
             <td id="diff-col">
-                <span id="result">{% for row in content %}{{ 'OK' if (loop.index in ignored_line_numbers)}}{{row}}{% endfor %}</span>
+                <div class="ignored">Grey lines are ignored</div>
+                <span id="result">{% for row in content %}{% if (loop.index in ignored_line_numbers)%}<span class="ignored">{% endif %}{{row}}{% if (loop.index in ignored_line_numbers)%}</span>{% endif %}{% endfor %}</span>
             </td>
         </tr>
         </tbody>
