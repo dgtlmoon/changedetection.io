@@ -102,7 +102,7 @@ class perform_site_check():
             # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
             # return content().textfilter().jsonextract().checksumcompare() ?
 
-            is_json = fetcher.headers.get('Content-Type', '') == 'application/json'
+            is_json = 'application/json' in fetcher.headers.get('Content-Type', '')
             is_html = not is_json
             css_filter_rule = watch['css_filter']
 
