@@ -777,15 +777,16 @@ def changedetection_app(config=None, datastore_o=None):
 
             with open(watch['history'][newest], 'r') as f:
                 content = f.readlines()
-
-            # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
-            ignored_line_numbers = html_tools.strip_ignore_text("".join(content),
-                                                                watch.get('ignore_text', []),
-                                                                'line numbers'
-                                                                )
         else:
             content = "No history found"
 
+        # Get what needs to be highlighted
+        ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
+        # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
+        ignored_line_numbers = html_tools.strip_ignore_text(content="".join(content),
+                                                            list_ignore_text=ignore_rules,
+                                                            mode='line numbers'
+                                                            )
         output = render_template("preview.html",
                                  content=content,
                                  extra_stylesheets=extra_stylesheets,
