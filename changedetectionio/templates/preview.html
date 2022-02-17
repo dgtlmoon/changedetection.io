@@ -11,8 +11,10 @@
         <tbody>
         <tr>
             <td id="diff-col">
-                <div class="ignored">Grey lines are ignored</div>
-                <span id="result">{% for row in content %}{% if (loop.index in ignored_line_numbers)%}<span class="ignored">{% endif %}{{row}}{% if (loop.index in ignored_line_numbers)%}</span>{% endif %}{% endfor %}</span>
+                <span class="ignored">Grey lines are ignored</span> <span class="triggered">Blue lines are triggers</span>
+                    {% for row in content %}
+                    <div class="{% if (loop.index in ignored_line_numbers)%}ignored{% endif %} {% if (loop.index in triggered_line_numbers)%}triggered{% endif %}">{{row}}</div>
+                    {% endfor %}
             </td>
         </tr>
         </tbody>

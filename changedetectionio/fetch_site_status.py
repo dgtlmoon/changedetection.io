@@ -132,22 +132,14 @@ class perform_site_check():
             blocked_by_not_found_trigger_text = False
 
             if len(watch['trigger_text']):
+                # Yeah, lets block first until something matches
                 blocked_by_not_found_trigger_text = True
-                for line in watch['trigger_text']:
-                    # Because JSON wont serialize a re.compile object
-                    if line[0] == '/' and line[-1] == '/':
-                        regex = re.compile(line.strip('/'), re.IGNORECASE)
-                        # Found it? so we don't wait for it anymore
-                        r = re.search(regex, str(stripped_text_from_html))
-                        if r:
-                            blocked_by_not_found_trigger_text = False
-                            break
-
-                    elif line.lower() in str(stripped_text_from_html).lower():
-                        # We found it don't wait for it.
-                        blocked_by_not_found_trigger_text = False
-                        break
-
+                # Filter and trigger works the same, so reuse it
+                result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
+                                                      wordlist=watch['trigger_text'],
+                                                      mode="line numbers")
+                if result:
+                    blocked_by_not_found_trigger_text = False
 
 
             if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:

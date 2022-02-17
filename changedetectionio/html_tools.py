@@ -107,10 +107,12 @@ def extract_json_as_string(content, jsonpath_filter):
     return stripped_text_from_html
 
 
-def strip_ignore_text(content, list_ignore_text, mode="content"):
+def strip_ignore_text(content, wordlist, mode="content"):
     ignore = []
     ignore_regex = []
-    for k in list_ignore_text:
+
+    # @todo check this runs case insensitive
+    for k in wordlist:
 
         # Is it a regex?
         if k[0] == '/':
