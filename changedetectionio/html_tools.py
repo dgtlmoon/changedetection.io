@@ -25,7 +25,7 @@ def xpath_filter(xpath_filter, html_content):
     tree = html.fromstring(html_content)
     html_block = ""
 
-    for item in tree.xpath(xpath_filter.strip()):
+    for item in tree.xpath(xpath_filter.strip(), namespaces={'re':'http://exslt.org/regular-expressions'}):
         html_block+= etree.tostring(item, pretty_print=True).decode('utf-8')+"<br/>"
 
     return html_block
