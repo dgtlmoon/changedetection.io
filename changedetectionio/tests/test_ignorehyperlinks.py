@@ -41,7 +41,8 @@ def set_modified_ignore_response():
         f.write(test_return_data)
 
 def test_ignore_hyperlinks_false(client, live_server):
-    """Testing the functionality of monitoring link changes"""
+    """Testing that the link changes are detected when functionality is
+    detected"""
     sleep_time_for_fetch_thread = 3
 
     # Give the endpoint time to spin up
