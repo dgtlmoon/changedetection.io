@@ -5,8 +5,6 @@ import time
 from flask import url_for
 from .util import live_server_setup
 
-import multiprocessing
-multiprocessing.set_start_method('fork')
 def test_setup(live_server):
     live_server_setup(live_server)
 
