@@ -17,6 +17,28 @@ class perform_site_check():
         super().__init__(*args, **kwargs)
         self.datastore = datastore
 
+    def html_to_text(self, html_content: str) -> str:
+        """Converts html string to a string with just the text. If ignoring
+        hyperlinks is disabled, hyperlinks are also included in the text"""
+
+        #  if hyperlinks are not being ignored define a config for
+        #  extracting hyperlinks
+        if not self.datastore.data["settings"]["application"][
+            "ignore_hyperlinks"]:
+
+            parser_config = ParserConfig(
+                annotation_rules={"a": ["hyperlink"]}, display_links=True
+            )
+
+        # otherwise set config to None
+        else:
+            parser_config = None
+
+        # get text and annotations via inscriptis
+        text_content = get_text(html_content, config=parser_config)
+
+        return text_content
+
     def strip_ignore_text(self, content, list_ignore_text):
         import re
         ignore = []
@@ -48,8 +70,6 @@ class perform_site_check():
                     output.append(line.encode('utf8'))
 
         return "\n".encode('utf8').join(output)
-
-
 
     def run(self, uuid):
         timestamp = int(time.time())  # used for storage etc too
@@ -130,17 +150,8 @@ class perform_site_check():
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                             html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
 
-                    # get text and annotations via inscriptis. A config is
-                    # passed so that hyperlinks can also be included in the
-                    # text and diffed on
-                    config = ParserConfig(
-                        annotation_rules={'a': ['hyperlink']},
-                        display_links=True
-                    )
-
-                    stripped_text_from_html = get_text(
-                        html_content, config=config
-                    )
+                    # extract text
+                    stripped_text_from_html = self.html_to_text(html_content)
 
                 else:
                     # Don't run get_text or xpath/css filters on plaintext
@@ -191,8 +202,6 @@ class perform_site_check():
                         # We found it don't wait for it.
                         blocked_by_not_found_trigger_text = False
                         break
-
-
 
             if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:
                 changed_detected = True
