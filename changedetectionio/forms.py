@@ -312,3 +312,5 @@ class globalSettingsForm(commonSettingsForm):
     base_url = StringField('Base URL', validators=[validators.Optional()])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     ignore_whitespace = BooleanField('Ignore whitespace')
+    ignore_hyperlinks = BooleanField('Ignore Hyperlinks',
+                                     default=True)

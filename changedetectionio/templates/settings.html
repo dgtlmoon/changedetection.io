@@ -82,7 +82,12 @@
                     <i>Note:</i> Changing this will change the status of your existing watches, possibily trigger alerts etc.
                     </span>
                     </fieldset>
-
+                <fieldset class="pure-group">
+                    {{ render_field(form.ignore_hyperlinks) }}
+                    <span class="pure-form-message-inline">Ignore hyperlinks, if enabled, hyperlinks will not be shown in the page content and changes in hyperlinks will not trigger alerts<br/>
+                    <i>Note:</i> Changing this will change the status of your existing watches, possibily trigger alerts etc.
+                    </span>
+                    </fieldset>
 
                     <fieldset class="pure-group">
                     {{ render_field(form.global_ignore_text, rows=5, placeholder="Some text to ignore in a line
