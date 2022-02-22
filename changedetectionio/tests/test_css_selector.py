@@ -1,10 +1,12 @@
 #!/usr/bin/python3
 
 import time
+
 from flask import url_for
-from . util import live_server_setup
 
 from ..html_tools import *
+from .util import live_server_setup
+
 
 def test_setup(live_server):
     live_server_setup(live_server)
@@ -68,6 +70,27 @@ def test_css_filter_output():
     assert text == "    Block A\n    Block B"
 
 
+def test_subtractive_css_filter_output():
+    from changedetectionio import fetch_site_status
+    from inscriptis import get_text
+
+    # Check text with sub-parts renders correctly
+    content = """<html> <body><div id="thingthing" >  Some really <b>bold</b> text  </div> </body> </html>"""
+    html_blob = subtractive_css_filter(css_filter="#thingthing", html_content=content)
+    text = get_text(html_blob)
+    assert text == ""
+
+    content = """<html> <body>
+    <p>foo bar blah</p>
+    <div class="parts">Block A</div> <div class="parts">Block B</div></body> 
+    </html>
+"""
+    html_blob = subtractive_css_filter(css_filter=".parts", html_content=content)
+    text = get_text(html_blob)
+    # Divs are converted to 4 whitespaces by inscriptis
+    assert text == "foo bar blah\n"
+
+    
 # Tests the whole stack works with the CSS Filter
 def test_check_markup_css_filter_restriction(client, live_server):
     sleep_time_for_fetch_thread = 3
