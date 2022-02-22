@@ -100,7 +100,11 @@ User-Agent: wonderbra 1.0") }}
                                 href="http://xpather.com/" target="new">test your XPath here</a></li>
                     </ul>
                     Please be sure that you thoroughly understand how to write CSS or JSONPath, XPath selector rules before filing an issue on GitHub! <a
-                                href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
+                                                                                                                                                         href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
+                    <br/>
+                    {{ render_field(form.subtractive_css_filter) }}
+                    <br/>
+                    Use this if you get constant changes on items you're not interested in, ie. for news or stock trackers.
                 </span>
                     </div>
 
