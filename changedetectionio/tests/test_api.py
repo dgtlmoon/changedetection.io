@@ -1,8 +1,11 @@
 #!/usr/bin/python3
 
 import time
+
 from flask import url_for
-from . util import live_server_setup
+
+from .util import live_server_setup
+
 
 def test_setup(live_server):
     live_server_setup(live_server)
@@ -15,9 +18,9 @@ def set_response_data(test_return_data):
 
 def test_snapshot_api_detects_change(client, live_server):
 
-    test_return_data = "Some initial text"
+    test_return_data = "Some initial text\n"
 
-    test_return_data_modified = "Some NEW nice initial text"
+    test_return_data_modified = "Some NEW nice initial text\n"
 
     sleep_time_for_fetch_thread = 3
 
@@ -71,4 +74,3 @@ def test_snapshot_api_invalid_uuid(client, live_server):
     )
 
     assert res.status_code == 400
-
