@@ -1,15 +1,19 @@
-from os import unlink, path, mkdir
 import json
-import uuid as uuid_builder
-from threading import Lock
-from copy import deepcopy
-
 import logging
-import time
-import threading
 import os
+import threading
+import time
+import uuid as uuid_builder
+from copy import deepcopy
+from os import mkdir, path, unlink
+from threading import Lock
 
-from changedetectionio.notification import default_notification_format, default_notification_body, default_notification_title
+from changedetectionio.notification import (
+    default_notification_body,
+    default_notification_format,
+    default_notification_title,
+)
+
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
@@ -82,6 +86,7 @@ class ChangeDetectionStore:
             'notification_body': default_notification_body,
             'notification_format': default_notification_format,
             'css_filter': "",
+            'subtractive_css_filter': False,
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'fetch_backend': None,
             'extract_title_as_title': False
@@ -144,8 +149,8 @@ class ChangeDetectionStore:
             unlink(password_reset_lockfile)
 
         if not 'app_guid' in self.__data:
-            import sys
             import os
+            import sys
             if "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ:
                 self.__data['app_guid'] = "test-" + str(uuid_builder.uuid4())
             else:
@@ -437,6 +442,7 @@ class ChangeDetectionStore:
                 index.append(self.data['watching'][uuid]['history'][str(id)])
 
         import pathlib
+
         # Only in the sub-directories
         for item in pathlib.Path(self.datastore_path).rglob("*/*txt"):
             if not str(item) in index:

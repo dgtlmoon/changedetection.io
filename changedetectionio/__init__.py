@@ -514,6 +514,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
             datastore.data['watching'][uuid]['css_filter'] = form.css_filter.data.strip()
+            datastore.data['watching'][uuid]['subtractive_css_filter'] = form.subtractive_css_filter.data
 
             # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
             if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
