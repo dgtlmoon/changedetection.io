@@ -33,11 +33,16 @@ def test_html_to_text_func():
     fetcher = fetch_site_status.perform_site_check(datastore=mock_data_store)
     text_content = fetcher.html_to_text(test_html)
 
+    no_links_text = """Some initial text
+
+Which is across multiple lines
+
+More Text
+So let's see what happens.
+Even More Text
+"""
     # check that no links are in the extracted text
-    assert (
-        text_content == "Some initial text\n\nWhich is across multiple lines\n\nFirst "
-        "Link Text So let's see what happens. Second Link Text"
-    )
+    assert text_content == no_links_text
 
     # set the mock data store, with 'ignore hyperlinks' set to False
     mock_data_store = MockDataStore(ignore_hyperlinks=False)
