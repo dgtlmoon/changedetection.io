@@ -764,6 +764,8 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def preview_page(uuid):
         content = []
+        ignored_line_numbers = []
+        trigger_line_numbers = []
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
@@ -782,25 +784,38 @@ def changedetection_app(config=None, datastore_o=None):
             filename = watch['history'][timestamps[-1]]
             try:
                 with open(filename, 'r') as f:
-                    content = f.readlines()
-            except:
-                content.append("File doesnt exist or unable to read file {}".format(filename))
+                    tmp = f.readlines()
+
+                    # Get what needs to be highlighted
+                    ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
+
+                    # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
+                    ignored_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
+                                                                        wordlist=ignore_rules,
+                                                                        mode='line numbers'
+                                                                        )
+
+                    trigger_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
+                                                                        wordlist=watch['trigger_text'],
+                                                                        mode='line numbers'
+                                                                        )
+                    # Prepare the classes and lines used in the template
+                    i=0
+                    for l in tmp:
+                        classes=[]
+                        i+=1
+                        if i in ignored_line_numbers:
+                            classes.append('ignored')
+                        if i in trigger_line_numbers:
+                            classes.append('triggered')
+                        content.append({'line': l, 'classes': ' '.join(classes)})
+
+
+            except Exception as e:
+                content.append({'line': "File doesnt exist or unable to read file {}".format(filename), 'classes': ''})
         else:
-            content.append("No history found")
+            content.append({'line': "No history found", 'classes': ''})
 
-        # Get what needs to be highlighted
-        ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
-
-        # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
-        ignored_line_numbers = html_tools.strip_ignore_text(content="".join(content),
-                                                            wordlist=ignore_rules,
-                                                            mode='line numbers'
-                                                            )
-
-        trigger_line_numbers = html_tools.strip_ignore_text(content="".join(content),
-                                                            wordlist=watch['trigger_text'],
-                                                            mode='line numbers'
-                                                            )
 
         output = render_template("preview.html",
                                  content=content,

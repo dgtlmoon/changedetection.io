@@ -13,10 +13,7 @@
         <tr>
             <td id="diff-col">
                     {% for row in content %}
-                        {% set classes = [] %}
-                           {% if (loop.index in ignored_line_numbers) %}{{ classes.append("ignored") }}{% endif %}
-                           {% if (loop.index in triggered_line_numbers) %}{{ classes.append("triggered") }}{% endif %}
-                    <div class="{{ classes|join(' ') }}">{{row}}</div>
+                    <div class="{{row.classes}}">{{row.line}}</div>
                     {% endfor %}
             </td>
         </tr>
