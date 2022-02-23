@@ -763,6 +763,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/preview/<string:uuid>", methods=['GET'])
     @login_required
     def preview_page(uuid):
+        content = []
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
@@ -777,15 +778,19 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         if len(watch['history']):
-            newest = list(watch['history'].keys())[-1]
-
-            with open(watch['history'][newest], 'r') as f:
-                content = f.readlines()
+            timestamps = sorted(watch['history'].keys(), key=lambda x: int(x))
+            filename = watch['history'][timestamps[-1]]
+            try:
+                with open(filename, 'r') as f:
+                    content = f.readlines()
+            except:
+                content.append("File doesnt exist or unable to read file {}".format(filename))
         else:
-            content = "No history found"
+            content.append("No history found")
 
         # Get what needs to be highlighted
         ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
+
         # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
         ignored_line_numbers = html_tools.strip_ignore_text(content="".join(content),
                                                             wordlist=ignore_rules,

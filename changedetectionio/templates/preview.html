@@ -3,7 +3,7 @@
 {% block content %}
 
 <div id="settings">
-    <h1>Current - {{watch.last_changed|format_timestamp_timeago}}</h1>
+    <h1>Current - {{watch.last_checked|format_timestamp_timeago}}</h1>
 </div>
 
 <div id="diff-ui">
@@ -13,7 +13,10 @@
         <tr>
             <td id="diff-col">
                     {% for row in content %}
-                    <div class="{% if (loop.index in ignored_line_numbers)%}ignored{% endif %} {% if (loop.index in triggered_line_numbers)%}triggered{% endif %}">{{row}}</div>
+                        {% set classes = [] %}
+                           {% if (loop.index in ignored_line_numbers) %}{{ classes.append("ignored") }}{% endif %}
+                           {% if (loop.index in triggered_line_numbers) %}{{ classes.append("triggered") }}{% endif %}
+                    <div class="{{ classes|join(' ') }}">{{row}}</div>
                     {% endfor %}
             </td>
         </tr>

@@ -106,7 +106,10 @@ def extract_json_as_string(content, jsonpath_filter):
 
     return stripped_text_from_html
 
-
+# Mode     - "content" return the content without the matches (default)
+#          - "line numbers" return a list of line numbers that match (int list)
+#
+# wordlist - list of regex's (str) or words (str)
 def strip_ignore_text(content, wordlist, mode="content"):
     ignore = []
     ignore_regex = []
