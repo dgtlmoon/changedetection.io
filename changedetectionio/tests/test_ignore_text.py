@@ -70,7 +70,7 @@ def set_modified_ignore_response():
        <body>
      Some initial text</br>
      <p>Which is across multiple lines</p>
-     <P>ZZZZZ</P>
+     <P>ZZZZz</P>
      </br>
      So let's see what happens.  </br>
      </body>
@@ -85,7 +85,8 @@ def set_modified_ignore_response():
 def test_check_ignore_text_functionality(client, live_server):
     sleep_time_for_fetch_thread = 3
 
-    ignore_text = "XXXXX\r\nYYYYY\r\nZZZZZ\r\nnew ignore stuff"
+    # Use a mix of case in ZzZ to prove it works case-insensitive.
+    ignore_text = "XXXXX\r\nYYYYY\r\nzZzZZ\r\nnew ignore stuff"
     set_original_ignore_response()
 
     # Give the endpoint time to spin up

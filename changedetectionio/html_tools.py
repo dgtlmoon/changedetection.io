@@ -140,7 +140,7 @@ def strip_ignore_text(content, wordlist, mode="content"):
                 except Exception as e:
                     continue
 
-            if not regex_matches and not any(skip_text in line for skip_text in ignore):
+            if not regex_matches and not any(skip_text.lower() in line.lower() for skip_text in ignore):
                 output.append(line.encode('utf8'))
             else:
                 ignored_line_numbers.append(i)
