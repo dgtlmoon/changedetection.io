@@ -35,6 +35,7 @@ from flask import (
     url_for,
 )
 from flask_login import login_required
+from changedetectionio import html_tools
 
 __version__ = '0.39.8'
 
@@ -441,7 +442,7 @@ def changedetection_app(config=None, datastore_o=None):
                 raw_content = file.read()
 
                 handler = fetch_site_status.perform_site_check(datastore=datastore)
-                stripped_content = handler.strip_ignore_text(raw_content,
+                stripped_content = html_tools.strip_ignore_text(raw_content,
                                                              datastore.data['watching'][uuid]['ignore_text'])
 
                 if datastore.data['settings']['application'].get('ignore_whitespace', False):
@@ -546,10 +547,14 @@ def changedetection_app(config=None, datastore_o=None):
                     flash('No notification URLs set, cannot send test.', 'error')
 
             # Diff page [edit] link should go back to diff page
-            if request.args.get("next") and request.args.get("next") == 'diff':
+            if request.args.get("next") and request.args.get("next") == 'diff' and not form.save_and_preview_button.data:
                 return redirect(url_for('diff_history_page', uuid=uuid))
             else:
-                return redirect(url_for('index'))
+                if form.save_and_preview_button.data:
+                    flash('You may need to reload this page to see the new content.')
+                    return redirect(url_for('preview_page', uuid=uuid))
+                else:
+                    return redirect(url_for('index'))
 
         else:
             if request.method == 'POST' and not form.validate():
@@ -721,8 +726,12 @@ def changedetection_app(config=None, datastore_o=None):
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, dates[0])
         newest_file = watch['history'][dates[0]]
-        with open(newest_file, 'r') as f:
-            newest_version_file_contents = f.read()
+
+        try:
+            with open(newest_file, 'r') as f:
+                newest_version_file_contents = f.read()
+        except Exception as e:
+            newest_version_file_contents = "Unable to read {}.\n".format(newest_file)
 
         previous_version = request.args.get('previous_version')
         try:
@@ -731,8 +740,11 @@ def changedetection_app(config=None, datastore_o=None):
             # Not present, use a default value, the second one in the sorted list.
             previous_file = watch['history'][dates[1]]
 
-        with open(previous_file, 'r') as f:
-            previous_version_file_contents = f.read()
+        try:
+            with open(previous_file, 'r') as f:
+                previous_version_file_contents = f.read()
+        except Exception as e:
+            previous_version_file_contents = "Unable to read {}.\n".format(previous_file)
 
         output = render_template("diff.html", watch_a=watch,
                                  newest=newest_version_file_contents,
@@ -751,6 +763,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/preview/<string:uuid>", methods=['GET'])
     @login_required
     def preview_page(uuid):
+        content = []
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
@@ -764,14 +777,38 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
-        newest = list(watch['history'].keys())[-1]
-        with open(watch['history'][newest], 'r') as f:
-            content = f.readlines()
+        if len(watch['history']):
+            timestamps = sorted(watch['history'].keys(), key=lambda x: int(x))
+            filename = watch['history'][timestamps[-1]]
+            try:
+                with open(filename, 'r') as f:
+                    content = f.readlines()
+            except:
+                content.append("File doesnt exist or unable to read file {}".format(filename))
+        else:
+            content.append("No history found")
+
+        # Get what needs to be highlighted
+        ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
+
+        # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
+        ignored_line_numbers = html_tools.strip_ignore_text(content="".join(content),
+                                                            wordlist=ignore_rules,
+                                                            mode='line numbers'
+                                                            )
+
+        trigger_line_numbers = html_tools.strip_ignore_text(content="".join(content),
+                                                            wordlist=watch['trigger_text'],
+                                                            mode='line numbers'
+                                                            )
 
         output = render_template("preview.html",
                                  content=content,
                                  extra_stylesheets=extra_stylesheets,
+                                 ignored_line_numbers=ignored_line_numbers,
+                                 triggered_line_numbers=trigger_line_numbers,
                                  current_diff_url=watch['url'],
+                                 watch=watch,
                                  uuid=uuid)
         return output
 

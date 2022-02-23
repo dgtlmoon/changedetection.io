@@ -3,19 +3,24 @@
 {% block content %}
 
 <div id="settings">
-    <h1>Current</h1>
+    <h1>Current - {{watch.last_checked|format_timestamp_timeago}}</h1>
 </div>
 
 <div id="diff-ui">
+    <span class="ignored">Grey lines are ignored</span> <span class="triggered">Blue lines are triggers</span>
     <table>
         <tbody>
         <tr>
             <td id="diff-col">
-                <span id="result">{% for row in content %}{{row}}{% endfor %}</span>
+                    {% for row in content %}
+                        {% set classes = [] %}
+                           {% if (loop.index in ignored_line_numbers) %}{{ classes.append("ignored") }}{% endif %}
+                           {% if (loop.index in triggered_line_numbers) %}{{ classes.append("triggered") }}{% endif %}
+                    <div class="{{ classes|join(' ') }}">{{row}}</div>
+                    {% endfor %}
             </td>
         </tr>
         </tbody>
     </table>
 </div>
-
 {% endblock %}

@@ -1,5 +1,6 @@
 import time
 from changedetectionio import content_fetcher
+from changedetectionio import html_tools
 import hashlib
 from inscriptis import get_text
 import urllib3
@@ -15,40 +16,6 @@ class perform_site_check():
     def __init__(self, *args, datastore, **kwargs):
         super().__init__(*args, **kwargs)
         self.datastore = datastore
-
-    def strip_ignore_text(self, content, list_ignore_text):
-        import re
-        ignore = []
-        ignore_regex = []
-        for k in list_ignore_text:
-
-            # Is it a regex?
-            if k[0] == '/':
-                ignore_regex.append(k.strip(" /"))
-            else:
-                ignore.append(k)
-
-        output = []
-        for line in content.splitlines():
-
-            # Always ignore blank lines in this mode. (when this function gets called)
-            if len(line.strip()):
-                regex_matches = False
-
-                # if any of these match, skip
-                for regex in ignore_regex:
-                    try:
-                        if re.search(regex, line, re.IGNORECASE):
-                            regex_matches = True
-                    except Exception as e:
-                        continue
-
-                if not regex_matches and not any(skip_text in line for skip_text in ignore):
-                    output.append(line.encode('utf8'))
-
-        return "\n".encode('utf8').join(output)
-
-
 
     def run(self, uuid):
         timestamp = int(time.time())  # used for storage etc too
@@ -147,7 +114,7 @@ class perform_site_check():
             # @todo we could abstract out the get_text() to handle this cleaner
             text_to_ignore = watch.get('ignore_text', []) + self.datastore.data['settings']['application'].get('global_ignore_text', [])
             if len(text_to_ignore):
-                stripped_text_from_html = self.strip_ignore_text(stripped_text_from_html, text_to_ignore)
+                stripped_text_from_html = html_tools.strip_ignore_text(stripped_text_from_html, text_to_ignore)
             else:
                 stripped_text_from_html = stripped_text_from_html.encode('utf8')
 
@@ -165,22 +132,14 @@ class perform_site_check():
             blocked_by_not_found_trigger_text = False
 
             if len(watch['trigger_text']):
+                # Yeah, lets block first until something matches
                 blocked_by_not_found_trigger_text = True
-                for line in watch['trigger_text']:
-                    # Because JSON wont serialize a re.compile object
-                    if line[0] == '/' and line[-1] == '/':
-                        regex = re.compile(line.strip('/'), re.IGNORECASE)
-                        # Found it? so we don't wait for it anymore
-                        r = re.search(regex, str(stripped_text_from_html))
-                        if r:
-                            blocked_by_not_found_trigger_text = False
-                            break
-
-                    elif line.lower() in str(stripped_text_from_html).lower():
-                        # We found it don't wait for it.
-                        blocked_by_not_found_trigger_text = False
-                        break
-
+                # Filter and trigger works the same, so reuse it
+                result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
+                                                      wordlist=watch['trigger_text'],
+                                                      mode="line numbers")
+                if result:
+                    blocked_by_not_found_trigger_text = False
 
 
             if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:

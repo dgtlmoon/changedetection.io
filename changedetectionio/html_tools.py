@@ -1,7 +1,7 @@
 import json
 from bs4 import BeautifulSoup
 from jsonpath_ng.ext import parse
-
+import re
 
 class JSONNotFound(ValueError):
     def __init__(self, msg):
@@ -105,3 +105,50 @@ def extract_json_as_string(content, jsonpath_filter):
         return ''
 
     return stripped_text_from_html
+
+# Mode     - "content" return the content without the matches (default)
+#          - "line numbers" return a list of line numbers that match (int list)
+#
+# wordlist - list of regex's (str) or words (str)
+def strip_ignore_text(content, wordlist, mode="content"):
+    ignore = []
+    ignore_regex = []
+
+    # @todo check this runs case insensitive
+    for k in wordlist:
+
+        # Is it a regex?
+        if k[0] == '/':
+            ignore_regex.append(k.strip(" /"))
+        else:
+            ignore.append(k)
+
+    i = 0
+    output = []
+    ignored_line_numbers = []
+    for line in content.splitlines():
+        i += 1
+        # Always ignore blank lines in this mode. (when this function gets called)
+        if len(line.strip()):
+            regex_matches = False
+
+            # if any of these match, skip
+            for regex in ignore_regex:
+                try:
+                    if re.search(regex, line, re.IGNORECASE):
+                        regex_matches = True
+                except Exception as e:
+                    continue
+
+            if not regex_matches and not any(skip_text in line for skip_text in ignore):
+                output.append(line.encode('utf8'))
+            else:
+                ignored_line_numbers.append(i)
+
+
+
+    # Used for finding out what to highlight
+    if mode == "line numbers":
+        return ignored_line_numbers
+
+    return "\n".encode('utf8').join(output)
