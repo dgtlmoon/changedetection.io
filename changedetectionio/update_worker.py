@@ -136,6 +136,8 @@ class update_worker(threading.Thread):
                         except Exception as e:
                             # Catch everything possible here, so that if a worker crashes, we don't lose it until restart!
                             print("!!!! Exception in update_worker !!!\n", e)
+                            self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
+                            self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
 
                     finally:
                         # Always record that we atleast tried
