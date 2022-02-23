@@ -1,8 +1,6 @@
 import time
 from changedetectionio import content_fetcher
 import hashlib
-from inscriptis import get_text
-from inscriptis.model.config import ParserConfig
 import urllib3
 from . import html_tools
 import re
@@ -16,28 +14,6 @@ class perform_site_check():
     def __init__(self, *args, datastore, **kwargs):
         super().__init__(*args, **kwargs)
         self.datastore = datastore
-
-    def html_to_text(self, html_content: str) -> str:
-        """Converts html string to a string with just the text. If ignoring
-        hyperlinks is disabled, hyperlinks are also included in the text"""
-
-        #  if hyperlinks are not being ignored define a config for
-        #  extracting hyperlinks
-        if not self.datastore.data["settings"]["application"][
-            "ignore_hyperlinks"]:
-
-            parser_config = ParserConfig(
-                annotation_rules={"a": ["hyperlink"]}, display_links=True
-            )
-
-        # otherwise set config to None
-        else:
-            parser_config = None
-
-        # get text and annotations via inscriptis
-        text_content = get_text(html_content, config=parser_config)
-
-        return text_content
 
     def strip_ignore_text(self, content, list_ignore_text):
         import re
@@ -151,7 +127,12 @@ class perform_site_check():
                             html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
 
                     # extract text
-                    stripped_text_from_html = self.html_to_text(html_content)
+                    stripped_text_from_html = \
+                        html_tools.html_to_text(
+                            html_content,
+                            ignore_hyperlinks=self.datastore.data["settings"][
+                                "application"]["ignore_hyperlinks"]
+                        )
 
                 else:
                     # Don't run get_text or xpath/css filters on plaintext

@@ -1,7 +1,8 @@
 import json
 from bs4 import BeautifulSoup
 from jsonpath_ng.ext import parse
-
+from inscriptis import get_text
+from inscriptis.model.config import ParserConfig
 
 class JSONNotFound(ValueError):
     def __init__(self, msg):
@@ -105,3 +106,31 @@ def extract_json_as_string(content, jsonpath_filter):
         return ''
 
     return stripped_text_from_html
+
+def html_to_text(html_content: str, ignore_hyperlinks=True) -> str:
+    """Converts html string to a string with just the text. If ignoring
+    hyperlinks is disabled, hyperlinks are also included in the text
+    
+    :param html_content: string with html content
+    :param ignore_hyperlinks: boolean flag indicating whether to extract
+    hyperlinks together with text. This refers to the 'href' inside 'a' tags.
+    Hyperlinks are rendered in the following manner:
+    '[ text ](hyperlink)'
+    :return: extracted text from the HTML
+    """
+    #  if hyperlinks are not being ignored define a config for
+    #  extracting hyperlinks
+    if not ignore_hyperlinks:
+
+        parser_config = ParserConfig(
+            annotation_rules={"a": ["hyperlink"]}, display_links=True
+        )
+
+    # otherwise set config to None
+    else:
+        parser_config = None
+
+    # get text and annotations via inscriptis
+    text_content = get_text(html_content, config=parser_config)
+
+    return text_content

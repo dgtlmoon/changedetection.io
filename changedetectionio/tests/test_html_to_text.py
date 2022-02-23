@@ -1,16 +1,6 @@
 #!/usr/bin/python3
 """Test suite for the method to extract text from an html string"""
-from changedetectionio import fetch_site_status
-
-
-class MockDataStore:
-    """Class to mock the bare minumum data store structure needed to test
-    the html to text conversion"""
-
-    def __init__(self, ignore_hyperlinks):
-        self.data = {
-            "settings": {"application": {"ignore_hyperlinks": ignore_hyperlinks}}
-        }
+from ..html_tools import html_to_text
 
 
 def test_html_to_text_func():
@@ -26,34 +16,23 @@ def test_html_to_text_func():
      </html>
     """
 
-    # set the mock data store, with 'ignore hyperlinks' set to True
-    mock_data_store = MockDataStore(ignore_hyperlinks=True)
+    # extract text, with 'ignore hyperlinks' set to True
+    text_content = html_to_text(test_html, ignore_hyperlinks=True)
 
-    # extract text
-    fetcher = fetch_site_status.perform_site_check(datastore=mock_data_store)
-    text_content = fetcher.html_to_text(test_html)
+    no_links_text = \
+        "Some initial text\n\nWhich is across multiple " \
+        "lines\n\nMore Text So let's see what happens. Even More Text"
 
-    no_links_text = """Some initial text
-
-Which is across multiple lines
-
-More Text
-So let's see what happens.
-Even More Text
-"""
     # check that no links are in the extracted text
     assert text_content == no_links_text
 
-    # set the mock data store, with 'ignore hyperlinks' set to False
-    mock_data_store = MockDataStore(ignore_hyperlinks=False)
+    # extract text, with 'ignore hyperlinks' set to False
+    text_content = html_to_text(test_html, ignore_hyperlinks=False)
 
-    # extract text
-    fetcher = fetch_site_status.perform_site_check(datastore=mock_data_store)
-    text_content = fetcher.html_to_text(test_html)
+    links_text = \
+        "Some initial text\n\nWhich is across multiple lines\n\n[ More Text " \
+        "](/first_link) So let's see what happens. [ Even More Text ]" \
+        "(second_link.com)"
 
     # check that links are present in the extracted text
-    assert (
-        text_content == "Some initial text\n\nWhich is across multiple "
-        "lines\n\n[ First Link Text ](/first_link) So let's see what "
-        "happens. [ Second Link Text ](second_link.com)"
-    )
+    assert text_content == links_text
