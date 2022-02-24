@@ -184,10 +184,6 @@ class ChangeDetectionStore:
 
     def update_watch(self, uuid, update_obj):
 
-        # Skip if 'paused' state
-        if self.__data['watching'][uuid]['paused']:
-            return
-
         with self.lock:
 
             # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
