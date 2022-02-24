@@ -1118,7 +1118,14 @@ def ticker_thread_check_time_launch_checks():
                 running_uuids.append(t.current_uuid)
 
         # Re #232 - Deepcopy the data incase it changes while we're iterating through it all
-        copied_datastore = deepcopy(datastore)
+        while True:
+            try:
+                copied_datastore = deepcopy(datastore)
+            except RuntimeError as e:
+                # RuntimeError: dictionary changed size during iteration
+                time.sleep(0.1)
+            else:
+                break
 
         # Check for watches outside of the time threshold to put in the thread queue.
         for uuid, watch in copied_datastore.data['watching'].items():
