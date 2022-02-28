@@ -147,4 +147,7 @@ class update_worker(threading.Thread):
                 self.current_uuid = None  # Done
                 self.q.task_done()
 
+                # Give the CPU time to interrupt
+                time.sleep(0.1)
+
             self.app.config.exit.wait(1)
