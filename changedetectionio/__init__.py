@@ -370,7 +370,8 @@ def changedetection_app(config=None, datastore_o=None):
                                  app_rss_token=datastore.data['settings']['application']['rss_access_token'],
                                  has_unviewed=datastore.data['has_unviewed'],
                                  # Don't link to hosting when we're on the hosting environment
-                                 hosted_sticky=os.getenv("SALTED_PASS", False) == False)
+                                 hosted_sticky=os.getenv("SALTED_PASS", False) == False,
+                                 guid=datastore.data['app_guid'])
 
         return output
 
