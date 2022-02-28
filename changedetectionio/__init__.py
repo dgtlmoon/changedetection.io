@@ -756,7 +756,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  current_previous_version=str(previous_version),
                                  current_diff_url=watch['url'],
                                  extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
-                                 left_sticky= True )
+                                 left_sticky=True)
 
         return output
 
@@ -1127,20 +1127,33 @@ def ticker_thread_check_time_launch_checks():
             else:
                 break
 
+        # Re #438 - Don't place more watches in the queue to be checked if the queue is already large
+        while update_q.qsize() >= 2000:
+            time.sleep(1)
+
         # Check for watches outside of the time threshold to put in the thread queue.
+        now = time.time()
+        max_system_wide = int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60
+
         for uuid, watch in copied_datastore.data['watching'].items():
+
+            # No need todo further processing if it's paused
+            if watch['paused']:
+                continue
+
             # If they supplied an individual entry minutes to threshold.
-            if 'minutes_between_check' in watch and watch['minutes_between_check'] is not None:
+            watch_minutes_between_check = watch.get('minutes_between_check', None)
+            if watch_minutes_between_check is not None:
                 # Cast to int just incase
-                max_time = int(watch['minutes_between_check']) * 60
+                max_time = int(watch_minutes_between_check) * 60
             else:
                 # Default system wide.
-                max_time = int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60
+                max_time = max_system_wide
 
-            threshold = time.time() - max_time
+            threshold = now - max_time
 
-            # Yeah, put it in the queue, it's more than time.
-            if not watch['paused'] and watch['last_checked'] <= threshold:
+            # Yeah, put it in the queue, it's more than time
+            if watch['last_checked'] <= threshold:
                 if not uuid in running_uuids and uuid not in update_q.queue:
                     update_q.put(uuid)
 
