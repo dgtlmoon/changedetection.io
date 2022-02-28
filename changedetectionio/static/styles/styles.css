@@ -242,7 +242,7 @@ footer {
 
 .sticky-tab {
   position: absolute;
-  top: 80px;
+  top: 100px;
   font-size: 8px;
   background: #fff;
   padding: 10px; }
@@ -250,6 +250,10 @@ footer {
     left: 0px; }
   .sticky-tab#right-sticky {
     right: 0px; }
+  .sticky-tab#hosted-sticky {
+    right: 0px;
+    top: 60px;
+    font-weight: bold; }
 
 #new-version-text a {
   color: #e07171; }

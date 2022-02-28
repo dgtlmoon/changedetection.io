@@ -68,7 +68,7 @@
         </ul>
     </div>
 </div>
-
+{% if hosted_sticky %}<div class="sticky-tab" id="hosted-sticky"><a href="https://lemonade.changedetection.io/start">Switch to Fully Hosted</a></div>{% endif %}
 {% if left_sticky %}<div class="sticky-tab" id="left-sticky"><a href="{{url_for('preview_page', uuid=uuid)}}">Show current snapshot</a></div> {% endif %}
 {% if right_sticky %}<div class="sticky-tab" id="right-sticky">{{ right_sticky }}</div> {% endif %}
 <section class="content">

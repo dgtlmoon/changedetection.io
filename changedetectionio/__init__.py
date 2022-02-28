@@ -368,7 +368,9 @@ def changedetection_app(config=None, datastore_o=None):
                                  tags=existing_tags,
                                  active_tag=limit_tag,
                                  app_rss_token=datastore.data['settings']['application']['rss_access_token'],
-                                 has_unviewed=datastore.data['has_unviewed'])
+                                 has_unviewed=datastore.data['has_unviewed'],
+                                 # Don't link to hosting when we're on the hosting environment
+                                 hosted_sticky=os.getenv("SALTED_PASS", False) == False)
 
         return output
 
