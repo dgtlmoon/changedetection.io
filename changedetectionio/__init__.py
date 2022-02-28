@@ -1127,11 +1127,19 @@ def ticker_thread_check_time_launch_checks():
             else:
                 break
 
+        # Re #438 - Don't place more watches in the queue to be checked if the queue is already large
+        while update_q.qsize() >= 2000:
+            time.sleep(1)
+
         # Check for watches outside of the time threshold to put in the thread queue.
         now = time.time()
         max_system_wide = int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60
 
         for uuid, watch in copied_datastore.data['watching'].items():
+
+            # No need todo further processing if it's paused
+            if watch['paused']:
+                continue
 
             # If they supplied an individual entry minutes to threshold.
             watch_minutes_between_check = watch.get('minutes_between_check', None)
@@ -1144,9 +1152,9 @@ def ticker_thread_check_time_launch_checks():
 
             threshold = now - max_time
 
-            # Yeah, put it in the queue, it's more than time, but also check we don't flood the queue
-            if not watch['paused'] and watch['last_checked'] <= threshold:
-                if not uuid in running_uuids and uuid not in update_q.queue and update_q.qsize() <= 2000:
+            # Yeah, put it in the queue, it's more than time
+            if watch['last_checked'] <= threshold:
+                if not uuid in running_uuids and uuid not in update_q.queue:
                     update_q.put(uuid)
 
         # Wait a few seconds before checking the list again
