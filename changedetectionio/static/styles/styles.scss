@@ -317,11 +317,9 @@ footer {
     */
 }
 
-
-
 .sticky-tab {
   position: absolute;
-  top: 100px;
+  top: 60px;
   font-size: 8px;
   background: #fff;
   padding: 10px;
@@ -333,7 +331,7 @@ footer {
   }
   &#hosted-sticky {
     right: 0px;
-    top: 60px;
+    top: 100px;
     font-weight: bold;
   }
 }
