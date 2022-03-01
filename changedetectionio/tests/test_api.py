@@ -15,9 +15,9 @@ def set_response_data(test_return_data):
 
 def test_snapshot_api_detects_change(client, live_server):
 
-    test_return_data = "Some initial text"
+    test_return_data = "Some initial text\n"
 
-    test_return_data_modified = "Some NEW nice initial text"
+    test_return_data_modified = "Some NEW nice initial text\n"
 
     sleep_time_for_fetch_thread = 3
 
