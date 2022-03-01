@@ -46,10 +46,7 @@ def live_server_setup(live_server):
         # Tried using a global var here but didn't seem to work, so reading from a file instead.
         with open("test-datastore/endpoint-content.txt", "r") as f:
             resp = make_response(f.read())
-            if ctype:
-                resp.headers['Content-Type'] = ctype
-            else:
-                resp.headers['Content-Type'] = 'application/json'
+            resp.headers['Content-Type'] = ctype if ctype else 'text/html'
             return resp
 
     @live_server.app.route('/test-403')
