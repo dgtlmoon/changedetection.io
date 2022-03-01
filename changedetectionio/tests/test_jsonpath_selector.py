@@ -162,6 +162,7 @@ def test_check_json_without_filter(client, live_server):
     time.sleep(1)
 
     # Add our URL to the import page
+    test_url = url_for('test_endpoint', content_type="text/plain", _external=True)
     test_url = url_for('test_endpoint_json', _external=True)
     client.post(
         url_for("import_page"),

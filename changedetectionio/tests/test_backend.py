@@ -15,7 +15,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("import_page"),
-        data={"urls": url_for('test_endpoint', _external=True)},
+        data={"urls": url_for('test_endpoint', content_type="text/html", _external=True)},
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
@@ -45,7 +45,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
     # Make a change
     set_modified_response()
 
-    res = urlopen(url_for('test_endpoint', _external=True))
+    res = urlopen(url_for('test_endpoint', content_type="text/html", _external=True))
     assert b'which has this one new line' in res.read()
 
     # Force recheck
@@ -60,7 +60,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
 
     # #75, and it should be in the RSS feed
     res = client.get(url_for("rss"))
-    expected_url = url_for('test_endpoint', _external=True)
+    expected_url = url_for('test_endpoint', content_type="text/html", _external=True)
     assert b'<rss' in res.data
     assert expected_url.encode('utf-8') in res.data
 
