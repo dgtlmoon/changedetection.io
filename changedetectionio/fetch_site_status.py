@@ -86,8 +86,9 @@ class perform_site_check():
             if is_html:
                 # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                 html_content = fetcher.content
-                if not fetcher.headers.get('Content-Type', '') == 'text/plain':
 
+                # If not JSON, then we assume HTML, and if it's not text/plain..
+                if not 'text/plain' in fetcher.headers.get('Content-Type', '').lower():
                     if has_filter_rule:
                         # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
                         if css_filter_rule[0] == '/':
