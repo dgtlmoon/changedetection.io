@@ -838,6 +838,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  logs=notification_debug_log if len(notification_debug_log) else ["No errors or warnings detected"])
 
         return output
+
     @app.route("/api/<string:uuid>/snapshot/current", methods=['GET'])
     @login_required
     def api_snapshot(uuid):

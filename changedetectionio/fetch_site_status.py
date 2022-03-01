@@ -86,8 +86,13 @@ class perform_site_check():
             if is_html:
                 # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                 html_content = fetcher.content
-                if not fetcher.headers.get('Content-Type', '') == 'text/plain':
 
+                # If not JSON,  and if it's not text/plain..
+                if 'text/plain' in fetcher.headers.get('Content-Type', '').lower():
+                    # Don't run get_text or xpath/css filters on plaintext
+                    stripped_text_from_html = html_content
+                else:
+                    # Then we assume HTML
                     if has_filter_rule:
                         # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
                         if css_filter_rule[0] == '/':
@@ -98,9 +103,7 @@ class perform_site_check():
 
                     # get_text() via inscriptis
                     stripped_text_from_html = get_text(html_content)
-                else:
-                    # Don't run get_text or xpath/css filters on plaintext
-                    stripped_text_from_html = html_content
+
 
             # Re #340 - return the content before the 'ignore text' was applied
             text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
