@@ -12,7 +12,7 @@ def test_inscriptus():
     from inscriptis import get_text
     html_content="<html><body>test!<br/>ok man</body></html>"
     stripped_text_from_html = get_text(html_content)
-    assert stripped_text_from_html == 'test!'
+    assert stripped_text_from_html == 'test!\nok man'
 
 
 def test_check_basic_change_detection_functionality(client, live_server):
