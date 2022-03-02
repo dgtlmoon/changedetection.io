@@ -66,3 +66,23 @@ ins {
 		height: 99%; /* Hide scroll bar in Firefox */
 	}
 }
+
+td#diff-col div {
+    text-align: justify;
+    white-space: pre-wrap;
+}
+
+.ignored {
+    background-color: #ccc;
+   /*  border: #0d91fa 1px solid; */
+    opacity: 0.7;
+}
+
+.triggered {
+    background-color: #1b98f8;
+}
+
+/* ignored and triggered? make it obvious error */
+.ignored.triggered {
+  background-color: #ff0000;
+}

@@ -1,6 +1,7 @@
 from wtforms import Form, SelectField, RadioField, BooleanField, StringField, PasswordField, validators, IntegerField, fields, TextAreaField, \
     Field
-from wtforms import widgets
+
+from wtforms import widgets, SubmitField
 from wtforms.validators import ValidationError
 from wtforms.fields import html5
 from changedetectionio import content_fetcher
@@ -289,6 +290,9 @@ class watchForm(commonSettingsForm):
     body = TextAreaField('Request Body', [validators.Optional()])
     method = SelectField('Request Method', choices=valid_method, default=default_method)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
+
+    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+    save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
 
     def validate(self, **kwargs):
         if not super().validate():

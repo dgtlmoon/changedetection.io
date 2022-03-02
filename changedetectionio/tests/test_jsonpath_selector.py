@@ -162,7 +162,7 @@ def test_check_json_without_filter(client, live_server):
     time.sleep(1)
 
     # Add our URL to the import page
-    test_url = url_for('test_endpoint_json', _external=True)
+    test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     client.post(
         url_for("import_page"),
         data={"urls": test_url},
@@ -193,7 +193,7 @@ def test_check_json_filter(client, live_server):
     time.sleep(1)
 
     # Add our URL to the import page
-    test_url = url_for('test_endpoint', _external=True)
+    test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     res = client.post(
         url_for("import_page"),
         data={"urls": test_url},
@@ -258,7 +258,7 @@ def test_check_json_filter_bool_val(client, live_server):
     # Give the endpoint time to spin up
     time.sleep(1)
 
-    test_url = url_for('test_endpoint', _external=True)
+    test_url = url_for('test_endpoint', content_type="application/json", _external=True)
 
     res = client.post(
         url_for("import_page"),
@@ -313,7 +313,7 @@ def test_check_json_ext_filter(client, live_server):
     time.sleep(1)
 
     # Add our URL to the import page
-    test_url = url_for('test_endpoint', _external=True)
+    test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     res = client.post(
         url_for("import_page"),
         data={"urls": test_url},
