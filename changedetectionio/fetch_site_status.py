@@ -1,11 +1,13 @@
-import time
-from changedetectionio import content_fetcher
-from changedetectionio import html_tools
 import hashlib
-from inscriptis import get_text
-import urllib3
-from . import html_tools
 import re
+import time
+
+import urllib3
+from inscriptis import get_text
+
+from changedetectionio import content_fetcher, html_tools
+
+from . import html_tools
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -100,7 +102,8 @@ class perform_site_check():
                         else:
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                             html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
-
+                    if filter_body:
+                        html_content = html_tools.ignore_tags(html_content)
                     # get_text() via inscriptis
                     stripped_text_from_html = get_text(html_content)
 
