@@ -317,11 +317,9 @@ footer {
     */
 }
 
-
-
 .sticky-tab {
   position: absolute;
-  top: 80px;
+  top: 60px;
   font-size: 8px;
   background: #fff;
   padding: 10px;
@@ -330,6 +328,11 @@ footer {
   }
   &#right-sticky {
     right: 0px;
+  }
+  &#hosted-sticky {
+    right: 0px;
+    top: 100px;
+    font-weight: bold;
   }
 }
 
@@ -567,3 +570,8 @@ $form-edge-padding: 20px;
   }
 }
 
+ul {
+    padding-left: 1em;
+    padding-top: 0px;
+    margin-top: 4px;
+}

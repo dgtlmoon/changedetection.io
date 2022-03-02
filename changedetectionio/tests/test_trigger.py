@@ -129,3 +129,8 @@ def test_trigger_functionality(client, live_server):
     time.sleep(sleep_time_for_fetch_thread)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
+
+    # Check the preview/highlighter, we should be able to see what we triggered on, but it should be highlighted
+    res = client.get(url_for("preview_page", uuid="first"))
+    # We should be able to see what we ignored
+    assert b'<div class="triggered">foobar' in res.data
