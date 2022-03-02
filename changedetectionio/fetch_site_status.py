@@ -74,6 +74,7 @@ class perform_site_check():
             is_json = 'application/json' in fetcher.headers.get('Content-Type', '')
             is_html = not is_json
             css_filter_rule = watch['css_filter']
+            filter_body = watch['filter_body']
 
             has_filter_rule = css_filter_rule and len(css_filter_rule.strip())
             if is_json and not has_filter_rule:
