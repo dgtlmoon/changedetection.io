@@ -23,19 +23,6 @@ def subtractive_css_filter(css_filter, html_content):
     for item in soup.select(css_filter, separator=""):
         item.decompose()
     return str(soup)
-
-
-stock_keywords = ["stock", "bourse", "aktie"]
-
-def stock_filter(html_content):
-    regex = re.compile(fr"(\b({'|'.join(stock_keywords)})[\w-]*\b)")
-    soup = BeautifulSoup(html_content, "html.parser")
-    selectors = set(map(lambda x: x[0], regex.findall(str(soup))))
-
-    css_filter = ",".join([f".{x}" for x in selectors]) + "," + ",".join([f"#{x}" for x in selectors])
-    for item in soup.select(css_filter, separator=""):
-        item.decompose()
-    return str(soup)
     
 
 # Return str Utf-8 of matched rules
