@@ -1,13 +1,30 @@
-from wtforms import Form, SelectField, RadioField, BooleanField, StringField, PasswordField, validators, IntegerField, fields, TextAreaField, \
-    Field
-
-from wtforms import widgets, SubmitField
-from wtforms.validators import ValidationError
-from wtforms.fields import html5
-from changedetectionio import content_fetcher
 import re
 
-from changedetectionio.notification import default_notification_format, valid_notification_formats, default_notification_body, default_notification_title
+from wtforms import (
+    BooleanField,
+    Field,
+    Form,
+    IntegerField,
+    PasswordField,
+    RadioField,
+    SelectField,
+    StringField,
+    SubmitField,
+    TextAreaField,
+    fields,
+    validators,
+    widgets,
+)
+from wtforms.fields import html5
+from wtforms.validators import ValidationError
+
+from changedetectionio import content_fetcher
+from changedetectionio.notification import (
+    default_notification_body,
+    default_notification_format,
+    default_notification_title,
+    valid_notification_formats,
+)
 
 valid_method = {
     'GET',
@@ -45,8 +62,8 @@ class SaltyPasswordField(StringField):
     encrypted_password = ""
 
     def build_password(self, password):
-        import hashlib
         import base64
+        import hashlib
         import secrets
 
         # Make a new salt on every new password and store it with the password
@@ -104,8 +121,9 @@ class ValidateContentFetcherIsReady(object):
         self.message = message
 
     def __call__(self, form, field):
-        from changedetectionio import content_fetcher
         import urllib3.exceptions
+
+        from changedetectionio import content_fetcher
 
         # Better would be a radiohandler that keeps a reference to each class
         if field.data is not None:
@@ -231,7 +249,7 @@ class ValidateCSSJSONXPATHInput(object):
 
         # Does it look like XPath?
         if field.data.strip()[0] == '/':
-            from lxml import html, etree
+            from lxml import etree, html
             tree = html.fromstring("<html></html>")
 
             try:
@@ -243,7 +261,10 @@ class ValidateCSSJSONXPATHInput(object):
                 raise ValidationError("A system-error occurred when validating your XPath expression")
 
         if 'json:' in field.data:
-            from jsonpath_ng.exceptions import JsonPathParserError, JsonPathLexerError
+            from jsonpath_ng.exceptions import (
+                JsonPathLexerError,
+                JsonPathParserError,
+            )
             from jsonpath_ng.ext import parse
 
             input = field.data.replace('json:', '')
@@ -283,6 +304,7 @@ class watchForm(commonSettingsForm):
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
     css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()])
+    filter_body = BooleanField('Remove header/footer/nav tags from HTML', default=False)
     title = StringField('Title')
 
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
