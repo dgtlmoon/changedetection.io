@@ -35,6 +35,7 @@ from flask import (
     url_for,
 )
 from flask_login import login_required
+
 from changedetectionio import html_tools
 
 __version__ = '0.39.9'
@@ -518,6 +519,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
             datastore.data['watching'][uuid]['css_filter'] = form.css_filter.data.strip()
+            datastore.data['watching'][uuid]['filter_body'] = form.filter_body.data
 
             # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
             if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
