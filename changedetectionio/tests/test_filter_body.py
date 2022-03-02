@@ -102,7 +102,7 @@ across multiple lines
     )
 
 
-def test_check_markup_css_filter_restriction(client, live_server):
+def test_body_filter_full(client, live_server):
     sleep_time_for_fetch_thread = 3
 
     set_original_response()
