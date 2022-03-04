@@ -317,8 +317,7 @@ class watchForm(commonSettingsForm):
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
     css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()])
-    filter_body = BooleanField('Remove header/footer/nav tags from HTML', default=False)
-    subtractive_filters = StringListField('Ignore elements', [ValidateCSSJSONXPATHInput()])
+    subtractive_filters = StringListField('Ignore elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     title = StringField('Title')
 
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
@@ -352,3 +351,4 @@ class globalSettingsForm(commonSettingsForm):
     base_url = StringField('Base URL', validators=[validators.Optional()])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     ignore_whitespace = BooleanField('Ignore whitespace')
+    subtractive_filters = StringListField('Ignore elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])

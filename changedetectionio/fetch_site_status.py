@@ -74,9 +74,15 @@ class perform_site_check():
             is_json = 'application/json' in fetcher.headers.get('Content-Type', '')
             is_html = not is_json
             css_filter_rule = watch['css_filter']
-            filter_body = watch['filter_body']
+            subtractive_filters = watch.get(
+                "subtractive_filters", []
+            ) + self.datastore.data["settings"]["application"].get(
+                "global_subtractive_filters", []
+            )
 
             has_filter_rule = css_filter_rule and len(css_filter_rule.strip())
+            has_subtractive_filters = subtractive_filters and len(subtractive_filters[0].strip())
+            
             if is_json and not has_filter_rule:
                 css_filter_rule = "json:$"
                 has_filter_rule = True
@@ -103,11 +109,10 @@ class perform_site_check():
                         else:
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                             html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
-                    if filter_body:
-                        html_content = html_tools.ignore_tags(html_content)
+                    if has_subtractive_filters:
+                        html_content = html_tools.subtractive_filter(subtractive_filters, html_content)
                     # get_text() via inscriptis
                     stripped_text_from_html = get_text(html_content)
-
 
             # Re #340 - return the content before the 'ignore text' was applied
             text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
