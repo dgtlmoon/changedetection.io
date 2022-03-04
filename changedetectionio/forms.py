@@ -232,54 +232,67 @@ class ValidateListRegex(object):
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))
 
+                
 class ValidateCSSJSONXPATHInput(object):
     """
     Filter validation
     @todo CSS validator ;)
     """
 
-    def __init__(self, message=None):
+    def __init__(self, message=None, allow_xpath=True, allow_json=True):
         self.message = message
+        self.allow_xpath = allow_xpath
+        self.allow_json = allow_json
 
     def __call__(self, form, field):
 
+        if isinstance(field.data, str):
+            field.data = [field.data]
+
+        for line in field.data:
         # Nothing to see here
-        if not len(field.data.strip()):
-            return
+            if not len(line.strip()):
+                return
 
-        # Does it look like XPath?
-        if field.data.strip()[0] == '/':
-            from lxml import etree, html
-            tree = html.fromstring("<html></html>")
+            # Does it look like XPath?
+            if line.strip()[0] == '/':
+                if not self.allow_xpath:
+                    raise ValidationError("XPath not permitted in this field!")
+                from lxml import etree, html
+                tree = html.fromstring("<html></html>")
 
-            try:
-                tree.xpath(field.data.strip())
-            except etree.XPathEvalError as e:
-                message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
-                raise ValidationError(message % (field.data, str(e)))
-            except:
-                raise ValidationError("A system-error occurred when validating your XPath expression")
+                try:
+                    tree.xpath(line.strip())
+                except etree.XPathEvalError as e:
+                    message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
+                    raise ValidationError(message % (line, str(e)))
+                except:
+                    raise ValidationError("A system-error occurred when validating your XPath expression")
 
-        if 'json:' in field.data:
-            from jsonpath_ng.exceptions import (
-                JsonPathLexerError,
-                JsonPathParserError,
-            )
-            from jsonpath_ng.ext import parse
+            if 'json:' in line:
+                if not self.allow_json:
+                    raise ValidationError("JSONPath not permitted in this field!")
 
-            input = field.data.replace('json:', '')
+                from jsonpath_ng.exceptions import (
+                    JsonPathLexerError,
+                    JsonPathParserError,
+                )
+                from jsonpath_ng.ext import parse
 
-            try:
-                parse(input)
-            except (JsonPathParserError, JsonPathLexerError) as e:
-                message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
-                raise ValidationError(message % (input, str(e)))
-            except:
-                raise ValidationError("A system-error occurred when validating your JSONPath expression")
+                input = line.replace('json:', '')
 
-            # Re #265 - maybe in the future fetch the page and offer a
-            # warning/notice that its possible the rule doesnt yet match anything?
+                try:
+                    parse(input)
+                except (JsonPathParserError, JsonPathLexerError) as e:
+                    message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
+                    raise ValidationError(message % (input, str(e)))
+                except:
+                    raise ValidationError("A system-error occurred when validating your JSONPath expression")
 
+                # Re #265 - maybe in the future fetch the page and offer a
+                # warning/notice that its possible the rule doesnt yet match anything?
+
+            
 class quickWatchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
     # `require_tld` = False is needed even for the test harness "http://localhost:5005.." to run
@@ -305,6 +318,7 @@ class watchForm(commonSettingsForm):
                                                [validators.Optional(), validators.NumberRange(min=1)])
     css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()])
     filter_body = BooleanField('Remove header/footer/nav tags from HTML', default=False)
+    subtractive_filters = StringListField('Ignore elements', [ValidateCSSJSONXPATHInput()])
     title = StringField('Title')
 
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
