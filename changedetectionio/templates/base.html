@@ -35,13 +35,13 @@
         {% if current_user.is_authenticated or not has_password %}
             {% if not current_diff_url %}
             <li class="pure-menu-item">
-                <a href="{{ url_for('get_backup')}}" class="pure-menu-link">BACKUP</a>
+                <a href="{{ url_for('settings_page')}}" class="pure-menu-link">SETTINGS</a>
             </li>
             <li class="pure-menu-item">
                 <a href="{{ url_for('import_page')}}" class="pure-menu-link">IMPORT</a>
             </li>
             <li class="pure-menu-item">
-                <a href="{{ url_for('settings_page')}}" class="pure-menu-link">SETTINGS</a>
+                <a href="{{ url_for('get_backup')}}" class="pure-menu-link">BACKUP</a>
             </li>
             {% else %}
             <li class="pure-menu-item">
