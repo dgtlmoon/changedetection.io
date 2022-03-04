@@ -83,7 +83,16 @@
                     </span>
                     </fieldset>
 
-
+                    <fieldset class="pure-group">
+                      {{ render_field(form.subtractive_filters, rows=5, placeholder="header
+footer
+nav
+.stockticker") }}
+                      <br/>
+                      Ignore HTML tags or matches to CSS selectors.
+                      <br/>
+                      Add one tag or CSS selector per line to ignore multiple parts of the HTML.
+                    </fieldset>
                     <fieldset class="pure-group">
                     {{ render_field(form.global_ignore_text, rows=5, placeholder="Some text to ignore in a line
 /some.regex\d{2}/ for case-INsensitive regex

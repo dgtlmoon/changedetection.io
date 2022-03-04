@@ -519,7 +519,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
             datastore.data['watching'][uuid]['css_filter'] = form.css_filter.data.strip()
-            datastore.data['watching'][uuid]['filter_body'] = form.filter_body.data
+            datastore.data['watching'][uuid]['subtractive_filters'] = form.subtractive_filters.data
 
             # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
             if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
@@ -592,6 +592,7 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'GET':
             form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'])
             form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
+            form.global_subtractive_filters.data = datastore.data['settings']['application']['global_subtractive_filters']
             form.global_ignore_text.data = datastore.data['settings']['application']['global_ignore_text']
             form.ignore_whitespace.data = datastore.data['settings']['application']['ignore_whitespace']
             form.extract_title_as_title.data = datastore.data['settings']['application']['extract_title_as_title']
@@ -620,6 +621,7 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['notification_format'] = form.notification_format.data
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.data['settings']['application']['base_url'] = form.base_url.data
+            datastore.data['settings']['application']['global_subtractive_filters'] = form.global_subtractive_filters.data
             datastore.data['settings']['application']['global_ignore_text'] =  form.global_ignore_text.data
             datastore.data['settings']['application']['ignore_whitespace'] = form.ignore_whitespace.data
 
