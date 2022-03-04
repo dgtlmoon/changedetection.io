@@ -1,5 +1,6 @@
 import time
 from changedetectionio import content_fetcher
+from changedetectionio import html_tools
 import hashlib
 from inscriptis import get_text
 import urllib3
@@ -15,40 +16,6 @@ class perform_site_check():
     def __init__(self, *args, datastore, **kwargs):
         super().__init__(*args, **kwargs)
         self.datastore = datastore
-
-    def strip_ignore_text(self, content, list_ignore_text):
-        import re
-        ignore = []
-        ignore_regex = []
-        for k in list_ignore_text:
-
-            # Is it a regex?
-            if k[0] == '/':
-                ignore_regex.append(k.strip(" /"))
-            else:
-                ignore.append(k)
-
-        output = []
-        for line in content.splitlines():
-
-            # Always ignore blank lines in this mode. (when this function gets called)
-            if len(line.strip()):
-                regex_matches = False
-
-                # if any of these match, skip
-                for regex in ignore_regex:
-                    try:
-                        if re.search(regex, line, re.IGNORECASE):
-                            regex_matches = True
-                    except Exception as e:
-                        continue
-
-                if not regex_matches and not any(skip_text in line for skip_text in ignore):
-                    output.append(line.encode('utf8'))
-
-        return "\n".encode('utf8').join(output)
-
-
 
     def run(self, uuid):
         timestamp = int(time.time())  # used for storage etc too
@@ -102,7 +69,7 @@ class perform_site_check():
             # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
             # return content().textfilter().jsonextract().checksumcompare() ?
 
-            is_json = fetcher.headers.get('Content-Type', '') == 'application/json'
+            is_json = 'application/json' in fetcher.headers.get('Content-Type', '')
             is_html = not is_json
             css_filter_rule = watch['css_filter']
 
@@ -119,8 +86,13 @@ class perform_site_check():
             if is_html:
                 # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                 html_content = fetcher.content
-                if not fetcher.headers.get('Content-Type', '') == 'text/plain':
 
+                # If not JSON,  and if it's not text/plain..
+                if 'text/plain' in fetcher.headers.get('Content-Type', '').lower():
+                    # Don't run get_text or xpath/css filters on plaintext
+                    stripped_text_from_html = html_content
+                else:
+                    # Then we assume HTML
                     if has_filter_rule:
                         # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
                         if css_filter_rule[0] == '/':
@@ -131,9 +103,7 @@ class perform_site_check():
 
                     # get_text() via inscriptis
                     stripped_text_from_html = get_text(html_content)
-                else:
-                    # Don't run get_text or xpath/css filters on plaintext
-                    stripped_text_from_html = html_content
+
 
             # Re #340 - return the content before the 'ignore text' was applied
             text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
@@ -147,7 +117,7 @@ class perform_site_check():
             # @todo we could abstract out the get_text() to handle this cleaner
             text_to_ignore = watch.get('ignore_text', []) + self.datastore.data['settings']['application'].get('global_ignore_text', [])
             if len(text_to_ignore):
-                stripped_text_from_html = self.strip_ignore_text(stripped_text_from_html, text_to_ignore)
+                stripped_text_from_html = html_tools.strip_ignore_text(stripped_text_from_html, text_to_ignore)
             else:
                 stripped_text_from_html = stripped_text_from_html.encode('utf8')
 
@@ -165,22 +135,14 @@ class perform_site_check():
             blocked_by_not_found_trigger_text = False
 
             if len(watch['trigger_text']):
+                # Yeah, lets block first until something matches
                 blocked_by_not_found_trigger_text = True
-                for line in watch['trigger_text']:
-                    # Because JSON wont serialize a re.compile object
-                    if line[0] == '/' and line[-1] == '/':
-                        regex = re.compile(line.strip('/'), re.IGNORECASE)
-                        # Found it? so we don't wait for it anymore
-                        r = re.search(regex, str(stripped_text_from_html))
-                        if r:
-                            blocked_by_not_found_trigger_text = False
-                            break
-
-                    elif line.lower() in str(stripped_text_from_html).lower():
-                        # We found it don't wait for it.
-                        blocked_by_not_found_trigger_text = False
-                        break
-
+                # Filter and trigger works the same, so reuse it
+                result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
+                                                      wordlist=watch['trigger_text'],
+                                                      mode="line numbers")
+                if result:
+                    blocked_by_not_found_trigger_text = False
 
 
             if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:

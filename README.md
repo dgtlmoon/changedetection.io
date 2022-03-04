@@ -15,13 +15,19 @@ Open source web page monitoring, notification and change detection.
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />
 
 
-**Get your own instance now on Lemonade!**
+**Get your own private instance now! Let us host it for you!**
 
 [![Deploy to Lemonade](https://lemonade.changedetection.io/static/images/lemonade.svg)](https://lemonade.changedetection.io/start)
 
+
+[_Let us host your own private instance - We accept PayPal and Bitcoin, Support the further development of changedetection.io!_](https://lemonade.changedetection.io/start)
+
+
+
 - Automatic Updates, Automatic Backups, No Heroku "paused application", don't miss a change!
 - Javascript browser included
-- Pay with Bitcoin
+- Unlimited checks and watches!
+
 
 #### Example use cases
 
@@ -98,6 +104,8 @@ See the wiki for more information https://github.com/dgtlmoon/changedetection.io
 
 ## Filters
 XPath, JSONPath and CSS support comes baked in! You can be as specific as you need, use XPath exported from various XPath element query creation tools.
+
+(We support LXML re:test, re:math and re:replace.)
 
 ## Notifications
 

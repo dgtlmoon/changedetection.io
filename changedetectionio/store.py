@@ -184,10 +184,6 @@ class ChangeDetectionStore:
 
     def update_watch(self, uuid, update_obj):
 
-        # Skip if 'paused' state
-        if self.__data['watching'][uuid]['paused']:
-            return
-
         with self.lock:
 
             # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
@@ -401,12 +397,9 @@ class ChangeDetectionStore:
                 # system was out of memory, out of RAM etc
                 with open(self.json_store_path+".tmp", 'w') as json_file:
                     json.dump(data, json_file, indent=4)
-
+                os.rename(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
                 logging.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
-
-            else:
-                os.rename(self.json_store_path+".tmp", self.json_store_path)
 
             self.needs_write = False
 

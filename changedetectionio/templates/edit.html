@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 {% from '_helpers.jinja' import render_field %}
+{% from '_helpers.jinja' import render_button %}
 {% from '_common_fields.jinja' import render_common_settings_form %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 
@@ -88,6 +89,18 @@ User-Agent: wonderbra 1.0") }}
 
             <div class="tab-pane-inner" id="filters-and-triggers">
                 <fieldset>
+                        <div class="pure-control-group">
+                            <strong>Pro-tips:</strong><br/>
+                            <ul>
+                                <li>
+                                    Use the preview page to see your filters and triggers highlighted.
+                                </li>
+                                <li>
+                                    Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a>
+                                </li>
+                            </ul>
+                    </div>
+
                     <div class="pure-control-group">
                         {{ render_field(form.css_filter, placeholder=".class-name or #some-id, or other CSS selector rule.",
                         class="m-d") }}
@@ -114,6 +127,7 @@ User-Agent: wonderbra 1.0") }}
                             <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
                             <li>Regular Expression support, wrap the line in forward slash <b>/regex/</b></li>
                             <li>Changing this will affect the comparison checksum which may trigger an alert</li>
+                            <li>Use the preview/show current tab to see ignores</li>
                         </ul>
                 </span>
 
@@ -138,7 +152,8 @@ User-Agent: wonderbra 1.0") }}
             <div id="actions">
                 <div class="pure-control-group">
 
-                    <button type="submit" class="pure-button pure-button-primary">Save</button>
+                      {{ render_button(form.save_button) }} {{ render_button(form.save_and_preview_button) }}
+
                     <a href="{{url_for('api_delete', uuid=uuid)}}"
                        class="pure-button button-small button-error ">Delete</a>
                     <a href="{{url_for('api_clone', uuid=uuid)}}"

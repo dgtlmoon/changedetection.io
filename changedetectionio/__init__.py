@@ -35,8 +35,9 @@ from flask import (
     url_for,
 )
 from flask_login import login_required
+from changedetectionio import html_tools
 
-__version__ = '0.39.8'
+__version__ = '0.39.9'
 
 datastore = None
 
@@ -367,6 +368,11 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio import forms
         form = forms.quickWatchForm(request.form)
 
+        extra_title = ""
+        if datastore.data['unviewed_count'] > 0:
+            extra_title = " ({})".format(str(datastore.data['unviewed_count']))
+
+
         output = render_template("watch-overview.html",
                                  form=form,
                                  watches=sorted_watches,
@@ -374,7 +380,10 @@ def changedetection_app(config=None, datastore_o=None):
                                  active_tag=limit_tag,
                                  app_rss_token=datastore.data['settings']['application']['rss_access_token'],
                                  has_unviewed=datastore.data['has_unviewed'],
-                                 extra_title="{}".format(" ({})".format(str(datastore.data['unviewed_count'])) if datastore.data['unviewed_count'] > 0 else "")
+                                 # Don't link to hosting when we're on the hosting environment
+                                 hosted_sticky=os.getenv("SALTED_PASS", False) == False,
+                                 guid=datastore.data['app_guid'],
+                                 extra_title=extra_title
                                 )
 
         return output
@@ -449,7 +458,7 @@ def changedetection_app(config=None, datastore_o=None):
                 raw_content = file.read()
 
                 handler = fetch_site_status.perform_site_check(datastore=datastore)
-                stripped_content = handler.strip_ignore_text(raw_content,
+                stripped_content = html_tools.strip_ignore_text(raw_content,
                                                              datastore.data['watching'][uuid]['ignore_text'])
 
                 if datastore.data['settings']['application'].get('ignore_whitespace', False):
@@ -554,10 +563,14 @@ def changedetection_app(config=None, datastore_o=None):
                     flash('No notification URLs set, cannot send test.', 'error')
 
             # Diff page [edit] link should go back to diff page
-            if request.args.get("next") and request.args.get("next") == 'diff':
+            if request.args.get("next") and request.args.get("next") == 'diff' and not form.save_and_preview_button.data:
                 return redirect(url_for('diff_history_page', uuid=uuid))
             else:
-                return redirect(url_for('index'))
+                if form.save_and_preview_button.data:
+                    flash('You may need to reload this page to see the new content.')
+                    return redirect(url_for('preview_page', uuid=uuid))
+                else:
+                    return redirect(url_for('index'))
 
         else:
             if request.method == 'POST' and not form.validate():
@@ -849,8 +862,12 @@ def changedetection_app(config=None, datastore_o=None):
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, dates[0])
         newest_file = watch['history'][dates[0]]
-        with open(newest_file, 'r') as f:
-            newest_version_file_contents = f.read()
+
+        try:
+            with open(newest_file, 'r') as f:
+                newest_version_file_contents = f.read()
+        except Exception as e:
+            newest_version_file_contents = "Unable to read {}.\n".format(newest_file)
 
         previous_version = request.args.get('previous_version')
         try:
@@ -859,8 +876,11 @@ def changedetection_app(config=None, datastore_o=None):
             # Not present, use a default value, the second one in the sorted list.
             previous_file = watch['history'][dates[1]]
 
-        with open(previous_file, 'r') as f:
-            previous_version_file_contents = f.read()
+        try:
+            with open(previous_file, 'r') as f:
+                previous_version_file_contents = f.read()
+        except Exception as e:
+            previous_version_file_contents = "Unable to read {}.\n".format(previous_file)
 
         output = render_template("diff.html", watch_a=watch,
                                  newest=newest_version_file_contents,
@@ -872,13 +892,16 @@ def changedetection_app(config=None, datastore_o=None):
                                  current_previous_version=str(previous_version),
                                  current_diff_url=watch['url'],
                                  extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
-                                 left_sticky= True )
+                                 left_sticky=True)
 
         return output
 
     @app.route("/preview/<string:uuid>", methods=['GET'])
     @login_required
     def preview_page(uuid):
+        content = []
+        ignored_line_numbers = []
+        trigger_line_numbers = []
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
@@ -892,14 +915,51 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
-        newest = list(watch['history'].keys())[-1]
-        with open(watch['history'][newest], 'r') as f:
-            content = f.readlines()
+        if len(watch['history']):
+            timestamps = sorted(watch['history'].keys(), key=lambda x: int(x))
+            filename = watch['history'][timestamps[-1]]
+            try:
+                with open(filename, 'r') as f:
+                    tmp = f.readlines()
+
+                    # Get what needs to be highlighted
+                    ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
+
+                    # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
+                    ignored_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
+                                                                        wordlist=ignore_rules,
+                                                                        mode='line numbers'
+                                                                        )
+
+                    trigger_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
+                                                                        wordlist=watch['trigger_text'],
+                                                                        mode='line numbers'
+                                                                        )
+                    # Prepare the classes and lines used in the template
+                    i=0
+                    for l in tmp:
+                        classes=[]
+                        i+=1
+                        if i in ignored_line_numbers:
+                            classes.append('ignored')
+                        if i in trigger_line_numbers:
+                            classes.append('triggered')
+                        content.append({'line': l, 'classes': ' '.join(classes)})
+
+
+            except Exception as e:
+                content.append({'line': "File doesnt exist or unable to read file {}".format(filename), 'classes': ''})
+        else:
+            content.append({'line': "No history found", 'classes': ''})
+
 
         output = render_template("preview.html",
                                  content=content,
                                  extra_stylesheets=extra_stylesheets,
+                                 ignored_line_numbers=ignored_line_numbers,
+                                 triggered_line_numbers=trigger_line_numbers,
                                  current_diff_url=watch['url'],
+                                 watch=watch,
                                  uuid=uuid)
         return output
 
@@ -1208,22 +1268,42 @@ def ticker_thread_check_time_launch_checks():
                 running_uuids.append(t.current_uuid)
 
         # Re #232 - Deepcopy the data incase it changes while we're iterating through it all
-        copied_datastore = deepcopy(datastore)
+        while True:
+            try:
+                copied_datastore = deepcopy(datastore)
+            except RuntimeError as e:
+                # RuntimeError: dictionary changed size during iteration
+                time.sleep(0.1)
+            else:
+                break
+
+        # Re #438 - Don't place more watches in the queue to be checked if the queue is already large
+        while update_q.qsize() >= 2000:
+            time.sleep(1)
 
         # Check for watches outside of the time threshold to put in the thread queue.
+        now = time.time()
+        max_system_wide = int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60
+
         for uuid, watch in copied_datastore.data['watching'].items():
+
+            # No need todo further processing if it's paused
+            if watch['paused']:
+                continue
+
             # If they supplied an individual entry minutes to threshold.
-            if 'minutes_between_check' in watch and watch['minutes_between_check'] is not None:
+            watch_minutes_between_check = watch.get('minutes_between_check', None)
+            if watch_minutes_between_check is not None:
                 # Cast to int just incase
-                max_time = int(watch['minutes_between_check']) * 60
+                max_time = int(watch_minutes_between_check) * 60
             else:
                 # Default system wide.
-                max_time = int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60
+                max_time = max_system_wide
 
-            threshold = time.time() - max_time
+            threshold = now - max_time
 
-            # Yeah, put it in the queue, it's more than time.
-            if not watch['paused'] and watch['last_checked'] <= threshold:
+            # Yeah, put it in the queue, it's more than time
+            if watch['last_checked'] <= threshold:
                 if not uuid in running_uuids and uuid not in update_q.queue:
                     update_q.put(uuid)
 

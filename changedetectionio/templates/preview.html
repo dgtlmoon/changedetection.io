@@ -3,19 +3,21 @@
 {% block content %}
 
 <div id="settings">
-    <h1>Current</h1>
+    <h1>Current - {{watch.last_checked|format_timestamp_timeago}}</h1>
 </div>
 
 <div id="diff-ui">
+    <span class="ignored">Grey lines are ignored</span> <span class="triggered">Blue lines are triggers</span>
     <table>
         <tbody>
         <tr>
             <td id="diff-col">
-                <span id="result">{% for row in content %}{{row}}{% endfor %}</span>
+                    {% for row in content %}
+                    <div class="{{row.classes}}">{{row.line}}</div>
+                    {% endfor %}
             </td>
         </tr>
         </tbody>
     </table>
 </div>
-
 {% endblock %}

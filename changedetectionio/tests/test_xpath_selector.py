@@ -96,6 +96,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server):
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
 
+
 def test_xpath_validation(client, live_server):
 
     # Give the endpoint time to spin up
