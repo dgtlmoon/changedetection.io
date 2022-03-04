@@ -29,6 +29,7 @@ def set_original_response():
      <p>Which is across multiple lines</p>
      </br>
      So let's see what happens.  </br>
+    <div id="changetext">Some text that will change</div>
      </body>
     <footer>
     <p>Footer</p>
@@ -57,6 +58,7 @@ def set_modified_response():
      <p>which has this one new line</p>
      </br>
      So let's see what happens.  </br>
+    <div id="changetext">Some text that changes</div>
      </body>
     <footer>
     <p>Changed footer</p>
@@ -68,7 +70,7 @@ def set_modified_response():
         f.write(test_return_data)
 
 
-def test_body_filter_output():
+def test_subtractive_filter_output():
     from changedetectionio import fetch_site_status
     from inscriptis import get_text
 
@@ -85,13 +87,16 @@ def test_body_filter_output():
        <body>
      Some initial text</br>
      <p>across multiple lines</p>
+     <div id="changetext">Some text that changes</div>
      </body>
     <footer>
     <p>Footer</p>
     </footer>
      </html>
     """
-    html_blob = subtractive_filter(["header", "footer", "nav"], html_content=content)
+    html_blob = subtractive_filter(
+        ["header", "footer", "nav", "#changetext"], html_content=content
+    )
     text = get_text(html_blob)
     assert (
         text
@@ -102,7 +107,7 @@ across multiple lines
     )
 
 
-def test_body_filter_full(client, live_server):
+def test_subtractive_filters_full(client, live_server):
     sleep_time_for_fetch_thread = 3
 
     set_original_response()
@@ -118,7 +123,8 @@ def test_body_filter_full(client, live_server):
     assert b"1 Imported" in res.data
 
     # Goto the edit page, add the filter data
-    subtractive_filters_data = "header\nfooter\nnav"
+    # Not sure why \r needs to be added - absent of the #changetext this is not necessary
+    subtractive_filters_data = "header\r\nfooter\r\nnav\r\n#changetext"
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={
@@ -153,6 +159,6 @@ def test_body_filter_full(client, live_server):
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
-    # It should have 'unviewed' still, as we removed footer
+    # It should have 'unviewed' still, as we removed changed elements
     res = client.get(url_for("index"))
     assert b"unviewed" in res.data
