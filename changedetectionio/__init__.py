@@ -368,6 +368,7 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio import forms
         form = forms.quickWatchForm(request.form)
 
+        # Extra page <title> (n) unviewed
         extra_title = ""
         if datastore.data['unviewed_count'] > 0:
             extra_title = " ({})".format(str(datastore.data['unviewed_count']))
