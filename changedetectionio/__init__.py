@@ -250,6 +250,11 @@ def changedetection_app(config=None, datastore_o=None):
         # (No password in settings or env var)
         app.config['LOGIN_DISABLED'] = datastore.data['settings']['application']['password'] == False and os.getenv("SALTED_PASS", False) == False
 
+        # Set the auth cookie path if we're running as X-settings/X-Forwarded-Prefix
+        if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Prefix' in request.headers:
+            app.config['REMEMBER_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
+            app.config['SESSION_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
+
         # For the RSS path, allow access via a token
         if request.path == '/rss' and request.args.get('token'):
             app_rss_token = datastore.data['settings']['application']['rss_access_token']
