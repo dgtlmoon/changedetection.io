@@ -253,6 +253,7 @@ def changedetection_app(config=None, datastore_o=None):
         # Set the auth cookie path if we're running as X-settings/X-Forwarded-Prefix
         if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Prefix' in request.headers:
             app.config['REMEMBER_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
+            app.config['SESSION_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
 
         # For the RSS path, allow access via a token
         if request.path == '/rss' and request.args.get('token'):
