@@ -53,13 +53,23 @@
 				<thead>
 				<tr id="header">
 					<th class="inline chkbox-header"><input id="chk-all" type="checkbox" name="showhide" onchange="checkAll(this)" title="Check/Uncheck All">&nbsp;&nbsp;#</th>
-					<th class="pause-resume-header" onclick="sortTable(1)"><span class="clickable" title="Sort by Pause/Resume"><a href="{{url_for('index', pause='pause-all', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause" title="Pause All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>&nbsp;<a href="{{url_for('index', pause='resume-all', tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="Resume" title="Resume All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>&nbsp;&nbsp;<span id="sortable-1"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" alt="sort" /></span><span class="sortarrow"><span id="sort-1a" style="display:none;">&#9650;</span><span id="sort-1d" style="display:none;">&#9660;</span></span></span></th>
+					<th class="pause-resume-header" onclick="sortTable(1)">
+						<span class="clickable"
+																				 title="Sort by Pause/Resume"><a
+							href="{{url_for('index', pause='pause-all', tag=active_tag)}}"><img
+							src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause"
+							title="Pause All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>&nbsp;<a
+							href="{{url_for('index', pause='resume-all', tag=active_tag)}}"><img
+							src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="Resume"
+							title="Resume All {%if active_tag%}in &quot;{{active_tag}}&quot; {%endif%}"/></a>&nbsp;&nbsp;<span
+							id="sortable-1"><img
+							src="{{url_for('static_content', group='images', filename='sortable.svg')}}"
+							alt="sort"/></span><span class="sortarrow"><span id="sort-1a"
+																			 style="display:none;">&#9650;</span><span
+							id="sort-1d" style="display:none;">&#9660;</span></span></span></th>
 					<th onclick="sortTable(3)"><span class="clickable" title="Sort by Title">Title&nbsp;&nbsp;<span id="sortable-3"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" alt="sort" /></span><span class="sortarrow"><span id="sort-3a" style="display:none;">&#9650;</span><span id="sort-3d" style="display:none;">&#9660;</span></span></span></th>
-					<th class="hidden-col"></th>
 					<th onclick="sortTable(5)"><span class="clickable" title="Sort by Last Checked">Checked&nbsp;&nbsp;<span id="sortable-5"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" alt="sort" /></span><span class="sortarrow"><span id="sort-5a" style="display:none;">&#9650;</span><span id="sort-5d" style="display:none;">&#9660;</span></span></span></th>
-					<th class="hidden-col"></th>
 					<th onclick="sortTable(7)"><span class="clickable" title="Sort by Last Changed">Changed&nbsp;&nbsp;<span id="sortable-7" style="display:none;"><img src="{{url_for('static_content', group='images', filename='sortable.svg')}}" alt="sort" /></span><span class="sortarrow"><span id="sort-7a" style="display:none;">&#9650;</span><span id="sort-7d">&#9660;</span></span></span></th>
-					<th class="hidden-col"></th>
 					<th>Actions</th>
 				</tr>
 				</thead>
@@ -94,18 +104,13 @@
 								<span class="watch-tag-list">{{ watch.tag}}</span>
 								{% endif %}
 							</td>
-							<td class="hidden-col">{{ watch.title if watch.title else watch.url }}</td>
-							   
-					 
 							<td class="last-checked">{{watch|format_last_checked_time}}</td>
-							<td class="hidden-col">{{ watch.last_checked }}</td>
 							<td class="last-changed">{% if watch.history|length >= 2 and watch.last_changed %}
 								{{watch.last_changed|format_timestamp_timeago}}
 								{% else %}
 								Not yet
 								{% endif %}
 							</td>
-							<td class="hidden-col">{{ watch.last_changed }}</td>
 							<td>
 								<a href="{{ url_for('api_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
 								   class="pure-button button-small pure-button-primary">Recheck</a>
