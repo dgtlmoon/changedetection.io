@@ -247,9 +247,11 @@ class ValidateCSSJSONXPATHInput(object):
     def __call__(self, form, field):
 
         if isinstance(field.data, str):
-            field.data = [field.data]
+            data = [field.data]
+        else:
+            data = field.data
 
-        for line in field.data:
+        for line in data:
         # Nothing to see here
             if not len(line.strip()):
                 return

@@ -91,7 +91,7 @@ def test_body_filter_output():
     </footer>
      </html>
     """
-    html_blob = ignore_tags(html_content=content)
+    html_blob = subtractive_filter(["header", "footer", "nav"], html_content=content)
     text = get_text(html_blob)
     assert (
         text
@@ -117,11 +117,12 @@ def test_body_filter_full(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    # Goto the edit page, add the body filter
+    # Goto the edit page, add the filter data
+    subtractive_filters_data = "header\nfooter\nnav"
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={
-            "filter_body": True,
+            "subtractive_filters": subtractive_filters_data,
             "url": test_url,
             "tag": "",
             "headers": "",
@@ -135,11 +136,7 @@ def test_body_filter_full(client, live_server):
     res = client.get(
         url_for("edit_page", uuid="first"),
     )
-    # Need to have value="y"
-    filter_body_html = (
-        '<input checked id="filter_body" name="filter_body" type="checkbox" value="y">'
-    )
-    assert bytes(filter_body_html.encode("utf-8")) in res.data
+    assert bytes(subtractive_filters_data.encode("utf-8")) in res.data
 
     # Trigger a check
     client.get(url_for("api_watch_checknow"), follow_redirects=True)
