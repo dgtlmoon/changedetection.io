@@ -125,11 +125,8 @@ body::after {
 }
 
 body::before {
+  // background-image set in base.html so it works with reverse proxies etc
   content: "";
-  background-image: url(/static/images/gradient-border.png);
-}
-
-body:before {
   background-size: cover
 }
 

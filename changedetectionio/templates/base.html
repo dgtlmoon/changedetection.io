@@ -12,7 +12,13 @@
         <link rel="stylesheet" href="{{ m }}?ver=1000">
         {% endfor %}
     {% endif %}
+    <style>
+    body::before {
+        background-image: url({{url_for('static_content', group='images', filename='gradient-border.png')}});
+    }
+    </style>
 </head>
+
 <body>
 
 <div class="header">
