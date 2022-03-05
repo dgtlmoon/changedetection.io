@@ -34,5 +34,4 @@ lxml
 
 # 3.141 was missing socksVersion, 3.150 was not in pypi, so we try 4.1.0
 selenium ~= 4.1.0
-pytest ~=6.2
-pytest-flask ~=1.2
+
