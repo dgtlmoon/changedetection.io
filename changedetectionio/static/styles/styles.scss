@@ -542,6 +542,16 @@ $form-edge-padding: 20px;
     display: block;
   }
 }
+
+.login-form {
+  .inner {
+    background: #fff;;
+    padding: $form-edge-padding;
+    border-radius: 5px;
+  }
+}
+
+
 .edit-form {
   min-width: 70%;
   .tab-pane-inner {

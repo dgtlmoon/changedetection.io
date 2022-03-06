@@ -385,6 +385,11 @@ and also iPads specifically.
 .pure-form-stacked > div:first-child {
   display: block; }
 
+.login-form .inner {
+  background: #fff;
+  padding: 20px;
+  border-radius: 5px; }
+
 .edit-form {
   min-width: 70%; }
   .edit-form .tab-pane-inner {
