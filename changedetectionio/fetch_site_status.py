@@ -110,7 +110,7 @@ class perform_site_check():
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                             html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
                     if has_subtractive_filters:
-                        html_content = html_tools.subtractive_filter(subtractive_filters, html_content)
+                        html_content = html_tools.element_removal(subtractive_filters, html_content)
                     # get_text() via inscriptis
                     stripped_text_from_html = get_text(html_content)
 

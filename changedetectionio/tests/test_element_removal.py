@@ -70,7 +70,7 @@ def set_modified_response():
         f.write(test_return_data)
 
 
-def test_subtractive_filter_output():
+def test_element_removal_output():
     from changedetectionio import fetch_site_status
     from inscriptis import get_text
 
@@ -94,7 +94,7 @@ def test_subtractive_filter_output():
     </footer>
      </html>
     """
-    html_blob = subtractive_filter(
+    html_blob = element_removal(
         ["header", "footer", "nav", "#changetext"], html_content=content
     )
     text = get_text(html_blob)
@@ -107,7 +107,7 @@ across multiple lines
     )
 
 
-def test_subtractive_filters_full(client, live_server):
+def test_element_removal_full(client, live_server):
     sleep_time_for_fetch_thread = 3
 
     set_original_response()
