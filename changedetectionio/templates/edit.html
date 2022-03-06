@@ -58,24 +58,30 @@
                         </span>
                     </div>
 
+                <hr/>
                 <fieldset class="pure-group">
-                                    <div class="pure-control-group">
-                    {{ render_field(form.method) }}
-                </div>
-                    <strong>Note: <i>Request Headers and Body settings are ONLY used by Basic fast Plaintext/HTTP Client fetch method.</i></strong>
-                    {{ render_field(form.headers, rows=5, placeholder="Example
+
+                    <span class="pure-form-message-inline">
+                        <strong>Request override is currently only used by the <i>Basic fast Plaintext/HTTP Client</i> method.</strong>
+                    </span>
+                    <div class="pure-control-group">
+                        {{ render_field(form.method) }}
+                    </div>
+                    <div class="pure-control-group">
+{{ render_field(form.headers, rows=5, placeholder="Example
 Cookie: foobar
 User-Agent: wonderbra 1.0") }}
-                </fieldset>
-                <div class="pure-control-group">
-                    {{ render_field(form.body, rows=5, placeholder="Example
+                    </div>
+                    <div class="pure-control-group">
+                                        {{ render_field(form.body, rows=5, placeholder="Example
 {
    \"name\":\"John\",
    \"age\":30,
    \"car\":null
 }") }}
-                </div>
-
+                    </div>
+                </fieldset>
+                <br/>
             </div>
 
             <div class="tab-pane-inner" id="notifications">

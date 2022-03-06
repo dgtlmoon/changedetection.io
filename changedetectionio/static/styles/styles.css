@@ -407,6 +407,8 @@ and also iPads specifically.
   .edit-form #actions {
     display: block;
     background: #fff; }
+  .edit-form .pure-form-message-inline {
+    padding-left: 0; }
 
 ul {
   padding-left: 1em;
