@@ -196,7 +196,8 @@ body:after, body:before {
   #new-watch-form .label {
     display: none; }
   #new-watch-form legend {
-    color: #fff; }
+    color: #fff;
+    font-weight: bold; }
 
 #diff-col {
   padding-left: 40px; }
