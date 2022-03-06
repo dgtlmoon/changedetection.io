@@ -127,7 +127,7 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     # return timeago.format(timestamp, time.time())
     # return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
 
-
+# When nobody is logged in Flask-Login's current_user is set to an AnonymousUser object.
 class User(flask_login.UserMixin):
     id=None
 
@@ -136,7 +136,6 @@ class User(flask_login.UserMixin):
     def get_user(self, email="defaultuser@changedetection.io"):
         return self
     def is_authenticated(self):
-
         return True
     def is_active(self):
         return True
@@ -215,6 +214,10 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         if request.method == 'GET':
+            if flask_login.current_user.is_authenticated:
+                flash("Already logged in")
+                return redirect(url_for("index"))
+
             output = render_template("login.html")
             return output
 
