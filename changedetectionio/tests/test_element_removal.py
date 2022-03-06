@@ -124,11 +124,11 @@ def test_element_removal_full(client, live_server):
 
     # Goto the edit page, add the filter data
     # Not sure why \r needs to be added - absent of the #changetext this is not necessary
-    subtractive_filters_data = "header\r\nfooter\r\nnav\r\n#changetext"
+    subtractive_selectors_data = "header\r\nfooter\r\nnav\r\n#changetext"
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={
-            "subtractive_filters": subtractive_filters_data,
+            "subtractive_selectors": subtractive_selectors_data,
             "url": test_url,
             "tag": "",
             "headers": "",
@@ -142,7 +142,7 @@ def test_element_removal_full(client, live_server):
     res = client.get(
         url_for("edit_page", uuid="first"),
     )
-    assert bytes(subtractive_filters_data.encode("utf-8")) in res.data
+    assert bytes(subtractive_selectors_data.encode("utf-8")) in res.data
 
     # Trigger a check
     client.get(url_for("api_watch_checknow"), follow_redirects=True)

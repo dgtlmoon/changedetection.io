@@ -19,17 +19,17 @@ def css_filter(css_filter, html_content):
 
     return html_block + "\n"
 
-def subtractive_css_selector(css_filter, html_content):
+def subtractive_css_selector(css_selector, html_content):
     soup = BeautifulSoup(html_content, "html.parser")
-    for item in soup.select(css_filter):
+    for item in soup.select(css_selector):
         item.decompose()
     return str(soup)
 
     
-def element_removal(filters: List[str], html_content):
+def element_removal(selectors: List[str], html_content):
     """Joins individual filters into one css filter."""
-    filt = ",".join(filters)
-    return subtractive_css_selector(filt, html_content)
+    selector = ",".join(selectors)
+    return subtractive_css_selector(selector, html_content)
     
 
 def ignore_tags(html_content, elements=["header", "footer", "nav"]):

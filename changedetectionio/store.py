@@ -50,7 +50,7 @@ class ChangeDetectionStore:
                     'extract_title_as_title': False,
                     'fetch_backend': 'html_requests',
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
-                    'global_subtractive_filters': [],
+                    'global_subtractive_selectors': [],
                     'ignore_whitespace': False,
                     'notification_urls': [], # Apprise URL list
                     # Custom notification content
@@ -87,7 +87,7 @@ class ChangeDetectionStore:
             'notification_body': default_notification_body,
             'notification_format': default_notification_format,
             'css_filter': "",
-            'subtractive_filters': [],
+            'subtractive_selectors': [],
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'fetch_backend': None,
             'extract_title_as_title': False

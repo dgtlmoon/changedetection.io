@@ -74,14 +74,14 @@ class perform_site_check():
             is_json = 'application/json' in fetcher.headers.get('Content-Type', '')
             is_html = not is_json
             css_filter_rule = watch['css_filter']
-            subtractive_filters = watch.get(
-                "subtractive_filters", []
+            subtractive_selectors = watch.get(
+                "subtractive_selectors", []
             ) + self.datastore.data["settings"]["application"].get(
-                "global_subtractive_filters", []
+                "global_subtractive_selectors", []
             )
 
             has_filter_rule = css_filter_rule and len(css_filter_rule.strip())
-            has_subtractive_filters = subtractive_filters and len(subtractive_filters[0].strip())
+            has_subtractive_selectors = subtractive_selectors and len(subtractive_selectors[0].strip())
             
             if is_json and not has_filter_rule:
                 css_filter_rule = "json:$"
@@ -109,8 +109,8 @@ class perform_site_check():
                         else:
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                             html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
-                    if has_subtractive_filters:
-                        html_content = html_tools.element_removal(subtractive_filters, html_content)
+                    if has_subtractive_selectors:
+                        html_content = html_tools.element_removal(subtractive_selectors, html_content)
                     # get_text() via inscriptis
                     stripped_text_from_html = get_text(html_content)
 

@@ -319,7 +319,7 @@ class watchForm(commonSettingsForm):
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
     css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()])
-    subtractive_filters = StringListField('Ignore elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
+    subtractive_selectors = StringListField('Ignore elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     title = StringField('Title')
 
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
@@ -351,6 +351,6 @@ class globalSettingsForm(commonSettingsForm):
                                                [validators.NumberRange(min=1)])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
     base_url = StringField('Base URL', validators=[validators.Optional()])
-    global_subtractive_filters = StringListField('Ignore elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
+    global_subtractive_selectors = StringListField('Ignore elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     ignore_whitespace = BooleanField('Ignore whitespace')
