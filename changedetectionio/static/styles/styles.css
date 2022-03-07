@@ -39,13 +39,13 @@ section.content {
 
 /* table related */
 .watch-table {
-  width: 100%; }
+  width: 100%;
+  font-size: 80%; }
   .watch-table tr.unviewed {
     font-weight: bold; }
   .watch-table .error {
     color: #a00; }
   .watch-table td {
-    font-size: 80%;
     white-space: nowrap; }
   .watch-table td.title-col {
     word-break: break-all;

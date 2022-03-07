@@ -45,6 +45,7 @@ section.content {
 /* table related */
 .watch-table {
   width: 100%;
+  font-size: 80%;
 
   tr.unviewed {
     font-weight: bold;
@@ -55,7 +56,6 @@ section.content {
   }
 
   td {
-    font-size: 80%;
     white-space: nowrap;
   }
 
