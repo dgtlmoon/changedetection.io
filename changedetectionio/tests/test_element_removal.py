@@ -44,11 +44,11 @@ def set_original_response():
 def set_modified_response():
     test_return_data = """<html>
     <header>
-    <h2>Header</h2>
+    <h2>Header changed</h2>
     </header>
     <nav>
     <ul>
-      <li><a href="#">AAA</a></li>
+      <li><a href="#">A changed</a></li>
       <li><a href="#">B</a></li>
       <li><a href="#">C</a></li>
     </ul>
@@ -61,7 +61,7 @@ def set_modified_response():
     <div id="changetext">Some text that changes</div>
      </body>
     <footer>
-    <p>Changed footer</p>
+    <p>Footer changed</p>
     </footer>
      </html>
     """
@@ -150,6 +150,10 @@ def test_element_removal_full(client, live_server):
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
+    # No change yet - first check
+    res = client.get(url_for("index"))
+    assert b"unviewed" not in res.data
+
     #  Make a change to header/footer/nav
     set_modified_response()
 
@@ -159,6 +163,6 @@ def test_element_removal_full(client, live_server):
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
-    # It should have 'unviewed' still, as we removed changed elements
+    # There should not be an unviewed change, as changes should be removed
     res = client.get(url_for("index"))
-    assert b"unviewed" in res.data
+    assert b"unviewed" not in res.data
