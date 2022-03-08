@@ -55,7 +55,7 @@ def set_modified_response():
     </nav>
        <body>
      Some initial text</br>
-     <p>which has this one new line</p>
+     <p>Which is across multiple lines</p>
      </br>
      So let's see what happens.  </br>
     <div id="changetext">Some text that changes</div>

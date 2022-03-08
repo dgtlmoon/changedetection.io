@@ -32,12 +32,6 @@ def element_removal(selectors: List[str], html_content):
     return subtractive_css_selector(selector, html_content)
     
 
-def ignore_tags(html_content, elements=["header", "footer", "nav"]):
-    soup = BeautifulSoup(html_content, "html.parser")
-    for item in soup.find_all(elements):
-        item.decompose()
-    return str(soup)
-
 # Return str Utf-8 of matched rules
 def xpath_filter(xpath_filter, html_content):
     from lxml import etree, html
