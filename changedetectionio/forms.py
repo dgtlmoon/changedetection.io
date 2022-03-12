@@ -231,8 +231,7 @@ class ValidateListRegex(object):
                 except re.error:
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))
-
-                
+              
 class ValidateCSSJSONXPATHInput(object):
     """
     Filter validation
