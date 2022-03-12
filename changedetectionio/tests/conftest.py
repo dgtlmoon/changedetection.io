@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 import pytest
-from changedetectionio import changedetection_app
-from changedetectionio import store
+import changedetection_app
+import store
 import os
 
 # https://github.com/pallets/flask/blob/1.1.2/examples/tutorial/tests/test_auth.py

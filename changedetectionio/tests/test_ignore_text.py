@@ -3,7 +3,7 @@
 import time
 from flask import url_for
 from . util import live_server_setup
-from changedetectionio import html_tools
+import html_tools
 
 def test_setup(live_server):
     live_server_setup(live_server)
@@ -11,7 +11,7 @@ def test_setup(live_server):
 # Unit test of the stripper
 # Always we are dealing in utf-8
 def test_strip_text_func():
-    from changedetectionio import fetch_site_status
+    import fetch_site_status
 
     test_content = """
     Some content

@@ -5,7 +5,7 @@ import time
 import urllib3
 from inscriptis import get_text
 
-from changedetectionio import content_fetcher, html_tools
+import content_fetcher, html_tools
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

@@ -6,7 +6,7 @@
 import unittest
 import os
 
-from changedetectionio import diff
+import diff
 
 # mostly
 class TestDiffBuilder(unittest.TestCase):

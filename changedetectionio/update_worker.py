@@ -19,7 +19,7 @@ class update_worker(threading.Thread):
         super().__init__(*args, **kwargs)
 
     def run(self):
-        from changedetectionio import fetch_site_status
+        import fetch_site_status
 
         update_handler = fetch_site_status.perform_site_check(datastore=self.datastore)
 
@@ -32,7 +32,7 @@ class update_worker(threading.Thread):
 
             else:
                 self.current_uuid = uuid
-                from changedetectionio import content_fetcher
+                import content_fetcher
 
                 if uuid in list(self.datastore.data['watching'].keys()):
 
@@ -122,7 +122,7 @@ class update_worker(threading.Thread):
                                         else:
                                             line_feed_sep = "\n"
 
-                                        from changedetectionio import diff
+                                        import diff
                                         n_object.update({
                                             'watch_url': watch['url'],
                                             'uuid': uuid,

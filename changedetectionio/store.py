@@ -8,7 +8,7 @@ from copy import deepcopy
 from os import mkdir, path, unlink
 from threading import Lock
 
-from changedetectionio.notification import (
+from notification import (
     default_notification_body,
     default_notification_format,
     default_notification_title,

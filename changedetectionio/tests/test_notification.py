@@ -4,7 +4,12 @@ import re
 from flask import url_for
 from . util import set_original_response, set_modified_response, live_server_setup
 import logging
-from changedetectionio.notification import default_notification_body, default_notification_title
+
+from notification import (
+    default_notification_body,
+    default_notification_format,
+    default_notification_title,
+)
 
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)

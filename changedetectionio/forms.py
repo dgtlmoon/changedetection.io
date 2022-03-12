@@ -18,8 +18,8 @@ from wtforms import (
 from wtforms.fields import html5
 from wtforms.validators import ValidationError
 
-from changedetectionio import content_fetcher
-from changedetectionio.notification import (
+import content_fetcher
+from notification import (
     default_notification_body,
     default_notification_format,
     default_notification_title,
@@ -123,7 +123,7 @@ class ValidateContentFetcherIsReady(object):
     def __call__(self, form, field):
         import urllib3.exceptions
 
-        from changedetectionio import content_fetcher
+        import content_fetcher
 
         # Better would be a radiohandler that keeps a reference to each class
         if field.data is not None:
@@ -189,7 +189,7 @@ class ValidateTokensList(object):
         self.message = message
 
     def __call__(self, form, field):
-        from changedetectionio import notification
+        import notification
         regex = re.compile('{.*?}')
         for p in re.findall(regex, field.data):
             if not p.strip('{}') in notification.valid_tokens:
