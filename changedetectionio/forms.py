@@ -319,7 +319,7 @@ class watchForm(commonSettingsForm):
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
     css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()])
-    subtractive_selectors = StringListField('Ignore elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
+    subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     title = StringField('Title')
 
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
