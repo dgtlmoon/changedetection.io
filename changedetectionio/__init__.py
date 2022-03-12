@@ -38,7 +38,7 @@ from flask_login import login_required
 
 from changedetectionio import html_tools
 
-__version__ = '0.39.9'
+__version__ = '0.39.10'
 
 datastore = None
 
