@@ -1,7 +1,10 @@
 import json
+import re
+from typing import List
+
 from bs4 import BeautifulSoup
 from jsonpath_ng.ext import parse
-import re
+
 
 class JSONNotFound(ValueError):
     def __init__(self, msg):
@@ -16,11 +19,22 @@ def css_filter(css_filter, html_content):
 
     return html_block + "\n"
 
+def subtractive_css_selector(css_selector, html_content):
+    soup = BeautifulSoup(html_content, "html.parser")
+    for item in soup.select(css_selector):
+        item.decompose()
+    return str(soup)
+
+    
+def element_removal(selectors: List[str], html_content):
+    """Joins individual filters into one css filter."""
+    selector = ",".join(selectors)
+    return subtractive_css_selector(selector, html_content)
+    
 
 # Return str Utf-8 of matched rules
 def xpath_filter(xpath_filter, html_content):
-    from lxml import html
-    from lxml import etree
+    from lxml import etree, html
 
     tree = html.fromstring(html_content)
     html_block = ""

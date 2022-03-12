@@ -122,7 +122,18 @@ User-Agent: wonderbra 1.0") }}
                                 href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
                 </span>
                     </div>
-
+                    <fieldset class="pure-group">
+                      {{ render_field(form.subtractive_selectors, rows=5, placeholder="header
+footer
+nav
+.stockticker") }}
+                      <span class="pure-form-message-inline">
+                        <ul>
+                          <li> Remove HTML element(s) by CSS selector before text conversion. </li>
+                          <li> Add multiple elements or CSS selectors per line to ignore multiple parts of the HTML. </li>
+                        </ul>
+                      </span>
+                    </fieldset>
                 </fieldset>
                 <fieldset class="pure-group">
                     {{ render_field(form.ignore_text, rows=5, placeholder="Some text to ignore in a line
