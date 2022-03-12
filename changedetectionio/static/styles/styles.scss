@@ -45,6 +45,7 @@ section.content {
 /* table related */
 .watch-table {
   width: 100%;
+  font-size: 80%;
 
   tr.unviewed {
     font-weight: bold;
@@ -55,7 +56,6 @@ section.content {
   }
 
   td {
-    font-size: 80%;
     white-space: nowrap;
   }
 
@@ -107,12 +107,12 @@ section.content {
 
 body:after {
   content: "";
-  background: linear-gradient(130deg, #ff7a18, #af002d 41.07%, #319197 76.05%)
+  background: linear-gradient(130deg, #5ad8f7, #2f50af 41.07%, #9150bf 84.05%);
 }
 
 body:after, body:before {
   display: block;
-  height: 600px;
+  height: 650px;
   position: absolute;
   top: 0;
   left: 0;
@@ -125,11 +125,8 @@ body::after {
 }
 
 body::before {
+  // background-image set in base.html so it works with reverse proxies etc
   content: "";
-  background-image: url(/static/images/gradient-border.png);
-}
-
-body:before {
   background-size: cover
 }
 
@@ -265,6 +262,7 @@ body:after, body:before {
   }
   legend {
     color: #fff;
+    font-weight: bold;
   }
 }
 
@@ -545,6 +543,16 @@ $form-edge-padding: 20px;
     display: block;
   }
 }
+
+.login-form {
+  .inner {
+    background: #fff;;
+    padding: $form-edge-padding;
+    border-radius: 5px;
+  }
+}
+
+
 .edit-form {
   min-width: 70%;
   .tab-pane-inner {
@@ -567,6 +575,10 @@ $form-edge-padding: 20px;
   #actions {
     display: block;
     background: #fff;
+  }
+
+  .pure-form-message-inline {
+    padding-left: 0;
   }
 }
 

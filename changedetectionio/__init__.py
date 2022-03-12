@@ -128,7 +128,7 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     # return timeago.format(timestamp, time.time())
     # return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
 
-
+# When nobody is logged in Flask-Login's current_user is set to an AnonymousUser object.
 class User(flask_login.UserMixin):
     id=None
 
@@ -137,7 +137,6 @@ class User(flask_login.UserMixin):
     def get_user(self, email="defaultuser@changedetection.io"):
         return self
     def is_authenticated(self):
-
         return True
     def is_active(self):
         return True
@@ -216,6 +215,10 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         if request.method == 'GET':
+            if flask_login.current_user.is_authenticated:
+                flash("Already logged in")
+                return redirect(url_for("index"))
+
             output = render_template("login.html")
             return output
 
@@ -250,6 +253,11 @@ def changedetection_app(config=None, datastore_o=None):
         # Disable password login if there is not one set
         # (No password in settings or env var)
         app.config['LOGIN_DISABLED'] = datastore.data['settings']['application']['password'] == False and os.getenv("SALTED_PASS", False) == False
+
+        # Set the auth cookie path if we're running as X-settings/X-Forwarded-Prefix
+        if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Prefix' in request.headers:
+            app.config['REMEMBER_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
+            app.config['SESSION_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
 
         # For the RSS path, allow access via a token
         if request.path == '/rss' and request.args.get('token'):
