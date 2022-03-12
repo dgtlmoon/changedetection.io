@@ -1057,6 +1057,7 @@ def changedetection_app(config=None, datastore_o=None):
 def check_for_new_version():
     import requests
     import urllib3
+    from changedetectionio import __version__
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     while not app.config.exit.is_set():

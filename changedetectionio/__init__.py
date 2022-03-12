@@ -8,7 +8,7 @@ import sys
 
 import eventlet
 import eventlet.wsgi
-from app import changedetection_app
+import app as flask_app
 import store
 
 __version__ = '0.39.10'
@@ -68,7 +68,7 @@ def main():
             sys.exit(2)
 
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=__version__)
-    app = changedetection_app(app_config, datastore)
+    app = flask_app.changedetection_app(app_config, datastore)
 
     # Go into cleanup mode
     if do_cleanup:
