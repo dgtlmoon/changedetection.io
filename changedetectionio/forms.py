@@ -214,7 +214,7 @@ class ValidateListRegex(object):
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))
 
-class ValidateCSSJSONXPATHInput(object):
+class ValidateCSSJSONXPathInput(object):
     """
     Filter validation
     @todo CSS validator ;)
@@ -282,7 +282,7 @@ class watchForm(commonSettingsForm):
 
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
-    css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()])
+    css_filter = StringField('CSS/JSON/XPath Filter', [ValidateCSSJSONXPathInput()])
     title = StringField('Title')
 
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
