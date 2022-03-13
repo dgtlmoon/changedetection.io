@@ -78,7 +78,8 @@ def _parse_json(json_data, jsonpath_filter):
         # Re 265 - Just return an empty string when filter not found
         return ''
 
-    stripped_text_from_html = json.dumps(s, indent=4)
+    # Ticket #462 - allow the original encoding through, usually it's UTF-8 or similar
+    stripped_text_from_html = json.dumps(s, indent=4, ensure_ascii=False)
 
     return stripped_text_from_html
 
