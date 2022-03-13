@@ -113,9 +113,9 @@ User-Agent: wonderbra 1.0") }}
                         <span class="pure-form-message-inline">
                     <ul>
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
-                        <li>JSON - Limit text to this JSON rule, using <a href="https://pypi.org/project/jsonpath-ng/">JSONPath</a>, prefix with <b>"json:"</b>, <a
+                        <li>JSON - Limit text to this JSON rule, using <a href="https://pypi.org/project/jsonpath-ng/">JSONPath</a>, prefix with <code>"json:"</code>, use <code>json:$</code> to force re-formatting if required,  <a
                                 href="https://jsonpath.com/" target="new">test your JSONPath here</a></li>
-                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash, example  <b>//*[contains(@class, 'sametext')]</b>, <a
+                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash, example  <code>//*[contains(@class, 'sametext')]</code>, <a
                                 href="http://xpather.com/" target="new">test your XPath here</a></li>
                     </ul>
                     Please be sure that you thoroughly understand how to write CSS or JSONPath, XPath selector rules before filing an issue on GitHub! <a
@@ -142,7 +142,7 @@ nav
                     <span class="pure-form-message-inline">
                         <ul>
                             <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
-                            <li>Regular Expression support, wrap the line in forward slash <b>/regex/</b></li>
+                            <li>Regular Expression support, wrap the line in forward slash <code>/regex/</code></li>
                             <li>Changing this will affect the comparison checksum which may trigger an alert</li>
                             <li>Use the preview/show current tab to see ignores</li>
                         </ul>
@@ -159,7 +159,7 @@ nav
                         <li>Text to wait for before triggering a change/notification, all text and regex are tested <i>case-insensitive</i>.</li>
                         <li>Trigger text is processed from the result-text that comes out of any CSS/JSON Filters for this watch</li>
                         <li>Each line is process separately (think of each line as "OR")</li>
-                        <li>Note: Wrap in forward slash / to use regex  example: <span style="font-family: monospace; background: #eee">/foo\d/</span></li>
+                        <li>Note: Wrap in forward slash / to use regex  example: <code>/foo\d/</code></li>
                     </ul>
                         </span>
                     </div>
