@@ -58,24 +58,30 @@
                         </span>
                     </div>
 
+                <hr/>
                 <fieldset class="pure-group">
-                                    <div class="pure-control-group">
-                    {{ render_field(form.method) }}
-                </div>
-                    <strong>Note: <i>Request Headers and Body settings are ONLY used by Basic fast Plaintext/HTTP Client fetch method.</i></strong>
-                    {{ render_field(form.headers, rows=5, placeholder="Example
+
+                    <span class="pure-form-message-inline">
+                        <strong>Request override is currently only used by the <i>Basic fast Plaintext/HTTP Client</i> method.</strong>
+                    </span>
+                    <div class="pure-control-group">
+                        {{ render_field(form.method) }}
+                    </div>
+                    <div class="pure-control-group">
+{{ render_field(form.headers, rows=5, placeholder="Example
 Cookie: foobar
 User-Agent: wonderbra 1.0") }}
-                </fieldset>
-                <div class="pure-control-group">
-                    {{ render_field(form.body, rows=5, placeholder="Example
+                    </div>
+                    <div class="pure-control-group">
+                                        {{ render_field(form.body, rows=5, placeholder="Example
 {
    \"name\":\"John\",
    \"age\":30,
    \"car\":null
 }") }}
-                </div>
-
+                    </div>
+                </fieldset>
+                <br/>
             </div>
 
             <div class="tab-pane-inner" id="notifications">
@@ -109,14 +115,25 @@ User-Agent: wonderbra 1.0") }}
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
                         <li>JSON - Limit text to this JSON rule, using <a href="https://pypi.org/project/jsonpath-ng/">JSONPath</a>, prefix with <b>"json:"</b>, <a
                                 href="https://jsonpath.com/" target="new">test your JSONPath here</a></li>
-                        <li>XPATH - Limit text to this XPath rule, simply start with a forward-slash, example  <b>//*[contains(@class, 'sametext')]</b>, <a
+                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash, example  <b>//*[contains(@class, 'sametext')]</b>, <a
                                 href="http://xpather.com/" target="new">test your XPath here</a></li>
                     </ul>
                     Please be sure that you thoroughly understand how to write CSS or JSONPath, XPath selector rules before filing an issue on GitHub! <a
                                 href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
                 </span>
                     </div>
-
+                    <fieldset class="pure-group">
+                      {{ render_field(form.subtractive_selectors, rows=5, placeholder="header
+footer
+nav
+.stockticker") }}
+                      <span class="pure-form-message-inline">
+                        <ul>
+                          <li> Remove HTML element(s) by CSS selector before text conversion. </li>
+                          <li> Add multiple elements or CSS selectors per line to ignore multiple parts of the HTML. </li>
+                        </ul>
+                      </span>
+                    </fieldset>
                 </fieldset>
                 <fieldset class="pure-group">
                     {{ render_field(form.ignore_text, rows=5, placeholder="Some text to ignore in a line

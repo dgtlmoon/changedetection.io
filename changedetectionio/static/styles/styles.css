@@ -39,13 +39,13 @@ section.content {
 
 /* table related */
 .watch-table {
-  width: 100%; }
+  width: 100%;
+  font-size: 80%; }
   .watch-table tr.unviewed {
     font-weight: bold; }
   .watch-table .error {
     color: #a00; }
   .watch-table td {
-    font-size: 80%;
     white-space: nowrap; }
   .watch-table td.title-col {
     word-break: break-all;
@@ -80,11 +80,11 @@ section.content {
 
 body:after {
   content: "";
-  background: linear-gradient(130deg, #ff7a18, #af002d 41.07%, #319197 76.05%); }
+  background: linear-gradient(130deg, #5ad8f7, #2f50af 41.07%, #9150bf 84.05%); }
 
 body:after, body:before {
   display: block;
-  height: 600px;
+  height: 650px;
   position: absolute;
   top: 0;
   left: 0;
@@ -96,9 +96,6 @@ body::after {
 
 body::before {
   content: "";
-  background-image: url(/static/images/gradient-border.png); }
-
-body:before {
   background-size: cover; }
 
 body:after, body:before {
@@ -199,7 +196,8 @@ body:after, body:before {
   #new-watch-form .label {
     display: none; }
   #new-watch-form legend {
-    color: #fff; }
+    color: #fff;
+    font-weight: bold; }
 
 #diff-col {
   padding-left: 40px; }
@@ -388,6 +386,11 @@ and also iPads specifically.
 .pure-form-stacked > div:first-child {
   display: block; }
 
+.login-form .inner {
+  background: #fff;
+  padding: 20px;
+  border-radius: 5px; }
+
 .edit-form {
   min-width: 70%; }
   .edit-form .tab-pane-inner {
@@ -404,6 +407,8 @@ and also iPads specifically.
   .edit-form #actions {
     display: block;
     background: #fff; }
+  .edit-form .pure-form-message-inline {
+    padding-left: 0; }
 
 ul {
   padding-left: 1em;

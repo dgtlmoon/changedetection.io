@@ -77,14 +77,6 @@ def test_body_in_request(client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_body', _external=True)
 
-    # Add the test URL twice, we will check
-    res = client.post(
-        url_for("import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
-
     res = client.post(
         url_for("import_page"),
         data={"urls": test_url},
@@ -93,19 +85,6 @@ def test_body_in_request(client, live_server):
     assert b"1 Imported" in res.data
 
     body_value = 'Test Body Value'
-
-    # Attempt to add a body with a GET method
-    res = client.post(
-        url_for("edit_page", uuid="first"),
-        data={
-              "url": test_url,
-              "tag": "",
-              "method": "GET",
-              "fetch_backend": "html_requests",
-              "body": "invalid"},
-        follow_redirects=True
-    )
-    assert b"Body must be empty when Request Method is set to GET" in res.data
 
     # Add a properly formatted body with a proper method
     res = client.post(
@@ -120,8 +99,7 @@ def test_body_in_request(client, live_server):
     )
     assert b"Updated watch." in res.data
 
-    # Give the thread time to pick up the first version
-    time.sleep(5)
+    time.sleep(3)
 
     # The service should echo back the body
     res = client.get(
@@ -129,8 +107,19 @@ def test_body_in_request(client, live_server):
         follow_redirects=True
     )
 
-    # Check if body returned contains the specified data
+    # If this gets stuck something is wrong, something should always be there
+    assert b"No history found" not in res.data
+    # We should see what we sent in the reply
     assert str.encode(body_value) in res.data
+
+    ####### data sanity checks
+    # Add the test URL twice, we will check
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
 
     watches_with_body = 0
     with open('test-datastore/url-watches.json') as f:
@@ -141,6 +130,20 @@ def test_body_in_request(client, live_server):
 
     # Should be only one with body set
     assert watches_with_body==1
+
+    # Attempt to add a body with a GET method
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={
+              "url": test_url,
+              "tag": "",
+              "method": "GET",
+              "fetch_backend": "html_requests",
+              "body": "invalid"},
+        follow_redirects=True
+    )
+    assert b"Body must be empty when Request Method is set to GET" in res.data
+
 
 def test_method_in_request(client, live_server):
     # Add our URL to the import page

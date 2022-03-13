@@ -35,9 +35,10 @@ from flask import (
     url_for,
 )
 from flask_login import login_required
+
 from changedetectionio import html_tools
 
-__version__ = '0.39.9'
+__version__ = '0.39.10'
 
 datastore = None
 
@@ -127,7 +128,7 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     # return timeago.format(timestamp, time.time())
     # return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
 
-
+# When nobody is logged in Flask-Login's current_user is set to an AnonymousUser object.
 class User(flask_login.UserMixin):
     id=None
 
@@ -136,7 +137,6 @@ class User(flask_login.UserMixin):
     def get_user(self, email="defaultuser@changedetection.io"):
         return self
     def is_authenticated(self):
-
         return True
     def is_active(self):
         return True
@@ -215,6 +215,10 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         if request.method == 'GET':
+            if flask_login.current_user.is_authenticated:
+                flash("Already logged in")
+                return redirect(url_for("index"))
+
             output = render_template("login.html")
             return output
 
@@ -249,6 +253,11 @@ def changedetection_app(config=None, datastore_o=None):
         # Disable password login if there is not one set
         # (No password in settings or env var)
         app.config['LOGIN_DISABLED'] = datastore.data['settings']['application']['password'] == False and os.getenv("SALTED_PASS", False) == False
+
+        # Set the auth cookie path if we're running as X-settings/X-Forwarded-Prefix
+        if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Prefix' in request.headers:
+            app.config['REMEMBER_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
+            app.config['SESSION_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
 
         # For the RSS path, allow access via a token
         if request.path == '/rss' and request.args.get('token'):
@@ -518,6 +527,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
             datastore.data['watching'][uuid]['css_filter'] = form.css_filter.data.strip()
+            datastore.data['watching'][uuid]['subtractive_selectors'] = form.subtractive_selectors.data
 
             # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
             if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
@@ -590,6 +600,7 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'GET':
             form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'])
             form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
+            form.global_subtractive_selectors.data = datastore.data['settings']['application']['global_subtractive_selectors']
             form.global_ignore_text.data = datastore.data['settings']['application']['global_ignore_text']
             form.ignore_whitespace.data = datastore.data['settings']['application']['ignore_whitespace']
             form.ignore_hyperlinks.data = datastore.data['settings']['application']['ignore_hyperlinks']
@@ -619,6 +630,7 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['notification_format'] = form.notification_format.data
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.data['settings']['application']['base_url'] = form.base_url.data
+            datastore.data['settings']['application']['global_subtractive_selectors'] = form.global_subtractive_selectors.data
             datastore.data['settings']['application']['global_ignore_text'] =  form.global_ignore_text.data
             datastore.data['settings']['application']['ignore_whitespace'] = form.ignore_whitespace.data
             datastore.data['settings']['application']['ignore_hyperlinks'] = form.ignore_hyperlinks.data
