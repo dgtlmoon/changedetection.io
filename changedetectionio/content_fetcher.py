@@ -20,7 +20,7 @@ class EmptyReply(Exception):
 class Fetcher():
     error = None
     status_code = None
-    content = None # Should always be bytes.
+    content = None
     headers = None
 
     fetcher_description ="No description"
@@ -154,17 +154,22 @@ class html_requests(Fetcher):
                          headers=request_headers,
                          timeout=timeout,
                          verify=False)
-
-        # https://stackoverflow.com/questions/44203397/python-requests-get-returns-improperly-decoded-text-instead-of-utf-8
-        # Return bytes here
-        html = r.text
+        
+        # If the response did not tell us what encoding format to expect,
+        # Then use chardet to override what `requests` thinks, but only for 'utf-8' for now
+        # For example - some sites don't tell us it's utf-8, but return utf-8 content
+        # This seems to not occur when using webdriver/selenium, it seems to detect the text encoding more reliably.
+        if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):
+            import chardet
+            if chardet.detect(r.content)['encoding'] == 'utf-8':
+                r.encoding = 'utf-8'
 
         # @todo test this
         # @todo maybe you really want to test zero-byte return pages?
-        if not r or not html or not len(html):
+        if not r or not r.content or not len(r.content):
             raise EmptyReply(url=url, status_code=r.status_code)
 
         self.status_code = r.status_code
-        self.content = html
+        self.content = r.text
         self.headers = r.headers
 
