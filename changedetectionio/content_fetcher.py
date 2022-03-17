@@ -1,10 +1,12 @@
-import os
-import time
 from abc import ABC, abstractmethod
+import chardet
+import os
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
 from selenium.common.exceptions import WebDriverException
+import requests
+import time
 import urllib3.exceptions
 
 
@@ -146,7 +148,6 @@ class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
 
     def run(self, url, timeout, request_headers, request_body, request_method):
-        import requests
 
         r = requests.request(method=request_method,
                          data=request_body,
@@ -154,15 +155,15 @@ class html_requests(Fetcher):
                          headers=request_headers,
                          timeout=timeout,
                          verify=False)
-        
-        # If the response did not tell us what encoding format to expect,
-        # Then use chardet to override what `requests` thinks, but only for 'utf-8' for now
+
+        # If the response did not tell us what encoding format to expect, Then use chardet to override what `requests` thinks.
         # For example - some sites don't tell us it's utf-8, but return utf-8 content
         # This seems to not occur when using webdriver/selenium, it seems to detect the text encoding more reliably.
+        # https://github.com/psf/requests/issues/1604 good info about requests encoding detection
         if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):
-            import chardet
-            if chardet.detect(r.content)['encoding'] == 'utf-8':
-                r.encoding = 'utf-8'
+            encoding = chardet.detect(r.content)['encoding']
+            if encoding:
+                r.encoding = encoding
 
         # @todo test this
         # @todo maybe you really want to test zero-byte return pages?
