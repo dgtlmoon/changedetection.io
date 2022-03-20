@@ -17,6 +17,7 @@ class Fetcher():
     content = None # Should be bytes?
 
     fetcher_description ="No description"
+    fetcher_list_order = 0
 
     @abstractmethod
     def get_error(self):
@@ -53,13 +54,18 @@ def available_fetchers():
                 # @todo html_ is maybe better as fetcher_ or something
                 # In this case, make sure to edit the default one in store.py and fetch_site_status.py
                 if "html_" in name:
-                    t=tuple([name,obj.fetcher_description])
+                    t=tuple([name,obj.fetcher_description,obj.fetcher_list_order])
                     p.append(t)
+        # sort by obj.fetcher_list_order
+        p.sort(key=lambda x: x[2])
+        # strip obj.fetcher_list_order from each member in the tuple
+        p = map(lambda x: x[:2], p)
 
         return p
 
 class html_playwright(Fetcher):
     fetcher_description = "Playwright Chromium/Javascript"
+    fetcher_list_order = 3
 
     def run(self, url, timeout, request_headers):
         with sync_playwright() as p:
@@ -84,6 +90,7 @@ class html_webdriver(Fetcher):
         fetcher_description = "WebDriver Chrome/Javascript via '{}'".format(os.getenv("WEBDRIVER_URL"))
     else:
         fetcher_description = "WebDriver Chrome/Javascript"
+    fetcher_list_order = 2
 
     command_executor = ''
 
@@ -132,6 +139,7 @@ class html_webdriver(Fetcher):
 # "html_requests" is listed as the default fetcher in store.py!
 class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
+    fetcher_list_order = 1
 
     def run(self, url, timeout, request_headers):
         import requests
