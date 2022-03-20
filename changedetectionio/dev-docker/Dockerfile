@@ -9,6 +9,3 @@ RUN [ ! -d "/datastore" ] && mkdir /datastore
 
 COPY sleep.py /
 CMD [ "python", "/sleep.py" ]
-
-
-

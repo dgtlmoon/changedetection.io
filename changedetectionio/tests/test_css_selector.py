@@ -1,13 +1,16 @@
 #!/usr/bin/python3
 
 import time
+
 from flask import url_for
-from . util import live_server_setup
 
 from ..html_tools import *
+from .util import live_server_setup
+
 
 def test_setup(live_server):
     live_server_setup(live_server)
+
 
 def set_original_response():
     test_return_data = """<html>
@@ -25,6 +28,7 @@ def set_original_response():
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
     return None
+
 
 def set_modified_response():
     test_return_data = """<html>
@@ -47,8 +51,9 @@ def set_modified_response():
 
 # Test that the CSS extraction works how we expect, important here is the right placing of new lines \n's
 def test_css_filter_output():
-    from changedetectionio import fetch_site_status
     from inscriptis import get_text
+
+    from changedetectionio import fetch_site_status
 
     # Check text with sub-parts renders correctly
     content = """<html> <body><div id="thingthing" >  Some really <b>bold</b> text  </div> </body> </html>"""
@@ -58,7 +63,7 @@ def test_css_filter_output():
 
     content = """<html> <body>
     <p>foo bar blah</p>
-    <div class="parts">Block A</div> <div class="parts">Block B</div></body> 
+    <div class="parts">Block A</div> <div class="parts">Block B</div></body>
     </html>
 """
     html_blob = css_filter(css_filter=".parts", html_content=content)
@@ -80,12 +85,8 @@ def test_check_markup_css_filter_restriction(client, live_server):
     time.sleep(1)
 
     # Add our URL to the import page
-    test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
+    test_url = url_for("test_endpoint", _external=True)
+    res = client.post(url_for("import_page"), data={"urls": test_url}, follow_redirects=True)
     assert b"1 Imported" in res.data
 
     # Trigger a check
@@ -98,8 +99,14 @@ def test_check_markup_css_filter_restriction(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": css_filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
-        follow_redirects=True
+        data={
+            "css_filter": css_filter,
+            "url": test_url,
+            "tag": "",
+            "headers": "",
+            "fetch_backend": "html_requests",
+        },
+        follow_redirects=True,
     )
     assert b"Updated watch." in res.data
 
@@ -107,7 +114,7 @@ def test_check_markup_css_filter_restriction(client, live_server):
     res = client.get(
         url_for("edit_page", uuid="first"),
     )
-    assert bytes(css_filter.encode('utf-8')) in res.data
+    assert bytes(css_filter.encode("utf-8")) in res.data
 
     # Trigger a check
     client.get(url_for("api_watch_checknow"), follow_redirects=True)
@@ -125,4 +132,4 @@ def test_check_markup_css_filter_restriction(client, live_server):
     # It should have 'unviewed' still
     # Because it should be looking at only that 'sametext' id
     res = client.get(url_for("index"))
-    assert b'unviewed' in res.data
+    assert b"unviewed" in res.data

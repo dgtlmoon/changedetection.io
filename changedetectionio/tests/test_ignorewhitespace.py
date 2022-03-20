@@ -1,8 +1,11 @@
 #!/usr/bin/python3
 
 import time
+
 from flask import url_for
-from . util import live_server_setup
+
+from .util import live_server_setup
+
 
 def test_setup(live_server):
     live_server_setup(live_server)
@@ -47,7 +50,6 @@ def set_original_ignore_response():
         f.write(test_return_data)
 
 
-
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
 def test_check_ignore_whitespace(client, live_server):
     sleep_time_for_fetch_thread = 3
@@ -63,19 +65,15 @@ def test_check_ignore_whitespace(client, live_server):
         data={
             "minutes_between_check": 180,
             "ignore_whitespace": "y",
-            'fetch_backend': "html_requests"
+            "fetch_backend": "html_requests",
         },
-        follow_redirects=True
+        follow_redirects=True,
     )
     assert b"Settings updated." in res.data
 
     # Add our URL to the import page
-    test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
+    test_url = url_for("test_endpoint", _external=True)
+    res = client.post(url_for("import_page"), data={"urls": test_url}, follow_redirects=True)
     assert b"1 Imported" in res.data
 
     time.sleep(sleep_time_for_fetch_thread)
@@ -92,5 +90,5 @@ def test_check_ignore_whitespace(client, live_server):
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
-    assert b'unviewed' not in res.data
-    assert b'/test-endpoint' in res.data
+    assert b"unviewed" not in res.data
+    assert b"/test-endpoint" in res.data

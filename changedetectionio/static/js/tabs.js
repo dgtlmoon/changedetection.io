@@ -45,7 +45,3 @@ function focus_error_tab() {
     }
     return false;
 }
-
-
-
-

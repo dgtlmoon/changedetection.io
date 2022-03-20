@@ -4,12 +4,12 @@
   <img src="https://img.shields.io/docker/pulls/dgtlmoon/changedetection.io" alt="Docker Pulls"/>
 </a>
 <a href="https://hub.docker.com/r/dgtlmoon/changedetection.io" target="_blank" title="Change detection docker hub">
-  <img src="https://img.shields.io/github/v/release/dgtlmoon/changedetection.io" alt="Change detection latest tag version"/> 
+  <img src="https://img.shields.io/github/v/release/dgtlmoon/changedetection.io" alt="Change detection latest tag version"/>
 </a>
 
 ## Self-hosted open source change monitoring of web pages.
 
-_Know when web pages change! Stay ontop of new information!_ 
+_Know when web pages change! Stay ontop of new information!_
 
 Live your data-life *pro-actively* instead of *re-actively*, do not rely on manipulative social media for consuming important information.
 
@@ -26,13 +26,13 @@ Know when ...
 - Festivals with changes
 - Realestate listing changes
 - COVID related news from government websites
-- Detect and monitor changes in JSON API responses 
+- Detect and monitor changes in JSON API responses
 - API monitoring and alerting
 
 **Get monitoring now!**
 
 ```bash
-$ pip3 install changedetection.io   
+$ pip3 install changedetection.io
 ```
 
 Specify a target for the *datastore path* with `-d` (required) and a *listening port* with `-p` (defaults to `5000`)

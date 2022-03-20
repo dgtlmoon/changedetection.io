@@ -71,8 +71,9 @@ def set_modified_response():
 
 
 def test_element_removal_output():
-    from changedetectionio import fetch_site_status
     from inscriptis import get_text
+
+    from changedetectionio import fetch_site_status
 
     # Check text with sub-parts renders correctly
     content = """<html>
@@ -94,9 +95,7 @@ def test_element_removal_output():
     </footer>
      </html>
     """
-    html_blob = element_removal(
-        ["header", "footer", "nav", "#changetext"], html_content=content
-    )
+    html_blob = element_removal(["header", "footer", "nav", "#changetext"], html_content=content)
     text = get_text(html_blob)
     assert (
         text
@@ -117,9 +116,7 @@ def test_element_removal_full(client, live_server):
 
     # Add our URL to the import page
     test_url = url_for("test_endpoint", _external=True)
-    res = client.post(
-        url_for("import_page"), data={"urls": test_url}, follow_redirects=True
-    )
+    res = client.post(url_for("import_page"), data={"urls": test_url}, follow_redirects=True)
     assert b"1 Imported" in res.data
 
     # Goto the edit page, add the filter data

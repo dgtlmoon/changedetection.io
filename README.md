@@ -5,7 +5,7 @@
 
 ## Self-Hosted, Open Source, Change Monitoring of Web Pages
 
-_Know when web pages change! Stay ontop of new information!_ 
+_Know when web pages change! Stay ontop of new information!_
 
 Live your data-life *pro-actively* instead of *re-actively*.
 
@@ -38,14 +38,14 @@ Open source web page monitoring, notification and change detection.
 - Realestate listing changes
 - COVID related news from government websites
 - University/organisation news from their website
-- Detect and monitor changes in JSON API responses 
+- Detect and monitor changes in JSON API responses
 - API monitoring and alerting
 - Changes in legal and other documents
 - Trigger API calls via notifications when text appears on a website
 - Glue together APIs using the JSON filter and JSON notifications
 - Create RSS feeds based on changes in web content
 - You have a very sensitive list of URLs to watch and you do _not_ want to use the paid alternatives. (Remember, _you_ are the product)
- 
+
 _Need an actual Chrome runner with Javascript support? We support fetching via WebDriver!</a>_
 
 ## Screenshots
@@ -124,7 +124,7 @@ Just some examples
     mailto://user:pass@example.com?to=receivingAddress@example.com
     json://someserver.com/custom-api
     syslog://
- 
+
 <a href="https://github.com/caronc/apprise#popular-notification-services">And everything else in this list!</a>
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-notifications.png" style="max-width:100%;" alt="Self-hosted web page change monitoring notifications"  title="Self-hosted web page change monitoring notifications"  />
@@ -143,7 +143,7 @@ This will re-parse the JSON and apply formatting to the text, making it super ea
 
 ### Parse JSON embedded in HTML!
 
-When you enable a `json:` filter, you can even automatically extract and parse embedded JSON inside a HTML page! Amazingly handy for sites that build content based on JSON, such as many e-commerce websites. 
+When you enable a `json:` filter, you can even automatically extract and parse embedded JSON inside a HTML page! Amazingly handy for sites that build content based on JSON, such as many e-commerce websites.
 
 ```
 <html>
@@ -151,7 +151,7 @@ When you enable a `json:` filter, you can even automatically extract and parse e
 <script type="application/ld+json">
   {"@context":"http://schema.org","@type":"Product","name":"Nan Optipro Stage 1 Baby Formula  800g","price": 23.50 }
 </script>
-```  
+```
 
 `json:$.price` would give `23.50`, or you can extract the whole structure
 

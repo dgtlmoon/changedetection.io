@@ -1,13 +1,14 @@
-from abc import ABC, abstractmethod
-import chardet
 import os
+import time
+from abc import ABC, abstractmethod
+
+import chardet
+import requests
+import urllib3.exceptions
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
-from selenium.common.exceptions import WebDriverException
-import requests
-import time
-import urllib3.exceptions
 
 
 class EmptyReply(Exception):
@@ -19,13 +20,14 @@ class EmptyReply(Exception):
 
     pass
 
-class Fetcher():
+
+class Fetcher:
     error = None
     status_code = None
     content = None
     headers = None
 
-    fetcher_description ="No description"
+    fetcher_description = "No description"
 
     @abstractmethod
     def get_error(self):
@@ -45,6 +47,7 @@ class Fetcher():
     def is_ready(self):
         return True
 
+
 #   Maybe for the future, each fetcher provides its own diff output, could be used for text, image
 #   the current one would return javascript output (as we use JS to generate the diff)
 #
@@ -53,46 +56,62 @@ class Fetcher():
 #    def return_diff(self, stream_a, stream_b):
 #        return
 
-def available_fetchers():
-        import inspect
-        from changedetectionio import content_fetcher
-        p=[]
-        for name, obj in inspect.getmembers(content_fetcher):
-            if inspect.isclass(obj):
-                # @todo html_ is maybe better as fetcher_ or something
-                # In this case, make sure to edit the default one in store.py and fetch_site_status.py
-                if "html_" in name:
-                    t=tuple([name,obj.fetcher_description])
-                    p.append(t)
 
-        return p
+def available_fetchers():
+    import inspect
+
+    from changedetectionio import content_fetcher
+
+    p = []
+    for name, obj in inspect.getmembers(content_fetcher):
+        if inspect.isclass(obj):
+            # @todo html_ is maybe better as fetcher_ or something
+            # In this case, make sure to edit the default one in store.py and fetch_site_status.py
+            if "html_" in name:
+                t = tuple([name, obj.fetcher_description])
+                p.append(t)
+
+    return p
+
 
 class html_webdriver(Fetcher):
     if os.getenv("WEBDRIVER_URL"):
-        fetcher_description = "WebDriver Chrome/Javascript via '{}'".format(os.getenv("WEBDRIVER_URL"))
+        fetcher_description = "WebDriver Chrome/Javascript via '{}'".format(
+            os.getenv("WEBDRIVER_URL")
+        )
     else:
         fetcher_description = "WebDriver Chrome/Javascript"
 
-    command_executor = ''
+    command_executor = ""
 
     # Configs for Proxy setup
     # In the ENV vars, is prefixed with "webdriver_", so it is for example "webdriver_sslProxy"
-    selenium_proxy_settings_mappings = ['proxyType', 'ftpProxy', 'httpProxy', 'noProxy',
-                                        'proxyAutoconfigUrl', 'sslProxy', 'autodetect',
-                                        'socksProxy', 'socksVersion', 'socksUsername', 'socksPassword']
+    selenium_proxy_settings_mappings = [
+        "proxyType",
+        "ftpProxy",
+        "httpProxy",
+        "noProxy",
+        "proxyAutoconfigUrl",
+        "sslProxy",
+        "autodetect",
+        "socksProxy",
+        "socksVersion",
+        "socksUsername",
+        "socksPassword",
+    ]
 
-
-
-    proxy=None
+    proxy = None
 
     def __init__(self):
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
-        self.command_executor = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub').strip('"')
+        self.command_executor = os.getenv(
+            "WEBDRIVER_URL", "http://browser-chrome:4444/wd/hub"
+        ).strip('"')
 
         # If any proxy settings are enabled, then we should setup the proxy object
         proxy_args = {}
         for k in self.selenium_proxy_settings_mappings:
-            v = os.getenv('webdriver_' + k, False)
+            v = os.getenv("webdriver_" + k, False)
             if v:
                 proxy_args[k] = v.strip('"')
 
@@ -107,7 +126,8 @@ class html_webdriver(Fetcher):
         driver = webdriver.Remote(
             command_executor=self.command_executor,
             desired_capabilities=DesiredCapabilities.CHROME,
-            proxy=self.proxy)
+            proxy=self.proxy,
+        )
 
         try:
             driver.get(url)
@@ -128,20 +148,20 @@ class html_webdriver(Fetcher):
 
         driver.quit()
 
-
     def is_ready(self):
         from selenium import webdriver
-        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
         from selenium.common.exceptions import WebDriverException
+        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
         driver = webdriver.Remote(
-            command_executor=self.command_executor,
-            desired_capabilities=DesiredCapabilities.CHROME)
+            command_executor=self.command_executor, desired_capabilities=DesiredCapabilities.CHROME
+        )
 
         # driver.quit() seems to cause better exceptions
         driver.quit()
 
         return True
+
 
 # "html_requests" is listed as the default fetcher in store.py!
 class html_requests(Fetcher):
@@ -149,19 +169,21 @@ class html_requests(Fetcher):
 
     def run(self, url, timeout, request_headers, request_body, request_method):
 
-        r = requests.request(method=request_method,
-                         data=request_body,
-                         url=url,
-                         headers=request_headers,
-                         timeout=timeout,
-                         verify=False)
+        r = requests.request(
+            method=request_method,
+            data=request_body,
+            url=url,
+            headers=request_headers,
+            timeout=timeout,
+            verify=False,
+        )
 
         # If the response did not tell us what encoding format to expect, Then use chardet to override what `requests` thinks.
         # For example - some sites don't tell us it's utf-8, but return utf-8 content
         # This seems to not occur when using webdriver/selenium, it seems to detect the text encoding more reliably.
         # https://github.com/psf/requests/issues/1604 good info about requests encoding detection
-        if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):
-            encoding = chardet.detect(r.content)['encoding']
+        if not r.headers.get("content-type") or not "charset=" in r.headers.get("content-type"):
+            encoding = chardet.detect(r.content)["encoding"]
             if encoding:
                 r.encoding = encoding
 
@@ -173,4 +195,3 @@ class html_requests(Fetcher):
         self.status_code = r.status_code
         self.content = r.text
         self.headers = r.headers
-

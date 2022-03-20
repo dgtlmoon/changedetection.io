@@ -1,12 +1,17 @@
 #!/usr/bin/python3
 
 import time
+
 from flask import url_for
-from . util import live_server_setup
+
 from changedetectionio import html_tools
+
+from .util import live_server_setup
+
 
 def test_setup(live_server):
     live_server_setup(live_server)
+
 
 # Unit test of the stripper
 # Always we are dealing in utf-8
@@ -93,12 +98,8 @@ def test_check_ignore_text_functionality(client, live_server):
     time.sleep(1)
 
     # Add our URL to the import page
-    test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
+    test_url = url_for("test_endpoint", _external=True)
+    res = client.post(url_for("import_page"), data={"urls": test_url}, follow_redirects=True)
     assert b"1 Imported" in res.data
 
     # Trigger a check
@@ -111,8 +112,8 @@ def test_check_ignore_text_functionality(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"ignore_text": ignore_text, "url": test_url, 'fetch_backend': "html_requests"},
-        follow_redirects=True
+        data={"ignore_text": ignore_text, "url": test_url, "fetch_backend": "html_requests"},
+        follow_redirects=True,
     )
     assert b"Updated watch." in res.data
 
@@ -120,7 +121,7 @@ def test_check_ignore_text_functionality(client, live_server):
     res = client.get(
         url_for("edit_page", uuid="first"),
     )
-    assert bytes(ignore_text.encode('utf-8')) in res.data
+    assert bytes(ignore_text.encode("utf-8")) in res.data
 
     # Trigger a check
     client.get(url_for("api_watch_checknow"), follow_redirects=True)
@@ -130,8 +131,8 @@ def test_check_ignore_text_functionality(client, live_server):
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
-    assert b'unviewed' not in res.data
-    assert b'/test-endpoint' in res.data
+    assert b"unviewed" not in res.data
+    assert b"/test-endpoint" in res.data
 
     #  Make a change
     set_modified_ignore_response()
@@ -143,12 +144,8 @@ def test_check_ignore_text_functionality(client, live_server):
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
-    assert b'unviewed' not in res.data
-    assert b'/test-endpoint' in res.data
-
-
-
-
+    assert b"unviewed" not in res.data
+    assert b"/test-endpoint" in res.data
 
     # Just to be sure.. set a regular modified change..
     set_modified_original_ignore_response()
@@ -156,7 +153,7 @@ def test_check_ignore_text_functionality(client, live_server):
     time.sleep(sleep_time_for_fetch_thread)
 
     res = client.get(url_for("index"))
-    assert b'unviewed' in res.data
+    assert b"unviewed" in res.data
 
     # Check the preview/highlighter, we should be able to see what we ignored, but it should be highlighted
     # We only introduce the "modified" content that includes what we ignore so we can prove the newest version also displays
@@ -166,7 +163,8 @@ def test_check_ignore_text_functionality(client, live_server):
     assert b'<div class="ignored">new ignore stuff' in res.data
 
     res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    assert b"Deleted" in res.data
+
 
 def test_check_global_ignore_text_functionality(client, live_server):
     sleep_time_for_fetch_thread = 3
@@ -178,12 +176,8 @@ def test_check_global_ignore_text_functionality(client, live_server):
     time.sleep(1)
 
     # Add our URL to the import page
-    test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
+    test_url = url_for("test_endpoint", _external=True)
+    res = client.post(url_for("import_page"), data={"urls": test_url}, follow_redirects=True)
     assert b"1 Imported" in res.data
 
     # Trigger a check
@@ -198,9 +192,9 @@ def test_check_global_ignore_text_functionality(client, live_server):
         data={
             "minutes_between_check": 180,
             "global_ignore_text": ignore_text,
-            'fetch_backend': "html_requests"
+            "fetch_backend": "html_requests",
         },
-        follow_redirects=True
+        follow_redirects=True,
     )
     assert b"Settings updated." in res.data
 
@@ -208,8 +202,12 @@ def test_check_global_ignore_text_functionality(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"ignore_text": "something irrelevent but just to check", "url": test_url, 'fetch_backend': "html_requests"},
-        follow_redirects=True
+        data={
+            "ignore_text": "something irrelevent but just to check",
+            "url": test_url,
+            "fetch_backend": "html_requests",
+        },
+        follow_redirects=True,
     )
     assert b"Updated watch." in res.data
 
@@ -217,7 +215,7 @@ def test_check_global_ignore_text_functionality(client, live_server):
     res = client.get(
         url_for("settings_page"),
     )
-    assert bytes(ignore_text.encode('utf-8')) in res.data
+    assert bytes(ignore_text.encode("utf-8")) in res.data
 
     # Trigger a check
     client.get(url_for("api_watch_checknow"), follow_redirects=True)
@@ -227,8 +225,8 @@ def test_check_global_ignore_text_functionality(client, live_server):
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
-    assert b'unviewed' not in res.data
-    assert b'/test-endpoint' in res.data
+    assert b"unviewed" not in res.data
+    assert b"/test-endpoint" in res.data
 
     #  Make a change
     set_modified_ignore_response()
@@ -240,15 +238,15 @@ def test_check_global_ignore_text_functionality(client, live_server):
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
-    assert b'unviewed' not in res.data
-    assert b'/test-endpoint' in res.data
+    assert b"unviewed" not in res.data
+    assert b"/test-endpoint" in res.data
 
     # Just to be sure.. set a regular modified change..
     set_modified_original_ignore_response()
     client.get(url_for("api_watch_checknow"), follow_redirects=True)
     time.sleep(sleep_time_for_fetch_thread)
     res = client.get(url_for("index"))
-    assert b'unviewed' in res.data
+    assert b"unviewed" in res.data
 
     res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    assert b"Deleted" in res.data

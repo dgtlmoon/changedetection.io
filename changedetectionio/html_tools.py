@@ -10,6 +10,7 @@ class JSONNotFound(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
 
+
 # Given a CSS Rule, and a blob of HTML, return the blob of HTML that matches
 def css_filter(css_filter, html_content):
     soup = BeautifulSoup(html_content, "html.parser")
@@ -19,18 +20,19 @@ def css_filter(css_filter, html_content):
 
     return html_block + "\n"
 
+
 def subtractive_css_selector(css_selector, html_content):
     soup = BeautifulSoup(html_content, "html.parser")
     for item in soup.select(css_selector):
         item.decompose()
     return str(soup)
 
-    
+
 def element_removal(selectors: List[str], html_content):
     """Joins individual filters into one css filter."""
     selector = ",".join(selectors)
     return subtractive_css_selector(selector, html_content)
-    
+
 
 # Return str Utf-8 of matched rules
 def xpath_filter(xpath_filter, html_content):
@@ -39,29 +41,32 @@ def xpath_filter(xpath_filter, html_content):
     tree = html.fromstring(html_content)
     html_block = ""
 
-    for item in tree.xpath(xpath_filter.strip(), namespaces={'re':'http://exslt.org/regular-expressions'}):
-        html_block+= etree.tostring(item, pretty_print=True).decode('utf-8')+"<br/>"
+    for item in tree.xpath(
+        xpath_filter.strip(), namespaces={"re": "http://exslt.org/regular-expressions"}
+    ):
+        html_block += etree.tostring(item, pretty_print=True).decode("utf-8") + "<br/>"
 
     return html_block
 
 
 # Extract/find element
-def extract_element(find='title', html_content=''):
+def extract_element(find="title", html_content=""):
 
-    #Re #106, be sure to handle when its not found
+    # Re #106, be sure to handle when its not found
     element_text = None
 
-    soup = BeautifulSoup(html_content, 'html.parser')
+    soup = BeautifulSoup(html_content, "html.parser")
     result = soup.find(find)
     if result and result.string:
         element_text = result.string.strip()
 
     return element_text
 
+
 #
 def _parse_json(json_data, jsonpath_filter):
-    s=[]
-    jsonpath_expression = parse(jsonpath_filter.replace('json:', ''))
+    s = []
+    jsonpath_expression = parse(jsonpath_filter.replace("json:", ""))
     match = jsonpath_expression.find(json_data)
 
     # More than one result, we will return it as a JSON list.
@@ -76,12 +81,13 @@ def _parse_json(json_data, jsonpath_filter):
     # Re #257 - Better handling where it does not exist, in the case the original 's' value was False..
     if not match:
         # Re 265 - Just return an empty string when filter not found
-        return ''
+        return ""
 
     # Ticket #462 - allow the original encoding through, usually it's UTF-8 or similar
     stripped_text_from_html = json.dumps(s, indent=4, ensure_ascii=False)
 
     return stripped_text_from_html
+
 
 def extract_json_as_string(content, jsonpath_filter):
 
@@ -94,17 +100,17 @@ def extract_json_as_string(content, jsonpath_filter):
 
         # Foreach <script json></script> blob.. just return the first that matches jsonpath_filter
         s = []
-        soup = BeautifulSoup(content, 'html.parser')
-        bs_result = soup.findAll('script')
+        soup = BeautifulSoup(content, "html.parser")
+        bs_result = soup.findAll("script")
 
         if not bs_result:
             raise JSONNotFound("No parsable JSON found in this document")
 
         for result in bs_result:
             # Skip empty tags, and things that dont even look like JSON
-            if not result.string or not '{' in result.string:
+            if not result.string or not "{" in result.string:
                 continue
-                
+
             try:
                 json_data = json.loads(result.string)
             except json.JSONDecodeError:
@@ -117,9 +123,10 @@ def extract_json_as_string(content, jsonpath_filter):
 
     if not stripped_text_from_html:
         # Re 265 - Just return an empty string when filter not found
-        return ''
+        return ""
 
     return stripped_text_from_html
+
 
 # Mode     - "content" return the content without the matches (default)
 #          - "line numbers" return a list of line numbers that match (int list)
@@ -133,7 +140,7 @@ def strip_ignore_text(content, wordlist, mode="content"):
     for k in wordlist:
 
         # Is it a regex?
-        if k[0] == '/':
+        if k[0] == "/":
             ignore_regex.append(k.strip(" /"))
         else:
             ignore.append(k)
@@ -155,15 +162,15 @@ def strip_ignore_text(content, wordlist, mode="content"):
                 except Exception as e:
                     continue
 
-            if not regex_matches and not any(skip_text.lower() in line.lower() for skip_text in ignore):
-                output.append(line.encode('utf8'))
+            if not regex_matches and not any(
+                skip_text.lower() in line.lower() for skip_text in ignore
+            ):
+                output.append(line.encode("utf8"))
             else:
                 ignored_line_numbers.append(i)
-
-
 
     # Used for finding out what to highlight
     if mode == "line numbers":
         return ignored_line_numbers
 
-    return "\n".encode('utf8').join(output)
+    return "\n".encode("utf8").join(output)

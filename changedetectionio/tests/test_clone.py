@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 
 import time
-from flask import url_for
-from . util import live_server_setup
 
+from flask import url_for
+
+from .util import live_server_setup
 
 
 def test_trigger_functionality(client, live_server):
@@ -15,16 +16,10 @@ def test_trigger_functionality(client, live_server):
 
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
-        data={"urls": "https://changedetection.io"},
-        follow_redirects=True
+        url_for("import_page"), data={"urls": "https://changedetection.io"}, follow_redirects=True
     )
     assert b"1 Imported" in res.data
 
-
-    res = client.get(
-        url_for("api_clone", uuid="first"),
-        follow_redirects=True
-    )
+    res = client.get(url_for("api_clone", uuid="first"), follow_redirects=True)
 
     assert b"Cloned." in res.data

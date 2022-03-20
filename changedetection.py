@@ -8,14 +8,15 @@ import sys
 
 import eventlet
 import eventlet.wsgi
-import changedetectionio
 
+import changedetectionio
 from changedetectionio import store
+
 
 def main():
     ssl_mode = False
-    host = ''
-    port = os.environ.get('PORT') or 5000
+    host = ""
+    port = os.environ.get("PORT") or 5000
     do_cleanup = False
 
     # Must be absolute so that send_from_directory doesnt try to make it relative to backend/
@@ -24,7 +25,7 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], "Ccsd:h:p:", "port")
     except getopt.GetoptError:
-        print('backend.py -s SSL enable -h [host] -p [port] -d [datastore path]')
+        print("backend.py -s SSL enable -h [host] -p [port] -d [datastore path]")
         sys.exit(2)
 
     create_datastore_dir = False
@@ -35,53 +36,58 @@ def main():
         #            for uuid, watch in datastore.data['watching'].items():
         #                watch.update({'history': {}, 'last_checked': 0, 'last_changed': 0, 'previous_md5': None})
 
-        if opt == '-s':
+        if opt == "-s":
             ssl_mode = True
 
-        if opt == '-h':
+        if opt == "-h":
             host = arg
 
-        if opt == '-p':
+        if opt == "-p":
             port = int(arg)
 
-        if opt == '-d':
+        if opt == "-d":
             datastore_path = arg
 
         # Cleanup (remove text files that arent in the index)
-        if opt == '-c':
+        if opt == "-c":
             do_cleanup = True
 
         # Create the datadir if it doesnt exist
-        if opt == '-C':
+        if opt == "-C":
             create_datastore_dir = True
 
     # isnt there some @thingy to attach to each route to tell it, that this route needs a datastore
-    app_config = {'datastore_path': datastore_path}
+    app_config = {"datastore_path": datastore_path}
 
-    if not os.path.isdir(app_config['datastore_path']):
+    if not os.path.isdir(app_config["datastore_path"]):
         if create_datastore_dir:
-            os.mkdir(app_config['datastore_path'])
+            os.mkdir(app_config["datastore_path"])
         else:
-            print ("ERROR: Directory path for the datastore '{}' does not exist, cannot start, please make sure the directory exists.\n"
-                   "Alternatively, use the -C parameter.".format(app_config['datastore_path']),file=sys.stderr)
+            print(
+                "ERROR: Directory path for the datastore '{}' does not exist, cannot start, please make sure the directory exists.\n"
+                "Alternatively, use the -C parameter.".format(app_config["datastore_path"]),
+                file=sys.stderr,
+            )
             sys.exit(2)
 
-    datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=changedetectionio.__version__)
+    datastore = store.ChangeDetectionStore(
+        datastore_path=app_config["datastore_path"], version_tag=changedetectionio.__version__
+    )
     app = changedetectionio.changedetection_app(app_config, datastore)
 
     # Go into cleanup mode
     if do_cleanup:
         datastore.remove_unused_snapshots()
 
-    app.config['datastore_path'] = datastore_path
-
+    app.config["datastore_path"] = datastore_path
 
     @app.context_processor
     def inject_version():
-        return dict(right_sticky="v{}".format(datastore.data['version_tag']),
-                    new_version_available=app.config['NEW_VERSION_AVAILABLE'],
-                    has_password=datastore.data['settings']['application']['password'] != False
-                    )
+        return dict(
+            right_sticky="v{}".format(datastore.data["version_tag"]),
+            new_version_available=app.config["NEW_VERSION_AVAILABLE"],
+            has_password=datastore.data["settings"]["application"]["password"] != False,
+        )
 
     # Proxy sub-directory support
     # Set environment var USE_X_SETTINGS=1 on this script
@@ -90,21 +96,27 @@ def main():
     #         proxy_set_header Host "localhost";
     #         proxy_set_header X-Forwarded-Prefix /app;
 
-    if os.getenv('USE_X_SETTINGS'):
-        print ("USE_X_SETTINGS is ENABLED\n")
+    if os.getenv("USE_X_SETTINGS"):
+        print("USE_X_SETTINGS is ENABLED\n")
         from werkzeug.middleware.proxy_fix import ProxyFix
+
         app.wsgi_app = ProxyFix(app.wsgi_app, x_prefix=1, x_host=1)
 
     if ssl_mode:
         # @todo finalise SSL config, but this should get you in the right direction if you need it.
-        eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen((host, port)),
-                                               certfile='cert.pem',
-                                               keyfile='privkey.pem',
-                                               server_side=True), app)
+        eventlet.wsgi.server(
+            eventlet.wrap_ssl(
+                eventlet.listen((host, port)),
+                certfile="cert.pem",
+                keyfile="privkey.pem",
+                server_side=True,
+            ),
+            app,
+        )
 
     else:
         eventlet.wsgi.server(eventlet.listen((host, int(port))), app)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

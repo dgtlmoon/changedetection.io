@@ -1,8 +1,11 @@
 #!/usr/bin/python3
 
 import time
+
 from flask import url_for
-from . util import live_server_setup
+
+from .util import live_server_setup
+
 
 def test_setup(live_server):
     live_server_setup(live_server)
@@ -26,12 +29,8 @@ def test_snapshot_api_detects_change(client, live_server):
     time.sleep(1)
 
     # Add our URL to the import page
-    test_url = url_for('test_endpoint', content_type="text/plain", _external=True)
-    res = client.post(
-        url_for("import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
+    test_url = url_for("test_endpoint", content_type="text/plain", _external=True)
+    res = client.post(url_for("import_page"), data={"urls": test_url}, follow_redirects=True)
     assert b"1 Imported" in res.data
 
     # Trigger a check
@@ -40,10 +39,7 @@ def test_snapshot_api_detects_change(client, live_server):
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
-    res = client.get(
-        url_for("api_snapshot", uuid="first"),
-        follow_redirects=True
-    )
+    res = client.get(url_for("api_snapshot", uuid="first"), follow_redirects=True)
 
     assert test_return_data.encode() == res.data
 
@@ -55,19 +51,13 @@ def test_snapshot_api_detects_change(client, live_server):
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
-    res = client.get(
-        url_for("api_snapshot", uuid="first"),
-        follow_redirects=True
-    )
+    res = client.get(url_for("api_snapshot", uuid="first"), follow_redirects=True)
 
     assert test_return_data_modified.encode() == res.data
 
+
 def test_snapshot_api_invalid_uuid(client, live_server):
 
-    res = client.get(
-        url_for("api_snapshot", uuid="invalid"),
-        follow_redirects=True
-    )
+    res = client.get(url_for("api_snapshot", uuid="invalid"), follow_redirects=True)
 
     assert res.status_code == 400
-
