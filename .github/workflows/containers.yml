@@ -2,11 +2,11 @@ name: Build and push containers
 
 on:
   # Automatically triggered by a testing workflow passing, but this is only checked when it lands in the `master`/default branch
-  workflow_run:
-    workflows: ["ChangeDetection.io Test"]
-    branches: [master]
-    tags: ['0.*']
-    types: [completed]
+#  workflow_run:
+#    workflows: ["ChangeDetection.io Test"]
+#    branches: [master]
+#    tags: ['0.*']
+#    types: [completed]
 
   # Or a new tagged release
   release:
