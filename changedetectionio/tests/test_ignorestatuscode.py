@@ -96,7 +96,7 @@ def test_403_page_check_works_with_ignore_status_code(client, live_server):
     time.sleep(1)
 
     # Add our URL to the import page
-    test_url = url_for('test_endpoint_403_error', _external=True)
+    test_url = url_for('test_endpoint', status_code=403, _external=True)
     res = client.post(
         url_for("import_page"),
         data={"urls": test_url},
@@ -148,7 +148,7 @@ def test_403_page_check_fails_without_ignore_status_code(client, live_server):
     time.sleep(1)
 
     # Add our URL to the import page
-    test_url = url_for('test_endpoint_403_error', _external=True)
+    test_url = url_for('test_endpoint', status_code=403, _external=True)
     res = client.post(
         url_for("import_page"),
         data={"urls": test_url},
