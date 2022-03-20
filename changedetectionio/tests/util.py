@@ -51,8 +51,12 @@ def live_server_setup(live_server):
 
     @live_server.app.route('/test-403')
     def test_endpoint_403_error():
-        resp = make_response('', 403)
-        return resp
+        ctype = request.args.get('content_type')
+
+        with open("test-datastore/endpoint-content.txt", "r") as f:
+            resp = make_response(f.read(), 403)
+            resp.headers['Content-Type'] = ctype if ctype else 'text/html'
+            return resp
 
     # Just return the headers in the request
     @live_server.app.route('/test-headers')

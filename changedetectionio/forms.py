@@ -325,6 +325,7 @@ class watchForm(commonSettingsForm):
     headers = StringDictKeyValue('Request Headers')
     body = TextAreaField('Request Body', [validators.Optional()])
     method = SelectField('Request Method', choices=valid_method, default=default_method)
+    ignore_status_codes = BooleanField('Ignore Status Codes (process non-2xx status codes as normal)', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
