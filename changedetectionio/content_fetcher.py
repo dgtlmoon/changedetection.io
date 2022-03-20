@@ -77,11 +77,31 @@ class html_playwright(Fetcher):
     fetcher_description = "Playwright Chromium/Javascript"
     fetcher_list_order = 3
 
+    # Configs for Proxy setup
+    # In the ENV vars, is prefixed with "playwright_proxy_", so it is for example "playwright_proxy_server"
+    playwright_proxy_settings_mappings = ['server', 'bypass', 'username', 'password']
+
+    proxy=None
+
+    def __init__(self):
+        # If any proxy settings are enabled, then we should setup the proxy object
+        proxy_args = {}
+        for k in self.playwright_proxy_settings_mappings:
+            v = os.getenv('playwright_proxy_' + k, False)
+            if v:
+                proxy_args[k] = v.strip('"')
+
+        if proxy_args:
+            self.proxy = proxy_args
+
     def run(self, url, timeout, request_headers, request_body, request_method):
         with sync_playwright() as p:
             browser = p.chromium.launch(timeout=60000)
             # Set user agent to prevent Cloudflare from blocking the browser
-            context = browser.new_context(user_agent="Mozilla/5.0")
+            context = browser.new_context(
+                user_agent="Mozilla/5.0",
+                proxy=self.proxy
+            )
             page = context.new_page()
             response = page.goto(url, wait_until='networkidle')
 
