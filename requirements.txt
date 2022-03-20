@@ -27,3 +27,6 @@ cryptography ~= 3.4
 bs4
 
 selenium ~= 3.141
+
+# An alternative to Selenium
+playwright ~= 1.20

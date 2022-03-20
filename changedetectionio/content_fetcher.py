@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.common.exceptions import WebDriverException
+from playwright.sync_api import sync_playwright
 import urllib3.exceptions
 
 
@@ -56,6 +57,27 @@ def available_fetchers():
                     p.append(t)
 
         return p
+
+class html_playwright(Fetcher):
+    fetcher_description = "Playwright Chromium/Javascript"
+
+    def run(self, url, timeout, request_headers):
+        with sync_playwright() as p:
+            browser = p.chromium.launch(timeout=60000)
+            # Set user agent to prevent Cloudflare from blocking the browser
+            context = browser.new_context(user_agent="Mozilla/5.0")
+            page = context.new_page()
+            response = page.goto(url, wait_until='networkidle')
+
+            if response is None:
+                raise EmptyReply(url=url, status_code=None)
+
+            self.status_code = response.status
+            self.content = page.content()
+            self.headers = response.all_headers()
+
+            context.close()
+            browser.close()
 
 class html_webdriver(Fetcher):
     if os.getenv("WEBDRIVER_URL"):

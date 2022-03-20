@@ -46,6 +46,12 @@ RUN [ ! -d "/datastore" ] && mkdir /datastore
 COPY --from=builder /dependencies /usr/local
 ENV PYTHONPATH=/usr/local
 
+# Required for some dependencies
+RUN sed -i 's/ main/ main non-free/' /etc/apt/sources.list
+
+# Install Chromium
+RUN playwright install --with-deps chromium
+
 EXPOSE 5000
 
 # The actual flask app
