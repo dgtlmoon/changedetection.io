@@ -3,7 +3,7 @@ flask~= 2.0
 eventlet>=0.31.0
 validators
 timeago ~=1.0
-inscriptis ~= 1.2
+inscriptis ~= 2.2
 feedgen ~= 0.9
 flask-login ~= 0.5
 pytz
@@ -17,16 +17,23 @@ wtforms ~= 2.3.3
 jsonpath-ng ~= 1.5.3
 
 # Notification library
-apprise ~= 0.9
+apprise ~= 0.9.7
+
+# apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
+paho-mqtt
 
 # Pinned version of cryptography otherwise
 # ERROR: Could not build wheels for cryptography which use PEP 517 and cannot be installed directly
 cryptography ~= 3.4
 
-# Used for CSS filtering, replace with soupsieve and lxml for xpath
+# Used for CSS filtering
 bs4
 
-selenium ~= 3.141
+# XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
+lxml
+
+# 3.141 was missing socksVersion, 3.150 was not in pypi, so we try 4.1.0
+selenium ~= 4.1.0
 
 # An alternative to Selenium
 playwright ~= 1.20

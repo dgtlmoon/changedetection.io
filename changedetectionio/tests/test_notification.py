@@ -4,6 +4,7 @@ import re
 from flask import url_for
 from . util import set_original_response, set_modified_response, live_server_setup
 import logging
+from changedetectionio.notification import default_notification_body, default_notification_title
 
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
@@ -14,6 +15,11 @@ def test_check_notification(client, live_server):
 
     # Give the endpoint time to spin up
     time.sleep(3)
+
+    # Re 360 - new install should have defaults set
+    res = client.get(url_for("settings_page"))
+    assert default_notification_body.encode() in res.data
+    assert default_notification_title.encode() in res.data
 
     # When test mode is in BASE_URL env mode, we should see this already configured
     env_base_url = os.getenv('BASE_URL', '').strip()
@@ -55,6 +61,8 @@ def test_check_notification(client, live_server):
                                    "Preview: {preview_url}\n"
                                    "Diff URL: {diff_url}\n"
                                    "Snapshot: {current_snapshot}\n"
+                                   "Diff: {diff}\n"
+                                   "Diff Full: {diff_full}\n"
                                    ":-)",
               "notification_format": "Text",
               "url": test_url,
@@ -114,6 +122,12 @@ def test_check_notification(client, live_server):
 
     assert test_url in notification_submission
 
+    # Diff was correctly executed
+    assert "Diff Full: Some initial text" in notification_submission
+    assert "Diff: (changed) Which is across multiple lines" in notification_submission
+    assert "(-> into) which has this one new line" in notification_submission
+
+
     if env_base_url:
         # Re #65 - did we see our BASE_URl ?
         logging.debug (">>> BASE_URL checking in notification: %s", env_base_url)
@@ -152,6 +166,9 @@ def test_check_notification(client, live_server):
 
     with open("test-datastore/notification.txt", "r") as f:
         notification_submission = f.read()
+        print ("Notification submission was:", notification_submission)
+        # Re #342 - check for accidental python byte encoding of non-utf8/string
+        assert "b'" not in notification_submission
 
         assert re.search('Watch UUID: [0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}', notification_submission, re.IGNORECASE)
         assert "Watch title: my title" in notification_submission
@@ -191,3 +208,20 @@ def test_check_notification(client, live_server):
     )
 
     assert bytes("is not a valid token".encode('utf-8')) in res.data
+
+    # Re #360 some validation
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"notification_urls": notification_url,
+              "notification_title": "",
+              "notification_body": "",
+              "notification_format": "Text",
+              "url": test_url,
+              "tag": "my tag",
+              "title": "my title",
+              "headers": "",
+              "fetch_backend": "html_requests",
+              "trigger_check": "y"},
+        follow_redirects=True
+    )
+    assert b"Notification Body and Title is required when a Notification URL is used" in res.data

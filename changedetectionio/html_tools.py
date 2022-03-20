@@ -1,4 +1,7 @@
 import json
+import re
+from typing import List
+
 from bs4 import BeautifulSoup
 from jsonpath_ng.ext import parse
 
@@ -15,6 +18,31 @@ def css_filter(css_filter, html_content):
         html_block += str(item)
 
     return html_block + "\n"
+
+def subtractive_css_selector(css_selector, html_content):
+    soup = BeautifulSoup(html_content, "html.parser")
+    for item in soup.select(css_selector):
+        item.decompose()
+    return str(soup)
+
+    
+def element_removal(selectors: List[str], html_content):
+    """Joins individual filters into one css filter."""
+    selector = ",".join(selectors)
+    return subtractive_css_selector(selector, html_content)
+    
+
+# Return str Utf-8 of matched rules
+def xpath_filter(xpath_filter, html_content):
+    from lxml import etree, html
+
+    tree = html.fromstring(html_content)
+    html_block = ""
+
+    for item in tree.xpath(xpath_filter.strip(), namespaces={'re':'http://exslt.org/regular-expressions'}):
+        html_block+= etree.tostring(item, pretty_print=True).decode('utf-8')+"<br/>"
+
+    return html_block
 
 
 # Extract/find element
@@ -50,7 +78,8 @@ def _parse_json(json_data, jsonpath_filter):
         # Re 265 - Just return an empty string when filter not found
         return ''
 
-    stripped_text_from_html = json.dumps(s, indent=4)
+    # Ticket #462 - allow the original encoding through, usually it's UTF-8 or similar
+    stripped_text_from_html = json.dumps(s, indent=4, ensure_ascii=False)
 
     return stripped_text_from_html
 
@@ -91,3 +120,50 @@ def extract_json_as_string(content, jsonpath_filter):
         return ''
 
     return stripped_text_from_html
+
+# Mode     - "content" return the content without the matches (default)
+#          - "line numbers" return a list of line numbers that match (int list)
+#
+# wordlist - list of regex's (str) or words (str)
+def strip_ignore_text(content, wordlist, mode="content"):
+    ignore = []
+    ignore_regex = []
+
+    # @todo check this runs case insensitive
+    for k in wordlist:
+
+        # Is it a regex?
+        if k[0] == '/':
+            ignore_regex.append(k.strip(" /"))
+        else:
+            ignore.append(k)
+
+    i = 0
+    output = []
+    ignored_line_numbers = []
+    for line in content.splitlines():
+        i += 1
+        # Always ignore blank lines in this mode. (when this function gets called)
+        if len(line.strip()):
+            regex_matches = False
+
+            # if any of these match, skip
+            for regex in ignore_regex:
+                try:
+                    if re.search(regex, line, re.IGNORECASE):
+                        regex_matches = True
+                except Exception as e:
+                    continue
+
+            if not regex_matches and not any(skip_text.lower() in line.lower() for skip_text in ignore):
+                output.append(line.encode('utf8'))
+            else:
+                ignored_line_numbers.append(i)
+
+
+
+    # Used for finding out what to highlight
+    if mode == "line numbers":
+        return ignored_line_numbers
+
+    return "\n".encode('utf8').join(output)

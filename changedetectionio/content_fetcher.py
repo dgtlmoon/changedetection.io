@@ -1,20 +1,30 @@
-import os
-import time
 from abc import ABC, abstractmethod
+import chardet
+import os
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
 from selenium.common.exceptions import WebDriverException
 from playwright.sync_api import sync_playwright
+import requests
+import time
 import urllib3.exceptions
 
 
 class EmptyReply(Exception):
+    def __init__(self, status_code, url):
+        # Set this so we can use it in other parts of the app
+        self.status_code = status_code
+        self.url = url
+        return
+
     pass
 
 class Fetcher():
     error = None
     status_code = None
-    content = None # Should be bytes?
+    content = None
+    headers = None
 
     fetcher_description ="No description"
     fetcher_list_order = 0
@@ -24,7 +34,7 @@ class Fetcher():
         return self.error
 
     @abstractmethod
-    def run(self, url, timeout, request_headers):
+    def run(self, url, timeout, request_headers, request_body, request_method):
         # Should set self.error, self.status_code and self.content
         pass
 
@@ -67,7 +77,7 @@ class html_playwright(Fetcher):
     fetcher_description = "Playwright Chromium/Javascript"
     fetcher_list_order = 3
 
-    def run(self, url, timeout, request_headers):
+    def run(self, url, timeout, request_headers, request_body, request_method):
         with sync_playwright() as p:
             browser = p.chromium.launch(timeout=60000)
             # Set user agent to prevent Cloudflare from blocking the browser
@@ -94,15 +104,39 @@ class html_webdriver(Fetcher):
 
     command_executor = ''
 
-    def __init__(self):
-        self.command_executor = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub')
+    # Configs for Proxy setup
+    # In the ENV vars, is prefixed with "webdriver_", so it is for example "webdriver_sslProxy"
+    selenium_proxy_settings_mappings = ['proxyType', 'ftpProxy', 'httpProxy', 'noProxy',
+                                        'proxyAutoconfigUrl', 'sslProxy', 'autodetect',
+                                        'socksProxy', 'socksVersion', 'socksUsername', 'socksPassword']
 
-    def run(self, url, timeout, request_headers):
+
+
+    proxy=None
+
+    def __init__(self):
+        # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
+        self.command_executor = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub').strip('"')
+
+        # If any proxy settings are enabled, then we should setup the proxy object
+        proxy_args = {}
+        for k in self.selenium_proxy_settings_mappings:
+            v = os.getenv('webdriver_' + k, False)
+            if v:
+                proxy_args[k] = v.strip('"')
+
+        if proxy_args:
+            self.proxy = SeleniumProxy(raw=proxy_args)
+
+    def run(self, url, timeout, request_headers, request_body, request_method):
+
+        # request_body, request_method unused for now, until some magic in the future happens.
 
         # check env for WEBDRIVER_URL
         driver = webdriver.Remote(
             command_executor=self.command_executor,
-            desired_capabilities=DesiredCapabilities.CHROME)
+            desired_capabilities=DesiredCapabilities.CHROME,
+            proxy=self.proxy)
 
         try:
             driver.get(url)
@@ -113,10 +147,13 @@ class html_webdriver(Fetcher):
 
         # @todo - how to check this? is it possible?
         self.status_code = 200
+        # @todo somehow we should try to get this working for WebDriver
+        # raise EmptyReply(url=url, status_code=r.status_code)
 
         # @todo - dom wait loaded?
-        time.sleep(5)
+        time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
         self.content = driver.page_source
+        self.headers = {}
 
         driver.quit()
 
@@ -133,7 +170,6 @@ class html_webdriver(Fetcher):
         # driver.quit() seems to cause better exceptions
         driver.quit()
 
-
         return True
 
 # "html_requests" is listed as the default fetcher in store.py!
@@ -141,21 +177,30 @@ class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
     fetcher_list_order = 1
 
-    def run(self, url, timeout, request_headers):
-        import requests
+    def run(self, url, timeout, request_headers, request_body, request_method):
 
-        r = requests.get(url,
+        r = requests.request(method=request_method,
+                         data=request_body,
+                         url=url,
                          headers=request_headers,
                          timeout=timeout,
                          verify=False)
 
-        html = r.text
-
+        # If the response did not tell us what encoding format to expect, Then use chardet to override what `requests` thinks.
+        # For example - some sites don't tell us it's utf-8, but return utf-8 content
+        # This seems to not occur when using webdriver/selenium, it seems to detect the text encoding more reliably.
+        # https://github.com/psf/requests/issues/1604 good info about requests encoding detection
+        if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):
+            encoding = chardet.detect(r.content)['encoding']
+            if encoding:
+                r.encoding = encoding
 
         # @todo test this
-        if not r or not html or not len(html):
-            raise EmptyReply(url)
+        # @todo maybe you really want to test zero-byte return pages?
+        if not r or not r.content or not len(r.content):
+            raise EmptyReply(url=url, status_code=r.status_code)
 
         self.status_code = r.status_code
-        self.content = html
+        self.content = r.text
+        self.headers = r.headers
 

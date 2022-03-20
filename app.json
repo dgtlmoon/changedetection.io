@@ -1,0 +1,21 @@
+{
+  "name": "ChangeDetection.io",
+  "description": "The best and simplest self-hosted open source website change detection monitoring and notification service.",
+  "keywords": [
+    "changedetection",
+    "website monitoring"
+  ],
+  "repository": "https://github.com/dgtlmoon/changedetection.io",
+  "success_url": "/",
+  "scripts": {
+  },
+  "env": {
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "free"
+    }
+  },
+  "image": "heroku/python"
+}

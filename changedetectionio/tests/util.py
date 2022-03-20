@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from flask import make_response, request
 
 def set_original_response():
     test_return_data = """<html>
@@ -40,15 +41,23 @@ def live_server_setup(live_server):
 
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
+        ctype = request.args.get('content_type')
+
         # Tried using a global var here but didn't seem to work, so reading from a file instead.
         with open("test-datastore/endpoint-content.txt", "r") as f:
-            return f.read()
+            resp = make_response(f.read())
+            resp.headers['Content-Type'] = ctype if ctype else 'text/html'
+            return resp
+
+    @live_server.app.route('/test-403')
+    def test_endpoint_403_error():
+        resp = make_response('', 403)
+        return resp
 
     # Just return the headers in the request
     @live_server.app.route('/test-headers')
     def test_headers():
 
-        from flask import request
         output= []
 
         for header in request.headers:
@@ -56,12 +65,19 @@ def live_server_setup(live_server):
 
         return "\n".join(output)
 
+    # Just return the body in the request
+    @live_server.app.route('/test-body', methods=['POST', 'GET'])
+    def test_body():
+        return request.data
+
+    # Just return the verb in the request
+    @live_server.app.route('/test-method', methods=['POST', 'GET', 'PATCH'])
+    def test_method():
+        return request.method
 
     # Where we POST to as a notification
     @live_server.app.route('/test_notification_endpoint', methods=['POST', 'GET'])
     def test_notification_endpoint():
-        from flask import request
-
         with open("test-datastore/notification.txt", "wb") as f:
             # Debug method, dump all POST to file also, used to prove #65
             data = request.stream.read()
@@ -70,5 +86,13 @@ def live_server_setup(live_server):
 
         print("\n>> Test notification endpoint was hit.\n")
         return "Text was set"
+
+
+    # Just return the verb in the request
+    @live_server.app.route('/test-basicauth', methods=['GET'])
+    def test_basicauth_method():
+        auth = request.authorization
+        ret = " ".join([auth.username, auth.password, auth.type])
+        return ret
 
     live_server.start()

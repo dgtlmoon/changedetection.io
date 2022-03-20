@@ -1,12 +1,40 @@
-from wtforms import Form, SelectField, RadioField, BooleanField, StringField, PasswordField, validators, IntegerField, fields, TextAreaField, \
-    Field
-from wtforms import widgets
-from wtforms.validators import ValidationError
-from wtforms.fields import html5
-from changedetectionio import content_fetcher
 import re
 
-from changedetectionio.notification import default_notification_format, valid_notification_formats
+from wtforms import (
+    BooleanField,
+    Field,
+    Form,
+    IntegerField,
+    PasswordField,
+    RadioField,
+    SelectField,
+    StringField,
+    SubmitField,
+    TextAreaField,
+    fields,
+    validators,
+    widgets,
+)
+from wtforms.fields import html5
+from wtforms.validators import ValidationError
+
+from changedetectionio import content_fetcher
+from changedetectionio.notification import (
+    default_notification_body,
+    default_notification_format,
+    default_notification_title,
+    valid_notification_formats,
+)
+
+valid_method = {
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+}
+
+default_method = 'GET'
 
 class StringListField(StringField):
     widget = widgets.TextArea()
@@ -34,8 +62,8 @@ class SaltyPasswordField(StringField):
     encrypted_password = ""
 
     def build_password(self, password):
-        import hashlib
         import base64
+        import hashlib
         import secrets
 
         # Make a new salt on every new password and store it with the password
@@ -93,8 +121,9 @@ class ValidateContentFetcherIsReady(object):
         self.message = message
 
     def __call__(self, form, field):
-        from changedetectionio import content_fetcher
         import urllib3.exceptions
+
+        from changedetectionio import content_fetcher
 
         # Better would be a radiohandler that keeps a reference to each class
         if field.data is not None:
@@ -106,10 +135,12 @@ class ValidateContentFetcherIsReady(object):
             except urllib3.exceptions.MaxRetryError as e:
                 driver_url = some_object.command_executor
                 message = field.gettext('Content fetcher \'%s\' did not respond.' % (field.data))
-                message += '<br/>'+field.gettext('Be sure that the selenium/webdriver runner is running and accessible via network from this container/host.')
+                message += '<br/>' + field.gettext(
+                    'Be sure that the selenium/webdriver runner is running and accessible via network from this container/host.')
                 message += '<br/>' + field.gettext('Did you follow the instructions in the wiki?')
                 message += '<br/><br/>' + field.gettext('WebDriver Host: %s' % (driver_url))
                 message += '<br/><a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">Go here for more information</a>'
+                message += '<br/>'+field.gettext('Content fetcher did not respond properly, unable to use it.\n %s' % (str(e)))
 
                 raise ValidationError(message)
 
@@ -117,6 +148,21 @@ class ValidateContentFetcherIsReady(object):
                 message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.\n %s')
                 raise ValidationError(message % (field.data, e))
 
+
+class ValidateNotificationBodyAndTitleWhenURLisSet(object):
+    """
+       Validates that they entered something in both notification title+body when the URL is set
+       Due to https://github.com/dgtlmoon/changedetection.io/issues/360
+       """
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        if len(field.data):
+            if not len(form.notification_title.data) or not len(form.notification_body.data):
+                message = field.gettext('Notification Body and Title is required when a Notification URL is used')
+                raise ValidationError(message)
 
 class ValidateAppRiseServers(object):
     """
@@ -149,7 +195,24 @@ class ValidateTokensList(object):
             if not p.strip('{}') in notification.valid_tokens:
                 message = field.gettext('Token \'%s\' is not a valid token.')
                 raise ValidationError(message % (p))
+            
+class validateURL(object):
+    
+    """
+       Flask wtform validators wont work with basic auth
+    """
 
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        import validators
+        try:
+            validators.url(field.data.strip())
+        except validators.ValidationFailure:
+            message = field.gettext('\'%s\' is not a valid URL.' % (field.data.strip()))
+            raise ValidationError(message)
+        
 class ValidateListRegex(object):
     """
     Validates that anything that looks like a regex passes as a regex
@@ -168,43 +231,80 @@ class ValidateListRegex(object):
                 except re.error:
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))
-
-class ValidateCSSJSONInput(object):
+              
+class ValidateCSSJSONXPATHInput(object):
     """
     Filter validation
     @todo CSS validator ;)
     """
 
-    def __init__(self, message=None):
+    def __init__(self, message=None, allow_xpath=True, allow_json=True):
         self.message = message
+        self.allow_xpath = allow_xpath
+        self.allow_json = allow_json
 
     def __call__(self, form, field):
-        if 'json:' in field.data:
-            from jsonpath_ng.exceptions import JsonPathParserError, JsonPathLexerError
-            from jsonpath_ng.ext import parse
 
-            input = field.data.replace('json:', '')
+        if isinstance(field.data, str):
+            data = [field.data]
+        else:
+            data = field.data
 
-            try:
-                parse(input)
-            except (JsonPathParserError, JsonPathLexerError) as e:
-                message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
-                raise ValidationError(message % (input, str(e)))
+        for line in data:
+        # Nothing to see here
+            if not len(line.strip()):
+                return
 
-            # Re #265 - maybe in the future fetch the page and offer a
-            # warning/notice that its possible the rule doesnt yet match anything?
+            # Does it look like XPath?
+            if line.strip()[0] == '/':
+                if not self.allow_xpath:
+                    raise ValidationError("XPath not permitted in this field!")
+                from lxml import etree, html
+                tree = html.fromstring("<html></html>")
 
+                try:
+                    tree.xpath(line.strip())
+                except etree.XPathEvalError as e:
+                    message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
+                    raise ValidationError(message % (line, str(e)))
+                except:
+                    raise ValidationError("A system-error occurred when validating your XPath expression")
+
+            if 'json:' in line:
+                if not self.allow_json:
+                    raise ValidationError("JSONPath not permitted in this field!")
+
+                from jsonpath_ng.exceptions import (
+                    JsonPathLexerError,
+                    JsonPathParserError,
+                )
+                from jsonpath_ng.ext import parse
+
+                input = line.replace('json:', '')
+
+                try:
+                    parse(input)
+                except (JsonPathParserError, JsonPathLexerError) as e:
+                    message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
+                    raise ValidationError(message % (input, str(e)))
+                except:
+                    raise ValidationError("A system-error occurred when validating your JSONPath expression")
+
+                # Re #265 - maybe in the future fetch the page and offer a
+                # warning/notice that its possible the rule doesnt yet match anything?
+
+            
 class quickWatchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
     # `require_tld` = False is needed even for the test harness "http://localhost:5005.." to run
-    url = html5.URLField('URL', [validators.URL(require_tld=False)])
+    url = html5.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
 class commonSettingsForm(Form):
 
-    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers()])
-    notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {watch_url}', validators=[validators.Optional(), ValidateTokensList()])
-    notification_body = TextAreaField('Notification Body', default='{watch_url} had a change.', validators=[validators.Optional(), ValidateTokensList()])
+    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateNotificationBodyAndTitleWhenURLisSet(), ValidateAppRiseServers()])
+    notification_title = StringField('Notification Title', default=default_notification_title, validators=[validators.Optional(), ValidateTokensList()])
+    notification_body = TextAreaField('Notification Body', default=default_notification_body, validators=[validators.Optional(), ValidateTokensList()])
     notification_format = SelectField('Notification Format', choices=valid_notification_formats.keys(), default=default_notification_format)
     trigger_check = BooleanField('Send test notification on save')
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
@@ -212,18 +312,36 @@ class commonSettingsForm(Form):
 
 class watchForm(commonSettingsForm):
 
-    url = html5.URLField('URL', [validators.URL(require_tld=False)])
+    url = html5.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
-    css_filter = StringField('CSS/JSON Filter', [ValidateCSSJSONInput()])
+    css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()])
+    subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     title = StringField('Title')
 
     ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     headers = StringDictKeyValue('Request Headers')
+    body = TextAreaField('Request Body', [validators.Optional()])
+    method = SelectField('Request Method', choices=valid_method, default=default_method)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
+    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+    save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
+
+    def validate(self, **kwargs):
+        if not super().validate():
+            return False
+
+        result = True
+
+        # Fail form validation when a body is set for a GET
+        if self.method.data == 'GET' and self.body.data:
+            self.body.errors.append('Body must be empty when Request Method is set to GET')
+            result = False
+
+        return result
 
 class globalSettingsForm(commonSettingsForm):
 
@@ -232,3 +350,6 @@ class globalSettingsForm(commonSettingsForm):
                                                [validators.NumberRange(min=1)])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
     base_url = StringField('Base URL', validators=[validators.Optional()])
+    global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
+    global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
+    ignore_whitespace = BooleanField('Ignore whitespace')

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 {% from '_helpers.jinja' import render_field %}
+{% from '_helpers.jinja' import render_button %}
 {% from '_common_fields.jinja' import render_common_settings_form %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 
@@ -9,9 +10,9 @@
     <div class="tabs">
         <ul>
             <li class="tab" id="default-tab"><a href="#general">General</a></li>
+            <li class="tab"><a href="#request">Request</a></li>
+            <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
-            <li class="tab"><a href="#filters">Filters</a></li>
-            <li class="tab"><a href="#triggers">Triggers</a></li>
         </ul>
     </div>
 
@@ -23,6 +24,7 @@
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.url, placeholder="https://...", required=true, class="m-d") }}
+                        <span class="pure-form-message-inline">Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a></span>
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.title, class="m-d") }}
@@ -41,29 +43,49 @@
                                 href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>.</span>
                         {% endif %}
                     </div>
-                    <fieldset class="pure-group">
-                        {{ render_field(form.headers, rows=5, placeholder="Example
-Cookie: foobar
-User-Agent: wonderbra 1.0") }}
-                        <span class="pure-form-message-inline">
-                            Note: ONLY used by Basic fast Plaintext/HTTP Client
-                          </span>
-                    </fieldset>
-                    <div class="pure-control-group">
-                        {{ render_field(form.fetch_backend) }}
-                        <span class="pure-form-message-inline">
-                            <p>Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render.</p>
-                            <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
-                        </span>
-                    </div>
                     <div class="pure-control-group">
                         {{ render_field(form.extract_title_as_title) }}
                     </div>
                 </fieldset>
             </div>
 
+            <div class="tab-pane-inner" id="request">
+                    <div class="pure-control-group">
+                        {{ render_field(form.fetch_backend) }}
+                        <span class="pure-form-message-inline">
+                            <p>Use the <strong>Basic</strong> method (default) where your watched site doesn't need Javascript to render.</p>
+                            <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
+                        </span>
+                    </div>
+
+                <hr/>
+                <fieldset class="pure-group">
+
+                    <span class="pure-form-message-inline">
+                        <strong>Request override is currently only used by the <i>Basic fast Plaintext/HTTP Client</i> method.</strong>
+                    </span>
+                    <div class="pure-control-group">
+                        {{ render_field(form.method) }}
+                    </div>
+                    <div class="pure-control-group">
+{{ render_field(form.headers, rows=5, placeholder="Example
+Cookie: foobar
+User-Agent: wonderbra 1.0") }}
+                    </div>
+                    <div class="pure-control-group">
+                                        {{ render_field(form.body, rows=5, placeholder="Example
+{
+   \"name\":\"John\",
+   \"age\":30,
+   \"car\":null
+}") }}
+                    </div>
+                </fieldset>
+                <br/>
+            </div>
+
             <div class="tab-pane-inner" id="notifications">
-                <strong>Note: <i>These settings override the global settings.</i></strong>
+                <strong>Note: <i>These settings override the global settings for this watch.</i></strong>
                 <fieldset>
                     <div class="field-group">
                         {{ render_common_settings_form(form, current_base_url) }}
@@ -71,52 +93,84 @@ User-Agent: wonderbra 1.0") }}
                 </fieldset>
             </div>
 
-            <div class="tab-pane-inner" id="filters">
+            <div class="tab-pane-inner" id="filters-and-triggers">
                 <fieldset>
+                        <div class="pure-control-group">
+                            <strong>Pro-tips:</strong><br/>
+                            <ul>
+                                <li>
+                                    Use the preview page to see your filters and triggers highlighted.
+                                </li>
+                                <li>
+                                    Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a>
+                                </li>
+                            </ul>
+                    </div>
+
                     <div class="pure-control-group">
                         {{ render_field(form.css_filter, placeholder=".class-name or #some-id, or other CSS selector rule.",
                         class="m-d") }}
                         <span class="pure-form-message-inline">
                     <ul>
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
-                        <li>JSON - Limit text to this JSON rule, using <a href="https://pypi.org/project/jsonpath-ng/">JSONPath</a>, prefix with <b>"json:"</b>, <a
+                        <li>JSON - Limit text to this JSON rule, using <a href="https://pypi.org/project/jsonpath-ng/">JSONPath</a>, prefix with <code>"json:"</code>, use <code>json:$</code> to force re-formatting if required,  <a
                                 href="https://jsonpath.com/" target="new">test your JSONPath here</a></li>
+                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash, example  <code>//*[contains(@class, 'sametext')]</code>, <a
+                                href="http://xpather.com/" target="new">test your XPath here</a></li>
                     </ul>
-                    Please be sure that you thoroughly understand how to write CSS or JSONPath selector rules before filing an issue on GitHub! <a
+                    Please be sure that you thoroughly understand how to write CSS or JSONPath, XPath selector rules before filing an issue on GitHub! <a
                                 href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
                 </span>
                     </div>
-
+                    <fieldset class="pure-group">
+                      {{ render_field(form.subtractive_selectors, rows=5, placeholder="header
+footer
+nav
+.stockticker") }}
+                      <span class="pure-form-message-inline">
+                        <ul>
+                          <li> Remove HTML element(s) by CSS selector before text conversion. </li>
+                          <li> Add multiple elements or CSS selectors per line to ignore multiple parts of the HTML. </li>
+                        </ul>
+                      </span>
+                    </fieldset>
                 </fieldset>
                 <fieldset class="pure-group">
                     {{ render_field(form.ignore_text, rows=5, placeholder="Some text to ignore in a line
 /some.regex\d{2}/ for case-INsensitive regex
                     ") }}
                     <span class="pure-form-message-inline">
-                    Each line processed separately, any line matching will be ignored.<br/>
-                    Regular Expression support, wrap the line in forward slash <b>/regex/</b>.
+                        <ul>
+                            <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
+                            <li>Regular Expression support, wrap the line in forward slash <code>/regex/</code></li>
+                            <li>Changing this will affect the comparison checksum which may trigger an alert</li>
+                            <li>Use the preview/show current tab to see ignores</li>
+                        </ul>
                 </span>
 
             </fieldset>
-            </div>
-
-            <div class="tab-pane-inner" id="triggers">
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.trigger_text, rows=5, placeholder="Some text to wait for in a line
 /some.regex\d{2}/ for case-INsensitive regex
-                    ") }}</br>
-                        <span class="pure-form-message-inline">Text to wait for before triggering a change/notification, all text and regex are tested <i>case-insensitive</i>.</span><br/>
-                        <span class="pure-form-message-inline">Trigger text is processed from the result-text that comes out of any <a href="#filters">CSS/JSON Filters</a> for this watch</span>.<br/>
-                        <span class="pure-form-message-inline">Each line is process separately (think of each line as "OR")</span><br/>
-                        <span class="pure-form-message-inline">Note: Wrap in forward slash / to use regex  example: <span style="font-family: monospace; background: #eee">/foo\d/</span> </span>
+                    ") }}
+                        <span class="pure-form-message-inline">
+                    <ul>
+                        <li>Text to wait for before triggering a change/notification, all text and regex are tested <i>case-insensitive</i>.</li>
+                        <li>Trigger text is processed from the result-text that comes out of any CSS/JSON Filters for this watch</li>
+                        <li>Each line is process separately (think of each line as "OR")</li>
+                        <li>Note: Wrap in forward slash / to use regex  example: <code>/foo\d/</code></li>
+                    </ul>
+                        </span>
                     </div>
                 </fieldset>
             </div>
+
             <div id="actions">
                 <div class="pure-control-group">
 
-                    <button type="submit" class="pure-button pure-button-primary">Save</button>
+                      {{ render_button(form.save_button) }} {{ render_button(form.save_and_preview_button) }}
+
                     <a href="{{url_for('api_delete', uuid=uuid)}}"
                        class="pure-button button-small button-error ">Delete</a>
                     <a href="{{url_for('api_clone', uuid=uuid)}}"
