@@ -69,7 +69,7 @@ def available_fetchers():
         # sort by obj.fetcher_list_order
         p.sort(key=lambda x: x[2])
         # strip obj.fetcher_list_order from each member in the tuple
-        p = map(lambda x: x[:2], p)
+        p = list(map(lambda x: x[:2], p))
 
         return p
 
