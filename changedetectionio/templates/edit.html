@@ -3,7 +3,9 @@
 {% from '_helpers.jinja' import render_field %}
 {% from '_helpers.jinja' import render_button %}
 {% from '_common_fields.jinja' import render_common_settings_form %}
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}" ></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='stepper.js')}}" defer></script>
 
 <div class="edit-form monospaced-textarea">
 
@@ -57,10 +59,40 @@
                             <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
                         </span>
                     </div>
-
                 <hr/>
-                <fieldset class="pure-group">
-
+                <table id="webdriver-stepper">
+                    <caption>Browser step/instructions table</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col"></th>
+                            <th scope="col"></th>
+                            <th scope="col"></th>
+                            <th scope="col"></th>
+                            <th scope="col"><a>Play</a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot.png" width="100"/></td>
+                            <td><select name="step_description[action]">
+                                    <option data-enabled="enabled-1-0">Click element if present</option>
+                                    <option value="enter-value" data-enabled="enabled-0-1">Enter value into element</option>
+                                    <option data-enabled="enabled-1-0">Wait seconds</option>
+                                    <option data-enabled="enabled-0-0">Wait for all AJAX</option>
+                                    <option data-enabled="enabled-0-0">Scroll to top</option>
+                                    <option data-enabled="enabled-0-0">Scroll to bottom</option>
+                                    <option data-enabled="enabled-0-0">Wait for text</option>
+                                    <option data-enabled="enabled-0-0">Accept alert box</option>
+                                    <option data-enabled="enabled-1-0-r-r">Select by option description</option>
+                                </select>
+                            </td>
+                            <td><input type="text" name="step_description[selector]" placeholder="CSS or xPath selector"></td>
+                            <td><input type="text" name="step_description[value]" placeholder="Optional value"></td>
+                            <td><a class="row-options button-small pure-button" data-action="remove">-</a> <a class="row-options button-small pure-button" data-action="add">+</a> <a class="row-options button-small pure-button" data-action="resend-step">@</a> </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <fieldset class="pure-group" id="request-override">
                     <span class="pure-form-message-inline">
                         <strong>Request override is currently only used by the <i>Basic fast Plaintext/HTTP Client</i> method.</strong>
                     </span>
@@ -98,6 +130,9 @@ User-Agent: wonderbra 1.0") }}
                         <div class="pure-control-group">
                             <strong>Pro-tips:</strong><br/>
                             <ul>
+                                <li>
+                                    If using browser-steps, this runs AFTER those steps have completed.
+                                </li>
                                 <li>
                                     Use the preview page to see your filters and triggers highlighted.
                                 </li>
