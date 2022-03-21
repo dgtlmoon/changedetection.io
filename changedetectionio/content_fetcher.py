@@ -118,7 +118,8 @@ class html_playwright(Fetcher):
                 proxy=self.proxy
             )
             page = context.new_page()
-            response = page.goto(url, wait_until='networkidle')
+            response = page.goto(url, timeout=timeout*1000)
+            page.wait_for_timeout(5000)
 
             if response is None:
                 raise EmptyReply(url=url, status_code=None)
