@@ -74,8 +74,15 @@ def available_fetchers():
         return p
 
 class html_playwright(Fetcher):
-    fetcher_description = "Playwright Chromium/Javascript"
+    fetcher_description = "Playwright {}/Javascript".format(
+        os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
+    )
+    if os.getenv("PLAYWRIGHT_DRIVER_URL"):
+        fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
     fetcher_list_order = 3
+
+    browser_type = ''
+    command_executor = ''
 
     # Configs for Proxy setup
     # In the ENV vars, is prefixed with "playwright_proxy_", so it is for example "playwright_proxy_server"
@@ -84,6 +91,13 @@ class html_playwright(Fetcher):
     proxy=None
 
     def __init__(self):
+        # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
+        self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
+        self.command_executor = os.getenv(
+            "PLAYWRIGHT_DRIVER_URL",
+            'ws://playwright-server:4444/playwright'
+        ).strip('"')
+
         # If any proxy settings are enabled, then we should setup the proxy object
         proxy_args = {}
         for k in self.playwright_proxy_settings_mappings:
@@ -96,7 +110,8 @@ class html_playwright(Fetcher):
 
     def run(self, url, timeout, request_headers, request_body, request_method):
         with sync_playwright() as p:
-            browser = p.chromium.launch(timeout=60000)
+            browser_type = getattr(p, self.browser_type)
+            browser = browser_type.connect(self.command_executor, timeout=timeout*1000)
             # Set user agent to prevent Cloudflare from blocking the browser
             context = browser.new_context(
                 user_agent="Mozilla/5.0",
