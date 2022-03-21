@@ -79,6 +79,9 @@ services:
 #            # Must match with PLAYWRIGHT_BROWSER_TYPE in the changedetection service
 #            - PLAYWRIGHT_BROWSER_TYPE=chromium
 #        ipc: host
+#        user: pwuser
+#        security_opt:
+#            - seccomp:./playwright/seccomp_profile.json
 #        restart: unless-stopped
 
 volumes:
