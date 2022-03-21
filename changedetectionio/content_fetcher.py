@@ -1,11 +1,6 @@
 from abc import ABC, abstractmethod
 import chardet
 import os
-from selenium import webdriver
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
-from selenium.common.exceptions import WebDriverException
-from playwright.sync_api import sync_playwright
 import requests
 import time
 import urllib3.exceptions
@@ -114,7 +109,16 @@ class html_playwright(Fetcher):
         if proxy_args:
             self.proxy = proxy_args
 
-    def run(self, url, timeout, request_headers, request_body, request_method):
+    def run(self,
+            url,
+            timeout,
+            request_headers,
+            request_body,
+            request_method,
+            ignore_status_codes=False):
+
+        from playwright.sync_api import sync_playwright
+
         with sync_playwright() as p:
             browser_type = getattr(p, self.browser_type)
             browser = browser_type.connect(self.command_executor, timeout=timeout*1000)
@@ -157,8 +161,11 @@ class html_webdriver(Fetcher):
     proxy=None
 
     def __init__(self):
+        from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
+
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
         self.command_executor = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub').strip('"')
+
 
         # If any proxy settings are enabled, then we should setup the proxy object
         proxy_args = {}
@@ -178,6 +185,9 @@ class html_webdriver(Fetcher):
             request_method,
             ignore_status_codes=False):
 
+        from selenium import webdriver
+        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+        from selenium.common.exceptions import WebDriverException
         # request_body, request_method unused for now, until some magic in the future happens.
 
         # check env for WEBDRIVER_URL
