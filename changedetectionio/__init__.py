@@ -35,6 +35,7 @@ from flask import (
     url_for,
 )
 from flask_login import login_required
+from flask_wtf import CSRFProtect
 
 from changedetectionio import html_tools
 
@@ -71,6 +72,9 @@ app.config['LOGIN_DISABLED'] = False
 
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+csrf = CSRFProtect()
+csrf.init_app(app)
 
 notification_debug_log=[]
 

@@ -25,6 +25,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
         data={"urls": url_for('test_endpoint', _external=True)},
         follow_redirects=True
     )
+
     assert b"1 Imported" in res.data
 
     time.sleep(sleep_time_for_fetch_thread)

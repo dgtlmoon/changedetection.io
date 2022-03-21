@@ -18,6 +18,7 @@
     </div>
     <div class="box-wrap inner">
         <form class="pure-form pure-form-stacked settings" action="{{url_for('settings_page')}}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="tab-pane-inner" id="general">
                 <fieldset>
                     <div class="pure-control-group">
