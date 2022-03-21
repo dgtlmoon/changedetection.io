@@ -78,6 +78,7 @@ services:
 #            - PLAYWRIGHT_PORT=4444
 #            # Must match with PLAYWRIGHT_BROWSER_TYPE in the changedetection service
 #            - PLAYWRIGHT_BROWSER_TYPE=chromium
+#        ipc: host
 #        restart: unless-stopped
 
 volumes:
