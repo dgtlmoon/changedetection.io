@@ -508,13 +508,13 @@ def changedetection_app(config=None, datastore_o=None):
                           'headers': form.headers.data,
                           'body': form.body.data,
                           'method': form.method.data,
+                          'ignore_status_codes': form.ignore_status_codes.data,
                           'fetch_backend': form.fetch_backend.data,
                           'trigger_text': form.trigger_text.data,
                           'notification_title': form.notification_title.data,
                           'notification_body': form.notification_body.data,
                           'notification_format': form.notification_format.data,
-                          'extract_title_as_title': form.extract_title_as_title.data
-
+                          'extract_title_as_title': form.extract_title_as_title.data,
                           }
 
             # Notification URLs
