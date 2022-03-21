@@ -38,21 +38,19 @@ def set_modified_response():
 
 def live_server_setup(live_server):
 
-
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
         ctype = request.args.get('content_type')
+        status_code = request.args.get('status_code')
 
-        # Tried using a global var here but didn't seem to work, so reading from a file instead.
-        with open("test-datastore/endpoint-content.txt", "r") as f:
-            resp = make_response(f.read())
-            resp.headers['Content-Type'] = ctype if ctype else 'text/html'
-            return resp
-
-    @live_server.app.route('/test-403')
-    def test_endpoint_403_error():
-        resp = make_response('', 403)
-        return resp
+        try:
+            # Tried using a global var here but didn't seem to work, so reading from a file instead.
+            with open("test-datastore/endpoint-content.txt", "r") as f:
+                resp = make_response(f.read(), status_code)
+                resp.headers['Content-Type'] = ctype if ctype else 'text/html'
+                return resp
+        except FileNotFoundError:
+            return make_response('', status_code)
 
     # Just return the headers in the request
     @live_server.app.route('/test-headers')
