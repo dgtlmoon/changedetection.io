@@ -4,6 +4,7 @@
 <div class="edit-form">
     <div class="box-wrap inner">
     <form class="pure-form pure-form-stacked" action="{{url_for('scrub_page')}}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <fieldset>
             <div class="pure-control-group">
                 This will remove all version snapshots/data, but keep your list of URLs. <br/>

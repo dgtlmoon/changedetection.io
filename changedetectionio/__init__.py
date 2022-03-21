@@ -35,6 +35,7 @@ from flask import (
     url_for,
 )
 from flask_login import login_required
+from flask_wtf import CSRFProtect
 
 from changedetectionio import html_tools
 
@@ -71,6 +72,9 @@ app.config['LOGIN_DISABLED'] = False
 
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+csrf = CSRFProtect()
+csrf.init_app(app)
 
 notification_debug_log=[]
 
@@ -610,16 +614,15 @@ def changedetection_app(config=None, datastore_o=None):
             form.notification_format.data = datastore.data['settings']['application']['notification_format']
             form.base_url.data = datastore.data['settings']['application']['base_url']
 
-            # Password unset is a GET, but we can lock the session to always need the password
-            if not os.getenv("SALTED_PASS", False) and request.values.get('removepassword') == 'yes':
-                from pathlib import Path
+        if request.method == 'POST' and form.data.get('removepassword_button') == True:
+            # Password unset is a GET, but we can lock the session to a salted env password to always need the password
+            if not os.getenv("SALTED_PASS", False):
                 datastore.data['settings']['application']['password'] = False
                 flash("Password protection removed.", 'notice')
                 flask_login.logout_user()
                 return redirect(url_for('settings_page'))
 
         if request.method == 'POST' and form.validate():
-
             datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
             datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data
             datastore.data['settings']['application']['extract_title_as_title'] = form.extract_title_as_title.data
