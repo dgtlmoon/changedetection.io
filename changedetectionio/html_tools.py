@@ -171,20 +171,22 @@ def strip_ignore_text(content, wordlist, mode="content"):
     return "\n".encode('utf8').join(output)
 
 
-def html_to_text(html_content: str, ignore_hyperlinks=True) -> str:
+def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
     """Converts html string to a string with just the text. If ignoring
-    hyperlinks is disabled, hyperlinks are also included in the text
+    rendering anchor tag content is enable, anchor tag content are also
+    included in the text
 
     :param html_content: string with html content
-    :param ignore_hyperlinks: boolean flag indicating whether to extract
-    hyperlinks together with text. This refers to the 'href' inside 'a' tags.
-    Hyperlinks are rendered in the following manner:
-    '[ text ](hyperlink)'
+    :param render_anchor_tag_content: boolean flag indicating whether to extract
+    hyperlinks (the anchor tag content) together with text. This refers to the
+    'href' inside 'a' tags.
+    Anchor tag content is rendered in the following manner:
+    '[ text ](anchor tag content)'
     :return: extracted text from the HTML
     """
-    #  if hyperlinks are not being ignored define a config for
-    #  extracting hyperlinks
-    if not ignore_hyperlinks:
+    #  if anchor tag content flag is set to True define a config for
+    #  extracting this content
+    if render_anchor_tag_content:
 
         parser_config = ParserConfig(
             annotation_rules={"a": ["hyperlink"]}, display_links=True

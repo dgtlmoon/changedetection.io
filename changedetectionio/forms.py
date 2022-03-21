@@ -354,5 +354,5 @@ class globalSettingsForm(commonSettingsForm):
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     ignore_whitespace = BooleanField('Ignore whitespace')
 
-    ignore_hyperlinks = BooleanField('Ignore Hyperlinks',
-                                     default=True)
+    render_anchor_tag_content = BooleanField('Render Anchor Tag Content',
+                                             default=False)

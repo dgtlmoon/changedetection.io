@@ -1,9 +1,12 @@
 #!/usr/bin/python3
-"""Test suite for the ignore/monitor hyperlinks functionality"""
+"""Test suite for the render/not render anchor tag content functionality"""
 
 import time
 from flask import url_for
 from .util import live_server_setup
+
+import multiprocessing
+multiprocessing.set_start_method('fork')
 
 def test_setup(live_server):
     live_server_setup(live_server)
@@ -40,7 +43,7 @@ def set_modified_ignore_response():
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
-def test_ignore_hyperlinks_false(client, live_server):
+def test_render_anchor_tag_content_true(client, live_server):
     """Testing that the link changes are detected when functionality is
     detected"""
     sleep_time_for_fetch_thread = 3
@@ -56,7 +59,7 @@ def test_ignore_hyperlinks_false(client, live_server):
         url_for("settings_page"),
         data={
             "minutes_between_check": 180,
-            "ignore_hyperlinks": "false",
+            "render_anchor_tag_content": "true",
             "fetch_backend": "html_requests",
         },
         follow_redirects=True,
@@ -85,7 +88,7 @@ def test_ignore_hyperlinks_false(client, live_server):
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
-    # since the link has changed, and we chose not to ignore links,
+    # since the link has changed, and we chose to render anchor tag content,
     # we should detect a change (new 'unviewed' class)
     res = client.get(url_for("index"))
     assert b"unviewed" in res.data
@@ -97,8 +100,9 @@ def test_ignore_hyperlinks_false(client, live_server):
     assert b'Deleted' in res.data
 
 
-def test_ignore_hyperlinks_true(client, live_server):
-    """Testing that hyperlinks are ignored when the option is selected"""
+def test_render_anchor_tag_content_false(client, live_server):
+    """Testing that anchor tag content changes are ignored when the option is
+    selected"""
     sleep_time_for_fetch_thread = 3
 
     # Give the endpoint time to spin up
@@ -112,7 +116,7 @@ def test_ignore_hyperlinks_true(client, live_server):
         url_for("settings_page"),
         data={
             "minutes_between_check": 180,
-            "ignore_hyperlinks": "true",
+            "render_anchor_tag_content": "false",
             "fetch_backend": "html_requests",
         },
         follow_redirects=True,
@@ -141,7 +145,7 @@ def test_ignore_hyperlinks_true(client, live_server):
     time.sleep(sleep_time_for_fetch_thread)
 
     # even though the link has changed, we shouldn't detect a change since
-    # we selected to ignore links (no new 'unviewed' class)
+    # we selected to not render anchor tag content (no new 'unviewed' class)
     res = client.get(url_for("index"))
     assert b"unviewed" not in res.data
     assert b"/test-endpoint" in res.data

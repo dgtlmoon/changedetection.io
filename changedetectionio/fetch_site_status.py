@@ -115,8 +115,9 @@ class perform_site_check():
                     stripped_text_from_html = \
                         html_tools.html_to_text(
                             html_content,
-                            ignore_hyperlinks=self.datastore.data["settings"][
-                                "application"].get("ignore_hyperlinks", True)
+                            render_anchor_tag_content=self.datastore.data["settings"][
+                                "application"].get(
+                                "render_anchor_tag_content", False)
                         )
             # Re #340 - return the content before the 'ignore text' was applied
             text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')

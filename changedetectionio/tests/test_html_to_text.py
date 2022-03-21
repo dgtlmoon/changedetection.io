@@ -16,8 +16,8 @@ def test_html_to_text_func():
      </html>
     """
 
-    # extract text, with 'ignore hyperlinks' set to True
-    text_content = html_to_text(test_html, ignore_hyperlinks=True)
+    # extract text, with 'render_anchor_tag_content' set to False
+    text_content = html_to_text(test_html, render_anchor_tag_content=False)
 
     no_links_text = \
         "Some initial text\n\nWhich is across multiple " \
@@ -26,8 +26,8 @@ def test_html_to_text_func():
     # check that no links are in the extracted text
     assert text_content == no_links_text
 
-    # extract text, with 'ignore hyperlinks' set to False
-    text_content = html_to_text(test_html, ignore_hyperlinks=False)
+    # extract text, with 'render_anchor_tag_content' set to True
+    text_content = html_to_text(test_html, render_anchor_tag_content=True)
 
     links_text = \
         "Some initial text\n\nWhich is across multiple lines\n\n[ More Text " \
