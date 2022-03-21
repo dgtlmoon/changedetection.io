@@ -353,3 +353,5 @@ class globalSettingsForm(commonSettingsForm):
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     ignore_whitespace = BooleanField('Ignore whitespace')
+    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+    removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
