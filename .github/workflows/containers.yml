@@ -12,6 +12,10 @@ on:
   release:
     types: [published, edited]
 
+  push:
+    branches:
+      - master
+
 jobs:
   metadata:
     runs-on: ubuntu-latest
