@@ -1,10 +1,6 @@
 from abc import ABC, abstractmethod
 import chardet
 import os
-from selenium import webdriver
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
-from selenium.common.exceptions import WebDriverException
 import requests
 import time
 import urllib3.exceptions
@@ -26,6 +22,7 @@ class Fetcher():
     headers = None
 
     fetcher_description ="No description"
+    fetcher_list_order = 0
 
     @abstractmethod
     def get_error(self):
@@ -68,16 +65,88 @@ def available_fetchers():
                 # @todo html_ is maybe better as fetcher_ or something
                 # In this case, make sure to edit the default one in store.py and fetch_site_status.py
                 if "html_" in name:
-                    t=tuple([name,obj.fetcher_description])
+                    t=tuple([name,obj.fetcher_description,obj.fetcher_list_order])
                     p.append(t)
+        # sort by obj.fetcher_list_order
+        p.sort(key=lambda x: x[2])
+        # strip obj.fetcher_list_order from each member in the tuple
+        p = list(map(lambda x: x[:2], p))
 
         return p
+
+class html_playwright(Fetcher):
+    fetcher_description = "Playwright {}/Javascript".format(
+        os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
+    )
+    if os.getenv("PLAYWRIGHT_DRIVER_URL"):
+        fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
+    fetcher_list_order = 3
+
+    browser_type = ''
+    command_executor = ''
+
+    # Configs for Proxy setup
+    # In the ENV vars, is prefixed with "playwright_proxy_", so it is for example "playwright_proxy_server"
+    playwright_proxy_settings_mappings = ['server', 'bypass', 'username', 'password']
+
+    proxy=None
+
+    def __init__(self):
+        # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
+        self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
+        self.command_executor = os.getenv(
+            "PLAYWRIGHT_DRIVER_URL",
+            'ws://playwright-server:4444/playwright'
+        ).strip('"')
+
+        # If any proxy settings are enabled, then we should setup the proxy object
+        proxy_args = {}
+        for k in self.playwright_proxy_settings_mappings:
+            v = os.getenv('playwright_proxy_' + k, False)
+            if v:
+                proxy_args[k] = v.strip('"')
+
+        if proxy_args:
+            self.proxy = proxy_args
+
+    def run(self,
+            url,
+            timeout,
+            request_headers,
+            request_body,
+            request_method,
+            ignore_status_codes=False):
+
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as p:
+            browser_type = getattr(p, self.browser_type)
+            browser = browser_type.connect(self.command_executor, timeout=timeout*1000)
+            # Set user agent to prevent Cloudflare from blocking the browser
+            context = browser.new_context(
+                user_agent="Mozilla/5.0",
+                proxy=self.proxy
+            )
+            page = context.new_page()
+            response = page.goto(url, timeout=timeout*1000)
+            page.wait_for_timeout(5000)
+
+            if response is None:
+                raise EmptyReply(url=url, status_code=None)
+
+            self.status_code = response.status
+            self.content = page.content()
+            self.headers = response.all_headers()
+
+            context.close()
+            browser.close()
 
 class html_webdriver(Fetcher):
     if os.getenv("WEBDRIVER_URL"):
         fetcher_description = "WebDriver Chrome/Javascript via '{}'".format(os.getenv("WEBDRIVER_URL"))
     else:
         fetcher_description = "WebDriver Chrome/Javascript"
+    fetcher_list_order = 2
 
     command_executor = ''
 
@@ -92,8 +161,11 @@ class html_webdriver(Fetcher):
     proxy=None
 
     def __init__(self):
+        from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
+
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
         self.command_executor = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub').strip('"')
+
 
         # If any proxy settings are enabled, then we should setup the proxy object
         proxy_args = {}
@@ -113,6 +185,9 @@ class html_webdriver(Fetcher):
             request_method,
             ignore_status_codes=False):
 
+        from selenium import webdriver
+        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+        from selenium.common.exceptions import WebDriverException
         # request_body, request_method unused for now, until some magic in the future happens.
 
         # check env for WEBDRIVER_URL
@@ -158,6 +233,7 @@ class html_webdriver(Fetcher):
 # "html_requests" is listed as the default fetcher in store.py!
 class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
+    fetcher_list_order = 1
 
     def run(self,
             url,
