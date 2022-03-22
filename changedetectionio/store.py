@@ -400,7 +400,7 @@ class ChangeDetectionStore:
                 # system was out of memory, out of RAM etc
                 with open(self.json_store_path+".tmp", 'w') as json_file:
                     json.dump(data, json_file, indent=4)
-                os.rename(self.json_store_path+".tmp", self.json_store_path)
+                os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
                 logging.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
 
