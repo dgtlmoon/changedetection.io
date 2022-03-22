@@ -61,8 +61,9 @@ def main():
         if create_datastore_dir:
             os.mkdir(app_config['datastore_path'])
         else:
-            print ("ERROR: Directory path for the datastore '{}' does not exist, cannot start, please make sure the directory exists.\n"
-                   "Alternatively, use the -C parameter.".format(app_config['datastore_path']),file=sys.stderr)
+            print(
+                "ERROR: Directory path for the datastore '{}' does not exist, cannot start, please make sure the directory exists or specify a directory with the -d option.\n"
+                "Or use the -C parameter to create the directory.".format(app_config['datastore_path']), file=sys.stderr)
             sys.exit(2)
 
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=__version__)
