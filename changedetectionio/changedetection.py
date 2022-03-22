@@ -8,6 +8,8 @@ import sys
 
 import eventlet
 import eventlet.wsgi
+from . import store, changedetection_app
+from . import __version__
 
 def main():
     ssl_mode = False
@@ -63,8 +65,8 @@ def main():
                    "Alternatively, use the -C parameter.".format(app_config['datastore_path']),file=sys.stderr)
             sys.exit(2)
 
-    datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=changedetectionio.__version__)
-    app = changedetectionio.changedetection_app(app_config, datastore)
+    datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=__version__)
+    app = changedetection_app(app_config, datastore)
 
     # Go into cleanup mode
     if do_cleanup:
