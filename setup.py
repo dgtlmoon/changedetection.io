@@ -33,10 +33,10 @@ setup(
     keywords='website change monitor for changes notification change detection '
              'alerts tracking website tracker change alert website and monitoring',
     zip_safe=False,
-    entry_points={"console_scripts": ["changedetection.io=changedetection:main"]},
+    entry_points={"console_scripts": ["changedetection.py=changedetectionio.changedetection:main",
+                                      "changedetection.io=changedetectionio.changedetection:main"]},
     author='dgtlmoon',
     url='https://changedetection.io',
-    scripts=['changedetection.py'],
     packages=['changedetectionio'],
     include_package_data=True,
     install_requires=install_requires,
