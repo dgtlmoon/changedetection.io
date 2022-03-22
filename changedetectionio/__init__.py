@@ -53,11 +53,10 @@ update_q = queue.Queue()
 
 notification_q = queue.Queue()
 
-# Needs to be set this way because we also build and publish via pip
-base_path = os.path.dirname(os.path.realpath(__file__))
 app = Flask(__name__,
-            static_url_path="{}/static".format(base_path),
-            template_folder="{}/templates".format(base_path))
+            static_url_path="",
+            static_folder="static",
+            template_folder="templates")
 
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
