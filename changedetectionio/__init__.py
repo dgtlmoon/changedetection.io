@@ -39,7 +39,7 @@ from flask_wtf import CSRFProtect
 
 from changedetectionio import html_tools
 
-__version__ = '0.39.10'
+__version__ = '0.39.11'
 
 datastore = None
 
