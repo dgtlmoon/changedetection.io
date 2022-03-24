@@ -2,7 +2,7 @@ version: '2'
 services:
     changedetection:
       image: ghcr.io/dgtlmoon/changedetection.io
-      container_name: changedetection.io
+      container_name: changedetection
       hostname: changedetection
       volumes:
         - changedetection-data:/datastore

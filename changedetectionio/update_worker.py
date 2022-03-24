@@ -42,7 +42,6 @@ class update_worker(threading.Thread):
                     now = time.time()
 
                     try:
-
                         changed_detected, update_obj, contents = update_handler.run(uuid)
 
                         # Re #342
@@ -50,8 +49,6 @@ class update_worker(threading.Thread):
                         # We then convert/.decode('utf-8') for the notification etc
                         if not isinstance(contents, (bytes, bytearray)):
                             raise Exception("Error - returned data from the fetch handler SHOULD be bytes")
-
-
                     except PermissionError as e:
                         self.app.logger.error("File permission error updating", uuid, str(e))
                     except content_fetcher.EmptyReply as e:

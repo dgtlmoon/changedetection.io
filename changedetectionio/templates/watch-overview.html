@@ -5,6 +5,7 @@
 <div class="box">
 
     <form class="pure-form" action="{{ url_for('api_watch_add') }}" method="POST" id="new-watch-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <fieldset>
             <legend>Add a new change detection watch</legend>
                 {{ render_simple_field(form.url, placeholder="https://...", required=true) }}

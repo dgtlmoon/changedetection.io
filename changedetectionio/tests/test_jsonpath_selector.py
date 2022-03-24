@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# coding=utf-8
 
 import time
 from flask import url_for
@@ -142,7 +143,7 @@ def set_modified_response():
         }
       ],
       "boss": {
-        "name": "Foobar"
+        "name": "Örnsköldsvik"
       },
       "available": false
     }
@@ -246,8 +247,10 @@ def test_check_json_filter(client, live_server):
 
     # Should not see this, because its not in the JSONPath we entered
     res = client.get(url_for("diff_history_page", uuid="first"))
+
     # But the change should be there, tho its hard to test the change was detected because it will show old and new versions
-    assert b'Foobar' in res.data
+    # And #462 - check we see the proper utf-8 string there
+    assert "Örnsköldsvik".encode('utf-8') in res.data
 
 
 def test_check_json_filter_bool_val(client, live_server):
