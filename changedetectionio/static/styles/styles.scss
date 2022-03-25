@@ -422,18 +422,25 @@ footer {
   }
 }
 
+
+
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 800px) {
+
+  // Make the tabs easier to hit, they will be all nice and horizontal
+  div.tabs ul li {
+    display: block;
+    border-radius: 0px;
+  }
+
+  input[type='text'] {
+    width: 100%;
+  }
+
 /*
 Max width before this PARTICULAR table gets nasty
 This query will take effect for any screen smaller than 760px
 and also iPads specifically.
 */
-
-@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
-
-  input[type='text'] {
-    width: 100%;
-  }
-    
   .watch-table {
     /* Force table to not be like tables anymore */
     thead, tbody, th, td, tr {
