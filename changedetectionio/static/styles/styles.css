@@ -244,7 +244,7 @@ footer {
 .sticky-tab {
   position: absolute;
   top: 60px;
-  font-size: 8px;
+  font-size: 65%;
   background: #fff;
   padding: 10px; }
   .sticky-tab#left-sticky {
