@@ -9,7 +9,7 @@ _Know when web pages change! Stay ontop of new information!_
 
 Live your data-life *pro-actively* instead of *re-actively*.
 
-Free, Open-source web page monitoring, notification and change detection. Don't have time? [Try our or $6.99/month plan](https://lemonade.changedetection.io/start)
+Free, Open-source web page monitoring, notification and change detection. Don't have time? [Try our $6.99/month plan - unlimited checks and watches!](https://lemonade.changedetection.io/start)
 
 
 [<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />](https://lemonade.changedetection.io/start)
