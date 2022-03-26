@@ -13,9 +13,10 @@ from wtforms import (
     TextAreaField,
     fields,
     validators,
-    widgets,
+    widgets
 )
-from wtforms.fields import html5
+
+from wtforms.fields import html5, FieldList, FormField
 from wtforms.validators import ValidationError
 
 from changedetectionio import content_fetcher
@@ -293,7 +294,6 @@ class ValidateCSSJSONXPATHInput(object):
                 # Re #265 - maybe in the future fetch the page and offer a
                 # warning/notice that its possible the rule doesnt yet match anything?
 
-            
 class quickWatchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
     # `require_tld` = False is needed even for the test harness "http://localhost:5005.." to run
@@ -309,6 +309,14 @@ class commonSettingsForm(Form):
     trigger_check = BooleanField('Send test notification on save')
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
+
+class SingleBrowserStep(Form):
+    # default
+    operation = SelectField('Notification Format', choices=['Wait for text', 'Accept alert box'])
+    selector    = StringField('Selector', render_kw={"placeholder": "CSS or xPath selector"})
+    optional_value   = StringField('Optional value', render_kw={"placeholder": "Optional value"})
+    remove_button = SubmitField('-', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
+    add_button = SubmitField('+', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
 
 class watchForm(commonSettingsForm):
 
@@ -327,6 +335,8 @@ class watchForm(commonSettingsForm):
     method = SelectField('Request Method', choices=valid_method, default=default_method)
     ignore_status_codes = BooleanField('Ignore Status Codes (process non-2xx status codes as normal)', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
+
+    browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=2)
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
     save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
