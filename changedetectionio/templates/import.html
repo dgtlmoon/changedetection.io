@@ -4,6 +4,7 @@
 <div class="edit-form">
      <div class="inner">
         <form class="pure-form pure-form-aligned" action="{{url_for('import_page')}}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <fieldset class="pure-group">
               <legend>
                 Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma (,):

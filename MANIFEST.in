@@ -2,5 +2,5 @@ recursive-include changedetectionio/templates *
 recursive-include changedetectionio/static *
 include changedetection.py
 global-exclude *.pyc
-global-exclude *node_modules*
+global-exclude node_modules
 global-exclude venv

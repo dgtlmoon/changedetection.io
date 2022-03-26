@@ -1,10 +1,10 @@
 import hashlib
+import os
 import re
 import time
-
 import urllib3
-from inscriptis import get_text
 
+from inscriptis import get_text
 from changedetectionio import content_fetcher, html_tools
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -24,8 +24,14 @@ class perform_site_check():
         stripped_text_from_html = ""
 
         watch = self.datastore.data['watching'][uuid]
-        # Unset any existing notification error
 
+        # Protect against file:// access
+        if re.search(r'^file', watch['url'], re.IGNORECASE) and not os.getenv('ALLOW_FILE_URI', False):
+            raise Exception(
+                "file:// type access is denied for security reasons."
+            )
+
+        # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False}
 
         extra_headers = self.datastore.get_val(uuid, 'headers')
@@ -47,6 +53,7 @@ class perform_site_check():
             url = self.datastore.get_val(uuid, 'url')
             request_body = self.datastore.get_val(uuid, 'body')
             request_method = self.datastore.get_val(uuid, 'method')
+            ignore_status_code = self.datastore.get_val(uuid, 'ignore_status_codes')
 
             # Pluggable content fetcher
             prefer_backend = watch['fetch_backend']
@@ -58,7 +65,7 @@ class perform_site_check():
 
 
             fetcher = klass()
-            fetcher.run(url, timeout, request_headers, request_body, request_method)
+            fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code)
             # Fetching complete, now filters
             # @todo move to class / maybe inside of fetcher abstract base?
 

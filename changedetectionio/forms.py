@@ -325,6 +325,7 @@ class watchForm(commonSettingsForm):
     headers = StringDictKeyValue('Request Headers')
     body = TextAreaField('Request Body', [validators.Optional()])
     method = SelectField('Request Method', choices=valid_method, default=default_method)
+    ignore_status_codes = BooleanField('Ignore Status Codes (process non-2xx status codes as normal)', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
@@ -353,3 +354,5 @@ class globalSettingsForm(commonSettingsForm):
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     ignore_whitespace = BooleanField('Ignore whitespace')
+    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+    removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})

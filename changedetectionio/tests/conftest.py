@@ -42,6 +42,9 @@ def app(request):
     cleanup(app_config['datastore_path'])
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], include_default_watches=False)
     app = changedetection_app(app_config, datastore)
+
+    # Disable CSRF while running tests
+    app.config['WTF_CSRF_ENABLED'] = False
     app.config['STOP_THREADS'] = True
 
     def teardown():

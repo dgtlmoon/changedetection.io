@@ -32,7 +32,13 @@ class Fetcher():
         return self.error
 
     @abstractmethod
-    def run(self, url, timeout, request_headers, request_body, request_method):
+    def run(self,
+            url,
+            timeout,
+            request_headers,
+            request_body,
+            request_method,
+            ignore_status_codes=False):
         # Should set self.error, self.status_code and self.content
         pass
 
@@ -99,7 +105,13 @@ class html_webdriver(Fetcher):
         if proxy_args:
             self.proxy = SeleniumProxy(raw=proxy_args)
 
-    def run(self, url, timeout, request_headers, request_body, request_method):
+    def run(self,
+            url,
+            timeout,
+            request_headers,
+            request_body,
+            request_method,
+            ignore_status_codes=False):
 
         # request_body, request_method unused for now, until some magic in the future happens.
 
@@ -147,7 +159,13 @@ class html_webdriver(Fetcher):
 class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
 
-    def run(self, url, timeout, request_headers, request_body, request_method):
+    def run(self,
+            url,
+            timeout,
+            request_headers,
+            request_body,
+            request_method,
+            ignore_status_codes=False):
 
         r = requests.request(method=request_method,
                          data=request_body,
@@ -167,7 +185,7 @@ class html_requests(Fetcher):
 
         # @todo test this
         # @todo maybe you really want to test zero-byte return pages?
-        if not r or not r.content or not len(r.content):
+        if (not ignore_status_codes and not r) or not r.content or not len(r.content):
             raise EmptyReply(url=url, status_code=r.status_code)
 
         self.status_code = r.status_code

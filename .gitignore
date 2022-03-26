@@ -8,4 +8,5 @@ __pycache__
 build
 dist
 venv
+*.egg-info*
 .vscode/settings.json
