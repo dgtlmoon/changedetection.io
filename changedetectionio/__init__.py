@@ -480,6 +480,9 @@ def changedetection_app(config=None, datastore_o=None):
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
+        # Should always be set this way? or set it in the struct and just disable it?
+        form.browser_steps[0].optional_value.data = datastore.data['watching'][uuid]['url']
+        form.browser_steps[0].operation.data = 'Goto URL'
 
         if request.method == 'GET':
             if not uuid in datastore.data['watching']:
@@ -487,6 +490,8 @@ def changedetection_app(config=None, datastore_o=None):
                 return redirect(url_for('index'))
 
             populate_form_from_watch(form, datastore.data['watching'][uuid])
+
+
 
             if datastore.data['watching'][uuid]['fetch_backend'] is None:
                 form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']

@@ -345,6 +345,7 @@ class watchForm(commonSettingsForm):
     # Maybe via default=... ?
     browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=2)
 
+
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
     save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
 
