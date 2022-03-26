@@ -311,10 +311,13 @@ class commonSettingsForm(Form):
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
 
 class SingleBrowserStep(Form):
+    # Thumbnail field, I guess each step is snapshotted as snapshot-stepNo, then we just keep reloading for new snapshots/thumbnails?
+    # On remove/add we should remove all snapshots/thumbnails
+    
     # default
     operation = SelectField('Notification Format', choices=['Wait for text', 'Accept alert box'])
-    selector    = StringField('Selector', render_kw={"placeholder": "CSS or xPath selector"})
-    optional_value   = StringField('Optional value', render_kw={"placeholder": "Optional value"})
+    selector = StringField('Selector', render_kw={"placeholder": "CSS or xPath selector"})
+    optional_value = StringField('Optional value', render_kw={"placeholder": "Optional value"})
     remove_button = SubmitField('-', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
     add_button = SubmitField('+', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
 
