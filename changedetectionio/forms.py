@@ -313,13 +313,14 @@ class commonSettingsForm(Form):
 class SingleBrowserStep(Form):
     # Thumbnail field, I guess each step is snapshotted as snapshot-stepNo, then we just keep reloading for new snapshots/thumbnails?
     # On remove/add we should remove all snapshots/thumbnails
-    
+
     # default
     operation = SelectField('Notification Format', choices=['Wait for text', 'Accept alert box'])
     selector = StringField('Selector', render_kw={"placeholder": "CSS or xPath selector"})
     optional_value = StringField('Optional value', render_kw={"placeholder": "Optional value"})
     remove_button = SubmitField('-', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
     add_button = SubmitField('+', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
+    ignore_button = SubmitField('⊘', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Disable / Ignore'})
 
 class watchForm(commonSettingsForm):
 
@@ -339,6 +340,8 @@ class watchForm(commonSettingsForm):
     ignore_status_codes = BooleanField('Ignore Status Codes (process non-2xx status codes as normal)', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
+    # First one should be Go-to URL |watch.url| and Disable
+    # Maybe via default=... ?
     browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=2)
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
