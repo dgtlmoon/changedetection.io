@@ -8,7 +8,8 @@ from .util import live_server_setup
 
 def test_setup(live_server):
     live_server_setup(live_server)
-
+import multiprocessing
+multiprocessing.set_start_method('fork')
 
 def set_original_ignore_response():
     test_return_data = """<html>
@@ -86,6 +87,10 @@ def test_render_anchor_tag_content_true(client, live_server):
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
+    # check that the anchor tag content is rendered
+    res = client.get(url_for("preview_page", uuid="first"))
+    assert '(/modified_link)' in res.data.decode()
+
     # since the link has changed, and we chose to render anchor tag content,
     # we should detect a change (new 'unviewed' class)
     res = client.get(url_for("index"))
@@ -142,6 +147,10 @@ def test_render_anchor_tag_content_false(client, live_server):
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
+    # check that the anchor tag content is not rendered
+    res = client.get(url_for("preview_page", uuid="first"))
+    assert '(/modified_link)' not in res.data.decode()
+
     # even though the link has changed, we shouldn't detect a change since
     # we selected to not render anchor tag content (no new 'unviewed' class)
     res = client.get(url_for("index"))
@@ -195,6 +204,10 @@ def test_render_anchor_tag_content_default(client, live_server):
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
+
+    # check that the anchor tag content is not rendered
+    res = client.get(url_for("preview_page", uuid="first"))
+    assert '(/modified_link)' not in res.data.decode()
 
     # even though the link has changed, we shouldn't detect a change since
     # we did not select the setting and the default behaviour is to not
