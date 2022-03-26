@@ -8,8 +8,6 @@ from .util import live_server_setup
 
 def test_setup(live_server):
     live_server_setup(live_server)
-import multiprocessing
-multiprocessing.set_start_method('fork')
 
 def set_original_ignore_response():
     test_return_data = """<html>
