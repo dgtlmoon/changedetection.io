@@ -316,7 +316,7 @@ class SingleBrowserStep(Form):
 
     # default
     # each select <option data-enabled="enabled-0-0"
-    operation = SelectField('Operation', choices=['Goto URL', 'Wait for text', 'Accept alert box'])
+    operation = SelectField('Operation', choices=['Goto URL', 'Enter text in field', 'Wait for text', 'Accept alert box', 'Click button'])
     selector = StringField('Selector', render_kw={"placeholder": "CSS or xPath selector"})
     optional_value = StringField('Optional value', render_kw={"placeholder": "Optional value"})
     remove_button = SubmitField('-', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
