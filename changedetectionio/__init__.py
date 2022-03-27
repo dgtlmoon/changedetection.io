@@ -518,10 +518,11 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio import forms
         form = forms.watchForm(request.form)
 
-        # More for testing, possible to return the first/only
+        # More for testing, possible to return the first/only or last
         if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
-
+            uuid = list(datastore.data['watching'])[0]
+        if uuid == 'last':
+            uuid = list(datastore.data['watching'])[-1]
 
         if request.method == 'GET':
             if not uuid in datastore.data['watching']:
