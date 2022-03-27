@@ -4,6 +4,7 @@ import os
 import threading
 import time
 import uuid as uuid_builder
+from collections import defaultdict
 from copy import deepcopy
 from os import mkdir, path, unlink
 from threading import Lock
@@ -229,6 +230,18 @@ class ChangeDetectionStore:
         self.__data['has_unviewed'] = has_unviewed
 
         return self.__data
+
+    def get_tags(self, uuid):
+        return [x.strip() for x in self.data['watching'][uuid]['tag'].split(',')]
+
+    def get_tag_uuid_index(self):
+        index = defaultdict(set)
+        for uuid, watch in self.data['watching'].items():
+            # Support for comma separated list of tags.
+            for tag in watch['tag'].split(','):
+                tag = tag.strip()
+                index[tag].add(uuid)
+        return index
 
     def get_all_tags(self):
         tags = []

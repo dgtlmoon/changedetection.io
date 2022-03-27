@@ -328,6 +328,8 @@ class watchForm(commonSettingsForm):
     ignore_status_codes = BooleanField('Ignore Status Codes (process non-2xx status codes as normal)', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
+    share_filters_across_tags = BooleanField('Copy filter/trigger settings to all watches with the same tags')
+
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
     save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
 

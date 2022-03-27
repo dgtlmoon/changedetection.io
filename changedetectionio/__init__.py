@@ -469,7 +469,49 @@ def changedetection_app(config=None, datastore_o=None):
 
         return datastore.data['watching'][uuid]['previous_md5']
 
+    def update_watch(uuid, form, filters_only=False):
+        if filters_only:
+            update_obj = {}
+        else:
+            update_obj = {
+                # General
+                'url': form.url.data.strip(),
+                'title': form.title.data.strip(),
+                'tag': form.tag.data.strip(),
+                'minutes_between_check': form.minutes_between_check.data,
+                'extract_title_as_title': form.extract_title_as_title.data,
+                # Request
+                'fetch_backend': form.fetch_backend.data,
+                'method': form.method.data,
+                'headers': form.headers.data,
+                'body': form.body.data,
+                'ignore_status_codes': form.ignore_status_codes.data,
+                # Notifications
+                'notification_urls': form.notification_urls.data,
+                'notification_title': form.notification_title.data,
+                'notification_body': form.notification_body.data,
+                'notification_format': form.notification_format.data,
+            }
+        
+        # Filters and triggers
+        update_obj['css_filter'] = form.css_filter.data.strip()
+        update_obj['subtractive_selectors'] = form.subtractive_selectors.data
+        form_ignore_text = form.ignore_text.data
+        update_obj['ignore_text'] = form_ignore_text
+        update_obj['trigger_text'] = form.trigger_text.data
 
+        # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
+        if form_ignore_text:
+            if len(datastore.data['watching'][uuid]['history']):
+                update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
+        
+        # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
+        if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
+            if len(datastore.data['watching'][uuid]['history']):
+                update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
+
+        datastore.data['watching'][uuid].update(update_obj)
+    
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     @login_required
     def edit_page(uuid):
@@ -500,45 +542,14 @@ def changedetection_app(config=None, datastore_o=None):
             if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
                 form.fetch_backend.data = None
 
-            update_obj = {'url': form.url.data.strip(),
-                          'minutes_between_check': form.minutes_between_check.data,
-                          'tag': form.tag.data.strip(),
-                          'title': form.title.data.strip(),
-                          'headers': form.headers.data,
-                          'body': form.body.data,
-                          'method': form.method.data,
-                          'ignore_status_codes': form.ignore_status_codes.data,
-                          'fetch_backend': form.fetch_backend.data,
-                          'trigger_text': form.trigger_text.data,
-                          'notification_title': form.notification_title.data,
-                          'notification_body': form.notification_body.data,
-                          'notification_format': form.notification_format.data,
-                          'extract_title_as_title': form.extract_title_as_title.data,
-                          }
-
-            # Notification URLs
-            datastore.data['watching'][uuid]['notification_urls'] = form.notification_urls.data
-
-            # Ignore text
-            form_ignore_text = form.ignore_text.data
-            datastore.data['watching'][uuid]['ignore_text'] = form_ignore_text
-
-            # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
-            if form_ignore_text:
-                if len(datastore.data['watching'][uuid]['history']):
-                    update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
-
-
-            datastore.data['watching'][uuid]['css_filter'] = form.css_filter.data.strip()
-            datastore.data['watching'][uuid]['subtractive_selectors'] = form.subtractive_selectors.data
-
-            # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
-            if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
-                if len(datastore.data['watching'][uuid]['history']):
-                    update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
-
-            datastore.data['watching'][uuid].update(update_obj)
-
+            update_watch(uuid, form)
+            if form.share_filters_across_tags:
+                tags = datastore.get_tags(uuid)
+                tag_index = datastore.get_tag_uuid_index()
+                # Copy settings only to watches where all tags match, and remove uuid to prevent updating it twice
+                copy_settings_to = set.intersection(*[tag_index[tag] for tag in tags]).difference(uuid)
+                for extra_uuid in copy_settings_to:
+                    update_watch(extra_uuid, form, filters_only=True)
             flash("Updated watch.")
 
             # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
@@ -547,6 +558,9 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Queue the watch for immediate recheck
             update_q.put(uuid)
+            if form.share_filters_across_tags:
+                for extra_uuid in copy_settings_to:
+                    update_q.put(extra_uuid)
 
             if form.trigger_check.data:
                 if len(form.notification_urls.data):
