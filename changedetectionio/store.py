@@ -232,9 +232,12 @@ class ChangeDetectionStore:
         return self.__data
 
     def get_tags(self, uuid):
+        # Get list of tags given a watches uuid
         return [x.strip() for x in self.data['watching'][uuid]['tag'].split(',')]
 
     def get_tag_uuid_index(self):
+        # Create a dict of {tag: set(uuids)} for all tags in use, usable as a search
+        # index to find which watches belong to a given tag.
         index = defaultdict(set)
         for uuid, watch in self.data['watching'].items():
             # Support for comma separated list of tags.
