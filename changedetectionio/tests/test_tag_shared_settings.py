@@ -71,7 +71,7 @@ def set_modified_response():
         f.write(test_return_data)
 
 
-def test_share_filters_across_tags(client, live_server):
+def test_sync_filters_across_tags(client, live_server):
     sleep_time_for_fetch_thread = 3
 
     set_original_response()
@@ -102,7 +102,7 @@ def test_share_filters_across_tags(client, live_server):
             "tag": "one,two,three",  # the first watch we added is supposed to have these tags
             "headers": "",
             "fetch_backend": "html_requests",
-            "share_filters_across_tags": True,
+            "sync_filters_across_tags": True,
         },
         follow_redirects=True,
     )

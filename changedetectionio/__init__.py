@@ -544,7 +544,7 @@ def changedetection_app(config=None, datastore_o=None):
                 form.fetch_backend.data = None
 
             update_watch(uuid, form)
-            if form.share_filters_across_tags:
+            if form.sync_filters_across_tags:
                 tags = datastore.get_tags(uuid)
                 tag_index = datastore.get_tag_uuid_index()
                 # Copy settings only to watches where all tags match, and remove uuid to prevent updating it twice
@@ -559,7 +559,7 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Queue the watch for immediate recheck
             update_q.put(uuid)
-            if form.share_filters_across_tags:
+            if form.sync_filters_across_tags:
                 for extra_uuid in copy_settings_to:
                     update_q.put(extra_uuid)
 
