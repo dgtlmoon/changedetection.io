@@ -13,6 +13,7 @@ def same_slicer(l, a, b):
 def customSequenceMatcher(before, after, include_equal=False):
     cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \\t", a=before, b=after)
 
+    # @todo Line-by-line mode instead of buncghed, including `after` that is not in `before` (maybe unset?)
     for tag, alo, ahi, blo, bhi in cruncher.get_opcodes():
         if include_equal and tag == 'equal':
             g = before[alo:ahi]
@@ -23,9 +24,6 @@ def customSequenceMatcher(before, after, include_equal=False):
         elif tag == 'replace':
             g = ["(changed) " + i for i in same_slicer(before, alo, ahi)]
             g += ["(into   ) " + i for i in same_slicer(after, blo, bhi)]
-            # Bunched difference mode
-            # g = ["(changed) " + i for i in before[blo:bhi]]
-            # g.append("(into   ) " + i for i in after[alo:ahi])
             yield g
         elif tag == 'insert':
             g = ["(added  ) " + i for i in same_slicer(after, blo, bhi)]
