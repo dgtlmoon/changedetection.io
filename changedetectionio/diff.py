@@ -11,13 +11,22 @@ def customSequenceMatcher(before, after, include_equal=False):
             g = before[alo:ahi]
             yield g
         elif tag == 'delete':
-            g = "(removed) {}".format(before[alo])
+            g = ["(removed) " + i for i in before[blo:bhi]]
             yield g
         elif tag == 'replace':
-            g = ["(changed) {}".format(before[alo]), "(-> into) {}".format(after[blo])]
+            # Line-by-line mode
+            g=[]
+            for i in range(blo,bhi):
+                g.append("(changed) "+before[i])
+                if len(after) >= len(before):
+                    g.append("(into  ) " + after[i])
+
+            # Bunched difference mode
+            #g = ["(changed) " + i for i in before[blo:bhi]]
+            #g.append("(into   ) " + i for i in after[alo:ahi])
             yield g
         elif tag == 'insert':
-            g = "(added) {}".format(after[blo])
+            g = ["(added  ) " + i for i in after[alo:ahi]]
             yield g
 
 # only_differences - only return info about the differences, no context
