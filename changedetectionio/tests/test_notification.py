@@ -125,7 +125,7 @@ def test_check_notification(client, live_server):
     # Diff was correctly executed
     assert "Diff Full: Some initial text" in notification_submission
     assert "Diff: (changed) Which is across multiple lines" in notification_submission
-    assert "(-> into) which has this one new line" in notification_submission
+    assert "(into   ) which has this one new line" in notification_submission
 
 
     if env_base_url:
