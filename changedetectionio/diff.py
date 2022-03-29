@@ -2,6 +2,13 @@
 
 import difflib
 
+
+def same_slicer(l, a, b):
+    if a == b:
+        return [l[a]]
+    else:
+        return l[a:b]
+
 # like .compare but a little different output
 def customSequenceMatcher(before, after, include_equal=False):
     cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \\t", a=before, b=after)
@@ -11,22 +18,17 @@ def customSequenceMatcher(before, after, include_equal=False):
             g = before[alo:ahi]
             yield g
         elif tag == 'delete':
-            g = ["(removed) " + i for i in before[blo:bhi]]
+            g = ["(removed) " + i for i in same_slicer(before, blo, bhi)]
             yield g
         elif tag == 'replace':
-            # Line-by-line mode
-            g=[]
-            for i in range(blo,bhi):
-                g.append("(changed) "+before[i])
-                if len(after) >= len(before):
-                    g.append("(into  ) " + after[i])
-
+            g = ["(changed) " + i for i in same_slicer(before, alo, ahi)]
+            g += ["(into   ) " + i for i in same_slicer(after, blo, bhi)]
             # Bunched difference mode
-            #g = ["(changed) " + i for i in before[blo:bhi]]
-            #g.append("(into   ) " + i for i in after[alo:ahi])
+            # g = ["(changed) " + i for i in before[blo:bhi]]
+            # g.append("(into   ) " + i for i in after[alo:ahi])
             yield g
         elif tag == 'insert':
-            g = ["(added  ) " + i for i in after[alo:ahi]]
+            g = ["(added  ) " + i for i in same_slicer(after, blo, bhi)]
             yield g
 
 # only_differences - only return info about the differences, no context
