@@ -19,7 +19,7 @@ def customSequenceMatcher(before, after, include_equal=False):
             g = before[alo:ahi]
             yield g
         elif tag == 'delete':
-            g = ["(removed) " + i for i in same_slicer(before, blo, bhi)]
+            g = ["(removed) " + i for i in same_slicer(before, alo, ahi)]
             yield g
         elif tag == 'replace':
             g = ["(changed) " + i for i in same_slicer(before, alo, ahi)]
