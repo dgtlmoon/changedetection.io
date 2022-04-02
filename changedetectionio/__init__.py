@@ -649,7 +649,7 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['global_ignore_text'] =  form.global_ignore_text.data
             datastore.data['settings']['application']['ignore_whitespace'] = form.ignore_whitespace.data
             datastore.data['settings']['application']['real_browser_save_screenshot'] = form.real_browser_save_screenshot.data
-            
+
             if form.trigger_check.data:
                 if len(form.notification_urls.data):
                     n_object = {'watch_url': "Test from changedetection.io!",

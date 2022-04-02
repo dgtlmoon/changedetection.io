@@ -35,15 +35,15 @@
     <a onclick="next_diff();">Jump</a>
 </div>
 
-{% if screenshot %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <div class="tabs">
     <ul>
         <li class="tab" id="default-tab"><a href="#text">Text</a></li>
+{% if screenshot %}
         <li class="tab"><a href="#screenshot">Screenshot</a></li>
+{% endif %}
     </ul>
 </div>
-{% endif %}
 
 <div id="diff-ui">
      <div class="tab-pane-inner" id="text">
