@@ -974,7 +974,12 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
         if group == 'screenshot':
+
             from flask import make_response
+
+            # Could be sensitive, follow password requirements
+            if datastore.data['settings']['application']['password'] and not flask_login.current_user.is_authenticated:
+                abort(403)
 
             # These files should be in our subdirectory
             try:
