@@ -776,6 +776,9 @@ def changedetection_app(config=None, datastore_o=None):
         except Exception as e:
             previous_version_file_contents = "Unable to read {}.\n".format(previous_file)
 
+
+        screenshot_url = datastore.get_screenshot(uuid)
+
         output = render_template("diff.html", watch_a=watch,
                                  newest=newest_version_file_contents,
                                  previous=previous_version_file_contents,
@@ -786,7 +789,8 @@ def changedetection_app(config=None, datastore_o=None):
                                  current_previous_version=str(previous_version),
                                  current_diff_url=watch['url'],
                                  extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
-                                 left_sticky=True)
+                                 left_sticky=True,
+                                 screenshot=screenshot_url)
 
         return output
 
@@ -967,6 +971,23 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
+        if group == 'screenshot':
+            from flask import make_response
+
+            # These files should be in our subdirectory
+            try:
+                # set nocache, set content-type
+                watch_dir = datastore_o.datastore_path + "/" + filename
+                response = make_response(send_from_directory(filename="last-screenshot.png", directory=watch_dir, path=watch_dir + "/last-screenshot.png"))
+                response.headers['Content-type'] = 'image/png'
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = 0
+                return response
+
+            except FileNotFoundError:
+                abort(404)
+
         # These files should be in our subdirectory
         try:
             return send_from_directory("static/{}".format(group), path=filename)

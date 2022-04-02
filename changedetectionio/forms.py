@@ -345,7 +345,6 @@ class watchForm(commonSettingsForm):
         return result
 
 class globalSettingsForm(commonSettingsForm):
-
     password = SaltyPasswordField()
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.NumberRange(min=1)])
@@ -355,4 +354,5 @@ class globalSettingsForm(commonSettingsForm):
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     ignore_whitespace = BooleanField('Ignore whitespace')
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+    real_browser_save_screenshot = BooleanField('Save last screenshot when using Chrome?')
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})

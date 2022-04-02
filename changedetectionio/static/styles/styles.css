@@ -317,7 +317,7 @@ footer {
     right: auto; }
   section.content {
     padding-top: 110px; }
-  div.tabs ul li {
+  div.tabs.collapsable ul li {
     display: block;
     border-radius: 0px; }
   input[type='text'] {
@@ -403,14 +403,15 @@ and also iPads specifically.
   padding: 20px;
   border-radius: 5px; }
 
+.tab-pane-inner {
+  padding: 0px; }
+  .tab-pane-inner:not(:target) {
+    display: none; }
+  .tab-pane-inner:target {
+    display: block; }
+
 .edit-form {
   min-width: 70%; }
-  .edit-form .tab-pane-inner {
-    padding: 0px; }
-    .edit-form .tab-pane-inner:not(:target) {
-      display: none; }
-    .edit-form .tab-pane-inner:target {
-      display: block; }
   .edit-form .box-wrap {
     position: relative; }
   .edit-form .inner {

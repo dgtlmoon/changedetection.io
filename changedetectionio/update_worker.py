@@ -38,11 +38,12 @@ class update_worker(threading.Thread):
 
                     changed_detected = False
                     contents = ""
+                    screenshot = False
                     update_obj= {}
                     now = time.time()
 
                     try:
-                        changed_detected, update_obj, contents = update_handler.run(uuid)
+                        changed_detected, update_obj, contents, screenshot = update_handler.run(uuid)
 
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
@@ -140,6 +141,9 @@ class update_worker(threading.Thread):
                         # Always record that we atleast tried
                         self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
                                                                            'last_checked': round(time.time())})
+                        # Always save the screenshot if it's available
+                        if screenshot:
+                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
 
                 self.current_uuid = None  # Done
                 self.q.task_done()
