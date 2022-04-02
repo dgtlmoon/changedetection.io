@@ -390,6 +390,7 @@ class ChangeDetectionStore:
 
         return False
 
+    # Save as PNG, PNG is larger but better for doing visual diff in the future
     def save_screenshot(self, watch_uuid, screenshot: bytes):
         output_path = "{}/{}".format(self.datastore_path, watch_uuid)
         fname = "{}/last-screenshot.png".format(output_path)
