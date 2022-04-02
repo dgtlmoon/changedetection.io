@@ -625,6 +625,7 @@ def changedetection_app(config=None, datastore_o=None):
             form.notification_body.data = datastore.data['settings']['application']['notification_body']
             form.notification_format.data = datastore.data['settings']['application']['notification_format']
             form.base_url.data = datastore.data['settings']['application']['base_url']
+            form.real_browser_save_screenshot.data = datastore.data['settings']['application']['real_browser_save_screenshot']
 
         if request.method == 'POST' and form.data.get('removepassword_button') == True:
             # Password unset is a GET, but we can lock the session to a salted env password to always need the password
@@ -647,7 +648,8 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['global_subtractive_selectors'] = form.global_subtractive_selectors.data
             datastore.data['settings']['application']['global_ignore_text'] =  form.global_ignore_text.data
             datastore.data['settings']['application']['ignore_whitespace'] = form.ignore_whitespace.data
-
+            datastore.data['settings']['application']['real_browser_save_screenshot'] = form.real_browser_save_screenshot.data
+            
             if form.trigger_check.data:
                 if len(form.notification_urls.data):
                     n_object = {'watch_url': "Test from changedetection.io!",
