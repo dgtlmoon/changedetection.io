@@ -8,7 +8,7 @@
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 
 <div class="edit-form">
-    <div class="tabs">
+    <div class="tabs collapsable">
         <ul>
             <li class="tab" id="default-tab"><a href="#general">General</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
@@ -50,6 +50,12 @@
                         {{ render_field(form.extract_title_as_title) }}
                         <span class="pure-form-message-inline">Note: This will automatically apply to all existing watches.</span>
                     </div>
+
+                    <div class="pure-control-group">
+                        {{ render_field(form.real_browser_save_screenshot) }}
+                        <span class="pure-form-message-inline">When using a Chrome browser, a screenshot from the last check will be available on the Diff page</span>
+                    </div>
+
                 </fieldset>
             </div>
 

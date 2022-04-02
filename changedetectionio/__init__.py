@@ -625,6 +625,7 @@ def changedetection_app(config=None, datastore_o=None):
             form.notification_body.data = datastore.data['settings']['application']['notification_body']
             form.notification_format.data = datastore.data['settings']['application']['notification_format']
             form.base_url.data = datastore.data['settings']['application']['base_url']
+            form.real_browser_save_screenshot.data = datastore.data['settings']['application']['real_browser_save_screenshot']
 
         if request.method == 'POST' and form.data.get('removepassword_button') == True:
             # Password unset is a GET, but we can lock the session to a salted env password to always need the password
@@ -647,7 +648,8 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['global_subtractive_selectors'] = form.global_subtractive_selectors.data
             datastore.data['settings']['application']['global_ignore_text'] =  form.global_ignore_text.data
             datastore.data['settings']['application']['ignore_whitespace'] = form.ignore_whitespace.data
-
+            datastore.data['settings']['application']['real_browser_save_screenshot'] = form.real_browser_save_screenshot.data
+            
             if form.trigger_check.data:
                 if len(form.notification_urls.data):
                     n_object = {'watch_url': "Test from changedetection.io!",
@@ -776,6 +778,9 @@ def changedetection_app(config=None, datastore_o=None):
         except Exception as e:
             previous_version_file_contents = "Unable to read {}.\n".format(previous_file)
 
+
+        screenshot_url = datastore.get_screenshot(uuid)
+
         output = render_template("diff.html", watch_a=watch,
                                  newest=newest_version_file_contents,
                                  previous=previous_version_file_contents,
@@ -786,7 +791,8 @@ def changedetection_app(config=None, datastore_o=None):
                                  current_previous_version=str(previous_version),
                                  current_diff_url=watch['url'],
                                  extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
-                                 left_sticky=True)
+                                 left_sticky=True,
+                                 screenshot=screenshot_url)
 
         return output
 
@@ -846,15 +852,17 @@ def changedetection_app(config=None, datastore_o=None):
         else:
             content.append({'line': "No history found", 'classes': ''})
 
-
+        screenshot_url = datastore.get_screenshot(uuid)
         output = render_template("preview.html",
                                  content=content,
                                  extra_stylesheets=extra_stylesheets,
                                  ignored_line_numbers=ignored_line_numbers,
                                  triggered_line_numbers=trigger_line_numbers,
                                  current_diff_url=watch['url'],
+                                 screenshot=screenshot_url,
                                  watch=watch,
                                  uuid=uuid)
+        
         return output
 
     @app.route("/settings/notification-logs", methods=['GET'])
@@ -967,6 +975,28 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
+        if group == 'screenshot':
+
+            from flask import make_response
+
+            # Could be sensitive, follow password requirements
+            if datastore.data['settings']['application']['password'] and not flask_login.current_user.is_authenticated:
+                abort(403)
+
+            # These files should be in our subdirectory
+            try:
+                # set nocache, set content-type
+                watch_dir = datastore_o.datastore_path + "/" + filename
+                response = make_response(send_from_directory(filename="last-screenshot.png", directory=watch_dir, path=watch_dir + "/last-screenshot.png"))
+                response.headers['Content-type'] = 'image/png'
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = 0
+                return response
+
+            except FileNotFoundError:
+                abort(404)
+
         # These files should be in our subdirectory
         try:
             return send_from_directory("static/{}".format(group), path=filename)

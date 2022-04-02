@@ -35,7 +35,7 @@ a.github-link {
 
 section.content {
   padding-top: 5em;
-  padding-bottom: 5em;
+  padding-bottom: 1em;
   flex-direction: column;
   display: flex;
   align-items: center;
@@ -437,7 +437,7 @@ footer {
   }
 
   // Make the tabs easier to hit, they will be all nice and horizontal
-  div.tabs ul li {
+  div.tabs.collapsable ul li {
     display: block;
     border-radius: 0px;
   }
@@ -573,10 +573,7 @@ $form-edge-padding: 20px;
   }
 }
 
-
-.edit-form {
-  min-width: 70%;
-  .tab-pane-inner {
+.tab-pane-inner {
     &:not(:target) {
         display: none;
     }
@@ -585,7 +582,11 @@ $form-edge-padding: 20px;
     }
     // doesnt need padding because theres another row of buttons/activity
     padding: 0px;
-  }
+}
+
+.edit-form {
+  min-width: 70%;
+
   .box-wrap {
     position: relative;
   }

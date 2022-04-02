@@ -57,6 +57,7 @@ class ChangeDetectionStore:
                     'notification_title': default_notification_title,
                     'notification_body': default_notification_body,
                     'notification_format': default_notification_format,
+                    'real_browser_save_screenshot': True,
                 }
             }
         }
@@ -380,6 +381,22 @@ class ChangeDetectionStore:
             f.close()
 
         return fname
+
+    def get_screenshot(self, watch_uuid):
+        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
+        fname = "{}/last-screenshot.png".format(output_path)
+        if path.isfile(fname):
+            return fname
+
+        return False
+
+    # Save as PNG, PNG is larger but better for doing visual diff in the future
+    def save_screenshot(self, watch_uuid, screenshot: bytes):
+        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
+        fname = "{}/last-screenshot.png".format(output_path)
+        with open(fname, 'wb') as f:
+            f.write(screenshot)
+            f.close()
 
     def sync_to_json(self):
         logging.info("Saving JSON..")

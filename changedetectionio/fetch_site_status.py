@@ -21,6 +21,7 @@ class perform_site_check():
         timestamp = int(time.time())  # used for storage etc too
 
         changed_detected = False
+        screenshot = False # as bytes
         stripped_text_from_html = ""
 
         watch = self.datastore.data['watching'][uuid]
@@ -171,5 +172,9 @@ class perform_site_check():
                     if not watch['title'] or not len(watch['title']):
                         update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
 
+            if self.datastore.data['settings']['application'].get('real_browser_save_screenshot', True):
+                screenshot = fetcher.screenshot()
 
-        return changed_detected, update_obj, text_content_before_ignored_filter
+            fetcher.quit()
+
+        return changed_detected, update_obj, text_content_before_ignored_filter, screenshot
