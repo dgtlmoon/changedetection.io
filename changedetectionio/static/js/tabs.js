@@ -1,6 +1,11 @@
 // Rewrite this is a plugin.. is all this JS really 'worth it?'
 
 
+if(!window.location.hash) {
+  var tab=document.querySelectorAll("#default-tab a");
+  tab[0].click();
+}
+
 window.addEventListener('hashchange', function() {
   var tabs = document.getElementsByClassName('active');
   while (tabs[0]) {
@@ -20,7 +25,6 @@ if (!has_errors.length) {
 } else {
   focus_error_tab();
 }
-
 
 function set_active_tab() {
   var tab=document.querySelectorAll("a[href='"+location.hash+"']");
