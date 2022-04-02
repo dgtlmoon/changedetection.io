@@ -850,15 +850,17 @@ def changedetection_app(config=None, datastore_o=None):
         else:
             content.append({'line': "No history found", 'classes': ''})
 
-
+        screenshot_url = datastore.get_screenshot(uuid)
         output = render_template("preview.html",
                                  content=content,
                                  extra_stylesheets=extra_stylesheets,
                                  ignored_line_numbers=ignored_line_numbers,
                                  triggered_line_numbers=trigger_line_numbers,
                                  current_diff_url=watch['url'],
+                                 screenshot=screenshot_url,
                                  watch=watch,
                                  uuid=uuid)
+        
         return output
 
     @app.route("/settings/notification-logs", methods=['GET'])
