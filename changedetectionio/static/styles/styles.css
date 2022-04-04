@@ -244,7 +244,7 @@ footer {
 .sticky-tab {
   position: absolute;
   top: 60px;
-  font-size: 8px;
+  font-size: 65%;
   background: #fff;
   padding: 10px; }
   .sticky-tab#left-sticky {
@@ -310,14 +310,23 @@ footer {
   #nav-menu {
     overflow-x: scroll; } }
 
-/*
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 800px) {
+  div.sticky-tab#hosted-sticky {
+    top: 60px;
+    left: 0px;
+    right: auto; }
+  section.content {
+    padding-top: 110px; }
+  div.tabs ul li {
+    display: block;
+    border-radius: 0px; }
+  input[type='text'] {
+    width: 100%; }
+  /*
 Max width before this PARTICULAR table gets nasty
 This query will take effect for any screen smaller than 760px
 and also iPads specifically.
 */
-@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
-  input[type='text'] {
-    width: 100%; }
   .watch-table {
     /* Force table to not be like tables anymore */
     /* Force table to not be like tables anymore */
