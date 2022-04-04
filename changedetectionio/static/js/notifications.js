@@ -28,7 +28,7 @@ $(document).ready(function() {
 
     $.ajax({
       type: "POST",
-      url: '/notification/send-test',
+      url: notification_base_url,
       data : data
     }).done(function(data){
       console.log(data);
