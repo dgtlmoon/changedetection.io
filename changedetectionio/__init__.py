@@ -410,6 +410,9 @@ def changedetection_app(config=None, datastore_o=None):
         apobj = apprise.Apprise()
 
         # validate URLS
+        if not len(request.form['notification_urls'].strip()):
+            return make_response({'error': 'No Notification URLs set'}, 400)
+
         for server_url in request.form['notification_urls'].splitlines():
             if not apobj.add(server_url):
                 message = '{} is not a valid AppRise URL.'.format(server_url)
