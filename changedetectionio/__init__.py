@@ -400,6 +400,34 @@ def changedetection_app(config=None, datastore_o=None):
 
         return output
 
+
+    # AJAX endpoint for sending a test
+    @app.route("/notification/send-test", methods=['POST'])
+    @login_required
+    def ajax_callback_send_notification_test():
+
+        import apprise
+        apobj = apprise.Apprise()
+
+        # validate URLS
+        for server_url in request.form['notification_urls'].splitlines():
+            if not apobj.add(server_url):
+                message = '{} is not a valid AppRise URL.'.format(server_url)
+                return make_response({'error': message}, 400)
+
+        try:
+            n_object = {'watch_url': request.form['window_url'],
+                        'notification_urls': request.form['notification_urls'].splitlines(),
+                        'notification_title': request.form['notification_title'].strip(),
+                        'notification_body': request.form['notification_body'].strip(),
+                        'notification_format': request.form['notification_format'].strip()
+                        }
+            notification_q.put(n_object)
+        except Exception as e:
+            return make_response({'error': str(e)}, 400)
+
+        return 'OK'
+
     @app.route("/scrub", methods=['GET', 'POST'])
     @login_required
     def scrub_page():
@@ -561,20 +589,6 @@ def changedetection_app(config=None, datastore_o=None):
             # Queue the watch for immediate recheck
             update_q.put(uuid)
 
-            if form.trigger_check.data:
-                if len(form.notification_urls.data):
-                    n_object = {'watch_url': form.url.data.strip(),
-                                'notification_urls': form.notification_urls.data,
-                                'notification_title': form.notification_title.data,
-                                'notification_body': form.notification_body.data,
-                                'notification_format': form.notification_format.data,
-                                'uuid': uuid
-                                }
-                    notification_q.put(n_object)
-                    flash('Test notification queued.')
-                else:
-                    flash('No notification URLs set, cannot send test.', 'error')
-
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff' and not form.save_and_preview_button.data:
                 return redirect(url_for('diff_history_page', uuid=uuid))
@@ -649,19 +663,6 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['global_ignore_text'] =  form.global_ignore_text.data
             datastore.data['settings']['application']['ignore_whitespace'] = form.ignore_whitespace.data
             datastore.data['settings']['application']['real_browser_save_screenshot'] = form.real_browser_save_screenshot.data
-
-            if form.trigger_check.data:
-                if len(form.notification_urls.data):
-                    n_object = {'watch_url': "Test from changedetection.io!",
-                                'notification_urls': form.notification_urls.data,
-                                'notification_title': form.notification_title.data,
-                                'notification_body': form.notification_body.data,
-                                'notification_format': form.notification_format.data,
-                                }
-                    notification_q.put(n_object)
-                    flash('Test notification queued.')
-                else:
-                    flash('No notification URLs set, cannot send test.', 'error')
 
             if not os.getenv("SALTED_PASS", False) and form.password.encrypted_password:
                 datastore.data['settings']['application']['password'] = form.password.encrypted_password
