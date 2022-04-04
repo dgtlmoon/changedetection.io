@@ -1,12 +1,9 @@
 import hashlib
-import urllib3
-from . import html_tools
 import os
 import re
 import time
 import urllib3
 
-from inscriptis import get_text
 from changedetectionio import content_fetcher, html_tools
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
