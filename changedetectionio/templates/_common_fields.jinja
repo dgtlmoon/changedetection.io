@@ -18,6 +18,8 @@
                                 <li>Go here for <a href="{{url_for('notification_logs')}}">Notification debug logs</a></li>
                               </ul>
                             </div>
+                            <br/>
+                            <a id="send-test-notification" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Send test notification</a>
                         </div>
                         <div id="notification-customisation">
                             <div class="pure-control-group">
@@ -92,8 +94,5 @@
                                 Your <code>BASE_URL</code> var is currently "{{current_base_url}}"
                             </span>
                             </div>
-                        </div>
-                        <div class="pure-control-group">
-                            {{ render_field(form.trigger_check) }}
                         </div>
 {% endmacro %}

@@ -306,7 +306,6 @@ class commonSettingsForm(Form):
     notification_title = StringField('Notification Title', default=default_notification_title, validators=[validators.Optional(), ValidateTokensList()])
     notification_body = TextAreaField('Notification Body', default=default_notification_body, validators=[validators.Optional(), ValidateTokensList()])
     notification_format = SelectField('Notification Format', choices=valid_notification_formats.keys(), default=default_notification_format)
-    trigger_check = BooleanField('Send test notification on save')
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
 

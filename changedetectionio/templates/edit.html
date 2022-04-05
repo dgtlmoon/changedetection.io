@@ -4,6 +4,10 @@
 {% from '_helpers.jinja' import render_button %}
 {% from '_common_fields.jinja' import render_common_settings_form %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
+<script>
+    var notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
+</script>
 
 <div class="edit-form monospaced-textarea">
 
