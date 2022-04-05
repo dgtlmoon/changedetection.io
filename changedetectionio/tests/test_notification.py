@@ -154,6 +154,11 @@ def test_check_notification(client, live_server):
     time.sleep(1)
     assert os.path.exists("test-datastore/notification.txt") == False
 
+    # cleanup for the next
+    client.get(
+        url_for("api_delete", uuid="first"),
+        follow_redirects=True
+    )
 
 
 def test_notification_validation(client, live_server):
@@ -167,6 +172,8 @@ def test_notification_validation(client, live_server):
         data={"url": test_url, "tag": 'nice one'},
         follow_redirects=True
     )
+    with open("xxx.bin", "wb") as f:
+        f.write(res.data)
     assert b"Watch added" in res.data
 
     # Re #360 some validation
@@ -191,7 +198,7 @@ def test_notification_validation(client, live_server):
         data={"notification_title": "New ChangeDetection.io Notification - {watch_url}",
               "notification_body": "Rubbish: {rubbish}\n",
               "notification_format": "Text",
-              "notification_urls": "json://foobar.com",
+              "notification_urls": "json://localhost/foobar",
               "time_between_check": {'seconds': 180},
               "fetch_backend": "html_requests"
               },
@@ -199,3 +206,9 @@ def test_notification_validation(client, live_server):
     )
 
     assert bytes("is not a valid token".encode('utf-8')) in res.data
+
+    # cleanup for the next
+    client.get(
+        url_for("api_delete", uuid="first"),
+        follow_redirects=True
+    )

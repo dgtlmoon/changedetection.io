@@ -1031,10 +1031,14 @@ def changedetection_app(config=None, datastore_o=None):
             flash("Error")
             return redirect(url_for('index'))
 
+
     @app.route("/api/delete", methods=['GET'])
     @login_required
     def api_delete():
         uuid = request.args.get('uuid')
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
         datastore.delete(uuid)
         flash('Deleted.')
 
