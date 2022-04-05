@@ -303,6 +303,10 @@ def changedetection_app(config=None, datastore_o=None):
         for watch in sorted_watches:
 
             dates = list(watch['history'].keys())
+            # Re #521 - Don't bother processing this one if theres less than 2 snapshots, means we never had a change detected.
+            if len(dates) < 2:
+                continue
+
             # Convert to int, sort and back to str again
             # @todo replace datastore getter that does this automatically
             dates = [int(i) for i in dates]
@@ -315,7 +319,6 @@ def changedetection_app(config=None, datastore_o=None):
                 # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
                 guid = "{}/{}".format(watch['uuid'], watch['last_changed'])
                 fe = fg.add_entry()
-
 
                 # Include a link to the diff page, they will have to login here to see if password protection is enabled.
                 # Description is the page you watch, link takes you to the diff JS UI page
