@@ -35,6 +35,24 @@ def set_modified_response():
 
     return None
 
+def set_more_modified_response():
+    test_return_data = """<html>
+    <head><title>modified head title</title></head>
+    <body>
+     Some initial text</br>
+     <p>which has this one new line</p>
+     </br>
+     So let's see what happens.  </br>
+     Ohh yeah awesome<br/>
+     </body>
+     </html>
+    """
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+
+    return None
+
 
 def live_server_setup(live_server):
 
@@ -82,7 +100,7 @@ def live_server_setup(live_server):
             if data != None:
                 f.write(data)
 
-        print("\n>> Test notification endpoint was hit.\n")
+        print("\n>> Test notification endpoint was hit.\n", data)
         return "Text was set"
 
 
