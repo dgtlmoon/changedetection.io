@@ -70,6 +70,10 @@ Docker standalone
 $ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
 ```
 
+### Windows
+
+See the install instructions at the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Microsoft-Windows
+
 ### Python Pip
 
 Check out our pypi page https://pypi.org/project/changedetection.io/
@@ -163,9 +167,6 @@ See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configura
 
 Raspberry Pi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! See the wiki for [details](https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver)
 
-## Windows support?
-
-YES! See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Microsoft-Windows
 
 ## Support us
 
