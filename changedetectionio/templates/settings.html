@@ -3,13 +3,16 @@
 {% block content %}
 {% from '_helpers.jinja' import render_field, render_button %}
 {% from '_common_fields.jinja' import render_common_settings_form %}
-
+<script>
+    const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
+{% if emailprefix %}
+    const email_notification_prefix=JSON.parse('{{emailprefix|tojson}}');
+{% endif %}
+</script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='settings.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
-<script>
-    var notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
-</script>
+
 <div class="edit-form">
     <div class="tabs collapsable">
         <ul>
@@ -65,7 +68,7 @@
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div class="field-group">
-                        {{ render_common_settings_form(form, current_base_url) }}
+                        {{ render_common_settings_form(form, current_base_url, emailprefix) }}
                     </div>
                 </fieldset>
                 <a href="{{url_for('notification_logs')}}">Notification debug logs</a>

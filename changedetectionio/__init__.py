@@ -417,9 +417,10 @@ def changedetection_app(config=None, datastore_o=None):
             return make_response({'error': 'No Notification URLs set'}, 400)
 
         for server_url in request.form['notification_urls'].splitlines():
-            if not apobj.add(server_url):
-                message = '{} is not a valid AppRise URL.'.format(server_url)
-                return make_response({'error': message}, 400)
+            if len(server_url.strip()):
+                if not apobj.add(server_url):
+                    message = '{} is not a valid AppRise URL.'.format(server_url)
+                    return make_response({'error': message}, 400)
 
         try:
             n_object = {'watch_url': request.form['window_url'],
@@ -620,7 +621,8 @@ def changedetection_app(config=None, datastore_o=None):
                                      watch=datastore.data['watching'][uuid],
                                      form=form,
                                      using_default_minutes=using_default_minutes,
-                                     current_base_url = datastore.data['settings']['application']['base_url']
+                                     current_base_url=datastore.data['settings']['application']['base_url'],
+                                     emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False)
                                      )
 
         return output
@@ -685,7 +687,8 @@ def changedetection_app(config=None, datastore_o=None):
         output = render_template("settings.html",
                                  form=form,
                                  current_base_url = datastore.data['settings']['application']['base_url'],
-                                 hide_remove_pass=os.getenv("SALTED_PASS", False))
+                                 hide_remove_pass=os.getenv("SALTED_PASS", False),
+                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False))
 
         return output
 

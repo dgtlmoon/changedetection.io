@@ -4,10 +4,13 @@
 {% from '_helpers.jinja' import render_button %}
 {% from '_common_fields.jinja' import render_common_settings_form %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 <script>
-    var notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
+    const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
+{% if emailprefix %}
+    const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
+{% endif %}
 </script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 
 <div class="edit-form monospaced-textarea">
 
@@ -96,7 +99,7 @@ User-Agent: wonderbra 1.0") }}
                 <strong>Note: <i>These settings override the global settings for this watch.</i></strong>
                 <fieldset>
                     <div class="field-group">
-                        {{ render_common_settings_form(form, current_base_url) }}
+                        {{ render_common_settings_form(form, current_base_url, emailprefix) }}
                     </div>
                 </fieldset>
             </div>
