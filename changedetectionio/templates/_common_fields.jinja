@@ -1,7 +1,7 @@
 
 {% from '_helpers.jinja' import render_field %}
 
-{% macro render_common_settings_form(form, current_base_url) %}
+{% macro render_common_settings_form(form, current_base_url, emailprefix) %}
 
                         <div class="pure-control-group">
                             {{ render_field(form.notification_urls, rows=5, placeholder="Examples:
@@ -20,6 +20,10 @@
                             </div>
                             <br/>
                             <a id="send-test-notification" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Send test notification</a>
+{% if emailprefix %}
+                            <a id="add-email-helper" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Add email</a>
+
+{% endif %}
                         </div>
                         <div id="notification-customisation">
                             <div class="pure-control-group">
