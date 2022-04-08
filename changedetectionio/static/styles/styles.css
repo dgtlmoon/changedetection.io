@@ -31,7 +31,7 @@ a.github-link {
 
 section.content {
   padding-top: 5em;
-  padding-bottom: 5em;
+  padding-bottom: 1em;
   flex-direction: column;
   display: flex;
   align-items: center;
@@ -184,6 +184,12 @@ body:after, body:before {
   border: 1px solid #ccc;
   padding: 1rem;
   border-radius: 5px; }
+
+#notification-error-log {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 5px;
+  overflow-wrap: break-word; }
 
 #token-table.pure-table td, #token-table.pure-table th {
   font-size: 80%; }
@@ -411,7 +417,9 @@ and also iPads specifically.
     display: block; }
 
 .edit-form {
-  min-width: 70%; }
+  min-width: 70%;
+  /* so it cant overflow */
+  max-width: 95%; }
   .edit-form .box-wrap {
     position: relative; }
   .edit-form .inner {

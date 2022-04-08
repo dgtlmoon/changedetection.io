@@ -245,6 +245,12 @@ body:after, body:before {
     border-radius: 5px;
 }
 
+#notification-error-log {
+    border: 1px solid #ccc;
+    padding: 1rem;
+    border-radius: 5px;
+    overflow-wrap: break-word;
+}
 
 #token-table {
     &.pure-table td, &.pure-table th {
@@ -586,7 +592,8 @@ $form-edge-padding: 20px;
 
 .edit-form {
   min-width: 70%;
-
+  /* so it cant overflow */
+  max-width: 95%;
   .box-wrap {
     position: relative;
   }
