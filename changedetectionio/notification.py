@@ -54,16 +54,27 @@ def process_notification(n_object, datastore):
         url = url.strip()
         if len(url):
             print(">> Process Notification: AppRise notifying {}".format(url))
-            apobj.add(url)
             with apprise.LogCapture(level=apprise.logging.DEBUG) as logs:
-                # Re 323 - Limit discord length to their 2000 char limit total
-                # Or it wont send.
+                # Re 323 - Limit discord length to their 2000 char limit total or it wont send.
                 # Because different notifications may require different pre-processing, run each sequentially :(
-                body = n_body[0:2000-len(n_title)] if 'discord://' in url else n_body
+                # 2000 bytes minus -
+                #     200 bytes for the overhead of the _entire_ json payload, 200 bytes for {tts, wait, content} etc headers
+                #     Length of URL - Incase they specify a longer custom avatar_url
+
+                # So if no avatar_url is specified, add one so it can be correctly calculated into the total payload
+                k = '?' if not '?' in url else '&'
+                if not 'avatar_url' in url:
+                    url += k + 'avatar_url=https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/changedetectionio/static/images/avatar-256x256.png'
+
+                body = n_body[0:1800-len(n_title)-len(url)] if 'discord://' in url else n_body
+                apobj.add(url)
+
                 apobj.notify(
                 title=n_title,
                 body=body,
                 body_format=n_format)
+
+                apobj.clear()
 
                 # Incase it needs to exist in memory for a while after to process(?)
                 apobjs.append(apobj)
