@@ -375,6 +375,15 @@ footer {
         div {
             margin: 0px;
         }
+        .checkbox {
+            > * {
+              display: inline;
+              vertical-align: middle;
+            }
+            > label {
+               padding-left: 5px;
+            }
+        }
     }
   /* The input fields with errors */
   .error {

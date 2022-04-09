@@ -316,7 +316,7 @@ class watchForm(commonSettingsForm):
 
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
-    css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()])
+    css_filter = StringField('CSS/JSON/XPATH filter', [ValidateCSSJSONXPATHInput()])
     subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     title = StringField('Title')
 
@@ -353,9 +353,9 @@ class globalSettingsForm(commonSettingsForm):
     global_ignore_text = StringListField('Ignore text', [ValidateListRegex()])
     ignore_whitespace = BooleanField('Ignore whitespace')
 
-    render_anchor_tag_content = BooleanField('Render Anchor Tag Content',
+    render_anchor_tag_content = BooleanField('Render anchor tag content',
                                              default=False)
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
-    real_browser_save_screenshot = BooleanField('Save last screenshot when using Chrome?')
+    real_browser_save_screenshot = BooleanField('Save last screenshot when using Chrome')
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
