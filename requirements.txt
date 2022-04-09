@@ -13,7 +13,7 @@ requests[socks] ~= 2.26
 urllib3 > 1.26
 chardet > 2.3.0
 
-wtforms ~= 2.3.3
+wtforms ~= 3.0
 jsonpath-ng ~= 1.5.3
 
 # Notification library

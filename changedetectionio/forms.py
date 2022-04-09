@@ -15,7 +15,6 @@ from wtforms import (
     validators,
     widgets,
 )
-from wtforms.fields import html5
 from wtforms.validators import ValidationError
 
 from changedetectionio import content_fetcher
@@ -295,9 +294,7 @@ class ValidateCSSJSONXPATHInput(object):
 
 
 class quickWatchForm(Form):
-    # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
-    # `require_tld` = False is needed even for the test harness "http://localhost:5005.." to run
-    url = html5.URLField('URL', validators=[validateURL()])
+    url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
 class commonSettingsForm(Form):
@@ -311,14 +308,16 @@ class commonSettingsForm(Form):
 
 class watchForm(commonSettingsForm):
 
-    url = html5.URLField('URL', validators=[validateURL()])
-    tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
+    url = fields.URLField('URL', validators=[validateURL()])
+    tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)], default='')
 
-    minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
+    minutes_between_check = fields.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
-    css_filter = StringField('CSS/JSON/XPATH filter', [ValidateCSSJSONXPATHInput()])
+
+    css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()], default='')
+
     subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
-    title = StringField('Title')
+    title = StringField('Title', default='')
 
     ignore_text = StringListField('Ignore text', [ValidateListRegex()])
     headers = StringDictKeyValue('Request headers')
@@ -345,7 +344,7 @@ class watchForm(commonSettingsForm):
 
 class globalSettingsForm(commonSettingsForm):
     password = SaltyPasswordField()
-    minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
+    minutes_between_check = fields.IntegerField('Maximum time in minutes until recheck',
                                                [validators.NumberRange(min=1)])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
     base_url = StringField('Base URL', validators=[validators.Optional()])
