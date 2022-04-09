@@ -4,7 +4,6 @@ import re
 import time
 import urllib3
 
-from inscriptis import get_text
 from changedetectionio import content_fetcher, html_tools
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -88,7 +87,7 @@ class perform_site_check():
 
             has_filter_rule = css_filter_rule and len(css_filter_rule.strip())
             has_subtractive_selectors = subtractive_selectors and len(subtractive_selectors[0].strip())
-            
+
             if is_json and not has_filter_rule:
                 css_filter_rule = "json:$"
                 has_filter_rule = True
@@ -117,9 +116,14 @@ class perform_site_check():
                             html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
                     if has_subtractive_selectors:
                         html_content = html_tools.element_removal(subtractive_selectors, html_content)
-                    # get_text() via inscriptis
-                    stripped_text_from_html = get_text(html_content)
-
+                    # extract text
+                    stripped_text_from_html = \
+                        html_tools.html_to_text(
+                            html_content,
+                            render_anchor_tag_content=self.datastore.data["settings"][
+                                "application"].get(
+                                "render_anchor_tag_content", False)
+                        )
             # Re #340 - return the content before the 'ignore text' was applied
             text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 

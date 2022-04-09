@@ -91,10 +91,16 @@
                     <fieldset class="pure-group">
                     {{ render_field(form.ignore_whitespace) }}
                     <span class="pure-form-message-inline">Ignore whitespace, tabs and new-lines/line-feeds when considering if a change was detected.<br/>
-                    <i>Note:</i> Changing this will change the status of your existing watches, possibily trigger alerts etc.
+                    <i>Note:</i> Changing this will change the status of your existing watches, possibly trigger alerts etc.
                     </span>
                     </fieldset>
-
+                <fieldset class="pure-group">
+                    {{ render_field(form.render_anchor_tag_content) }}
+                    <span class="pure-form-message-inline">Render anchor tag content, default disabled, when enabled renders links as <code>(link text)[https://somesite.com]</code>
+                        <br/>
+                    <i>Note:</i> Changing this could affect the content of your existing watches, possibly trigger alerts etc.
+                    </span>
+                    </fieldset>
                     <fieldset class="pure-group">
                       {{ render_field(form.global_subtractive_selectors, rows=5, placeholder="header
 footer
