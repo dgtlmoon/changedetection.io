@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-{% from '_helpers.jinja' import render_field, render_button %}
+{% from '_helpers.jinja' import render_field, render_checkbox_field, render_button %}
 {% from '_common_fields.jinja' import render_common_settings_form %}
 <script>
     const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
@@ -53,12 +53,12 @@
                     </div>
 
                     <div class="pure-control-group">
-                        {{ render_field(form.extract_title_as_title) }}
+                        {{ render_checkbox_field(form.extract_title_as_title) }}
                         <span class="pure-form-message-inline">Note: This will automatically apply to all existing watches.</span>
                     </div>
 
                     <div class="pure-control-group">
-                        {{ render_field(form.real_browser_save_screenshot) }}
+                        {{ render_checkbox_field(form.real_browser_save_screenshot) }}
                         <span class="pure-form-message-inline">When using a Chrome browser, a screenshot from the last check will be available on the Diff page</span>
                     </div>
 
@@ -71,8 +71,6 @@
                         {{ render_common_settings_form(form, current_base_url, emailprefix) }}
                     </div>
                 </fieldset>
-                <a href="{{url_for('notification_logs')}}">Notification debug logs</a>
-
             </div>
 
             <div class="tab-pane-inner" id="fetching">
@@ -89,13 +87,13 @@
             <div class="tab-pane-inner" id="filters">
 
                     <fieldset class="pure-group">
-                    {{ render_field(form.ignore_whitespace) }}
+                    {{ render_checkbox_field(form.ignore_whitespace) }}
                     <span class="pure-form-message-inline">Ignore whitespace, tabs and new-lines/line-feeds when considering if a change was detected.<br/>
                     <i>Note:</i> Changing this will change the status of your existing watches, possibly trigger alerts etc.
                     </span>
                     </fieldset>
                 <fieldset class="pure-group">
-                    {{ render_field(form.render_anchor_tag_content) }}
+                    {{ render_checkbox_field(form.render_anchor_tag_content) }}
                     <span class="pure-form-message-inline">Render anchor tag content, default disabled, when enabled renders links as <code>(link text)[https://somesite.com]</code>
                         <br/>
                     <i>Note:</i> Changing this could affect the content of your existing watches, possibly trigger alerts etc.

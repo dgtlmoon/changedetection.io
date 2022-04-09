@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.jinja' import render_field %}
-{% from '_helpers.jinja' import render_button %}
+{% from '_helpers.jinja' import render_field, render_checkbox_field, render_button %}
 {% from '_common_fields.jinja' import render_common_settings_form %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script>
@@ -52,7 +51,7 @@
                         {% endif %}
                     </div>
                     <div class="pure-control-group">
-                        {{ render_field(form.extract_title_as_title) }}
+                        {{ render_checkbox_field(form.extract_title_as_title) }}
                     </div>
                 </fieldset>
             </div>
@@ -89,7 +88,7 @@ User-Agent: wonderbra 1.0") }}
 }") }}
                     </div>
                     <div>
-                        {{ render_field(form.ignore_status_codes) }}
+                        {{ render_checkbox_field(form.ignore_status_codes) }}
                     </div>
                 </fieldset>
                 <br/>

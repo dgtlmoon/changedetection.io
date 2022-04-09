@@ -241,7 +241,7 @@ body:after, body:before {
 
 #notification-customisation {
     border: 1px solid #ccc;
-    padding: 1rem;
+    padding: 0.5rem;
     border-radius: 5px;
 }
 
@@ -374,6 +374,15 @@ footer {
         padding-bottom: 1em;
         div {
             margin: 0px;
+        }
+        .checkbox {
+            > * {
+              display: inline;
+              vertical-align: middle;
+            }
+            > label {
+               padding-left: 5px;
+            }
         }
     }
   /* The input fields with errors */

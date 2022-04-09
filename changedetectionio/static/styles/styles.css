@@ -182,7 +182,7 @@ body:after, body:before {
 
 #notification-customisation {
   border: 1px solid #ccc;
-  padding: 1rem;
+  padding: 0.5rem;
   border-radius: 5px; }
 
 #notification-error-log {
@@ -285,6 +285,11 @@ footer {
     padding-bottom: 1em; }
     .pure-form .pure-control-group div, .pure-form .pure-group div, .pure-form .pure-controls div {
       margin: 0px; }
+    .pure-form .pure-control-group .checkbox > *, .pure-form .pure-group .checkbox > *, .pure-form .pure-controls .checkbox > * {
+      display: inline;
+      vertical-align: middle; }
+    .pure-form .pure-control-group .checkbox > label, .pure-form .pure-group .checkbox > label, .pure-form .pure-controls .checkbox > label {
+      padding-left: 5px; }
   .pure-form .error input {
     background-color: #ffebeb; }
   .pure-form ul.errors {

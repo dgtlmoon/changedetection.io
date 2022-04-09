@@ -302,11 +302,11 @@ class quickWatchForm(Form):
 
 class commonSettingsForm(Form):
 
-    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateNotificationBodyAndTitleWhenURLisSet(), ValidateAppRiseServers()])
-    notification_title = StringField('Notification Title', default=default_notification_title, validators=[validators.Optional(), ValidateTokensList()])
-    notification_body = TextAreaField('Notification Body', default=default_notification_body, validators=[validators.Optional(), ValidateTokensList()])
-    notification_format = SelectField('Notification Format', choices=valid_notification_formats.keys(), default=default_notification_format)
-    fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    notification_urls = StringListField('Notification URL list', validators=[validators.Optional(), ValidateNotificationBodyAndTitleWhenURLisSet(), ValidateAppRiseServers()])
+    notification_title = StringField('Notification title', default=default_notification_title, validators=[validators.Optional(), ValidateTokensList()])
+    notification_body = TextAreaField('Notification body', default=default_notification_body, validators=[validators.Optional(), ValidateTokensList()])
+    notification_format = SelectField('Notification format', choices=valid_notification_formats.keys(), default=default_notification_format)
+    fetch_backend = RadioField(u'Fetch method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
 
 class watchForm(commonSettingsForm):
@@ -316,15 +316,15 @@ class watchForm(commonSettingsForm):
 
     minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
-    css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()])
+    css_filter = StringField('CSS/JSON/XPATH filter', [ValidateCSSJSONXPATHInput()])
     subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     title = StringField('Title')
 
-    ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
-    headers = StringDictKeyValue('Request Headers')
-    body = TextAreaField('Request Body', [validators.Optional()])
-    method = SelectField('Request Method', choices=valid_method, default=default_method)
-    ignore_status_codes = BooleanField('Ignore Status Codes (process non-2xx status codes as normal)', default=False)
+    ignore_text = StringListField('Ignore text', [ValidateListRegex()])
+    headers = StringDictKeyValue('Request headers')
+    body = TextAreaField('Request body', [validators.Optional()])
+    method = SelectField('Request method', choices=valid_method, default=default_method)
+    ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
@@ -350,12 +350,12 @@ class globalSettingsForm(commonSettingsForm):
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
     base_url = StringField('Base URL', validators=[validators.Optional()])
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
-    global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
+    global_ignore_text = StringListField('Ignore text', [ValidateListRegex()])
     ignore_whitespace = BooleanField('Ignore whitespace')
 
-    render_anchor_tag_content = BooleanField('Render Anchor Tag Content',
+    render_anchor_tag_content = BooleanField('Render anchor tag content',
                                              default=False)
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
-    real_browser_save_screenshot = BooleanField('Save last screenshot when using Chrome?')
+    real_browser_save_screenshot = BooleanField('Save last screenshot when using Chrome')
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
