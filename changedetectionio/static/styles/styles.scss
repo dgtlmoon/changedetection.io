@@ -241,10 +241,16 @@ body:after, body:before {
 
 #notification-customisation {
     border: 1px solid #ccc;
-    padding: 1rem;
+    padding: 0.5rem;
     border-radius: 5px;
 }
 
+#notification-error-log {
+    border: 1px solid #ccc;
+    padding: 1rem;
+    border-radius: 5px;
+    overflow-wrap: break-word;
+}
 
 #token-table {
     &.pure-table td, &.pure-table th {
@@ -368,6 +374,15 @@ footer {
         padding-bottom: 1em;
         div {
             margin: 0px;
+        }
+        .checkbox {
+            > * {
+              display: inline;
+              vertical-align: middle;
+            }
+            > label {
+               padding-left: 5px;
+            }
         }
     }
   /* The input fields with errors */
@@ -586,7 +601,8 @@ $form-edge-padding: 20px;
 
 .edit-form {
   min-width: 70%;
-
+  /* so it cant overflow */
+  max-width: 95%;
   .box-wrap {
     position: relative;
   }

@@ -39,7 +39,7 @@ from flask_wtf import CSRFProtect
 
 from changedetectionio import html_tools
 
-__version__ = '0.39.11'
+__version__ = '0.39.12'
 
 datastore = None
 
@@ -417,9 +417,10 @@ def changedetection_app(config=None, datastore_o=None):
             return make_response({'error': 'No Notification URLs set'}, 400)
 
         for server_url in request.form['notification_urls'].splitlines():
-            if not apobj.add(server_url):
-                message = '{} is not a valid AppRise URL.'.format(server_url)
-                return make_response({'error': message}, 400)
+            if len(server_url.strip()):
+                if not apobj.add(server_url):
+                    message = '{} is not a valid AppRise URL.'.format(server_url)
+                    return make_response({'error': message}, 400)
 
         try:
             n_object = {'watch_url': request.form['window_url'],
@@ -620,7 +621,8 @@ def changedetection_app(config=None, datastore_o=None):
                                      watch=datastore.data['watching'][uuid],
                                      form=form,
                                      using_default_minutes=using_default_minutes,
-                                     current_base_url = datastore.data['settings']['application']['base_url']
+                                     current_base_url=datastore.data['settings']['application']['base_url'],
+                                     emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False)
                                      )
 
         return output
@@ -639,6 +641,7 @@ def changedetection_app(config=None, datastore_o=None):
             form.global_subtractive_selectors.data = datastore.data['settings']['application']['global_subtractive_selectors']
             form.global_ignore_text.data = datastore.data['settings']['application']['global_ignore_text']
             form.ignore_whitespace.data = datastore.data['settings']['application']['ignore_whitespace']
+            form.render_anchor_tag_content.data = datastore.data['settings']['application']['render_anchor_tag_content']
             form.extract_title_as_title.data = datastore.data['settings']['application']['extract_title_as_title']
             form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
             form.notification_title.data = datastore.data['settings']['application']['notification_title']
@@ -669,6 +672,7 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['global_ignore_text'] =  form.global_ignore_text.data
             datastore.data['settings']['application']['ignore_whitespace'] = form.ignore_whitespace.data
             datastore.data['settings']['application']['real_browser_save_screenshot'] = form.real_browser_save_screenshot.data
+            datastore.data['settings']['application']['render_anchor_tag_content'] = form.render_anchor_tag_content.data
 
             if not os.getenv("SALTED_PASS", False) and form.password.encrypted_password:
                 datastore.data['settings']['application']['password'] = form.password.encrypted_password
@@ -685,7 +689,8 @@ def changedetection_app(config=None, datastore_o=None):
         output = render_template("settings.html",
                                  form=form,
                                  current_base_url = datastore.data['settings']['application']['base_url'],
-                                 hide_remove_pass=os.getenv("SALTED_PASS", False))
+                                 hide_remove_pass=os.getenv("SALTED_PASS", False),
+                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False))
 
         return output
 

@@ -52,6 +52,7 @@ class ChangeDetectionStore:
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
                     'global_subtractive_selectors': [],
                     'ignore_whitespace': False,
+                    'render_anchor_tag_content': False,
                     'notification_urls': [], # Apprise URL list
                     # Custom notification content
                     'notification_title': default_notification_title,

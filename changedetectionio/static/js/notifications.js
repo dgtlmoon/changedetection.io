@@ -1,4 +1,15 @@
 $(document).ready(function() {
+
+  $('#add-email-helper').click(function (e) {
+    e.preventDefault();
+    email = prompt("Destination email");
+    if(email) {
+      var n = $("#notification_urls");
+      var p=email_notification_prefix;
+      $(n).val( $.trim( $(n).val() )+"\n"+email_notification_prefix+email );
+    }
+  });
+
   $('#send-test-notification').click(function (e) {
     e.preventDefault();
 
