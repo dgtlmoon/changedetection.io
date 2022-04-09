@@ -26,7 +26,8 @@ def test_snapshot_api_detects_change(client, live_server):
     time.sleep(1)
 
     # Add our URL to the import page
-    test_url = url_for('test_endpoint', content_type="text/plain", _external=True)
+    test_url = url_for('test_endpoint', content_type="text/plain",
+                       _external=True)
     res = client.post(
         url_for("import_page"),
         data={"urls": test_url},

@@ -231,7 +231,7 @@ class ValidateListRegex(object):
                 except re.error:
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))
-              
+
 class ValidateCSSJSONXPATHInput(object):
     """
     Filter validation
@@ -293,7 +293,7 @@ class ValidateCSSJSONXPATHInput(object):
                 # Re #265 - maybe in the future fetch the page and offer a
                 # warning/notice that its possible the rule doesnt yet match anything?
 
-            
+
 class quickWatchForm(Form):
     # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
     # `require_tld` = False is needed even for the test harness "http://localhost:5005.." to run
@@ -352,6 +352,10 @@ class globalSettingsForm(commonSettingsForm):
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     ignore_whitespace = BooleanField('Ignore whitespace')
+
+    render_anchor_tag_content = BooleanField('Render Anchor Tag Content',
+                                             default=False)
+
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
     real_browser_save_screenshot = BooleanField('Save last screenshot when using Chrome?')
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
