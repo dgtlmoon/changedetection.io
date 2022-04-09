@@ -182,7 +182,7 @@ body:after, body:before {
 
 #notification-customisation {
   border: 1px solid #ccc;
-  padding: 1rem;
+  padding: 0.5rem;
   border-radius: 5px; }
 
 #notification-error-log {
