@@ -641,6 +641,7 @@ def changedetection_app(config=None, datastore_o=None):
             form.global_subtractive_selectors.data = datastore.data['settings']['application']['global_subtractive_selectors']
             form.global_ignore_text.data = datastore.data['settings']['application']['global_ignore_text']
             form.ignore_whitespace.data = datastore.data['settings']['application']['ignore_whitespace']
+            form.render_anchor_tag_content.data = datastore.data['settings']['application']['render_anchor_tag_content']
             form.extract_title_as_title.data = datastore.data['settings']['application']['extract_title_as_title']
             form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
             form.notification_title.data = datastore.data['settings']['application']['notification_title']
@@ -671,6 +672,7 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['settings']['application']['global_ignore_text'] =  form.global_ignore_text.data
             datastore.data['settings']['application']['ignore_whitespace'] = form.ignore_whitespace.data
             datastore.data['settings']['application']['real_browser_save_screenshot'] = form.real_browser_save_screenshot.data
+            datastore.data['settings']['application']['render_anchor_tag_content'] = form.render_anchor_tag_content.data
 
             if not os.getenv("SALTED_PASS", False) and form.password.encrypted_password:
                 datastore.data['settings']['application']['password'] = form.password.encrypted_password
