@@ -20,7 +20,7 @@ class perform_site_check():
         timestamp = int(time.time())  # used for storage etc too
 
         changed_detected = False
-        screenshot = False # as bytes
+        screenshot = False  # as bytes
         stripped_text_from_html = ""
 
         watch = self.datastore.data['watching'][uuid]
@@ -52,6 +52,12 @@ class perform_site_check():
         request_method = self.datastore.get_val(uuid, 'method')
         ignore_status_code = self.datastore.get_val(uuid, 'ignore_status_codes')
 
+        # source: support
+        is_source = False
+        if url.startswith('source:'):
+            url = url.replace('source:', '')
+            is_source = True
+
         # Pluggable content fetcher
         prefer_backend = watch['fetch_backend']
         if hasattr(content_fetcher, prefer_backend):
@@ -59,7 +65,6 @@ class perform_site_check():
         else:
             # If the klass doesnt exist, just use a default
             klass = getattr(content_fetcher, "html_requests")
-
 
         fetcher = klass()
         fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code)
@@ -75,6 +80,12 @@ class perform_site_check():
 
         is_json = 'application/json' in fetcher.headers.get('Content-Type', '')
         is_html = not is_json
+
+        # source: support, basically treat it as plaintext
+        if is_source:
+            is_html = False
+            is_json = False
+
         css_filter_rule = watch['css_filter']
         subtractive_selectors = watch.get(
             "subtractive_selectors", []
@@ -94,7 +105,7 @@ class perform_site_check():
                 stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, jsonpath_filter=css_filter_rule)
                 is_html = False
 
-        if is_html:
+        if is_html or is_source:
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
             html_content = fetcher.content
 
@@ -113,15 +124,24 @@ class perform_site_check():
                         html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)
-                # extract text
-                stripped_text_from_html = \
-                    html_tools.html_to_text(
-                        html_content,
-                        render_anchor_tag_content=self.datastore.data["settings"][
-                            "application"].get(
-                            "render_anchor_tag_content", False)
-                    )
-                
+
+                if not is_source:
+                    # extract text
+                    stripped_text_from_html = \
+                        html_tools.html_to_text(
+                            html_content,
+                            render_anchor_tag_content=self.datastore.data["settings"][
+                                "application"].get(
+                                "render_anchor_tag_content", False)
+                        )
+
+                elif is_source:
+                    stripped_text_from_html = html_content
+
+            # Re #340 - return the content before the 'ignore text' was applied
+            text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
+
+
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 
@@ -161,12 +181,10 @@ class perform_site_check():
             if result:
                 blocked_by_not_found_trigger_text = False
 
-
         if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:
             changed_detected = True
             update_obj["previous_md5"] = fetched_md5
             update_obj["last_changed"] = timestamp
-
 
         # Extract title as title
         if is_html:

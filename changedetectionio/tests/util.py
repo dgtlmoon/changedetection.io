@@ -10,6 +10,7 @@ def set_original_response():
      <p>Which is across multiple lines</p>
      </br>
      So let's see what happens.  </br>
+     <span class="foobar-detection" style='display:none'></span>
      </body>
      </html>
     """

@@ -39,13 +39,14 @@ Free, Open-source web page monitoring, notification and change detection. Don't 
 - COVID related news from government websites
 - University/organisation news from their website
 - Detect and monitor changes in JSON API responses 
-- API monitoring and alerting
+- JSON API monitoring and alerting
 - Changes in legal and other documents
 - Trigger API calls via notifications when text appears on a website
 - Glue together APIs using the JSON filter and JSON notifications
 - Create RSS feeds based on changes in web content
+- Monitor HTML source code for unexpected changes, strengthen your PCI compliance
 - You have a very sensitive list of URLs to watch and you do _not_ want to use the paid alternatives. (Remember, _you_ are the product)
- 
+
 _Need an actual Chrome runner with Javascript support? We support fetching via WebDriver!</a>_
 
 ## Screenshots

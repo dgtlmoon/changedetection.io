@@ -50,6 +50,14 @@ def test_check_basic_change_detection_functionality(client, live_server):
 
     #####################
 
+    # Check HTML conversion detected and workd
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+    # Check this class does not appear (that we didnt see the actual source)
+    assert b'foobar-detection' not in res.data
+
     # Make a change
     set_modified_response()
 
