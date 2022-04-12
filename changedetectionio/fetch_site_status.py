@@ -141,10 +141,9 @@ class perform_site_check():
             # Re #340 - return the content before the 'ignore text' was applied
             text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 
-        else:
-            # Anything other than HTML, just store the original
-            # Such as JSON requests
-            text_content_before_ignored_filter = fetcher.content.encode('utf-8')
+
+        # Re #340 - return the content before the 'ignore text' was applied
+        text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 
         # We rely on the actual text in the html output.. many sites have random script vars etc,
         # in the future we'll implement other mechanisms.
