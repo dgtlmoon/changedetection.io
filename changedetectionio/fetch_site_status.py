@@ -143,6 +143,7 @@ class perform_site_check():
 
         else:
             # Anything other than HTML, just process it as plaintext
+            stripped_text_from_html = fetcher.content
 
         # We rely on the actual text in the html output.. many sites have random script vars etc,
         # in the future we'll implement other mechanisms.
