@@ -20,7 +20,7 @@ class perform_site_check():
         timestamp = int(time.time())  # used for storage etc too
 
         changed_detected = False
-        screenshot = False # as bytes
+        screenshot = False  # as bytes
         stripped_text_from_html = ""
 
         watch = self.datastore.data['watching'][uuid]
@@ -65,7 +65,6 @@ class perform_site_check():
         else:
             # If the klass doesnt exist, just use a default
             klass = getattr(content_fetcher, "html_requests")
-
 
         fetcher = klass()
         fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code)
@@ -126,7 +125,6 @@ class perform_site_check():
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)
 
-                # For rendered HTML only
                 if not is_source:
                     # extract text
                     stripped_text_from_html = \
@@ -136,8 +134,8 @@ class perform_site_check():
                                 "application"].get(
                                 "render_anchor_tag_content", False)
                         )
+
                 elif is_source:
-                    # Use the actual source
                     stripped_text_from_html = html_content
 
             # Re #340 - return the content before the 'ignore text' was applied
@@ -145,7 +143,6 @@ class perform_site_check():
 
         else:
             # Anything other than HTML, just process it as plaintext
-            text_content_before_ignored_filter = fetcher.content.encode('utf-8')
 
         # We rely on the actual text in the html output.. many sites have random script vars etc,
         # in the future we'll implement other mechanisms.
@@ -183,12 +180,10 @@ class perform_site_check():
             if result:
                 blocked_by_not_found_trigger_text = False
 
-
         if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:
             changed_detected = True
             update_obj["previous_md5"] = fetched_md5
             update_obj["last_changed"] = timestamp
-
 
         # Extract title as title
         if is_html:
