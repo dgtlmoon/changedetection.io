@@ -69,10 +69,10 @@ services:
 
      # Used for fetching pages via Playwright+Chrome where you need Javascript support.
 
-    playwright-chrome:
-        hostname: playwright-chrome
-        image: browserless/chrome
-        restart: unless-stopped
+#    playwright-chrome:
+#        hostname: playwright-chrome
+#        image: browserless/chrome
+#        restart: unless-stopped
 
 volumes:
   changedetection-data:
