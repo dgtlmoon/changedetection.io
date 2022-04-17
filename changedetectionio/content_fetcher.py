@@ -103,7 +103,7 @@ class html_playwright(Fetcher):
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
         self.command_executor = os.getenv(
             "PLAYWRIGHT_DRIVER_URL",
-            'ws://playwright-server:4444/playwright'
+            'ws://playwright-chrome:3000/playwright'
         ).strip('"')
 
         # If any proxy settings are enabled, then we should setup the proxy object
