@@ -23,6 +23,7 @@ class Fetcher():
 
     fetcher_description ="No description"
     fetcher_list_order = 0
+    fetcher_enabled = True
 
     @abstractmethod
     def get_error(self):
@@ -65,10 +66,12 @@ def available_fetchers():
                 # @todo html_ is maybe better as fetcher_ or something
                 # In this case, make sure to edit the default one in store.py and fetch_site_status.py
                 if "html_" in name:
-                    t=tuple([name,obj.fetcher_description,obj.fetcher_list_order])
+                    t=tuple([name,obj.fetcher_description,obj.fetcher_list_order,obj.fetcher_enabled])
                     p.append(t)
         # sort by obj.fetcher_list_order
         p.sort(key=lambda x: x[2])
+        # filter out fetchers that aren't enabled
+        p = filter(lambda x: x[3], p)
         # strip obj.fetcher_list_order from each member in the tuple
         p = list(map(lambda x: x[:2], p))
 
@@ -81,6 +84,10 @@ class html_playwright(Fetcher):
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
     fetcher_list_order = 3
+    try:
+        from playwright.sync_api import sync_playwright
+    except ModuleNotFoundError:
+        fetcher_enabled = False
 
     browser_type = ''
     command_executor = ''
