@@ -60,7 +60,7 @@ def test_check_access_control(app, client):
         )
 
 # There was a bug where saving the settings form would submit a blank password
-def xtest_check_access_control_no_blank_password(app, client):
+def test_check_access_control_no_blank_password(app, client):
     # Still doesnt work, but this is closer.
 
     with app.test_client() as c:
@@ -77,8 +77,8 @@ def xtest_check_access_control_no_blank_password(app, client):
             follow_redirects=True
         )
 
-        with open('/tmp/xxx.html', 'wb') as f:
-            f.write(res.data)
+#        with open('/tmp/xxx.html', 'wb') as f:
+#            f.write(res.data)
 
         assert b"Password protection enabled." not in res.data
         assert b"defaultuser@changedetection.io" not in res.data

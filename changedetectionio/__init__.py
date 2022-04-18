@@ -256,7 +256,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Disable password login if there is not one set
         # (No password in settings or env var)
-        app.config['LOGIN_DISABLED'] = not datastore.data['settings']['application']['password'] and not os.getenv("SALTED_PASS", False)
+        app.config['LOGIN_DISABLED'] = datastore.data['settings']['application']['password'] == False and os.getenv("SALTED_PASS", False) == False
 
         # Set the auth cookie path if we're running as X-settings/X-Forwarded-Prefix
         if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Prefix' in request.headers:
@@ -419,9 +419,10 @@ def changedetection_app(config=None, datastore_o=None):
             return make_response({'error': 'No Notification URLs set'}, 400)
 
         for server_url in request.form['notification_urls'].splitlines():
-            if not apobj.add(server_url):
-                message = '{} is not a valid AppRise URL.'.format(server_url)
-                return make_response({'error': message}, 400)
+            if len(server_url.strip()):
+                if not apobj.add(server_url):
+                    message = '{} is not a valid AppRise URL.'.format(server_url)
+                    return make_response({'error': message}, 400)
 
         try:
             n_object = {'watch_url': request.form['window_url'],
