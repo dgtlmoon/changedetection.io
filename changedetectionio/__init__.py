@@ -36,6 +36,7 @@ from flask import (
 )
 from flask_login import login_required
 from flask_wtf import CSRFProtect
+from werkzeug.datastructures import MultiDict
 
 from changedetectionio import html_tools
 
@@ -255,7 +256,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Disable password login if there is not one set
         # (No password in settings or env var)
-        app.config['LOGIN_DISABLED'] = datastore.data['settings']['application']['password'] == False and os.getenv("SALTED_PASS", False) == False
+        app.config['LOGIN_DISABLED'] = not datastore.data['settings']['application']['password'] and not os.getenv("SALTED_PASS", False)
 
         # Set the auth cookie path if we're running as X-settings/X-Forwarded-Prefix
         if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Prefix' in request.headers:
@@ -319,6 +320,7 @@ def changedetection_app(config=None, datastore_o=None):
                 # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
                 guid = "{}/{}".format(watch['uuid'], watch['last_changed'])
                 fe = fg.add_entry()
+
 
                 # Include a link to the diff page, they will have to login here to see if password protection is enabled.
                 # Description is the page you watch, link takes you to the diff JS UI page
@@ -417,10 +419,9 @@ def changedetection_app(config=None, datastore_o=None):
             return make_response({'error': 'No Notification URLs set'}, 400)
 
         for server_url in request.form['notification_urls'].splitlines():
-            if len(server_url.strip()):
-                if not apobj.add(server_url):
-                    message = '{} is not a valid AppRise URL.'.format(server_url)
-                    return make_response({'error': message}, 400)
+            if not apobj.add(server_url):
+                message = '{} is not a valid AppRise URL.'.format(server_url)
+                return make_response({'error': message}, 400)
 
         try:
             n_object = {'watch_url': request.form['window_url'],
@@ -520,49 +521,42 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     @login_required
+    # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
+    # https://wtforms.readthedocs.io/en/3.0.x/forms/#wtforms.form.Form.populate_obj ?
+
     def edit_page(uuid):
         from changedetectionio import forms
-        form = forms.watchForm(request.form)
+
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
+        if not uuid in datastore.data['watching']:
+            flash("No watch with the UUID %s found." % (uuid), "error")
+            return redirect(url_for('index'))
+
+        form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
+                                        data=datastore.data['watching'][uuid]
+                                        )
 
         if request.method == 'GET':
-            if not uuid in datastore.data['watching']:
-                flash("No watch with the UUID %s found." % (uuid), "error")
-                return redirect(url_for('index'))
-
-            populate_form_from_watch(form, datastore.data['watching'][uuid])
-
+            # Set some defaults that refer to the main config when None, we do the same in POST,
+            # probably there should be a nice little handler for this.
             if datastore.data['watching'][uuid]['fetch_backend'] is None:
                 form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
+            if datastore.data['watching'][uuid]['minutes_between_check'] is None:
+                form.minutes_between_check.data = datastore.data['settings']['requests']['minutes_between_check']
 
         if request.method == 'POST' and form.validate():
 
             # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
             if form.minutes_between_check.data == datastore.data['settings']['requests']['minutes_between_check']:
                 form.minutes_between_check.data = None
-
             if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
                 form.fetch_backend.data = None
 
-            update_obj = {'url': form.url.data.strip(),
-                          'minutes_between_check': form.minutes_between_check.data,
-                          'tag': form.tag.data.strip(),
-                          'title': form.title.data.strip(),
-                          'headers': form.headers.data,
-                          'body': form.body.data,
-                          'method': form.method.data,
-                          'ignore_status_codes': form.ignore_status_codes.data,
-                          'fetch_backend': form.fetch_backend.data,
-                          'trigger_text': form.trigger_text.data,
-                          'notification_title': form.notification_title.data,
-                          'notification_body': form.notification_body.data,
-                          'notification_format': form.notification_format.data,
-                          'extract_title_as_title': form.extract_title_as_title.data,
-                          }
+            extra_update_obj = {}
 
             # Notification URLs
             datastore.data['watching'][uuid]['notification_urls'] = form.notification_urls.data
@@ -574,18 +568,15 @@ def changedetection_app(config=None, datastore_o=None):
             # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
             if form_ignore_text:
                 if len(datastore.data['watching'][uuid]['history']):
-                    update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
-
-
-            datastore.data['watching'][uuid]['css_filter'] = form.css_filter.data.strip()
-            datastore.data['watching'][uuid]['subtractive_selectors'] = form.subtractive_selectors.data
+                    extra_update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
             # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
             if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
                 if len(datastore.data['watching'][uuid]['history']):
-                    update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
+                    extra_update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
-            datastore.data['watching'][uuid].update(update_obj)
+            datastore.data['watching'][uuid].update(form.data)
+            datastore.data['watching'][uuid].update(extra_update_obj)
 
             flash("Updated watch.")
 
@@ -610,19 +601,13 @@ def changedetection_app(config=None, datastore_o=None):
             if request.method == 'POST' and not form.validate():
                 flash("An error occurred, please see below.", "error")
 
-            # Re #110 offer the default minutes
-            using_default_minutes = False
-            if form.minutes_between_check.data == None:
-                form.minutes_between_check.data = datastore.data['settings']['requests']['minutes_between_check']
-                using_default_minutes = True
-
+            has_empty_checktime = datastore.data['watching'][uuid].has_empty_checktime
             output = render_template("edit.html",
                                      uuid=uuid,
                                      watch=datastore.data['watching'][uuid],
                                      form=form,
-                                     using_default_minutes=using_default_minutes,
-                                     current_base_url=datastore.data['settings']['application']['base_url'],
-                                     emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False)
+                                     has_empty_checktime=has_empty_checktime,
+                                     current_base_url=datastore.data['settings']['application']['base_url']
                                      )
 
         return output
@@ -630,61 +615,43 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/settings", methods=['GET', "POST"])
     @login_required
     def settings_page():
-
         from changedetectionio import content_fetcher, forms
 
-        form = forms.globalSettingsForm(request.form)
+        # Don't use form.data on POST so that it doesnt overrid the checkbox status from the POST status
+        form = forms.globalSettingsForm(formdata=request.form if request.method == 'POST' else None,
+                                        data=datastore.data['settings']
+                                        )
 
-        if request.method == 'GET':
-            form.minutes_between_check.data = int(datastore.data['settings']['requests']['minutes_between_check'])
-            form.notification_urls.data = datastore.data['settings']['application']['notification_urls']
-            form.global_subtractive_selectors.data = datastore.data['settings']['application']['global_subtractive_selectors']
-            form.global_ignore_text.data = datastore.data['settings']['application']['global_ignore_text']
-            form.ignore_whitespace.data = datastore.data['settings']['application']['ignore_whitespace']
-            form.render_anchor_tag_content.data = datastore.data['settings']['application']['render_anchor_tag_content']
-            form.extract_title_as_title.data = datastore.data['settings']['application']['extract_title_as_title']
-            form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
-            form.notification_title.data = datastore.data['settings']['application']['notification_title']
-            form.notification_body.data = datastore.data['settings']['application']['notification_body']
-            form.notification_format.data = datastore.data['settings']['application']['notification_format']
-            form.base_url.data = datastore.data['settings']['application']['base_url']
-            form.real_browser_save_screenshot.data = datastore.data['settings']['application']['real_browser_save_screenshot']
-
-        if request.method == 'POST' and form.data.get('removepassword_button') == True:
+        if request.method == 'POST':
             # Password unset is a GET, but we can lock the session to a salted env password to always need the password
-            if not os.getenv("SALTED_PASS", False):
-                datastore.data['settings']['application']['password'] = False
+            if form.application.form.data.get('removepassword_button', False) == True and not os.getenv("SALTED_PASS", False):
+                datastore.remove_password()
                 flash("Password protection removed.", 'notice')
                 flask_login.logout_user()
                 return redirect(url_for('settings_page'))
 
-        if request.method == 'POST' and form.validate():
-            datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
-            datastore.data['settings']['requests']['minutes_between_check'] = form.minutes_between_check.data
-            datastore.data['settings']['application']['extract_title_as_title'] = form.extract_title_as_title.data
-            datastore.data['settings']['application']['fetch_backend'] = form.fetch_backend.data
-            datastore.data['settings']['application']['notification_title'] = form.notification_title.data
-            datastore.data['settings']['application']['notification_body'] = form.notification_body.data
-            datastore.data['settings']['application']['notification_format'] = form.notification_format.data
-            datastore.data['settings']['application']['notification_urls'] = form.notification_urls.data
-            datastore.data['settings']['application']['base_url'] = form.base_url.data
-            datastore.data['settings']['application']['global_subtractive_selectors'] = form.global_subtractive_selectors.data
-            datastore.data['settings']['application']['global_ignore_text'] =  form.global_ignore_text.data
-            datastore.data['settings']['application']['ignore_whitespace'] = form.ignore_whitespace.data
-            datastore.data['settings']['application']['real_browser_save_screenshot'] = form.real_browser_save_screenshot.data
-            datastore.data['settings']['application']['render_anchor_tag_content'] = form.render_anchor_tag_content.data
+            if form.validate():
+                datastore.data['settings']['application'].update(form.data['application'])
+                datastore.data['settings']['requests'].update(form.data['requests'])
+                datastore.needs_write = True
 
-            if not os.getenv("SALTED_PASS", False) and form.password.encrypted_password:
-                datastore.data['settings']['application']['password'] = form.password.encrypted_password
-                flash("Password protection enabled.", 'notice')
-                flask_login.logout_user()
-                return redirect(url_for('index'))
+                if not os.getenv("SALTED_PASS", False) and len(form.application.form.password.encrypted_password):
+                    datastore.data['settings']['application']['password'] = form.application.form.password.encrypted_password
+                    datastore.needs_write = True
+                    flash("Password protection enabled.", 'notice')
+                    flask_login.logout_user()
+                    return redirect(url_for('index'))
 
-            datastore.needs_write = True
-            flash("Settings updated.")
+                flash("Settings updated.")
 
-        if request.method == 'POST' and not form.validate():
-            flash("An error occurred, please see below.", "error")
+            else:
+                flash("An error occurred, please see below.", "error")
+                for fieldName, errorMessages in form.errors.items():
+                    for err in errorMessages:
+                        flash(fieldName,err)
+                        x=err
+                        y=1
+
 
         output = render_template("settings.html",
                                  form=form,
@@ -1172,8 +1139,6 @@ def notification_runner():
                 notification_debug_log = notification_debug_log[-100:]
 
 
-
-
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     from changedetectionio import update_worker
@@ -1219,15 +1184,11 @@ def ticker_thread_check_time_launch_checks():
                 continue
 
             # If they supplied an individual entry minutes to threshold.
-            watch_minutes_between_check = watch.get('minutes_between_check', None)
-            if watch_minutes_between_check is not None:
-                # Cast to int just incase
-                max_time = int(watch_minutes_between_check) * 60
+            threshold = now
+            if watch.threshold_seconds:
+                threshold -= watch.threshold_seconds
             else:
-                # Default system wide.
-                max_time = max_system_wide
-
-            threshold = now - max_time
+                threshold -= max_system_wide
 
             # Yeah, put it in the queue, it's more than time
             if watch['last_checked'] <= threshold:
