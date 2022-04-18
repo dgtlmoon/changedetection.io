@@ -625,11 +625,13 @@ def changedetection_app(config=None, datastore_o=None):
 
         if request.method == 'POST':
             # Password unset is a GET, but we can lock the session to a salted env password to always need the password
-            if form.application.form.data.get('removepassword_button', False) == True and not os.getenv("SALTED_PASS", False):
-                datastore.remove_password()
-                flash("Password protection removed.", 'notice')
-                flask_login.logout_user()
-                return redirect(url_for('settings_page'))
+            if form.application.form.data.get('removepassword_button', False):
+                # SALTED_PASS means the password is "locked" to what we set in the Env var
+                if not os.getenv("SALTED_PASS", False):
+                    datastore.remove_password()
+                    flash("Password protection removed.", 'notice')
+                    flask_login.logout_user()
+                    return redirect(url_for('settings_page'))
 
             if form.validate():
                 datastore.data['settings']['application'].update(form.data['application'])
@@ -647,12 +649,6 @@ def changedetection_app(config=None, datastore_o=None):
 
             else:
                 flash("An error occurred, please see below.", "error")
-                for fieldName, errorMessages in form.errors.items():
-                    for err in errorMessages:
-                        flash(fieldName,err)
-                        x=err
-                        y=1
-
 
         output = render_template("settings.html",
                                  form=form,
