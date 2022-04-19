@@ -61,9 +61,9 @@ def test_check_ignore_whitespace(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={
-            "minutes_between_check": 180,
-            "ignore_whitespace": "y",
-            'fetch_backend': "html_requests"
+            "requests-minutes_between_check": 180,
+            "application-ignore_whitespace": "y",
+            "application-fetch_backend": "html_requests"
         },
         follow_redirects=True
     )

@@ -8,11 +8,7 @@ from copy import deepcopy
 from os import mkdir, path, unlink
 from threading import Lock
 
-from changedetectionio.notification import (
-    default_notification_body,
-    default_notification_format,
-    default_notification_title,
-)
+from changedetectionio.model import Watch, App
 
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
@@ -29,71 +25,10 @@ class ChangeDetectionStore:
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
         self.stop_thread = False
 
-        self.__data = {
-            'note': "Hello! If you change this file manually, please be sure to restart your changedetection.io instance!",
-            'watching': {},
-            'settings': {
-                'headers': {
-                    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36',
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-                    'Accept-Encoding': 'gzip, deflate',  # No support for brolti in python requests yet.
-                    'Accept-Language': 'en-GB,en-US;q=0.9,en;'
-                },
-                'requests': {
-                    'timeout': 15,  # Default 15 seconds
-                    'minutes_between_check': 3 * 60,  # Default 3 hours
-                    'workers': 10  # Number of threads, lower is better for slow connections
-                },
-                'application': {
-                    'password': False,
-                    'base_url' : None,
-                    'extract_title_as_title': False,
-                    'fetch_backend': 'html_requests',
-                    'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
-                    'global_subtractive_selectors': [],
-                    'ignore_whitespace': False,
-                    'render_anchor_tag_content': False,
-                    'notification_urls': [], # Apprise URL list
-                    # Custom notification content
-                    'notification_title': default_notification_title,
-                    'notification_body': default_notification_body,
-                    'notification_format': default_notification_format,
-                    'real_browser_save_screenshot': True,
-                }
-            }
-        }
+        self.__data = App.model()
 
         # Base definition for all watchers
-        self.generic_definition = {
-            'url': None,
-            'tag': None,
-            'last_checked': 0,
-            'last_changed': 0,
-            'paused': False,
-            'last_viewed': 0,  # history key value of the last viewed via the [diff] link
-            'newest_history_key': "",
-            'title': None,
-            # Re #110, so then if this is set to None, we know to use the default value instead
-            # Requires setting to None on submit if it's the same as the default
-            'minutes_between_check': None,
-            'previous_md5': "",
-            'uuid': str(uuid_builder.uuid4()),
-            'headers': {},  # Extra headers to send
-            'body': None,
-            'method': 'GET',
-            'history': {},  # Dict of timestamp and output stripped filename
-            'ignore_text': [], # List of text to ignore when calculating the comparison checksum
-            # Custom notification content
-            'notification_urls': [], # List of URLs to add to the notification Queue (Usually AppRise)
-            'notification_title': default_notification_title,
-            'notification_body': default_notification_body,
-            'notification_format': default_notification_format,
-            'css_filter': "",
-            'subtractive_selectors': [],
-            'trigger_text': [],  # List of text or regex to wait for until a change is detected
-            'fetch_backend': None,
-            'extract_title_as_title': False
-        }
+        self.generic_definition = Watch.model()
 
         if path.isfile('changedetectionio/source.txt'):
             with open('changedetectionio/source.txt') as f:
@@ -188,6 +123,10 @@ class ChangeDetectionStore:
 
     def set_last_viewed(self, uuid, timestamp):
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
+        self.needs_write = True
+
+    def remove_password(self):
+        self.__data['settings']['application']['password'] = False
         self.needs_write = True
 
     def update_watch(self, uuid, update_obj):

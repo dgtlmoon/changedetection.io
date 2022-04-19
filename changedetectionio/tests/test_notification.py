@@ -195,11 +195,11 @@ def test_notification_validation(client, live_server):
     # Now adding a wrong token should give us an error
     res = client.post(
         url_for("settings_page"),
-        data={"notification_title": "New ChangeDetection.io Notification - {watch_url}",
-              "notification_body": "Rubbish: {rubbish}\n",
-              "notification_format": "Text",
-              "notification_urls": "json://localhost/foobar",
-              "time_between_check": {'seconds': 180},
+        data={"application-notification_title": "New ChangeDetection.io Notification - {watch_url}",
+              "application-notification_body": "Rubbish: {rubbish}\n",
+              "application-notification_format": "Text",
+              "application-notification_urls": "json://localhost/foobar",
+              "requests-minutes_between_check": 180,
               "fetch_backend": "html_requests"
               },
         follow_redirects=True

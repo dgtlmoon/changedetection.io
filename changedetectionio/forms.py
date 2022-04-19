@@ -25,6 +25,8 @@ from changedetectionio.notification import (
     valid_notification_formats,
 )
 
+from wtforms.fields import FormField
+
 valid_method = {
     'GET',
     'POST',
@@ -121,7 +123,6 @@ class ValidateContentFetcherIsReady(object):
 
     def __call__(self, form, field):
         import urllib3.exceptions
-
         from changedetectionio import content_fetcher
 
         # Better would be a radiohandler that keeps a reference to each class
@@ -297,6 +298,7 @@ class quickWatchForm(Form):
     url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
+# Common to a single watch and the global settings
 class commonSettingsForm(Form):
 
     notification_urls = StringListField('Notification URL list', validators=[validators.Optional(), ValidateNotificationBodyAndTitleWhenURLisSet(), ValidateAppRiseServers()])
@@ -342,19 +344,31 @@ class watchForm(commonSettingsForm):
 
         return result
 
-class globalSettingsForm(commonSettingsForm):
-    password = SaltyPasswordField()
+
+# datastore.data['settings']['requests']..
+class globalSettingsRequestForm(Form):
     minutes_between_check = fields.IntegerField('Maximum time in minutes until recheck',
                                                [validators.NumberRange(min=1)])
-    extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
+# datastore.data['settings']['application']..
+class globalSettingsApplicationForm(commonSettingsForm):
+
     base_url = StringField('Base URL', validators=[validators.Optional()])
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
-    global_ignore_text = StringListField('Ignore text', [ValidateListRegex()])
+    global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     ignore_whitespace = BooleanField('Ignore whitespace')
-
-    render_anchor_tag_content = BooleanField('Render anchor tag content',
-                                             default=False)
-
-    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
-    real_browser_save_screenshot = BooleanField('Save last screenshot when using Chrome')
+    real_browser_save_screenshot = BooleanField('Save last screenshot when using Chrome?')
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
+    render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
+    fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    password = SaltyPasswordField()
+
+
+class globalSettingsForm(Form):
+    # Define these as FormFields/"sub forms", this way it matches the JSON storage
+    # datastore.data['settings']['application']..
+    # datastore.data['settings']['requests']..
+
+    requests = FormField(globalSettingsRequestForm)
+    application = FormField(globalSettingsApplicationForm)
+    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+
