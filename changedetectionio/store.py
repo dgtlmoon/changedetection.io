@@ -279,8 +279,7 @@ class ChangeDetectionStore:
         with self.lock:
             # @todo use a common generic version of this
             new_uuid = str(uuid_builder.uuid4())
-            _blank = deepcopy(self.generic_definition)
-            _blank.update({
+            new_watch = Watch.model({
                 'url': url,
                 'tag': tag
             })
@@ -291,10 +290,10 @@ class ChangeDetectionStore:
                 if k in apply_extras:
                     del apply_extras[k]
 
-            _blank.update(apply_extras)
+            new_watch.update(apply_extras)
 
             # this is the slowest part for large lists
-            self.data['watching'][new_uuid]=_blank
+            self.__data['watching'][new_uuid]=new_watch
 
         # Get the directory ready
         output_path = "{}/{}".format(self.datastore_path, new_uuid)
