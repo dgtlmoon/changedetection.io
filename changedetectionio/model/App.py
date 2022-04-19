@@ -13,8 +13,6 @@ from changedetectionio.notification import (
 
 
 class model(dict):
-    mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
-
     def __init__(self, *arg, **kw):
         super(model, self).__init__(*arg, **kw)
         self.update({
@@ -54,10 +52,8 @@ class model(dict):
         })
 
     @property
-    def total_seconds(self):
-        seconds = 0
-        for m, n in self.mtable.items():
-            x = self.get('settings', {}).get('request', {}).get('time_between_check', {}).get(m, None)
-            if x:
-                seconds += x * n
-        return max(seconds, minimum_seconds_recheck_time)
+    def threshold_seconds(self):
+        sec = self.get('minutes_between_check', None)
+        if sec:
+            sec = sec * 60
+        return sec
