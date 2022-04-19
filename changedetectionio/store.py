@@ -291,8 +291,6 @@ class ChangeDetectionStore:
                     del apply_extras[k]
 
             new_watch.update(apply_extras)
-
-            # this is the slowest part for large lists
             self.__data['watching'][new_uuid]=new_watch
 
         # Get the directory ready
