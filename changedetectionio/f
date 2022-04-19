@@ -1,0 +1,6 @@
+#!/bin/bash
+
+seq 1 25000|while read s
+do
+echo http://foobar.com/?s=$s
+done

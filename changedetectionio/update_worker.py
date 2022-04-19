@@ -2,6 +2,7 @@ import threading
 import queue
 import time
 
+from changedetectionio import content_fetcher
 # A single update worker
 #
 # Requests for checking on a single site(watch) from a queue of watches
@@ -32,7 +33,6 @@ class update_worker(threading.Thread):
 
             else:
                 self.current_uuid = uuid
-                from changedetectionio import content_fetcher
 
                 if uuid in list(self.datastore.data['watching'].keys()):
 
