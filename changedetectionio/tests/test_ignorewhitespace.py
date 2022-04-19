@@ -63,7 +63,7 @@ def test_check_ignore_whitespace(client, live_server):
         data={
             "requests-minutes_between_check": 180,
             "application-ignore_whitespace": "y",
-            "application-fetch_backend|": "html_requests"
+            "application-fetch_backend": "html_requests"
         },
         follow_redirects=True
     )
