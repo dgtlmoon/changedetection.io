@@ -601,7 +601,8 @@ def changedetection_app(config=None, datastore_o=None):
                                      watch=datastore.data['watching'][uuid],
                                      form=form,
                                      has_empty_checktime=has_empty_checktime,
-                                     current_base_url=datastore.data['settings']['application']['base_url']
+                                     current_base_url=datastore.data['settings']['application']['base_url'],
+                                     emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False)
                                      )
 
         return output
