@@ -47,10 +47,3 @@ class model(dict):
                 }
             }
         })
-
-    @property
-    def threshold_seconds(self):
-        sec = self.get('minutes_between_check', None)
-        if sec:
-            sec = sec * 60
-        return sec
