@@ -3,14 +3,11 @@ import os
 
 import uuid as uuid_builder
 
-minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 5))
-
 from changedetectionio.notification import (
     default_notification_body,
     default_notification_format,
     default_notification_title,
 )
-
 
 class model(dict):
     def __init__(self, *arg, **kw):

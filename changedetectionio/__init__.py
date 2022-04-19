@@ -1176,7 +1176,9 @@ def ticker_thread_check_time_launch_checks():
 
         # Check for watches outside of the time threshold to put in the thread queue.
         now = time.time()
-        max_system_wide = int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60
+
+        recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
+        recheck_time_system_seconds = int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60
 
         for uuid, watch in copied_datastore.data['watching'].items():
 
@@ -1189,10 +1191,10 @@ def ticker_thread_check_time_launch_checks():
             if watch.threshold_seconds:
                 threshold -= watch.threshold_seconds
             else:
-                threshold -= max_system_wide
+                threshold -= recheck_time_system_seconds
 
             # Yeah, put it in the queue, it's more than time
-            if watch['last_checked'] <= threshold:
+            if watch['last_checked'] <= max(threshold, recheck_time_minimum_seconds):
                 if not uuid in running_uuids and uuid not in update_q.queue:
                     update_q.put(uuid)
 
