@@ -12,8 +12,6 @@ from changedetectionio.notification import (
 
 
 class model(dict):
-    mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
-
     def __init__(self, *arg, **kw):
         super(model, self).__init__(*arg, **kw)
         self.update({
