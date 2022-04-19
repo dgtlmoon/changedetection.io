@@ -530,6 +530,10 @@ def changedetection_app(config=None, datastore_o=None):
 
 
         # More for testing, possible to return the first/only
+        if not datastore.data['watching'].keys():
+            flash("No watches to edit", "error")
+            return redirect(url_for('index'))
+
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
