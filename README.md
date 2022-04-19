@@ -17,10 +17,7 @@ Free, Open-source web page monitoring, notification and change detection. Don't 
 
 **Get your own private instance now! Let us host it for you!**
 
-[![Deploy to Lemonade](https://lemonade.changedetection.io/static/images/lemonade.svg)](https://lemonade.changedetection.io/start)
-
-
-[_Let us host your own private instance - We accept PayPal and Bitcoin, Support the further development of changedetection.io!_](https://lemonade.changedetection.io/start)
+[**Try our $6.99/month subscription - unlimited checks and watches!**](https://lemonade.changedetection.io/start) , _half the price of othr website change monitoring services and comes with unlimited watches & checks - no restrictions!_
 
 
 
