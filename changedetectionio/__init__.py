@@ -661,13 +661,19 @@ def changedetection_app(config=None, datastore_o=None):
         good = 0
 
         if request.method == 'POST':
+            now=time.time()
             urls = request.values.get('urls').split("\n")
+
+            if (len(urls) > 5000):
+                flash("Importing 5,000 of the first URLs from your list, the rest can be imported again.")
+
             for url in urls:
                 url = url.strip()
                 url, *tags = url.split(" ")
                 # Flask wtform validators wont work with basic auth, use validators package
-                if len(url) and validators.url(url.replace('source:', '')):
-                    new_uuid = datastore.add_watch(url=url.strip(), tag=" ".join(tags))
+                # Up to 5000 per batch so we dont flood the server
+                if len(url) and validators.url(url.replace('source:', '')) and good < 5000:
+                    new_uuid = datastore.add_watch(url=url.strip(), tag=" ".join(tags), write_to_disk_now=False)
                     # Straight into the queue.
                     update_q.put(new_uuid)
                     good += 1
@@ -675,7 +681,8 @@ def changedetection_app(config=None, datastore_o=None):
                     if len(url):
                         remaining_urls.append(url)
 
-            flash("{} Imported, {} Skipped.".format(good, len(remaining_urls)))
+            flash("{} Imported in {:.2f}s, {} Skipped.".format(good, time.time()-now,len(remaining_urls)))
+            datastore.needs_write = True
 
             if len(remaining_urls) == 0:
                 # Looking good, redirect to index.

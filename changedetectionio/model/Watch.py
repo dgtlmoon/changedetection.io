@@ -13,7 +13,6 @@ from changedetectionio.notification import (
 
 class model(dict):
     def __init__(self, *arg, **kw):
-        super(model, self).__init__(*arg, **kw)
         self.update({
             'url': None,
             'tag': None,
@@ -45,6 +44,9 @@ class model(dict):
             # Should be all None by default, so we use the system default in this case.
             'minutes_between_check': None
         })
+        # goes at the end so we update the default object with the initialiser
+        super(model, self).__init__(*arg, **kw)
+
 
     @property
     def has_empty_checktime(self):

@@ -272,15 +272,14 @@ class ChangeDetectionStore:
         self.needs_write = True
         return changes_removed
 
-    def add_watch(self, url, tag="", extras=None):
+    def add_watch(self, url, tag="", extras=None, write_to_disk_now=True):
         if extras is None:
             extras = {}
 
         with self.lock:
             # @todo use a common generic version of this
             new_uuid = str(uuid_builder.uuid4())
-            _blank = deepcopy(self.generic_definition)
-            _blank.update({
+            new_watch = Watch.model({
                 'url': url,
                 'tag': tag
             })
@@ -291,9 +290,8 @@ class ChangeDetectionStore:
                 if k in apply_extras:
                     del apply_extras[k]
 
-            _blank.update(apply_extras)
-
-            self.data['watching'][new_uuid] = _blank
+            new_watch.update(apply_extras)
+            self.__data['watching'][new_uuid]=new_watch
 
         # Get the directory ready
         output_path = "{}/{}".format(self.datastore_path, new_uuid)
@@ -302,7 +300,8 @@ class ChangeDetectionStore:
         except FileExistsError:
             print(output_path, "already exists.")
 
-        self.sync_to_json()
+        if write_to_disk_now:
+            self.sync_to_json()
         return new_uuid
 
     # Save some text file to the appropriate path and bump the history
