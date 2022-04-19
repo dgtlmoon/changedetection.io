@@ -36,7 +36,6 @@ from flask import (
 )
 from flask_login import login_required
 from flask_wtf import CSRFProtect
-from werkzeug.datastructures import MultiDict
 
 from changedetectionio import html_tools
 
@@ -94,16 +93,6 @@ def init_app_secret(datastore_path):
             f.write(secret)
 
     return secret
-
-# Remember python is by reference
-# populate_form in wtfors didnt work for me. (try using a setattr() obj type on datastore.watch?)
-def populate_form_from_watch(form, watch):
-    for i in form.__dict__.keys():
-        if i[0] != '_':
-            p = getattr(form, i)
-            if hasattr(p, 'data') and i in watch:
-                setattr(p, "data", watch[i])
-
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
 # running or something similar.
