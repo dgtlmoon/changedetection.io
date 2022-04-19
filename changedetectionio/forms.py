@@ -298,6 +298,7 @@ class quickWatchForm(Form):
     url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
+# Common to a single watch and the global settings
 class commonSettingsForm(Form):
 
     notification_urls = StringListField('Notification URL list', validators=[validators.Optional(), ValidateNotificationBodyAndTitleWhenURLisSet(), ValidateAppRiseServers()])
@@ -344,22 +345,13 @@ class watchForm(commonSettingsForm):
         return result
 
 
-
-# Needs to be the same struct
+# datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     minutes_between_check = fields.IntegerField('Maximum time in minutes until recheck',
                                                [validators.NumberRange(min=1)])
+# datastore.data['settings']['application']..
+class globalSettingsApplicationForm(commonSettingsForm):
 
-class globalSettingsApplicationForm(Form):
-    notification_urls = StringListField('Notification URL List',
-                                        validators=[validators.Optional(), ValidateNotificationBodyAndTitleWhenURLisSet(),
-                                                    ValidateAppRiseServers()])
-    notification_title = StringField('Notification Title', default=default_notification_title,
-                                     validators=[validators.Optional(), ValidateTokensList()])
-    notification_body = TextAreaField('Notification Body', default=default_notification_body,
-                                      validators=[validators.Optional(), ValidateTokensList()])
-    notification_format = SelectField('Notification Format', choices=valid_notification_formats.keys(), default=default_notification_format)
-    extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
     base_url = StringField('Base URL', validators=[validators.Optional()])
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
@@ -372,6 +364,9 @@ class globalSettingsApplicationForm(Form):
 
 
 class globalSettingsForm(Form):
+    # Define these as FormFields/"sub forms", this way it matches the JSON storage
+    # datastore.data['settings']['application']..
+    # datastore.data['settings']['requests']..
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
