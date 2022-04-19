@@ -85,6 +85,7 @@ def live_server_setup(live_server):
     # Just return the body in the request
     @live_server.app.route('/test-body', methods=['POST', 'GET'])
     def test_body():
+        print ("TEST-BODY GOT", request.data, "returning")
         return request.data
 
     # Just return the verb in the request

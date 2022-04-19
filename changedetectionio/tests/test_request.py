@@ -84,9 +84,25 @@ def test_body_in_request(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    body_value = 'Test Body Value'
+    time.sleep(3)
 
-    # Add a properly formatted body with a proper method
+    # add the first 'version'
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={
+              "url": test_url,
+              "tag": "",
+              "method": "POST",
+              "fetch_backend": "html_requests",
+              "body": "something something"},
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+
+    time.sleep(3)
+
+    # Now the change which should trigger a change
+    body_value = 'Test Body Value'
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={
