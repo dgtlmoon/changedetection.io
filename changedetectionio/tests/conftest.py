@@ -16,6 +16,7 @@ def cleanup(datastore_path):
     # Unlink test output files
     files = ['output.txt',
              'url-watches.json',
+             'secret.txt',
              'notification.txt',
              'count.txt',
              'endpoint-content.txt'
