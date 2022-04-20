@@ -17,7 +17,7 @@ Free, Open-source web page monitoring, notification and change detection. Don't 
 
 **Get your own private instance now! Let us host it for you!**
 
-[**Try our $6.99/month subscription - unlimited checks and watches!**](https://lemonade.changedetection.io/start) , _half the price of othr website change monitoring services and comes with unlimited watches & checks - no restrictions!_
+[**Try our $6.99/month subscription - unlimited checks and watches!**](https://lemonade.changedetection.io/start) , _half the price of other website change monitoring services and comes with unlimited watches & checks!_
 
 
 
