@@ -66,19 +66,25 @@ def process_notification(n_object, datastore):
                 if not 'avatar_url' in url:
                     url += k + 'avatar_url=https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/changedetectionio/static/images/avatar-256x256.png'
 
-                payload_max_size = 1700
-                # Trim everything to a max of 1700 total chars (leave some for padding, control etc)
-                # Incase n_title > 1700
-                # basically trim back the body until the total size fits our threshold
-                # and trim off the n_title to fit always.
-                body_limit = max(0, payload_max_size - len(n_title))
-                body = n_body[0:body_limit] if 'discord://' in url else n_body
+                if url.startswith('tgram://'):
+                    # real limit is 4096, but minus some for extra metadata
+                    payload_max_size = 3600
+                    body_limit = max(0, payload_max_size - len(n_title))
+                    n_title = n_title[0:payload_max_size]
+                    n_body = n_body[0:body_limit]
+
+                elif url.startswith('discord://'):
+                    # real limit is 2000, but minus some for extra metadata
+                    payload_max_size = 1700
+                    body_limit = max(0, payload_max_size - len(n_title))
+                    n_title = n_title[0:payload_max_size]
+                    n_body = n_body[0:body_limit]
 
                 apobj.add(url)
 
                 apobj.notify(
-                    title=n_title[0:payload_max_size],
-                    body=body,
+                    title=n_title,
+                    body=n_body,
                     body_format=n_format)
 
                 apobj.clear()
