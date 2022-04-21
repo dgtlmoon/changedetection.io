@@ -25,10 +25,10 @@ $(document).ready(function() {
 
     data = {
         window_url : window.location.href,
-        notification_urls : $('#notification_urls').val(),
-        notification_title : $('#notification_title').val(),
-        notification_body : $('#notification_body').val(),
-        notification_format : $('#notification_format').val(),
+        notification_urls : $('.notification-urls').val(),
+        notification_title : $('.notification-title').val(),
+        notification_body : $('.notification-body').val(),
+        notification_format : $('.notification-format').val(),
     }
     for (key in data) {
       if (!data[key].length) {

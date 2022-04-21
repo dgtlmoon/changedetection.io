@@ -8,7 +8,7 @@
     Gitter - gitter://token/room
     Office365 - o365://TenantID:AccountEmail/ClientID/ClientSecret/TargetEmail
     AWS SNS - sns://AccessKeyID/AccessSecretKey/RegionName/+PhoneNo
-    SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com")
+    SMTPS - mailtos://user:pass@mail.domain.com?to=receivingAddress@example.com", class="notification-urls")
                             }}
                             <div class="pure-form-message-inline">
                               <ul>
@@ -27,15 +27,15 @@
                         </div>
                         <div id="notification-customisation" class="pure-control-group">
                             <div class="pure-control-group">
-                                {{ render_field(form.notification_title, class="m-d") }}
+                                {{ render_field(form.notification_title, class="m-d notification-title") }}
                                 <span class="pure-form-message-inline">Title for all notifications</span>
                             </div>
                             <div class="pure-control-group">
-                                {{ render_field(form.notification_body , rows=5) }}
+                                {{ render_field(form.notification_body , rows=5, class="notification-body") }}
                                 <span class="pure-form-message-inline">Body for all notifications</span>
                             </div>
                             <div class="pure-control-group">
-                                {{ render_field(form.notification_format , rows=5) }}
+                                {{ render_field(form.notification_format , rows=5, class="notification-format") }}
                                 <span class="pure-form-message-inline">Format for all notifications</span>
                             </div>
                             <div class="pure-controls">
