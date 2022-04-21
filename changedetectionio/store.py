@@ -7,6 +7,7 @@ import uuid as uuid_builder
 from copy import deepcopy
 from os import mkdir, path, unlink
 from threading import Lock
+import re
 
 from changedetectionio.model import Watch, App
 
@@ -100,6 +101,9 @@ class ChangeDetectionStore:
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['rss_access_token'] = secret
 
+        # Bump the update version by running updates
+        self.run_updates()
+
         self.needs_write = True
 
         # Finally start the thread that will manage periodic data saves to JSON
@@ -144,6 +148,17 @@ class ChangeDetectionStore:
             self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
 
         self.needs_write = True
+
+    @property
+    def threshold_seconds(self):
+        seconds = 0
+        mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
+        minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 5))
+        for m, n in mtable.items():
+            x = self.__data['settings']['requests']['time_between_check'].get(m)
+            if x:
+                seconds += x * n
+        return max(seconds, minimum_seconds_recheck_time)
 
     @property
     def data(self):
@@ -398,3 +413,41 @@ class ChangeDetectionStore:
             if not str(item) in index:
                 print ("Removing",item)
                 unlink(item)
+
+    # Run all updates
+    # IMPORTANT - Each update could be run even when they have a new install and the schema is correct
+    #             So therefor - each `update_n` should be very careful about checking if it needs to actually run
+    #             Probably we should bump the current update schema version with each tag release version?
+    def run_updates(self):
+        import inspect
+        updates_available = []
+        for i, o in inspect.getmembers(self, predicate=inspect.ismethod):
+            m = re.search(r'update_(\d+)$', i)
+            if m:
+                updates_available.append(int(m.group(1)))
+        updates_available.sort()
+
+        for update_n in updates_available:
+            if update_n > self.__data['settings']['application']['schema_version']:
+                print ("Applying update_{}".format((update_n)))
+                try:
+                    update_method = getattr(self, "update_{}".format(update_n))()
+                except Exception as e:
+                    print("Error while trying update_{}".format((update_n)))
+                    print(e)
+                    # Don't run any more updates
+                    return
+                else:
+                    # Bump the version, important
+                    self.__data['settings']['application']['schema_version'] = update_n
+
+    # Convert minutes to seconds on settings and each watch
+    def update_1(self):
+        if 'minutes_between_check' in self.data['settings']['requests']:
+            self.data['settings']['requests']['time_between_check']['minutes'] = self.data['settings']['requests']['minutes_between_check']
+
+        for uuid, watch in self.data['watching'].items():
+            if 'minutes_between_check' in watch:
+                # Only upgrade individual watch time if it was set
+                if watch.get('minutes_between_check', False):
+                    self.data['watching'][uuid]['time_between_check']['minutes'] = watch['minutes_between_check']

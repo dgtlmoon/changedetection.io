@@ -24,8 +24,7 @@ class model(dict):
                 },
                 'requests': {
                     'timeout': 15,  # Default 15 seconds
-                    # Default 3 hours
-                    'minutes_between_check': 3 * 60,  # Default 3 hours
+                    'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
                     'workers': 10  # Number of threads, lower is better for slow connections
                 },
                 'application': {

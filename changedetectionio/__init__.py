@@ -541,14 +541,16 @@ def changedetection_app(config=None, datastore_o=None):
             # probably there should be a nice little handler for this.
             if datastore.data['watching'][uuid]['fetch_backend'] is None:
                 form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
-            if datastore.data['watching'][uuid]['minutes_between_check'] is None:
-                form.minutes_between_check.data = datastore.data['settings']['requests']['minutes_between_check']
+
+#            if datastore.data['watching'][uuid].has_empty_checktime:
+#                form.time_between_check.data = dict(datastore.data['settings']['requests']['time_between_check'])
 
         if request.method == 'POST' and form.validate():
 
             # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
-            if form.minutes_between_check.data == datastore.data['settings']['requests']['minutes_between_check']:
-                form.minutes_between_check.data = None
+#            if form.minutes_between_check.data == datastore.data['settings']['requests']['minutes_between_check']:
+#                form.minutes_between_check.data = None
+
             if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
                 form.fetch_backend.data = None
 
@@ -1177,7 +1179,7 @@ def ticker_thread_check_time_launch_checks():
         now = time.time()
 
         recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
-        recheck_time_system_seconds = int(copied_datastore.data['settings']['requests']['minutes_between_check']) * 60
+        recheck_time_system_seconds = datastore.threshold_seconds
 
         for uuid, watch in copied_datastore.data['watching'].items():
 

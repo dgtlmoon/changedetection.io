@@ -42,7 +42,7 @@ class model(dict):
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
-            'minutes_between_check': None
+            'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None}
         })
         # goes at the end so we update the default object with the initialiser
         super(model, self).__init__(*arg, **kw)
@@ -50,13 +50,17 @@ class model(dict):
 
     @property
     def has_empty_checktime(self):
-        if self.get('minutes_between_check', None):
-            return False
-        return True
+        # using all() + dictionary comprehension
+        # Check if all values are 0 in dictionary
+        res = all(x == None or x == False or x==0 for x in self.get('time_between_check', {}).values())
+        return res
 
     @property
     def threshold_seconds(self):
-        sec = self.get('minutes_between_check', None)
-        if sec:
-            sec = sec * 60
-        return sec
+        seconds = 0
+        mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
+        for m, n in mtable.items():
+            x = self.get('time_between_check', {}).get(m, None)
+            if x:
+                seconds += x * n
+        return max(seconds, minimum_seconds_recheck_time)
