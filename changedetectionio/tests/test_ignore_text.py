@@ -196,7 +196,7 @@ def test_check_global_ignore_text_functionality(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={
-            "requests-minutes_between_check": 180,
+            "requests-time_between_check-minutes": 180,
             "application-global_ignore_text": ignore_text,
             'application-fetch_backend': "html_requests"
         },

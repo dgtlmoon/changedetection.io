@@ -55,7 +55,7 @@ def test_render_anchor_tag_content_true(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={
-            "requests-minutes_between_check": 180,
+            "requests-time_between_check-minutes": 180,
             "application-render_anchor_tag_content": "true",
             "application-fetch_backend": "html_requests",
         },
@@ -116,7 +116,7 @@ def test_render_anchor_tag_content_false(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={
-            "requests-minutes_between_check": 180,
+            "requests-time_between_check-minutes": 180,
             "application-render_anchor_tag_content": "false",
             "application-fetch_backend": "html_requests",
         },
@@ -175,7 +175,7 @@ def test_render_anchor_tag_content_default(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={
-            "requests-minutes_between_check": 180,
+            "requests-time_between_check-minutes": 180,
             "application-fetch_backend": "html_requests",
         },
         follow_redirects=True,
