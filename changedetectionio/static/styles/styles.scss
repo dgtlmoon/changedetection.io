@@ -625,3 +625,12 @@ ul {
     padding-top: 0px;
     margin-top: 4px;
 }
+
+.time-check-widget {
+    tr {
+        display: inline;
+        input[type="number"] {
+            width: 4em;
+        }
+    }
+}

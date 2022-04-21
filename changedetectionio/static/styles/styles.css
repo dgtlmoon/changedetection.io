@@ -440,3 +440,8 @@ ul {
   padding-left: 1em;
   padding-top: 0px;
   margin-top: 4px; }
+
+.time-check-widget tr {
+  display: inline; }
+  .time-check-widget tr input[type="number"] {
+    width: 4em; }
