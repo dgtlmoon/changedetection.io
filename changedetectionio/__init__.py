@@ -342,6 +342,8 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/", methods=['GET'])
     @login_required
     def index():
+        from changedetectionio import forms
+
         limit_tag = request.args.get('tag')
         pause_uuid = request.args.get('pause')
 
@@ -378,7 +380,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         existing_tags = datastore.get_all_tags()
 
-        from changedetectionio import forms
         form = forms.quickWatchForm(request.form)
 
         output = render_template("watch-overview.html",
@@ -390,7 +391,8 @@ def changedetection_app(config=None, datastore_o=None):
                                  has_unviewed=datastore.data['has_unviewed'],
                                  # Don't link to hosting when we're on the hosting environment
                                  hosted_sticky=os.getenv("SALTED_PASS", False) == False,
-                                 guid=datastore.data['app_guid'])
+                                 guid=datastore.data['app_guid'],
+                                 queued_uuids=update_q.queue)
 
         return output
 
