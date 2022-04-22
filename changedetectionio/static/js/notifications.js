@@ -4,7 +4,7 @@ $(document).ready(function() {
     e.preventDefault();
     email = prompt("Destination email");
     if(email) {
-      var n = $("#notification_urls");
+      var n = $(".notification-urls");
       var p=email_notification_prefix;
       $(n).val( $.trim( $(n).val() )+"\n"+email_notification_prefix+email );
     }
