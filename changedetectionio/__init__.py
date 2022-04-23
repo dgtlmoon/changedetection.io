@@ -519,7 +519,6 @@ def changedetection_app(config=None, datastore_o=None):
     def edit_page(uuid):
         from changedetectionio import forms
 
-
         # More for testing, possible to return the first/only
         if not datastore.data['watching'].keys():
             flash("No watches to edit", "error")
@@ -532,29 +531,39 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No watch with the UUID %s found." % (uuid), "error")
             return redirect(url_for('index'))
 
+        default = datastore.data['watching'][uuid]
+
+        # Show system wide default if nothing configured
+        if datastore.data['watching'][uuid]['fetch_backend'] is None:
+            default['fetch_backend'] = datastore.data['settings']['application']['fetch_backend']
+
+        # Show system wide default if nothing configured
+        if all(value == 0 or value == None for value in datastore.data['watching'][uuid]['time_between_check'].values()):
+            default['time_between_check'] = datastore.data['settings']['requests']['time_between_check']
+
         form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
-                                        data=datastore.data['watching'][uuid]
+                                        data=default
                                         )
 
-        if request.method == 'GET':
-            # Set some defaults that refer to the main config when None, we do the same in POST,
-            # probably there should be a nice little handler for this.
-            if datastore.data['watching'][uuid]['fetch_backend'] is None:
-                form.fetch_backend.data = datastore.data['settings']['application']['fetch_backend']
-
-#            if datastore.data['watching'][uuid].has_empty_checktime:
-#                form.time_between_check.data = dict(datastore.data['settings']['requests']['time_between_check'])
 
         if request.method == 'POST' and form.validate():
-
-            # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
-#            if form.minutes_between_check.data == datastore.data['settings']['requests']['minutes_between_check']:
-#                form.minutes_between_check.data = None
-
-            if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
-                form.fetch_backend.data = None
+            from changedetectionio.model import Watch
 
             extra_update_obj = {}
+
+            # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
+            # Assume we use the default value, unless something relevant is different, then use the form value
+            # values could be None, 0 etc.
+            # Set to None unless the next for: says that something is different
+            extra_update_obj['time_between_check'] = dict.fromkeys(form.time_between_check.data)
+            for k, v in form.time_between_check.data.items():
+                if v and v != datastore.data['settings']['requests']['time_between_check'][k]:
+                    extra_update_obj['time_between_check'] = form.time_between_check.data
+                    break
+
+            # Use the default if its the same as system wide
+            if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
+                extra_update_obj['fetch_backend'] = None
 
             # Notification URLs
             datastore.data['watching'][uuid]['notification_urls'] = form.notification_urls.data

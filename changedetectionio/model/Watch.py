@@ -12,8 +12,7 @@ from changedetectionio.notification import (
 
 
 class model(dict):
-    def __init__(self, *arg, **kw):
-        self.update({
+    base_config = {
             'url': None,
             'tag': None,
             'last_checked': 0,
@@ -43,7 +42,10 @@ class model(dict):
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None}
-        })
+        }
+
+    def __init__(self, *arg, **kw):
+        self.update(self.base_config)
         # goes at the end so we update the default object with the initialiser
         super(model, self).__init__(*arg, **kw)
 

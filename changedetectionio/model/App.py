@@ -10,9 +10,7 @@ from changedetectionio.notification import (
 )
 
 class model(dict):
-    def __init__(self, *arg, **kw):
-        super(model, self).__init__(*arg, **kw)
-        self.update({
+    base_config = {
             'note': "Hello! If you change this file manually, please be sure to restart your changedetection.io instance!",
             'watching': {},
             'settings': {
@@ -45,4 +43,8 @@ class model(dict):
                     'schema_version' : 0
                 }
             }
-        })
+        }
+
+    def __init__(self, *arg, **kw):
+        super(model, self).__init__(*arg, **kw)
+        self.update(self.base_config)
