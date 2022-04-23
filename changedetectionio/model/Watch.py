@@ -57,7 +57,6 @@ class model(dict):
         res = all(x == None or x == False or x==0 for x in self.get('time_between_check', {}).values())
         return res
 
-    @property
     def threshold_seconds(self):
         seconds = 0
         mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
@@ -65,4 +64,4 @@ class model(dict):
             x = self.get('time_between_check', {}).get(m, None)
             if x:
                 seconds += x * n
-        return max(seconds, minimum_seconds_recheck_time)
+        return seconds

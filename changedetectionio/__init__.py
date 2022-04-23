@@ -519,6 +519,7 @@ def changedetection_app(config=None, datastore_o=None):
     def edit_page(uuid):
         from changedetectionio import forms
 
+        using_default_check_time = True
         # More for testing, possible to return the first/only
         if not datastore.data['watching'].keys():
             flash("No watches to edit", "error")
@@ -531,7 +532,8 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No watch with the UUID %s found." % (uuid), "error")
             return redirect(url_for('index'))
 
-        default = datastore.data['watching'][uuid]
+        # be sure we update with a copy instead of accidently editing the live object by reference
+        default = deepcopy(datastore.data['watching'][uuid])
 
         # Show system wide default if nothing configured
         if datastore.data['watching'][uuid]['fetch_backend'] is None:
@@ -539,7 +541,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Show system wide default if nothing configured
         if all(value == 0 or value == None for value in datastore.data['watching'][uuid]['time_between_check'].values()):
-            default['time_between_check'] = datastore.data['settings']['requests']['time_between_check']
+            default['time_between_check'] = deepcopy(datastore.data['settings']['requests']['time_between_check'])
 
         form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
                                         data=default
@@ -547,8 +549,6 @@ def changedetection_app(config=None, datastore_o=None):
 
 
         if request.method == 'POST' and form.validate():
-            from changedetectionio.model import Watch
-
             extra_update_obj = {}
 
             # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
@@ -559,6 +559,7 @@ def changedetection_app(config=None, datastore_o=None):
             for k, v in form.time_between_check.data.items():
                 if v and v != datastore.data['settings']['requests']['time_between_check'][k]:
                     extra_update_obj['time_between_check'] = form.time_between_check.data
+                    using_default_check_time = False
                     break
 
             # Use the default if its the same as system wide
@@ -589,7 +590,7 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
             # But in the case something is added we should save straight away
-            datastore.sync_to_json()
+            datastore.needs_write_urgent = True
 
             # Queue the watch for immediate recheck
             update_q.put(uuid)
@@ -608,12 +609,12 @@ def changedetection_app(config=None, datastore_o=None):
             if request.method == 'POST' and not form.validate():
                 flash("An error occurred, please see below.", "error")
 
-            has_empty_checktime = datastore.data['watching'][uuid].has_empty_checktime
+
             output = render_template("edit.html",
                                      uuid=uuid,
                                      watch=datastore.data['watching'][uuid],
                                      form=form,
-                                     has_empty_checktime=has_empty_checktime,
+                                     has_empty_checktime=using_default_check_time,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False)
                                      )
@@ -643,15 +644,15 @@ def changedetection_app(config=None, datastore_o=None):
             if form.validate():
                 datastore.data['settings']['application'].update(form.data['application'])
                 datastore.data['settings']['requests'].update(form.data['requests'])
-                datastore.needs_write = True
 
                 if not os.getenv("SALTED_PASS", False) and len(form.application.form.password.encrypted_password):
                     datastore.data['settings']['application']['password'] = form.application.form.password.encrypted_password
-                    datastore.needs_write = True
+                    datastore.needs_write_urgent = True
                     flash("Password protection enabled.", 'notice')
                     flask_login.logout_user()
                     return redirect(url_for('index'))
 
+                datastore.needs_write_urgent = True
                 flash("Settings updated.")
 
             else:
@@ -1198,8 +1199,9 @@ def ticker_thread_check_time_launch_checks():
 
             # If they supplied an individual entry minutes to threshold.
             threshold = now
-            if watch.threshold_seconds:
-                threshold -= watch.threshold_seconds
+            watch_threshold_seconds = watch.threshold_seconds()
+            if watch_threshold_seconds:
+                threshold -= watch_threshold_seconds
             else:
                 threshold -= recheck_time_system_seconds
 

@@ -56,7 +56,7 @@ def test_check_recheck_global_setting(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={
-               "requests-minutes_between_check": 1566,
+               "requests-time_between_check-minutes": 1566,
                'application-fetch_backend': "html_requests"
                },
         follow_redirects=True
@@ -88,7 +88,7 @@ def test_check_recheck_global_setting(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={
-               "requests-minutes_between_check": 222,
+               "requests-time_between_check-minutes": 222,
                 'application-fetch_backend': "html_requests"
                },
         follow_redirects=True
@@ -124,8 +124,8 @@ def test_check_recheck_global_setting(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={
-               "requests-minutes_between_check": 666,
-                'application-fetch_backend': "html_requests"
+               "requests-time_between_check-minutes": 666,
+                "application-fetch_backend": "html_requests"
                },
         follow_redirects=True
     )
@@ -147,4 +147,3 @@ def test_check_recheck_global_setting(client, live_server):
         follow_redirects=True
     )
     assert b"666" in res.data
-

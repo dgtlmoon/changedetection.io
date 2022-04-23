@@ -17,6 +17,11 @@ from changedetectionio.model import Watch, App
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change
 class ChangeDetectionStore:
     lock = Lock()
+    # For general updates/writes that can wait a few seconds
+    needs_write = False
+
+    # For when we edit, we should write to disk
+    needs_write_urgent = False
 
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         # Should only be active for docker
@@ -354,7 +359,7 @@ class ChangeDetectionStore:
 
     def sync_to_json(self):
         logging.info("Saving JSON..")
-
+        print("Saving JSON..")
         try:
             data = deepcopy(self.__data)
         except RuntimeError as e:
@@ -376,6 +381,7 @@ class ChangeDetectionStore:
                 logging.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
 
             self.needs_write = False
+            self.needs_write_urgent = False
 
     # Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
     # by just running periodically in one thread, according to python, dict updates are threadsafe.
@@ -386,14 +392,14 @@ class ChangeDetectionStore:
                 print("Shutting down datastore thread")
                 return
 
-            if self.needs_write:
+            if self.needs_write or self.needs_write_urgent:
                 self.sync_to_json()
 
             # Once per minute is enough, more and it can cause high CPU usage
             # better here is to use something like self.app.config.exit.wait(1), but we cant get to 'app' from here
-            for i in range(30):
-                time.sleep(2)
-                if self.stop_thread:
+            for i in range(120):
+                time.sleep(0.5)
+                if self.stop_thread or self.needs_write_urgent:
                     break
 
     # Go through the datastore path and remove any snapshots that are not mentioned in the index
