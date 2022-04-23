@@ -19,9 +19,9 @@ class model(dict):
             'last_changed': 0,
             'paused': False,
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
-            'newest_history_key': "",
+            'newest_history_key': 0,
             'title': None,
-            'previous_md5': "",
+            'previous_md5': False,
             'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send
             'body': None,
