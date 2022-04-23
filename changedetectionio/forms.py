@@ -15,8 +15,7 @@ from wtforms import (
     validators,
     widgets
 )
-
-from wtforms.fields import html5, FieldList, FormField
+from wtforms.fields import FieldList, FormField
 from wtforms.validators import ValidationError
 
 from changedetectionio import content_fetcher
@@ -26,6 +25,8 @@ from changedetectionio.notification import (
     default_notification_title,
     valid_notification_formats,
 )
+
+from wtforms.fields import FormField
 
 valid_method = {
     'GET',
@@ -123,7 +124,6 @@ class ValidateContentFetcherIsReady(object):
 
     def __call__(self, form, field):
         import urllib3.exceptions
-
         from changedetectionio import content_fetcher
 
         # Better would be a radiohandler that keeps a reference to each class
@@ -232,7 +232,7 @@ class ValidateListRegex(object):
                 except re.error:
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))
-              
+
 class ValidateCSSJSONXPATHInput(object):
     """
     Filter validation
@@ -295,19 +295,17 @@ class ValidateCSSJSONXPATHInput(object):
                 # warning/notice that its possible the rule doesnt yet match anything?
 
 class quickWatchForm(Form):
-    # https://wtforms.readthedocs.io/en/2.3.x/fields/#module-wtforms.fields.html5
-    # `require_tld` = False is needed even for the test harness "http://localhost:5005.." to run
-    url = html5.URLField('URL', validators=[validateURL()])
+    url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
 
+# Common to a single watch and the global settings
 class commonSettingsForm(Form):
 
-    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateNotificationBodyAndTitleWhenURLisSet(), ValidateAppRiseServers()])
-    notification_title = StringField('Notification Title', default=default_notification_title, validators=[validators.Optional(), ValidateTokensList()])
-    notification_body = TextAreaField('Notification Body', default=default_notification_body, validators=[validators.Optional(), ValidateTokensList()])
-    notification_format = SelectField('Notification Format', choices=valid_notification_formats.keys(), default=default_notification_format)
-    trigger_check = BooleanField('Send test notification on save')
-    fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    notification_urls = StringListField('Notification URL list', validators=[validators.Optional(), ValidateNotificationBodyAndTitleWhenURLisSet(), ValidateAppRiseServers()])
+    notification_title = StringField('Notification title', default=default_notification_title, validators=[validators.Optional(), ValidateTokensList()])
+    notification_body = TextAreaField('Notification body', default=default_notification_body, validators=[validators.Optional(), ValidateTokensList()])
+    notification_format = SelectField('Notification format', choices=valid_notification_formats.keys(), default=default_notification_format)
+    fetch_backend = RadioField(u'Fetch method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
 
 class SingleBrowserStep(Form):
@@ -325,20 +323,22 @@ class SingleBrowserStep(Form):
 
 class watchForm(commonSettingsForm):
 
-    url = html5.URLField('URL', validators=[validateURL()])
-    tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
+    url = fields.URLField('URL', validators=[validateURL()])
+    tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)], default='')
 
-    minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
+    minutes_between_check = fields.IntegerField('Maximum time in minutes until recheck',
                                                [validators.Optional(), validators.NumberRange(min=1)])
-    css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()])
-    subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
-    title = StringField('Title')
 
-    ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
-    headers = StringDictKeyValue('Request Headers')
-    body = TextAreaField('Request Body', [validators.Optional()])
-    method = SelectField('Request Method', choices=valid_method, default=default_method)
-    ignore_status_codes = BooleanField('Ignore Status Codes (process non-2xx status codes as normal)', default=False)
+    css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()], default='')
+
+    subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
+    title = StringField('Title', default='')
+
+    ignore_text = StringListField('Ignore text', [ValidateListRegex()])
+    headers = StringDictKeyValue('Request headers')
+    body = TextAreaField('Request body', [validators.Optional()])
+    method = SelectField('Request method', choices=valid_method, default=default_method)
+    ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
     # First one should be Go-to URL |watch.url| and Disable
@@ -362,15 +362,31 @@ class watchForm(commonSettingsForm):
 
         return result
 
-class globalSettingsForm(commonSettingsForm):
 
-    password = SaltyPasswordField()
-    minutes_between_check = html5.IntegerField('Maximum time in minutes until recheck',
+# datastore.data['settings']['requests']..
+class globalSettingsRequestForm(Form):
+    minutes_between_check = fields.IntegerField('Maximum time in minutes until recheck',
                                                [validators.NumberRange(min=1)])
-    extract_title_as_title = BooleanField('Extract <title> from document and use as watch title')
+# datastore.data['settings']['application']..
+class globalSettingsApplicationForm(commonSettingsForm):
+
     base_url = StringField('Base URL', validators=[validators.Optional()])
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     ignore_whitespace = BooleanField('Ignore whitespace')
-    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+    real_browser_save_screenshot = BooleanField('Save last screenshot when using Chrome?')
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
+    render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
+    fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    password = SaltyPasswordField()
+
+
+class globalSettingsForm(Form):
+    # Define these as FormFields/"sub forms", this way it matches the JSON storage
+    # datastore.data['settings']['application']..
+    # datastore.data['settings']['requests']..
+
+    requests = FormField(globalSettingsRequestForm)
+    application = FormField(globalSettingsApplicationForm)
+    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+

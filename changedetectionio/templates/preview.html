@@ -6,18 +6,40 @@
     <h1>Current - {{watch.last_checked|format_timestamp_timeago}}</h1>
 </div>
 
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<div class="tabs">
+    <ul>
+        <li class="tab" id="default-tab"><a href="#text">Text</a></li>
+{% if screenshot %}
+        <li class="tab"><a href="#screenshot">Current screenshot</a></li>
+{% endif %}
+    </ul>
+</div>
+
 <div id="diff-ui">
-    <span class="ignored">Grey lines are ignored</span> <span class="triggered">Blue lines are triggers</span>
-    <table>
-        <tbody>
-        <tr>
-            <td id="diff-col">
+    <div class="tab-pane-inner" id="text">
+        <span class="ignored">Grey lines are ignored</span> <span class="triggered">Blue lines are triggers</span>
+        <table>
+            <tbody>
+            <tr>
+                <td id="diff-col">
                     {% for row in content %}
                     <div class="{{row.classes}}">{{row.line}}</div>
                     {% endfor %}
-            </td>
-        </tr>
-        </tbody>
-    </table>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+{% if screenshot %}
+     <div class="tab-pane-inner" id="screenshot">
+         <p>
+         <i>For now, only the most recent screenshot is saved and displayed.</i>
+             </p>
+
+        <img src="{{url_for('static_content', group='screenshot', filename=uuid)}}">
+     </div>
+{% endif %}
 </div>
 {% endblock %}

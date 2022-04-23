@@ -26,13 +26,6 @@ default_notification_title = 'ChangeDetection.io Notification - {watch_url}'
 
 def process_notification(n_object, datastore):
 
-    apobj = apprise.Apprise(debug=True)
-
-    for url in n_object['notification_urls']:
-        url = url.strip()
-        print (">> Process Notification: AppRise notifying {}".format(url))
-        apobj.add(url)
-
     # Get the notification body from datastore
     n_body = n_object.get('notification_body', default_notification_body)
     n_title = n_object.get('notification_title', default_notification_title)
@@ -54,19 +47,55 @@ def process_notification(n_object, datastore):
     # https://github.com/caronc/apprise/wiki/Development_LogCapture
     # Anything higher than or equal to WARNING (which covers things like Connection errors)
     # raise it as an exception
+    apobjs=[]
+    for url in n_object['notification_urls']:
 
-    with apprise.LogCapture(level=apprise.logging.DEBUG) as logs:
-        apobj.notify(
-        body=n_body,
-        title=n_title,
-        body_format=n_format)
+        apobj = apprise.Apprise(debug=True)
+        url = url.strip()
+        if len(url):
+            print(">> Process Notification: AppRise notifying {}".format(url))
+            with apprise.LogCapture(level=apprise.logging.DEBUG) as logs:
+                # Re 323 - Limit discord length to their 2000 char limit total or it wont send.
+                # Because different notifications may require different pre-processing, run each sequentially :(
+                # 2000 bytes minus -
+                #     200 bytes for the overhead of the _entire_ json payload, 200 bytes for {tts, wait, content} etc headers
+                #     Length of URL - Incase they specify a longer custom avatar_url
 
-        # Returns empty string if nothing found, multi-line string otherwise
-        log_value = logs.getvalue()
-        if log_value and 'WARNING' in log_value or 'ERROR' in log_value:
-            raise Exception(log_value)
+                # So if no avatar_url is specified, add one so it can be correctly calculated into the total payload
+                k = '?' if not '?' in url else '&'
+                if not 'avatar_url' in url:
+                    url += k + 'avatar_url=https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/changedetectionio/static/images/avatar-256x256.png'
 
+                if url.startswith('tgram://'):
+                    # real limit is 4096, but minus some for extra metadata
+                    payload_max_size = 3600
+                    body_limit = max(0, payload_max_size - len(n_title))
+                    n_title = n_title[0:payload_max_size]
+                    n_body = n_body[0:body_limit]
 
+                elif url.startswith('discord://'):
+                    # real limit is 2000, but minus some for extra metadata
+                    payload_max_size = 1700
+                    body_limit = max(0, payload_max_size - len(n_title))
+                    n_title = n_title[0:payload_max_size]
+                    n_body = n_body[0:body_limit]
+
+                apobj.add(url)
+
+                apobj.notify(
+                    title=n_title,
+                    body=n_body,
+                    body_format=n_format)
+
+                apobj.clear()
+
+                # Incase it needs to exist in memory for a while after to process(?)
+                apobjs.append(apobj)
+
+                # Returns empty string if nothing found, multi-line string otherwise
+                log_value = logs.getvalue()
+                if log_value and 'WARNING' in log_value or 'ERROR' in log_value:
+                    raise Exception(log_value)
 
 # Notification title + body content parameters get created here.
 def create_notification_parameters(n_object, datastore):

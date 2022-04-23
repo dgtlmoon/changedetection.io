@@ -10,6 +10,7 @@ def set_original_response():
      <p>Which is across multiple lines</p>
      </br>
      So let's see what happens.  </br>
+     <span class="foobar-detection" style='display:none'></span>
      </body>
      </html>
     """
@@ -26,6 +27,24 @@ def set_modified_response():
      <p>which has this one new line</p>
      </br>
      So let's see what happens.  </br>
+     </body>
+     </html>
+    """
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+
+    return None
+
+def set_more_modified_response():
+    test_return_data = """<html>
+    <head><title>modified head title</title></head>
+    <body>
+     Some initial text</br>
+     <p>which has this one new line</p>
+     </br>
+     So let's see what happens.  </br>
+     Ohh yeah awesome<br/>
      </body>
      </html>
     """
@@ -66,6 +85,7 @@ def live_server_setup(live_server):
     # Just return the body in the request
     @live_server.app.route('/test-body', methods=['POST', 'GET'])
     def test_body():
+        print ("TEST-BODY GOT", request.data, "returning")
         return request.data
 
     # Just return the verb in the request
@@ -82,7 +102,7 @@ def live_server_setup(live_server):
             if data != None:
                 f.write(data)
 
-        print("\n>> Test notification endpoint was hit.\n")
+        print("\n>> Test notification endpoint was hit.\n", data)
         return "Text was set"
 
 

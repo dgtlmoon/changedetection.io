@@ -31,7 +31,7 @@ a.github-link {
 
 section.content {
   padding-top: 5em;
-  padding-bottom: 5em;
+  padding-bottom: 1em;
   flex-direction: column;
   display: flex;
   align-items: center;
@@ -182,8 +182,14 @@ body:after, body:before {
 
 #notification-customisation {
   border: 1px solid #ccc;
-  padding: 1rem;
+  padding: 0.5rem;
   border-radius: 5px; }
+
+#notification-error-log {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 5px;
+  overflow-wrap: break-word; }
 
 #token-table.pure-table td, #token-table.pure-table th {
   font-size: 80%; }
@@ -279,6 +285,11 @@ footer {
     padding-bottom: 1em; }
     .pure-form .pure-control-group div, .pure-form .pure-group div, .pure-form .pure-controls div {
       margin: 0px; }
+    .pure-form .pure-control-group .checkbox > *, .pure-form .pure-group .checkbox > *, .pure-form .pure-controls .checkbox > * {
+      display: inline;
+      vertical-align: middle; }
+    .pure-form .pure-control-group .checkbox > label, .pure-form .pure-group .checkbox > label, .pure-form .pure-controls .checkbox > label {
+      padding-left: 5px; }
   .pure-form .error input {
     background-color: #ffebeb; }
   .pure-form ul.errors {
@@ -328,7 +339,7 @@ footer {
     right: auto; }
   section.content {
     padding-top: 110px; }
-  div.tabs ul li {
+  div.tabs.collapsable ul li {
     display: block;
     border-radius: 0px; }
   input[type='text'] {
@@ -414,14 +425,17 @@ and also iPads specifically.
   padding: 20px;
   border-radius: 5px; }
 
+.tab-pane-inner {
+  padding: 0px; }
+  .tab-pane-inner:not(:target) {
+    display: none; }
+  .tab-pane-inner:target {
+    display: block; }
+
 .edit-form {
-  min-width: 70%; }
-  .edit-form .tab-pane-inner {
-    padding: 0px; }
-    .edit-form .tab-pane-inner:not(:target) {
-      display: none; }
-    .edit-form .tab-pane-inner:target {
-      display: block; }
+  min-width: 70%;
+  /* so it cant overflow */
+  max-width: 95%; }
   .edit-form .box-wrap {
     position: relative; }
   .edit-form .inner {

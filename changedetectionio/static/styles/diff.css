@@ -1,7 +1,8 @@
 #diff-ui {
   background: #fff;
   padding: 2em;
-  margin: 1em;
+  margin-left: 1em;
+  margin-right: 1em;
   border-radius: 5px;
   font-size: 11px; }
   #diff-ui table {
@@ -70,3 +71,8 @@ td#diff-col div {
 /* ignored and triggered? make it obvious error */
 .ignored.triggered {
   background-color: #ff0000; }
+
+.tab-pane-inner#screenshot {
+  text-align: center; }
+  .tab-pane-inner#screenshot img {
+    max-width: 99%; }

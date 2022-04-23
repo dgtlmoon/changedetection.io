@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 
 {% block content %}
-
 <div id="settings">
     <h1>Differences</h1>
     <form class="pure-form " action="" method="GET">
@@ -35,21 +34,45 @@
 <div id="diff-jump">
     <a onclick="next_diff();">Jump</a>
 </div>
+
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<div class="tabs">
+    <ul>
+        <li class="tab" id="default-tab"><a href="#text">Text</a></li>
+{% if screenshot %}
+        <li class="tab"><a href="#screenshot">Current screenshot</a></li>
+{% endif %}
+    </ul>
+</div>
+
 <div id="diff-ui">
-    <div class="tip">Pro-tip: Use <strong>show current snapshot</strong> tab to visualise what will be ignored.</div>
-    <table>
-        <tbody>
-        <tr>
-            <!-- just proof of concept copied straight from github.com/kpdecker/jsdiff -->
-            <td id="a" style="display: none;">{{previous}}</td>
-            <td id="b" style="display: none;">{{newest}}</td>
-            <td id="diff-col">
-                <span id="result"></span>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-    Diff algorithm from the amazing <a href="https://github.com/kpdecker/jsdiff">github.com/kpdecker/jsdiff</a>
+     <div class="tab-pane-inner" id="text">
+         <div class="tip">Pro-tip: Use <strong>show current snapshot</strong> tab to visualise what will be ignored.
+         </div>
+         <table>
+             <tbody>
+             <tr>
+                 <!-- just proof of concept copied straight from github.com/kpdecker/jsdiff -->
+                 <td id="a" style="display: none;">{{previous}}</td>
+                 <td id="b" style="display: none;">{{newest}}</td>
+                 <td id="diff-col">
+                     <span id="result"></span>
+                 </td>
+             </tr>
+             </tbody>
+         </table>
+         Diff algorithm from the amazing <a href="https://github.com/kpdecker/jsdiff">github.com/kpdecker/jsdiff</a>
+     </div>
+
+{% if screenshot %}
+     <div class="tab-pane-inner" id="screenshot">
+         <p>
+         <i>For now, only the most recent screenshot is saved and displayed.</i>
+             </p>
+
+        <img src="{{url_for('static_content', group='screenshot', filename=uuid)}}">
+     </div>
+{% endif %}
 
 </div>
 

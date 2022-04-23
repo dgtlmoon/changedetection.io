@@ -9,7 +9,7 @@ _Know when web pages change! Stay ontop of new information!_
 
 Live your data-life *pro-actively* instead of *re-actively*.
 
-Free, Open-source web page monitoring, notification and change detection. Don't have time? [Try our $6.99/month plan - unlimited checks and watches!](https://lemonade.changedetection.io/start)
+Free, Open-source web page monitoring, notification and change detection. Don't have time? [**Try our $6.99/month subscription - unlimited checks and watches!**](https://lemonade.changedetection.io/start)
 
 
 [<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />](https://lemonade.changedetection.io/start)
@@ -17,10 +17,7 @@ Free, Open-source web page monitoring, notification and change detection. Don't 
 
 **Get your own private instance now! Let us host it for you!**
 
-[![Deploy to Lemonade](https://lemonade.changedetection.io/static/images/lemonade.svg)](https://lemonade.changedetection.io/start)
-
-
-[_Let us host your own private instance - We accept PayPal and Bitcoin, Support the further development of changedetection.io!_](https://lemonade.changedetection.io/start)
+[**Try our $6.99/month subscription - unlimited checks and watches!**](https://lemonade.changedetection.io/start) , _half the price of other website change monitoring services and comes with unlimited watches & checks!_
 
 
 
@@ -39,13 +36,14 @@ Free, Open-source web page monitoring, notification and change detection. Don't 
 - COVID related news from government websites
 - University/organisation news from their website
 - Detect and monitor changes in JSON API responses 
-- API monitoring and alerting
+- JSON API monitoring and alerting
 - Changes in legal and other documents
 - Trigger API calls via notifications when text appears on a website
 - Glue together APIs using the JSON filter and JSON notifications
 - Create RSS feeds based on changes in web content
+- Monitor HTML source code for unexpected changes, strengthen your PCI compliance
 - You have a very sensitive list of URLs to watch and you do _not_ want to use the paid alternatives. (Remember, _you_ are the product)
- 
+
 _Need an actual Chrome runner with Javascript support? We support fetching via WebDriver!</a>_
 
 ## Screenshots
@@ -69,6 +67,10 @@ Docker standalone
 ```bash
 $ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
 ```
+
+### Windows
+
+See the install instructions at the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Microsoft-Windows
 
 ### Python Pip
 
@@ -163,9 +165,6 @@ See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configura
 
 Raspberry Pi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! See the wiki for [details](https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver)
 
-## Windows support?
-
-YES! See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Microsoft-Windows
 
 ## Support us
 
