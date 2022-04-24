@@ -42,17 +42,17 @@ class StringListField(StringField):
 
     def _value(self):
         if self.data:
-            return "\r\n".join(self.data)
+            filter_object = filter(lambda x: len(x.strip('\r\n')), self.data)
+            return "\n".join(list(filter_object))
         else:
             return u''
 
     # incoming
     def process_formdata(self, valuelist):
         if valuelist:
-            # Remove empty strings
-            cleaned = list(filter(None, valuelist[0].split("\n")))
-            self.data = [x.strip() for x in cleaned]
-            p = 1
+            # Remove empty strings, stripping and splitting \r\n, only \n etc.
+            filter_object = filter(lambda x: len(x.strip('\r\n')), valuelist[0].split("\n"))
+            self.data = list(filter_object)
         else:
             self.data = []
 
