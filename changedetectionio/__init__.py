@@ -1070,6 +1070,43 @@ def changedetection_app(config=None, datastore_o=None):
         flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
 
+    @app.route("/api/share-url", methods=['GET'])
+    @login_required
+    def api_share_put_watch():
+        """Given a watch UUID, upload the info and return a share-link
+           the share-link can be imported/added"""
+        import requests
+        import json
+        tag = request.args.get('tag')
+        uuid = request.args.get('uuid')
+
+        # copy it to memory as trim off what we dont need (history)
+        watch = deepcopy(datastore.data['watching'][uuid])
+        if (watch.get('history')):
+            del (watch['history'])
+        # for safety/privacy
+        del(watch['notification_urls'])
+
+        watch_json = json.dumps(watch)
+
+        try:
+            r = requests.request(method="POST",
+                                 data={'watch': watch_json},
+                                 url="https://changedetection.io/share/share",
+                                 headers={'App-Guid': datastore.data['app_guid']})
+            res = r.json()
+            # @todo copy to clipboard
+            flash("Share this link: https://changedetection.io/share/{}".format(res['share_key']))
+        except Exception as e:
+            flash("Could not share, something went wrong while communicating with the share server.", 'error')
+
+        # https://changedetection.io/share/VrMv05wpXyQa
+        # in the browser - should give you a nice info page - wtf
+        # paste in etc
+
+
+        return redirect(url_for('index'))
+
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
 
