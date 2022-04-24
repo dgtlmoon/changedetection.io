@@ -413,10 +413,10 @@ footer {
   textarea {
     width: 100%;
   }
-  ul#fetch_backend {
+  ul.fetch-backend {
     margin: 0px;
     list-style: none;
-    > li {
+    li {
         > * {
             display: inline-block;
         }
