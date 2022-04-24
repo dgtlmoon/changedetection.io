@@ -39,8 +39,11 @@ def test_check_watch_field_storage(client, live_server):
         follow_redirects=True
     )
     # checks that we dont get an error when using blank lines in the field value
+    assert not b"json://127.0.0.1\n\njson" in res.data
+    assert not b"json://127.0.0.1\r\n\njson" in res.data
     assert b"json://127.0.0.1" in res.data
     assert b"json://128.0.0.1" in res.data
+
     assert b"126" in res.data
     assert b".fooclass" in res.data
     assert b"My title" in res.data
