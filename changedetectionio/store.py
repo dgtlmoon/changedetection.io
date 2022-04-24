@@ -426,6 +426,8 @@ class ChangeDetectionStore:
     #             Probably we should bump the current update schema version with each tag release version?
     def run_updates(self):
         import inspect
+        import shutil
+
         updates_available = []
         for i, o in inspect.getmembers(self, predicate=inspect.ismethod):
             m = re.search(r'update_(\d+)$', i)
@@ -436,6 +438,8 @@ class ChangeDetectionStore:
         for update_n in updates_available:
             if update_n > self.__data['settings']['application']['schema_version']:
                 print ("Applying update_{}".format((update_n)))
+                shutil.copyfile(self.json_store_path, self.datastore_path+"/-before-{}.json".format(update_n))
+
                 try:
                     update_method = getattr(self, "update_{}".format(update_n))()
                 except Exception as e:
