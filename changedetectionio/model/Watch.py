@@ -2,7 +2,7 @@ import os
 
 import uuid as uuid_builder
 
-minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 5))
+minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
 
 from changedetectionio.notification import (
     default_notification_body,
