@@ -42,8 +42,7 @@ class StringListField(StringField):
 
     def _value(self):
         if self.data:
-            filter_object = filter(lambda x: len(x.strip('\r\n')), self.data)
-            return "\n".join(list(filter_object))
+            return "\r\n".join(self.data)
         else:
             return u''
 
@@ -51,12 +50,9 @@ class StringListField(StringField):
     def process_formdata(self, valuelist):
         if valuelist:
             # Remove empty strings, stripping and splitting \r\n, only \n etc.
-            filter_object = filter(lambda x: len(x.strip('\r\n')), valuelist[0].split("\n"))
-            self.data = list(filter_object)
+            self.data = valuelist[0].splitlines()
         else:
             self.data = []
-
-
 
 class SaltyPasswordField(StringField):
     widget = widgets.PasswordInput()
