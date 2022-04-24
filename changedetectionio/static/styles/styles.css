@@ -306,10 +306,10 @@ footer {
     font-weight: bold; }
   .pure-form textarea {
     width: 100%; }
-  .pure-form ul#fetch_backend {
+  .pure-form ul.fetch-backend {
     margin: 0px;
     list-style: none; }
-    .pure-form ul#fetch_backend > li > * {
+    .pure-form ul.fetch-backend li > * {
       display: inline-block; }
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
@@ -440,3 +440,8 @@ ul {
   padding-left: 1em;
   padding-top: 0px;
   margin-top: 4px; }
+
+.time-check-widget tr {
+  display: inline; }
+  .time-check-widget tr input[type="number"] {
+    width: 4em; }

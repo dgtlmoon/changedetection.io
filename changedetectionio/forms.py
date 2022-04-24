@@ -37,25 +37,29 @@ valid_method = {
 
 default_method = 'GET'
 
+
 class StringListField(StringField):
     widget = widgets.TextArea()
 
     def _value(self):
         if self.data:
-            return "\r\n".join(self.data)
+            # ignore empty lines in the storage
+            data = list(filter(lambda x: len(x.strip()), self.data))
+            # Apply strip to each line
+            data = list(map(lambda x: x.strip(), data))
+            return "\r\n".join(data)
         else:
             return u''
 
     # incoming
     def process_formdata(self, valuelist):
-        if valuelist:
-            # Remove empty strings
-            cleaned = list(filter(None, valuelist[0].split("\n")))
-            self.data = [x.strip() for x in cleaned]
-            p = 1
+        if valuelist and len(valuelist[0].strip()):
+            # Remove empty strings, stripping and splitting \r\n, only \n etc.
+            self.data = valuelist[0].splitlines()
+            # Remove empty lines from the final data
+            self.data = list(filter(lambda x: len(x.strip()), self.data))
         else:
             self.data = []
-
 
 
 class SaltyPasswordField(StringField):
@@ -85,6 +89,13 @@ class SaltyPasswordField(StringField):
         else:
             self.data = False
 
+class TimeBetweenCheckForm(Form):
+    weeks = IntegerField('Weeks', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    days = IntegerField('Days', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    hours = IntegerField('Hours', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    minutes = IntegerField('Minutes', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    seconds = IntegerField('Seconds', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    # @todo add total seconds minimum validatior = minimum_seconds_recheck_time
 
 # Separated by  key:value
 class StringDictKeyValue(StringField):
@@ -313,8 +324,7 @@ class watchForm(commonSettingsForm):
     url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)], default='')
 
-    minutes_between_check = fields.IntegerField('Maximum time in minutes until recheck',
-                                               [validators.Optional(), validators.NumberRange(min=1)])
+    time_between_check = FormField(TimeBetweenCheckForm)
 
     css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()], default='')
 
@@ -347,8 +357,9 @@ class watchForm(commonSettingsForm):
 
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
-    minutes_between_check = fields.IntegerField('Maximum time in minutes until recheck',
-                                               [validators.NumberRange(min=1)])
+    time_between_check = FormField(TimeBetweenCheckForm)
+
+
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
 

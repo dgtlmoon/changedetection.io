@@ -35,7 +35,7 @@ def test_check_notification_error_handling(client, live_server):
               "tag": "",
               "title": "",
               "headers": "",
-              "minutes_between_check": "180",
+              "time_between_check-minutes": "180",
               "fetch_backend": "html_requests",
               "trigger_check": "y"},
         follow_redirects=True

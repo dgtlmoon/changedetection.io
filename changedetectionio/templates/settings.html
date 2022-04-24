@@ -28,7 +28,7 @@
             <div class="tab-pane-inner" id="general">
                 <fieldset>
                     <div class="pure-control-group">
-                        {{ render_field(form.requests.form.minutes_between_check) }}
+                        {{ render_field(form.requests.form.time_between_check, class="time-check-widget") }}
                         <span class="pure-form-message-inline">Default time for all watches, when the watch does not have a specific time setting.</span>
                     </div>
                     <div class="pure-control-group">
@@ -75,7 +75,7 @@
 
             <div class="tab-pane-inner" id="fetching">
                 <div class="pure-control-group">
-                    {{ render_field(form.application.form.fetch_backend) }}
+                    {{ render_field(form.application.form.fetch_backend, class="fetch-backend") }}
                     <span class="pure-form-message-inline">
                         <p>Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render.</p>
                         <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>

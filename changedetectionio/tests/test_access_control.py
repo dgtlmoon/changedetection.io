@@ -13,7 +13,7 @@ def test_check_access_control(app, client):
         res = c.post(
             url_for("settings_page"),
             data={"application-password": "foobar",
-                  "requests-minutes_between_check": 180,
+                  "requests-time_between_check-minutes": 180,
                   'application-fetch_backend': "html_requests"},
             follow_redirects=True
         )
@@ -46,7 +46,7 @@ def test_check_access_control(app, client):
         assert b"BACKUP" in res.data
         assert b"IMPORT" in res.data
         assert b"LOG OUT" in res.data
-        assert b"minutes_between_check" in res.data
+        assert b"time_between_check-minutes" in res.data
         assert b"fetch_backend" in res.data
 
         ##################################################
@@ -55,7 +55,7 @@ def test_check_access_control(app, client):
         res = c.post(
             url_for("settings_page"),
             data={
-                "requests-minutes_between_check": 180,
+                "requests-time_between_check-minutes": 180,
                 "application-fetch_backend": "html_webdriver",
                 "application-removepassword_button": "Remove password"
             },
@@ -70,7 +70,7 @@ def test_check_access_control(app, client):
         res = c.post(
             url_for("settings_page"),
             data={"application-password": "",
-                  "requests-minutes_between_check": 180,
+                  "requests-time_between_check-minutes": 180,
                   'application-fetch_backend': "html_requests"},
             follow_redirects=True
         )
