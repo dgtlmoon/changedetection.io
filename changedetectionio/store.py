@@ -449,8 +449,10 @@ class ChangeDetectionStore:
 
     # Convert minutes to seconds on settings and each watch
     def update_1(self):
-        if 'minutes_between_check' in self.data['settings']['requests']:
+        if self.data['settings']['requests'].get('minutes_between_check'):
             self.data['settings']['requests']['time_between_check']['minutes'] = self.data['settings']['requests']['minutes_between_check']
+            # Remove the default 'hours' that is set from the model
+            self.data['settings']['requests']['time_between_check']['hours'] = None
 
         for uuid, watch in self.data['watching'].items():
             if 'minutes_between_check' in watch:
