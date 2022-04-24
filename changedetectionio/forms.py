@@ -37,25 +37,29 @@ valid_method = {
 
 default_method = 'GET'
 
+
 class StringListField(StringField):
     widget = widgets.TextArea()
 
     def _value(self):
         if self.data:
-            return "\r\n".join(self.data)
+            # ignore empty lines in the storage
+            data = list(filter(lambda x: len(x.strip()), self.data))
+            # Apply strip to each line
+            data = list(map(lambda x: x.strip(), data))
+            return "\r\n".join(data)
         else:
             return u''
 
     # incoming
     def process_formdata(self, valuelist):
-        if valuelist:
-            # Remove empty strings
-            cleaned = list(filter(None, valuelist[0].split("\n")))
-            self.data = [x.strip() for x in cleaned]
-            p = 1
+        if valuelist and len(valuelist[0].strip()):
+            # Remove empty strings, stripping and splitting \r\n, only \n etc.
+            self.data = valuelist[0].splitlines()
+            # Remove empty lines from the final data
+            self.data = list(filter(lambda x: len(x.strip()), self.data))
         else:
             self.data = []
-
 
 
 class SaltyPasswordField(StringField):
