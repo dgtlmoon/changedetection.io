@@ -438,7 +438,9 @@ class ChangeDetectionStore:
         for update_n in updates_available:
             if update_n > self.__data['settings']['application']['schema_version']:
                 print ("Applying update_{}".format((update_n)))
-                shutil.copyfile(self.json_store_path, self.datastore_path+"/url-watches-before-{}.json".format(update_n))
+                # Wont exist on fresh installs
+                if os.path.exists(self.json_store_path):
+                    shutil.copyfile(self.json_store_path, self.datastore_path+"/url-watches-before-{}.json".format(update_n))
 
                 try:
                     update_method = getattr(self, "update_{}".format(update_n))()
