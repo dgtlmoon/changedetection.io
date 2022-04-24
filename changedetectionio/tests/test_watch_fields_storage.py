@@ -20,7 +20,7 @@ def test_check_watch_field_storage(client, live_server):
 
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={ "notification_urls": "json://myapi.com",
+        data={ "notification_urls": "json://127.0.0.1:30000\r\njson://128.0.0.1\r\n",
                "minutes_between_check": 126,
                "css_filter" : ".fooclass",
                "title" : "My title",
@@ -38,8 +38,14 @@ def test_check_watch_field_storage(client, live_server):
         url_for("edit_page", uuid="first"),
         follow_redirects=True
     )
+    # checks that we dont get an error when using blank lines in the field value
+    assert not b"json://127.0.0.1\n\njson" in res.data
+    assert not b"json://127.0.0.1\r\n\njson" in res.data
+    assert not b"json://127.0.0.1\r\n\rjson" in res.data
 
-    assert b"json://myapi.com" in res.data
+    assert b"json://127.0.0.1" in res.data
+    assert b"json://128.0.0.1" in res.data
+
     assert b"126" in res.data
     assert b".fooclass" in res.data
     assert b"My title" in res.data
