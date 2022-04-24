@@ -164,8 +164,8 @@ class perform_site_check():
         else:
             fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
-        # On the first run of a site, watch['previous_md5'] will be an empty string, set it the current one.
-        if not len(watch['previous_md5']):
+        # On the first run of a site, watch['previous_md5'] will be None, set it the current one.
+        if not watch.get('previous_md5'):
             watch['previous_md5'] = fetched_md5
             update_obj["previous_md5"] = fetched_md5
 

@@ -28,7 +28,7 @@
             <div class="tab-pane-inner" id="general">
                 <fieldset>
                     <div class="pure-control-group">
-                        {{ render_field(form.requests.form.minutes_between_check) }}
+                        {{ render_field(form.requests.form.time_between_check, class="time-check-widget") }}
                         <span class="pure-form-message-inline">Default time for all watches, when the watch does not have a specific time setting.</span>
                     </div>
                     <div class="pure-control-group">

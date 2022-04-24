@@ -51,12 +51,11 @@ def test_render_anchor_tag_content_true(client, live_server):
     # set original html text
     set_original_ignore_response()
 
-    # Goto the settings page, choose not to ignore links
+    # Goto the settings page, choose to ignore links (dont select/send "application-render_anchor_tag_content")
     res = client.post(
         url_for("settings_page"),
         data={
-            "requests-minutes_between_check": 180,
-            "application-render_anchor_tag_content": "true",
+            "requests-time_between_check-minutes": 180,
             "application-fetch_backend": "html_requests",
         },
         follow_redirects=True,
@@ -85,6 +84,30 @@ def test_render_anchor_tag_content_true(client, live_server):
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
+    # We should not see the rendered anchor tag
+    res = client.get(url_for("preview_page", uuid="first"))
+    assert '(/modified_link)' not in res.data.decode()
+
+    # Goto the settings page, ENABLE render anchor tag
+    res = client.post(
+        url_for("settings_page"),
+        data={
+            "requests-time_between_check-minutes": 180,
+            "application-render_anchor_tag_content": "true",
+            "application-fetch_backend": "html_requests",
+        },
+        follow_redirects=True,
+    )
+    assert b"Settings updated." in res.data
+
+    # Trigger a check
+    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+
+    # Give the thread time to pick it up
+    time.sleep(sleep_time_for_fetch_thread)
+
+
+
     # check that the anchor tag content is rendered
     res = client.get(url_for("preview_page", uuid="first"))
     assert '(/modified_link)' in res.data.decode()
@@ -100,120 +123,3 @@ def test_render_anchor_tag_content_true(client, live_server):
                      follow_redirects=True)
     assert b'Deleted' in res.data
 
-
-def test_render_anchor_tag_content_false(client, live_server):
-    """Testing that anchor tag content changes are ignored when
-    render_anchor_tag_content setting is set to false"""
-    sleep_time_for_fetch_thread = 3
-
-    # Give the endpoint time to spin up
-    time.sleep(1)
-
-    # set the original html text
-    set_original_ignore_response()
-
-    # Goto the settings page, choose to ignore hyperlinks
-    res = client.post(
-        url_for("settings_page"),
-        data={
-            "requests-minutes_between_check": 180,
-            "application-render_anchor_tag_content": "false",
-            "application-fetch_backend": "html_requests",
-        },
-        follow_redirects=True,
-    )
-    assert b"Settings updated." in res.data
-
-    # Add our URL to the import page
-    test_url = url_for("test_endpoint", _external=True)
-    res = client.post(
-        url_for("import_page"), data={"urls": test_url}, follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
-
-    time.sleep(sleep_time_for_fetch_thread)
-    # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
-
-    # set a new html text, with a modified link
-    set_modified_ignore_response()
-    time.sleep(sleep_time_for_fetch_thread)
-
-    # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
-
-    # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
-
-    # check that the anchor tag content is not rendered
-    res = client.get(url_for("preview_page", uuid="first"))
-    assert '(/modified_link)' not in res.data.decode()
-
-    # even though the link has changed, we shouldn't detect a change since
-    # we selected to not render anchor tag content (no new 'unviewed' class)
-    res = client.get(url_for("index"))
-    assert b"unviewed" not in res.data
-    assert b"/test-endpoint" in res.data
-
-    # Cleanup everything
-    res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
-
-
-def test_render_anchor_tag_content_default(client, live_server):
-    """Testing that anchor tag content changes are ignored when the
-    render_anchor_tag_content setting is not explicitly selected"""
-    sleep_time_for_fetch_thread = 3
-
-    # Give the endpoint time to spin up
-    time.sleep(1)
-
-    # set the original html text
-    set_original_ignore_response()
-
-    # Goto the settings page, not passing the render_anchor_tag_content setting
-    res = client.post(
-        url_for("settings_page"),
-        data={
-            "requests-minutes_between_check": 180,
-            "application-fetch_backend": "html_requests",
-        },
-        follow_redirects=True,
-    )
-    assert b"Settings updated." in res.data
-
-    # Add our URL to the import page
-    test_url = url_for("test_endpoint", _external=True)
-    res = client.post(
-        url_for("import_page"), data={"urls": test_url}, follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
-
-    time.sleep(sleep_time_for_fetch_thread)
-    # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
-
-    # set a new html text, with a modified link
-    set_modified_ignore_response()
-    time.sleep(sleep_time_for_fetch_thread)
-
-    # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
-
-    # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
-
-    # check that the anchor tag content is not rendered
-    res = client.get(url_for("preview_page", uuid="first"))
-    assert '(/modified_link)' not in res.data.decode()
-
-    # even though the link has changed, we shouldn't detect a change since
-    # we did not select the setting and the default behaviour is to not
-    # render anchor tag content (no new 'unviewed' class)
-    res = client.get(url_for("index"))
-    assert b"unviewed" not in res.data
-    assert b"/test-endpoint" in res.data
-
-    # Cleanup everything
-    res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data

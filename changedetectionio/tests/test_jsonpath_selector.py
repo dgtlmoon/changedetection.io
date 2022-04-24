@@ -270,6 +270,7 @@ def test_check_json_filter_bool_val(client, live_server):
     )
     assert b"1 Imported" in res.data
 
+    time.sleep(3)
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
@@ -284,6 +285,7 @@ def test_check_json_filter_bool_val(client, live_server):
     )
     assert b"Updated watch." in res.data
 
+    time.sleep(3)
 
     # Trigger a check
     client.get(url_for("api_watch_checknow"), follow_redirects=True)

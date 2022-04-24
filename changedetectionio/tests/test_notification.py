@@ -199,7 +199,7 @@ def test_notification_validation(client, live_server):
               "application-notification_body": "Rubbish: {rubbish}\n",
               "application-notification_format": "Text",
               "application-notification_urls": "json://localhost/foobar",
-              "requests-minutes_between_check": 180,
+              "requests-time_between_check-minutes": 180,
               "fetch_backend": "html_requests"
               },
         follow_redirects=True

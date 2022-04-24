@@ -7,6 +7,7 @@ import uuid as uuid_builder
 from copy import deepcopy
 from os import mkdir, path, unlink
 from threading import Lock
+import re
 
 from changedetectionio.model import Watch, App
 
@@ -16,6 +17,11 @@ from changedetectionio.model import Watch, App
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change
 class ChangeDetectionStore:
     lock = Lock()
+    # For general updates/writes that can wait a few seconds
+    needs_write = False
+
+    # For when we edit, we should write to disk
+    needs_write_urgent = False
 
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         # Should only be active for docker
@@ -100,6 +106,9 @@ class ChangeDetectionStore:
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['rss_access_token'] = secret
 
+        # Bump the update version by running updates
+        self.run_updates()
+
         self.needs_write = True
 
         # Finally start the thread that will manage periodic data saves to JSON
@@ -144,6 +153,17 @@ class ChangeDetectionStore:
             self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
 
         self.needs_write = True
+
+    @property
+    def threshold_seconds(self):
+        seconds = 0
+        mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
+        minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 5))
+        for m, n in mtable.items():
+            x = self.__data['settings']['requests']['time_between_check'].get(m)
+            if x:
+                seconds += x * n
+        return max(seconds, minimum_seconds_recheck_time)
 
     @property
     def data(self):
@@ -339,7 +359,7 @@ class ChangeDetectionStore:
 
     def sync_to_json(self):
         logging.info("Saving JSON..")
-
+        print("Saving JSON..")
         try:
             data = deepcopy(self.__data)
         except RuntimeError as e:
@@ -361,6 +381,7 @@ class ChangeDetectionStore:
                 logging.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
 
             self.needs_write = False
+            self.needs_write_urgent = False
 
     # Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
     # by just running periodically in one thread, according to python, dict updates are threadsafe.
@@ -371,14 +392,14 @@ class ChangeDetectionStore:
                 print("Shutting down datastore thread")
                 return
 
-            if self.needs_write:
+            if self.needs_write or self.needs_write_urgent:
                 self.sync_to_json()
 
             # Once per minute is enough, more and it can cause high CPU usage
             # better here is to use something like self.app.config.exit.wait(1), but we cant get to 'app' from here
-            for i in range(30):
-                time.sleep(2)
-                if self.stop_thread:
+            for i in range(120):
+                time.sleep(0.5)
+                if self.stop_thread or self.needs_write_urgent:
                     break
 
     # Go through the datastore path and remove any snapshots that are not mentioned in the index
@@ -398,3 +419,49 @@ class ChangeDetectionStore:
             if not str(item) in index:
                 print ("Removing",item)
                 unlink(item)
+
+    # Run all updates
+    # IMPORTANT - Each update could be run even when they have a new install and the schema is correct
+    #             So therefor - each `update_n` should be very careful about checking if it needs to actually run
+    #             Probably we should bump the current update schema version with each tag release version?
+    def run_updates(self):
+        import inspect
+        import shutil
+
+        updates_available = []
+        for i, o in inspect.getmembers(self, predicate=inspect.ismethod):
+            m = re.search(r'update_(\d+)$', i)
+            if m:
+                updates_available.append(int(m.group(1)))
+        updates_available.sort()
+
+        for update_n in updates_available:
+            if update_n > self.__data['settings']['application']['schema_version']:
+                print ("Applying update_{}".format((update_n)))
+                # Wont exist on fresh installs
+                if os.path.exists(self.json_store_path):
+                    shutil.copyfile(self.json_store_path, self.datastore_path+"/url-watches-before-{}.json".format(update_n))
+
+                try:
+                    update_method = getattr(self, "update_{}".format(update_n))()
+                except Exception as e:
+                    print("Error while trying update_{}".format((update_n)))
+                    print(e)
+                    # Don't run any more updates
+                    return
+                else:
+                    # Bump the version, important
+                    self.__data['settings']['application']['schema_version'] = update_n
+
+    # Convert minutes to seconds on settings and each watch
+    def update_1(self):
+        if self.data['settings']['requests'].get('minutes_between_check'):
+            self.data['settings']['requests']['time_between_check']['minutes'] = self.data['settings']['requests']['minutes_between_check']
+            # Remove the default 'hours' that is set from the model
+            self.data['settings']['requests']['time_between_check']['hours'] = None
+
+        for uuid, watch in self.data['watching'].items():
+            if 'minutes_between_check' in watch:
+                # Only upgrade individual watch time if it was set
+                if watch.get('minutes_between_check', False):
+                    self.data['watching'][uuid]['time_between_check']['minutes'] = watch['minutes_between_check']

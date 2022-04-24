@@ -10,9 +10,7 @@ from changedetectionio.notification import (
 )
 
 class model(dict):
-    def __init__(self, *arg, **kw):
-        super(model, self).__init__(*arg, **kw)
-        self.update({
+    base_config = {
             'note': "Hello! If you change this file manually, please be sure to restart your changedetection.io instance!",
             'watching': {},
             'settings': {
@@ -24,8 +22,7 @@ class model(dict):
                 },
                 'requests': {
                     'timeout': 15,  # Default 15 seconds
-                    # Default 3 hours
-                    'minutes_between_check': 3 * 60,  # Default 3 hours
+                    'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
                     'workers': 10  # Number of threads, lower is better for slow connections
                 },
                 'application': {
@@ -46,4 +43,8 @@ class model(dict):
                     'schema_version' : 0
                 }
             }
-        })
+        }
+
+    def __init__(self, *arg, **kw):
+        super(model, self).__init__(*arg, **kw)
+        self.update(self.base_config)

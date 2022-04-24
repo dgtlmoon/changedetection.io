@@ -41,7 +41,7 @@
                         <span class="pure-form-message-inline">Organisational tag/group name used in the main listing page</span>
                     </div>
                     <div class="pure-control-group">
-                        {{ render_field(form.minutes_between_check) }}
+                        {{ render_field(form.time_between_check, class="time-check-widget") }}
                         {% if has_empty_checktime %}
                         <span class="pure-form-message-inline">Currently using the <a
                                 href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>, change to another value if you want to be specific.</span>
