@@ -1,3 +1,6 @@
+from flask import (
+    flash
+)
 import json
 import logging
 import os
@@ -8,6 +11,7 @@ from copy import deepcopy
 from os import mkdir, path, unlink
 from threading import Lock
 import re
+import requests
 
 from changedetectionio.model import Watch, App
 
@@ -295,6 +299,33 @@ class ChangeDetectionStore:
     def add_watch(self, url, tag="", extras=None, write_to_disk_now=True):
         if extras is None:
             extras = {}
+        # Incase these are copied across, assume it's a reference and deepcopy()
+        apply_extras = deepcopy(extras)
+
+        # Was it a share link? try to fetch the data
+        if (url.startswith("https://changedetection.io/share/")):
+            try:
+                r = requests.request(method="GET",
+                                     url=url,
+                                     # So we know to return the JSON instead of the human-friendly "help" page
+                                     headers={'App-Guid': self.__data['app_guid']})
+                res = r.json()
+
+                # List of permisable stuff we accept from the wild internet
+                for k in ['url', 'tag',
+                                   'paused', 'title',
+                                   'previous_md5', 'headers',
+                                   'body', 'method',
+                                   'ignore_text', 'css_filter',
+                                   'subtractive_selectors', 'trigger_text',
+                                   'extract_title_as_title']:
+                    if res.get(k):
+                        apply_extras[k] = res[k]
+
+            except Exception as e:
+                logging.error("Error fetching metadata for shared watch link", url, str(e))
+                flash("Error fetching metadata for {}".format(url), 'error')
+                return False
 
         with self.lock:
             # @todo use a common generic version of this
@@ -304,8 +335,7 @@ class ChangeDetectionStore:
                 'tag': tag
             })
 
-            # Incase these are copied across, assume it's a reference and deepcopy()
-            apply_extras = deepcopy(extras)
+
             for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
                 if k in apply_extras:
                     del apply_extras[k]

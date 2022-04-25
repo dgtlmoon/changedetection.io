@@ -5,6 +5,8 @@ $(function () {
   });
 
   $('.with-share-link > *').click(function () {
+      $("#copied-clipboard").remove();
+
       var range = document.createRange();
       var n=$("#share-link")[0];
       range.selectNode(n);

@@ -690,12 +690,14 @@ def changedetection_app(config=None, datastore_o=None):
                 # Up to 5000 per batch so we dont flood the server
                 if len(url) and validators.url(url.replace('source:', '')) and good < 5000:
                     new_uuid = datastore.add_watch(url=url.strip(), tag=" ".join(tags), write_to_disk_now=False)
-                    # Straight into the queue.
-                    update_q.put(new_uuid)
-                    good += 1
-                else:
-                    if len(url):
-                        remaining_urls.append(url)
+                    if new_uuid:
+                        # Straight into the queue.
+                        update_q.put(new_uuid)
+                        good += 1
+                        continue
+
+                if len(url.strip()):
+                    remaining_urls.append(url)
 
             flash("{} Imported in {:.2f}s, {} Skipped.".format(good, time.time()-now,len(remaining_urls)))
             datastore.needs_write = True
@@ -1002,23 +1004,24 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio import forms
         form = forms.quickWatchForm(request.form)
 
-        if form.validate():
-
-            url = request.form.get('url').strip()
-            if datastore.url_exists(url):
-                flash('The URL {} already exists'.format(url), "error")
-                return redirect(url_for('index'))
-
-            # @todo add_watch should throw a custom Exception for validation etc
-            new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip())
-            # Straight into the queue.
-            update_q.put(new_uuid)
-
-            flash("Watch added.")
-            return redirect(url_for('index'))
-        else:
+        if not form.validate():
             flash("Error")
             return redirect(url_for('index'))
+
+        url = request.form.get('url').strip()
+        if datastore.url_exists(url):
+            flash('The URL {} already exists'.format(url), "error")
+            return redirect(url_for('index'))
+
+        # @todo add_watch should throw a custom Exception for validation etc
+        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip())
+        if new_uuid:
+            # Straight into the queue.
+            update_q.put(new_uuid)
+            flash("Watch added.")
+
+        return redirect(url_for('index'))
+
 
 
     @app.route("/api/delete", methods=['GET'])
@@ -1100,7 +1103,13 @@ def changedetection_app(config=None, datastore_o=None):
             del (watch['history'])
 
         # for safety/privacy
-        del(watch['notification_urls'])
+        for k in list(watch.keys()):
+            if k.startswith('notification_'):
+                del watch[k]
+
+        for r in['uuid', 'last_checked', 'last_changed']:
+            if watch.get(r):
+                del (watch[r])
 
         # Add the global stuff which may have an impact
         watch['ignore_text'] += datastore.data['settings']['application']['global_ignore_text']
