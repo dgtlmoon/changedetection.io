@@ -180,6 +180,9 @@ body:after, body:before {
   .messages li.notice {
     background: rgba(255, 255, 255, 0.5); }
 
+.messages.with-share-link > *:hover {
+  cursor: pointer; }
+
 #notification-customisation {
   border: 1px solid #ccc;
   padding: 0.5rem;

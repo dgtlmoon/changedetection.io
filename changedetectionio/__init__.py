@@ -32,6 +32,7 @@ from flask import (
     render_template,
     request,
     send_from_directory,
+    session,
     url_for,
 )
 from flask_login import login_required
@@ -393,7 +394,8 @@ def changedetection_app(config=None, datastore_o=None):
                                  hosted_sticky=os.getenv("SALTED_PASS", False) == False,
                                  guid=datastore.data['app_guid'],
                                  queued_uuids=update_q.queue)
-
+        if session.get('share-link'):
+            del(session['share-link'])
         return output
 
 
@@ -1096,6 +1098,7 @@ def changedetection_app(config=None, datastore_o=None):
         watch = deepcopy(datastore.data['watching'][uuid])
         if (watch.get('history')):
             del (watch['history'])
+
         # for safety/privacy
         del(watch['notification_urls'])
 
@@ -1107,17 +1110,18 @@ def changedetection_app(config=None, datastore_o=None):
                                  url="https://changedetection.io/share/share",
                                  headers={'App-Guid': datastore.data['app_guid']})
             res = r.json()
-            # @todo copy to clipboard
-            flash("Share this link: https://changedetection.io/share/{}".format(res['share_key']))
+
+            session['share-link'] = "https://changedetection.io/share/{}".format(res['share_key'])
+
+
         except Exception as e:
             flash("Could not share, something went wrong while communicating with the share server.", 'error')
 
         # https://changedetection.io/share/VrMv05wpXyQa
         # in the browser - should give you a nice info page - wtf
         # paste in etc
-
-
         return redirect(url_for('index'))
+
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()

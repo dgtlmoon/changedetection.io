@@ -237,6 +237,11 @@ body:after, body:before {
             background: rgba(255, 255, 255, .5);
         }
     }
+    &.with-share-link {
+     > *:hover {
+       cursor:pointer;
+     }
+    }
 }
 
 #notification-customisation {
