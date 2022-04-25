@@ -14,7 +14,9 @@ $(function () {
       window.getSelection().removeAllRanges();
 
       $('.with-share-link').append('<span style="font-size: 80%; color: #fff;" id="copied-clipboard">Copied to clipboard</span>');
-      $("#copied-clipboard").fadeOut(3000);
+      $("#copied-clipboard").fadeOut(2500, function() {
+       $(this).remove();
+      });
   });
 });
 
