@@ -1102,6 +1102,10 @@ def changedetection_app(config=None, datastore_o=None):
         # for safety/privacy
         del(watch['notification_urls'])
 
+        # Add the global stuff which may have an impact
+        watch['ignore_text'] += datastore.data['settings']['application']['global_ignore_text']
+        watch['subtractive_selectors'] += datastore.data['settings']['application']['global_subtractive_selectors']
+
         watch_json = json.dumps(watch)
 
         try:
