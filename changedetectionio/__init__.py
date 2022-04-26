@@ -1097,6 +1097,10 @@ def changedetection_app(config=None, datastore_o=None):
         tag = request.args.get('tag')
         uuid = request.args.get('uuid')
 
+        # more for testing
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
         # copy it to memory as trim off what we dont need (history)
         watch = deepcopy(datastore.data['watching'][uuid])
         if (watch.get('history')):
