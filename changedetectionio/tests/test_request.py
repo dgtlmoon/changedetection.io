@@ -27,6 +27,7 @@ def test_headers_in_request(client, live_server):
     )
     assert b"1 Imported" in res.data
 
+    time.sleep(3)
     cookie_header = '_ga=GA1.2.1022228332; cookie-preferences=analytics:accepted;'
 
 

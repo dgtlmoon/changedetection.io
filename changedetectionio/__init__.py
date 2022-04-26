@@ -32,6 +32,7 @@ from flask import (
     render_template,
     request,
     send_from_directory,
+    session,
     url_for,
 )
 from flask_login import login_required
@@ -393,7 +394,8 @@ def changedetection_app(config=None, datastore_o=None):
                                  hosted_sticky=os.getenv("SALTED_PASS", False) == False,
                                  guid=datastore.data['app_guid'],
                                  queued_uuids=update_q.queue)
-
+        if session.get('share-link'):
+            del(session['share-link'])
         return output
 
 
@@ -688,12 +690,14 @@ def changedetection_app(config=None, datastore_o=None):
                 # Up to 5000 per batch so we dont flood the server
                 if len(url) and validators.url(url.replace('source:', '')) and good < 5000:
                     new_uuid = datastore.add_watch(url=url.strip(), tag=" ".join(tags), write_to_disk_now=False)
-                    # Straight into the queue.
-                    update_q.put(new_uuid)
-                    good += 1
-                else:
-                    if len(url):
-                        remaining_urls.append(url)
+                    if new_uuid:
+                        # Straight into the queue.
+                        update_q.put(new_uuid)
+                        good += 1
+                        continue
+
+                if len(url.strip()):
+                    remaining_urls.append(url)
 
             flash("{} Imported in {:.2f}s, {} Skipped.".format(good, time.time()-now,len(remaining_urls)))
             datastore.needs_write = True
@@ -1000,23 +1004,24 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio import forms
         form = forms.quickWatchForm(request.form)
 
-        if form.validate():
-
-            url = request.form.get('url').strip()
-            if datastore.url_exists(url):
-                flash('The URL {} already exists'.format(url), "error")
-                return redirect(url_for('index'))
-
-            # @todo add_watch should throw a custom Exception for validation etc
-            new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip())
-            # Straight into the queue.
-            update_q.put(new_uuid)
-
-            flash("Watch added.")
-            return redirect(url_for('index'))
-        else:
+        if not form.validate():
             flash("Error")
             return redirect(url_for('index'))
+
+        url = request.form.get('url').strip()
+        if datastore.url_exists(url):
+            flash('The URL {} already exists'.format(url), "error")
+            return redirect(url_for('index'))
+
+        # @todo add_watch should throw a custom Exception for validation etc
+        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip())
+        if new_uuid:
+            # Straight into the queue.
+            update_q.put(new_uuid)
+            flash("Watch added.")
+
+        return redirect(url_for('index'))
+
 
 
     @app.route("/api/delete", methods=['GET'])
@@ -1081,6 +1086,59 @@ def changedetection_app(config=None, datastore_o=None):
                     i += 1
         flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
+
+    @app.route("/api/share-url", methods=['GET'])
+    @login_required
+    def api_share_put_watch():
+        """Given a watch UUID, upload the info and return a share-link
+           the share-link can be imported/added"""
+        import requests
+        import json
+        tag = request.args.get('tag')
+        uuid = request.args.get('uuid')
+
+        # more for testing
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
+        # copy it to memory as trim off what we dont need (history)
+        watch = deepcopy(datastore.data['watching'][uuid])
+        if (watch.get('history')):
+            del (watch['history'])
+
+        # for safety/privacy
+        for k in list(watch.keys()):
+            if k.startswith('notification_'):
+                del watch[k]
+
+        for r in['uuid', 'last_checked', 'last_changed']:
+            if watch.get(r):
+                del (watch[r])
+
+        # Add the global stuff which may have an impact
+        watch['ignore_text'] += datastore.data['settings']['application']['global_ignore_text']
+        watch['subtractive_selectors'] += datastore.data['settings']['application']['global_subtractive_selectors']
+
+        watch_json = json.dumps(watch)
+
+        try:
+            r = requests.request(method="POST",
+                                 data={'watch': watch_json},
+                                 url="https://changedetection.io/share/share",
+                                 headers={'App-Guid': datastore.data['app_guid']})
+            res = r.json()
+
+            session['share-link'] = "https://changedetection.io/share/{}".format(res['share_key'])
+
+
+        except Exception as e:
+            flash("Could not share, something went wrong while communicating with the share server.", 'error')
+
+        # https://changedetection.io/share/VrMv05wpXyQa
+        # in the browser - should give you a nice info page - wtf
+        # paste in etc
+        return redirect(url_for('index'))
+
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
