@@ -5,11 +5,14 @@
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script>
     const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
+    const watch_visual_selector_data_url="{{url_for('static_content', group='visual_selector_data', filename=uuid)}}";
 {% if emailprefix %}
     const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
 {% endif %}
 </script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='visual-selector.js')}}" defer></script>
+<script src="https://code.createjs.com/easeljs-0.8.2.min.js"></script>
 
 <div class="edit-form monospaced-textarea">
 
@@ -19,6 +22,7 @@
             <li class="tab"><a href="#request">Request</a></li>
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
+            <li class="tab"><a href="#visualselector">Visual Selector</a></li>
         </ul>
     </div>
 
@@ -172,6 +176,20 @@ nav
                         <li>Note: Wrap in forward slash / to use regex  example: <code>/foo\d/</code></li>
                     </ul>
                         </span>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="tab-pane-inner visual-selector-ui" id="visualselector">
+                <fieldset>
+                    <div class="pure-control-group">
+                        <i class="fetching-update-notice">One moment, fetching screenshot and element information..</i><br/>
+                        <div id="selector-wrapper">
+                            <!-- request the screenshot and get the element offset info ready -->
+                            <!-- use img src ready load to know everything is ready to map out -->
+                            <img id="selector-background" src="{{ url_for('visualselector_request_current_screenshot_and_metadata', uuid=uuid) }}"/>
+                            <canvas id="selector-canvas"></canvas>
+                        </div>
                     </div>
                 </fieldset>
             </div>

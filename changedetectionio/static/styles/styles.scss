@@ -634,3 +634,17 @@ ul {
         }
     }
 }
+
+#selector-wrapper {
+ position: relative;
+
+ > img {
+    position: absolute;
+    z-index: 4;
+ }
+ >canvas {
+    position: absolute;
+    z-index: 5;
+ }
+
+}

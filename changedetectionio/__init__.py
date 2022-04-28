@@ -966,10 +966,9 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
+        from flask import make_response
+
         if group == 'screenshot':
-
-            from flask import make_response
-
             # Could be sensitive, follow password requirements
             if datastore.data['settings']['application']['password'] and not flask_login.current_user.is_authenticated:
                 abort(403)
@@ -980,6 +979,26 @@ def changedetection_app(config=None, datastore_o=None):
                 watch_dir = datastore_o.datastore_path + "/" + filename
                 response = make_response(send_from_directory(filename="last-screenshot.png", directory=watch_dir, path=watch_dir + "/last-screenshot.png"))
                 response.headers['Content-type'] = 'image/png'
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = 0
+                return response
+
+            except FileNotFoundError:
+                abort(404)
+
+
+        if group == 'visual_selector_data':
+            # Could be sensitive, follow password requirements
+            if datastore.data['settings']['application']['password'] and not flask_login.current_user.is_authenticated:
+                abort(403)
+
+            # These files should be in our subdirectory
+            try:
+                # set nocache, set content-type
+                watch_dir = datastore_o.datastore_path + "/" + filename
+                response = make_response(send_from_directory(filename="elements.json", directory=watch_dir, path=watch_dir + "/elements.json"))
+                response.headers['Content-type'] = 'application/json'
                 response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
                 response.headers['Pragma'] = 'no-cache'
                 response.headers['Expires'] = 0
@@ -1081,6 +1100,84 @@ def changedetection_app(config=None, datastore_o=None):
                     i += 1
         flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
+
+    @app.route("/api/request-visual-selector-data/<string:uuid>", methods=['GET'])
+    @login_required
+    def visualselector_request_current_screenshot_and_metadata(uuid):
+        import json
+
+        watch = datastore.data['watching'][uuid]
+
+        path_to_datafile = os.path.join(datastore_o.datastore_path, uuid, "elements.json")
+        try:
+            os.unlink(path_to_datafile)
+        except FileNotFoundError:
+            pass
+
+        # docker run -p 3000:3000 browserless/chrome
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            browser = p.chromium.connect_over_cdp("ws://127.0.0.1:3000")
+            page = browser.new_page()
+            page.set_viewport_size({"width": 1220, "height": 800})
+            page.goto(watch['url'])
+            #            time.sleep(3)
+            # https://github.com/microsoft/playwright/issues/620
+            screenshot = page.screenshot(type='jpeg', full_page=True)
+
+            # Could be made a lot faster
+            # https://toruskit.com/blog/how-to-get-element-bounds-without-reflow/
+
+            info = page.evaluate("""async () => {                        
+            // Include the getXpath script directly, easier than fetching
+            !function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):(e=e||self).getXPath=n()}(this,function(){return function(e){var n=e;if(n&&n.id)return'//*[@id="'+n.id+'"]';for(var o=[];n&&Node.ELEMENT_NODE===n.nodeType;){for(var i=0,r=!1,d=n.previousSibling;d;)d.nodeType!==Node.DOCUMENT_TYPE_NODE&&d.nodeName===n.nodeName&&i++,d=d.previousSibling;for(d=n.nextSibling;d;){if(d.nodeName===n.nodeName){r=!0;break}d=d.nextSibling}o.push((n.prefix?n.prefix+":":"")+n.localName+(i||r?"["+(i+1)+"]":"")),n=n.parentNode}return o.length?"/"+o.reverse().join("/"):""}});
+            //# sourceMappingURL=index.umd.js.map
+               
+                                    
+              var elements = document.getElementsByTagName("*");
+              var size_pos=[];
+              // after page fetch, inject this JS
+              // build a map of all elements and their positions (maybe that only include text?)
+              var bbox;
+              for (var i = 0; i < elements.length; i++) {   
+                 bbox = elements[i].getBoundingClientRect();
+                 
+                 if (! bbox['width'] || !bbox['height'] ) {
+                   continue;
+                 }
+                 if (bbox['width'] >500 && bbox['height'] >500 ) {
+                   continue;
+                 }
+                 if(! 'textContent' in elements[i] || elements[i].textContent.length < 2 ) {
+                   continue;
+                 }
+                 size_pos.push({
+                   xpath: getXPath(elements[i]),
+                   width: bbox['width'], 
+                   height: bbox['height'],
+                   left: bbox['left'],
+                   top: bbox['top'],
+                   childCount: elements[i].childElementCount,
+                   text: elements[i].textContent    
+                 });
+              }
+              
+              return size_pos;
+}""")
+
+            browser.close()
+
+            with open(path_to_datafile ,'w') as f:
+                f.write(json.dumps(info, indent=4))
+
+
+            response = make_response(screenshot)
+            response.headers['Content-type'] = 'image/jpeg'
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = 0
+            return response
+
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()

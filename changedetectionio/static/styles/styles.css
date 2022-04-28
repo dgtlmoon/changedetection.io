@@ -445,3 +445,12 @@ ul {
   display: inline; }
   .time-check-widget tr input[type="number"] {
     width: 4em; }
+
+#selector-wrapper {
+  position: relative; }
+  #selector-wrapper > img {
+    position: absolute;
+    z-index: 4; }
+  #selector-wrapper > canvas {
+    position: absolute;
+    z-index: 5; }
