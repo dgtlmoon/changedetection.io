@@ -8,8 +8,11 @@ var xctx = c.getContext("2d");
 // redline highlight context
 var ctx = c.getContext("2d");
 
-
 var current_default_xpath=$("#css_filter").val();
+var x_scale;
+var y_scale;
+var selector_image = document.getElementById("selector-background");
+var selector_image_rect;
 
 
 function fetch_data() {
@@ -32,25 +35,27 @@ $(document).on('keydown', function(event) {
   }
 });
 
-function reflow_selector(selector_data) {
+$(window).resize(function() {
+    set_scale();
+});
 
-  //  $('#selector-canvas').attr('width',
-  // $("img#selector-background")[0].getBoundingClientRect().width);
-
-  var selector_image = document.getElementById("selector-background");
-  var selector_image_rect = selector_image.getBoundingClientRect();
-  var selector_currnt_xpath_text=$("#selector-current-xpath span");
-
+function set_scale() {
+  selector_image_rect = selector_image.getBoundingClientRect();
+  // make the canvas the same size as the image
   $('#selector-canvas').attr('height', selector_image_rect.height);
   $('#selector-canvas').attr('width', selector_image_rect.width);
-
+  x_scale = selector_image_rect.width / selector_image.naturalWidth;
+  y_scale = selector_image_rect.height / selector_image.naturalHeight;
 
   ctx.strokeStyle = 'rgb(255,0,0, 0.8)';
   ctx.lineWidth = 2;
+}
 
-  // set this on resize too
-  var x_scale = selector_image_rect.width / selector_image.naturalWidth;
-  var y_scale = selector_image_rect.height / selector_image.naturalHeight;
+function reflow_selector(selector_data) {
+
+  var selector_currnt_xpath_text=$("#selector-current-xpath span");
+
+  set_scale();
 
   console.log(selector_data.length + " selectors found");
 
