@@ -13,7 +13,7 @@ var x_scale;
 var y_scale;
 var selector_image = document.getElementById("selector-background");
 var selector_image_rect;
-
+var vh;
 
 function fetch_data() {
   // Image is ready
@@ -39,6 +39,12 @@ $(window).resize(function() {
     set_scale();
 });
 
+
+$('#visualselector-tab').bind('click', function (e) {
+  set_scale();
+});
+
+
 function set_scale() {
   selector_image_rect = selector_image.getBoundingClientRect();
   // make the canvas the same size as the image
@@ -49,6 +55,10 @@ function set_scale() {
 
   ctx.strokeStyle = 'rgb(255,0,0, 0.8)';
   ctx.lineWidth = 2;
+  vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+
+  $("#selector-wrapper").css('height', vh-230);
+
 }
 
 function reflow_selector(selector_data) {
