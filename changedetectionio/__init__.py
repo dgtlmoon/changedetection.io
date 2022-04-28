@@ -1147,6 +1147,28 @@ def changedetection_app(config=None, datastore_o=None):
             // Include the getXpath script directly, easier than fetching
             !function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):(e=e||self).getXPath=n()}(this,function(){return function(e){var n=e;if(n&&n.id)return'//*[@id="'+n.id+'"]';for(var o=[];n&&Node.ELEMENT_NODE===n.nodeType;){for(var i=0,r=!1,d=n.previousSibling;d;)d.nodeType!==Node.DOCUMENT_TYPE_NODE&&d.nodeName===n.nodeName&&i++,d=d.previousSibling;for(d=n.nextSibling;d;){if(d.nodeName===n.nodeName){r=!0;break}d=d.nextSibling}o.push((n.prefix?n.prefix+":":"")+n.localName+(i||r?"["+(i+1)+"]":"")),n=n.parentNode}return o.length?"/"+o.reverse().join("/"):""}});
             //# sourceMappingURL=index.umd.js.map             
+
+
+const findUpTag = (el) => {
+  let r = el
+  chained_css = [];
+  
+  while (r.parentNode) {
+  
+    if(r.classList.length >0) {
+      current_css='.'+Array.from(r.classList).join('.');
+      chained_css.unshift(current_css);
+   
+      var f=chained_css.join(' ');
+      var q=document.querySelectorAll(f);
+      if(q.length==1) return current_css;
+      if(f.length >120) return null;
+    }  
+    r = r.parentNode;
+  }
+  return null;
+}
+
                                     
               var elements = document.getElementsByTagName("*");
               var size_pos=[];
@@ -1155,12 +1177,9 @@ def changedetection_app(config=None, datastore_o=None):
               var bbox;
               for (var i = 0; i < elements.length; i++) {   
                  bbox = elements[i].getBoundingClientRect();
-                 // forget ones that are the same width as the screen (body etc)
-                 if ( bbox['width'] == window.innerWidth ) {
-                   continue;
-                 }
+
                  // forget reallysmall ones
-                 if (bbox['width'] <10 || bbox['height'] <10 ) {
+                 if (bbox['width'] <10 && bbox['height'] <10 ) {
                    continue;
                  }
                  // forget ones that dont have any textContent
@@ -1171,8 +1190,25 @@ def changedetection_app(config=None, datastore_o=None):
                  // @todo the getXpath kind of sucks, it doesnt know when there is for example just one ID sometimes
                  // it should not traverse when we know we can anchor off just an ID one level up etc..
                  // maybe, get current class or id, keep traversing up looking for only class or id until there is just one match 
+                 
+                 // 1st primitive - if it has class, try joining it all and select, if theres only one.. well thats us.
+                 xpath_result=false;
+                 try {
+                   var d= findUpTag(elements[i]);
+                   if (d) {
+                     xpath_result =d;
+                   }                
+                 } catch (e) {
+                   var x=1;
+                 }
+                 
+                 // default back to the less intelligent one
+                 if (!xpath_result) {
+                   xpath_result = getXPath(elements[i]);                   
+                 } 
+                 
                  size_pos.push({
-                   xpath: getXPath(elements[i]),
+                   xpath: xpath_result,
                    width: bbox['width'], 
                    height: bbox['height'],
                    left: bbox['left'],
@@ -1213,12 +1249,12 @@ def changedetection_app(config=None, datastore_o=None):
                 f.write(json.dumps(info, indent=4))
 
 
-            response = make_response(screenshot)
-            response.headers['Content-type'] = 'image/jpeg'
-            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-            response.headers['Pragma'] = 'no-cache'
-            response.headers['Expires'] = 0
-            return response
+        response = make_response(screenshot)
+        response.headers['Content-type'] = 'image/jpeg'
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = 0
+        return response
 
 
     # @todo handle ctrl break

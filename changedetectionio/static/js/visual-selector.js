@@ -57,7 +57,7 @@ function set_scale() {
   ctx.lineWidth = 2;
   vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
 
-  $("#selector-wrapper").css('height', vh-230);
+  $("#selector-wrapper").css('height', vh-250);
 
 }
 
