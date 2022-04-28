@@ -12,7 +12,7 @@
 </script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='visual-selector.js')}}" defer></script>
-<script src="https://code.createjs.com/easeljs-0.8.2.min.js"></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>
 
 <div class="edit-form monospaced-textarea">
 
@@ -187,7 +187,13 @@ nav
                         <div id="selector-wrapper">
                             <!-- request the screenshot and get the element offset info ready -->
                             <!-- use img src ready load to know everything is ready to map out -->
-                            <img id="selector-background" src="{{ url_for('visualselector_request_current_screenshot_and_metadata', uuid=uuid) }}"/>
+                            <img id="selector-background" />
+                            <script>
+                                $("img#selector-background").attr("src", "{{ url_for('visualselector_request_current_screenshot_and_metadata', uuid=uuid) }}");
+                                $("img#selector-background").bind('load', function () {
+                                   fetch_data();
+                                });
+                            </script>
                             <canvas id="selector-canvas"></canvas>
                         </div>
                     </div>

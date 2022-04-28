@@ -450,7 +450,11 @@ ul {
   position: relative; }
   #selector-wrapper > img {
     position: absolute;
-    z-index: 4; }
+    z-index: 4;
+    max-width: 100%; }
   #selector-wrapper > canvas {
-    position: absolute;
-    z-index: 5; }
+    position: relative;
+    z-index: 5;
+    max-width: 100%; }
+    #selector-wrapper > canvas:hover {
+      cursor: pointer; }

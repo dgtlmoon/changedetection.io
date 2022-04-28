@@ -1119,12 +1119,11 @@ def changedetection_app(config=None, datastore_o=None):
         with sync_playwright() as p:
             browser = p.chromium.connect_over_cdp("ws://127.0.0.1:3000")
             page = browser.new_page()
-            page.set_viewport_size({"width": 1220, "height": 800})
             page.goto(watch['url'])
-            #            time.sleep(3)
+            #time.sleep(3)
             # https://github.com/microsoft/playwright/issues/620
+            screenshot = page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
             screenshot = page.screenshot(type='jpeg', full_page=True)
-
             # Could be made a lot faster
             # https://toruskit.com/blog/how-to-get-element-bounds-without-reflow/
 
@@ -1141,13 +1140,13 @@ def changedetection_app(config=None, datastore_o=None):
               var bbox;
               for (var i = 0; i < elements.length; i++) {   
                  bbox = elements[i].getBoundingClientRect();
-                 
-                 if (! bbox['width'] || !bbox['height'] ) {
+                 if ( bbox['width'] == window.innerWidth ) {
                    continue;
                  }
-                 if (bbox['width'] >500 && bbox['height'] >500 ) {
+                 if (bbox['width'] <10 || bbox['height'] <10 ) {
                    continue;
                  }
+
                  if(! 'textContent' in elements[i] || elements[i].textContent.length < 2 ) {
                    continue;
                  }

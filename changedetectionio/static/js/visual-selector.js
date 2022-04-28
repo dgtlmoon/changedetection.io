@@ -1,4 +1,6 @@
-$("img#selector-background").bind('load', function () {
+var current_selected_i;
+
+function fetch_data() {
   // Image is ready
   $('.fetching-update-notice').html("Fetching element data..");
 
@@ -9,62 +11,51 @@ $("img#selector-background").bind('load', function () {
     $('.fetching-update-notice').html("Rendering..");
     reflow_selector(data);
   });
+};
 
-});
 
 function reflow_selector(selector_data) {
-  $('#selector-canvas').attr('width', $("img#selector-background").width());
-  $('#selector-canvas').attr('height', $("img#selector-background").height());
 
-  //.attr('height', $("img#selector-background").height());
+  //  $('#selector-canvas').attr('width',
+  // $("img#selector-background")[0].getBoundingClientRect().width);
+  var c = document.getElementById("selector-canvas");
+  var selector_image = document.getElementById("selector-background");
+  var selector_image_rect = selector_image.getBoundingClientRect();
 
-  // could trim it according to the lowest/furtheret item in the dataset
-  stage = new createjs.Stage("selector-canvas");
-
-  // to get onMouseOver & onMouseOut events, we need to enable them on the
-  // stage:
-  stage.enableMouseOver();
-  output = new createjs.Text("Test press, click, doubleclick, mouseover, and mouseout", "14px Arial");
-  output.x = output.y = 10;
-  stage.addChild(output);
-
-  var squares = [];
-  for (var i = 0; i < selector_data.length; i++) {
-
-    squares[i] = new createjs.Shape();
-
-    squares[i].graphics.beginFill("rgba(215,0,0,0.2)").drawRect(
-        selector_data[i]['left'],
-        selector_data[i]['top'],
-        selector_data[i]['width'],
-        selector_data[i]['height']);
-    
-    squares[i].name = selector_data[i]['xpath'];
-    stage.addChild(squares[i]);
-
-    squares[i].on("click", handleMouseEvent);
-    squares[i].on("dblclick", handleMouseEvent);
-    squares[i].on("mouseover", handleMouseEvent);
-    squares[i].on("mouseout", handleMouseEvent);
-    squares.push(squares[i]);
-  }
+  $('#selector-canvas').attr('height', selector_image_rect.height);
+  $('#selector-canvas').attr('width', selector_image_rect.width);
 
 
-  stage.update();
-  $('.fetching-update-notice').hide();
-}
+  var ctx = c.getContext("2d");
+  ctx.strokeStyle = 'rgba(255,0,0,5)';
 
-function handleMouseEvent(evt) {
-  output.text = "evt.target: " + evt.target + ", evt.type: " + evt.type;
+  // set this on resize too
+  var x_scale = selector_image_rect.width / selector_image.naturalWidth;
+  var y_scale = selector_image_rect.height / selector_image.naturalHeight;
 
-  if(evt.type == 'mouseover') {
-    evt.target.graphics.beginFill("rgba(225,220,220,0.9)");
-  }
+  console.log(selector_data.length + " selectors found");
+  $('#selector-canvas').bind('mousemove', function (e) {
+    ctx.clearRect(0, 0, c.width, c.height);
+    current_selected_i=null;
 
-  if(evt.type == 'mouseout') {
-    evt.target.graphics.beginFill("rgba(1,1,1,0.4)");
-  }
+    // Reverse order - the most specific one should be deeper/"laster"
+    for (var i = selector_data.length; i!=0; i--) {
+      // draw all of them? let them choose somehow?
+      var sel = selector_data[i-1];
+      if (e.offsetY > sel.top * y_scale && e.offsetY < sel.top * y_scale + sel.height * y_scale
+          &&
+          e.offsetX > sel.left * y_scale && e.offsetX < sel.left * y_scale + sel.width * y_scale
+      ) {
+        ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+        // no need to keep digging
+        current_selected_i=i;
+        break;
+      }
+    }
 
-  // to save CPU, we're only updating when we need to, instead of on a tick:1
-  stage.update();
+  }.debounce(5));
+
+  $('#selector-canvas').bind('mousedown', function (e) {
+    alert(selector_data[current_selected_i].xpath);
+  });
 }
