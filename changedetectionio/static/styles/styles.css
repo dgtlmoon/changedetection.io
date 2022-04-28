@@ -447,7 +447,7 @@ ul {
     width: 4em; }
 
 #selector-wrapper {
-  max-height: 600px;
+  height: 600px;
   overflow-y: scroll;
   position: relative; }
   #selector-wrapper > img {
