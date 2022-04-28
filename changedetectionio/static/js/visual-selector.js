@@ -45,7 +45,8 @@ function reflow_selector(selector_data) {
   $('#selector-canvas').attr('width', selector_image_rect.width);
 
 
-  ctx.strokeStyle = 'rgba(255,0,0)';
+  ctx.strokeStyle = 'rgb(255,0,0, 0.8)';
+  ctx.lineWidth = 2;
 
   // set this on resize too
   var x_scale = selector_image_rect.width / selector_image.naturalWidth;

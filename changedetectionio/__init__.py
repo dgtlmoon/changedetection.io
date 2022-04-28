@@ -1115,17 +1115,30 @@ def changedetection_app(config=None, datastore_o=None):
             pass
 
         # docker run -p 3000:3000 browserless/chrome
+        # @todo this needs abstracting out?
         from playwright.sync_api import sync_playwright
         with sync_playwright() as p:
             browser = p.chromium.connect_over_cdp("ws://127.0.0.1:3000")
             page = browser.new_page()
-            page.goto(watch['url'])
+
+
+            # @todo handle timeouts for long pages >30sec
+            try:
+                page.goto(watch['url'])
+            except Exception as e:
+                pass
+
             #time.sleep(3)
             # https://github.com/microsoft/playwright/issues/620
+            # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             screenshot = page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
             screenshot = page.screenshot(type='jpeg', full_page=True, quality=90)
+
             # Could be made a lot faster
             # https://toruskit.com/blog/how-to-get-element-bounds-without-reflow/
+
+
+            page.evaluate("var css_filter=\"{}\";".format(watch['css_filter']))
 
             info = page.evaluate("""async () => {                        
             // Include the getXpath script directly, easier than fetching
@@ -1140,30 +1153,55 @@ def changedetection_app(config=None, datastore_o=None):
               var bbox;
               for (var i = 0; i < elements.length; i++) {   
                  bbox = elements[i].getBoundingClientRect();
+                 // forget ones that are the same width as the screen (body etc)
                  if ( bbox['width'] == window.innerWidth ) {
                    continue;
                  }
+                 // forget reallysmall ones
                  if (bbox['width'] <10 || bbox['height'] <10 ) {
                    continue;
                  }
-
+                 // forget ones that dont have any textContent
                  if(! 'textContent' in elements[i] || elements[i].textContent.length < 2 ) {
                    continue;
                  }
                  
-                 // @todo the getXpath kind of sucks, it doesnt know when there is for example just one ID
-                 
+                 // @todo the getXpath kind of sucks, it doesnt know when there is for example just one ID sometimes
+                 // it should not traverse when we know we can anchor off just an ID one level up etc..
+                 // maybe, get current class or id, keep traversing up looking for only class or id until there is just one match 
                  size_pos.push({
                    xpath: getXPath(elements[i]),
                    width: bbox['width'], 
                    height: bbox['height'],
                    left: bbox['left'],
                    top: bbox['top'],
-                   childCount: elements[i].childElementCount,
-                   text: elements[i].textContent    
-                 });
+                   childCount: elements[i].childElementCount
+                 });                 
               }
               
+              
+               // inject the current one set in the css_filter, which may be a CSS rule
+               // used for displaying the current one in VisualSelector, where its not one we generated.
+               if (css_filter.length) {
+                   // is it xpath?
+                   if (css_filter.startsWith('/') ) {
+                     q=document.evaluate(css_filter, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                   } else {
+                     q=document.querySelector(css_filter);
+                   }
+                   if (q) {
+                       bbox = q.getBoundingClientRect();
+                       size_pos.push({
+                           xpath: css_filter,
+                           width: bbox['width'], 
+                           height: bbox['height'],
+                           left: bbox['left'],
+                           top: bbox['top'],
+                           childCount: q.childElementCount
+                         });
+                     }
+               }
+                 
               return size_pos;
 }""")
 
