@@ -1106,7 +1106,7 @@ def changedetection_app(config=None, datastore_o=None):
     def visualselector_request_current_screenshot_and_metadata(uuid):
         import json
 
-        watch = datastore.data['watching'][uuid]
+        watch = deepcopy(datastore.data['watching'][uuid])
 
         path_to_datafile = os.path.join(datastore_o.datastore_path, uuid, "elements.json")
         try:
@@ -1137,14 +1137,16 @@ def changedetection_app(config=None, datastore_o=None):
             # Could be made a lot faster
             # https://toruskit.com/blog/how-to-get-element-bounds-without-reflow/
 
+            # lazy quoting, probably going to be bad later.
+            css_filter = watch['css_filter'].replace('"', '\\"')
+            css_filter = css_filter.replace('\'', '\\\'')
 
-            page.evaluate("var css_filter=\"{}\";".format(watch['css_filter']))
+            page.evaluate("var css_filter='{}';".format(css_filter))
 
             info = page.evaluate("""async () => {                        
             // Include the getXpath script directly, easier than fetching
             !function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):(e=e||self).getXPath=n()}(this,function(){return function(e){var n=e;if(n&&n.id)return'//*[@id="'+n.id+'"]';for(var o=[];n&&Node.ELEMENT_NODE===n.nodeType;){for(var i=0,r=!1,d=n.previousSibling;d;)d.nodeType!==Node.DOCUMENT_TYPE_NODE&&d.nodeName===n.nodeName&&i++,d=d.previousSibling;for(d=n.nextSibling;d;){if(d.nodeName===n.nodeName){r=!0;break}d=d.nextSibling}o.push((n.prefix?n.prefix+":":"")+n.localName+(i||r?"["+(i+1)+"]":"")),n=n.parentNode}return o.length?"/"+o.reverse().join("/"):""}});
-            //# sourceMappingURL=index.umd.js.map
-               
+            //# sourceMappingURL=index.umd.js.map             
                                     
               var elements = document.getElementsByTagName("*");
               var size_pos=[];
