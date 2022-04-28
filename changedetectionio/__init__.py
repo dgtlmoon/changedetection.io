@@ -1123,7 +1123,7 @@ def changedetection_app(config=None, datastore_o=None):
             #time.sleep(3)
             # https://github.com/microsoft/playwright/issues/620
             screenshot = page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
-            screenshot = page.screenshot(type='jpeg', full_page=True)
+            screenshot = page.screenshot(type='jpeg', full_page=True, quality=90)
             # Could be made a lot faster
             # https://toruskit.com/blog/how-to-get-element-bounds-without-reflow/
 
@@ -1150,6 +1150,9 @@ def changedetection_app(config=None, datastore_o=None):
                  if(! 'textContent' in elements[i] || elements[i].textContent.length < 2 ) {
                    continue;
                  }
+                 
+                 // @todo the getXpath kind of sucks, it doesnt know when there is for example just one ID
+                 
                  size_pos.push({
                    xpath: getXPath(elements[i]),
                    width: bbox['width'], 

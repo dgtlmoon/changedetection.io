@@ -636,6 +636,8 @@ ul {
 }
 
 #selector-wrapper {
+ max-height: 600px;
+ overflow-y: scroll;
  position: relative;
     //width: 100%;
  > img {
@@ -651,5 +653,8 @@ ul {
      cursor: pointer;
      }
  }
+}
 
+#selector-current-xpath {
+  font-size: 80%;
 }

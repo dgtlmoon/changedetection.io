@@ -447,6 +447,8 @@ ul {
     width: 4em; }
 
 #selector-wrapper {
+  max-height: 600px;
+  overflow-y: scroll;
   position: relative; }
   #selector-wrapper > img {
     position: absolute;
@@ -458,3 +460,6 @@ ul {
     max-width: 100%; }
     #selector-wrapper > canvas:hover {
       cursor: pointer; }
+
+#selector-current-xpath {
+  font-size: 80%; }
