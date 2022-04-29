@@ -22,7 +22,8 @@ class model(dict):
             'newest_history_key': 0,
             'title': None,
             'previous_md5': False,
-            'uuid': str(uuid_builder.uuid4()),
+#           UUID not needed, should be generated only as a key
+#            'uuid':
             'headers': {},  # Extra headers to send
             'body': None,
             'method': 'GET',
