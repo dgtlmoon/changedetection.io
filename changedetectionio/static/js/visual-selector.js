@@ -58,6 +58,7 @@ function set_scale() {
   vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
 
   $("#selector-wrapper").css('height', vh-250);
+  $("#selector-current-xpath").css('max-width', selector_image_rect.width);
 
 }
 
