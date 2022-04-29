@@ -1028,6 +1028,11 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def api_delete():
         uuid = request.args.get('uuid')
+
+        if uuid != 'all' and not uuid in datastore.data['watching'].keys():
+            flash('The watch by UUID {} does not exist.'.format(uuid), 'error')
+            return redirect(url_for('index'))
+
         # More for testing, possible to return the first/only
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()

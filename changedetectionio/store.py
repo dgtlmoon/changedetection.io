@@ -38,7 +38,8 @@ class ChangeDetectionStore:
         self.__data = App.model()
 
         # Base definition for all watchers
-        self.generic_definition = Watch.model()
+        # deepcopy part of #569 - not sure why its needed exactly
+        self.generic_definition = deepcopy(Watch.model())
 
         if path.isfile('changedetectionio/source.txt'):
             with open('changedetectionio/source.txt') as f:
@@ -231,7 +232,7 @@ class ChangeDetectionStore:
 
                 del self.data['watching'][uuid]
 
-            self.needs_write = True
+            self.needs_write_urgent = True
 
     # Clone a watch by UUID
     def clone(self, uuid):
@@ -330,10 +331,13 @@ class ChangeDetectionStore:
         with self.lock:
             # @todo use a common generic version of this
             new_uuid = str(uuid_builder.uuid4())
-            new_watch = Watch.model({
+            # #Re 569
+            # Not sure why deepcopy was needed here, sometimes new watches would appear to already have 'history' set
+            # I assumed this would instantiate a new object but somehow an existing dict was getting used
+            new_watch = deepcopy(Watch.model({
                 'url': url,
                 'tag': tag
-            })
+            }))
 
 
             for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
