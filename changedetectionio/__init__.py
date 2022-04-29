@@ -1182,10 +1182,6 @@ const findUpTag = (el) => {
                  if (bbox['width'] <10 && bbox['height'] <10 ) {
                    continue;
                  }
-                 // forget ones that dont have any textContent
-                 if(! 'textContent' in elements[i] || elements[i].textContent.length < 2 ) {
-                   continue;
-                 }
                  
                  // @todo the getXpath kind of sucks, it doesnt know when there is for example just one ID sometimes
                  // it should not traverse when we know we can anchor off just an ID one level up etc..
