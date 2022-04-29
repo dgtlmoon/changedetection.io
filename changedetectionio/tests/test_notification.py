@@ -172,8 +172,8 @@ def test_notification_validation(client, live_server):
         data={"url": test_url, "tag": 'nice one'},
         follow_redirects=True
     )
-    with open("xxx.bin", "wb") as f:
-        f.write(res.data)
+ #   with open("xxx.bin", "wb") as f:
+ #       f.write(res.data)
     assert b"Watch added" in res.data
 
     # Re #360 some validation
