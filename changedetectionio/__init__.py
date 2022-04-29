@@ -1156,7 +1156,8 @@ const findUpTag = (el) => {
   while (r.parentNode) {
   
     if(r.classList.length >0) {
-      current_css='.'+Array.from(r.classList).join('.');
+     // limit to just using 2 class names of each, stops from getting really huge selector strings
+      current_css='.'+Array.from(r.classList).slice(0, 2).join('.');
       chained_css.unshift(current_css);
    
       var f=chained_css.join(' ');
