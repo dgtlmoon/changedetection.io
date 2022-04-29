@@ -1029,7 +1029,7 @@ def changedetection_app(config=None, datastore_o=None):
     def api_delete():
         uuid = request.args.get('uuid')
 
-        if not uuid in datastore.data['watching'].keys():
+        if uuid != 'all' and not uuid in datastore.data['watching'].keys():
             flash('The watch by UUID {} does not exist.'.format(uuid), 'error')
             return redirect(url_for('index'))
 
