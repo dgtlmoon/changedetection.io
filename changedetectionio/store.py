@@ -231,7 +231,7 @@ class ChangeDetectionStore:
 
                 del self.data['watching'][uuid]
 
-            self.needs_write = True
+            self.needs_write_urgent = True
 
     # Clone a watch by UUID
     def clone(self, uuid):
