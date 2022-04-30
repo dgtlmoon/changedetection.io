@@ -40,10 +40,11 @@ class update_worker(threading.Thread):
                     contents = ""
                     screenshot = False
                     update_obj= {}
+                    xpath_data = False
                     now = time.time()
 
                     try:
-                        changed_detected, update_obj, contents, screenshot = update_handler.run(uuid)
+                        changed_detected, update_obj, contents, screenshot, xpath_data = update_handler.run(uuid)
 
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
@@ -144,6 +145,9 @@ class update_worker(threading.Thread):
                         # Always save the screenshot if it's available
                         if screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
+                        if xpath_data:
+                            self.datastore.save_xpath_data(watch_uuid=uuid, data=xpath_data)
+
 
                 self.current_uuid = None  # Done
                 self.q.task_done()

@@ -189,7 +189,7 @@ nav
                             <!-- use img src ready load to know everything is ready to map out -->
                             <img id="selector-background" />
                             <script>
-                                $("img#selector-background").attr("src", "{{ url_for('visualselector_request_current_screenshot_and_metadata', uuid=uuid) }}");
+                                $("img#selector-background").attr("src", "{{url_for('static_content', group='screenshot', filename=uuid)}}");
                                 $("img#selector-background").bind('load', function () {
                                    fetch_data();
                                 });
@@ -198,7 +198,6 @@ nav
                         </div>
 
                         <div id="selector-current-xpath"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
-
 
                     </div>
                 </fieldset>

@@ -357,6 +357,14 @@ class ChangeDetectionStore:
             f.write(screenshot)
             f.close()
 
+    def save_xpath_data(self, watch_uuid, data):
+        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
+        fname = "{}/elements.json".format(output_path)
+        with open(fname, 'w') as f:
+            f.write(json.dumps(data))
+            f.close()
+
+
     def sync_to_json(self):
         logging.info("Saving JSON..")
         print("Saving JSON..")

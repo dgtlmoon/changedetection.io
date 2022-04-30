@@ -195,6 +195,7 @@ class perform_site_check():
         if self.datastore.data['settings']['application'].get('real_browser_save_screenshot', True):
             screenshot = fetcher.screenshot()
 
+        xpath_elements = fetcher.get_xpath_data(watch['css_filter'])
         fetcher.quit()
 
-        return changed_detected, update_obj, text_content_before_ignored_filter, screenshot
+        return changed_detected, update_obj, text_content_before_ignored_filter, screenshot, xpath_elements
