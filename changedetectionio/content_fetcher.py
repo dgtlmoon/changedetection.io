@@ -46,10 +46,6 @@ class Fetcher():
         return
 
     @abstractmethod
-    def screenshot(self):
-        return
-
-    @abstractmethod
     def get_last_status_code(self):
         return self.status_code
 
@@ -149,7 +145,7 @@ class base_html_playwright(Fetcher):
 
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
-            screenshot = page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
+            page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
             self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=90)
             context.close()
             browser.close()

@@ -142,7 +142,7 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
                                                                            'last_checked': round(time.time())})
                         # Always save the screenshot if it's available
-                        if screenshot is not None:
+                        if screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
 
                 self.current_uuid = None  # Done
