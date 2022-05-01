@@ -249,7 +249,8 @@ class html_webdriver(Fetcher):
         self.headers = {}
 
     def screenshot(self):
-        return self.driver.get_screenshot_as_png()
+        screenshot = self.driver.get_screenshot_as_png()
+        return screenshot
 
     # Does the connection to the webdriver work? run a test connection.
     def is_ready(self):

@@ -14,6 +14,8 @@ var y_scale;
 var selector_image = document.getElementById("selector-background");
 var selector_image_rect;
 var vh;
+var selector_data;
+
 
 function fetch_data() {
   // Image is ready
@@ -24,7 +26,8 @@ function fetch_data() {
     context: document.body
   }).done(function (data) {
     $('.fetching-update-notice').html("Rendering..");
-    reflow_selector(data);
+    selector_data = data;
+    reflow_selector();
     $('.fetching-update-notice').fadeOut();
   });
 };
@@ -42,6 +45,7 @@ $(window).resize(function() {
 
 $('#visualselector-tab').bind('click', function (e) {
   set_scale();
+  reflow_selector();
 });
 
 
@@ -62,7 +66,7 @@ function set_scale() {
 
 }
 
-function reflow_selector(selector_data) {
+function reflow_selector() {
 
   var selector_currnt_xpath_text=$("#selector-current-xpath span");
 
