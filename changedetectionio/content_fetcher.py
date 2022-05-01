@@ -23,7 +23,7 @@ class Fetcher():
     content = None
     headers = None
     # Will be needed in the future by the VisualSelector, always get this where possible.
-    screenshot = None
+    screenshot = False
     fetcher_description = "No description"
 
     @abstractmethod
@@ -80,6 +80,11 @@ class base_html_playwright(Fetcher):
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
 
+#    try:
+#        from playwright.sync_api import sync_playwright
+#    except ModuleNotFoundError:
+#        fetcher_enabled = False
+
     browser_type = ''
     command_executor = ''
 
@@ -94,7 +99,7 @@ class base_html_playwright(Fetcher):
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
         self.command_executor = os.getenv(
             "PLAYWRIGHT_DRIVER_URL",
-            'ws://playwright-server:4444/playwright'
+            'ws://playwright-chrome:3000/playwright'
         ).strip('"')
 
         # If any proxy settings are enabled, then we should setup the proxy object

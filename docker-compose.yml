@@ -24,11 +24,7 @@ services:
   #             https://selenium-python.readthedocs.io/api.html#module-selenium.webdriver.common.proxy
   #
   #       Alternative Playwright URL, do not use "'s or 's!
-  #      - PLAYWRIGHT_DRIVER_URL=ws://playwright-server:4444/playwright
-  #
-  #       Alternative Playwright Browser Type, must match with PLAYWRIGHT_BROWSER_TYPE in the playwright-server service
-  #       See https://playwright.dev/docs/browsers
-  #      - PLAYWRIGHT_BROWSER_TYPE=chromium
+  #      - PLAYWRIGHT_DRIVER_URL=ws://playwright-chrome:3000/playwright
   #
   #       Playwright proxy settings playwright_proxy_server, playwright_proxy_bypass, playwright_proxy_username, playwright_proxy_password
   #
@@ -71,17 +67,11 @@ services:
 #            - /dev/shm:/dev/shm
 #        restart: unless-stopped
 
-#    playwright-server:
-#        hostname: playwright-server
-#        build: ./playwright
-#        environment:
-#            - PLAYWRIGHT_PORT=4444
-#            # Must match with PLAYWRIGHT_BROWSER_TYPE in the changedetection service
-#            - PLAYWRIGHT_BROWSER_TYPE=chromium
-#        ipc: host
-#        user: pwuser
-#        security_opt:
-#            - seccomp:./playwright/seccomp_profile.json
+     # Used for fetching pages via Playwright+Chrome where you need Javascript support.
+
+#    playwright-chrome:
+#        hostname: playwright-chrome
+#        image: browserless/chrome
 #        restart: unless-stopped
 
 volumes:
