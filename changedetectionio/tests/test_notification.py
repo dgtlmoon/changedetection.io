@@ -156,7 +156,7 @@ def test_check_notification(client, live_server):
 
     # cleanup for the next
     client.get(
-        url_for("api_delete", uuid="first"),
+        url_for("api_delete", uuid="all"),
         follow_redirects=True
     )
 
@@ -172,8 +172,7 @@ def test_notification_validation(client, live_server):
         data={"url": test_url, "tag": 'nice one'},
         follow_redirects=True
     )
-    with open("xxx.bin", "wb") as f:
-        f.write(res.data)
+
     assert b"Watch added" in res.data
 
     # Re #360 some validation
@@ -209,6 +208,6 @@ def test_notification_validation(client, live_server):
 
     # cleanup for the next
     client.get(
-        url_for("api_delete", uuid="first"),
+        url_for("api_delete", uuid="all"),
         follow_redirects=True
     )
