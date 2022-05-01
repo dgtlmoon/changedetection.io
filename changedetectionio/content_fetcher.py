@@ -1,14 +1,11 @@
 from abc import ABC, abstractmethod
 import chardet
 import os
-from selenium import webdriver
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
-from selenium.common.exceptions import WebDriverException
 import requests
 import time
 import json
 import urllib3.exceptions
+import sys
 
 
 class EmptyReply(Exception):
@@ -19,6 +16,7 @@ class EmptyReply(Exception):
         return
 
     pass
+
 
 class Fetcher():
     error = None
@@ -124,6 +122,10 @@ class Fetcher():
                 return size_pos;
     """
 
+    # Will be needed in the future by the VisualSelector, always get this where possible.
+    screenshot = False
+    fetcher_description = "No description"
+
     @abstractmethod
     def get_error(self):
         return self.error
@@ -144,10 +146,6 @@ class Fetcher():
         return
 
     @abstractmethod
-    def screenshot(self):
-        return
-
-    @abstractmethod
     def get_last_status_code(self):
         return self.status_code
 
@@ -164,26 +162,105 @@ class Fetcher():
 #   Maybe for the future, each fetcher provides its own diff output, could be used for text, image
 #   the current one would return javascript output (as we use JS to generate the diff)
 #
-#   Returns tuple(mime_type, stream)
-#    @abstractmethod
-#    def return_diff(self, stream_a, stream_b):
-#        return
-
 def available_fetchers():
-        import inspect
-        from changedetectionio import content_fetcher
-        p=[]
-        for name, obj in inspect.getmembers(content_fetcher):
-            if inspect.isclass(obj):
-                # @todo html_ is maybe better as fetcher_ or something
-                # In this case, make sure to edit the default one in store.py and fetch_site_status.py
-                if "html_" in name:
-                    t=tuple([name,obj.fetcher_description])
-                    p.append(t)
+    # See the if statement at the bottom of this file for how we switch between playwright and webdriver
+    import inspect
+    p = []
+    for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass):
+        if inspect.isclass(obj):
+            # @todo html_ is maybe better as fetcher_ or something
+            # In this case, make sure to edit the default one in store.py and fetch_site_status.py
+            if name.startswith('html_'):
+                t = tuple([name, obj.fetcher_description])
+                p.append(t)
 
-        return p
+    return p
 
-class html_webdriver(Fetcher):
+
+class base_html_playwright(Fetcher):
+    fetcher_description = "Playwright {}/Javascript".format(
+        os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
+    )
+    if os.getenv("PLAYWRIGHT_DRIVER_URL"):
+        fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
+
+#    try:
+#        from playwright.sync_api import sync_playwright
+#    except ModuleNotFoundError:
+#        fetcher_enabled = False
+
+    browser_type = ''
+    command_executor = ''
+
+    # Configs for Proxy setup
+    # In the ENV vars, is prefixed with "playwright_proxy_", so it is for example "playwright_proxy_server"
+    playwright_proxy_settings_mappings = ['server', 'bypass', 'username', 'password']
+
+    proxy = None
+
+    def __init__(self):
+        # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
+        self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
+        self.command_executor = os.getenv(
+            "PLAYWRIGHT_DRIVER_URL",
+            'ws://playwright-chrome:3000/playwright'
+        ).strip('"')
+
+        # If any proxy settings are enabled, then we should setup the proxy object
+        proxy_args = {}
+        for k in self.playwright_proxy_settings_mappings:
+            v = os.getenv('playwright_proxy_' + k, False)
+            if v:
+                proxy_args[k] = v.strip('"')
+
+        if proxy_args:
+            self.proxy = proxy_args
+
+    def run(self,
+            url,
+            timeout,
+            request_headers,
+            request_body,
+            request_method,
+            ignore_status_codes=False):
+
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as p:
+            browser_type = getattr(p, self.browser_type)
+
+            # Seemed to cause a connection Exception even tho I can see it connect
+            # self.browser = browser_type.connect(self.command_executor, timeout=timeout*1000)
+            browser = browser_type.connect_over_cdp(self.command_executor, timeout=timeout * 1000)
+
+            # Set user agent to prevent Cloudflare from blocking the browser
+            context = browser.new_context(
+                user_agent="Mozilla/5.0",
+                proxy=self.proxy
+            )
+            page = context.new_page()
+            page.set_viewport_size({"width": 1280, "height": 1024})
+            response = page.goto(url, timeout=timeout * 1000)
+
+            extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
+            page.wait_for_timeout(extra_wait * 1000)
+
+            if response is None:
+                raise EmptyReply(url=url, status_code=None)
+
+            self.status_code = response.status
+            self.content = page.content()
+            self.headers = response.all_headers()
+
+            # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
+            # JPEG is better here because the screenshots can be very very large
+            page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
+            self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=90)
+            context.close()
+            browser.close()
+
+
+class base_html_webdriver(Fetcher):
     if os.getenv("WEBDRIVER_URL"):
         fetcher_description = "WebDriver Chrome/Javascript via '{}'".format(os.getenv("WEBDRIVER_URL"))
     else:
@@ -196,12 +273,11 @@ class html_webdriver(Fetcher):
     selenium_proxy_settings_mappings = ['proxyType', 'ftpProxy', 'httpProxy', 'noProxy',
                                         'proxyAutoconfigUrl', 'sslProxy', 'autodetect',
                                         'socksProxy', 'socksVersion', 'socksUsername', 'socksPassword']
-
-
-
-    proxy=None
+    proxy = None
 
     def __init__(self):
+        from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
+
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
         self.command_executor = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub').strip('"')
 
@@ -223,6 +299,9 @@ class html_webdriver(Fetcher):
             request_method,
             ignore_status_codes=False):
 
+        from selenium import webdriver
+        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+        from selenium.common.exceptions import WebDriverException
         # request_body, request_method unused for now, until some magic in the future happens.
 
         # check env for WEBDRIVER_URL
@@ -247,10 +326,6 @@ class html_webdriver(Fetcher):
         time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
         self.content = self.driver.page_source
         self.headers = {}
-
-    def screenshot(self):
-        screenshot = self.driver.get_screenshot_as_png()
-        return screenshot
 
     # Does the connection to the webdriver work? run a test connection.
     def is_ready(self):
@@ -282,6 +357,7 @@ class html_webdriver(Fetcher):
             except Exception as e:
                 print("Exception in chrome shutdown/quit" + str(e))
 
+
 # "html_requests" is listed as the default fetcher in store.py!
 class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
@@ -295,11 +371,11 @@ class html_requests(Fetcher):
             ignore_status_codes=False):
 
         r = requests.request(method=request_method,
-                         data=request_body,
-                         url=url,
-                         headers=request_headers,
-                         timeout=timeout,
-                         verify=False)
+                             data=request_body,
+                             url=url,
+                             headers=request_headers,
+                             timeout=timeout,
+                             verify=False)
 
         # If the response did not tell us what encoding format to expect, Then use chardet to override what `requests` thinks.
         # For example - some sites don't tell us it's utf-8, but return utf-8 content
@@ -319,3 +395,11 @@ class html_requests(Fetcher):
         self.content = r.text
         self.headers = r.headers
 
+
+# Decide which is the 'real' HTML webdriver, this is more a system wide config
+# rather than site-specific.
+use_playwright_as_chrome_fetcher = os.getenv('PLAYWRIGHT_DRIVER_URL', False)
+if use_playwright_as_chrome_fetcher:
+    html_webdriver = base_html_playwright
+else:
+    html_webdriver = base_html_webdriver

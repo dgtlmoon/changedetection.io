@@ -39,4 +39,9 @@ selenium ~= 4.1.0
 # ImportError: cannot import name 'safe_str_cmp' from 'werkzeug.security'
 # need to revisit flask login versions
 werkzeug ~= 2.0.0
+<<<<<<< HEAD
 playwright ~= 1.21.0
+=======
+
+# playwright is installed at Dockerfile build time because it's not available on all platforms
+>>>>>>> playwright

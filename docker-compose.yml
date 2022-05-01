@@ -23,6 +23,13 @@ services:
   #
   #             https://selenium-python.readthedocs.io/api.html#module-selenium.webdriver.common.proxy
   #
+  #       Alternative Playwright URL, do not use "'s or 's!
+  #      - PLAYWRIGHT_DRIVER_URL=ws://playwright-chrome:3000/playwright
+  #
+  #       Playwright proxy settings playwright_proxy_server, playwright_proxy_bypass, playwright_proxy_username, playwright_proxy_password
+  #
+  #             https://playwright.dev/python/docs/api/class-browsertype#browser-type-launch-option-proxy
+  #
   #        Plain requsts - proxy support example.
   #      - HTTP_PROXY=socks5h://10.10.1.10:1080
   #      - HTTPS_PROXY=socks5h://10.10.1.10:1080
@@ -58,6 +65,13 @@ services:
 #            # Workaround to avoid the browser crashing inside a docker container
 #            # See https://github.com/SeleniumHQ/docker-selenium#quick-start
 #            - /dev/shm:/dev/shm
+#        restart: unless-stopped
+
+     # Used for fetching pages via Playwright+Chrome where you need Javascript support.
+
+#    playwright-chrome:
+#        hostname: playwright-chrome
+#        image: browserless/chrome
 #        restart: unless-stopped
 
 volumes:
