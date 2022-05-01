@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Self hosted website change detection.">
     <title>Change Detection{{extra_title}}</title>
+    <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag %}- {{active_tag}}{% endif %}" href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}" />
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}">
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}">
     {% if extra_stylesheets %}
@@ -17,6 +18,8 @@
         background-image: url({{url_for('static_content', group='images', filename='gradient-border.png')}});
     }
     </style>
+    <script type="text/javascript" src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
+
 </head>
 
 <body>
@@ -91,6 +94,13 @@
         </ul>
       {% endif %}
     {% endwith %}
+
+    {% if session['share-link'] %}
+        <ul class="messages with-share-link">
+          <li class="message">Share this link: <span id="share-link">{{ session['share-link'] }}</span> <img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='copy.svg')}}" /></li>
+        </ul>
+    {% endif %}
+
     {% block content %}
 
     {% endblock %}

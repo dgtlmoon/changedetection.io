@@ -50,6 +50,14 @@ def test_check_basic_change_detection_functionality(client, live_server):
 
     #####################
 
+    # Check HTML conversion detected and workd
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+    # Check this class does not appear (that we didnt see the actual source)
+    assert b'foobar-detection' not in res.data
+
     # Make a change
     set_modified_response()
 
@@ -70,6 +78,11 @@ def test_check_basic_change_detection_functionality(client, live_server):
     res = client.get(url_for("rss"))
     expected_url = url_for('test_endpoint', _external=True)
     assert b'<rss' in res.data
+
+    # re #16 should have the diff in here too
+    assert b'(into   ) which has this one new line' in res.data
+    assert b'CDATA' in res.data
+    
     assert expected_url.encode('utf-8') in res.data
 
     # Following the 'diff' link, it should no longer display as 'unviewed' even after we recheck it a few times
@@ -96,7 +109,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
     # Enable auto pickup of <title> in settings
     res = client.post(
         url_for("settings_page"),
-        data={"extract_title_as_title": "1", "minutes_between_check": 180, 'fetch_backend': "html_requests"},
+        data={"application-extract_title_as_title": "1", "requests-time_between_check-minutes": 180, 'application-fetch_backend': "html_requests"},
         follow_redirects=True
     )
 

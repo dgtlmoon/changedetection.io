@@ -31,7 +31,7 @@ a.github-link {
 
 section.content {
   padding-top: 5em;
-  padding-bottom: 5em;
+  padding-bottom: 1em;
   flex-direction: column;
   display: flex;
   align-items: center;
@@ -180,10 +180,19 @@ body:after, body:before {
   .messages li.notice {
     background: rgba(255, 255, 255, 0.5); }
 
+.messages.with-share-link > *:hover {
+  cursor: pointer; }
+
 #notification-customisation {
   border: 1px solid #ccc;
-  padding: 1rem;
+  padding: 0.5rem;
   border-radius: 5px; }
+
+#notification-error-log {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 5px;
+  overflow-wrap: break-word; }
 
 #token-table.pure-table td, #token-table.pure-table th {
   font-size: 80%; }
@@ -244,7 +253,7 @@ footer {
 .sticky-tab {
   position: absolute;
   top: 60px;
-  font-size: 8px;
+  font-size: 65%;
   background: #fff;
   padding: 10px; }
   .sticky-tab#left-sticky {
@@ -279,6 +288,11 @@ footer {
     padding-bottom: 1em; }
     .pure-form .pure-control-group div, .pure-form .pure-group div, .pure-form .pure-controls div {
       margin: 0px; }
+    .pure-form .pure-control-group .checkbox > *, .pure-form .pure-group .checkbox > *, .pure-form .pure-controls .checkbox > * {
+      display: inline;
+      vertical-align: middle; }
+    .pure-form .pure-control-group .checkbox > label, .pure-form .pure-group .checkbox > label, .pure-form .pure-controls .checkbox > label {
+      padding-left: 5px; }
   .pure-form .error input {
     background-color: #ffebeb; }
   .pure-form ul.errors {
@@ -295,10 +309,10 @@ footer {
     font-weight: bold; }
   .pure-form textarea {
     width: 100%; }
-  .pure-form ul#fetch_backend {
+  .pure-form ul.fetch-backend {
     margin: 0px;
     list-style: none; }
-    .pure-form ul#fetch_backend > li > * {
+    .pure-form ul.fetch-backend li > * {
       display: inline-block; }
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
@@ -310,14 +324,23 @@ footer {
   #nav-menu {
     overflow-x: scroll; } }
 
-/*
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 800px) {
+  div.sticky-tab#hosted-sticky {
+    top: 60px;
+    left: 0px;
+    right: auto; }
+  section.content {
+    padding-top: 110px; }
+  div.tabs.collapsable ul li {
+    display: block;
+    border-radius: 0px; }
+  input[type='text'] {
+    width: 100%; }
+  /*
 Max width before this PARTICULAR table gets nasty
 This query will take effect for any screen smaller than 760px
 and also iPads specifically.
 */
-@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
-  input[type='text'] {
-    width: 100%; }
   .watch-table {
     /* Force table to not be like tables anymore */
     /* Force table to not be like tables anymore */
@@ -394,14 +417,17 @@ and also iPads specifically.
   padding: 20px;
   border-radius: 5px; }
 
+.tab-pane-inner {
+  padding: 0px; }
+  .tab-pane-inner:not(:target) {
+    display: none; }
+  .tab-pane-inner:target {
+    display: block; }
+
 .edit-form {
-  min-width: 70%; }
-  .edit-form .tab-pane-inner {
-    padding: 0px; }
-    .edit-form .tab-pane-inner:not(:target) {
-      display: none; }
-    .edit-form .tab-pane-inner:target {
-      display: block; }
+  min-width: 70%;
+  /* so it cant overflow */
+  max-width: 95%; }
   .edit-form .box-wrap {
     position: relative; }
   .edit-form .inner {
@@ -417,3 +443,8 @@ ul {
   padding-left: 1em;
   padding-top: 0px;
   margin-top: 4px; }
+
+.time-check-widget tr {
+  display: inline; }
+  .time-check-widget tr input[type="number"] {
+    width: 4em; }

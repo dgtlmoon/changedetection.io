@@ -13,11 +13,11 @@ requests[socks] ~= 2.26
 urllib3 > 1.26
 chardet > 2.3.0
 
-wtforms ~= 2.3.3
+wtforms ~= 3.0
 jsonpath-ng ~= 1.5.3
 
 # Notification library
-apprise ~= 0.9.7
+apprise ~= 0.9.8.3
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 paho-mqtt
@@ -35,5 +35,9 @@ lxml
 # 3.141 was missing socksVersion, 3.150 was not in pypi, so we try 4.1.0
 selenium ~= 4.1.0
 
-# An alternative to Selenium
-playwright ~= 1.20
+# https://stackoverflow.com/questions/71652965/importerror-cannot-import-name-safe-str-cmp-from-werkzeug-security/71653849#71653849
+# ImportError: cannot import name 'safe_str_cmp' from 'werkzeug.security'
+# need to revisit flask login versions
+werkzeug ~= 2.0.0
+
+# playwright is installed at Dockerfile build time because it's not available on all platforms

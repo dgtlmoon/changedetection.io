@@ -4,6 +4,9 @@ from typing import List
 
 from bs4 import BeautifulSoup
 from jsonpath_ng.ext import parse
+import re
+from inscriptis import get_text
+from inscriptis.model.config import ParserConfig
 
 
 class JSONNotFound(ValueError):
@@ -25,12 +28,12 @@ def subtractive_css_selector(css_selector, html_content):
         item.decompose()
     return str(soup)
 
-    
+
 def element_removal(selectors: List[str], html_content):
     """Joins individual filters into one css filter."""
     selector = ",".join(selectors)
     return subtractive_css_selector(selector, html_content)
-    
+
 
 # Return str Utf-8 of matched rules
 def xpath_filter(xpath_filter, html_content):
@@ -167,3 +170,35 @@ def strip_ignore_text(content, wordlist, mode="content"):
         return ignored_line_numbers
 
     return "\n".encode('utf8').join(output)
+
+
+def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
+    """Converts html string to a string with just the text. If ignoring
+    rendering anchor tag content is enable, anchor tag content are also
+    included in the text
+
+    :param html_content: string with html content
+    :param render_anchor_tag_content: boolean flag indicating whether to extract
+    hyperlinks (the anchor tag content) together with text. This refers to the
+    'href' inside 'a' tags.
+    Anchor tag content is rendered in the following manner:
+    '[ text ](anchor tag content)'
+    :return: extracted text from the HTML
+    """
+    #  if anchor tag content flag is set to True define a config for
+    #  extracting this content
+    if render_anchor_tag_content:
+
+        parser_config = ParserConfig(
+            annotation_rules={"a": ["hyperlink"]}, display_links=True
+        )
+
+    # otherwise set config to None
+    else:
+        parser_config = None
+
+    # get text and annotations via inscriptis
+    text_content = get_text(html_content, config=parser_config)
+
+    return text_content
+

@@ -35,7 +35,7 @@ a.github-link {
 
 section.content {
   padding-top: 5em;
-  padding-bottom: 5em;
+  padding-bottom: 1em;
   flex-direction: column;
   display: flex;
   align-items: center;
@@ -237,14 +237,25 @@ body:after, body:before {
             background: rgba(255, 255, 255, .5);
         }
     }
+    &.with-share-link {
+     > *:hover {
+       cursor:pointer;
+     }
+    }
 }
 
 #notification-customisation {
     border: 1px solid #ccc;
-    padding: 1rem;
+    padding: 0.5rem;
     border-radius: 5px;
 }
 
+#notification-error-log {
+    border: 1px solid #ccc;
+    padding: 1rem;
+    border-radius: 5px;
+    overflow-wrap: break-word;
+}
 
 #token-table {
     &.pure-table td, &.pure-table th {
@@ -322,7 +333,7 @@ footer {
 .sticky-tab {
   position: absolute;
   top: 60px;
-  font-size: 8px;
+  font-size: 65%;
   background: #fff;
   padding: 10px;
   &#left-sticky {
@@ -369,6 +380,15 @@ footer {
         div {
             margin: 0px;
         }
+        .checkbox {
+            > * {
+              display: inline;
+              vertical-align: middle;
+            }
+            > label {
+               padding-left: 5px;
+            }
+        }
     }
   /* The input fields with errors */
   .error {
@@ -398,10 +418,10 @@ footer {
   textarea {
     width: 100%;
   }
-  ul#fetch_backend {
+  ul.fetch-backend {
     margin: 0px;
     list-style: none;
-    > li {
+    li {
         > * {
             display: inline-block;
         }
@@ -422,18 +442,35 @@ footer {
   }
 }
 
+
+
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 800px) {
+
+  div.sticky-tab#hosted-sticky {
+    top: 60px;
+    left: 0px;
+    right: auto;
+  }
+
+  section.content {
+    padding-top: 110px;
+  }
+
+  // Make the tabs easier to hit, they will be all nice and horizontal
+  div.tabs.collapsable ul li {
+    display: block;
+    border-radius: 0px;
+  }
+
+  input[type='text'] {
+    width: 100%;
+  }
+
 /*
 Max width before this PARTICULAR table gets nasty
 This query will take effect for any screen smaller than 760px
 and also iPads specifically.
 */
-
-@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
-
-  input[type='text'] {
-    width: 100%;
-  }
-    
   .watch-table {
     /* Force table to not be like tables anymore */
     thead, tbody, th, td, tr {
@@ -556,10 +593,7 @@ $form-edge-padding: 20px;
   }
 }
 
-
-.edit-form {
-  min-width: 70%;
-  .tab-pane-inner {
+.tab-pane-inner {
     &:not(:target) {
         display: none;
     }
@@ -568,7 +602,12 @@ $form-edge-padding: 20px;
     }
     // doesnt need padding because theres another row of buttons/activity
     padding: 0px;
-  }
+}
+
+.edit-form {
+  min-width: 70%;
+  /* so it cant overflow */
+  max-width: 95%;
   .box-wrap {
     position: relative;
   }
@@ -590,4 +629,13 @@ ul {
     padding-left: 1em;
     padding-top: 0px;
     margin-top: 4px;
+}
+
+.time-check-widget {
+    tr {
+        display: inline;
+        input[type="number"] {
+            width: 4em;
+        }
+    }
 }

@@ -40,6 +40,14 @@ class Fetcher():
         pass
 
     @abstractmethod
+    def quit(self):
+        return
+
+    @abstractmethod
+    def screenshot(self):
+        return
+
+    @abstractmethod
     def get_last_status_code(self):
         return self.status_code
 
@@ -191,16 +199,16 @@ class html_webdriver(Fetcher):
         # request_body, request_method unused for now, until some magic in the future happens.
 
         # check env for WEBDRIVER_URL
-        driver = webdriver.Remote(
+        self.driver = webdriver.Remote(
             command_executor=self.command_executor,
             desired_capabilities=DesiredCapabilities.CHROME,
             proxy=self.proxy)
 
         try:
-            driver.get(url)
+            self.driver.get(url)
         except WebDriverException as e:
             # Be sure we close the session window
-            driver.quit()
+            self.quit()
             raise
 
         # @todo - how to check this? is it possible?
@@ -210,25 +218,32 @@ class html_webdriver(Fetcher):
 
         # @todo - dom wait loaded?
         time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
-        self.content = driver.page_source
+        self.content = self.driver.page_source
         self.headers = {}
 
-        driver.quit()
+    def screenshot(self):
+        return self.driver.get_screenshot_as_png()
 
-
+    # Does the connection to the webdriver work? run a test connection.
     def is_ready(self):
         from selenium import webdriver
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
         from selenium.common.exceptions import WebDriverException
 
-        driver = webdriver.Remote(
+        self.driver = webdriver.Remote(
             command_executor=self.command_executor,
             desired_capabilities=DesiredCapabilities.CHROME)
 
         # driver.quit() seems to cause better exceptions
-        driver.quit()
-
+        self.quit()
         return True
+
+    def quit(self):
+        if self.driver:
+            try:
+                self.driver.quit()
+            except Exception as e:
+                print("Exception in chrome shutdown/quit" + str(e))
 
 # "html_requests" is listed as the default fetcher in store.py!
 class html_requests(Fetcher):

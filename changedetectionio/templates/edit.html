@@ -1,13 +1,19 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.jinja' import render_field %}
-{% from '_helpers.jinja' import render_button %}
+{% from '_helpers.jinja' import render_field, render_checkbox_field, render_button %}
 {% from '_common_fields.jinja' import render_common_settings_form %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<script>
+    const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
+{% if emailprefix %}
+    const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
+{% endif %}
+</script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 
 <div class="edit-form monospaced-textarea">
 
-    <div class="tabs">
+    <div class="tabs collapsable">
         <ul>
             <li class="tab" id="default-tab"><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
@@ -35,8 +41,8 @@
                         <span class="pure-form-message-inline">Organisational tag/group name used in the main listing page</span>
                     </div>
                     <div class="pure-control-group">
-                        {{ render_field(form.minutes_between_check) }}
-                        {% if using_default_minutes %}
+                        {{ render_field(form.time_between_check, class="time-check-widget") }}
+                        {% if has_empty_checktime %}
                         <span class="pure-form-message-inline">Currently using the <a
                                 href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>, change to another value if you want to be specific.</span>
                         {% else %}
@@ -45,14 +51,14 @@
                         {% endif %}
                     </div>
                     <div class="pure-control-group">
-                        {{ render_field(form.extract_title_as_title) }}
+                        {{ render_checkbox_field(form.extract_title_as_title) }}
                     </div>
                 </fieldset>
             </div>
 
             <div class="tab-pane-inner" id="request">
                     <div class="pure-control-group">
-                        {{ render_field(form.fetch_backend) }}
+                        {{ render_field(form.fetch_backend, class="fetch-backend") }}
                         <span class="pure-form-message-inline">
                             <p>Use the <strong>Basic</strong> method (default) where your watched site doesn't need Javascript to render.</p>
                             <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
@@ -82,7 +88,7 @@ User-Agent: wonderbra 1.0") }}
 }") }}
                     </div>
                     <div>
-                        {{ render_field(form.ignore_status_codes) }}
+                        {{ render_checkbox_field(form.ignore_status_codes) }}
                     </div>
                 </fieldset>
                 <br/>
@@ -92,7 +98,7 @@ User-Agent: wonderbra 1.0") }}
                 <strong>Note: <i>These settings override the global settings for this watch.</i></strong>
                 <fieldset>
                     <div class="field-group">
-                        {{ render_common_settings_form(form, current_base_url) }}
+                        {{ render_common_settings_form(form, current_base_url, emailprefix) }}
                     </div>
                 </fieldset>
             </div>
@@ -162,7 +168,7 @@ nav
                     <ul>
                         <li>Text to wait for before triggering a change/notification, all text and regex are tested <i>case-insensitive</i>.</li>
                         <li>Trigger text is processed from the result-text that comes out of any CSS/JSON Filters for this watch</li>
-                        <li>Each line is process separately (think of each line as "OR")</li>
+                        <li>Each line is processed separately (think of each line as "OR")</li>
                         <li>Note: Wrap in forward slash / to use regex  example: <code>/foo\d/</code></li>
                     </ul>
                         </span>

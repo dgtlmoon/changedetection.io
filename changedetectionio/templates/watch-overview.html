@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% block content %}
 {% from '_helpers.jinja' import render_simple_field %}
-
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 <div class="box">
 
     <form class="pure-form" action="{{ url_for('api_watch_add') }}" method="POST" id="new-watch-form">
@@ -9,11 +10,10 @@
         <fieldset>
             <legend>Add a new change detection watch</legend>
                 {{ render_simple_field(form.url, placeholder="https://...", required=true) }}
-                {{ render_simple_field(form.tag, value=active_tag if active_tag else '', placeholder="tag") }}
+                {{ render_simple_field(form.tag, value=active_tag if active_tag else '', placeholder="watch group") }}
             <button type="submit" class="pure-button pure-button-primary">Watch</button>
         </fieldset>
-        <!-- add extra stuff, like do a http POST and send headers -->
-        <!-- user/pass r = requests.get('https://api.github.com/user', auth=('user', 'pass')) -->
+        <span style="color:#eee; font-size: 80%;"><img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread.svg')}}" /> Tip: You can also add 'shared' watches. <a href="#">More info</a></a></span>
     </form>
     <div>
         <a href="{{url_for('index')}}" class="pure-button button-tag {{'active' if not active_tag }}">All</a>
@@ -45,12 +45,15 @@
                 {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
                 {% if watch.last_notification_error is defined and watch.last_notification_error != False %}error{% endif %}
                 {% if watch.paused is defined and watch.paused != False %}paused{% endif %}
-                {% if watch.newest_history_key| int > watch.last_viewed| int %}unviewed{% endif %}">
+                {% if watch.newest_history_key| int > watch.last_viewed| int %}unviewed{% endif %}
+                {% if watch.uuid in queued_uuids %}queued{% endif %}">
                 <td class="inline">{{ loop.index }}</td>
                 <td class="inline paused-state state-{{watch.paused}}"><a href="{{url_for('index', pause=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause" title="Pause"/></a></td>
 
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
-                    <a class="external" target="_blank" rel="noopener" href="{{ watch.url }}"></a>
+                    <a class="external" target="_blank" rel="noopener" href="{{ watch.url.replace('source:','') }}"></a>
+                    <a href="{{url_for('api_share_put_watch', uuid=watch.uuid)}}"><img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread.svg')}}" /></a>
+
                     {%if watch.fetch_backend == "html_webdriver" %}<img style="height: 1em; display:inline-block;" src="{{url_for('static_content', group='images', filename='Google-Chrome-icon.png')}}" />{% endif %}
                     {%if watch.fetch_backend == "html_playwright" %}<img style="height: 1em; display:inline-block;" src="{{url_for('static_content', group='images', filename='Playwright-icon.png')}}" />{% endif %}
 
@@ -72,11 +75,11 @@
                     {% endif %}
                 </td>
                 <td>
-                    <a href="{{ url_for('api_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
-                       class="pure-button button-small pure-button-primary">Recheck</a>
+                    <a {% if watch.uuid in queued_uuids %}disabled="true"{% endif %} href="{{ url_for('api_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
+                       class="recheck pure-button button-small pure-button-primary">{% if watch.uuid in queued_uuids %}Queued{% else %}Recheck{% endif %}</a>
                     <a href="{{ url_for('edit_page', uuid=watch.uuid)}}" class="pure-button button-small pure-button-primary">Edit</a>
                     {% if watch.history|length >= 2 %}
-                    <a href="{{ url_for('diff_history_page', uuid=watch.uuid) }}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary">Diff</a>
+                    <a href="{{ url_for('diff_history_page', uuid=watch.uuid) }}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary diff-link">Diff</a>
                     {% else %}
                         {% if watch.history|length == 1 %}
                             <a href="{{ url_for('preview_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary">Preview</a>
