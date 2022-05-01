@@ -145,6 +145,10 @@ class ChangeDetectionStore:
 
     def update_watch(self, uuid, update_obj):
 
+        # It's possible that the watch could be deleted before update
+        if not self.__data['watching'].get(uuid):
+            return
+
         with self.lock:
 
             # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
