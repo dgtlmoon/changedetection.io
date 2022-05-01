@@ -4,7 +4,7 @@ import os
 import requests
 import time
 import urllib3.exceptions
-
+import sys
 
 class EmptyReply(Exception):
     def __init__(self, status_code, url):
@@ -20,9 +20,9 @@ class Fetcher():
     status_code = None
     content = None
     headers = None
-
-    fetcher_description ="No description"
-    fetcher_list_order = 0
+    # Will be needed in the future by the VisualSelector, always get this where possible.
+    screenshot = None
+    fetcher_description = "No description"
 
     @abstractmethod
     def get_error(self):
@@ -59,36 +59,28 @@ class Fetcher():
 #   Maybe for the future, each fetcher provides its own diff output, could be used for text, image
 #   the current one would return javascript output (as we use JS to generate the diff)
 #
-#   Returns tuple(mime_type, stream)
-#    @abstractmethod
-#    def return_diff(self, stream_a, stream_b):
-#        return
-
 def available_fetchers():
-        import inspect
-        from changedetectionio import content_fetcher
-        p=[]
-        for name, obj in inspect.getmembers(content_fetcher):
-            if inspect.isclass(obj):
-                # @todo html_ is maybe better as fetcher_ or something
-                # In this case, make sure to edit the default one in store.py and fetch_site_status.py
-                if "html_" in name:
-                    t=tuple([name,obj.fetcher_description,obj.fetcher_list_order])
-                    p.append(t)
-        # sort by obj.fetcher_list_order
-        p.sort(key=lambda x: x[2])
-        # strip obj.fetcher_list_order from each member in the tuple
-        p = list(map(lambda x: x[:2], p))
 
-        return p
+    # See the if statement at the bottom of this file for how we switch between playwright and webdriver
+    import inspect
+    p=[]
+    for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass):
+        if inspect.isclass(obj):
+            # @todo html_ is maybe better as fetcher_ or something
+            # In this case, make sure to edit the default one in store.py and fetch_site_status.py
+            if name.startswith('html_'):
+                t=tuple([name,obj.fetcher_description])
+                p.append(t)
 
-class html_playwright(Fetcher):
+
+    return p
+
+class base_html_playwright(Fetcher):
     fetcher_description = "Playwright {}/Javascript".format(
         os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
     )
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
-    fetcher_list_order = 3
 
     browser_type = ''
     command_executor = ''
@@ -129,15 +121,22 @@ class html_playwright(Fetcher):
 
         with sync_playwright() as p:
             browser_type = getattr(p, self.browser_type)
-            browser = browser_type.connect(self.command_executor, timeout=timeout*1000)
+
+            # Seemed to cause a connection Exception even tho I can see it connect
+            #self.browser = browser_type.connect(self.command_executor, timeout=timeout*1000)
+            browser = browser_type.connect_over_cdp(self.command_executor, timeout=timeout * 1000)
+
             # Set user agent to prevent Cloudflare from blocking the browser
             context = browser.new_context(
                 user_agent="Mozilla/5.0",
                 proxy=self.proxy
             )
             page = context.new_page()
+            page.set_viewport_size({"width": 1280, "height": 1024})
             response = page.goto(url, timeout=timeout*1000)
-            page.wait_for_timeout(5000)
+
+            extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
+            page.wait_for_timeout(extra_wait * 1000)
 
             if response is None:
                 raise EmptyReply(url=url, status_code=None)
@@ -146,15 +145,19 @@ class html_playwright(Fetcher):
             self.content = page.content()
             self.headers = response.all_headers()
 
+            # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
+            # JPEG is better here because the screenshots can be very very large
+            screenshot = page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
+            self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=90)
             context.close()
             browser.close()
 
-class html_webdriver(Fetcher):
+
+class base_html_webdriver(Fetcher):
     if os.getenv("WEBDRIVER_URL"):
         fetcher_description = "WebDriver Chrome/Javascript via '{}'".format(os.getenv("WEBDRIVER_URL"))
     else:
         fetcher_description = "WebDriver Chrome/Javascript"
-    fetcher_list_order = 2
 
     command_executor = ''
 
@@ -220,9 +223,8 @@ class html_webdriver(Fetcher):
         time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
         self.content = self.driver.page_source
         self.headers = {}
-
-    def screenshot(self):
-        return self.driver.get_screenshot_as_png()
+        self.screenshot = self.driver.get_screenshot_as_png()
+        self.quit()
 
     # Does the connection to the webdriver work? run a test connection.
     def is_ready(self):
@@ -248,7 +250,6 @@ class html_webdriver(Fetcher):
 # "html_requests" is listed as the default fetcher in store.py!
 class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
-    fetcher_list_order = 1
 
     def run(self,
             url,
@@ -282,4 +283,13 @@ class html_requests(Fetcher):
         self.status_code = r.status_code
         self.content = r.text
         self.headers = r.headers
+
+
+# Decide which is the 'real' HTML webdriver, this is more a system wide config
+# rather than site-specific.
+use_playwright_as_chrome_fetcher= os.getenv('PLAYWRIGHT_DRIVER_URL', False)
+if use_playwright_as_chrome_fetcher:
+    html_webdriver = base_html_playwright
+else:
+    html_webdriver = base_html_webdriver
 
