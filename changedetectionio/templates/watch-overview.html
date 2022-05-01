@@ -55,7 +55,6 @@
                     <a href="{{url_for('api_share_put_watch', uuid=watch.uuid)}}"><img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread.svg')}}" /></a>
 
                     {%if watch.fetch_backend == "html_webdriver" %}<img style="height: 1em; display:inline-block;" src="{{url_for('static_content', group='images', filename='Google-Chrome-icon.png')}}" />{% endif %}
-                    {%if watch.fetch_backend == "html_playwright" %}<img style="height: 1em; display:inline-block;" src="{{url_for('static_content', group='images', filename='Playwright-icon.png')}}" />{% endif %}
 
                     {% if watch.last_error is defined and watch.last_error != False %}
                     <div class="fetch-error">{{ watch.last_error }}</div>

@@ -6,6 +6,7 @@ import time
 import urllib3.exceptions
 import sys
 
+
 class EmptyReply(Exception):
     def __init__(self, status_code, url):
         # Set this so we can use it in other parts of the app
@@ -14,6 +15,7 @@ class EmptyReply(Exception):
         return
 
     pass
+
 
 class Fetcher():
     error = None
@@ -56,24 +58,24 @@ class Fetcher():
     def is_ready(self):
         return True
 
+
 #   Maybe for the future, each fetcher provides its own diff output, could be used for text, image
 #   the current one would return javascript output (as we use JS to generate the diff)
 #
 def available_fetchers():
-
     # See the if statement at the bottom of this file for how we switch between playwright and webdriver
     import inspect
-    p=[]
+    p = []
     for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass):
         if inspect.isclass(obj):
             # @todo html_ is maybe better as fetcher_ or something
             # In this case, make sure to edit the default one in store.py and fetch_site_status.py
             if name.startswith('html_'):
-                t=tuple([name,obj.fetcher_description])
+                t = tuple([name, obj.fetcher_description])
                 p.append(t)
 
-
     return p
+
 
 class base_html_playwright(Fetcher):
     fetcher_description = "Playwright {}/Javascript".format(
@@ -89,7 +91,7 @@ class base_html_playwright(Fetcher):
     # In the ENV vars, is prefixed with "playwright_proxy_", so it is for example "playwright_proxy_server"
     playwright_proxy_settings_mappings = ['server', 'bypass', 'username', 'password']
 
-    proxy=None
+    proxy = None
 
     def __init__(self):
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
@@ -123,7 +125,7 @@ class base_html_playwright(Fetcher):
             browser_type = getattr(p, self.browser_type)
 
             # Seemed to cause a connection Exception even tho I can see it connect
-            #self.browser = browser_type.connect(self.command_executor, timeout=timeout*1000)
+            # self.browser = browser_type.connect(self.command_executor, timeout=timeout*1000)
             browser = browser_type.connect_over_cdp(self.command_executor, timeout=timeout * 1000)
 
             # Set user agent to prevent Cloudflare from blocking the browser
@@ -133,7 +135,7 @@ class base_html_playwright(Fetcher):
             )
             page = context.new_page()
             page.set_viewport_size({"width": 1280, "height": 1024})
-            response = page.goto(url, timeout=timeout*1000)
+            response = page.goto(url, timeout=timeout * 1000)
 
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
             page.wait_for_timeout(extra_wait * 1000)
@@ -166,17 +168,13 @@ class base_html_webdriver(Fetcher):
     selenium_proxy_settings_mappings = ['proxyType', 'ftpProxy', 'httpProxy', 'noProxy',
                                         'proxyAutoconfigUrl', 'sslProxy', 'autodetect',
                                         'socksProxy', 'socksVersion', 'socksUsername', 'socksPassword']
-
-
-
-    proxy=None
+    proxy = None
 
     def __init__(self):
         from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
 
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
         self.command_executor = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub').strip('"')
-
 
         # If any proxy settings are enabled, then we should setup the proxy object
         proxy_args = {}
@@ -247,6 +245,7 @@ class base_html_webdriver(Fetcher):
             except Exception as e:
                 print("Exception in chrome shutdown/quit" + str(e))
 
+
 # "html_requests" is listed as the default fetcher in store.py!
 class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
@@ -260,11 +259,11 @@ class html_requests(Fetcher):
             ignore_status_codes=False):
 
         r = requests.request(method=request_method,
-                         data=request_body,
-                         url=url,
-                         headers=request_headers,
-                         timeout=timeout,
-                         verify=False)
+                             data=request_body,
+                             url=url,
+                             headers=request_headers,
+                             timeout=timeout,
+                             verify=False)
 
         # If the response did not tell us what encoding format to expect, Then use chardet to override what `requests` thinks.
         # For example - some sites don't tell us it's utf-8, but return utf-8 content
@@ -287,9 +286,8 @@ class html_requests(Fetcher):
 
 # Decide which is the 'real' HTML webdriver, this is more a system wide config
 # rather than site-specific.
-use_playwright_as_chrome_fetcher= os.getenv('PLAYWRIGHT_DRIVER_URL', False)
+use_playwright_as_chrome_fetcher = os.getenv('PLAYWRIGHT_DRIVER_URL', False)
 if use_playwright_as_chrome_fetcher:
     html_webdriver = base_html_playwright
 else:
     html_webdriver = base_html_webdriver
-
