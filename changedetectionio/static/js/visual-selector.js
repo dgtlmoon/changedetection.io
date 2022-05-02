@@ -27,6 +27,7 @@ function fetch_data() {
   }).done(function (data) {
     $('.fetching-update-notice').html("Rendering..");
     selector_data = data;
+    set_scale();
     reflow_selector();
     $('.fetching-update-notice').fadeOut();
   });
@@ -42,14 +43,17 @@ $(window).resize(function() {
     set_scale();
 });
 
-
 $('#visualselector-tab').bind('click', function (e) {
   set_scale();
   reflow_selector();
 });
 
 
+
 function set_scale() {
+
+  // some things to check if the scaling doesnt work
+  // - that the widths/sizes really are about the actual screen size cat elements.json |grep -o width......|sort|uniq
   selector_image_rect = selector_image.getBoundingClientRect();
   // make the canvas the same size as the image
   $('#selector-canvas').attr('height', selector_image_rect.height);
@@ -59,10 +63,6 @@ function set_scale() {
 
   ctx.strokeStyle = 'rgb(255,0,0, 0.8)';
   ctx.lineWidth = 2;
-  vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
-
-  $("#selector-wrapper").css('height', vh-250);
-  $("#selector-current-xpath").css('max-width', selector_image_rect.width);
 
 }
 

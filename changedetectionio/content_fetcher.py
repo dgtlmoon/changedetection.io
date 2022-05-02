@@ -236,8 +236,9 @@ class base_html_playwright(Fetcher):
                 proxy=self.proxy
             )
             page = context.new_page()
-            page.set_viewport_size({"width": 1280, "height": 1024})
             response = page.goto(url, timeout=timeout * 1000)
+            # set size after visiting page, otherwise it wont work (seems to default to 800x)
+            page.set_viewport_size({"width": 1280, "height": 1024})
 
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
             page.wait_for_timeout(extra_wait * 1000)
@@ -258,7 +259,7 @@ class base_html_playwright(Fetcher):
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
             page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
-            self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=90)
+            self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=92)
             context.close()
             browser.close()
 
