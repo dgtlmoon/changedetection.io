@@ -8,7 +8,7 @@ import sys
 
 import eventlet
 import eventlet.wsgi
-from . import store, changedetection_app
+from . import store, changedetection_app, content_fetcher
 from . import __version__
 
 def main():
