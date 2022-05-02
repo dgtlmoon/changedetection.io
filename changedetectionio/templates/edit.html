@@ -9,6 +9,7 @@
 {% if emailprefix %}
     const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
 {% endif %}
+    const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
 </script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='visual-selector.js')}}" defer></script>
@@ -188,12 +189,6 @@ nav
                             <!-- request the screenshot and get the element offset info ready -->
                             <!-- use img src ready load to know everything is ready to map out -->
                             <img id="selector-background" />
-                            <script>
-                                $("img#selector-background").attr("src", "{{url_for('static_content', group='screenshot', filename=uuid)}}");
-                                $("img#selector-background").bind('load', function () {
-                                   fetch_data();
-                                });
-                            </script>
                             <canvas id="selector-canvas"></canvas>
                         </div>
 
