@@ -67,7 +67,8 @@ class perform_site_check():
             klass = getattr(content_fetcher, "html_requests")
 
         fetcher = klass()
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code)
+        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code, watch['css_filter'])
+        fetcher.quit()
 
         # Fetching complete, now filters
         # @todo move to class / maybe inside of fetcher abstract base?
@@ -194,8 +195,5 @@ class perform_site_check():
                     update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
 
 
-        xpath_elements = fetcher.get_xpath_data(watch['css_filter'])
-        fetcher.quit()
-
-        return changed_detected, update_obj, text_content_before_ignored_filter, fetcher.screenshot, xpath_elements
+        return changed_detected, update_obj, text_content_before_ignored_filter, fetcher.screenshot, fetcher.xpath_data
 

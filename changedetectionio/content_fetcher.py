@@ -121,10 +121,10 @@ class Fetcher():
                 
                 return size_pos;
     """
+    xpath_data=None
 
     # Will be needed in the future by the VisualSelector, always get this where possible.
     screenshot = False
-    fetcher_description = "No description"
 
     @abstractmethod
     def get_error(self):
@@ -137,7 +137,8 @@ class Fetcher():
             request_headers,
             request_body,
             request_method,
-            ignore_status_codes=False):
+            ignore_status_codes=False,
+            current_css_filter=None):
         # Should set self.error, self.status_code and self.content
         pass
 
@@ -153,11 +154,6 @@ class Fetcher():
     # Return true/false if this checker is ready to run, in the case it needs todo some special config check etc
     def is_ready(self):
         return True
-
-    @abstractmethod
-    def get_xpath_data(self, current_css_xpath_filter):
-        return None
-
 
 #   Maybe for the future, each fetcher provides its own diff output, could be used for text, image
 #   the current one would return javascript output (as we use JS to generate the diff)
@@ -222,7 +218,8 @@ class base_html_playwright(Fetcher):
             request_headers,
             request_body,
             request_method,
-            ignore_status_codes=False):
+            ignore_status_codes=False,
+            current_css_filter=None):
 
         from playwright.sync_api import sync_playwright
 
@@ -252,6 +249,12 @@ class base_html_playwright(Fetcher):
             self.content = page.content()
             self.headers = response.all_headers()
 
+            if current_css_filter is not None:
+                page.evaluate("var css_filter='{}'".format(current_css_filter))
+            else:
+                page.evaluate("var css_filter=''")
+
+            self.xpath_data = page.evaluate("async () => {"+ self.xpath_element_js+ "}")
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
             page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
@@ -297,7 +300,8 @@ class base_html_webdriver(Fetcher):
             request_headers,
             request_body,
             request_method,
-            ignore_status_codes=False):
+            ignore_status_codes=False,
+            current_css_filter=None):
 
         from selenium import webdriver
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -341,13 +345,6 @@ class base_html_webdriver(Fetcher):
         self.quit()
         return True
 
-    def get_xpath_data(self, current_css_xpath_filter):
-
-        # lazy quoting, probably going to be bad later.
-        css_filter = current_css_xpath_filter.replace('"', '\\"')
-        css_filter = css_filter.replace('\'', '\\\'')
-        info = self.driver.execute_script("var css_filter='{}';".format(css_filter)+self.xpath_element_js)
-        return info
 
 
     def quit(self):
@@ -368,7 +365,8 @@ class html_requests(Fetcher):
             request_headers,
             request_body,
             request_method,
-            ignore_status_codes=False):
+            ignore_status_codes=False,
+            current_css_filter=None):
 
         r = requests.request(method=request_method,
                              data=request_body,
