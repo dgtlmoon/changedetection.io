@@ -322,13 +322,17 @@ class base_html_webdriver(Fetcher):
             self.quit()
             raise
 
+        self.driver.set_window_size(1280, 1024)
+        self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
+        self.xpath_data = self.driver.execute_script("var css_filter='{}';".format(current_css_filter)+self.xpath_element_js)
+        self.screenshot = self.driver.get_screenshot_as_png()
+
         # @todo - how to check this? is it possible?
         self.status_code = 200
         # @todo somehow we should try to get this working for WebDriver
         # raise EmptyReply(url=url, status_code=r.status_code)
 
         # @todo - dom wait loaded?
-        time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
         self.content = self.driver.page_source
         self.headers = {}
 
