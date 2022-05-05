@@ -24,24 +24,24 @@ class Fetcher():
     content = None
     headers = None
 
-    fetcher_description ="No description"
-    xpath_element_js="""               
+    fetcher_description = "No description"
+    xpath_element_js = """               
                 // Include the getXpath script directly, easier than fetching
                 !function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):(e=e||self).getXPath=n()}(this,function(){return function(e){var n=e;if(n&&n.id)return'//*[@id="'+n.id+'"]';for(var o=[];n&&Node.ELEMENT_NODE===n.nodeType;){for(var i=0,r=!1,d=n.previousSibling;d;)d.nodeType!==Node.DOCUMENT_TYPE_NODE&&d.nodeName===n.nodeName&&i++,d=d.previousSibling;for(d=n.nextSibling;d;){if(d.nodeName===n.nodeName){r=!0;break}d=d.nextSibling}o.push((n.prefix?n.prefix+":":"")+n.localName+(i||r?"["+(i+1)+"]":"")),n=n.parentNode}return o.length?"/"+o.reverse().join("/"):""}});
                 //# sourceMappingURL=index.umd.js.map             
 
-            
+
                 const findUpTag = (el) => {
                   let r = el
                   chained_css = [];
-            
+
                   while (r.parentNode) {
-            
+
                     if(r.classList.length >0) {
                      // limit to just using 2 class names of each, stops from getting really huge selector strings
                       current_css='.'+Array.from(r.classList).slice(0, 2).join('.');
                       chained_css.unshift(current_css);
-            
+
                       var f=chained_css.join(' ');
                       var q=document.querySelectorAll(f);
                       if(q.length==1) return current_css;
@@ -52,7 +52,7 @@ class Fetcher():
                   return null;
                 }
 
-                
+
                 var elements = document.getElementsByTagName("*");
                 var size_pos=[];
                 // after page fetch, inject this JS
@@ -60,16 +60,16 @@ class Fetcher():
                 var bbox;
                 for (var i = 0; i < elements.length; i++) {   
                  bbox = elements[i].getBoundingClientRect();
-                
+
                  // forget reallysmall ones
                  if (bbox['width'] <10 && bbox['height'] <10 ) {
                    continue;
                  }
-                
+
                  // @todo the getXpath kind of sucks, it doesnt know when there is for example just one ID sometimes
                  // it should not traverse when we know we can anchor off just an ID one level up etc..
                  // maybe, get current class or id, keep traversing up looking for only class or id until there is just one match 
-                
+
                  // 1st primitive - if it has class, try joining it all and select, if theres only one.. well thats us.
                  xpath_result=false;
                  try {
@@ -80,12 +80,12 @@ class Fetcher():
                  } catch (e) {
                    var x=1;
                  }
-                
+
                  // default back to the less intelligent one
                  if (!xpath_result) {
                    xpath_result = getXPath(elements[i]);                   
                  } 
-                
+
                  size_pos.push({
                    xpath: xpath_result,
                    width: bbox['width'], 
@@ -95,8 +95,8 @@ class Fetcher():
                    childCount: elements[i].childElementCount
                  });                 
                 }
-                
-                
+
+
                 // inject the current one set in the css_filter, which may be a CSS rule
                 // used for displaying the current one in VisualSelector, where its not one we generated.
                 if (css_filter.length) {
@@ -118,10 +118,10 @@ class Fetcher():
                          });
                      }
                 }
-                
+
                 return size_pos;
     """
-    xpath_data=None
+    xpath_data = None
 
     # Will be needed in the future by the VisualSelector, always get this where possible.
     screenshot = False
@@ -155,6 +155,7 @@ class Fetcher():
     def is_ready(self):
         return True
 
+
 #   Maybe for the future, each fetcher provides its own diff output, could be used for text, image
 #   the current one would return javascript output (as we use JS to generate the diff)
 #
@@ -180,10 +181,10 @@ class base_html_playwright(Fetcher):
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
 
-#    try:
-#        from playwright.sync_api import sync_playwright
-#    except ModuleNotFoundError:
-#        fetcher_enabled = False
+    #    try:
+    #        from playwright.sync_api import sync_playwright
+    #    except ModuleNotFoundError:
+    #        fetcher_enabled = False
 
     browser_type = ''
     command_executor = ''
@@ -255,7 +256,7 @@ class base_html_playwright(Fetcher):
             else:
                 page.evaluate("var css_filter=''")
 
-            self.xpath_data = page.evaluate("async () => {"+ self.xpath_element_js+ "}")
+            self.xpath_data = page.evaluate("async () => {" + self.xpath_element_js + "}")
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
             page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
@@ -324,7 +325,7 @@ class base_html_webdriver(Fetcher):
 
         self.driver.set_window_size(1280, 1024)
         self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
-        self.xpath_data = self.driver.execute_script("var css_filter='{}';".format(current_css_filter)+self.xpath_element_js)
+        self.xpath_data = self.driver.execute_script("var css_filter='{}';".format(current_css_filter) + self.xpath_element_js)
         self.screenshot = self.driver.get_screenshot_as_png()
 
         # @todo - how to check this? is it possible?
@@ -349,8 +350,6 @@ class base_html_webdriver(Fetcher):
         # driver.quit() seems to cause better exceptions
         self.quit()
         return True
-
-
 
     def quit(self):
         if self.driver:
