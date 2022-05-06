@@ -130,8 +130,9 @@ class base_html_playwright(Fetcher):
             browser = browser_type.connect_over_cdp(self.command_executor, timeout=timeout * 1000)
 
             # Set user agent to prevent Cloudflare from blocking the browser
+            # Use the default one configured in the App.py model that's passed from fetch_site_status.py
             context = browser.new_context(
-                user_agent="Mozilla/5.0",
+                user_agent=request_headers['User-Agent'] if request_headers.get('User-Agent') else 'Mozilla/5.0',
                 proxy=self.proxy
             )
             page = context.new_page()
