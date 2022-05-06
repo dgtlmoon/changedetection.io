@@ -9,6 +9,7 @@
     const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
 {% endif %}
 </script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 
 <div class="edit-form monospaced-textarea">
@@ -65,12 +66,10 @@
                         </span>
                     </div>
 
-                <hr/>
-                <fieldset class="pure-group">
-
-                    <span class="pure-form-message-inline">
+                <fieldset class="pure-group" id="requests-override-options">
+                    <div class="pure-form-message-inline">
                         <strong>Request override is currently only used by the <i>Basic fast Plaintext/HTTP Client</i> method.</strong>
-                    </span>
+                    </div>
                     <div class="pure-control-group">
                         {{ render_field(form.method) }}
                     </div>
