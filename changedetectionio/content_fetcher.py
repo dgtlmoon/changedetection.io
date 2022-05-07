@@ -118,6 +118,7 @@ class base_html_playwright(Fetcher):
             ignore_status_codes=False):
 
         from playwright.sync_api import sync_playwright
+        import playwright._impl._api_types
         from playwright._impl._api_types import Error, TimeoutError
 
         with sync_playwright() as p:
