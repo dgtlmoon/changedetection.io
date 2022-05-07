@@ -118,6 +118,7 @@ class base_html_playwright(Fetcher):
             ignore_status_codes=False):
 
         from playwright.sync_api import sync_playwright
+        from playwright._impl._api_types import Error, TimeoutError
 
         with sync_playwright() as p:
             browser_type = getattr(p, self.browser_type)
@@ -134,10 +135,16 @@ class base_html_playwright(Fetcher):
             )
             page = context.new_page()
             page.set_viewport_size({"width": 1280, "height": 1024})
-            response = page.goto(url, timeout=timeout * 1000)
-
-            extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
-            page.wait_for_timeout(extra_wait * 1000)
+            try:
+                response = page.goto(url, timeout=timeout * 1000, wait_until='commit')
+                # Wait_until = commit
+                # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
+                # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
+                # This seemed to solve nearly all 'TimeoutErrors'
+                extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
+                page.wait_for_timeout(extra_wait * 1000)
+            except playwright._impl._api_types.TimeoutError as e:
+                raise EmptyReply(url=url, status_code=None)
 
             if response is None:
                 raise EmptyReply(url=url, status_code=None)
