@@ -25,6 +25,8 @@ class Fetcher():
     # Will be needed in the future by the VisualSelector, always get this where possible.
     screenshot = False
     fetcher_description = "No description"
+    system_http_proxy = os.getenv('HTTP_PROXY')
+    system_https_proxy = os.getenv('HTTPS_PROXY')
 
     @abstractmethod
     def get_error(self):
@@ -80,17 +82,12 @@ class base_html_playwright(Fetcher):
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
 
-#    try:
-#        from playwright.sync_api import sync_playwright
-#    except ModuleNotFoundError:
-#        fetcher_enabled = False
-
     browser_type = ''
     command_executor = ''
 
     # Configs for Proxy setup
     # In the ENV vars, is prefixed with "playwright_proxy_", so it is for example "playwright_proxy_server"
-    playwright_proxy_settings_mappings = ['server', 'bypass', 'username', 'password']
+    playwright_proxy_settings_mappings = ['bypass', 'server', 'username', 'password']
 
     proxy = None
 
@@ -185,6 +182,12 @@ class base_html_webdriver(Fetcher):
             if v:
                 proxy_args[k] = v.strip('"')
 
+        # Map back standard HTTP_ and HTTPS_PROXY to webDriver httpProxy/sslProxy
+        if not proxy_args.get('webdriver_httpProxy') and self.system_http_proxy:
+            proxy_args['httpProxy'] = self.system_http_proxy
+        if not proxy_args.get('webdriver_sslProxy') and self.system_https_proxy:
+            proxy_args['httpsProxy'] = self.system_https_proxy
+
         if proxy_args:
             self.proxy = SeleniumProxy(raw=proxy_args)
 
@@ -260,11 +263,19 @@ class html_requests(Fetcher):
             request_method,
             ignore_status_codes=False):
 
+        # Map back standard HTTP_ and HTTPS_PROXY to requests http/https proxy
+        proxies={}
+        if self.system_http_proxy:
+            proxies['http'] = self.system_http_proxy
+        if self.system_https_proxy:
+            proxies['https'] = self.system_https_proxy
+
         r = requests.request(method=request_method,
                              data=request_body,
                              url=url,
                              headers=request_headers,
                              timeout=timeout,
+                             proxies=proxies,
                              verify=False)
 
         # If the response did not tell us what encoding format to expect, Then use chardet to override what `requests` thinks.
