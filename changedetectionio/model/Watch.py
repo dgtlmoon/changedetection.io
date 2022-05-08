@@ -39,6 +39,7 @@ class model(dict):
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'fetch_backend': None,
             'extract_title_as_title': False,
+            'proxy': None, # Preferred proxy connection
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.

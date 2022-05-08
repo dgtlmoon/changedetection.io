@@ -58,14 +58,21 @@
             </div>
 
             <div class="tab-pane-inner" id="request">
-                    <div class="pure-control-group">
+                    <div class="pure-control-group inline-radio">
                         {{ render_field(form.fetch_backend, class="fetch-backend") }}
                         <span class="pure-form-message-inline">
                             <p>Use the <strong>Basic</strong> method (default) where your watched site doesn't need Javascript to render.</p>
                             <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
                         </span>
                     </div>
-
+                {% if form.proxy %}
+                    <div class="pure-control-group inline-radio">
+                        {{ render_field(form.proxy, class="fetch-backend-proxy") }}
+                        <span class="pure-form-message-inline">
+                        Choose a proxy for this watch
+                        </span>
+                    </div>
+                {% endif %}
                 <fieldset class="pure-group" id="requests-override-options">
                     <div class="pure-form-message-inline">
                         <strong>Request override is currently only used by the <i>Basic fast Plaintext/HTTP Client</i> method.</strong>

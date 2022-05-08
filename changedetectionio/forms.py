@@ -337,9 +337,9 @@ class watchForm(commonSettingsForm):
     method = SelectField('Request method', choices=valid_method, default=default_method)
     ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
-
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
     save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
+    proxy = RadioField('Proxy')
 
     def validate(self, **kwargs):
         if not super().validate():
@@ -358,6 +358,7 @@ class watchForm(commonSettingsForm):
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     time_between_check = FormField(TimeBetweenCheckForm)
+    proxy = RadioField('Proxy')
 
 
 # datastore.data['settings']['application']..
@@ -382,4 +383,3 @@ class globalSettingsForm(Form):
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
-

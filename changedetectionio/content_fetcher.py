@@ -91,7 +91,8 @@ class base_html_playwright(Fetcher):
 
     proxy = None
 
-    def __init__(self):
+    def __init__(self, proxy_override=None):
+
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
         self.command_executor = os.getenv(
@@ -108,6 +109,10 @@ class base_html_playwright(Fetcher):
 
         if proxy_args:
             self.proxy = proxy_args
+
+        # allow per-watch proxy selection override
+        if proxy_override:
+            self.proxy = {'server': proxy_override}
 
     def run(self,
             url,
@@ -177,7 +182,7 @@ class base_html_webdriver(Fetcher):
                                         'socksProxy', 'socksVersion', 'socksUsername', 'socksPassword']
     proxy = None
 
-    def __init__(self):
+    def __init__(self, proxy_override=None):
         from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
 
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
@@ -195,6 +200,10 @@ class base_html_webdriver(Fetcher):
             proxy_args['httpProxy'] = self.system_http_proxy
         if not proxy_args.get('webdriver_sslProxy') and self.system_https_proxy:
             proxy_args['httpsProxy'] = self.system_https_proxy
+
+        # Allows override the proxy on a per-request basis
+        if proxy_override is not None:
+            proxy_args['httpProxy'] = proxy_override
 
         if proxy_args:
             self.proxy = SeleniumProxy(raw=proxy_args)
@@ -263,6 +272,9 @@ class base_html_webdriver(Fetcher):
 class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
 
+    def __init__(self, proxy_override=None):
+        self.proxy_override = proxy_override
+
     def run(self,
             url,
             timeout,
@@ -271,12 +283,16 @@ class html_requests(Fetcher):
             request_method,
             ignore_status_codes=False):
 
-        # Map back standard HTTP_ and HTTPS_PROXY to requests http/https proxy
         proxies={}
-        if self.system_http_proxy:
-            proxies['http'] = self.system_http_proxy
-        if self.system_https_proxy:
-            proxies['https'] = self.system_https_proxy
+
+        # Allows override the proxy on a per-request basis
+        if self.proxy_override:
+            proxies = {'http': self.proxy_override, 'https': self.proxy_override, 'ftp': self.proxy_override}
+        else:
+            if self.system_http_proxy:
+                proxies['http'] = self.system_http_proxy
+            if self.system_https_proxy:
+                proxies['https'] = self.system_https_proxy
 
         r = requests.request(method=request_method,
                              data=request_body,
