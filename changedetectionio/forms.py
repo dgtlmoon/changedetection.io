@@ -339,7 +339,7 @@ class watchForm(commonSettingsForm):
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
     save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
-    proxy = RadioField('Location')
+    proxy = RadioField('Proxy')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -368,7 +368,7 @@ class watchForm(commonSettingsForm):
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     time_between_check = FormField(TimeBetweenCheckForm)
-    proxy = RadioField('Location')
+    proxy = RadioField('Proxy')
 
 
 # datastore.data['settings']['application']..
