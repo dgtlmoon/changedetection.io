@@ -575,6 +575,15 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)
 
+            if form.sync_filters_across_tags:
+                filter_keys = ['css_filter', 'subtractive_selectors', 'ignore_text', 'trigger_text']
+                filter_dict = {k: datastore.data['watching'][uuid][k] for k in filter_keys}
+                tags = datastore.get_tags(uuid)
+                tag_index = datastore.get_tag_uuid_index()
+                # Copy settings only to watches where all tags match, and remove uuid to prevent updating it twice
+                copy_settings_to = set.intersection(*[tag_index[tag] for tag in tags]).difference(uuid)
+                for extra_uuid in copy_settings_to:
+                    update_watch_filters(extra_uuid, filter_dict)
             flash("Updated watch.")
 
             # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
@@ -583,6 +592,9 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Queue the watch for immediate recheck
             update_q.put(uuid)
+            if form.sync_filters_across_tags:
+                for extra_uuid in copy_settings_to:
+                    update_q.put(extra_uuid)
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff' and not form.save_and_preview_button.data:
