@@ -15,6 +15,7 @@ from wtforms import (
     validators,
     widgets,
 )
+from wtforms.fields import FormField
 from wtforms.validators import ValidationError
 
 from changedetectionio import content_fetcher
@@ -24,8 +25,6 @@ from changedetectionio.notification import (
     default_notification_title,
     valid_notification_formats,
 )
-
-from wtforms.fields import FormField
 
 valid_method = {
     'GET',
@@ -134,6 +133,7 @@ class ValidateContentFetcherIsReady(object):
 
     def __call__(self, form, field):
         import urllib3.exceptions
+
         from changedetectionio import content_fetcher
 
         # Better would be a radiohandler that keeps a reference to each class
@@ -338,6 +338,8 @@ class watchForm(commonSettingsForm):
     ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
+    sync_filters_across_tags = BooleanField('Copy filter/trigger settings to all watches with the same tags')
+
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
     save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
 
@@ -382,4 +384,3 @@ class globalSettingsForm(Form):
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
-
