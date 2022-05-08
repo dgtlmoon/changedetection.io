@@ -485,6 +485,20 @@ def changedetection_app(config=None, datastore_o=None):
 
         return datastore.data['watching'][uuid]['previous_md5']
 
+    def update_watch_filters(uuid, filter_dict):
+        prev_css_filter = datastore.data['watching'][uuid]['css_filter']
+        datastore.data['watching'][uuid].update(filter_dict)
+
+        # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
+        if filter_dict['ignore_text']:
+            if len(datastore.data['watching'][uuid]['history']):
+                datastore.data['watching'][uuid]['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
+
+        # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
+        if prev_css_filter != filter_dict['css_filter']:
+            if len(datastore.data['watching'][uuid]['history']):
+                datastore.data['watching'][uuid]['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
+
 
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     @login_required
