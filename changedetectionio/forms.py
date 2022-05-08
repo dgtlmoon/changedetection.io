@@ -337,9 +337,19 @@ class watchForm(commonSettingsForm):
     method = SelectField('Request method', choices=valid_method, default=default_method)
     ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
-
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
     save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
+    proxy = RadioField('Location')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Remove proxy if we shouldnt handle it (not enabled)
+        if kwargs['data'].get('proxy_list'):
+            if kwargs['data']['proxy_list'] is None:
+                del (self.proxy)
+            else:
+                self.proxy.choices = kwargs['data']['proxy_list']
+
 
     def validate(self, **kwargs):
         if not super().validate():
@@ -358,6 +368,7 @@ class watchForm(commonSettingsForm):
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     time_between_check = FormField(TimeBetweenCheckForm)
+    proxy = RadioField('Location')
 
 
 # datastore.data['settings']['application']..
@@ -382,4 +393,14 @@ class globalSettingsForm(Form):
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Remove proxy if we shouldnt handle it (not enabled)
+        if kwargs['data'].get('proxy_list'):
+            if kwargs['data']['proxy_list'] is None:
+                del(self.requests.form.proxy)
+            else:
+                self.requests.form.proxy.choices=kwargs['data']['proxy_list']
 

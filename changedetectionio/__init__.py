@@ -518,9 +518,23 @@ def changedetection_app(config=None, datastore_o=None):
         if all(value == 0 or value == None for value in datastore.data['watching'][uuid]['time_between_check'].values()):
             default['time_between_check'] = deepcopy(datastore.data['settings']['requests']['time_between_check'])
 
+        # Defaults for proxy choice
+        if datastore.proxy_list is not None:  # When enabled
+            system_proxy = datastore.data['settings']['requests']['proxy']
+            if default['proxy'] is None:
+                default['proxy'] = system_proxy
+            else:
+                # Does the chosen one exist?
+                if not any(default['proxy'] in tup for tup in datastore.proxy_list):
+                    default['proxy'] = datastore.proxy_list[0][0]
+
+            # Used by the form handler to keep or remove the proxy settings
+            default['proxy_list']=datastore.proxy_list
+
+        # proxy_override set to the json/text list of the items
         form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
-                                        data=default
-                                        )
+                               data=default,
+                               )
 
 
         if request.method == 'POST' and form.validate():
@@ -601,9 +615,17 @@ def changedetection_app(config=None, datastore_o=None):
     def settings_page():
         from changedetectionio import content_fetcher, forms
 
+        default = deepcopy(datastore.data['settings'])
+        if datastore.proxy_list is not None:
+            # When enabled
+            system_proxy = datastore.data['settings']['requests']['proxy']
+            default['requests']['proxy'] = system_proxy if system_proxy is not None else datastore.proxy_list[0][0]
+            # Used by the form handler to keep or remove the proxy settings
+            default['proxy_list'] = datastore.proxy_list
+
         # Don't use form.data on POST so that it doesnt overrid the checkbox status from the POST status
         form = forms.globalSettingsForm(formdata=request.form if request.method == 'POST' else None,
-                                        data=datastore.data['settings']
+                                        data=default
                                         )
 
         if request.method == 'POST':

@@ -16,6 +16,34 @@ class perform_site_check():
         super().__init__(*args, **kwargs)
         self.datastore = datastore
 
+    # If there was a proxy list enabled, figure out what proxy_args/which proxy to use
+        # if watch.proxy use that
+        # fetcher.proxy_override = watch.proxy or main config proxy
+        # Allows override the proxy on a per-request basis
+        # ALWAYS use the first one is nothing selected
+
+    def set_proxy_from_list(self, watch):
+        proxy_args = None
+        if self.datastore.proxy_list is None:
+            return None
+
+        if watch['proxy'] is not None:
+            if any([watch['proxy'] in p for p in self.datastore.proxy_list]):
+                proxy_args = watch['proxy']
+            else:
+                # @todo test this
+                proxy_args = self.datastore.proxy_list[0][0]
+
+        # Or maybe system wide
+        if proxy_args and self.datastore.data['settings']['requests']['proxy'] is not None:
+            if any([watch['proxy'] in p for p in self.datastore.proxy_list]):
+                proxy_args = self.datastore.data['requests']['proxy']
+            else:
+                # @todo test this
+                proxy_args = self.datastore.proxy_list[0][0]
+
+        return proxy_args
+
     def run(self, uuid):
         timestamp = int(time.time())  # used for storage etc too
 
@@ -66,7 +94,10 @@ class perform_site_check():
             # If the klass doesnt exist, just use a default
             klass = getattr(content_fetcher, "html_requests")
 
-        fetcher = klass()
+        proxy_args = self.set_proxy_from_list(watch)
+        fetcher = klass(proxy_override=proxy_args)
+
+        # Proxy List support
         fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code)
 
         # Fetching complete, now filters
