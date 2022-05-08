@@ -5,6 +5,7 @@ import re
 import threading
 import time
 import uuid as uuid_builder
+from collections import defaultdict
 from copy import deepcopy
 from os import mkdir, path, unlink
 from threading import Lock
