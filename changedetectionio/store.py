@@ -1,19 +1,18 @@
-from flask import (
-    flash
-)
 import json
 import logging
 import os
+import re
 import threading
 import time
 import uuid as uuid_builder
 from copy import deepcopy
 from os import mkdir, path, unlink
 from threading import Lock
-import re
-import requests
 
-from changedetectionio.model import Watch, App
+import requests
+from flask import flash
+
+from changedetectionio.model import App, Watch
 
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
@@ -199,6 +198,21 @@ class ChangeDetectionStore:
         self.__data['has_unviewed'] = has_unviewed
 
         return self.__data
+
+    def get_tags(self, uuid):
+        # Get list of tags given a watches uuid
+        return [x.strip() for x in self.data['watching'][uuid]['tag'].split(',')]
+
+    def get_tag_uuid_index(self):
+        # Create a dict of {tag: set(uuids)} for all tags in use, usable as a search
+        # index to find which watches belong to a given tag.
+        index = defaultdict(set)
+        for uuid, watch in self.data['watching'].items():
+            # Support for comma separated list of tags.
+            for tag in watch['tag'].split(','):
+                tag = tag.strip()
+                index[tag].add(uuid)
+        return index
 
     def get_all_tags(self):
         tags = []
