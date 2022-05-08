@@ -504,18 +504,19 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
     # https://wtforms.readthedocs.io/en/3.0.x/forms/#wtforms.form.Form.populate_obj ?
-
     def edit_page(uuid):
         from changedetectionio import forms
 
         using_default_check_time = True
-        # More for testing, possible to return the first/only
+        # More for testing, possible to return the first/only or last
         if not datastore.data['watching'].keys():
             flash("No watches to edit", "error")
             return redirect(url_for('index'))
 
         if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
+            uuid = list(datastore.data['watching'])[-1]
+        if uuid == 'last':
+            uuid = list(datastore.data['watching'])[0]
 
         if not uuid in datastore.data['watching']:
             flash("No watch with the UUID %s found." % (uuid), "error")
