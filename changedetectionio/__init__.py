@@ -529,13 +529,20 @@ def changedetection_app(config=None, datastore_o=None):
                     default['proxy'] = datastore.proxy_list[0][0]
 
             # Used by the form handler to keep or remove the proxy settings
-            default['proxy_list']=datastore.proxy_list
+            default['proxy_list'] = datastore.proxy_list
 
         # proxy_override set to the json/text list of the items
         form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
                                data=default,
                                )
 
+        if datastore.proxy_list is None:
+            # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
+            del form.proxy
+        else:
+            form.proxy.choices = datastore.proxy_list
+            if default['proxy'] is None:
+                form.proxy.default='http://hello'
 
         if request.method == 'POST' and form.validate():
             extra_update_obj = {}
@@ -619,14 +626,24 @@ def changedetection_app(config=None, datastore_o=None):
         if datastore.proxy_list is not None:
             # When enabled
             system_proxy = datastore.data['settings']['requests']['proxy']
+            # In the case it doesnt exist anymore
+            if not any([system_proxy in tup for tup in datastore.proxy_list]):
+                system_proxy = None
+
             default['requests']['proxy'] = system_proxy if system_proxy is not None else datastore.proxy_list[0][0]
             # Used by the form handler to keep or remove the proxy settings
             default['proxy_list'] = datastore.proxy_list
+
 
         # Don't use form.data on POST so that it doesnt overrid the checkbox status from the POST status
         form = forms.globalSettingsForm(formdata=request.form if request.method == 'POST' else None,
                                         data=default
                                         )
+        if datastore.proxy_list is None:
+            # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
+            del form.requests.form.proxy
+        else:
+            form.requests.form.proxy.choices = datastore.proxy_list
 
         if request.method == 'POST':
             # Password unset is a GET, but we can lock the session to a salted env password to always need the password

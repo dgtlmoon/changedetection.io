@@ -341,16 +341,6 @@ class watchForm(commonSettingsForm):
     save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
     proxy = RadioField('Proxy')
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Remove proxy if we shouldnt handle it (not enabled)
-        if kwargs['data'].get('proxy_list'):
-            if kwargs['data']['proxy_list'] is None:
-                del (self.proxy)
-            else:
-                self.proxy.choices = kwargs['data']['proxy_list']
-
-
     def validate(self, **kwargs):
         if not super().validate():
             return False
@@ -393,14 +383,3 @@ class globalSettingsForm(Form):
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
-
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Remove proxy if we shouldnt handle it (not enabled)
-        if kwargs['data'].get('proxy_list'):
-            if kwargs['data']['proxy_list'] is None:
-                del(self.requests.form.proxy)
-            else:
-                self.requests.form.proxy.choices=kwargs['data']['proxy_list']
-
