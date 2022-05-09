@@ -688,7 +688,7 @@ def changedetection_app(config=None, datastore_o=None):
             from .importer import import_url_list, import_distill_io_json
 
             # URL List import
-            if request.values.get('urls').strip():
+            if request.values.get('urls') and len(request.values.get('urls').strip()):
                 # Import and push into the queue for immediate update check
                 importer = import_url_list()
                 importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore)
@@ -698,7 +698,7 @@ def changedetection_app(config=None, datastore_o=None):
                 remaining_urls = importer.remaining_data
 
             # Distill.io import
-            if request.values.get('distill-io').strip():
+            if request.values.get('distill-io') and len(request.values.get('distill-io').strip()):
                 # Import and push into the queue for immediate update check
                 importer = import_distill_io_json()
                 importer.run(data=request.values.get('distill-io'), flash=flash, datastore=datastore)
