@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+import time
+import validators
 
 
 class Importer():
@@ -20,8 +22,6 @@ class import_url_list(Importer):
             datastore,
             ):
 
-        import validators
-        import time
         urls = data.split("\n")
         good = 0
         now = time.time()
@@ -48,7 +48,7 @@ class import_url_list(Importer):
                 self.remaining_data.append(url)
 
         flash("{} Imported in {:.2f}s, {} Skipped.".format(good, time.time() - now, len(self.remaining_data)))
-        return self.new_uuids
+
 
 class import_distill_io_json(Importer):
     def run(self,
@@ -56,4 +56,49 @@ class import_distill_io_json(Importer):
             flash,
             datastore,
             ):
-        x = 1
+
+        import json
+        good = 0
+        now = time.time()
+
+        data = json.loads(data.strip())
+        for d in data.get('data'):
+            d_config = json.loads(d['config'])
+            extras = {'title': d['name']}
+
+            if len(d['uri']) and good < 5000:
+                try:
+                    # @todo we only support CSS ones at the moment
+                    extras['subtractive_selectors'] = d_config['selections'][0]['frames'][0]['excludes'][0]['expr']
+                except KeyError:
+                    pass
+                except IndexError:
+                    pass
+
+                try:
+                    extras['css_filter'] = d_config['selections'][0]['frames'][0]['includes'][0]['expr']
+                    if d_config['selections'][0]['frames'][0]['includes'][0]['type'] == 'xpath':
+                        extras['css_filter'] = 'xpath:' + extras['css_filter']
+
+                except KeyError:
+                    pass
+                except IndexError:
+                    pass
+
+                try:
+                    extras['tags'] = " ".join(d['tags'])
+                except KeyError:
+                    pass
+                except IndexError:
+                    pass
+
+                new_uuid = datastore.add_watch(url=d['uri'].strip(),
+                                               extras=extras,
+                                               write_to_disk_now=False)
+
+                if new_uuid:
+                    # Straight into the queue.
+                    self.new_uuids.append(new_uuid)
+                    good += 1
+
+        flash("{} Imported in {:.2f}s, {} Skipped.".format(len(self.new_uuids), time.time() - now, len(self.remaining_data)))

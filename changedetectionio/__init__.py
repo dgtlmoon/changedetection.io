@@ -685,24 +685,32 @@ def changedetection_app(config=None, datastore_o=None):
     def import_page():
         remaining_urls = []
         if request.method == 'POST':
+            from .importer import import_url_list, import_distill_io_json
 
-            from . importer import import_url_list, import_distill_io_json
-            # Import and push into the queue for immediate update check
-            importer = import_url_list()
-            new_uuids = importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore)
-            for uuid in new_uuids:
-                update_q.put(uuid)
+            # URL List import
+            if request.values.get('urls').strip():
+                # Import and push into the queue for immediate update check
+                importer = import_url_list()
+                importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore)
+                for uuid in importer.new_uuids:
+                    update_q.put(uuid)
 
-            if len(importer.remaining_data) == 0:
-                # Looking good, redirect to index.
-                return redirect(url_for('index'))
-            else:
+                remaining_urls = importer.remaining_data
+
+            # Distill.io import
+            if request.values.get('distill-io').strip():
+                # Import and push into the queue for immediate update check
+                importer = import_distill_io_json()
+                importer.run(data=request.values.get('distill-io'), flash=flash, datastore=datastore)
+                for uuid in importer.new_uuids:
+                    update_q.put(uuid)
+
                 remaining_urls = importer.remaining_data
 
         # Could be some remaining, or we could be on GET
         output = render_template("import.html",
                                  import_url_list_remaining="\n".join(remaining_urls),
-                                 original_distill_json='xxx'
+                                 original_distill_json=''
                                  )
         return output
 
