@@ -60,8 +60,16 @@ class import_distill_io_json(Importer):
         import json
         good = 0
         now = time.time()
+        try:
+            data = json.loads(data.strip())
+        except json.decoder.JSONDecodeError:
+            flash("Unable to read JSON file, was it broken?", 'error')
+            return
 
-        data = json.loads(data.strip())
+        if not data.get('data'):
+            flash("JSON structure looks invalid, was it broken?", 'error')
+            return
+
         for d in data.get('data'):
             d_config = json.loads(d['config'])
             extras = {'title': d['name']}
