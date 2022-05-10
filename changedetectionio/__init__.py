@@ -683,44 +683,37 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/import", methods=['GET', "POST"])
     @login_required
     def import_page():
-        import validators
         remaining_urls = []
-
-        good = 0
-
         if request.method == 'POST':
-            now=time.time()
-            urls = request.values.get('urls').split("\n")
+            from .importer import import_url_list, import_distill_io_json
 
-            if (len(urls) > 5000):
-                flash("Importing 5,000 of the first URLs from your list, the rest can be imported again.")
+            # URL List import
+            if request.values.get('urls') and len(request.values.get('urls').strip()):
+                # Import and push into the queue for immediate update check
+                importer = import_url_list()
+                importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore)
+                for uuid in importer.new_uuids:
+                    update_q.put(uuid)
 
-            for url in urls:
-                url = url.strip()
-                url, *tags = url.split(" ")
-                # Flask wtform validators wont work with basic auth, use validators package
-                # Up to 5000 per batch so we dont flood the server
-                if len(url) and validators.url(url.replace('source:', '')) and good < 5000:
-                    new_uuid = datastore.add_watch(url=url.strip(), tag=" ".join(tags), write_to_disk_now=False)
-                    if new_uuid:
-                        # Straight into the queue.
-                        update_q.put(new_uuid)
-                        good += 1
-                        continue
+                if len(importer.remaining_data) == 0:
+                    return redirect(url_for('index'))
+                else:
+                    remaining_urls = importer.remaining_data
 
-                if len(url.strip()):
-                    remaining_urls.append(url)
+            # Distill.io import
+            if request.values.get('distill-io') and len(request.values.get('distill-io').strip()):
+                # Import and push into the queue for immediate update check
+                d_importer = import_distill_io_json()
+                d_importer.run(data=request.values.get('distill-io'), flash=flash, datastore=datastore)
+                for uuid in d_importer.new_uuids:
+                    update_q.put(uuid)
 
-            flash("{} Imported in {:.2f}s, {} Skipped.".format(good, time.time()-now,len(remaining_urls)))
-            datastore.needs_write = True
 
-            if len(remaining_urls) == 0:
-                # Looking good, redirect to index.
-                return redirect(url_for('index'))
 
         # Could be some remaining, or we could be on GET
         output = render_template("import.html",
-                                 remaining="\n".join(remaining_urls)
+                                 import_url_list_remaining="\n".join(remaining_urls),
+                                 original_distill_json=''
                                  )
         return output
 

@@ -117,3 +117,45 @@ def test_xpath_validation(client, live_server):
         follow_redirects=True
     )
     assert b"is not a valid XPath expression" in res.data
+
+
+# actually only really used by the distll.io importer, but could be handy too
+def test_check_with_prefix_css_filter(client, live_server):
+    res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+    # Give the endpoint time to spin up
+    time.sleep(1)
+
+    set_original_response()
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    time.sleep(3)
+
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"css_filter":  "xpath://*[contains(@class, 'sametext')]", "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+
+    assert b"Updated watch." in res.data
+    time.sleep(3)
+
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    with open('/tmp/fuck.html', 'wb') as f:
+        f.write(res.data)
+    assert b"Some text thats the same" in res.data #in selector
+    assert b"Some text that will change" not in res.data #not in selector
+
+    client.get(url_for("api_delete", uuid="all"), follow_redirects=True)

@@ -17,10 +17,10 @@ class perform_site_check():
         self.datastore = datastore
 
     # If there was a proxy list enabled, figure out what proxy_args/which proxy to use
-        # if watch.proxy use that
-        # fetcher.proxy_override = watch.proxy or main config proxy
-        # Allows override the proxy on a per-request basis
-        # ALWAYS use the first one is nothing selected
+    # if watch.proxy use that
+    # fetcher.proxy_override = watch.proxy or main config proxy
+    # Allows override the proxy on a per-request basis
+    # ALWAYS use the first one is nothing selected
 
     def set_proxy_from_list(self, watch):
         proxy_args = None
@@ -149,11 +149,13 @@ class perform_site_check():
                 # Then we assume HTML
                 if has_filter_rule:
                     # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
-                    if css_filter_rule[0] == '/':
-                        html_content = html_tools.xpath_filter(xpath_filter=css_filter_rule, html_content=fetcher.content)
+                    if css_filter_rule[0] == '/' or css_filter_rule.startswith('xpath:'):
+                        html_content = html_tools.xpath_filter(xpath_filter=css_filter_rule.replace('xpath:', ''),
+                                                               html_content=fetcher.content)
                     else:
                         # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                         html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
+
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)
 
@@ -172,7 +174,6 @@ class perform_site_check():
 
             # Re #340 - return the content before the 'ignore text' was applied
             text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
-
 
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
