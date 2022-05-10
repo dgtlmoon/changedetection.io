@@ -66,7 +66,7 @@ def test_import_distillio(client, live_server):
             "name": "Unraid | News",
             "uri": "https://unraid.net/blog",
             "config": "{\\"selections\\":[{\\"frames\\":[{\\"index\\":0,\\"excludes\\":[],\\"includes\\":[{\\"type\\":\\"xpath\\",\\"expr\\":\\"(//div[@id='App']/div[contains(@class,'flex')]/main[contains(@class,'relative')]/section[contains(@class,'relative')]/div[@class='container']/div[contains(@class,'flex')]/div[contains(@class,'w-full')])[1]\\"}]}],\\"dynamic\\":true,\\"delay\\":2}],\\"ignoreEmptyText\\":true,\\"includeStyle\\":false,\\"dataAttr\\":\\"text\\"}",
-            "tags": [],
+            "tags": ["nice stuff", "nerd-news"],
             "content_type": 2,
             "state": 40,
             "schedule": "{\\"type\\":\\"INTERVAL\\",\\"params\\":{\\"interval\\":4447}}",
@@ -108,6 +108,12 @@ def test_import_distillio(client, live_server):
     # embedded_d=json.loads(d['data'][0]['config'])
     # x=html.escape(embedded_d['selections'][0]['frames'][0]['includes'][0]['expr']).encode('utf-8')
     assert b"xpath:(//div[@id=&#39;App&#39;]/div[contains(@class,&#39;flex&#39;)]/main[contains(@class,&#39;relative&#39;)]/section[contains(@class,&#39;relative&#39;)]/div[@class=&#39;container&#39;]/div[contains(@class,&#39;flex&#39;)]/div[contains(@class,&#39;w-full&#39;)])[1]" in res.data
+
+    # did the tags work?
+    res = client.get( url_for("index"))
+
+    assert b"nice stuff" in res.data
+    assert b"nerd-news" in res.data
 
     res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
     # Clear flask alerts

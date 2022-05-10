@@ -97,7 +97,8 @@ class import_distill_io_json(Importer):
             if len(d['uri']) and good < 5000:
                 try:
                     # @todo we only support CSS ones at the moment
-                    extras['subtractive_selectors'] = d_config['selections'][0]['frames'][0]['excludes'][0]['expr']
+                    if d_config['selections'][0]['frames'][0]['excludes'][0]['type'] == 'css':
+                        extras['subtractive_selectors'] = d_config['selections'][0]['frames'][0]['excludes'][0]['expr']
                 except KeyError:
                     pass
                 except IndexError:
@@ -114,7 +115,7 @@ class import_distill_io_json(Importer):
                     pass
 
                 try:
-                    extras['tags'] = ", ".join(d['tags'])
+                    extras['tag'] = ", ".join(d['tags'])
                 except KeyError:
                     pass
                 except IndexError:
@@ -128,6 +129,5 @@ class import_distill_io_json(Importer):
                     # Straight into the queue.
                     self.new_uuids.append(new_uuid)
                     good += 1
-                    print (new_uuid)
 
         flash("{} Imported from Distill.io in {:.2f}s, {} Skipped.".format(len(self.new_uuids), time.time() - now, len(self.remaining_data)))
