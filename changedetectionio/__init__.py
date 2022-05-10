@@ -703,9 +703,9 @@ def changedetection_app(config=None, datastore_o=None):
             # Distill.io import
             if request.values.get('distill-io') and len(request.values.get('distill-io').strip()):
                 # Import and push into the queue for immediate update check
-                importer = import_distill_io_json()
-                importer.run(data=request.values.get('distill-io'), flash=flash, datastore=datastore)
-                for uuid in importer.new_uuids:
+                d_importer = import_distill_io_json()
+                d_importer.run(data=request.values.get('distill-io'), flash=flash, datastore=datastore)
+                for uuid in d_importer.new_uuids:
                     update_q.put(uuid)
 
 
