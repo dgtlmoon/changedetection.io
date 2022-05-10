@@ -695,7 +695,10 @@ def changedetection_app(config=None, datastore_o=None):
                 for uuid in importer.new_uuids:
                     update_q.put(uuid)
 
-                remaining_urls = importer.remaining_data
+                if len(importer.remaining_data) == 0:
+                    return redirect(url_for('index'))
+                else:
+                    remaining_urls = importer.remaining_data
 
             # Distill.io import
             if request.values.get('distill-io') and len(request.values.get('distill-io').strip()):
@@ -705,7 +708,7 @@ def changedetection_app(config=None, datastore_o=None):
                 for uuid in importer.new_uuids:
                     update_q.put(uuid)
 
-                remaining_urls = importer.remaining_data
+
 
         # Could be some remaining, or we could be on GET
         output = render_template("import.html",

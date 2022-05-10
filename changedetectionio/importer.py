@@ -16,6 +16,9 @@ class Importer():
 
 
 class import_url_list(Importer):
+    """
+    Imports a list, can be in <code>https://example.com tag1, tag2, last tag</code> format
+    """
     def run(self,
             data,
             flash,
@@ -31,21 +34,29 @@ class import_url_list(Importer):
 
         for url in urls:
             url = url.strip()
-            url, *tags = url.split(" ")
+            if not len(url):
+                continue
+
+            tags = ""
+
+            # 'tags' should be a csv list after the URL
+            if ' ' in url:
+                url, tags = url.split(" ", 1)
+
             # Flask wtform validators wont work with basic auth, use validators package
             # Up to 5000 per batch so we dont flood the server
             if len(url) and validators.url(url.replace('source:', '')) and good < 5000:
-                new_uuid = datastore.add_watch(url=url.strip(), tag=" ".join(tags), write_to_disk_now=False)
+                new_uuid = datastore.add_watch(url=url.strip(), tag=tags, write_to_disk_now=False)
                 if new_uuid:
                     # Straight into the queue.
                     self.new_uuids.append(new_uuid)
                     good += 1
                     continue
 
-            if len(url.strip()):
-                if self.remaining_data is None:
-                    self.remaining_data = []
-                self.remaining_data.append(url)
+            # Worked past the 'continue' above, append it to the bad list
+            if self.remaining_data is None:
+                self.remaining_data = []
+            self.remaining_data.append(url)
 
         flash("{} Imported in {:.2f}s, {} Skipped.".format(good, time.time() - now, len(self.remaining_data)))
 
