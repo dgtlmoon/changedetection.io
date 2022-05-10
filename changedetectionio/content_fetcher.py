@@ -84,7 +84,10 @@ class Fetcher():
                  // default back to the less intelligent one
                  if (!xpath_result) {
                    xpath_result = getXPath(elements[i]);                   
-                 } 
+                 }
+                 if(window.getComputedStyle(elements[i]).visibility === "hidden") {
+                   continue;
+                 }
 
                  size_pos.push({
                    xpath: xpath_result,

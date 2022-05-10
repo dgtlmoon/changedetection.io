@@ -137,7 +137,7 @@ $(document).ready(function() {
         }
 
         var sel = selector_data[current_selected_i];
-        $("#css_filter").val(sel.xpath);
+        $("#css_filter").val('xpath:'+sel.xpath);
         xctx.fillStyle = 'rgba(225,225,225,0.8)';
         xctx.fillRect(0,0,c.width, c.height);
         xctx.clearRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
