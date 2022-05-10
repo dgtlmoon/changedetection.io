@@ -128,6 +128,9 @@ class Fetcher():
 
     # Will be needed in the future by the VisualSelector, always get this where possible.
     screenshot = False
+    fetcher_description = "No description"
+    system_http_proxy = os.getenv('HTTP_PROXY')
+    system_https_proxy = os.getenv('HTTPS_PROXY')
 
     @abstractmethod
     def get_error(self):
@@ -184,21 +187,17 @@ class base_html_playwright(Fetcher):
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
 
-    #    try:
-    #        from playwright.sync_api import sync_playwright
-    #    except ModuleNotFoundError:
-    #        fetcher_enabled = False
-
     browser_type = ''
     command_executor = ''
 
     # Configs for Proxy setup
     # In the ENV vars, is prefixed with "playwright_proxy_", so it is for example "playwright_proxy_server"
-    playwright_proxy_settings_mappings = ['server', 'bypass', 'username', 'password']
+    playwright_proxy_settings_mappings = ['bypass', 'server', 'username', 'password']
 
     proxy = None
 
-    def __init__(self):
+    def __init__(self, proxy_override=None):
+
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
         self.command_executor = os.getenv(
@@ -216,6 +215,10 @@ class base_html_playwright(Fetcher):
         if proxy_args:
             self.proxy = proxy_args
 
+        # allow per-watch proxy selection override
+        if proxy_override:
+            self.proxy = {'server': proxy_override}
+
     def run(self,
             url,
             timeout,
@@ -226,6 +229,8 @@ class base_html_playwright(Fetcher):
             current_css_filter=None):
 
         from playwright.sync_api import sync_playwright
+        import playwright._impl._api_types
+        from playwright._impl._api_types import Error, TimeoutError
 
         with sync_playwright() as p:
             browser_type = getattr(p, self.browser_type)
@@ -235,17 +240,23 @@ class base_html_playwright(Fetcher):
             browser = browser_type.connect_over_cdp(self.command_executor, timeout=timeout * 1000)
 
             # Set user agent to prevent Cloudflare from blocking the browser
+            # Use the default one configured in the App.py model that's passed from fetch_site_status.py
             context = browser.new_context(
-                user_agent="Mozilla/5.0",
+                user_agent=request_headers['User-Agent'] if request_headers.get('User-Agent') else 'Mozilla/5.0',
                 proxy=self.proxy
             )
             page = context.new_page()
-            response = page.goto(url, timeout=timeout * 1000)
-            # set size after visiting page, otherwise it wont work (seems to default to 800x)
             page.set_viewport_size({"width": 1280, "height": 1024})
-
-            extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
-            page.wait_for_timeout(extra_wait * 1000)
+            try:
+                response = page.goto(url, timeout=timeout * 1000, wait_until='commit')
+                # Wait_until = commit
+                # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
+                # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
+                # This seemed to solve nearly all 'TimeoutErrors'
+                extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
+                page.wait_for_timeout(extra_wait * 1000)
+            except playwright._impl._api_types.TimeoutError as e:
+                raise EmptyReply(url=url, status_code=None)
 
             if response is None:
                 raise EmptyReply(url=url, status_code=None)
@@ -283,7 +294,7 @@ class base_html_webdriver(Fetcher):
                                         'socksProxy', 'socksVersion', 'socksUsername', 'socksPassword']
     proxy = None
 
-    def __init__(self):
+    def __init__(self, proxy_override=None):
         from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
 
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
@@ -295,6 +306,16 @@ class base_html_webdriver(Fetcher):
             v = os.getenv('webdriver_' + k, False)
             if v:
                 proxy_args[k] = v.strip('"')
+
+        # Map back standard HTTP_ and HTTPS_PROXY to webDriver httpProxy/sslProxy
+        if not proxy_args.get('webdriver_httpProxy') and self.system_http_proxy:
+            proxy_args['httpProxy'] = self.system_http_proxy
+        if not proxy_args.get('webdriver_sslProxy') and self.system_https_proxy:
+            proxy_args['httpsProxy'] = self.system_https_proxy
+
+        # Allows override the proxy on a per-request basis
+        if proxy_override is not None:
+            proxy_args['httpProxy'] = proxy_override
 
         if proxy_args:
             self.proxy = SeleniumProxy(raw=proxy_args)
@@ -366,6 +387,9 @@ class base_html_webdriver(Fetcher):
 class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
 
+    def __init__(self, proxy_override=None):
+        self.proxy_override = proxy_override
+
     def run(self,
             url,
             timeout,
@@ -375,11 +399,23 @@ class html_requests(Fetcher):
             ignore_status_codes=False,
             current_css_filter=None):
 
+        proxies={}
+
+        # Allows override the proxy on a per-request basis
+        if self.proxy_override:
+            proxies = {'http': self.proxy_override, 'https': self.proxy_override, 'ftp': self.proxy_override}
+        else:
+            if self.system_http_proxy:
+                proxies['http'] = self.system_http_proxy
+            if self.system_https_proxy:
+                proxies['https'] = self.system_https_proxy
+
         r = requests.request(method=request_method,
                              data=request_body,
                              url=url,
                              headers=request_headers,
                              timeout=timeout,
+                             proxies=proxies,
                              verify=False)
 
         # If the response did not tell us what encoding format to expect, Then use chardet to override what `requests` thinks.

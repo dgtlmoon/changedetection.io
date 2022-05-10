@@ -2,7 +2,6 @@
 {% from '_helpers.jinja' import render_field %}
 
 {% macro render_common_settings_form(form, current_base_url, emailprefix) %}
-
                         <div class="pure-control-group">
                             {{ render_field(form.notification_urls, rows=5, placeholder="Examples:
     Gitter - gitter://token/room

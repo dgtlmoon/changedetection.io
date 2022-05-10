@@ -16,6 +16,34 @@ class perform_site_check():
         super().__init__(*args, **kwargs)
         self.datastore = datastore
 
+    # If there was a proxy list enabled, figure out what proxy_args/which proxy to use
+    # if watch.proxy use that
+    # fetcher.proxy_override = watch.proxy or main config proxy
+    # Allows override the proxy on a per-request basis
+    # ALWAYS use the first one is nothing selected
+
+    def set_proxy_from_list(self, watch):
+        proxy_args = None
+        if self.datastore.proxy_list is None:
+            return None
+
+        # If its a valid one
+        if any([watch['proxy'] in p for p in self.datastore.proxy_list]):
+            proxy_args = watch['proxy']
+
+        # not valid (including None), try the system one
+        else:
+            system_proxy = self.datastore.data['settings']['requests']['proxy']
+            # Is not None and exists
+            if any([system_proxy in p for p in self.datastore.proxy_list]):
+                proxy_args = system_proxy
+
+        # Fallback - Did not resolve anything, use the first available
+        if proxy_args is None:
+            proxy_args = self.datastore.proxy_list[0][0]
+
+        return proxy_args
+
     def run(self, uuid):
         timestamp = int(time.time())  # used for storage etc too
 
@@ -66,9 +94,14 @@ class perform_site_check():
             # If the klass doesnt exist, just use a default
             klass = getattr(content_fetcher, "html_requests")
 
-        fetcher = klass()
+
+        proxy_args = self.set_proxy_from_list(watch)
+        fetcher = klass(proxy_override=proxy_args)
+
+        # Proxy List support
         fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code, watch['css_filter'])
         fetcher.quit()
+
 
         # Fetching complete, now filters
         # @todo move to class / maybe inside of fetcher abstract base?
@@ -119,11 +152,13 @@ class perform_site_check():
                 # Then we assume HTML
                 if has_filter_rule:
                     # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
-                    if css_filter_rule[0] == '/':
-                        html_content = html_tools.xpath_filter(xpath_filter=css_filter_rule, html_content=fetcher.content)
+                    if css_filter_rule[0] == '/' or css_filter_rule.startswith('xpath:'):
+                        html_content = html_tools.xpath_filter(xpath_filter=css_filter_rule.replace('xpath:', ''),
+                                                               html_content=fetcher.content)
                     else:
                         # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                         html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
+
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)
 
@@ -142,7 +177,6 @@ class perform_site_check():
 
             # Re #340 - return the content before the 'ignore text' was applied
             text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
-
 
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')

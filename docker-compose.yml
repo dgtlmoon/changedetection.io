@@ -17,14 +17,14 @@ services:
   #       Alternative WebDriver/selenium URL, do not use "'s or 's!
   #      - WEBDRIVER_URL=http://browser-chrome:4444/wd/hub
   #
-  #       WebDriver proxy settings webdriver_proxyType, webdriver_ftpProxy, webdriver_httpProxy, webdriver_noProxy,
-  #                                webdriver_proxyAutoconfigUrl, webdriver_sslProxy, webdriver_autodetect,
+  #       WebDriver proxy settings webdriver_proxyType, webdriver_ftpProxy, webdriver_noProxy,
+  #                                webdriver_proxyAutoconfigUrl, webdriver_autodetect,
   #                                webdriver_socksProxy, webdriver_socksUsername, webdriver_socksVersion, webdriver_socksPassword
   #
   #             https://selenium-python.readthedocs.io/api.html#module-selenium.webdriver.common.proxy
   #
   #       Alternative Playwright URL, do not use "'s or 's!
-  #      - PLAYWRIGHT_DRIVER_URL=ws://playwright-chrome:3000/playwright
+  #      - PLAYWRIGHT_DRIVER_URL=ws://playwright-chrome:3000/
   #
   #       Playwright proxy settings playwright_proxy_server, playwright_proxy_bypass, playwright_proxy_username, playwright_proxy_password
   #

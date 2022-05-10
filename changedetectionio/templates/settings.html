@@ -9,7 +9,6 @@
     const email_notification_prefix=JSON.parse('{{emailprefix|tojson}}');
 {% endif %}
 </script>
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='settings.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 
@@ -61,7 +60,14 @@
                         {{ render_checkbox_field(form.application.form.real_browser_save_screenshot) }}
                         <span class="pure-form-message-inline">When using a Chrome browser, a screenshot from the last check will be available on the Diff page</span>
                     </div>
-
+                {% if form.requests.proxy %}
+                    <div class="pure-control-group inline-radio">
+                        {{ render_field(form.requests.form.proxy, class="fetch-backend-proxy") }}
+                        <span class="pure-form-message-inline">
+                        Choose a default proxy for all watches
+                        </span>
+                    </div>
+                {% endif %}
                 </fieldset>
             </div>
 
@@ -74,7 +80,7 @@
             </div>
 
             <div class="tab-pane-inner" id="fetching">
-                <div class="pure-control-group">
+                <div class="pure-control-group inline-radio">
                     {{ render_field(form.application.form.fetch_backend, class="fetch-backend") }}
                     <span class="pure-form-message-inline">
                         <p>Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render.</p>
