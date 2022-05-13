@@ -12,6 +12,7 @@ from os import mkdir, path, unlink
 from threading import Lock
 import re
 import requests
+import sqlite3
 
 from . model import App, Watch
 
@@ -32,6 +33,12 @@ class ChangeDetectionStore:
         self.needs_write = False
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
+        self.datastore_path = datastore_path
+
+        self.history_db_store_path = "{}/history.db".format(self.datastore_path)
+        #@todo - check for better options
+        self.history_db_connection = sqlite3.connect(self.history_db_store_path)
+
         self.proxy_list = None
         self.stop_thread = False
 
@@ -129,19 +136,16 @@ class ChangeDetectionStore:
 
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
     def get_newest_history_key(self, uuid):
-        if len(self.__data['watching'][uuid]['history']) == 1:
+
+        cur = self.history_db_connection.cursor()
+
+        c = cur.execute("SELECT COUNT(*) FROM watch_history WHERE watch_uuid = :uuid", {"uuid": uuid}).fetchone()
+        if c and c[0] <= 1:
             return 0
 
-        dates = list(self.__data['watching'][uuid]['history'].keys())
-        # Convert to int, sort and back to str again
-        # @todo replace datastore getter that does this automatically
-        dates = [int(i) for i in dates]
-        dates.sort(reverse=True)
-        if len(dates):
-            # always keyed as str
-            return str(dates[0])
+        max = cur.execute("SELECT MAX(timestamp) FROM watch_history WHERE  watch_uuid  = :uuid", {"uuid": uuid}).fetchone()
+        return max[0]
 
-        return 0
 
     def set_last_viewed(self, uuid, timestamp):
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
@@ -495,3 +499,32 @@ class ChangeDetectionStore:
                 # Only upgrade individual watch time if it was set
                 if watch.get('minutes_between_check', False):
                     self.data['watching'][uuid]['time_between_check']['minutes'] = watch['minutes_between_check']
+
+    def update_3(self):
+        """Migrate storage of history data to SQLite
+        - No need to store the history list in memory and re-write it everytime
+        - I've seen memory usage grow exponentially due to having large lists of watches with long histories
+        - Data about 'last changed' still stored in the main JSON struct which is fine
+        - We don't really need this data until we query against it (like for listing other available snapshots in the diff page etc)
+        """
+
+        if self.history_db_connection:
+            # Create the table
+            self.history_db_connection.execute("CREATE TABLE IF NOT EXISTS  watch_history(id INTEGER PRIMARY KEY, watch_uuid VARCHAR(36), timestamp INT, path TEXT, snapshot_type VARCHAR(10))")
+            self.history_db_connection.execute("CREATE INDEX IF NOT EXISTS `uuid` ON `watch_history` (`watch_uuid`)")
+            self.history_db_connection.execute("CREATE INDEX IF NOT EXISTS `uuid_timestamp` ON `watch_history` (`watch_uuid`, `timestamp`)")
+
+            # Insert each watch history list as executemany() for faster migration
+            for uuid, watch in self.data['watching'].items():
+                history = []
+
+                if watch.get('history', False):
+                    for d, p in watch['history'].items():
+                        d = int(d) # Used to be keyed as str, we'll fix this now too
+                        history.append((uuid, d, p, 'text'))
+
+                    if len(history):
+                        self.history_db_connection.executemany("INSERT INTO watch_history (watch_uuid, timestamp, path, snapshot_type) VALUES (?,?,?,?)", history)
+                        self.history_db_connection.commit()
+                        del(self.data['watching'][uuid]['history'])
+

@@ -27,7 +27,8 @@ class model(dict):
             'headers': {},  # Extra headers to send
             'body': None,
             'method': 'GET',
-            'history': {},  # Dict of timestamp and output stripped filename
+            # now stored in a sqlite3 db to reduce memory usage
+            #'history': {},  # Dict of timestamp and output stripped filename
             'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
             # Custom notification content
             'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
