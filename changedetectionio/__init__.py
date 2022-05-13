@@ -932,6 +932,9 @@ def changedetection_app(config=None, datastore_o=None):
             # Add the flask app secret
             zipObj.write(os.path.join(datastore_o.datastore_path, "secret.txt"), arcname="secret.txt")
 
+            # Add the sqlite3 db
+            zipObj.write(os.path.join(datastore_o.datastore_path, "watch.db"), arcname="watch.db")
+
             # Add any snapshot data we find, use the full path to access the file, but make the file 'relative' in the Zip.
             for txt_file_path in Path(datastore_o.datastore_path).rglob('*.txt'):
                 parent_p = txt_file_path.parent

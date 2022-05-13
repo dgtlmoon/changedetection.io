@@ -16,6 +16,7 @@ import sqlite3
 
 from . model import App, Watch
 
+
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change
@@ -35,9 +36,8 @@ class ChangeDetectionStore:
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
         self.datastore_path = datastore_path
 
-        self.history_db_store_path = "{}/history.db".format(self.datastore_path)
         #@todo - check for better options
-        self.history_db_connection = sqlite3.connect(self.history_db_store_path)
+        self.__history_db_connection = sqlite3.connect("{}/watch.db".format(self.datastore_path))
 
         self.proxy_list = None
         self.stop_thread = False
@@ -77,6 +77,9 @@ class ChangeDetectionStore:
                     if 'application' in from_disk['settings']:
                         self.__data['settings']['application'].update(from_disk['settings']['application'])
 
+                # Bump the update version by running updates
+                self.run_updates()
+
                 # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
                 # @todo pretty sure theres a python we todo this with an abstracted(?) object!
                 for uuid, watch in self.__data['watching'].items():
@@ -85,6 +88,7 @@ class ChangeDetectionStore:
                     self.__data['watching'].update({uuid: _blank})
                     self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
                     print("Watching:", uuid, self.__data['watching'][uuid]['url'])
+
 
         # First time ran, doesnt exist.
         except (FileNotFoundError, json.decoder.JSONDecodeError):
@@ -118,7 +122,6 @@ class ChangeDetectionStore:
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['rss_access_token'] = secret
 
-
         # Proxy list support - available as a selection in settings when text file is imported
         # CSV list
         # "name, address", or just "name"
@@ -126,8 +129,6 @@ class ChangeDetectionStore:
         if path.isfile(proxy_list_file):
             self.import_proxy_list(proxy_list_file)
 
-        # Bump the update version by running updates
-        self.run_updates()
 
         self.needs_write = True
 
@@ -137,7 +138,7 @@ class ChangeDetectionStore:
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
     def get_newest_history_key(self, uuid):
 
-        cur = self.history_db_connection.cursor()
+        cur = self.__history_db_connection.cursor()
 
         c = cur.execute("SELECT COUNT(*) FROM watch_history WHERE watch_uuid = :uuid", {"uuid": uuid}).fetchone()
         if c and c[0] <= 1:
@@ -146,6 +147,10 @@ class ChangeDetectionStore:
         max = cur.execute("SELECT MAX(timestamp) FROM watch_history WHERE  watch_uuid  = :uuid", {"uuid": uuid}).fetchone()
         return max[0]
 
+    def __refresh_history_max_timestamp(self):
+        # select watch_uuid, max(timestamp) from watch_history group by watch_uuid;
+        # could be way faster
+        x=1
 
     def set_last_viewed(self, uuid, timestamp):
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
@@ -190,13 +195,13 @@ class ChangeDetectionStore:
     def data(self):
         has_unviewed = False
         for uuid, v in self.__data['watching'].items():
-            self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
-            if int(v['newest_history_key']) <= int(v['last_viewed']):
-                self.__data['watching'][uuid]['viewed'] = True
+#            self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
+#            if int(v['newest_history_key']) <= int(v['last_viewed']):
+#                self.__data['watching'][uuid]['viewed'] = True
 
-            else:
-                self.__data['watching'][uuid]['viewed'] = False
-                has_unviewed = True
+#            else:
+#                self.__data['watching'][uuid]['viewed'] = False
+#                has_unviewed = True
 
             # #106 - Be sure this is None on empty string, False, None, etc
             # Default var for fetch_backend
@@ -508,11 +513,11 @@ class ChangeDetectionStore:
         - We don't really need this data until we query against it (like for listing other available snapshots in the diff page etc)
         """
 
-        if self.history_db_connection:
+        if self.__history_db_connection:
             # Create the table
-            self.history_db_connection.execute("CREATE TABLE IF NOT EXISTS  watch_history(id INTEGER PRIMARY KEY, watch_uuid VARCHAR(36), timestamp INT, path TEXT, snapshot_type VARCHAR(10))")
-            self.history_db_connection.execute("CREATE INDEX IF NOT EXISTS `uuid` ON `watch_history` (`watch_uuid`)")
-            self.history_db_connection.execute("CREATE INDEX IF NOT EXISTS `uuid_timestamp` ON `watch_history` (`watch_uuid`, `timestamp`)")
+            self.__history_db_connection.execute("CREATE TABLE IF NOT EXISTS  watch_history(id INTEGER PRIMARY KEY, watch_uuid VARCHAR(36), timestamp INT, path TEXT, snapshot_type VARCHAR(10))")
+            self.__history_db_connection.execute("CREATE INDEX IF NOT EXISTS `uuid` ON `watch_history` (`watch_uuid`)")
+            self.__history_db_connection.execute("CREATE INDEX IF NOT EXISTS `uuid_timestamp` ON `watch_history` (`watch_uuid`, `timestamp`)")
 
             # Insert each watch history list as executemany() for faster migration
             for uuid, watch in self.data['watching'].items():
@@ -524,7 +529,6 @@ class ChangeDetectionStore:
                         history.append((uuid, d, p, 'text'))
 
                     if len(history):
-                        self.history_db_connection.executemany("INSERT INTO watch_history (watch_uuid, timestamp, path, snapshot_type) VALUES (?,?,?,?)", history)
-                        self.history_db_connection.commit()
+                        self.__history_db_connection.executemany("INSERT INTO watch_history (watch_uuid, timestamp, path, snapshot_type) VALUES (?,?,?,?)", history)
+                        self.__history_db_connection.commit()
                         del(self.data['watching'][uuid]['history'])
-
