@@ -418,14 +418,16 @@ footer {
   textarea {
     width: 100%;
   }
-  ul.fetch-backend {
-    margin: 0px;
-    list-style: none;
-    li {
-        > * {
-            display: inline-block;
+  .inline-radio {
+      ul {
+        margin: 0px;
+        list-style: none;
+        li {
+            > * {
+                display: inline-block;
+            }
         }
-    }
+      }
   }
 }
 

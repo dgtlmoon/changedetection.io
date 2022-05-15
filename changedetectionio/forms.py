@@ -342,6 +342,7 @@ class watchForm(commonSettingsForm):
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
     save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
+    proxy = RadioField('Proxy')
 
     def validate(self, **kwargs):
         if not super().validate():
@@ -360,6 +361,7 @@ class watchForm(commonSettingsForm):
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     time_between_check = FormField(TimeBetweenCheckForm)
+    proxy = RadioField('Proxy')
 
 
 # datastore.data['settings']['application']..

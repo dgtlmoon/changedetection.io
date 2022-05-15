@@ -309,10 +309,10 @@ footer {
     font-weight: bold; }
   .pure-form textarea {
     width: 100%; }
-  .pure-form ul.fetch-backend {
+  .pure-form .inline-radio ul {
     margin: 0px;
     list-style: none; }
-    .pure-form ul.fetch-backend li > * {
+    .pure-form .inline-radio ul li > * {
       display: inline-block; }
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
