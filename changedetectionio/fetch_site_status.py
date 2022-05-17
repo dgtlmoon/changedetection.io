@@ -189,7 +189,6 @@ class perform_site_check():
         if not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
             raise content_fetcher.ReplyWithContentButNoText(url=url, status_code=200)
 
-
         # We rely on the actual text in the html output.. many sites have random script vars etc,
         # in the future we'll implement other mechanisms.
 

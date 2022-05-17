@@ -3,9 +3,7 @@ import chardet
 import os
 import requests
 import time
-import urllib3.exceptions
 import sys
-
 
 class EmptyReply(Exception):
     def __init__(self, status_code, url):
@@ -13,7 +11,6 @@ class EmptyReply(Exception):
         self.status_code = status_code
         self.url = url
         return
-
     pass
 
 class ReplyWithContentButNoText(Exception):
@@ -22,7 +19,6 @@ class ReplyWithContentButNoText(Exception):
         self.status_code = status_code
         self.url = url
         return
-
     pass
 
 
