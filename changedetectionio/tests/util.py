@@ -19,6 +19,8 @@ def set_original_response():
         f.write(test_return_data)
     return None
 
+
+
 def set_modified_response():
     test_return_data = """<html>
     <head><title>modified head title</title></head>

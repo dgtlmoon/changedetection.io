@@ -371,6 +371,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
     ignore_whitespace = BooleanField('Ignore whitespace')
     real_browser_save_screenshot = BooleanField('Save last screenshot when using Chrome?')
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
+    empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
     fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     password = SaltyPasswordField()

@@ -16,6 +16,15 @@ class EmptyReply(Exception):
 
     pass
 
+class ReplyWithContentButNoText(Exception):
+    def __init__(self, status_code, url):
+        # Set this so we can use it in other parts of the app
+        self.status_code = status_code
+        self.url = url
+        return
+
+    pass
+
 
 class Fetcher():
     error = None

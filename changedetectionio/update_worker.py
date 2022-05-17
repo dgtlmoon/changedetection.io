@@ -52,6 +52,10 @@ class update_worker(threading.Thread):
                             raise Exception("Error - returned data from the fetch handler SHOULD be bytes")
                     except PermissionError as e:
                         self.app.logger.error("File permission error updating", uuid, str(e))
+                    except content_fetcher.ReplyWithContentButNoText as e:
+                        # Totally fine, it's by choice - just continue on, nothing more to care about
+                        # Page had elements/content but no renderable text
+                        pass
                     except content_fetcher.EmptyReply as e:
                         # Some kind of custom to-str handler in the exception handler that does this?
                         err_text = "EmptyReply: Status Code {}".format(e.status_code)
