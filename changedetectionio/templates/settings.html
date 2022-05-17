@@ -61,6 +61,11 @@
                         {{ render_checkbox_field(form.application.form.real_browser_save_screenshot) }}
                         <span class="pure-form-message-inline">When using a Chrome browser, a screenshot from the last check will be available on the Diff page</span>
                     </div>
+
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.application.form.empty_pages_are_a_change) }}
+                        <span class="pure-form-message-inline">When a page contains HTML, but no renderable text appears (empty page), is this considered a change?</span>
+                    </div>
                 {% if form.requests.proxy %}
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.requests.form.proxy, class="fetch-backend-proxy") }}
