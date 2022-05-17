@@ -158,6 +158,9 @@ class base_html_playwright(Fetcher):
             if response is None:
                 raise EmptyReply(url=url, status_code=None)
 
+            if len(page.content().strip()) == 0:
+                raise EmptyReply(url=url, status_code=None)
+
             self.status_code = response.status
             self.content = page.content()
             self.headers = response.all_headers()
