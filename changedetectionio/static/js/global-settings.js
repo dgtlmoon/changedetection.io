@@ -1,6 +1,6 @@
 $(document).ready(function() {
     function toggle() {
-        if ($('input[name="fetch_backend"]:checked').val() != 'html_requests') {
+        if ($('input[name="application-fetch_backend"]:checked').val() != 'html_requests') {
             $('#requests-override-options').hide();
             $('#webdriver-override-options').show();
         } else {
@@ -8,7 +8,7 @@ $(document).ready(function() {
             $('#webdriver-override-options').hide();
         }
     }
-    $('input[name="fetch_backend"]').click(function (e) {
+    $('input[name="application-fetch_backend"]').click(function (e) {
         toggle();
     });
     toggle();
