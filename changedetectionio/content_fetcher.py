@@ -28,6 +28,9 @@ class Fetcher():
     system_http_proxy = os.getenv('HTTP_PROXY')
     system_https_proxy = os.getenv('HTTPS_PROXY')
 
+    # Time ONTOP of the system defined env minimum time
+    render_extract_delay=0
+
     @abstractmethod
     def get_error(self):
         return self.error
@@ -147,7 +150,7 @@ class base_html_playwright(Fetcher):
                 # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
                 # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
                 # This seemed to solve nearly all 'TimeoutErrors'
-                extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
+                extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
                 page.wait_for_timeout(extra_wait * 1000)
             except playwright._impl._api_types.TimeoutError as e:
                 raise EmptyReply(url=url, status_code=None)
@@ -240,7 +243,7 @@ class base_html_webdriver(Fetcher):
         # raise EmptyReply(url=url, status_code=r.status_code)
 
         # @todo - dom wait loaded?
-        time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
+        time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay)
         self.content = self.driver.page_source
         self.headers = {}
         self.screenshot = self.driver.get_screenshot_as_png()

@@ -97,7 +97,13 @@ class perform_site_check():
         proxy_args = self.set_proxy_from_list(watch)
         fetcher = klass(proxy_override=proxy_args)
 
-        # Proxy List support
+        # Configurable per-watch or global extra delay before extracting text (for webDriver types)
+        system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
+        if watch['webdriver_delay'] is not None:
+            fetcher.render_extract_delay = watch['webdriver_delay']
+        elif system_webdriver_delay is not None:
+            fetcher.render_extract_delay = system_webdriver_delay
+
         fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code)
 
         # Fetching complete, now filters
