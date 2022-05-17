@@ -186,7 +186,7 @@ class perform_site_check():
 
         # Treat pages with no renderable text content as a change? No by default
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
-        if not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
+        if not is_json and not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
             raise content_fetcher.ReplyWithContentButNoText(url=url, status_code=200)
 
         # We rely on the actual text in the html output.. many sites have random script vars etc,
