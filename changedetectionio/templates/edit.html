@@ -73,7 +73,7 @@
                         </span>
                     </div>
                 {% endif %}
-                <fieldset class="pure-group" id="webdriver-override-options">
+                <fieldset id="webdriver-override-options">
                     <div class="pure-form-message-inline">
                         <strong>If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here.</strong>
                         <br/>
@@ -125,8 +125,7 @@ User-Agent: wonderbra 1.0") }}
             </div>
 
             <div class="tab-pane-inner" id="filters-and-triggers">
-                <div>
-                        <div class="pure-control-group">
+                    <div class="pure-control-group">
                             <strong>Pro-tips:</strong><br/>
                             <ul>
                                 <li>
@@ -137,7 +136,6 @@ User-Agent: wonderbra 1.0") }}
                                 </li>
                             </ul>
                     </div>
-
                     <div class="pure-control-group">
                         {{ render_field(form.css_filter, placeholder=".class-name or #some-id, or other CSS selector rule.",
                         class="m-d") }}
@@ -165,7 +163,6 @@ nav
                         </ul>
                       </span>
                     </div>
-                </fieldset>
                 <fieldset class="pure-group">
                     {{ render_field(form.ignore_text, rows=5, placeholder="Some text to ignore in a line
 /some.regex\d{2}/ for case-INsensitive regex
