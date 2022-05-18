@@ -637,7 +637,13 @@ ul {
     tr {
         display: inline;
         input[type="number"] {
-            width: 4em;
+            width: 5em;
         }
     }
+}
+
+#webdriver-override-options {
+        input[type="number"] {
+            width: 5em;
+        }
 }

@@ -447,4 +447,7 @@ ul {
 .time-check-widget tr {
   display: inline; }
   .time-check-widget tr input[type="number"] {
-    width: 4em; }
+    width: 5em; }
+
+#webdriver-override-options input[type="number"] {
+  width: 5em; }
