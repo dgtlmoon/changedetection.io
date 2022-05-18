@@ -125,7 +125,7 @@ User-Agent: wonderbra 1.0") }}
             </div>
 
             <div class="tab-pane-inner" id="filters-and-triggers">
-                <fieldset>
+                <div>
                         <div class="pure-control-group">
                             <strong>Pro-tips:</strong><br/>
                             <ul>
@@ -153,7 +153,7 @@ User-Agent: wonderbra 1.0") }}
                                 href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
                 </span>
                     </div>
-                    <fieldset class="pure-group">
+                    <div class="pure-control-group">
                       {{ render_field(form.subtractive_selectors, rows=5, placeholder="header
 footer
 nav
@@ -164,7 +164,7 @@ nav
                           <li> Add multiple elements or CSS selectors per line to ignore multiple parts of the HTML. </li>
                         </ul>
                       </span>
-                    </fieldset>
+                    </div>
                 </fieldset>
                 <fieldset class="pure-group">
                     {{ render_field(form.ignore_text, rows=5, placeholder="Some text to ignore in a line

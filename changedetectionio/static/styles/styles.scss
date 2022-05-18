@@ -375,6 +375,13 @@ footer {
 
 
 .pure-form {
+    fieldset {
+        padding-top: 0px;
+        ul {
+            padding-bottom: 0px;
+            margin-bottom: 0px;
+        }
+    }
     .pure-control-group, .pure-group, .pure-controls {
         padding-bottom: 1em;
         div {
