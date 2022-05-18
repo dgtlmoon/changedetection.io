@@ -284,6 +284,11 @@ footer {
 .pure-form {
   /* The input fields with errors */
   /* The list of errors */ }
+  .pure-form fieldset {
+    padding-top: 0px; }
+    .pure-form fieldset ul {
+      padding-bottom: 0px;
+      margin-bottom: 0px; }
   .pure-form .pure-control-group, .pure-form .pure-group, .pure-form .pure-controls {
     padding-bottom: 1em; }
     .pure-form .pure-control-group div, .pure-form .pure-group div, .pure-form .pure-controls div {
@@ -447,4 +452,7 @@ ul {
 .time-check-widget tr {
   display: inline; }
   .time-check-widget tr input[type="number"] {
-    width: 4em; }
+    width: 5em; }
+
+#webdriver-override-options input[type="number"] {
+  width: 5em; }
