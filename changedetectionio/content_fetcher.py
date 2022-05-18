@@ -3,10 +3,7 @@ import chardet
 import os
 import requests
 import time
-import json
-import urllib3.exceptions
 import sys
-
 
 class EmptyReply(Exception):
     def __init__(self, status_code, url):
@@ -14,7 +11,14 @@ class EmptyReply(Exception):
         self.status_code = status_code
         self.url = url
         return
+    pass
 
+class ReplyWithContentButNoText(Exception):
+    def __init__(self, status_code, url):
+        # Set this so we can use it in other parts of the app
+        self.status_code = status_code
+        self.url = url
+        return
     pass
 
 
@@ -132,6 +136,9 @@ class Fetcher():
     system_http_proxy = os.getenv('HTTP_PROXY')
     system_https_proxy = os.getenv('HTTPS_PROXY')
 
+    # Time ONTOP of the system defined env minimum time
+    render_extract_delay=0
+
     @abstractmethod
     def get_error(self):
         return self.error
@@ -202,7 +209,7 @@ class base_html_playwright(Fetcher):
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
         self.command_executor = os.getenv(
             "PLAYWRIGHT_DRIVER_URL",
-            'ws://playwright-chrome:3000/playwright'
+            'ws://playwright-chrome:3000'
         ).strip('"')
 
         # If any proxy settings are enabled, then we should setup the proxy object
@@ -253,12 +260,15 @@ class base_html_playwright(Fetcher):
                 # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
                 # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
                 # This seemed to solve nearly all 'TimeoutErrors'
-                extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
+                extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
                 page.wait_for_timeout(extra_wait * 1000)
             except playwright._impl._api_types.TimeoutError as e:
                 raise EmptyReply(url=url, status_code=None)
 
             if response is None:
+                raise EmptyReply(url=url, status_code=None)
+
+            if len(page.content().strip()) == 0:
                 raise EmptyReply(url=url, status_code=None)
 
             self.status_code = response.status
@@ -358,6 +368,7 @@ class base_html_webdriver(Fetcher):
         # raise EmptyReply(url=url, status_code=r.status_code)
 
         # @todo - dom wait loaded?
+        time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay)
         self.content = self.driver.page_source
         self.headers = {}
 

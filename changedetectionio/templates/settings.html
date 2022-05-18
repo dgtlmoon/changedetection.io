@@ -12,6 +12,7 @@
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <div class="edit-form">
     <div class="tabs collapsable">
         <ul>
@@ -60,6 +61,11 @@
                         {{ render_checkbox_field(form.application.form.real_browser_save_screenshot) }}
                         <span class="pure-form-message-inline">When using a Chrome browser, a screenshot from the last check will be available on the Diff page</span>
                     </div>
+
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.application.form.empty_pages_are_a_change) }}
+                        <span class="pure-form-message-inline">When a page contains HTML, but no renderable text appears (empty page), is this considered a change?</span>
+                    </div>
                 {% if form.requests.proxy %}
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.requests.form.proxy, class="fetch-backend-proxy") }}
@@ -87,6 +93,16 @@
                         <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
                     </span>
                 </div>
+                <fieldset class="pure-group" id="webdriver-override-options">
+                    <div class="pure-form-message-inline">
+                        <strong>If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here.</strong>
+                        <br/>
+                        This will wait <i>n</i> seconds before extracting the text.
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.webdriver_delay) }}
+                    </div>
+                </fieldset>
             </div>
 
 

@@ -318,6 +318,7 @@ class commonSettingsForm(Form):
     notification_format = SelectField('Notification format', choices=valid_notification_formats.keys(), default=default_notification_format)
     fetch_backend = RadioField(u'Fetch method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
+    webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")] )
 
 class watchForm(commonSettingsForm):
 
@@ -370,6 +371,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
     ignore_whitespace = BooleanField('Ignore whitespace')
     real_browser_save_screenshot = BooleanField('Save last screenshot when using Chrome?')
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
+    empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
     fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     password = SaltyPasswordField()

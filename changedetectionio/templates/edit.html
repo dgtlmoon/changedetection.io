@@ -78,6 +78,21 @@
                         </span>
                     </div>
                 {% endif %}
+                <fieldset class="pure-group" id="webdriver-override-options">
+                    <div class="pure-form-message-inline">
+                        <strong>If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here.</strong>
+                        <br/>
+                        This will wait <i>n</i> seconds before extracting the text.
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.webdriver_delay) }}
+                    </div>
+                    {% if using_global_webdriver_wait %}
+                    <div class="pure-form-message-inline">
+                        <strong>Using the current global default settings</strong>
+                    </div>
+                    {% endif %}
+                </fieldset>
                 <fieldset class="pure-group" id="requests-override-options">
                     <div class="pure-form-message-inline">
                         <strong>Request override is currently only used by the <i>Basic fast Plaintext/HTTP Client</i> method.</strong>

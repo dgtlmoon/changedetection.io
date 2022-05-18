@@ -16,6 +16,13 @@ Live your data-life *pro-actively* instead of *re-actively*, do not rely on mani
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />
 
+
+**Get your own private instance now! Let us host it for you!**
+
+[**Try our $6.99/month subscription - unlimited checks, watches and notifications!**](https://lemonade.changedetection.io/start), choose from different geographical locations, let us handle everything for you. 
+
+
+
 #### Example use cases
 
 Know when ...
@@ -58,14 +65,3 @@ Then visit http://127.0.0.1:5000 , You should now be able to access the UI.
 
 See https://github.com/dgtlmoon/changedetection.io for more information.
 
-
-
-### Support us
-
-Do you use changedetection.io to make money? does it save you time or money? Does it make your life easier? less stressful? Remember, we write this software when we should be doing actual paid work, we have to buy food and pay rent just like you.
-
-Please support us, even small amounts help a LOT.
-
-BTC `1PLFN327GyUarpJd7nVe7Reqg9qHx5frNn`
-
-<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/btc-support.png" style="max-width:50%;" alt="Support us!"  />

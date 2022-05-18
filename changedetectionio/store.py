@@ -13,8 +13,7 @@ from threading import Lock
 import re
 import requests
 
-from changedetectionio.model import Watch, App
-
+from . model import App, Watch
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
