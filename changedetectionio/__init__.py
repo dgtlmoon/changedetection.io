@@ -520,16 +520,9 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Defaults for proxy choice
         if datastore.proxy_list is not None:  # When enabled
-            system_proxy = datastore.data['settings']['requests']['proxy']
-            if default['proxy'] is None:
-                default['proxy'] = system_proxy
-            else:
-                # Does the chosen one exist?
-                if not any(default['proxy'] in tup for tup in datastore.proxy_list):
-                    default['proxy'] = datastore.proxy_list[0][0]
-
-            # Used by the form handler to keep or remove the proxy settings
-            default['proxy_list'] = datastore.proxy_list
+            # Radio needs '' not None, or incase that the chosen one no longer exists
+            if default['proxy'] is None or not any(default['proxy'] in tup for tup in datastore.proxy_list):
+                default['proxy'] = ''
 
         # proxy_override set to the json/text list of the items
         form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
@@ -540,9 +533,7 @@ def changedetection_app(config=None, datastore_o=None):
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
             del form.proxy
         else:
-            form.proxy.choices = datastore.proxy_list
-            if default['proxy'] is None:
-                form.proxy.default='http://hello'
+            form.proxy.choices = [('', 'Default')] + datastore.proxy_list
 
         if request.method == 'POST' and form.validate():
             extra_update_obj = {}
@@ -578,6 +569,10 @@ def changedetection_app(config=None, datastore_o=None):
             if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
                 if len(datastore.data['watching'][uuid]['history']):
                     extra_update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
+
+            # Be sure proxy value is None
+            if datastore.proxy_list is not None and form.data['proxy'] == '':
+                extra_update_obj['proxy'] = None
 
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)
