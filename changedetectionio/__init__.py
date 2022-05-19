@@ -185,7 +185,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
     watch_api.add_resource(api_v1.WatchSingleHistory,
-                           '/api/v1/watch/<string:uuid>/history/<int:timestamp>',
+                           '/api/v1/watch/<string:uuid>/history/<string:timestamp>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
     watch_api.add_resource(api_v1.WatchHistory,
@@ -893,27 +893,6 @@ def changedetection_app(config=None, datastore_o=None):
                                  logs=notification_debug_log if len(notification_debug_log) else ["No errors or warnings detected"])
 
         return output
-
-    @app.route("/api/<string:uuid>/snapshot/current", methods=['GET'])
-    @login_required
-    def api_snapshot(uuid):
-
-        # More for testing, possible to return the first/only
-        if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
-
-        try:
-            watch = datastore.data['watching'][uuid]
-        except KeyError:
-            return abort(400, "No history found for the specified link, bad link?")
-
-        newest = list(watch['history'].keys())[-1]
-        with open(watch['history'][newest], 'r') as f:
-            content = f.read()
-
-        resp = make_response(content)
-        resp.headers['Content-Type'] = 'text/plain'
-        return resp
 
     @app.route("/favicon.ico", methods=['GET'])
     def favicon():

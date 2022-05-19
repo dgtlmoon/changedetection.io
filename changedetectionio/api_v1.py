@@ -53,19 +53,23 @@ class WatchSingleHistory(Resource):
         # datastore is a black box dependency
         self.datastore = kwargs['datastore']
 
+    # Read a given history snapshot and return its content
+    # <string:timestamp> or "latest"
+    # curl http://localhost:4000/api/v1/watch/<string:uuid>/history/<int:timestamp>
     def get(self, uuid, timestamp):
         watch = self.datastore.data['watching'].get(uuid)
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
 
-        return watch
+        if not len(watch['history']):
+            abort(404, message='Watch found but no history exists for the UUID {}'.format(uuid))
 
-    def delete(self, uuid, timestamp):
-        if not self.datastore.data['watching'].get(uuid):
-            abort(400, message='No watch exists with the UUID of {}'.format(uuid))
+        if timestamp == 'latest':
+            timestamp = list(watch['history'].keys())[-1]
 
-        self.datastore.delete(uuid)
-        return '', 204
+        with open(watch['history'][timestamp], 'r') as f:
+            content = f.read()
+        return content, '200', {'Content-type': 'text/plain'}
 
 
 class CreateWatch(Resource):
