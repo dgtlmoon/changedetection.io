@@ -211,7 +211,8 @@ class ChangeDetectionStore:
     def get_all_tags(self):
         tags = []
         for uuid, watch in self.data['watching'].items():
-
+            if watch['tag'] is None:
+                continue
             # Support for comma separated list of tags.
             for tag in watch['tag'].split(','):
                 tag = tag.strip()
@@ -280,6 +281,10 @@ class ChangeDetectionStore:
     def add_watch(self, url, tag="", extras=None, write_to_disk_now=True):
         if extras is None:
             extras = {}
+        # should always be str
+        if tag is None or not tag:
+            tag=''
+
         # Incase these are copied across, assume it's a reference and deepcopy()
         apply_extras = deepcopy(extras)
 

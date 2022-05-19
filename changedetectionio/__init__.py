@@ -36,9 +36,11 @@ from flask import (
     url_for,
 )
 from flask_login import login_required
+from flask_restful import reqparse, abort, Api, Resource
+
 from flask_wtf import CSRFProtect
 
-from changedetectionio import html_tools
+from changedetectionio import api_v1, html_tools
 
 __version__ = '0.39.13.1'
 
@@ -77,6 +79,8 @@ csrf = CSRFProtect()
 csrf.init_app(app)
 
 notification_debug_log=[]
+
+watch_api = Api(app, decorators=[csrf.exempt])
 
 def init_app_secret(datastore_path):
     secret = ""
@@ -178,6 +182,24 @@ def changedetection_app(config=None, datastore_o=None):
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
     app.secret_key = init_app_secret(config['datastore_path'])
+
+
+    watch_api.add_resource(api_v1.WatchSingleHistory,
+                           '/api/v1/watch/<string:uuid>/history/<int:timestamp>',
+                           resource_class_kwargs={'datastore': datastore})
+
+    watch_api.add_resource(api_v1.WatchHistory,
+                           '/api/v1/watch/<string:uuid>/history',
+                           resource_class_kwargs={'datastore': datastore})
+
+    watch_api.add_resource(api_v1.CreateWatch, '/api/v1/watch',
+                           resource_class_kwargs={'datastore': datastore})
+
+    watch_api.add_resource(api_v1.Watch, '/api/v1/watch/<string:uuid>', resource_class_kwargs={'datastore': datastore})
+
+
+
+
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
