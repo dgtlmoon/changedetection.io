@@ -186,16 +186,17 @@ def changedetection_app(config=None, datastore_o=None):
 
     watch_api.add_resource(api_v1.WatchSingleHistory,
                            '/api/v1/watch/<string:uuid>/history/<int:timestamp>',
-                           resource_class_kwargs={'datastore': datastore})
+                           resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
     watch_api.add_resource(api_v1.WatchHistory,
                            '/api/v1/watch/<string:uuid>/history',
                            resource_class_kwargs={'datastore': datastore})
 
     watch_api.add_resource(api_v1.CreateWatch, '/api/v1/watch',
-                           resource_class_kwargs={'datastore': datastore})
+                           resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
-    watch_api.add_resource(api_v1.Watch, '/api/v1/watch/<string:uuid>', resource_class_kwargs={'datastore': datastore})
+    watch_api.add_resource(api_v1.Watch, '/api/v1/watch/<string:uuid>',
+                           resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
 
 
@@ -389,6 +390,8 @@ def changedetection_app(config=None, datastore_o=None):
 
             if limit_tag != None:
                 # Support for comma separated list of tags.
+                if watch['tag'] is None:
+                    continue
                 for tag_in_watch in watch['tag'].split(','):
                     tag_in_watch = tag_in_watch.strip()
                     if tag_in_watch == limit_tag:
