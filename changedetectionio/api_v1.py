@@ -1,5 +1,6 @@
-from flask_restful import reqparse, abort, Api, Resource
+from flask_restful import abort, Resource
 from flask import request
+
 # https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
 
 class Watch(Resource):
@@ -33,9 +34,6 @@ class Watch(Resource):
         self.datastore.delete(uuid)
         return '', 204
 
-
-
-
 class WatchHistory(Resource):
     def __init__(self, **kwargs):
         # datastore is a black box dependency
@@ -68,6 +66,7 @@ class WatchSingleHistory(Resource):
 
         self.datastore.delete(uuid)
         return '', 204
+
 
 class CreateWatch(Resource):
     def __init__(self, **kwargs):
