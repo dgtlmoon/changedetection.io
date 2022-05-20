@@ -2,6 +2,7 @@ from flask_restful import abort, Resource
 from flask import request, make_response
 import validators
 
+
 # https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
 
 class Watch(Resource):
@@ -34,6 +35,7 @@ class Watch(Resource):
 
         self.datastore.delete(uuid)
         return 'OK', 204
+
 
 class WatchHistory(Resource):
     def __init__(self, **kwargs):
@@ -106,11 +108,11 @@ class CreateWatch(Resource):
                        'title': v['title'],
                        'last_checked': v['last_checked'],
                        'last_changed': v['last_changed'],
-                       'last_error' : v['last_error']}
+                       'last_error': v['last_error']}
 
         if request.args.get('recheck_all'):
             for uuid in self.datastore.data['watching'].keys():
                 self.update_q.put(uuid)
-            return {'status':"OK"}, 200
+            return {'status': "OK"}, 200
 
         return list, 200
