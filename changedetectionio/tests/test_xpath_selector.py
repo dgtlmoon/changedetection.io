@@ -46,8 +46,6 @@ def set_modified_response():
 
 # Handle utf-8 charset replies https://github.com/dgtlmoon/changedetection.io/pull/613
 def test_check_xpath_filter_utf8(client, live_server):
-
-    live_server_setup(live_server)
     filter='//item/*[self::description]'
 
     d='''<?xml version="1.0" encoding="UTF-8"?>
