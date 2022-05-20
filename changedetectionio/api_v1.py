@@ -1,5 +1,6 @@
 from flask_restful import abort, Resource
-from flask import request
+from flask import request, make_response
+import validators
 
 # https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
 
@@ -69,7 +70,10 @@ class WatchSingleHistory(Resource):
 
         with open(watch['history'][timestamp], 'r') as f:
             content = f.read()
-        return content, '200', {'Content-type': 'text/plain'}
+
+        response = make_response(content, 200)
+        response.mimetype = "text/plain"
+        return response
 
 
 class CreateWatch(Resource):
@@ -82,8 +86,13 @@ class CreateWatch(Resource):
         # curl http://localhost:4000/api/v1/watch -H "Content-Type: application/json" -d '{"url": "https://my-nice.com", "tag": "one, two" }'
         json_data = request.get_json()
         tag = json_data['tag'].strip() if json_data.get('tag') else ''
+
+        if not validators.url(json_data['url'].strip()):
+            return "Invalid or unsupported URL", 400
+
         new_uuid = self.datastore.add_watch(url=json_data['url'].strip(), tag=tag)
-        return new_uuid, 201
+        self.update_q.put(new_uuid)
+        return {'uuid': new_uuid}, 201
 
     # Return concise list of available watches and some very basic info
     # curl http://localhost:4000/api/v1/watch|python -mjson.tool
@@ -99,6 +108,6 @@ class CreateWatch(Resource):
         if request.args.get('recheck'):
             for uuid in self.datastore.data['watching'].items():
                 self.update_q.put(uuid)
-            return "OK", 200
+            return {'status':"OK"}, 200
 
         return list, 200
