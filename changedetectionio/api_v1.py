@@ -33,7 +33,7 @@ class Watch(Resource):
             abort(400, message='No watch exists with the UUID of {}'.format(uuid))
 
         self.datastore.delete(uuid)
-        return '', 204
+        return 'OK', 204
 
 class WatchHistory(Resource):
     def __init__(self, **kwargs):
@@ -90,23 +90,26 @@ class CreateWatch(Resource):
         if not validators.url(json_data['url'].strip()):
             return "Invalid or unsupported URL", 400
 
-        new_uuid = self.datastore.add_watch(url=json_data['url'].strip(), tag=tag)
+        extras = {'title': json_data['title'].strip()} if json_data.get('title') else {}
+
+        new_uuid = self.datastore.add_watch(url=json_data['url'].strip(), tag=tag, extras=extras)
         self.update_q.put(new_uuid)
         return {'uuid': new_uuid}, 201
 
     # Return concise list of available watches and some very basic info
     # curl http://localhost:4000/api/v1/watch|python -mjson.tool
-    # ?recheck=all to recheck all
+    # ?recheck_all=1 to recheck all
     def get(self):
         list = {}
         for k, v in self.datastore.data['watching'].items():
             list[k] = {'url': v['url'],
                        'title': v['title'],
                        'last_checked': v['last_checked'],
-                       'last_changed': v['last_changed']}
+                       'last_changed': v['last_changed'],
+                       'last_error' : v['last_error']}
 
-        if request.args.get('recheck'):
-            for uuid in self.datastore.data['watching'].items():
+        if request.args.get('recheck_all'):
+            for uuid in self.datastore.data['watching'].keys():
                 self.update_q.put(uuid)
             return {'status':"OK"}, 200
 
