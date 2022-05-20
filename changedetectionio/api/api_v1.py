@@ -1,6 +1,8 @@
 from flask_restful import abort, Resource
 from flask import request, make_response
 import validators
+from . import auth
+
 
 
 # https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
@@ -14,6 +16,7 @@ class Watch(Resource):
     # Get information about a single watch, excluding the history list (can be large)
     # curl http://localhost:4000/api/v1/watch/<string:uuid>
     # ?recheck=true
+    @auth.check_token
     def get(self, uuid):
         from copy import deepcopy
         watch = deepcopy(self.datastore.data['watching'].get(uuid))
@@ -29,6 +32,7 @@ class Watch(Resource):
         del (watch['history'])
         return watch
 
+    @auth.check_token
     def delete(self, uuid):
         if not self.datastore.data['watching'].get(uuid):
             abort(400, message='No watch exists with the UUID of {}'.format(uuid))
@@ -59,6 +63,7 @@ class WatchSingleHistory(Resource):
     # Read a given history snapshot and return its content
     # <string:timestamp> or "latest"
     # curl http://localhost:4000/api/v1/watch/<string:uuid>/history/<int:timestamp>
+    @auth.check_token
     def get(self, uuid, timestamp):
         watch = self.datastore.data['watching'].get(uuid)
         if not watch:
@@ -84,6 +89,7 @@ class CreateWatch(Resource):
         self.datastore = kwargs['datastore']
         self.update_q = kwargs['update_q']
 
+    @auth.check_token
     def post(self):
         # curl http://localhost:4000/api/v1/watch -H "Content-Type: application/json" -d '{"url": "https://my-nice.com", "tag": "one, two" }'
         json_data = request.get_json()
@@ -101,6 +107,7 @@ class CreateWatch(Resource):
     # Return concise list of available watches and some very basic info
     # curl http://localhost:4000/api/v1/watch|python -mjson.tool
     # ?recheck_all=1 to recheck all
+    @auth.check_token
     def get(self):
         list = {}
         for k, v in self.datastore.data['watching'].items():

@@ -12,6 +12,7 @@ from os import mkdir, path, unlink
 from threading import Lock
 import re
 import requests
+import secrets
 
 from . model import App, Watch
 
@@ -107,10 +108,13 @@ class ChangeDetectionStore:
 
         # Generate the URL access token for RSS feeds
         if not 'rss_access_token' in self.__data['settings']['application']:
-            import secrets
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['rss_access_token'] = secret
 
+        # Generate the API access token
+        if not 'api_access_token' in self.__data['settings']['application']:
+            secret = secrets.token_hex(16)
+            self.__data['settings']['application']['api_access_token'] = secret
 
         # Proxy list support - available as a selection in settings when text file is imported
         # CSV list

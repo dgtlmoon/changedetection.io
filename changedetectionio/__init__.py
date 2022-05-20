@@ -36,11 +36,12 @@ from flask import (
     url_for,
 )
 from flask_login import login_required
-from flask_restful import reqparse, abort, Api, Resource
+from flask_restful import abort, Api
 
 from flask_wtf import CSRFProtect
 
-from changedetectionio import api_v1, html_tools
+from changedetectionio import html_tools
+from changedetectionio.api import api_v1
 
 __version__ = '0.39.13.1'
 
@@ -696,6 +697,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  form=form,
                                  current_base_url = datastore.data['settings']['application']['base_url'],
                                  hide_remove_pass=os.getenv("SALTED_PASS", False),
+                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
                                  emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False))
 
         return output
