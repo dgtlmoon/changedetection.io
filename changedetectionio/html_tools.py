@@ -39,7 +39,7 @@ def element_removal(selectors: List[str], html_content):
 def xpath_filter(xpath_filter, html_content):
     from lxml import etree, html
 
-    tree = html.fromstring(html_content)
+    tree = html.fromstring(bytes(html_content, encoding='utf-8'))
     html_block = ""
 
     for item in tree.xpath(xpath_filter.strip(), namespaces={'re':'http://exslt.org/regular-expressions'}):
