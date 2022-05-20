@@ -27,6 +27,7 @@ class model(dict):
                     'proxy': None # Preferred proxy connection
                 },
                 'application': {
+                    'api_access_token_enabled': True,
                     'password': False,
                     'base_url' : None,
                     'extract_title_as_title': False,

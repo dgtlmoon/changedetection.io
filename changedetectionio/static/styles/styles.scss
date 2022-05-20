@@ -654,3 +654,13 @@ ul {
             width: 5em;
         }
 }
+
+#api-key {
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+#api-key-copy {
+  color: #0078e7;
+}

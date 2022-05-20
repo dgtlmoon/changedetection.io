@@ -65,7 +65,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server):
     assert b"1 Imported" in res.data
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
@@ -89,7 +89,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server):
     set_modified_response()
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
@@ -121,7 +121,7 @@ def test_xpath_validation(client, live_server):
 
 # actually only really used by the distll.io importer, but could be handy too
 def test_check_with_prefix_css_filter(client, live_server):
-    res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
     # Give the endpoint time to spin up
@@ -158,4 +158,4 @@ def test_check_with_prefix_css_filter(client, live_server):
     assert b"Some text thats the same" in res.data #in selector
     assert b"Some text that will change" not in res.data #not in selector
 
-    client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
+    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)

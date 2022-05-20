@@ -39,7 +39,7 @@ def test_check_encoding_detection(client, live_server):
     )
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(2)
@@ -71,7 +71,7 @@ def test_check_encoding_detection_missing_content_type_header(client, live_serve
     )
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(2)

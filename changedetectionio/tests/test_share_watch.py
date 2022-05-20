@@ -41,7 +41,7 @@ def test_share_watch(client, live_server):
 
     # click share the link
     res = client.get(
-        url_for("api_share_put_watch", uuid="first"),
+        url_for("form_share_put_watch", uuid="first"),
         follow_redirects=True
     )
 
@@ -54,7 +54,7 @@ def test_share_watch(client, live_server):
 
     # Now delete what we have, we will try to re-import it
     # Cleanup everything
-    res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
     # Add our URL to the import page

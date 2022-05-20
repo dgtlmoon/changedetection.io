@@ -6,6 +6,7 @@ timeago ~=1.0
 inscriptis ~= 2.2
 feedgen ~= 0.9
 flask-login ~= 0.5
+flask_restful
 pytz
 
 # Set these versions together to avoid a RequestsDependencyWarning
