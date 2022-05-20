@@ -22,7 +22,7 @@ def check_token(f):
 
         if config_api_token_enabled and api_key_header != config_api_token:
             return make_response(
-                jsonify("Invalid access - API key invalid.", 403)
+                jsonify("Invalid access - API key invalid."), 403
             )
 
         return f(*args, **kwargs)

@@ -53,19 +53,35 @@ def is_valid_uuid(val):
         return False
 
 
+# kinda funky, but works for now
+def _extract_api_key_from_UI(client):
+    import re
+    res = client.get(
+        url_for("settings_page"),
+    )
+    # <span id="api-key">{{api_key}}</span>
+
+    m = re.search('<span id="api-key">(.+?)</span>', str(res.data))
+    api_key = m.group(1)
+    return api_key.strip()
+
+
 def test_api_simple(client, live_server):
     live_server_setup(live_server)
+
+    api_key = _extract_api_key_from_UI(client)
 
     # Create a watch
     set_original_response()
     watch_uuid = None
 
     # Validate bad URL
-    test_url = url_for('test_endpoint', _external=True)
+    test_url = url_for('test_endpoint', _external=True,
+                       headers={'x-api-key': api_key}, )
     res = client.post(
         url_for("createwatch"),
         data=json.dumps({"url": "h://xxxxxxxxxom"}),
-        headers={'content-type': 'application/json'},
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
         follow_redirects=True
     )
     assert res.status_code == 400
@@ -74,7 +90,7 @@ def test_api_simple(client, live_server):
     res = client.post(
         url_for("createwatch"),
         data=json.dumps({"url": test_url, 'tag': "One, Two", "title": "My test URL"}),
-        headers={'content-type': 'application/json'},
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
         follow_redirects=True
     )
     s = json.loads(res.data)
@@ -86,7 +102,8 @@ def test_api_simple(client, live_server):
 
     # Verify its in the list and that recheck worked
     res = client.get(
-        url_for("createwatch")
+        url_for("createwatch"),
+        headers={'x-api-key': api_key}
     )
     assert watch_uuid in json.loads(res.data).keys()
     before_recheck_info = json.loads(res.data)[watch_uuid]
@@ -96,13 +113,15 @@ def test_api_simple(client, live_server):
     set_modified_response()
     # Trigger recheck of all ?recheck_all=1
     client.get(
-        url_for("createwatch", recheck_all='1')
+        url_for("createwatch", recheck_all='1'),
+        headers={'x-api-key': api_key},
     )
     time.sleep(3)
 
     # Did the recheck fire?
     res = client.get(
-        url_for("createwatch")
+        url_for("createwatch"),
+        headers={'x-api-key': api_key},
     )
     after_recheck_info = json.loads(res.data)[watch_uuid]
     assert after_recheck_info['last_checked'] != before_recheck_info['last_checked']
@@ -110,26 +129,30 @@ def test_api_simple(client, live_server):
 
     # Check history index list
     res = client.get(
-        url_for("watchhistory", uuid=watch_uuid)
+        url_for("watchhistory", uuid=watch_uuid),
+        headers={'x-api-key': api_key},
     )
     history = json.loads(res.data)
     assert len(history) == 2, "Should have two history entries (the original and the changed)"
 
     # Fetch a snapshot by timestamp, check the right one was found
     res = client.get(
-        url_for("watchsinglehistory", uuid=watch_uuid, timestamp=list(history.keys())[-1])
+        url_for("watchsinglehistory", uuid=watch_uuid, timestamp=list(history.keys())[-1]),
+        headers={'x-api-key': api_key},
     )
     assert b'which has this one new line' in res.data
 
     # Fetch a snapshot by 'latest'', check the right one was found
     res = client.get(
-        url_for("watchsinglehistory", uuid=watch_uuid, timestamp='latest')
+        url_for("watchsinglehistory", uuid=watch_uuid, timestamp='latest'),
+        headers={'x-api-key': api_key},
     )
     assert b'which has this one new line' in res.data
 
     # Fetch the whole watch
     res = client.get(
-        url_for("watch", uuid=watch_uuid)
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key}
     )
     watch = json.loads(res.data)
     # @todo how to handle None/default global values?
@@ -137,13 +160,49 @@ def test_api_simple(client, live_server):
 
     # Finally delete the watch
     res = client.delete(
-        url_for("watch", uuid=watch_uuid)
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key},
     )
     assert res.status_code == 204
 
     # Check via a relist
     res = client.get(
-        url_for("createwatch")
+        url_for("createwatch"),
+        headers={'x-api-key': api_key}
     )
     watch_list = json.loads(res.data)
     assert len(watch_list) == 0, "Watch list should be empty"
+
+
+def test_access_denied(client, live_server):
+    # `config_api_token_enabled` Should be On by default
+    res = client.get(
+        url_for("createwatch")
+    )
+    assert res.status_code == 403
+
+    res = client.get(
+        url_for("createwatch"),
+        headers={'x-api-key': "something horrible"}
+    )
+    assert res.status_code == 403
+
+    # Disable config_api_token_enabled and it should work
+    res = client.post(
+        url_for("settings_page"),
+        data={
+            "requests-time_between_check-minutes": 180,
+            "application-fetch_backend": "html_requests",
+            "application-api_access_token_enabled": ""
+        },
+        follow_redirects=True
+    )
+
+#    with open('/tmp/f.html', 'wb') as f:
+#        f.write(res.data)
+    assert b"Settings updated." in res.data
+
+    res = client.get(
+        url_for("createwatch")
+    )
+    assert res.status_code == 200

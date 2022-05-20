@@ -374,8 +374,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
     empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
     fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
-
-    api_access_token_enabled = BooleanField('API access token security check enabled', default=False)
+    api_access_token_enabled = BooleanField('API access token security check enabled', default=True, validators=[validators.Optional()])
     password = SaltyPasswordField()
 
 
