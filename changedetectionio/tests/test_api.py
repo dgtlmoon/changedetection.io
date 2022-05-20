@@ -198,8 +198,6 @@ def test_access_denied(client, live_server):
         follow_redirects=True
     )
 
-#    with open('/tmp/f.html', 'wb') as f:
-#        f.write(res.data)
     assert b"Settings updated." in res.data
 
     res = client.get(
