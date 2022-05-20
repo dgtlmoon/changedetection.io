@@ -36,7 +36,7 @@ def test_check_notification(client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("api_watch_add"),
+        url_for("form_watch_add"),
         data={"url": test_url, "tag": ''},
         follow_redirects=True
     )
@@ -98,7 +98,7 @@ def test_check_notification(client, live_server):
     notification_submission = None
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(3)
     # Verify what was sent as a notification, this file should exist
     with open("test-datastore/notification.txt", "r") as f:
@@ -133,7 +133,7 @@ def test_check_notification(client, live_server):
 
     # This should insert the {current_snapshot}
     set_more_modified_response()
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(3)
     # Verify what was sent as a notification, this file should exist
     with open("test-datastore/notification.txt", "r") as f:
@@ -146,17 +146,17 @@ def test_check_notification(client, live_server):
     os.unlink("test-datastore/notification.txt")
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(1)
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(1)
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(1)
     assert os.path.exists("test-datastore/notification.txt") == False
 
     # cleanup for the next
     client.get(
-        url_for("api_delete", uuid="all"),
+        url_for("form_delete", uuid="all"),
         follow_redirects=True
     )
 
@@ -168,7 +168,7 @@ def test_notification_validation(client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("api_watch_add"),
+        url_for("form_watch_add"),
         data={"url": test_url, "tag": 'nice one'},
         follow_redirects=True
     )
@@ -208,6 +208,6 @@ def test_notification_validation(client, live_server):
 
     # cleanup for the next
     client.get(
-        url_for("api_delete", uuid="all"),
+        url_for("form_delete", uuid="all"),
         follow_redirects=True
     )

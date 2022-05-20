@@ -23,7 +23,7 @@ def test_trigger_functionality(client, live_server):
 
 
     res = client.get(
-        url_for("api_clone", uuid="first"),
+        url_for("form_clone", uuid="first"),
         follow_redirects=True
     )
 

@@ -25,7 +25,7 @@ https://example.com tag1, other tag"""
     assert b"3 Imported" in res.data
     assert b"tag1" in res.data
     assert b"other tag" in res.data
-    res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
 
     # Clear flask alerts
     res = client.get( url_for("index"))
@@ -50,7 +50,7 @@ def xtest_import_skip_url(client, live_server):
     assert b"1 Imported" in res.data
     assert b"ht000000broken" in res.data
     assert b"1 Skipped" in res.data
-    res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     # Clear flask alerts
     res = client.get( url_for("index"))
 
@@ -79,7 +79,7 @@ def test_import_distillio(client, live_server):
 
     # Give the endpoint time to spin up
     time.sleep(1)
-    client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
+    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     res = client.post(
         url_for("import_page"),
         data={
@@ -115,6 +115,6 @@ def test_import_distillio(client, live_server):
     assert b"nice stuff" in res.data
     assert b"nerd-news" in res.data
 
-    res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     # Clear flask alerts
     res = client.get(url_for("index"))

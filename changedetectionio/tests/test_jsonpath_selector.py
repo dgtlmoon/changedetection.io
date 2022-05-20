@@ -171,7 +171,7 @@ def test_check_json_without_filter(client, live_server):
     )
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(3)
@@ -203,7 +203,7 @@ def test_check_json_filter(client, live_server):
     assert b"1 Imported" in res.data
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(3)
@@ -229,7 +229,7 @@ def test_check_json_filter(client, live_server):
     assert bytes(json_filter.encode('utf-8')) in res.data
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(3)
@@ -237,7 +237,7 @@ def test_check_json_filter(client, live_server):
     set_modified_response()
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     time.sleep(4)
 
@@ -288,7 +288,7 @@ def test_check_json_filter_bool_val(client, live_server):
     time.sleep(3)
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(3)
@@ -296,7 +296,7 @@ def test_check_json_filter_bool_val(client, live_server):
     set_modified_response()
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     time.sleep(3)
 
@@ -327,7 +327,7 @@ def test_check_json_ext_filter(client, live_server):
     assert b"1 Imported" in res.data
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(3)
@@ -353,7 +353,7 @@ def test_check_json_ext_filter(client, live_server):
     assert bytes(json_filter.encode('utf-8')) in res.data
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(3)
@@ -361,7 +361,7 @@ def test_check_json_ext_filter(client, live_server):
     set_modified_ext_response()
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     time.sleep(4)
 

@@ -39,7 +39,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
 
     # Do this a few times.. ensures we dont accidently set the status
     for n in range(3):
-        client.get(url_for("api_watch_checknow"), follow_redirects=True)
+        client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
         # Give the thread time to pick it up
         time.sleep(sleep_time_for_fetch_thread)
@@ -61,7 +61,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
     # this should not trigger a change, because no good text could be converted from the HTML
     set_nonrenderable_response()
 
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
@@ -83,7 +83,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
     set_modified_response()
 
 
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
@@ -97,6 +97,6 @@ def test_check_basic_change_detection_functionality(client, live_server):
 
     #
     # Cleanup everything
-    res = client.get(url_for("api_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
