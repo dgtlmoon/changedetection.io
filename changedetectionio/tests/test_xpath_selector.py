@@ -95,6 +95,8 @@ def test_check_xpath_filter_utf8(client, live_server):
     time.sleep(3)
     res = client.get(url_for("index"))
     assert b'Unicode strings with encoding declaration are not supported.' not in res.data
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
 
 
@@ -148,6 +150,8 @@ def test_check_markup_xpath_filter_restriction(client, live_server):
 
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
 
 def test_xpath_validation(client, live_server):
@@ -170,6 +174,8 @@ def test_xpath_validation(client, live_server):
         follow_redirects=True
     )
     assert b"is not a valid XPath expression" in res.data
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
 
 # actually only really used by the distll.io importer, but could be handy too
