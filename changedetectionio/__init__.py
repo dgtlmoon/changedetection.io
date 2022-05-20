@@ -1004,7 +1004,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/api/add", methods=['POST'])
     @login_required
-    def api_watch_add():
+    def form_watch_add():
         from changedetectionio import forms
         form = forms.quickWatchForm(request.form)
 
@@ -1030,7 +1030,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/api/delete", methods=['GET'])
     @login_required
-    def api_delete():
+    def form_delete():
         uuid = request.args.get('uuid')
 
         if uuid != 'all' and not uuid in datastore.data['watching'].keys():
@@ -1047,7 +1047,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/api/clone", methods=['GET'])
     @login_required
-    def api_clone():
+    def form_clone():
         uuid = request.args.get('uuid')
         # More for testing, possible to return the first/only
         if uuid == 'first':
@@ -1061,7 +1061,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/api/checknow", methods=['GET'])
     @login_required
-    def api_watch_checknow():
+    def form_watch_checknow():
 
         tag = request.args.get('tag')
         uuid = request.args.get('uuid')
@@ -1098,7 +1098,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/api/share-url", methods=['GET'])
     @login_required
-    def api_share_put_watch():
+    def form_share_put_watch():
         """Given a watch UUID, upload the info and return a share-link
            the share-link can be imported/added"""
         import requests
