@@ -59,11 +59,11 @@ $(document).ready(function() {
       // - that the widths/sizes really are about the actual screen size cat elements.json |grep -o width......|sort|uniq
       selector_image_rect = selector_image.getBoundingClientRect();
       console.log(selector_image.getBoundingClientRect());
+
       // make the canvas the same size as the image
       $('#selector-canvas').attr('height', selector_image_rect.height);
       $('#selector-canvas').attr('width', selector_image_rect.width);
       x_scale = selector_image_rect.width / selector_image.naturalWidth;
-      y_scale = selector_image_rect.height / selector_image.naturalHeight;
 
       ctx.strokeStyle = 'rgb(255,0,0, 0.8)';
       ctx.lineWidth = 2;
@@ -80,7 +80,7 @@ $(document).ready(function() {
 
       // highlight the default one if we can find it in the xPath list
       // or the xpath matches the default one
-      for (var i = selector_data.length; i!=0; i--) {
+      for (var i = selector_data.length; i!==0; i--) {
         var sel = selector_data[i-1];
         if(selector_data[i - 1].xpath == current_default_xpath) {
           ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
@@ -101,7 +101,7 @@ $(document).ready(function() {
 
         // Reverse order - the most specific one should be deeper/"laster"
         // Basically, find the most 'deepest'
-        for (var i = selector_data.length; i!=0; i--) {
+        for (var i = selector_data.length; i!==0; i--) {
           // draw all of them? let them choose somehow?
           var sel = selector_data[i-1];
           // If we are in a bounding-box
@@ -119,6 +119,7 @@ $(document).ready(function() {
             // @todo or, O to go out/up, I to go in
             // or double click to go up/out the selector?
             current_selected_i=i-1;
+            console.log(sel);
             break;
           }
         }

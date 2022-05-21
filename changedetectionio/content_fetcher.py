@@ -57,7 +57,7 @@ class Fetcher():
                 }
 
 
-                var elements = document.getElementsByTagName("*");
+                var elements = window.document.querySelectorAll(".hnname");
                 var size_pos=[];
                 // after page fetch, inject this JS
                 // build a map of all elements and their positions (maybe that only include text?)
@@ -65,7 +65,7 @@ class Fetcher():
                 for (var i = 0; i < elements.length; i++) {   
                  bbox = elements[i].getBoundingClientRect();
 
-                 // forget reallysmall ones
+                 // forget really small ones
                  if (bbox['width'] <10 && bbox['height'] <10 ) {
                    continue;
                  }
@@ -76,6 +76,7 @@ class Fetcher():
 
                  // 1st primitive - if it has class, try joining it all and select, if theres only one.. well thats us.
                  xpath_result=false;
+                 /*
                  try {
                    var d= findUpTag(elements[i]);
                    if (d) {
@@ -84,6 +85,7 @@ class Fetcher():
                  } catch (e) {
                    var x=1;
                  }
+                 */
 
                  // default back to the less intelligent one
                  if (!xpath_result) {
@@ -281,10 +283,15 @@ class base_html_playwright(Fetcher):
                 page.evaluate("var css_filter=''")
 
             self.xpath_data = page.evaluate("async () => {" + self.xpath_element_js + "}")
+            # Bug 1 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
             page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
             self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=92)
+
+            # Bug 2 - screenshot size is not the real size (but reported elements and everything else is fine)
+            width = page.evaluate('async () => {return Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)}')
+
             context.close()
             browser.close()
 
