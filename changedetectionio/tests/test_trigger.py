@@ -129,6 +129,11 @@ def test_trigger_functionality(client, live_server):
     time.sleep(sleep_time_for_fetch_thread)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
+    
+    # https://github.com/dgtlmoon/changedetection.io/issues/616
+    # Apparently the actual snapshot that contains the trigger never shows
+    res = client.get(url_for("diff_history_page", uuid="first"))
+    assert b'foobar123' in res.data
 
     # Check the preview/highlighter, we should be able to see what we triggered on, but it should be highlighted
     res = client.get(url_for("preview_page", uuid="first"))
