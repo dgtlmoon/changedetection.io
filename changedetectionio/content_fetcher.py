@@ -32,32 +32,26 @@ class Fetcher():
     xpath_element_js = """               
                 // Include the getXpath script directly, easier than fetching
                 !function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):(e=e||self).getXPath=n()}(this,function(){return function(e){var n=e;if(n&&n.id)return'//*[@id="'+n.id+'"]';for(var o=[];n&&Node.ELEMENT_NODE===n.nodeType;){for(var i=0,r=!1,d=n.previousSibling;d;)d.nodeType!==Node.DOCUMENT_TYPE_NODE&&d.nodeName===n.nodeName&&i++,d=d.previousSibling;for(d=n.nextSibling;d;){if(d.nodeName===n.nodeName){r=!0;break}d=d.nextSibling}o.push((n.prefix?n.prefix+":":"")+n.localName+(i||r?"["+(i+1)+"]":"")),n=n.parentNode}return o.length?"/"+o.reverse().join("/"):""}});
-                //# sourceMappingURL=index.umd.js.map             
-
 
                 const findUpTag = (el) => {
-                  let r = el
-                  chained_css = [];
+                  return null;
+                  let r = el    
+                  chained_css = [el.tagName];
 
+                // Keep going up until we hit an ID tag,  image it's like  #list-widget div h4
                   while (r.parentNode) {
-
-                    if(r.classList.length >0) {
-                     // limit to just using 2 class names of each, stops from getting really huge selector strings
-                      current_css='.'+Array.from(r.classList).slice(0, 2).join('.');
-                      chained_css.unshift(current_css);
-
-                      var f=chained_css.join(' ');
-                      var q=document.querySelectorAll(f);
-                      if(q.length==1) return current_css;
-                      if(f.length >120) return null;
-                    }  
-                    r = r.parentNode;
+                    if('' !==r.id) {
+                      chained_css.unshift("#"+r.id);
+                      return chained_css.join(' ');
+                    } else {
+                      chained_css.unshift(r.tagName);
+                    }
                   }
                   return null;
                 }
 
-
-                var elements = window.document.querySelectorAll(".hnname");
+                // @todo - if it's SVG or IMG, go into image diff mode
+                var elements = window.document.querySelectorAll("div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4");
                 var size_pos=[];
                 // after page fetch, inject this JS
                 // build a map of all elements and their positions (maybe that only include text?)
@@ -76,7 +70,7 @@ class Fetcher():
 
                  // 1st primitive - if it has class, try joining it all and select, if theres only one.. well thats us.
                  xpath_result=false;
-                 /*
+                 
                  try {
                    var d= findUpTag(elements[i]);
                    if (d) {
@@ -85,8 +79,8 @@ class Fetcher():
                  } catch (e) {
                    var x=1;
                  }
-                 */
-
+                 
+// You could swap it and default to getXpath and then try the smarter one
                  // default back to the less intelligent one
                  if (!xpath_result) {
                    xpath_result = getXPath(elements[i]);                   
@@ -127,8 +121,8 @@ class Fetcher():
                          });
                      }
                 }
-
-                return size_pos;
+// https://stackoverflow.com/questions/1145850/how-to-get-height-of-entire-document-with-javascript
+                return {'size_pos':size_pos, 'browser_width': window.innerWidth, 'browser_height':document.body.scrollHeight};
     """
     xpath_data = None
 
@@ -255,7 +249,6 @@ class base_html_playwright(Fetcher):
                 proxy=self.proxy
             )
             page = context.new_page()
-            page.set_viewport_size({"width": 1280, "height": 1024})
             try:
                 response = page.goto(url, timeout=timeout * 1000, wait_until='commit')
                 # Wait_until = commit
@@ -273,6 +266,9 @@ class base_html_playwright(Fetcher):
             if len(page.content().strip()) == 0:
                 raise EmptyReply(url=url, status_code=None)
 
+            # Bug 1(?) Set the viewport size AFTER loading the page
+            page.set_viewport_size({"width": 1280, "height": 1024})
+
             self.status_code = response.status
             self.content = page.content()
             self.headers = response.all_headers()
@@ -283,13 +279,13 @@ class base_html_playwright(Fetcher):
                 page.evaluate("var css_filter=''")
 
             self.xpath_data = page.evaluate("async () => {" + self.xpath_element_js + "}")
-            # Bug 1 in Playwright screenshot handling
+            # Bug 2 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
             page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
             self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=92)
 
-            # Bug 2 - screenshot size is not the real size (but reported elements and everything else is fine)
+            # Bug 3 - screenshot size is not the real size (but reported elements and everything else is fine)
             width = page.evaluate('async () => {return Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)}')
 
             context.close()
