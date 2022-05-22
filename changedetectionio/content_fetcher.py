@@ -47,7 +47,7 @@ class Fetcher():
                     if('' !==r.id) {
                       chained_css.unshift("#"+r.id);
                       final_selector= chained_css.join('>');
-                      # be sure theres only one
+                      // Be sure theres only one, some sites have multiples of the same ID tag :-(
                       if (window.document.querySelectorAll(final_selector).length ==1 ) {
                         return final_selector;
                       }
@@ -63,7 +63,7 @@ class Fetcher():
 
 
                 // @todo - if it's SVG or IMG, go into image diff mode
-                var elements = window.document.querySelectorAll("div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4");
+                var elements = window.document.querySelectorAll("div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary");
                 var size_pos=[];
                 // after page fetch, inject this JS
                 // build a map of all elements and their positions (maybe that only include text?)
@@ -72,7 +72,7 @@ class Fetcher():
                  bbox = elements[i].getBoundingClientRect();
 
                  // forget really small ones
-                 if (bbox['width'] <10 && bbox['height'] <10 ) {
+                 if (bbox['width'] <20 && bbox['height'] < 20 ) {
                    continue;
                  }
 

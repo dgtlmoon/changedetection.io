@@ -612,7 +612,7 @@ def changedetection_app(config=None, datastore_o=None):
                                      has_empty_checktime=using_default_check_time,
                                      using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
-                                     emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False)
+                                     emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                      )
 
         return output
