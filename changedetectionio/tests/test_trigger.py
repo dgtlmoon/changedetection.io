@@ -43,7 +43,7 @@ def set_modified_with_trigger_text_response():
      Some NEW nice initial text</br>
      <p>Which is across multiple lines</p>
      </br>
-     foobar123
+     Add to cart
      <br/>
      So let's see what happens.  </br>
      </body>
@@ -60,7 +60,7 @@ def test_trigger_functionality(client, live_server):
     live_server_setup(live_server)
 
     sleep_time_for_fetch_thread = 3
-    trigger_text = "foobar123"
+    trigger_text = "Add to cart"
     set_original_ignore_response()
 
     # Give the endpoint time to spin up
@@ -133,9 +133,10 @@ def test_trigger_functionality(client, live_server):
     # https://github.com/dgtlmoon/changedetection.io/issues/616
     # Apparently the actual snapshot that contains the trigger never shows
     res = client.get(url_for("diff_history_page", uuid="first"))
-    assert b'foobar123' in res.data
+    assert b'Add to cart' in res.data
 
     # Check the preview/highlighter, we should be able to see what we triggered on, but it should be highlighted
     res = client.get(url_for("preview_page", uuid="first"))
-    # We should be able to see what we ignored
-    assert b'<div class="triggered">foobar' in res.data
+
+    # We should be able to see what we triggered on
+    assert b'<div class="triggered">Add to cart' in res.data
