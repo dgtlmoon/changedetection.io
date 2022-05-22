@@ -70,7 +70,7 @@ $(document).ready(function() {
       x_scale = selector_image_rect.width / selector_data['browser_width'];
       y_scale = selector_image_rect.height / selector_image.naturalHeight;
        console.log(selector_image_rect.width +" "+ selector_image.naturalWidth);
-      ctx.strokeStyle = 'rgba(255,0,0, 0.8)';
+      ctx.strokeStyle = 'rgba(255,0,0, 0.9)';
       ctx.fillStyle = 'rgba(255,0,0, 0.1)';
       ctx.lineWidth = 3;
       console.log("scaling set  x: "+x_scale+" by y:"+y_scale);
@@ -86,15 +86,25 @@ $(document).ready(function() {
 
       // highlight the default one if we can find it in the xPath list
       // or the xpath matches the default one
-      for (var i = selector_data['size_pos'].length; i!==0; i--) {
-        var sel = selector_data['size_pos'][i-1];
-        if(selector_data['size_pos'][i - 1].xpath == current_default_xpath) {
-          ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-          current_selected_i=i-1;
-          highlight_current_selected_i();
-          break;
+      found = false;
+      if(current_default_xpath.length) {
+          for (var i = selector_data['size_pos'].length; i!==0; i--) {
+            var sel = selector_data['size_pos'][i-1];
+            if(selector_data['size_pos'][i - 1].xpath == current_default_xpath) {
+              ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+              current_selected_i=i-1;
+              highlight_current_selected_i();
+              found = true;
+              break;
+            }
+          }
+        if(!found) {
+          alert("unfortunately your existing CSS/xPath Filter was no longer found!");
         }
+
       }
+
+
 
 
       $('#selector-canvas').bind('mousemove', function (e) {
@@ -146,7 +156,12 @@ $(document).ready(function() {
         }
 
         var sel = selector_data['size_pos'][current_selected_i];
-        $("#css_filter").val('xpath:'+sel.xpath);
+        if (sel[0] == '/') {
+        // @todo - not sure just checking / is right
+            $("#css_filter").val('xpath:'+sel.xpath);
+        } else {
+            $("#css_filter").val(sel.xpath);
+        }
         xctx.fillStyle = 'rgba(225,225,225,0.8)';
         xctx.fillRect(0,0,c.width, c.height);
         xctx.clearRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);

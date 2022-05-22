@@ -33,22 +33,34 @@ class Fetcher():
                 // Include the getXpath script directly, easier than fetching
                 !function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):(e=e||self).getXPath=n()}(this,function(){return function(e){var n=e;if(n&&n.id)return'//*[@id="'+n.id+'"]';for(var o=[];n&&Node.ELEMENT_NODE===n.nodeType;){for(var i=0,r=!1,d=n.previousSibling;d;)d.nodeType!==Node.DOCUMENT_TYPE_NODE&&d.nodeName===n.nodeName&&i++,d=d.previousSibling;for(d=n.nextSibling;d;){if(d.nodeName===n.nodeName){r=!0;break}d=d.nextSibling}o.push((n.prefix?n.prefix+":":"")+n.localName+(i||r?"["+(i+1)+"]":"")),n=n.parentNode}return o.length?"/"+o.reverse().join("/"):""}});
 
-                const findUpTag = (el) => {
-                  return null;
-                  let r = el    
-                  chained_css = [el.tagName];
 
-                // Keep going up until we hit an ID tag,  image it's like  #list-widget div h4
+                const findUpTag = (el) => {
+                  let r = el
+                  chained_css = [];
+                  depth=0;
+            
+                // Strategy 1: Keep going up until we hit an ID tag, imagine it's like  #list-widget div h4
                   while (r.parentNode) {
+                    if(depth==5) {
+                      break;
+                    }
                     if('' !==r.id) {
                       chained_css.unshift("#"+r.id);
-                      return chained_css.join(' ');
+                      final_selector= chained_css.join('>');
+                      # be sure theres only one
+                      if (window.document.querySelectorAll(final_selector).length ==1 ) {
+                        return final_selector;
+                      }
+                      return null;
                     } else {
-                      chained_css.unshift(r.tagName);
+                      chained_css.unshift(r.tagName.toLowerCase());
                     }
+                    r=r.parentNode;
+                    depth+=1;
                   }
                   return null;
                 }
+
 
                 // @todo - if it's SVG or IMG, go into image diff mode
                 var elements = window.document.querySelectorAll("div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4");
@@ -109,8 +121,8 @@ class Fetcher():
                    } else {
                      q=document.querySelector(css_filter);
                    }
-                   if (q) {
-                       bbox = q.getBoundingClientRect();
+                   bbox = q.getBoundingClientRect();                
+                   if (bbox && bbox['width'] >0 && bbox['height']>0) {                       
                        size_pos.push({
                            xpath: css_filter,
                            width: bbox['width'], 
@@ -250,6 +262,7 @@ class base_html_playwright(Fetcher):
             )
             page = context.new_page()
             try:
+               # Bug - never set viewport size BEFORE page.goto
                 response = page.goto(url, timeout=timeout * 1000, wait_until='commit')
                 # Wait_until = commit
                 # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
@@ -266,7 +279,9 @@ class base_html_playwright(Fetcher):
             if len(page.content().strip()) == 0:
                 raise EmptyReply(url=url, status_code=None)
 
-            # Bug 1(?) Set the viewport size AFTER loading the page
+            # Bug 2(?) Set the viewport size AFTER loading the page
+            page.set_viewport_size({"width": 1280, "height": 1024})
+            # Bugish - Let the page redraw/reflow
             page.set_viewport_size({"width": 1280, "height": 1024})
 
             self.status_code = response.status
@@ -279,14 +294,11 @@ class base_html_playwright(Fetcher):
                 page.evaluate("var css_filter=''")
 
             self.xpath_data = page.evaluate("async () => {" + self.xpath_element_js + "}")
-            # Bug 2 in Playwright screenshot handling
+            # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
             page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
             self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=92)
-
-            # Bug 3 - screenshot size is not the real size (but reported elements and everything else is fine)
-            width = page.evaluate('async () => {return Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)}')
 
             context.close()
             browser.close()
