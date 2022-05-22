@@ -202,6 +202,17 @@ class perform_site_check():
         else:
             stripped_text_from_html = stripped_text_from_html.encode('utf8')
 
+        # 615 Extract text by regex
+        extract_text = watch.get('extract_text', [])
+        if len(extract_text):
+            pending_stripped_text = ""
+            for s_re in extract_text:
+                result = re.findall(s_re.encode('utf8'), stripped_text_from_html, flags=re.MULTILINE | re.DOTALL | re.LOCALE)
+                if result:
+                    x = 1
+
+
+
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
         if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
             fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()

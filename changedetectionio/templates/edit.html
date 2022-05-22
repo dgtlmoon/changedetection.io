@@ -192,6 +192,16 @@ nav
                         </span>
                     </div>
                 </fieldset>
+                <fieldset>
+                    <div class="pure-control-group">
+                        {{ render_field(form.extract_text, rows=5, placeholder="/some.regex\d{2}/ case-insensitive regex") }}
+                        <span class="pure-form-message-inline">
+                    <ul>
+                        <li>Reg-Ex text extract from results</li>
+                    </ul>
+                        </span>
+                    </div>
+                </fieldset>
             </div>
 
             <div id="actions">

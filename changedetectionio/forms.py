@@ -223,7 +223,7 @@ class validateURL(object):
         except validators.ValidationFailure:
             message = field.gettext('\'%s\' is not a valid URL.' % (field.data.strip()))
             raise ValidationError(message)
-        
+
 class ValidateListRegex(object):
     """
     Validates that anything that looks like a regex passes as a regex
@@ -330,6 +330,9 @@ class watchForm(commonSettingsForm):
     css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()], default='')
 
     subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
+
+    extract_text = StringListField('Extract text', [ValidateListRegex()])
+
     title = StringField('Title', default='')
 
     ignore_text = StringListField('Ignore text', [ValidateListRegex()])
