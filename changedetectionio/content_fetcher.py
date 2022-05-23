@@ -89,14 +89,22 @@ class Fetcher():
                      xpath_result =d;
                    }                
                  } catch (e) {
-                   var x=1;
+                   console.log(e);
                  }
                  
-// You could swap it and default to getXpath and then try the smarter one
+                 // You could swap it and default to getXpath and then try the smarter one
                  // default back to the less intelligent one
                  if (!xpath_result) {
-                   xpath_result = getXPath(elements[i]);                   
+                    try {
+                       // I've seen on FB and eBay that this doesnt work
+                       // ReferenceError: getXPath is not defined at eval (eval at evaluate (:152:29), <anonymous>:67:20) at UtilityScript.evaluate (<anonymous>:159:18) at UtilityScript.<anonymous> (<anonymous>:1:44)
+                       xpath_result = getXPath(elements[i]);
+                     } catch (e) {
+                       console.log(e);
+                       continue;
+                     }            
                  }
+                 
                  if(window.getComputedStyle(elements[i]).visibility === "hidden") {
                    continue;
                  }
