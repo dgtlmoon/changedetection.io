@@ -34,7 +34,7 @@ def test_fetch_webdriver_content(client, live_server):
         res = client.get(url_for("index"))
         if not b'Checking now' in res.data:
             break
-        logging.getLogger().warning("Waiting for WebDriver to complete..")
+        logging.getLogger().info("Waiting for check to not say 'Checking now'..")
         time.sleep(3)
         attempt += 1
 
@@ -43,7 +43,6 @@ def test_fetch_webdriver_content(client, live_server):
         url_for("preview_page", uuid="first"),
         follow_redirects=True
     )
-    with open('/tmp/fuck.html', 'wb') as f:
-        f.write(res.data)
+    logging.getLogger().info("Looking for correct fetched HTML (text) from server")
 
     assert b'cool it works' in res.data
