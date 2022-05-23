@@ -338,7 +338,8 @@ footer {
     padding-top: 110px; }
   div.tabs.collapsable ul li {
     display: block;
-    border-radius: 0px; }
+    border-radius: 0px;
+    margin-right: 0px; }
   input[type='text'] {
     width: 100%; }
   /*
@@ -428,6 +429,16 @@ and also iPads specifically.
     display: none; }
   .tab-pane-inner:target {
     display: block; }
+
+#beta-logo {
+  height: 50px;
+  right: 0px;
+  top: 0px;
+  position: absolute;
+  display: none; }
+
+#selector-header {
+  padding-bottom: 1em; }
 
 .edit-form {
   min-width: 70%;

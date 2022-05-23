@@ -469,6 +469,7 @@ footer {
   div.tabs.collapsable ul li {
     display: block;
     border-radius: 0px;
+    margin-right: 0px;
   }
 
   input[type='text'] {
@@ -611,6 +612,17 @@ $form-edge-padding: 20px;
     }
     // doesnt need padding because theres another row of buttons/activity
     padding: 0px;
+}
+
+#beta-logo {
+    height: 50px;
+    right: 0px;
+    top: 0px;
+    position: absolute;
+    display: none;
+}
+#selector-header {
+    padding-bottom: 1em;
 }
 
 .edit-form {

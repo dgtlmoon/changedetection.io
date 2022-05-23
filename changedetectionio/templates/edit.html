@@ -31,6 +31,8 @@
     </div>
 
     <div class="box-wrap inner">
+         <img style="display: none;" id="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
+
         <form class="pure-form pure-form-stacked"
               action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next') ) }}" method="POST">
              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -204,7 +206,11 @@ nav
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
                 <fieldset>
                     <div class="pure-control-group">
-                        <i class="fetching-update-notice">One moment, fetching screenshot and element information..</i><br/>
+
+                        <div id="selector-header">
+                            <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Clear selection</a>
+                            <i class="fetching-update-notice" style="font-size: 80%;">One moment, fetching screenshot and element information..</i>
+                        </div>
                         <div id="selector-wrapper">
                             <!-- request the screenshot and get the element offset info ready -->
                             <!-- use img src ready load to know everything is ready to map out -->
@@ -212,7 +218,7 @@ nav
                             <canvas id="selector-canvas"></canvas>
                         </div>
 
-                        <div id="selector-current-xpath"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
+                        <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
 
                     </div>
                 </fieldset>

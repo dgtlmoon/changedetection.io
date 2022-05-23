@@ -103,10 +103,10 @@ class Fetcher():
 
                  size_pos.push({
                    xpath: xpath_result,
-                   width: bbox['width'], 
-                   height: bbox['height'],
-                   left: bbox['left'],
-                   top: bbox['top'],
+                   width: Math.round(bbox['width']), 
+                   height: Math.round(bbox['height']), 
+                   left: Math.floor(bbox['left']), 
+                   top: Math.floor(bbox['top']), 
                    childCount: elements[i].childElementCount
                  });                 
                 }

@@ -1,4 +1,5 @@
 // Horrible proof of concept code :)
+// yes - this is really a hack, if you are a front-ender and want to help, please get in touch!
 
 $(document).ready(function() {
 
@@ -7,10 +8,31 @@ $(document).ready(function() {
         bootstrap_visualselector();
     });
 
+    $(document).on('keydown', function(event) {
+        if ($("img#selector-background").is(":visible")) {
+            if (event.key == "Escape") {
+                state_clicked=false;
+                ctx.clearRect(0, 0, c.width, c.height);
+            }
+        }
+    });
+
+    // For when the page loads
     if(!window.location.hash || window.location.hash != '#visualselector') {
         $("img#selector-background").attr('src','');
+        $('#beta-logo').hide();
         return;
     }
+
+    // Handle clearing button/link
+    $('#clear-selector').on('click', function(event) {
+        if(!state_clicked) {
+            alert('Oops, Nothing selected!');
+        }
+        state_clicked=false;
+        ctx.clearRect(0, 0, c.width, c.height);
+    });
+
 
     bootstrap_visualselector();
 
@@ -35,6 +57,7 @@ $(document).ready(function() {
 
     function bootstrap_visualselector() {
         if ( 1 ) {
+        $('#beta-logo').show();
             // bootstrap it, this will trigger everything else
             $("img#selector-background").bind('load', function () {
                 console.log("Loaded background...");
@@ -69,14 +92,6 @@ $(document).ready(function() {
       });
     };
 
-    $(document).on('keydown', function(event) {
-      if (event.key == "Escape") {
-        state_clicked=false;
-        ctx.clearRect(0, 0, c.width, c.height);
-      }
-    });
-     // <a id="add-email-helper" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Add email</a>
-
 
 
     function set_scale() {
@@ -96,6 +111,7 @@ $(document).ready(function() {
       ctx.fillStyle = 'rgba(255,0,0, 0.1)';
       ctx.lineWidth = 3;
       console.log("scaling set  x: "+x_scale+" by y:"+y_scale);
+      $("#selector-current-xpath").css('max-width', selector_image_rect.width);
     }
 
     function reflow_selector() {
