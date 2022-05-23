@@ -3,6 +3,7 @@
 $(document).ready(function() {
 
     $('#visualselector-tab').click(function () {
+        $("img#selector-background").off('load');
         bootstrap_visualselector();
     });
 
@@ -36,7 +37,7 @@ $(document).ready(function() {
         if ( 1 ) {
             // bootstrap it, this will trigger everything else
             $("img#selector-background").bind('load', function () {
-
+                console.log("Loaded background...");
                c = document.getElementById("selector-canvas");
                 // greyed out fill context
                xctx = c.getContext("2d");
@@ -60,8 +61,8 @@ $(document).ready(function() {
       }).done(function (data) {
         $('.fetching-update-notice').html("Rendering..");
         selector_data = data;
-
         console.log("Reported browser width from backend: "+data['browser_width']);
+        state_clicked=false;
         set_scale();
         reflow_selector();
         $('.fetching-update-notice').fadeOut();
@@ -71,12 +72,12 @@ $(document).ready(function() {
     $(document).on('keydown', function(event) {
       if (event.key == "Escape") {
         state_clicked=false;
+        ctx.clearRect(0, 0, c.width, c.height);
       }
     });
+     // <a id="add-email-helper" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Add email</a>
 
-    $(window).resize(function() {
-        set_scale();
-    });
+
 
     function set_scale() {
 
@@ -91,7 +92,6 @@ $(document).ready(function() {
       $('#selector-wrapper').attr('width', selector_image_rect.width);
       x_scale = selector_image_rect.width / selector_data['browser_width'];
       y_scale = selector_image_rect.height / selector_image.naturalHeight;
-       console.log(selector_image_rect.width +" "+ selector_image.naturalWidth);
       ctx.strokeStyle = 'rgba(255,0,0, 0.9)';
       ctx.fillStyle = 'rgba(255,0,0, 0.1)';
       ctx.lineWidth = 3;
@@ -99,7 +99,9 @@ $(document).ready(function() {
     }
 
     function reflow_selector() {
-
+        $(window).resize(function() {
+            set_scale();
+        });
       var selector_currnt_xpath_text=$("#selector-current-xpath span");
 
       set_scale();
@@ -113,8 +115,8 @@ $(document).ready(function() {
           for (var i = selector_data['size_pos'].length; i!==0; i--) {
             var sel = selector_data['size_pos'][i-1];
             if(selector_data['size_pos'][i - 1].xpath == current_default_xpath) {
-              ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-              current_selected_i=i-1;
+            console.log("highlighting "+current_default_xpath);
+              current_selected_i = i-1;
               highlight_current_selected_i();
               found = true;
               break;
@@ -136,6 +138,7 @@ $(document).ready(function() {
         // Reverse order - the most specific one should be deeper/"laster"
         // Basically, find the most 'deepest'
         var found=0;
+        ctx.fillStyle = 'rgba(205,0,0,0.35)';
         for (var i = selector_data['size_pos'].length; i!==0; i--) {
           // draw all of them? let them choose somehow?
           var sel = selector_data['size_pos'][i-1];
@@ -159,7 +162,7 @@ $(document).ready(function() {
             break;
           }
         }
-        console.log("Found elements depth "+found);
+
       }.debounce(5));
 
       function set_current_selected_text(s) {
@@ -180,9 +183,13 @@ $(document).ready(function() {
         } else {
             $("#css_filter").val(sel.xpath);
         }
-        xctx.fillStyle = 'rgba(225,225,225,0.8)';
+        xctx.fillStyle = 'rgba(205,205,205,0.95)';
+        xctx.strokeStyle = 'rgba(225,0,0,0.9)';
+        xctx.lineWidth = 3;
         xctx.fillRect(0,0,c.width, c.height);
+        // Clear out what only should be seen (make a clear/clean spot)
         xctx.clearRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+        xctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
         state_clicked=true;
         set_current_selected_text(sel.xpath);
 
