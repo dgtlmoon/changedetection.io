@@ -626,6 +626,12 @@ def changedetection_app(config=None, datastore_o=None):
             if request.method == 'POST' and not form.validate():
                 flash("An error occurred, please see below.", "error")
 
+            visualselector_data_is_ready = datastore.visualselector_data_is_ready(uuid)
+
+            # Only works reliably with Playwright
+            visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and default['fetch_backend'] == 'html_webdriver'
+
+
             output = render_template("edit.html",
                                      uuid=uuid,
                                      watch=datastore.data['watching'][uuid],
@@ -634,6 +640,8 @@ def changedetection_app(config=None, datastore_o=None):
                                      using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                     visualselector_data_is_ready=visualselector_data_is_ready,
+                                     visualselector_enabled=visualselector_enabled
                                      )
 
         return output

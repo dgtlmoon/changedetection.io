@@ -206,20 +206,25 @@ nav
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
                 <fieldset>
                     <div class="pure-control-group">
-
-                        <div id="selector-header">
-                            <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Clear selection</a>
-                            <i class="fetching-update-notice" style="font-size: 80%;">One moment, fetching screenshot and element information..</i>
-                        </div>
-                        <div id="selector-wrapper">
-                            <!-- request the screenshot and get the element offset info ready -->
-                            <!-- use img src ready load to know everything is ready to map out -->
-                            <img id="selector-background" />
-                            <canvas id="selector-canvas"></canvas>
-                        </div>
-
-                        <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
-
+                        {% if visualselector_enabled %}
+                            {% if visualselector_data_is_ready %}
+                                <div id="selector-header">
+                                    <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Clear selection</a>
+                                    <i class="fetching-update-notice" style="font-size: 80%;">One moment, fetching screenshot and element information..</i>
+                                </div>
+                                <div id="selector-wrapper">
+                                    <!-- request the screenshot and get the element offset info ready -->
+                                    <!-- use img src ready load to know everything is ready to map out -->
+                                    <img id="selector-background" />
+                                    <canvas id="selector-canvas"></canvas>
+                                </div>
+                                <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
+                            {% else %}
+                                <span class="pure-form-message-inline">Screenshot and element data is not available or not yet ready.</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="pure-form-message-inline">Sorry, this functionality only works with Playwright/Chrome enabled watches.</span>
+                        {% endif %}
                     </div>
                 </fieldset>
             </div>

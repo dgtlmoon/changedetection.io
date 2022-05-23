@@ -372,6 +372,15 @@ class ChangeDetectionStore:
 
         return False
 
+    def visualselector_data_is_ready(self, watch_uuid):
+        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
+        screenshot_filename = "{}/last-screenshot.png".format(output_path)
+        elements_index_filename = "{}/elements.json".format(output_path)
+        if path.isfile(screenshot_filename) and  path.isfile(elements_index_filename) :
+            return True
+
+        return False
+
     # Save as PNG, PNG is larger but better for doing visual diff in the future
     def save_screenshot(self, watch_uuid, screenshot: bytes):
         output_path = "{}/{}".format(self.datastore_path, watch_uuid)
