@@ -375,6 +375,13 @@ footer {
 
 
 .pure-form {
+    fieldset {
+        padding-top: 0px;
+        ul {
+            padding-bottom: 0px;
+            margin-bottom: 0px;
+        }
+    }
     .pure-control-group, .pure-group, .pure-controls {
         padding-bottom: 1em;
         div {
@@ -637,7 +644,7 @@ ul {
     tr {
         display: inline;
         input[type="number"] {
-            width: 4em;
+            width: 5em;
         }
     }
 }
@@ -664,4 +671,20 @@ ul {
 
 #selector-current-xpath {
   font-size: 80%;
+}
+
+#webdriver-override-options {
+        input[type="number"] {
+            width: 5em;
+        }
+}
+
+#api-key {
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+#api-key-copy {
+  color: #0078e7;
 }

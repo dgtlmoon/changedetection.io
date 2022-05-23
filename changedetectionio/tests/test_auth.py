@@ -29,7 +29,7 @@ def test_basic_auth(client, live_server):
     assert b"Updated watch." in res.data
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(1)
     res = client.get(
         url_for("preview_page", uuid="first"),

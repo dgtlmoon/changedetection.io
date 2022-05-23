@@ -67,10 +67,11 @@
 {% if screenshot %}
      <div class="tab-pane-inner" id="screenshot">
          <p>
-         <i>For now, only the most recent screenshot is saved and displayed.</i>
-             </p>
+             <i>For now, only the most recent screenshot is saved and displayed.</i></br>
+             <strong>Note: No changedetection is performed on the image yet, but we are working on that in an upcoming release.</strong>
+         </p>
 
-        <img src="{{url_for('static_content', group='screenshot', filename=uuid)}}">
+         <img src="{{url_for('static_content', group='screenshot', filename=uuid)}}">
      </div>
 {% endif %}
 

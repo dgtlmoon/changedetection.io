@@ -43,7 +43,7 @@ def test_trigger_regex_functionality(client, live_server):
     assert b"1 Imported" in res.data
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
@@ -65,7 +65,7 @@ def test_trigger_regex_functionality(client, live_server):
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("some new noise")
 
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(sleep_time_for_fetch_thread)
 
     # It should report nothing found (nothing should match the regex)
@@ -75,7 +75,7 @@ def test_trigger_regex_functionality(client, live_server):
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("regex test123<br/>\nsomething 123")
 
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(sleep_time_for_fetch_thread)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data

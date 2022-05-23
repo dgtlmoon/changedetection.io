@@ -12,6 +12,7 @@ from os import mkdir, path, unlink
 from threading import Lock
 import re
 import requests
+import secrets
 
 from . model import App, Watch
 
@@ -107,10 +108,13 @@ class ChangeDetectionStore:
 
         # Generate the URL access token for RSS feeds
         if not 'rss_access_token' in self.__data['settings']['application']:
-            import secrets
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['rss_access_token'] = secret
 
+        # Generate the API access token
+        if not 'api_access_token' in self.__data['settings']['application']:
+            secret = secrets.token_hex(16)
+            self.__data['settings']['application']['api_access_token'] = secret
 
         # Proxy list support - available as a selection in settings when text file is imported
         # CSV list
@@ -211,7 +215,8 @@ class ChangeDetectionStore:
     def get_all_tags(self):
         tags = []
         for uuid, watch in self.data['watching'].items():
-
+            if watch['tag'] is None:
+                continue
             # Support for comma separated list of tags.
             for tag in watch['tag'].split(','):
                 tag = tag.strip()
@@ -280,6 +285,10 @@ class ChangeDetectionStore:
     def add_watch(self, url, tag="", extras=None, write_to_disk_now=True):
         if extras is None:
             extras = {}
+        # should always be str
+        if tag is None or not tag:
+            tag=''
+
         # Incase these are copied across, assume it's a reference and deepcopy()
         apply_extras = deepcopy(extras)
 

@@ -20,6 +20,7 @@
             <li class="tab"><a href="#notifications">Notifications</a></li>
             <li class="tab"><a href="#fetching">Fetching</a></li>
             <li class="tab"><a href="#filters">Global Filters</a></li>
+            <li class="tab"><a href="#api">API</a></li>
         </ul>
     </div>
     <div class="box-wrap inner">
@@ -43,6 +44,7 @@
                             <span class="pure-form-message-inline">Password is locked.</span>
                         {% endif %}
                     </div>
+
                     <div class="pure-control-group">
                         {{ render_field(form.application.form.base_url, placeholder="http://yoursite.com:5000/",
                         class="m-d") }}
@@ -105,7 +107,6 @@
                 </fieldset>
             </div>
 
-
             <div class="tab-pane-inner" id="filters">
 
                     <fieldset class="pure-group">
@@ -150,12 +151,26 @@ nav
                     </fieldset>
            </div>
 
+            <div class="tab-pane-inner" id="api">
+
+                <p>Drive your changedetection.io via API, More about <a href="https://github.com/dgtlmoon/changedetection.io/wiki/API-Reference">API access here</a></p>
+
+                <div class="pure-control-group">
+                    {{ render_checkbox_field(form.application.form.api_access_token_enabled) }}
+                    <div class="pure-form-message-inline">Restrict API access limit by using <code>x-api-key</code> header</div><br/>
+                    <div class="pure-form-message-inline"><br/>API Key <span id="api-key">{{api_key}}</span>
+                        <span style="display:none;" id="api-key-copy" >copy</span>
+                    </div>
+                </div>
+            </div>
+
             <div id="actions">
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
                     <a href="{{url_for('index')}}" class="pure-button button-small button-cancel">Back</a>
                     <a href="{{url_for('scrub_page')}}" class="pure-button button-small button-cancel">Delete History Snapshot Data</a>
                 </div>
+
             </div>
         </form>
     </div>
