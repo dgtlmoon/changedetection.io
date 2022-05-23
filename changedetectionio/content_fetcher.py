@@ -374,7 +374,6 @@ class base_html_webdriver(Fetcher):
 
         self.driver.set_window_size(1280, 1024)
         self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
-        self.xpath_data = self.driver.execute_script("var css_filter='{}';".format(current_css_filter) + self.xpath_element_js)
         self.screenshot = self.driver.get_screenshot_as_png()
 
         # @todo - how to check this? is it possible?
