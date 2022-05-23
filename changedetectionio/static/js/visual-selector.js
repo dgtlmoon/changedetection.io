@@ -1,30 +1,53 @@
+// Horrible proof of concept code :)
+
 $(document).ready(function() {
 
+    $('#visualselector-tab').click(function () {
+        bootstrap_visualselector();
+    });
+
+    if(!window.location.hash || window.location.hash != '#visualselector') {
+        $("img#selector-background").attr('src','');
+        return;
+    }
+
+    bootstrap_visualselector();
 
     var current_selected_i;
     var state_clicked=false;
 
-    var c = document.getElementById("selector-canvas");
+    var c;
 
     // greyed out fill context
-    var xctx = c.getContext("2d");
+    var xctx;
     // redline highlight context
-    var ctx = c.getContext("2d");
+    var ctx;
 
-    var current_default_xpath=$("#css_filter").val();
+    var current_default_xpath;
     var x_scale=1;
     var y_scale=1;
-    var selector_image = document.getElementById("selector-background");
+    var selector_image;
     var selector_image_rect;
     var vh;
     var selector_data;
 
 
-    if ( $("img#selector-background").is(':visible') ) {
-        // bootstrap it, this will trigger everything else
-        $("img#selector-background").bind('load', function () {
-           fetch_data();
-        }).attr("src", screenshot_url);
+    function bootstrap_visualselector() {
+        if ( 1 ) {
+            // bootstrap it, this will trigger everything else
+            $("img#selector-background").bind('load', function () {
+
+               c = document.getElementById("selector-canvas");
+                // greyed out fill context
+               xctx = c.getContext("2d");
+                // redline highlight context
+               ctx = c.getContext("2d");
+               current_default_xpath =$("#css_filter").val();
+               fetch_data();
+               $('#selector-canvas').off("mousemove");
+               // screenshot_url defined in the edit.html template
+            }).attr("src", screenshot_url);
+        }
     }
 
     function fetch_data() {
@@ -59,9 +82,8 @@ $(document).ready(function() {
 
       // some things to check if the scaling doesnt work
       // - that the widths/sizes really are about the actual screen size cat elements.json |grep -o width......|sort|uniq
-
+      selector_image = $("img#selector-background")[0];
       selector_image_rect = selector_image.getBoundingClientRect();
-
 
       // make the canvas the same size as the image
       $('#selector-canvas').attr('height', selector_image_rect.height);
@@ -101,14 +123,10 @@ $(document).ready(function() {
         if(!found) {
           alert("unfortunately your existing CSS/xPath Filter was no longer found!");
         }
-
       }
 
 
-
-
       $('#selector-canvas').bind('mousemove', function (e) {
-
         if(state_clicked) {
           return;
         }

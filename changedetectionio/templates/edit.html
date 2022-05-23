@@ -6,10 +6,12 @@
 <script>
     const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
     const watch_visual_selector_data_url="{{url_for('static_content', group='visual_selector_data', filename=uuid)}}";
+    const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
+
 {% if emailprefix %}
     const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
 {% endif %}
-    const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
+
 </script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
@@ -22,9 +24,9 @@
         <ul>
             <li class="tab" id="default-tab"><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
-            <li class="tab"><a href="#visualselector">Visual Selector</a></li>
+            <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Selector</a></li>
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
-            <li class="tab"><a id="visualselector-tab" href="#notifications">Notifications</a></li>
+            <li class="tab"><a href="#notifications">Notifications</a></li>
         </ul>
     </div>
 
