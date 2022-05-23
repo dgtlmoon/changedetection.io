@@ -31,8 +31,6 @@
     </div>
 
     <div class="box-wrap inner">
-         <img style="display: none;" id="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
-
         <form class="pure-form pure-form-stacked"
               action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next') ) }}" method="POST">
              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -204,6 +202,8 @@ nav
             </div>
 
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
+                <img id="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
+
                 <fieldset>
                     <div class="pure-control-group">
                         {% if visualselector_enabled %}

@@ -20,7 +20,6 @@ $(document).ready(function() {
     // For when the page loads
     if(!window.location.hash || window.location.hash != '#visualselector') {
         $("img#selector-background").attr('src','');
-        $('#beta-logo').hide();
         return;
     }
 
@@ -57,7 +56,6 @@ $(document).ready(function() {
 
     function bootstrap_visualselector() {
         if ( 1 ) {
-        $('#beta-logo').show();
             // bootstrap it, this will trigger everything else
             $("img#selector-background").bind('load', function () {
                 console.log("Loaded background...");

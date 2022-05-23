@@ -434,8 +434,7 @@ and also iPads specifically.
   height: 50px;
   right: 0px;
   top: 0px;
-  position: absolute;
-  display: none; }
+  position: absolute; }
 
 #selector-header {
   padding-bottom: 1em; }

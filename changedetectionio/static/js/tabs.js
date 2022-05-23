@@ -11,7 +11,6 @@ window.addEventListener('hashchange', function() {
   while (tabs[0]) {
     tabs[0].classList.remove('active')
   }
-  document.getElementById("beta-logo").style.display = "none";
   set_active_tab();
 }, false);
 
