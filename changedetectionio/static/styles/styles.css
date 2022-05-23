@@ -432,8 +432,8 @@ and also iPads specifically.
 
 #beta-logo {
   height: 50px;
-  right: 0px;
-  top: 0px;
+  right: -3px;
+  top: -3px;
   position: absolute; }
 
 #selector-header {

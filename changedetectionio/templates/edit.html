@@ -215,16 +215,27 @@ nav
                                 <div id="selector-wrapper">
                                     <!-- request the screenshot and get the element offset info ready -->
                                     <!-- use img src ready load to know everything is ready to map out -->
+                                    <!-- @todo: maybe something interesting like a field to select 'elements that contain text... and their parents n' -->
                                     <img id="selector-background" />
                                     <canvas id="selector-canvas"></canvas>
+
                                 </div>
                                 <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
+
+                            <span class="pure-form-message-inline">
+                                <p><span style="font-weight: bold">Beta!</span> The Visual Selector is new and there may be minor bugs, please report pages that dont work, help us to improve this software!</p>
+                            </span>
+
                             {% else %}
                                 <span class="pure-form-message-inline">Screenshot and element data is not available or not yet ready.</span>
                             {% endif %}
                         {% else %}
-                            <span class="pure-form-message-inline">Sorry, this functionality only works with Playwright/Chrome enabled watches,
-                                alternatively try our <a href="https://lemonade.changedetection.io/start">very affordable subscription based service</a></span>
+                            <span class="pure-form-message-inline">
+                                <p>Sorry, this functionality only works with Playwright/Chrome enabled watches.</p>
+                                <p>Enable the Playwright Chrome fetcher, or alternatively try our <a href="https://lemonade.changedetection.io/start">very affordable subscription based service</a>.</p>
+                                <p>This is because Selenium/WebDriver can not extract full page screenshots reliably.</p>
+
+                            </span>
                         {% endif %}
                     </div>
                 </fieldset>

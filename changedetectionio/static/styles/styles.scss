@@ -616,8 +616,9 @@ $form-edge-padding: 20px;
 
 #beta-logo {
     height: 50px;
-    right: 0px;
-    top: 0px;
+    // looks better when it's hanging off a little
+    right: -3px;
+    top: -3px;
     position: absolute;
 }
 
