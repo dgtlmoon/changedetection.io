@@ -115,6 +115,7 @@ $(document).ready(function() {
     function reflow_selector() {
         $(window).resize(function() {
             set_scale();
+            highlight_current_selected_i();
         });
       var selector_currnt_xpath_text=$("#selector-current-xpath span");
 
