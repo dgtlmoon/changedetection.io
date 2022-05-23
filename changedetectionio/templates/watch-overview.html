@@ -3,6 +3,7 @@
 {% from '_helpers.jinja' import render_simple_field %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
+
 <div class="box">
 
     <form class="pure-form" action="{{ url_for('form_watch_add') }}" method="POST" id="new-watch-form">

@@ -469,6 +469,7 @@ footer {
   div.tabs.collapsable ul li {
     display: block;
     border-radius: 0px;
+    margin-right: 0px;
   }
 
   input[type='text'] {
@@ -613,6 +614,18 @@ $form-edge-padding: 20px;
     padding: 0px;
 }
 
+#beta-logo {
+    height: 50px;
+    // looks better when it's hanging off a little
+    right: -3px;
+    top: -3px;
+    position: absolute;
+}
+
+#selector-header {
+    padding-bottom: 1em;
+}
+
 .edit-form {
   min-width: 70%;
   /* so it cant overflow */
@@ -647,6 +660,30 @@ ul {
             width: 5em;
         }
     }
+}
+
+#selector-wrapper {
+ height: 600px;
+ overflow-y: scroll;
+ position: relative;
+    //width: 100%;
+ > img {
+    position: absolute;
+    z-index: 4;
+    max-width: 100%;
+ }
+ >canvas {
+    position: relative;
+    z-index: 5;
+     max-width: 100%;
+     &:hover {
+     cursor: pointer;
+     }
+ }
+}
+
+#selector-current-xpath {
+  font-size: 80%;
 }
 
 #webdriver-override-options {

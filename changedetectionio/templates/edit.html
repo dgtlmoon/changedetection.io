@@ -5,12 +5,18 @@
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script>
     const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
+    const watch_visual_selector_data_url="{{url_for('static_content', group='visual_selector_data', filename=uuid)}}";
+    const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
+
 {% if emailprefix %}
     const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
 {% endif %}
+
 </script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='visual-selector.js')}}" defer></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>
 
 <div class="edit-form monospaced-textarea">
 
@@ -18,6 +24,7 @@
         <ul>
             <li class="tab" id="default-tab"><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
+            <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Selector</a></li>
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
         </ul>
@@ -190,6 +197,46 @@ nav
                         <li>Note: Wrap in forward slash / to use regex  example: <code>/foo\d/</code></li>
                     </ul>
                         </span>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="tab-pane-inner visual-selector-ui" id="visualselector">
+                <img id="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
+
+                <fieldset>
+                    <div class="pure-control-group">
+                        {% if visualselector_enabled %}
+                            {% if visualselector_data_is_ready %}
+                                <div id="selector-header">
+                                    <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Clear selection</a>
+                                    <i class="fetching-update-notice" style="font-size: 80%;">One moment, fetching screenshot and element information..</i>
+                                </div>
+                                <div id="selector-wrapper">
+                                    <!-- request the screenshot and get the element offset info ready -->
+                                    <!-- use img src ready load to know everything is ready to map out -->
+                                    <!-- @todo: maybe something interesting like a field to select 'elements that contain text... and their parents n' -->
+                                    <img id="selector-background" />
+                                    <canvas id="selector-canvas"></canvas>
+
+                                </div>
+                                <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
+
+                            <span class="pure-form-message-inline">
+                                <p><span style="font-weight: bold">Beta!</span> The Visual Selector is new and there may be minor bugs, please report pages that dont work, help us to improve this software!</p>
+                            </span>
+
+                            {% else %}
+                                <span class="pure-form-message-inline">Screenshot and element data is not available or not yet ready.</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="pure-form-message-inline">
+                                <p>Sorry, this functionality only works with Playwright/Chrome enabled watches.</p>
+                                <p>Enable the Playwright Chrome fetcher, or alternatively try our <a href="https://lemonade.changedetection.io/start">very affordable subscription based service</a>.</p>
+                                <p>This is because Selenium/WebDriver can not extract full page screenshots reliably.</p>
+
+                            </span>
+                        {% endif %}
                     </div>
                 </fieldset>
             </div>

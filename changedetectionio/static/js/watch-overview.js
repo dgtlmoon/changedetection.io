@@ -4,6 +4,7 @@ $(function () {
     $(this).closest('.unviewed').removeClass('unviewed');
   });
 
+
   $('.with-share-link > *').click(function () {
       $("#copied-clipboard").remove();
 
@@ -20,5 +21,6 @@ $(function () {
        $(this).remove();
       });
   });
+
 });
 
