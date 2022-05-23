@@ -37,8 +37,8 @@ docker kill $$-test_selenium
 
 echo "TESTING WEBDRIVER FETCH > PLAYWRIGHT/BROWSERLESS..."
 # Not all platforms support playwright (not ARM/rPI), so it's not packaged in requirements.txt
-pip3 install playwright
-docker run -d --name $$-test_browserless -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  browserless/chrome
+pip3 install playwright~=1.22
+docker run -d --name $$-test_browserless -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  browserless/chrome:1.53-chrome-stable
 # takes a while to spin up
 sleep 5
 export PLAYWRIGHT_DRIVER_URL=ws://127.0.0.1:3000
