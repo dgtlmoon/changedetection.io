@@ -22,3 +22,21 @@ echo "RUNNING WITH BASE_URL SET"
 export BASE_URL="https://really-unique-domain.io"
 pytest tests/test_notification.py
 
+
+# Now for the selenium and playwright/browserless fetchers
+# Note - this is not UI functional tests
+
+docker run -d --name test_selenium --restart unless-stopped -p 4444:4444  --shm-size="2g"  selenium/standalone-chrome-debug:3.141.59
+echo "TESTING SELENIUM/WEBDRIVER..."
+export WEBDRIVER_URL=http://localhost:4444/wd/hub
+pytest tests/fetchers/test_content.py
+unset WEBDRIVER_URL
+docker kill test_selenium
+
+
+docker run -d -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" -p 3000:3000  --shm-size="2g" --name test_browserless browserless/chrome
+echo "TESTING PLAYWRIGHT/BROWSERLESS..."
+export PLAYWRIGHT_DRIVER_URL=ws://127.0.0.1:3000
+pytest tests/fetchers/test_content.py
+unset PLAYWRIGHT_DRIVER_URL
+docker kill test_browserless
