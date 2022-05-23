@@ -24,19 +24,22 @@ pytest tests/test_notification.py
 
 
 # Now for the selenium and playwright/browserless fetchers
-# Note - this is not UI functional tests
+# Note - this is not UI functional tests - just checking that each one can fetch the content
 
-docker run -d --name test_selenium --restart unless-stopped -p 4444:4444  --shm-size="2g"  selenium/standalone-chrome-debug:3.141.59
-echo "TESTING SELENIUM/WEBDRIVER..."
+echo "TESTING WEBDRIVER FETCH > SELENIUM/WEBDRIVER..."
+docker run -d --name $$-test_selenium  -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome-debug:3.141.59
+# takes a while to spin up
+sleep 5
 export WEBDRIVER_URL=http://localhost:4444/wd/hub
 pytest tests/fetchers/test_content.py
 unset WEBDRIVER_URL
-docker kill test_selenium
+docker kill $$-test_selenium
 
-
-docker run -d -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" -p 3000:3000  --shm-size="2g" --name test_browserless browserless/chrome
-echo "TESTING PLAYWRIGHT/BROWSERLESS..."
+echo "TESTING WEBDRIVER FETCH > PLAYWRIGHT/BROWSERLESS..."
+docker run -d --name $$-test_browserless -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  browserless/chrome
+# takes a while to spin up
+sleep 5
 export PLAYWRIGHT_DRIVER_URL=ws://127.0.0.1:3000
 pytest tests/fetchers/test_content.py
 unset PLAYWRIGHT_DRIVER_URL
-docker kill test_browserless
+docker kill $$-test_browserless
