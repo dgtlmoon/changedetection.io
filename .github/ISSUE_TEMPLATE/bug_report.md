@@ -1,9 +1,9 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Create a bug report, if you don't follow this template, your report will be DELETED
 title: ''
-labels: ''
-assignees: ''
+labels: 'triage'
+assignees: 'dgtlmoon'
 
 ---
 
@@ -11,14 +11,17 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 **Version**
-In the top right area: 0....
+*Exact version* in the top right area: 0....
 
 **To Reproduce**
+
 Steps to reproduce the behavior:
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
+
+! ALWAYS INCLUDE AN EXAMPLE URL WHERE IT IS POSSIBLE TO RE-CREATE THE ISSUE !
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
