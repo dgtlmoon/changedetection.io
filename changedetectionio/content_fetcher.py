@@ -277,8 +277,13 @@ class base_html_playwright(Fetcher):
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
             context = browser.new_context(
                 user_agent=request_headers['User-Agent'] if request_headers.get('User-Agent') else 'Mozilla/5.0',
-                proxy=self.proxy
+                proxy=self.proxy,
+                # This is needed to enable JavaScript execution on GitHub and others
+                bypass_csp=True,
+                # Should never be needed
+                accept_downloads=False
             )
+
             page = context.new_page()
             try:
                # Bug - never set viewport size BEFORE page.goto
