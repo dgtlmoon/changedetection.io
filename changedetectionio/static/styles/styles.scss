@@ -472,7 +472,7 @@ footer {
   }
 
   li {
-    list-style: none;
+    list-style: decimal;
 
     > label {
       display: none;
@@ -659,7 +659,7 @@ $form-edge-padding: 20px;
   padding: 0px;
 }
 
-#beta-logo {
+.beta-logo {
   height: 50px;
   // looks better when it's hanging off a little
   right: -3px;

@@ -321,21 +321,25 @@ class commonSettingsForm(Form):
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")] )
 
 class SingleBrowserStep(Form):
-    # Thumbnail field, I guess each step is snapshotted as snapshot-stepNo, then we just keep reloading for new snapshots/thumbnails?
-    # On remove/add we should remove all snapshots/thumbnails
-
     # default
     # each select <option data-enabled="enabled-0-0"
-    operation = SelectField('Operation', [validators.Optional()], choices=['Enter text in field',
-                                                                           'Select by label',
-                                                                           'Wait for text',
-                                                                           'Wait for seconds'
-                                                                           'Click button',
-                                                                           'Click button containing text'])
+    operation = SelectField('Operation', [validators.Optional()], choices=[
+        'Choose one',
+        'Enter text in field',
+        'Select by label',
+        'Wait for text',
+        'Wait for seconds',
+        'Check checkbox',
+        'Uncheck checkbox',
+        'Click button',
+        'Click button containing text',
+        'Switch to iFrame by index number'])
+
     selector = StringField('Selector', [validators.Optional()], render_kw={"placeholder": "CSS or xPath selector"})
-    optional_value = StringField('Optional value', [validators.Optional()], render_kw={"placeholder": "Optional value"})
-    remove_button = SubmitField('-', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
-    add_button = SubmitField('+', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
+    optional_value = StringField('value', [validators.Optional()], render_kw={"placeholder": "value"})
+#   @todo move to JS? ajax fetch new field?
+#    remove_button = SubmitField('-', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
+#    add_button = SubmitField('+', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
 
 class watchForm(commonSettingsForm):
 
@@ -358,7 +362,7 @@ class watchForm(commonSettingsForm):
 
     # First one should be Go-to URL |watch.url| and Disable
     # Maybe via default=... ?
-    browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=2)
+    browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
     save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})

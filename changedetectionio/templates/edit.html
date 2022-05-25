@@ -14,9 +14,11 @@
 
 </script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='visual-selector.js')}}" defer></script>
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='browser-steps.js')}}" defer></script>
+
 
 <div class="edit-form monospaced-textarea">
 
@@ -124,6 +126,7 @@ User-Agent: wonderbra 1.0") }}
             </div>
 
             <div class="tab-pane-inner" id="browser-steps">
+                <img class="beta-logo" src="/static/images/beta-logo.png">
                 <fieldset>
                     <div class="pure-control-group">
                         <span class="pure-form-message-inline">Requires a Playwright or WebDriver/Selenium fetcher to be enabled</span>
@@ -222,7 +225,7 @@ nav
             </div>
 
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
-                <img id="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
+                <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
 
                 <fieldset>
                     <div class="pure-control-group">

@@ -6,6 +6,10 @@ class BrowserStepBase():
 
     page = None # instance of
 
+    # Blank step
+    def choose_one(self, step):
+        return
+
     @abstractmethod
     def enter_text_in_field(self, step):
         return
@@ -27,7 +31,8 @@ class BrowserStepBase():
         return
 
 
-
+# Good reference - https://playwright.dev/python/docs/input
+#                  https://pythonmana.com/2021/12/202112162236307035.html
 class browsersteps_playwright(BrowserStepBase):
     def enter_text_in_field(self, step):
         self.page.fill(step['selector'], step['optional_value'])

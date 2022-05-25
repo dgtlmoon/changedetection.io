@@ -243,12 +243,12 @@ footer {
 
 #top-right-menu {
   /*
-    position: absolute;
-    right: 0px;
-    background: linear-gradient(to right, #fff0, #fff 10%);
-    padding-left: 20px;
-    padding-right: 10px;
-    */ }
+      position: absolute;
+      right: 0px;
+      background: linear-gradient(to right, #fff0, #fff 10%);
+      padding-left: 20px;
+      padding-right: 10px;
+      */ }
 
 .sticky-tab {
   position: absolute;
@@ -327,7 +327,7 @@ footer {
   #browser_steps tr {
     display: inline-block; }
   #browser_steps li {
-    list-style: none; }
+    list-style: decimal; }
     #browser_steps li > label {
       display: none; }
 
@@ -354,10 +354,10 @@ footer {
   input[type='text'] {
     width: 100%; }
   /*
-Max width before this PARTICULAR table gets nasty
-This query will take effect for any screen smaller than 760px
-and also iPads specifically.
-*/
+  Max width before this PARTICULAR table gets nasty
+  This query will take effect for any screen smaller than 760px
+  and also iPads specifically.
+  */
   .watch-table {
     /* Force table to not be like tables anymore */
     /* Force table to not be like tables anymore */
@@ -441,7 +441,7 @@ and also iPads specifically.
   .tab-pane-inner:target {
     display: block; }
 
-#beta-logo {
+.beta-logo {
   height: 50px;
   right: -3px;
   top: -3px;

@@ -203,6 +203,7 @@ class Fetcher():
             for step in self.browser_steps:
                 step_machine_name = re.sub(r'\W', '_', step['operation'].lower()).strip('_')
                 getattr(self, step_machine_name)(step)
+                time.sleep(0.2)
 
 
 #   Maybe for the future, each fetcher provides its own diff output, could be used for text, image
