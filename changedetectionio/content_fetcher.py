@@ -293,10 +293,13 @@ class base_html_playwright(Fetcher):
                 # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
                 # This seemed to solve nearly all 'TimeoutErrors'
                 extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
+                p=time.time()
                 page.wait_for_timeout(extra_wait * 1000)
             except playwright._impl._api_types.TimeoutError as e:
                 raise EmptyReply(url=url, status_code=None)
 
+            r=time.time()-p
+            x=1
             if response is None:
                 raise EmptyReply(url=url, status_code=None)
 
