@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import chardet
+import json
 import os
 import requests
 import time
@@ -123,13 +124,23 @@ class Fetcher():
                 // inject the current one set in the css_filter, which may be a CSS rule
                 // used for displaying the current one in VisualSelector, where its not one we generated.
                 if (css_filter.length) {
-                   // is it xpath?
-                   if (css_filter.startsWith('/') ) {
-                     q=document.evaluate(css_filter, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                   } else {
-                     q=document.querySelector(css_filter);
+                   q=false;                   
+                   try {
+                       // is it xpath?
+                       if (css_filter.startsWith('/') || css_filter.startsWith('xpath:')) {
+                         q=document.evaluate(css_filter.replace('xpath:',''), document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                       } else {
+                         q=document.querySelector(css_filter);
+                       }                       
+                   } catch (e) {
+                    // Maybe catch DOMException and alert? 
+                     console.log(e);                       
                    }
-                   bbox = q.getBoundingClientRect();                
+                   bbox=false;
+                   if(q) {
+                     bbox = q.getBoundingClientRect();
+                   }
+                                   
                    if (bbox && bbox['width'] >0 && bbox['height']>0) {                       
                        size_pos.push({
                            xpath: css_filter,
@@ -141,8 +152,8 @@ class Fetcher():
                          });
                      }
                 }
-// https://stackoverflow.com/questions/1145850/how-to-get-height-of-entire-document-with-javascript
-                return {'size_pos':size_pos, 'browser_width': window.innerWidth, 'browser_height':document.body.scrollHeight};
+                // Window.width required for proper scaling in the frontend
+                return {'size_pos':size_pos, 'browser_width': window.innerWidth};
     """
     xpath_data = None
 
@@ -297,7 +308,7 @@ class base_html_playwright(Fetcher):
             self.headers = response.all_headers()
 
             if current_css_filter is not None:
-                page.evaluate("var css_filter='{}'".format(current_css_filter))
+                page.evaluate("var css_filter={}".format(json.dumps(current_css_filter)))
             else:
                 page.evaluate("var css_filter=''")
 

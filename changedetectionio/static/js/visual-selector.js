@@ -138,7 +138,7 @@ $(document).ready(function() {
             }
           }
         if(!found) {
-          alert("unfortunately your existing CSS/xPath Filter was no longer found!");
+          alert("Unfortunately your existing CSS/xPath Filter was no longer found!");
         }
       }
 
