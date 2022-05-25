@@ -327,7 +327,7 @@ class SingleBrowserStep(Form):
     # default
     # each select <option data-enabled="enabled-0-0"
     operation = SelectField('Operation', [validators.Optional()], choices=['Enter text in field',
-                                                                           'Select value from field',
+                                                                           'Select by label',
                                                                            'Wait for text',
                                                                            'Wait for seconds'
                                                                            'Click button',

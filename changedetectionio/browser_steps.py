@@ -48,6 +48,9 @@ class browsersteps_playwright(BrowserStepBase):
         self.page.click("text="+step['optional_value'])
         return
 
+    def select_by_label(self, step):
+        self.page.select_option(step['selector'], label=step['optional_value'])
+        return
 
 class browsersteps_selenium(BrowserStepBase):
     def enter_text_in_field(self, step):

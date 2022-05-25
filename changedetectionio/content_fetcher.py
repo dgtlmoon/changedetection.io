@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import chardet
 import json
 import os
+import re
 import requests
 import time
 import sys
@@ -200,7 +201,7 @@ class Fetcher():
     def iterate_browser_steps(self):
         if self.browser_steps is not None and len(self.browser_steps):
             for step in self.browser_steps:
-                step_machine_name = step['operation'].lower().replace(' ', '_')
+                step_machine_name = re.sub(r'\W', '_', step['operation'].lower()).strip('_')
                 getattr(self, step_machine_name)(step)
 
 
