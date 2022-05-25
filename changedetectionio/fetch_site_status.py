@@ -87,6 +87,7 @@ class perform_site_check():
             is_source = True
 
         # Pluggable content fetcher
+        # @todo does this correctly obey the global?
         prefer_backend = watch['fetch_backend']
         if hasattr(content_fetcher, prefer_backend):
             klass = getattr(content_fetcher, prefer_backend)
@@ -104,6 +105,9 @@ class perform_site_check():
             fetcher.render_extract_delay = watch['webdriver_delay']
         elif system_webdriver_delay is not None:
             fetcher.render_extract_delay = system_webdriver_delay
+
+        if prefer_backend == 'html_webdriver':
+            fetcher.browser_steps = watch.get('browser_steps', None)
 
         fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code, watch['css_filter'])
         fetcher.quit()

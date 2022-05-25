@@ -123,11 +123,16 @@ User-Agent: wonderbra 1.0") }}
                 <br/>
             </div>
 
-
             <div class="tab-pane-inner" id="browser-steps">
                 <fieldset>
                     <div class="pure-control-group">
+                        <!--
+                        Too hard right now, better to just send the events to the fetcher for now and leave it in the final screenshot
+                        and/or report an error
+                        <a id="play-steps" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Play steps  ▶</a>
+                        -->
                         {{ render_field(form.browser_steps) }}
+                        <span class="pure-form-message-inline">Browser steps run before Filters & Triggers</span>
                     </div>
                 </fieldset>
             </div>

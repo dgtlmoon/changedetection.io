@@ -5,6 +5,7 @@ import os
 import requests
 import time
 import sys
+from .browser_steps import  browsersteps_playwright, browsersteps_selenium
 
 class EmptyReply(Exception):
     def __init__(self, status_code, url):
@@ -28,6 +29,7 @@ class Fetcher():
     status_code = None
     content = None
     headers = None
+    browser_steps = None
 
     fetcher_description = "No description"
     xpath_element_js = """               
@@ -195,6 +197,12 @@ class Fetcher():
     def is_ready(self):
         return True
 
+    def iterate_browser_steps(self):
+        if self.browser_steps is not None and len(self.browser_steps):
+            for step in self.browser_steps:
+                step_machine_name = step['operation'].lower().replace(' ', '_')
+                getattr(self, step_machine_name)(step)
+
 
 #   Maybe for the future, each fetcher provides its own diff output, could be used for text, image
 #   the current one would return javascript output (as we use JS to generate the diff)
@@ -214,7 +222,7 @@ def available_fetchers():
     return p
 
 
-class base_html_playwright(Fetcher):
+class base_html_playwright(Fetcher, browsersteps_playwright):
     fetcher_description = "Playwright {}/Javascript".format(
         os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
     )
@@ -284,49 +292,52 @@ class base_html_playwright(Fetcher):
                 accept_downloads=False
             )
 
-            page = context.new_page()
+            self.page = context.new_page()
             try:
                # Bug - never set viewport size BEFORE page.goto
-                response = page.goto(url, timeout=timeout * 1000, wait_until='commit')
+                response = self.page.goto(url, timeout=timeout * 1000, wait_until='commit')
                 # Wait_until = commit
                 # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
                 # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
                 # This seemed to solve nearly all 'TimeoutErrors'
                 extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
-                page.wait_for_timeout(extra_wait * 1000)
+                self.page.wait_for_timeout(extra_wait * 1000)
             except playwright._impl._api_types.TimeoutError as e:
                 raise EmptyReply(url=url, status_code=None)
+
+            # Run Browser Steps here
+            self.iterate_browser_steps()
 
             if response is None:
                 raise EmptyReply(url=url, status_code=None)
 
-            if len(page.content().strip()) == 0:
+            if len(self.page.content().strip()) == 0:
                 raise EmptyReply(url=url, status_code=None)
 
             # Bug 2(?) Set the viewport size AFTER loading the page
-            page.set_viewport_size({"width": 1280, "height": 1024})
+            self.page.set_viewport_size({"width": 1280, "height": 1024})
 
             self.status_code = response.status
-            self.content = page.content()
+            self.content = self.page.content()
             self.headers = response.all_headers()
 
             if current_css_filter is not None:
-                page.evaluate("var css_filter={}".format(json.dumps(current_css_filter)))
+                self.page.evaluate("var css_filter={}".format(json.dumps(current_css_filter)))
             else:
-                page.evaluate("var css_filter=''")
+                self.page.evaluate("var css_filter=''")
 
-            self.xpath_data = page.evaluate("async () => {" + self.xpath_element_js + "}")
+            self.xpath_data = self.page.evaluate("async () => {" + self.xpath_element_js + "}")
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
-            page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
-            self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=92)
+            self.page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
+            self.screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=92)
 
             context.close()
             browser.close()
 
 
-class base_html_webdriver(Fetcher):
+class base_html_webdriver(Fetcher, browsersteps_selenium):
     if os.getenv("WEBDRIVER_URL"):
         fetcher_description = "WebDriver Chrome/Javascript via '{}'".format(os.getenv("WEBDRIVER_URL"))
     else:
@@ -396,6 +407,10 @@ class base_html_webdriver(Fetcher):
 
         self.driver.set_window_size(1280, 1024)
         self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
+
+        # Run Browser Steps here
+        self.iterate_browser_steps()
+
         self.screenshot = self.driver.get_screenshot_as_png()
 
         # @todo - how to check this? is it possible?

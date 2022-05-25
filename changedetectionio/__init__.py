@@ -555,9 +555,7 @@ def changedetection_app(config=None, datastore_o=None):
                                data=default,
                                )
 
-        # Should always be set this way? or set it in the struct and just disable it?
-        form.browser_steps[0].optional_value.data = datastore.data['watching'][uuid]['url']
-        form.browser_steps[0].operation.data = 'Goto URL'
+        # form.browser_steps[0] can be assumed that we 'goto url' first
 
         if datastore.proxy_list is None:
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
