@@ -10,6 +10,7 @@ body {
   color: #333;
   background: #262626;
 }
+
 .pure-table-even {
   background: #fff;
 }
@@ -144,22 +145,26 @@ body:after, body:before {
   border-width: 0 3px 3px 0;
   display: inline-block;
   padding: 3px;
-    &.right {
-      transform: rotate(-45deg);
-      -webkit-transform: rotate(-45deg);
-    }
-    &.left {
-      transform: rotate(135deg);
-      -webkit-transform: rotate(135deg);
-    }
-    &.up {
-      transform: rotate(-135deg);
-      -webkit-transform: rotate(-135deg);
-    }
-    &.down {
-      transform: rotate(45deg);
-      -webkit-transform: rotate(45deg);
-    }
+
+  &.right {
+    transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
+  }
+
+  &.left {
+    transform: rotate(135deg);
+    -webkit-transform: rotate(135deg);
+  }
+
+  &.up {
+    transform: rotate(-135deg);
+    -webkit-transform: rotate(-135deg);
+  }
+
+  &.down {
+    transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+  }
 }
 
 .button-small {
@@ -221,46 +226,50 @@ body:after, body:before {
 }
 
 .messages {
-    li {
-        list-style: none;
-        padding: 1em;
-        border-radius: 10px;
-        color: #fff;
-        font-weight: bold;
-        &.message {
-            background: rgba(255, 255, 255, .2);
-        }
-        &.error {
-            background: rgba(255, 1, 1, .5);
-        }
-        &.notice {
-            background: rgba(255, 255, 255, .5);
-        }
+  li {
+    list-style: none;
+    padding: 1em;
+    border-radius: 10px;
+    color: #fff;
+    font-weight: bold;
+
+    &.message {
+      background: rgba(255, 255, 255, .2);
     }
-    &.with-share-link {
-     > *:hover {
-       cursor:pointer;
-     }
+
+    &.error {
+      background: rgba(255, 1, 1, .5);
     }
+
+    &.notice {
+      background: rgba(255, 255, 255, .5);
+    }
+  }
+
+  &.with-share-link {
+    > *:hover {
+      cursor: pointer;
+    }
+  }
 }
 
 #notification-customisation {
-    border: 1px solid #ccc;
-    padding: 0.5rem;
-    border-radius: 5px;
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  border-radius: 5px;
 }
 
 #notification-error-log {
-    border: 1px solid #ccc;
-    padding: 1rem;
-    border-radius: 5px;
-    overflow-wrap: break-word;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 5px;
+  overflow-wrap: break-word;
 }
 
 #token-table {
-    &.pure-table td, &.pure-table th {
-        font-size: 80%;
-    }
+  &.pure-table td, &.pure-table th {
+    font-size: 80%;
+  }
 }
 
 #new-watch-form {
@@ -268,20 +277,21 @@ body:after, body:before {
   padding: 1em;
   border-radius: 10px;
   margin-bottom: 1em;
+
   input {
     width: auto !important;
     display: inline-block;
   }
+
   .label {
     display: none;
   }
+
   legend {
     color: #fff;
     font-weight: bold;
   }
 }
-
-
 
 
 #diff-col {
@@ -297,15 +307,16 @@ body:after, body:before {
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
   box-shadow: 5px 0 5px -2px #888;
-     a {
-      color: #1b98f8;
-      cursor: grabbing;
-      -moz-user-select: none;
-      -webkit-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-      -o-user-select: none;
-    }
+
+  a {
+    color: #1b98f8;
+    cursor: grabbing;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -o-user-select: none;
+  }
 }
 
 footer {
@@ -320,14 +331,14 @@ footer {
 }
 
 #top-right-menu {
-// Just let flex overflow the x axis for now
-/*
-    position: absolute;
-    right: 0px;
-    background: linear-gradient(to right, #fff0, #fff 10%);
-    padding-left: 20px;
-    padding-right: 10px;
-    */
+  // Just let flex overflow the x axis for now
+  /*
+      position: absolute;
+      right: 0px;
+      background: linear-gradient(to right, #fff0, #fff 10%);
+      padding-left: 20px;
+      padding-right: 10px;
+      */
 }
 
 .sticky-tab {
@@ -336,12 +347,15 @@ footer {
   font-size: 65%;
   background: #fff;
   padding: 10px;
+
   &#left-sticky {
     left: 0px;
   }
+
   &#right-sticky {
     right: 0px;
   }
+
   &#hosted-sticky {
     right: 0px;
     top: 100px;
@@ -364,43 +378,49 @@ footer {
 }
 
 .monospaced-textarea {
-    textarea {
-        width: 100%;
-        font-family: monospace;
-        white-space: pre;
-        overflow-wrap: normal;
-        overflow-x: scroll;
-    }
+  textarea {
+    width: 100%;
+    font-family: monospace;
+    white-space: pre;
+    overflow-wrap: normal;
+    overflow-x: scroll;
+  }
 }
 
 
 .pure-form {
-    fieldset {
-        padding-top: 0px;
-        ul {
-            padding-bottom: 0px;
-            margin-bottom: 0px;
-        }
+  fieldset {
+    padding-top: 0px;
+
+    ul {
+      padding-bottom: 0px;
+      margin-bottom: 0px;
     }
-    .pure-control-group, .pure-group, .pure-controls {
-        padding-bottom: 1em;
-        div {
-            margin: 0px;
-        }
-        .checkbox {
-            > * {
-              display: inline;
-              vertical-align: middle;
-            }
-            > label {
-               padding-left: 5px;
-            }
-        }
+  }
+
+  .pure-control-group, .pure-group, .pure-controls {
+    padding-bottom: 1em;
+
+    div {
+      margin: 0px;
     }
+
+    .checkbox {
+      > * {
+        display: inline;
+        vertical-align: middle;
+      }
+
+      > label {
+        padding-left: 5px;
+      }
+    }
+  }
+
   /* The input fields with errors */
   .error {
     input {
-        background-color: #ffebeb;
+      background-color: #ffebeb;
     }
   }
 
@@ -412,9 +432,10 @@ footer {
     vertical-align: middle;
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
+
     li {
-        margin-left: 1em;
-        color: #dd0000;
+      margin-left: 1em;
+      color: #dd0000;
     }
   }
 
@@ -425,29 +446,34 @@ footer {
   textarea {
     width: 100%;
   }
+
   .inline-radio {
-      ul {
-        margin: 0px;
-        list-style: none;
-        li {
-            > * {
-                display: inline-block;
-            }
+    ul {
+      margin: 0px;
+      list-style: none;
+
+      li {
+        > * {
+          display: inline-block;
         }
       }
+    }
   }
 }
 
 #browser_steps {
-/* convert rows to horizontal cells */
+  /* convert rows to horizontal cells */
   th {
     display: none;
   }
+
   tr {
-   display: inline-block;
+    display: inline-block;
   }
+
   li {
     list-style: none;
+
     > label {
       display: none;
     }
@@ -466,7 +492,6 @@ footer {
     overflow-x: scroll;
   }
 }
-
 
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 800px) {
@@ -492,11 +517,11 @@ footer {
     width: 100%;
   }
 
-/*
-Max width before this PARTICULAR table gets nasty
-This query will take effect for any screen smaller than 760px
-and also iPads specifically.
-*/
+  /*
+  Max width before this PARTICULAR table gets nasty
+  This query will take effect for any screen smaller than 760px
+  and also iPads specifically.
+  */
   .watch-table {
     /* Force table to not be like tables anymore */
     thead, tbody, th, td, tr {
@@ -567,19 +592,19 @@ and also iPads specifically.
 - Rely always on width in CSS
 */
 @media only screen and (min-width: 761px) {
-/* m-d is medium-desktop */
-    .m-d {
-        min-width: 80%;
-    }
+  /* m-d is medium-desktop */
+  .m-d {
+    min-width: 80%;
+  }
 }
-
 
 
 .tabs {
   ul {
     margin: 0px;
     padding: 0px;
-    display:block;
+    display: block;
+
     li {
       margin-right: 3px;
       display: inline-block;
@@ -588,13 +613,15 @@ and also iPads specifically.
       border-top-right-radius: 5px;
       background-color: rgba(255, 255, 255, 0.2);
 
-      &.active,:target {
+      &.active, :target {
         background-color: #fff;
+
         a {
           color: #222;
           font-weight: bold;
         }
       }
+
       a {
         display: block;
         padding: 0.8em;
@@ -606,7 +633,7 @@ and also iPads specifically.
 
 $form-edge-padding: 20px;
 .pure-form-stacked {
-  >div:first-child {
+  > div:first-child {
     display: block;
   }
 }
@@ -620,39 +647,44 @@ $form-edge-padding: 20px;
 }
 
 .tab-pane-inner {
-    &:not(:target) {
-        display: none;
-    }
-    &:target {
-      display: block;
-    }
-    // doesnt need padding because theres another row of buttons/activity
-    padding: 0px;
+  &:not(:target) {
+    display: none;
+  }
+
+  &:target {
+    display: block;
+  }
+
+  // doesnt need padding because theres another row of buttons/activity
+  padding: 0px;
 }
 
 #beta-logo {
-    height: 50px;
-    // looks better when it's hanging off a little
-    right: -3px;
-    top: -3px;
-    position: absolute;
+  height: 50px;
+  // looks better when it's hanging off a little
+  right: -3px;
+  top: -3px;
+  position: absolute;
 }
 
 #selector-header {
-    padding-bottom: 1em;
+  padding-bottom: 1em;
 }
 
 .edit-form {
   min-width: 70%;
   /* so it cant overflow */
   max-width: 95%;
+
   .box-wrap {
     position: relative;
   }
+
   .inner {
     background: #fff;;
     padding: $form-edge-padding;
   }
+
   #actions {
     display: block;
     background: #fff;
@@ -664,38 +696,41 @@ $form-edge-padding: 20px;
 }
 
 ul {
-    padding-left: 1em;
-    padding-top: 0px;
-    margin-top: 4px;
+  padding-left: 1em;
+  padding-top: 0px;
+  margin-top: 4px;
 }
 
 .time-check-widget {
-    tr {
-        display: inline;
-        input[type="number"] {
-            width: 5em;
-        }
+  tr {
+    display: inline;
+
+    input[type="number"] {
+      width: 5em;
     }
+  }
 }
 
 #selector-wrapper {
- height: 600px;
- overflow-y: scroll;
- position: relative;
-    //width: 100%;
- > img {
+  height: 600px;
+  overflow-y: scroll;
+  position: relative;
+  //width: 100%;
+  > img {
     position: absolute;
     z-index: 4;
     max-width: 100%;
- }
- >canvas {
+  }
+
+  > canvas {
     position: relative;
     z-index: 5;
-     max-width: 100%;
-     &:hover {
-     cursor: pointer;
-     }
- }
+    max-width: 100%;
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
 }
 
 #selector-current-xpath {
@@ -703,9 +738,9 @@ ul {
 }
 
 #webdriver-override-options {
-        input[type="number"] {
-            width: 5em;
-        }
+  input[type="number"] {
+    width: 5em;
+  }
 }
 
 #api-key {
