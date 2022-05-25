@@ -6,6 +6,7 @@ timeago ~=1.0
 inscriptis ~= 2.2
 feedgen ~= 0.9
 flask-login ~= 0.5
+flask_restful
 pytz
 
 # Set these versions together to avoid a RequestsDependencyWarning
@@ -17,7 +18,7 @@ wtforms ~= 3.0
 jsonpath-ng ~= 1.5.3
 
 # Notification library
-apprise ~= 0.9.8.1
+apprise ~= 0.9.8.3
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 paho-mqtt
@@ -40,3 +41,4 @@ selenium ~= 4.1.0
 # need to revisit flask login versions
 werkzeug ~= 2.0.0
 
+# playwright is installed at Dockerfile build time because it's not available on all platforms

@@ -38,25 +38,29 @@ valid_method = {
 
 default_method = 'GET'
 
+
 class StringListField(StringField):
     widget = widgets.TextArea()
 
     def _value(self):
         if self.data:
-            return "\r\n".join(self.data)
+            # ignore empty lines in the storage
+            data = list(filter(lambda x: len(x.strip()), self.data))
+            # Apply strip to each line
+            data = list(map(lambda x: x.strip(), data))
+            return "\r\n".join(data)
         else:
             return u''
 
     # incoming
     def process_formdata(self, valuelist):
-        if valuelist:
-            # Remove empty strings
-            cleaned = list(filter(None, valuelist[0].split("\n")))
-            self.data = [x.strip() for x in cleaned]
-            p = 1
+        if valuelist and len(valuelist[0].strip()):
+            # Remove empty strings, stripping and splitting \r\n, only \n etc.
+            self.data = valuelist[0].splitlines()
+            # Remove empty lines from the final data
+            self.data = list(filter(lambda x: len(x.strip()), self.data))
         else:
             self.data = []
-
 
 
 class SaltyPasswordField(StringField):
@@ -86,6 +90,13 @@ class SaltyPasswordField(StringField):
         else:
             self.data = False
 
+class TimeBetweenCheckForm(Form):
+    weeks = IntegerField('Weeks', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    days = IntegerField('Days', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    hours = IntegerField('Hours', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    minutes = IntegerField('Minutes', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    seconds = IntegerField('Seconds', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    # @todo add total seconds minimum validatior = minimum_seconds_recheck_time
 
 # Separated by  key:value
 class StringDictKeyValue(StringField):
@@ -307,6 +318,7 @@ class commonSettingsForm(Form):
     notification_format = SelectField('Notification format', choices=valid_notification_formats.keys(), default=default_notification_format)
     fetch_backend = RadioField(u'Fetch method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
+    webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")] )
 
 class SingleBrowserStep(Form):
     # Thumbnail field, I guess each step is snapshotted as snapshot-stepNo, then we just keep reloading for new snapshots/thumbnails?
@@ -326,8 +338,7 @@ class watchForm(commonSettingsForm):
     url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)], default='')
 
-    minutes_between_check = fields.IntegerField('Maximum time in minutes until recheck',
-                                               [validators.Optional(), validators.NumberRange(min=1)])
+    time_between_check = FormField(TimeBetweenCheckForm)
 
     css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()], default='')
 
@@ -345,9 +356,9 @@ class watchForm(commonSettingsForm):
     # Maybe via default=... ?
     browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=2)
 
-
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
     save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
+    proxy = RadioField('Proxy')
 
     def validate(self, **kwargs):
         if not super().validate():
@@ -365,8 +376,10 @@ class watchForm(commonSettingsForm):
 
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
-    minutes_between_check = fields.IntegerField('Maximum time in minutes until recheck',
-                                               [validators.NumberRange(min=1)])
+    time_between_check = FormField(TimeBetweenCheckForm)
+    proxy = RadioField('Proxy')
+
+
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
 
@@ -376,8 +389,10 @@ class globalSettingsApplicationForm(commonSettingsForm):
     ignore_whitespace = BooleanField('Ignore whitespace')
     real_browser_save_screenshot = BooleanField('Save last screenshot when using Chrome?')
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
+    empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
     fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    api_access_token_enabled = BooleanField('API access token security check enabled', default=True, validators=[validators.Optional()])
     password = SaltyPasswordField()
 
 
@@ -389,4 +404,3 @@ class globalSettingsForm(Form):
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
-

@@ -12,7 +12,7 @@ Live your data-life *pro-actively* instead of *re-actively*.
 Free, Open-source web page monitoring, notification and change detection. Don't have time? [**Try our $6.99/month subscription - unlimited checks and watches!**](https://lemonade.changedetection.io/start)
 
 
-[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />](https://lemonade.changedetection.io/start)
+[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />](https://lemonade.changedetection.io/start)
 
 
 **Get your own private instance now! Let us host it for you!**
@@ -48,12 +48,19 @@ _Need an actual Chrome runner with Javascript support? We support fetching via W
 
 ## Screenshots
 
-Examining differences in content.
+### Examine differences in content.
 
-<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
+Easily see what changed, examine by word, line, or individual character.
+
+<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
 
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
 
+### Target elements with the Visual Selector tool.
+
+Available when connected to a <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher">playwright content fetcher</a> (available also as part of our subscription service)
+
+<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/visualselector-anim.gif" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
 
 ## Installation
 
@@ -129,7 +136,7 @@ Just some examples
  
 <a href="https://github.com/caronc/apprise#popular-notification-services">And everything else in this list!</a>
 
-<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/screenshot-notifications.png" style="max-width:100%;" alt="Self-hosted web page change monitoring notifications"  title="Self-hosted web page change monitoring notifications"  />
+<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot-notifications.png" style="max-width:100%;" alt="Self-hosted web page change monitoring notifications"  title="Self-hosted web page change monitoring notifications"  />
 
 Now you can also customise your notification content!
 
@@ -137,11 +144,11 @@ Now you can also customise your notification content!
 
 Detect changes and monitor data in JSON API's by using the built-in JSONPath selectors as a filter / selector.
 
-![image](https://user-images.githubusercontent.com/275001/125165842-0ce01980-e1dc-11eb-9e73-d8137dd162dc.png)
+![image](https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/json-filter-field-example.png)
 
 This will re-parse the JSON and apply formatting to the text, making it super easy to monitor and detect changes in JSON API results
 
-![image](https://user-images.githubusercontent.com/275001/125165995-d9ea5580-e1dc-11eb-8030-f0deced2661a.png)
+![image](https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/json-diff-example.png)
 
 ### Parse JSON embedded in HTML!
 
@@ -170,11 +177,14 @@ Raspberry Pi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! See the 
 
 Do you use changedetection.io to make money? does it save you time or money? Does it make your life easier? less stressful? Remember, we write this software when we should be doing actual paid work, we have to buy food and pay rent just like you.
 
-Please support us, even small amounts help a LOT.
 
-BTC `1PLFN327GyUarpJd7nVe7Reqg9qHx5frNn`
+Firstly, consider taking out a [change detection monthly subscription - unlimited checks and watches](https://lemonade.changedetection.io/start) , even if you don't use it, you still get the warm fuzzy feeling of helping out the project. (And who knows, you might just use it!)
 
-<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/btc-support.png" style="max-width:50%;" alt="Support us!"  />
+Or directly donate an amount PayPal [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?hosted_button_id=7CP6HR9ZCNDYJ)
+
+Or BTC `1PLFN327GyUarpJd7nVe7Reqg9qHx5frNn`
+
+<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/btc-support.png" style="max-width:50%;" alt="Support us!"  />
 
 ## Commercial Support
 

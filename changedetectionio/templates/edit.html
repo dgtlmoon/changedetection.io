@@ -2,17 +2,21 @@
 {% block content %}
 {% from '_helpers.jinja' import render_field, render_checkbox_field, render_button %}
 {% from '_common_fields.jinja' import render_common_settings_form %}
-
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}" ></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='stepper.js')}}" defer></script>
 <script>
     const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
+    const watch_visual_selector_data_url="{{url_for('static_content', group='visual_selector_data', filename=uuid)}}";
+    const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
+
 {% if emailprefix %}
     const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
 {% endif %}
+
 </script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='visual-selector.js')}}" defer></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>
 
 <div class="edit-form monospaced-textarea">
 
@@ -20,6 +24,8 @@
         <ul>
             <li class="tab" id="default-tab"><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
+            <li class="tab"><a href="#browser-steps">Browser Steps</a></li>
+            <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Selector</a></li>
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
         </ul>
@@ -44,7 +50,7 @@
                         <span class="pure-form-message-inline">Organisational tag/group name used in the main listing page</span>
                     </div>
                     <div class="pure-control-group">
-                        {{ render_field(form.minutes_between_check) }}
+                        {{ render_field(form.time_between_check, class="time-check-widget") }}
                         {% if has_empty_checktime %}
                         <span class="pure-form-message-inline">Currently using the <a
                                 href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>, change to another value if you want to be specific.</span>
@@ -60,22 +66,40 @@
             </div>
 
             <div class="tab-pane-inner" id="request">
-                    <div class="pure-control-group">
-                        {{ render_field(form.fetch_backend) }}
+                    <div class="pure-control-group inline-radio">
+                        {{ render_field(form.fetch_backend, class="fetch-backend") }}
                         <span class="pure-form-message-inline">
                             <p>Use the <strong>Basic</strong> method (default) where your watched site doesn't need Javascript to render.</p>
                             <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
                         </span>
                     </div>
-                 <div id="webdriver-stepper">
-                    {{ render_field(form.browser_steps) }}
-                 </div>
-                <hr/>
-                <fieldset class="pure-group" id="request-override">
-
-                    <span class="pure-form-message-inline">
+                {% if form.proxy %}
+                    <div class="pure-control-group inline-radio">
+                        {{ render_field(form.proxy, class="fetch-backend-proxy") }}
+                        <span class="pure-form-message-inline">
+                        Choose a proxy for this watch
+                        </span>
+                    </div>
+                {% endif %}
+                <fieldset id="webdriver-override-options">
+                    <div class="pure-form-message-inline">
+                        <strong>If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here.</strong>
+                        <br/>
+                        This will wait <i>n</i> seconds before extracting the text.
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.webdriver_delay) }}
+                    </div>
+                    {% if using_global_webdriver_wait %}
+                    <div class="pure-form-message-inline">
+                        <strong>Using the current global default settings</strong>
+                    </div>
+                    {% endif %}
+                </fieldset>
+                <fieldset class="pure-group" id="requests-override-options">
+                    <div class="pure-form-message-inline">
                         <strong>Request override is currently only used by the <i>Basic fast Plaintext/HTTP Client</i> method.</strong>
-                    </span>
+                    </div>
                     <div class="pure-control-group">
                         {{ render_field(form.method) }}
                     </div>
@@ -99,6 +123,15 @@ User-Agent: wonderbra 1.0") }}
                 <br/>
             </div>
 
+
+            <div class="tab-pane-inner" id="browser-steps">
+                <fieldset>
+                    <div class="pure-control-group">
+                        {{ render_field(form.browser_steps) }}
+                    </div>
+                </fieldset>
+            </div>
+
             <div class="tab-pane-inner" id="notifications">
                 <strong>Note: <i>These settings override the global settings for this watch.</i></strong>
                 <fieldset>
@@ -109,13 +142,9 @@ User-Agent: wonderbra 1.0") }}
             </div>
 
             <div class="tab-pane-inner" id="filters-and-triggers">
-                <fieldset>
-                        <div class="pure-control-group">
+                    <div class="pure-control-group">
                             <strong>Pro-tips:</strong><br/>
                             <ul>
-                                <li>
-                                    If using browser-steps, this runs AFTER those steps have completed.
-                                </li>
                                 <li>
                                     Use the preview page to see your filters and triggers highlighted.
                                 </li>
@@ -124,7 +153,6 @@ User-Agent: wonderbra 1.0") }}
                                 </li>
                             </ul>
                     </div>
-
                     <div class="pure-control-group">
                         {{ render_field(form.css_filter, placeholder=".class-name or #some-id, or other CSS selector rule.",
                         class="m-d") }}
@@ -133,14 +161,14 @@ User-Agent: wonderbra 1.0") }}
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
                         <li>JSON - Limit text to this JSON rule, using <a href="https://pypi.org/project/jsonpath-ng/">JSONPath</a>, prefix with <code>"json:"</code>, use <code>json:$</code> to force re-formatting if required,  <a
                                 href="https://jsonpath.com/" target="new">test your JSONPath here</a></li>
-                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash, example  <code>//*[contains(@class, 'sametext')]</code>, <a
+                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash, example  <code>//*[contains(@class, 'sametext')]</code> or <code>xpath://*[contains(@class, 'sametext')]</code>, <a
                                 href="http://xpather.com/" target="new">test your XPath here</a></li>
                     </ul>
                     Please be sure that you thoroughly understand how to write CSS or JSONPath, XPath selector rules before filing an issue on GitHub! <a
                                 href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
                 </span>
                     </div>
-                    <fieldset class="pure-group">
+                    <div class="pure-control-group">
                       {{ render_field(form.subtractive_selectors, rows=5, placeholder="header
 footer
 nav
@@ -151,8 +179,7 @@ nav
                           <li> Add multiple elements or CSS selectors per line to ignore multiple parts of the HTML. </li>
                         </ul>
                       </span>
-                    </fieldset>
-                </fieldset>
+                    </div>
                 <fieldset class="pure-group">
                     {{ render_field(form.ignore_text, rows=5, placeholder="Some text to ignore in a line
 /some.regex\d{2}/ for case-INsensitive regex
@@ -184,14 +211,54 @@ nav
                 </fieldset>
             </div>
 
+            <div class="tab-pane-inner visual-selector-ui" id="visualselector">
+                <img id="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
+
+                <fieldset>
+                    <div class="pure-control-group">
+                        {% if visualselector_enabled %}
+                            {% if visualselector_data_is_ready %}
+                                <div id="selector-header">
+                                    <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Clear selection</a>
+                                    <i class="fetching-update-notice" style="font-size: 80%;">One moment, fetching screenshot and element information..</i>
+                                </div>
+                                <div id="selector-wrapper">
+                                    <!-- request the screenshot and get the element offset info ready -->
+                                    <!-- use img src ready load to know everything is ready to map out -->
+                                    <!-- @todo: maybe something interesting like a field to select 'elements that contain text... and their parents n' -->
+                                    <img id="selector-background" />
+                                    <canvas id="selector-canvas"></canvas>
+
+                                </div>
+                                <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
+
+                            <span class="pure-form-message-inline">
+                                <p><span style="font-weight: bold">Beta!</span> The Visual Selector is new and there may be minor bugs, please report pages that dont work, help us to improve this software!</p>
+                            </span>
+
+                            {% else %}
+                                <span class="pure-form-message-inline">Screenshot and element data is not available or not yet ready.</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="pure-form-message-inline">
+                                <p>Sorry, this functionality only works with Playwright/Chrome enabled watches.</p>
+                                <p>Enable the Playwright Chrome fetcher, or alternatively try our <a href="https://lemonade.changedetection.io/start">very affordable subscription based service</a>.</p>
+                                <p>This is because Selenium/WebDriver can not extract full page screenshots reliably.</p>
+
+                            </span>
+                        {% endif %}
+                    </div>
+                </fieldset>
+            </div>
+
             <div id="actions">
                 <div class="pure-control-group">
 
                       {{ render_button(form.save_button) }} {{ render_button(form.save_and_preview_button) }}
 
-                    <a href="{{url_for('api_delete', uuid=uuid)}}"
+                    <a href="{{url_for('form_delete', uuid=uuid)}}"
                        class="pure-button button-small button-error ">Delete</a>
-                    <a href="{{url_for('api_clone', uuid=uuid)}}"
+                    <a href="{{url_for('form_clone', uuid=uuid)}}"
                        class="pure-button button-small ">Create Copy</a>
                 </div>
             </div>

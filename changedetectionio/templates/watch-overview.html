@@ -3,9 +3,10 @@
 {% from '_helpers.jinja' import render_simple_field %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
+
 <div class="box">
 
-    <form class="pure-form" action="{{ url_for('api_watch_add') }}" method="POST" id="new-watch-form">
+    <form class="pure-form" action="{{ url_for('form_watch_add') }}" method="POST" id="new-watch-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <fieldset>
             <legend>Add a new change detection watch</legend>
@@ -13,8 +14,7 @@
                 {{ render_simple_field(form.tag, value=active_tag if active_tag else '', placeholder="watch group") }}
             <button type="submit" class="pure-button pure-button-primary">Watch</button>
         </fieldset>
-        <!-- add extra stuff, like do a http POST and send headers -->
-        <!-- user/pass r = requests.get('https://api.github.com/user', auth=('user', 'pass')) -->
+        <span style="color:#eee; font-size: 80%;"><img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread.svg')}}" /> Tip: You can also add 'shared' watches. <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">More info</a></a></span>
     </form>
     <div>
         <a href="{{url_for('index')}}" class="pure-button button-tag {{'active' if not active_tag }}">All</a>
@@ -53,6 +53,8 @@
 
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
                     <a class="external" target="_blank" rel="noopener" href="{{ watch.url.replace('source:','') }}"></a>
+                    <a href="{{url_for('form_share_put_watch', uuid=watch.uuid)}}"><img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread.svg')}}" /></a>
+
                     {%if watch.fetch_backend == "html_webdriver" %}<img style="height: 1em; display:inline-block;" src="{{url_for('static_content', group='images', filename='Google-Chrome-icon.png')}}" />{% endif %}
 
                     {% if watch.last_error is defined and watch.last_error != False %}
@@ -73,7 +75,7 @@
                     {% endif %}
                 </td>
                 <td>
-                    <a {% if watch.uuid in queued_uuids %}disabled="true"{% endif %} href="{{ url_for('api_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
+                    <a {% if watch.uuid in queued_uuids %}disabled="true"{% endif %} href="{{ url_for('form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
                        class="recheck pure-button button-small pure-button-primary">{% if watch.uuid in queued_uuids %}Queued{% else %}Recheck{% endif %}</a>
                     <a href="{{ url_for('edit_page', uuid=watch.uuid)}}" class="pure-button button-small pure-button-primary">Edit</a>
                     {% if watch.history|length >= 2 %}
@@ -95,7 +97,7 @@
             </li>
             {% endif %}
             <li>
-               <a href="{{ url_for('api_watch_checknow', tag=active_tag) }}" class="pure-button button-tag ">Recheck
+               <a href="{{ url_for('form_watch_checknow', tag=active_tag) }}" class="pure-button button-tag ">Recheck
                 all {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
             </li>
             <li>

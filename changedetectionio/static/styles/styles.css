@@ -180,6 +180,9 @@ body:after, body:before {
   .messages li.notice {
     background: rgba(255, 255, 255, 0.5); }
 
+.messages.with-share-link > *:hover {
+  cursor: pointer; }
+
 #notification-customisation {
   border: 1px solid #ccc;
   padding: 0.5rem;
@@ -281,6 +284,11 @@ footer {
 .pure-form {
   /* The input fields with errors */
   /* The list of errors */ }
+  .pure-form fieldset {
+    padding-top: 0px; }
+    .pure-form fieldset ul {
+      padding-bottom: 0px;
+      margin-bottom: 0px; }
   .pure-form .pure-control-group, .pure-form .pure-group, .pure-form .pure-controls {
     padding-bottom: 1em; }
     .pure-form .pure-control-group div, .pure-form .pure-group div, .pure-form .pure-controls div {
@@ -306,10 +314,10 @@ footer {
     font-weight: bold; }
   .pure-form textarea {
     width: 100%; }
-  .pure-form ul#fetch_backend {
+  .pure-form .inline-radio ul {
     margin: 0px;
     list-style: none; }
-    .pure-form ul#fetch_backend > li > * {
+    .pure-form .inline-radio ul li > * {
       display: inline-block; }
 
 #browser_steps {
@@ -341,7 +349,8 @@ footer {
     padding-top: 110px; }
   div.tabs.collapsable ul li {
     display: block;
-    border-radius: 0px; }
+    border-radius: 0px;
+    margin-right: 0px; }
   input[type='text'] {
     width: 100%; }
   /*
@@ -432,6 +441,15 @@ and also iPads specifically.
   .tab-pane-inner:target {
     display: block; }
 
+#beta-logo {
+  height: 50px;
+  right: -3px;
+  top: -3px;
+  position: absolute; }
+
+#selector-header {
+  padding-bottom: 1em; }
+
 .edit-form {
   min-width: 70%;
   /* so it cant overflow */
@@ -451,3 +469,35 @@ ul {
   padding-left: 1em;
   padding-top: 0px;
   margin-top: 4px; }
+
+.time-check-widget tr {
+  display: inline; }
+  .time-check-widget tr input[type="number"] {
+    width: 5em; }
+
+#selector-wrapper {
+  height: 600px;
+  overflow-y: scroll;
+  position: relative; }
+  #selector-wrapper > img {
+    position: absolute;
+    z-index: 4;
+    max-width: 100%; }
+  #selector-wrapper > canvas {
+    position: relative;
+    z-index: 5;
+    max-width: 100%; }
+    #selector-wrapper > canvas:hover {
+      cursor: pointer; }
+
+#selector-current-xpath {
+  font-size: 80%; }
+
+#webdriver-override-options input[type="number"] {
+  width: 5em; }
+
+#api-key:hover {
+  cursor: pointer; }
+
+#api-key-copy {
+  color: #0078e7; }

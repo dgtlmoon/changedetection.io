@@ -1,3 +1,6 @@
+from flask import (
+    flash
+)
 import json
 import logging
 import os
@@ -7,15 +10,22 @@ import uuid as uuid_builder
 from copy import deepcopy
 from os import mkdir, path, unlink
 from threading import Lock
+import re
+import requests
+import secrets
 
-from changedetectionio.model import Watch, App
-
+from . model import App, Watch
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change
 class ChangeDetectionStore:
     lock = Lock()
+    # For general updates/writes that can wait a few seconds
+    needs_write = False
+
+    # For when we edit, we should write to disk
+    needs_write_urgent = False
 
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         # Should only be active for docker
@@ -23,12 +33,14 @@ class ChangeDetectionStore:
         self.needs_write = False
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
+        self.proxy_list = None
         self.stop_thread = False
 
         self.__data = App.model()
 
         # Base definition for all watchers
-        self.generic_definition = Watch.model()
+        # deepcopy part of #569 - not sure why its needed exactly
+        self.generic_definition = deepcopy(Watch.model())
 
         if path.isfile('changedetectionio/source.txt'):
             with open('changedetectionio/source.txt') as f:
@@ -96,9 +108,23 @@ class ChangeDetectionStore:
 
         # Generate the URL access token for RSS feeds
         if not 'rss_access_token' in self.__data['settings']['application']:
-            import secrets
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['rss_access_token'] = secret
+
+        # Generate the API access token
+        if not 'api_access_token' in self.__data['settings']['application']:
+            secret = secrets.token_hex(16)
+            self.__data['settings']['application']['api_access_token'] = secret
+
+        # Proxy list support - available as a selection in settings when text file is imported
+        # CSV list
+        # "name, address", or just "name"
+        proxy_list_file = "{}/proxies.txt".format(self.datastore_path)
+        if path.isfile(proxy_list_file):
+            self.import_proxy_list(proxy_list_file)
+
+        # Bump the update version by running updates
+        self.run_updates()
 
         self.needs_write = True
 
@@ -131,6 +157,10 @@ class ChangeDetectionStore:
 
     def update_watch(self, uuid, update_obj):
 
+        # It's possible that the watch could be deleted before update
+        if not self.__data['watching'].get(uuid):
+            return
+
         with self.lock:
 
             # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
@@ -144,6 +174,17 @@ class ChangeDetectionStore:
             self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
 
         self.needs_write = True
+
+    @property
+    def threshold_seconds(self):
+        seconds = 0
+        mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
+        minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
+        for m, n in mtable.items():
+            x = self.__data['settings']['requests']['time_between_check'].get(m)
+            if x:
+                seconds += x * n
+        return max(seconds, minimum_seconds_recheck_time)
 
     @property
     def data(self):
@@ -174,7 +215,8 @@ class ChangeDetectionStore:
     def get_all_tags(self):
         tags = []
         for uuid, watch in self.data['watching'].items():
-
+            if watch['tag'] is None:
+                continue
             # Support for comma separated list of tags.
             for tag in watch['tag'].split(','):
                 tag = tag.strip()
@@ -207,7 +249,7 @@ class ChangeDetectionStore:
 
                 del self.data['watching'][uuid]
 
-            self.needs_write = True
+            self.needs_write_urgent = True
 
     # Clone a watch by UUID
     def clone(self, uuid):
@@ -231,61 +273,62 @@ class ChangeDetectionStore:
         return self.data['watching'][uuid].get(val)
 
     # Remove a watchs data but keep the entry (URL etc)
-    def scrub_watch(self, uuid, limit_timestamp = False):
+    def scrub_watch(self, uuid):
+        import pathlib
 
-        import hashlib
-        del_timestamps = []
+        self.__data['watching'][uuid].update({'history': {}, 'last_checked': 0, 'last_changed': 0, 'newest_history_key': 0, 'previous_md5': False})
+        self.needs_write_urgent = True
 
-        changes_removed = 0
-
-        for timestamp, path in self.data['watching'][uuid]['history'].items():
-            if not limit_timestamp or (limit_timestamp is not False and int(timestamp) > limit_timestamp):
-                self.unlink_history_file(path)
-                del_timestamps.append(timestamp)
-                changes_removed += 1
-
-        if not limit_timestamp:
-            self.data['watching'][uuid]['last_checked'] = 0
-            self.data['watching'][uuid]['last_changed'] = 0
-            self.data['watching'][uuid]['previous_md5'] = ""
-
-
-        for timestamp in del_timestamps:
-            del self.data['watching'][uuid]['history'][str(timestamp)]
-
-            # If there was a limitstamp, we need to reset some meta data about the entry
-            # This has to happen after we remove the others from the list
-            if limit_timestamp:
-                newest_key = self.get_newest_history_key(uuid)
-                if newest_key:
-                    self.data['watching'][uuid]['last_checked'] = int(newest_key)
-                    # @todo should be the original value if it was less than newest key
-                    self.data['watching'][uuid]['last_changed'] = int(newest_key)
-                    try:
-                        with open(self.data['watching'][uuid]['history'][str(newest_key)], "rb") as fp:
-                            content = fp.read()
-                        self.data['watching'][uuid]['previous_md5'] = hashlib.md5(content).hexdigest()
-                    except (FileNotFoundError, IOError):
-                        self.data['watching'][uuid]['previous_md5'] = ""
-                        pass
-
-        self.needs_write = True
-        return changes_removed
+        for item in pathlib.Path(self.datastore_path).rglob(uuid+"/*.txt"):
+            unlink(item)
 
     def add_watch(self, url, tag="", extras=None, write_to_disk_now=True):
         if extras is None:
             extras = {}
+        # should always be str
+        if tag is None or not tag:
+            tag=''
+
+        # Incase these are copied across, assume it's a reference and deepcopy()
+        apply_extras = deepcopy(extras)
+
+        # Was it a share link? try to fetch the data
+        if (url.startswith("https://changedetection.io/share/")):
+            try:
+                r = requests.request(method="GET",
+                                     url=url,
+                                     # So we know to return the JSON instead of the human-friendly "help" page
+                                     headers={'App-Guid': self.__data['app_guid']})
+                res = r.json()
+
+                # List of permisable stuff we accept from the wild internet
+                for k in ['url', 'tag',
+                                   'paused', 'title',
+                                   'previous_md5', 'headers',
+                                   'body', 'method',
+                                   'ignore_text', 'css_filter',
+                                   'subtractive_selectors', 'trigger_text',
+                                   'extract_title_as_title']:
+                    if res.get(k):
+                        apply_extras[k] = res[k]
+
+            except Exception as e:
+                logging.error("Error fetching metadata for shared watch link", url, str(e))
+                flash("Error fetching metadata for {}".format(url), 'error')
+                return False
 
         with self.lock:
             # @todo use a common generic version of this
             new_uuid = str(uuid_builder.uuid4())
-            new_watch = Watch.model({
+            # #Re 569
+            # Not sure why deepcopy was needed here, sometimes new watches would appear to already have 'history' set
+            # I assumed this would instantiate a new object but somehow an existing dict was getting used
+            new_watch = deepcopy(Watch.model({
                 'url': url,
                 'tag': tag
-            })
+            }))
 
-            # Incase these are copied across, assume it's a reference and deepcopy()
-            apply_extras = deepcopy(extras)
+
             for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
                 if k in apply_extras:
                     del apply_extras[k]
@@ -329,6 +372,15 @@ class ChangeDetectionStore:
 
         return False
 
+    def visualselector_data_is_ready(self, watch_uuid):
+        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
+        screenshot_filename = "{}/last-screenshot.png".format(output_path)
+        elements_index_filename = "{}/elements.json".format(output_path)
+        if path.isfile(screenshot_filename) and  path.isfile(elements_index_filename) :
+            return True
+
+        return False
+
     # Save as PNG, PNG is larger but better for doing visual diff in the future
     def save_screenshot(self, watch_uuid, screenshot: bytes):
         output_path = "{}/{}".format(self.datastore_path, watch_uuid)
@@ -337,9 +389,17 @@ class ChangeDetectionStore:
             f.write(screenshot)
             f.close()
 
+    def save_xpath_data(self, watch_uuid, data):
+        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
+        fname = "{}/elements.json".format(output_path)
+        with open(fname, 'w') as f:
+            f.write(json.dumps(data))
+            f.close()
+
+
     def sync_to_json(self):
         logging.info("Saving JSON..")
-
+        print("Saving JSON..")
         try:
             data = deepcopy(self.__data)
         except RuntimeError as e:
@@ -361,6 +421,7 @@ class ChangeDetectionStore:
                 logging.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
 
             self.needs_write = False
+            self.needs_write_urgent = False
 
     # Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
     # by just running periodically in one thread, according to python, dict updates are threadsafe.
@@ -371,14 +432,14 @@ class ChangeDetectionStore:
                 print("Shutting down datastore thread")
                 return
 
-            if self.needs_write:
+            if self.needs_write or self.needs_write_urgent:
                 self.sync_to_json()
 
             # Once per minute is enough, more and it can cause high CPU usage
             # better here is to use something like self.app.config.exit.wait(1), but we cant get to 'app' from here
-            for i in range(30):
-                time.sleep(2)
-                if self.stop_thread:
+            for i in range(120):
+                time.sleep(0.5)
+                if self.stop_thread or self.needs_write_urgent:
                     break
 
     # Go through the datastore path and remove any snapshots that are not mentioned in the index
@@ -394,7 +455,69 @@ class ChangeDetectionStore:
         import pathlib
 
         # Only in the sub-directories
-        for item in pathlib.Path(self.datastore_path).rglob("*/*txt"):
-            if not str(item) in index:
-                print ("Removing",item)
-                unlink(item)
+        for uuid in self.data['watching']:
+            for item in pathlib.Path(self.datastore_path).rglob(uuid+"/*.txt"):
+                if not str(item) in index:
+                    print ("Removing",item)
+                    unlink(item)
+
+    def import_proxy_list(self, filename):
+        import csv
+        with open(filename, newline='') as f:
+            reader = csv.reader(f, skipinitialspace=True)
+            # @todo This loop can could be improved
+            l = []
+            for row in reader:
+                if len(row):
+                    if len(row)>=2:
+                        l.append(tuple(row[:2]))
+                    else:
+                        l.append(tuple([row[0], row[0]]))
+            self.proxy_list = l if len(l) else None
+
+
+    # Run all updates
+    # IMPORTANT - Each update could be run even when they have a new install and the schema is correct
+    #             So therefor - each `update_n` should be very careful about checking if it needs to actually run
+    #             Probably we should bump the current update schema version with each tag release version?
+    def run_updates(self):
+        import inspect
+        import shutil
+
+        updates_available = []
+        for i, o in inspect.getmembers(self, predicate=inspect.ismethod):
+            m = re.search(r'update_(\d+)$', i)
+            if m:
+                updates_available.append(int(m.group(1)))
+        updates_available.sort()
+
+        for update_n in updates_available:
+            if update_n > self.__data['settings']['application']['schema_version']:
+                print ("Applying update_{}".format((update_n)))
+                # Wont exist on fresh installs
+                if os.path.exists(self.json_store_path):
+                    shutil.copyfile(self.json_store_path, self.datastore_path+"/url-watches-before-{}.json".format(update_n))
+
+                try:
+                    update_method = getattr(self, "update_{}".format(update_n))()
+                except Exception as e:
+                    print("Error while trying update_{}".format((update_n)))
+                    print(e)
+                    # Don't run any more updates
+                    return
+                else:
+                    # Bump the version, important
+                    self.__data['settings']['application']['schema_version'] = update_n
+
+    # Convert minutes to seconds on settings and each watch
+    def update_1(self):
+        if self.data['settings']['requests'].get('minutes_between_check'):
+            self.data['settings']['requests']['time_between_check']['minutes'] = self.data['settings']['requests']['minutes_between_check']
+            # Remove the default 'hours' that is set from the model
+            self.data['settings']['requests']['time_between_check']['hours'] = None
+
+        for uuid, watch in self.data['watching'].items():
+            if 'minutes_between_check' in watch:
+                # Only upgrade individual watch time if it was set
+                if watch.get('minutes_between_check', False):
+                    self.data['watching'][uuid]['time_between_check']['minutes'] = watch['minutes_between_check']

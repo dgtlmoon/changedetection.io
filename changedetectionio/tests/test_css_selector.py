@@ -89,7 +89,7 @@ def test_check_markup_css_filter_restriction(client, live_server):
     assert b"1 Imported" in res.data
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
@@ -110,7 +110,7 @@ def test_check_markup_css_filter_restriction(client, live_server):
     assert bytes(css_filter.encode('utf-8')) in res.data
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
@@ -118,7 +118,7 @@ def test_check_markup_css_filter_restriction(client, live_server):
     set_modified_response()
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 

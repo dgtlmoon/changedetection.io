@@ -16,7 +16,7 @@ def test_check_notification_error_handling(client, live_server):
     # use a different URL so that it doesnt interfere with the actual check until we are ready
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("api_watch_add"),
+        url_for("form_watch_add"),
         data={"url": "https://changedetection.io/CHANGELOG.txt", "tag": ''},
         follow_redirects=True
     )
@@ -35,7 +35,7 @@ def test_check_notification_error_handling(client, live_server):
               "tag": "",
               "title": "",
               "headers": "",
-              "minutes_between_check": "180",
+              "time_between_check-minutes": "180",
               "fetch_backend": "html_requests",
               "trigger_check": "y"},
         follow_redirects=True

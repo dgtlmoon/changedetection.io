@@ -237,6 +237,11 @@ body:after, body:before {
             background: rgba(255, 255, 255, .5);
         }
     }
+    &.with-share-link {
+     > *:hover {
+       cursor:pointer;
+     }
+    }
 }
 
 #notification-customisation {
@@ -370,6 +375,13 @@ footer {
 
 
 .pure-form {
+    fieldset {
+        padding-top: 0px;
+        ul {
+            padding-bottom: 0px;
+            margin-bottom: 0px;
+        }
+    }
     .pure-control-group, .pure-group, .pure-controls {
         padding-bottom: 1em;
         div {
@@ -413,14 +425,16 @@ footer {
   textarea {
     width: 100%;
   }
-  ul#fetch_backend {
-    margin: 0px;
-    list-style: none;
-    > li {
-        > * {
-            display: inline-block;
+  .inline-radio {
+      ul {
+        margin: 0px;
+        list-style: none;
+        li {
+            > * {
+                display: inline-block;
+            }
         }
-    }
+      }
   }
 }
 
@@ -471,6 +485,7 @@ footer {
   div.tabs.collapsable ul li {
     display: block;
     border-radius: 0px;
+    margin-right: 0px;
   }
 
   input[type='text'] {
@@ -615,6 +630,18 @@ $form-edge-padding: 20px;
     padding: 0px;
 }
 
+#beta-logo {
+    height: 50px;
+    // looks better when it's hanging off a little
+    right: -3px;
+    top: -3px;
+    position: absolute;
+}
+
+#selector-header {
+    padding-bottom: 1em;
+}
+
 .edit-form {
   min-width: 70%;
   /* so it cant overflow */
@@ -640,4 +667,53 @@ ul {
     padding-left: 1em;
     padding-top: 0px;
     margin-top: 4px;
+}
+
+.time-check-widget {
+    tr {
+        display: inline;
+        input[type="number"] {
+            width: 5em;
+        }
+    }
+}
+
+#selector-wrapper {
+ height: 600px;
+ overflow-y: scroll;
+ position: relative;
+    //width: 100%;
+ > img {
+    position: absolute;
+    z-index: 4;
+    max-width: 100%;
+ }
+ >canvas {
+    position: relative;
+    z-index: 5;
+     max-width: 100%;
+     &:hover {
+     cursor: pointer;
+     }
+ }
+}
+
+#selector-current-xpath {
+  font-size: 80%;
+}
+
+#webdriver-override-options {
+        input[type="number"] {
+            width: 5em;
+        }
+}
+
+#api-key {
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+#api-key-copy {
+  color: #0078e7;
 }

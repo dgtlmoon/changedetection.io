@@ -10,9 +10,7 @@ from changedetectionio.notification import (
 )
 
 class model(dict):
-    def __init__(self, *arg, **kw):
-        super(model, self).__init__(*arg, **kw)
-        self.update({
+    base_config = {
             'note': "Hello! If you change this file manually, please be sure to restart your changedetection.io instance!",
             'watching': {},
             'settings': {
@@ -24,14 +22,16 @@ class model(dict):
                 },
                 'requests': {
                     'timeout': 15,  # Default 15 seconds
-                    # Default 3 hours
-                    'minutes_between_check': 3 * 60,  # Default 3 hours
-                    'workers': 10  # Number of threads, lower is better for slow connections
+                    'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
+                    'workers': 10,  # Number of threads, lower is better for slow connections
+                    'proxy': None # Preferred proxy connection
                 },
                 'application': {
+                    'api_access_token_enabled': True,
                     'password': False,
                     'base_url' : None,
                     'extract_title_as_title': False,
+                    'empty_pages_are_a_change': False,
                     'fetch_backend': os.getenv("DEFAULT_FETCH_BACKEND", "html_requests"),
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
                     'global_subtractive_selectors': [],
@@ -43,7 +43,12 @@ class model(dict):
                     'notification_body': default_notification_body,
                     'notification_format': default_notification_format,
                     'real_browser_save_screenshot': True,
-                    'schema_version' : 0
+                    'schema_version' : 0,
+                    'webdriver_delay': None  # Extra delay in seconds before extracting text
                 }
             }
-        })
+        }
+
+    def __init__(self, *arg, **kw):
+        super(model, self).__init__(*arg, **kw)
+        self.update(self.base_config)
