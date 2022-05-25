@@ -3,8 +3,27 @@
 
 $(document).ready(function() {
 
+    var current_selected_i;
+    var state_clicked=false;
+
+    var c;
+
+    // greyed out fill context
+    var xctx;
+    // redline highlight context
+    var ctx;
+
+    var current_default_xpath;
+    var x_scale=1;
+    var y_scale=1;
+    var selector_image;
+    var selector_image_rect;
+    var selector_data;
+
     $('#visualselector-tab').click(function () {
         $("img#selector-background").off('load');
+        state_clicked = false;
+        current_selected_i = false;
         bootstrap_visualselector();
     });
 
@@ -35,23 +54,6 @@ $(document).ready(function() {
 
     bootstrap_visualselector();
 
-    var current_selected_i;
-    var state_clicked=false;
-
-    var c;
-
-    // greyed out fill context
-    var xctx;
-    // redline highlight context
-    var ctx;
-
-    var current_default_xpath;
-    var x_scale=1;
-    var y_scale=1;
-    var selector_image;
-    var selector_image_rect;
-    var vh;
-    var selector_data;
 
 
     function bootstrap_visualselector() {
@@ -66,7 +68,7 @@ $(document).ready(function() {
                ctx = c.getContext("2d");
                current_default_xpath =$("#css_filter").val();
                fetch_data();
-               $('#selector-canvas').off("mousemove");
+               $('#selector-canvas').off("mousemove mousedown");
                // screenshot_url defined in the edit.html template
             }).attr("src", screenshot_url);
         }
