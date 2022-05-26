@@ -342,7 +342,7 @@ class SingleBrowserStep(Form):
 
     # maybe better to set some <script>var..
     selector = StringField('Selector', [validators.Optional()], render_kw={"placeholder": "CSS or xPath selector"})
-    optional_value = StringField('value', [validators.Optional()], render_kw={"placeholder": "value"})
+    optional_value = StringField('value', [validators.Optional()], render_kw={"placeholder": "Value"})
 #   @todo move to JS? ajax fetch new field?
 #    remove_button = SubmitField('-', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
 #    add_button = SubmitField('+', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
