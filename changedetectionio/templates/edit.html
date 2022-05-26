@@ -12,6 +12,7 @@
     const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
 {% endif %}
 
+const browser_steps_config=JSON.parse('{{ browser_steps_config|tojson }}');
 </script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>

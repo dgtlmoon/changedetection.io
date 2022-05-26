@@ -39,6 +39,22 @@ valid_method = {
 
 default_method = 'GET'
 
+# Two flags, tell the JS which of the "Selector" or "Value" field should be enabled
+# 0- off, 1- on
+
+browser_steps = {'Choose one': '0 0',
+                 'Enter text in field': '1 1',
+                 'Select by label': '1 1',
+                 'Wait for text': '0 1',
+                 'Wait for seconds': '0 1',
+                 'Check checkbox': '1 0',
+                 'Uncheck checkbox': '1 0',
+                 'Click button': '1 0',
+                 'Click button containing text': '0 1',
+                 'Scroll to top': '0 0',
+                 'Scroll to bottom': '0 0',
+                 'Scroll to element': '1 0',
+                 'Switch to iFrame by index number': '0 1'}
 
 class StringListField(StringField):
     widget = widgets.TextArea()
@@ -324,21 +340,7 @@ class commonSettingsForm(Form):
 class SingleBrowserStep(Form):
     # default
     # each select <option data-enabled="enabled-0-0"
-    operation = SelectField('Operation', [validators.Optional()], choices=[
-        'Choose one',
-        'Enter text in field',
-        'Select by label',
-        'Wait for text',
-        'Wait for seconds',
-        'Check checkbox',
-        'Uncheck checkbox',
-        'Click button',
-        'Click button containing text',
-        'Scroll to top',
-        'Scroll to bottom',
-        'Scroll to element',
-        'Switch to iFrame by index number']
-        )
+    operation = SelectField('Operation', [validators.Optional()], choices=browser_steps.keys())
 
     # maybe better to set some <script>var..
     selector = StringField('Selector', [validators.Optional()], render_kw={"placeholder": "CSS or xPath selector"})

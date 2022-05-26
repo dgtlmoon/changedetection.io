@@ -633,7 +633,6 @@ def changedetection_app(config=None, datastore_o=None):
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and default['fetch_backend'] == 'html_webdriver'
 
-
             output = render_template("edit.html",
                                      uuid=uuid,
                                      watch=datastore.data['watching'][uuid],
@@ -642,6 +641,7 @@ def changedetection_app(config=None, datastore_o=None):
                                      using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                     browser_steps_config=forms.browser_steps,
                                      visualselector_data_is_ready=visualselector_data_is_ready,
                                      visualselector_enabled=visualselector_enabled
                                      )
