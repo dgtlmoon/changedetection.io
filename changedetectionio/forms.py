@@ -17,6 +17,7 @@ from wtforms import (
 )
 from wtforms.fields import FieldList, FormField
 from wtforms.validators import ValidationError
+import json
 
 from changedetectionio import content_fetcher
 from changedetectionio.notification import (
@@ -333,8 +334,13 @@ class SingleBrowserStep(Form):
         'Uncheck checkbox',
         'Click button',
         'Click button containing text',
-        'Switch to iFrame by index number'])
+        'Scroll to top',
+        'Scroll to bottom',
+        'Scroll to element',
+        'Switch to iFrame by index number']
+        )
 
+    # maybe better to set some <script>var..
     selector = StringField('Selector', [validators.Optional()], render_kw={"placeholder": "CSS or xPath selector"})
     optional_value = StringField('value', [validators.Optional()], render_kw={"placeholder": "value"})
 #   @todo move to JS? ajax fetch new field?
