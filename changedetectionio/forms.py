@@ -54,7 +54,9 @@ browser_steps = {'Choose one': '0 0',
                  'Scroll to top': '0 0',
                  'Scroll to bottom': '0 0',
                  'Scroll to element': '1 0',
-                 'Switch to iFrame by index number': '0 1'}
+# @todo
+#                 'Switch to iFrame by index number': '0 1'
+                 }
 
 class StringListField(StringField):
     widget = widgets.TextArea()
