@@ -27,7 +27,7 @@ class model(dict):
             'headers': {},  # Extra headers to send
             'body': None,
             'method': 'GET',
-            'history': {},  # Dict of timestamp and output stripped filename
+            #'history': {},  # Dict of timestamp and output stripped filename
             'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
             # Custom notification content
             'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
@@ -49,9 +49,19 @@ class model(dict):
 
     def __init__(self, *arg, **kw):
         self.update(self.base_config)
+        self.__datastore_path = kw['datastore_path']
+        del kw['datastore_path']
         # goes at the end so we update the default object with the initialiser
         super(model, self).__init__(*arg, **kw)
 
+
+    @property
+    def history(self):
+        tmp_history={}
+        with open(os.path.join(self.__datastore_path, self.get('uuid'), "history.txt"), "r") as f:
+            tmp_history = dict(i.strip().split(',', 2) for i in f.readlines())
+
+        return tmp_history
 
     @property
     def has_empty_checktime(self):

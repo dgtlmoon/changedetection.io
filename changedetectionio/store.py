@@ -40,7 +40,7 @@ class ChangeDetectionStore:
 
         # Base definition for all watchers
         # deepcopy part of #569 - not sure why its needed exactly
-        self.generic_definition = deepcopy(Watch.model())
+        self.generic_definition = deepcopy(Watch.model(datastore_path = datastore_path))
 
         if path.isfile('changedetectionio/source.txt'):
             with open('changedetectionio/source.txt') as f:
@@ -133,10 +133,10 @@ class ChangeDetectionStore:
 
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
     def get_newest_history_key(self, uuid):
-        if len(self.__data['watching'][uuid]['history']) == 1:
+        if len(self.__data['watching'][uuid].history) == 1:
             return 0
 
-        dates = list(self.__data['watching'][uuid]['history'].keys())
+        dates = list(self.__data['watching'][uuid].history.keys())
         # Convert to int, sort and back to str again
         # @todo replace datastore getter that does this automatically
         dates = [int(i) for i in dates]
@@ -240,11 +240,11 @@ class ChangeDetectionStore:
 
                 # GitHub #30 also delete history records
                 for uuid in self.data['watching']:
-                    for path in self.data['watching'][uuid]['history'].values():
+                    for path in self.data['watching'][uuid].history.values():
                         self.unlink_history_file(path)
 
             else:
-                for path in self.data['watching'][uuid]['history'].values():
+                for path in self.data['watching'][uuid].history.values():
                     self.unlink_history_file(path)
 
                 del self.data['watching'][uuid]
@@ -349,7 +349,7 @@ class ChangeDetectionStore:
 
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
-    def save_history_text(self, watch_uuid, contents):
+    def save_history_text(self, watch_uuid, contents, timestamp):
         import uuid
 
         output_path = "{}/{}".format(self.datastore_path, watch_uuid)
@@ -357,12 +357,20 @@ class ChangeDetectionStore:
         if not os.path.isdir(output_path):
             mkdir(output_path)
 
-        fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
-        with open(fname, 'wb') as f:
+        snapshot_fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
+        with open(snapshot_fname, 'wb') as f:
             f.write(contents)
             f.close()
 
-        return fname
+        # Append to index
+        # @todo check last char was \n
+        index_fname = "{}/history.txt".format(output_path)
+        with open(index_fname, 'a') as f:
+            f.write("{},{}\n".format(timestamp, snapshot_fname))
+            f.close()
+
+        #@todo bump static cache of the last timestamp so we dont need to examine the file to set a proper ''viewed'' status
+        return snapshot_fname
 
     def get_screenshot(self, watch_uuid):
         output_path = "{}/{}".format(self.datastore_path, watch_uuid)
@@ -449,8 +457,8 @@ class ChangeDetectionStore:
 
         index=[]
         for uuid in self.data['watching']:
-            for id in self.data['watching'][uuid]['history']:
-                index.append(self.data['watching'][uuid]['history'][str(id)])
+            for id in self.data['watching'][uuid].history:
+                index.append(self.data['watching'][uuid].history[str(id)])
 
         import pathlib
 
@@ -521,3 +529,23 @@ class ChangeDetectionStore:
                 # Only upgrade individual watch time if it was set
                 if watch.get('minutes_between_check', False):
                     self.data['watching'][uuid]['time_between_check']['minutes'] = watch['minutes_between_check']
+
+    # Move the history list to a flat text file index
+    # Better than SQLite because this list is only appended to, and works across NAS / NFS type setups
+    def update_5(self):
+        # @todo test running this on a newly updated one (when this already ran)
+        for uuid, watch in self.data['watching'].items():
+            history = []
+
+            if watch.get('history', False):
+                for d, p in watch.history.items():
+                    d = int(d)  # Used to be keyed as str, we'll fix this now too
+                    history.append("{},{}\n".format(d,p))
+
+                if len(history):
+                    # in the future 'a'
+                    with open(os.path.join(self.datastore_path, uuid, "history.txt"), "w") as f:
+                        f.writelines(history)
+
+                # No longer needed, dynamically pulled from the disk when needed.
+                del (self.data['watching'][uuid]['history'])

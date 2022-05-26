@@ -317,7 +317,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         for watch in sorted_watches:
 
-            dates = list(watch['history'].keys())
+            dates = list(watch.history.keys())
             # Re #521 - Don't bother processing this one if theres less than 2 snapshots, means we never had a change detected.
             if len(dates) < 2:
                 continue
@@ -327,7 +327,7 @@ def changedetection_app(config=None, datastore_o=None):
             dates = [int(i) for i in dates]
             dates.sort(reverse=True)
             dates = [str(i) for i in dates]
-            prev_fname = watch['history'][dates[1]]
+            prev_fname = watch.history[dates[1]]
 
             if not watch['viewed']:
                 # Re #239 - GUID needs to be individual for each event
@@ -350,7 +350,7 @@ def changedetection_app(config=None, datastore_o=None):
 
                 watch_title = watch.get('title') if watch.get('title') else watch.get('url')
                 fe.title(title=watch_title)
-                latest_fname = watch['history'][dates[0]]
+                latest_fname = watch.history[dates[0]]
 
                 html_diff = diff.render_diff(prev_fname, latest_fname, include_equal=False, line_feed_sep="</br>")
                 fe.description(description="<![CDATA[<html><body><h4>{}</h4>{}</body></html>".format(watch_title, html_diff))
@@ -491,10 +491,10 @@ def changedetection_app(config=None, datastore_o=None):
 
         # 0 means that theres only one, so that there should be no 'unviewed' history available
         if newest_history_key == 0:
-            newest_history_key = list(datastore.data['watching'][uuid]['history'].keys())[0]
+            newest_history_key = list(datastore.data['watching'][uuid].history.keys())[0]
 
         if newest_history_key:
-            with open(datastore.data['watching'][uuid]['history'][newest_history_key],
+            with open(datastore.data['watching'][uuid].history[newest_history_key],
                       encoding='utf-8') as file:
                 raw_content = file.read()
 
@@ -588,12 +588,12 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
             if form_ignore_text:
-                if len(datastore.data['watching'][uuid]['history']):
+                if len(datastore.data['watching'][uuid].history):
                     extra_update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
             # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
             if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
-                if len(datastore.data['watching'][uuid]['history']):
+                if len(datastore.data['watching'][uuid].history):
                     extra_update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
             # Be sure proxy value is None
@@ -774,7 +774,7 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
-        dates = list(watch['history'].keys())
+        dates = list(watch.history.keys())
         # Convert to int, sort and back to str again
         # @todo replace datastore getter that does this automatically
         dates = [int(i) for i in dates]
@@ -787,7 +787,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, dates[0])
-        newest_file = watch['history'][dates[0]]
+        newest_file = watch.history[dates[0]]
 
         try:
             with open(newest_file, 'r') as f:
@@ -797,10 +797,10 @@ def changedetection_app(config=None, datastore_o=None):
 
         previous_version = request.args.get('previous_version')
         try:
-            previous_file = watch['history'][previous_version]
+            previous_file = watch.history[previous_version]
         except KeyError:
             # Not present, use a default value, the second one in the sorted list.
-            previous_file = watch['history'][dates[1]]
+            previous_file = watch.history[dates[1]]
 
         try:
             with open(previous_file, 'r') as f:
@@ -845,9 +845,9 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
-        if len(watch['history']):
-            timestamps = sorted(watch['history'].keys(), key=lambda x: int(x))
-            filename = watch['history'][timestamps[-1]]
+        if len(watch.history):
+            timestamps = sorted(watch.history.keys(), key=lambda x: int(x))
+            filename = watch.history[timestamps[-1]]
             try:
                 with open(filename, 'r') as f:
                     tmp = f.readlines()
@@ -1142,7 +1142,7 @@ def changedetection_app(config=None, datastore_o=None):
         # copy it to memory as trim off what we dont need (history)
         watch = deepcopy(datastore.data['watching'][uuid])
         if (watch.get('history')):
-            del (watch['history'])
+            del (watch.history)
 
         # for safety/privacy
         for k in list(watch.keys()):
