@@ -9,4 +9,17 @@ $(document).ready(function () {
     });
     r();
 
+    function toggle_ui() {
+        var current = $('input[name=fetch_backend]:checked').val();
+        if (current === 'html_webdriver') {
+            $('#browser-steps-fieldlist').show();
+        } else {
+            $('#browser-steps-fieldlist').hide();
+        }
+    }
+
+    $('input[name=fetch_backend]').change(function () {
+        toggle_ui();
+    });
+    toggle_ui();
 });
