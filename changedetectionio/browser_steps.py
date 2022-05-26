@@ -42,7 +42,7 @@ class browsersteps_playwright(BrowserStepBase):
         return
 
     def wait_for_seconds(self, step):
-        self.page.wait_for_timeout(step['optional_value'] * 1000)
+        self.page.wait_for_timeout(int(step['optional_value']) * 1000)
         return
 
     def click_button(self, step):
