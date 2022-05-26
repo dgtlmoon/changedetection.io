@@ -532,7 +532,7 @@ class ChangeDetectionStore:
 
     # Move the history list to a flat text file index
     # Better than SQLite because this list is only appended to, and works across NAS / NFS type setups
-    def update_5(self):
+    def update_2(self):
         # @todo test running this on a newly updated one (when this already ran)
         for uuid, watch in self.data['watching'].items():
             history = []
