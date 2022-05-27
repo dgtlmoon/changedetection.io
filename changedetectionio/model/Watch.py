@@ -1,7 +1,5 @@
 import os
 
-import uuid as uuid_builder
-
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
 
 from changedetectionio.notification import (
@@ -51,15 +49,28 @@ class model(dict):
         self.update(self.base_config)
         self.__datastore_path = kw['datastore_path']
         del kw['datastore_path']
+
+        if kw.get('default'):
+            self.update(kw['default'])
+            del kw['default']
+
         # goes at the end so we update the default object with the initialiser
         super(model, self).__init__(*arg, **kw)
 
-
     @property
     def history(self):
-        tmp_history={}
-        with open(os.path.join(self.__datastore_path, self.get('uuid'), "history.txt"), "r") as f:
-            tmp_history = dict(i.strip().split(',', 2) for i in f.readlines())
+        tmp_history = {}
+        import logging
+        import time
+        logging.error("loading from disk"+str(time.time()))
+        if not self.get('uuid'):
+            return {}
+
+        # Read the history file as a dict
+        fname = os.path.join(self.__datastore_path, self.get('uuid'), "history.txt")
+        if os.path.isfile(fname):
+            with open(fname, "r") as f:
+                tmp_history = dict(i.strip().split(',', 2) for i in f.readlines())
 
         return tmp_history
 

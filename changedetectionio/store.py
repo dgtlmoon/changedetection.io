@@ -40,7 +40,7 @@ class ChangeDetectionStore:
 
         # Base definition for all watchers
         # deepcopy part of #569 - not sure why its needed exactly
-        self.generic_definition = deepcopy(Watch.model(datastore_path = datastore_path))
+        self.generic_definition = deepcopy(Watch.model(datastore_path = datastore_path, default={}))
 
         if path.isfile('changedetectionio/source.txt'):
             with open('changedetectionio/source.txt') as f:
@@ -323,7 +323,7 @@ class ChangeDetectionStore:
             # #Re 569
             # Not sure why deepcopy was needed here, sometimes new watches would appear to already have 'history' set
             # I assumed this would instantiate a new object but somehow an existing dict was getting used
-            new_watch = deepcopy(Watch.model({
+            new_watch = deepcopy(Watch.model(datastore_path=self.datastore_path, default={
                 'url': url,
                 'tag': tag
             }))
