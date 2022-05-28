@@ -1267,9 +1267,10 @@ def ticker_thread_check_time_launch_checks():
                 running_uuids.append(t.current_uuid)
 
         # Re #232 - Deepcopy the data incase it changes while we're iterating through it all
+        watch_uuid_list = []
         while True:
             try:
-                copied_datastore = deepcopy(datastore)
+                watch_uuid_list = datastore.data['watching'].keys()
             except RuntimeError as e:
                 # RuntimeError: dictionary changed size during iteration
                 time.sleep(0.1)
@@ -1286,7 +1287,11 @@ def ticker_thread_check_time_launch_checks():
         recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
         recheck_time_system_seconds = datastore.threshold_seconds
 
-        for uuid, watch in copied_datastore.data['watching'].items():
+        for uuid in watch_uuid_list:
+
+            watch = datastore.data['watching'].get(uuid)
+            if not watch:
+                continue
 
             # No need todo further processing if it's paused
             if watch['paused']:

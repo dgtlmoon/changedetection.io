@@ -71,13 +71,10 @@ class ChangeDetectionStore:
                     if 'application' in from_disk['settings']:
                         self.__data['settings']['application'].update(from_disk['settings']['application'])
 
-                # Reinitialise each `watching` with our generic_definition in the case that we add a new var in the future.
-                # @todo pretty sure theres a python we todo this with an abstracted(?) object!
+                # Convert each existing watch back to the Watch.model object
                 for uuid, watch in self.__data['watching'].items():
-                    _blank = deepcopy(self.generic_definition)
-                    _blank.update(watch)
-                    self.__data['watching'].update({uuid: _blank})
-                    self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
+                    watch['uuid']=uuid
+                    self.__data['watching'][uuid] = Watch.model(datastore_path=self.datastore_path, default=watch)
                     print("Watching:", uuid, self.__data['watching'][uuid]['url'])
 
         # First time ran, doesnt exist.
@@ -131,22 +128,6 @@ class ChangeDetectionStore:
         # Finally start the thread that will manage periodic data saves to JSON
         save_data_thread = threading.Thread(target=self.save_datastore).start()
 
-    # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
-    def get_newest_history_key(self, uuid):
-        if len(self.__data['watching'][uuid].history) == 1:
-            return 0
-
-        dates = list(self.__data['watching'][uuid].history.keys())
-        # Convert to int, sort and back to str again
-        # @todo replace datastore getter that does this automatically
-        dates = [int(i) for i in dates]
-        dates.sort(reverse=True)
-        if len(dates):
-            # always keyed as str
-            return str(dates[0])
-
-        return 0
-
     def set_last_viewed(self, uuid, timestamp):
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
         self.needs_write = True
@@ -171,7 +152,6 @@ class ChangeDetectionStore:
                         del (update_obj[dict_key])
 
             self.__data['watching'][uuid].update(update_obj)
-            self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
 
         self.needs_write = True
 
@@ -189,14 +169,14 @@ class ChangeDetectionStore:
     @property
     def data(self):
         has_unviewed = False
-        for uuid, v in self.__data['watching'].items():
-            self.__data['watching'][uuid]['newest_history_key'] = self.get_newest_history_key(uuid)
-            if int(v['newest_history_key']) <= int(v['last_viewed']):
-                self.__data['watching'][uuid]['viewed'] = True
+        for uuid, watch in self.__data['watching'].items():
+            self.__data['watching'][uuid]['viewed']=True
+#            if int(watch.newest_history_key) <= int(watch['last_viewed']):
+#                self.__data['watching'][uuid]['viewed'] = True
 
-            else:
-                self.__data['watching'][uuid]['viewed'] = False
-                has_unviewed = True
+ #           else:
+#                self.__data['watching'][uuid]['viewed'] = False
+#                has_unviewed = True
 
             # #106 - Be sure this is None on empty string, False, None, etc
             # Default var for fetch_backend
@@ -318,8 +298,7 @@ class ChangeDetectionStore:
                 return False
 
         with self.lock:
-            # @todo use a common generic version of this
-            new_uuid = str(uuid_builder.uuid4())
+
             # #Re 569
             # Not sure why deepcopy was needed here, sometimes new watches would appear to already have 'history' set
             # I assumed this would instantiate a new object but somehow an existing dict was getting used
@@ -328,6 +307,7 @@ class ChangeDetectionStore:
                 'tag': tag
             }))
 
+            new_uuid=new_watch['uuid']
 
             for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
                 if k in apply_extras:

@@ -1,4 +1,5 @@
 import os
+import uuid as uuid_builder
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
 
@@ -20,8 +21,7 @@ class model(dict):
             'newest_history_key': 0,
             'title': None,
             'previous_md5': False,
-#           UUID not needed, should be generated only as a key
-#            'uuid':
+            'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send
             'body': None,
             'method': 'GET',
@@ -62,7 +62,7 @@ class model(dict):
         tmp_history = {}
         import logging
         import time
-        logging.error("loading from disk"+str(time.time()))
+        logging.debug("Disk IO accessed "+str(time.time()))
         if not self.get('uuid'):
             return {}
 
@@ -73,6 +73,21 @@ class model(dict):
                 tmp_history = dict(i.strip().split(',', 2) for i in f.readlines())
 
         return tmp_history
+
+
+    # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
+    @property
+    def newest_history_key(self):
+        if len(self.history) == 1:
+            return 0
+
+        dates = list(self.history.keys())
+
+        if len(dates):
+            # always keyed as str
+            return str(dates[-1])
+
+        return 0
 
     @property
     def has_empty_checktime(self):
