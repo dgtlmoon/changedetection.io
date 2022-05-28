@@ -75,7 +75,7 @@ class update_worker(threading.Thread):
                             # For the FIRST time we check a site, or a change detected, save the snapshot.
                             if changed_detected or not watch['last_checked']:
                                 # A change was detected
-                                fname = self.datastore.save_history_text(watch_uuid=uuid, contents=contents, timestamp=str(round(time.time())))
+                                fname = watch.save_history_text(contents=contents, timestamp=str(round(time.time())))
 
                             # Generally update anything interesting returned
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)

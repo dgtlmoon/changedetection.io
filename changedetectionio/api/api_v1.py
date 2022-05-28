@@ -28,7 +28,7 @@ class Watch(Resource):
             return "OK", 200
 
         # Return without history, get that via another API call
-        watch['history_n'] = len(watch.history)
+        watch['history_n'] = watch.history_n
         return watch
 
     @auth.check_token

@@ -11,6 +11,9 @@ from changedetectionio.notification import (
 
 
 class model(dict):
+    __newest_history_key = None
+    __history_n=0
+
     base_config = {
             'url': None,
             'tag': None,
@@ -46,8 +49,12 @@ class model(dict):
         }
 
     def __init__(self, *arg, **kw):
+        import uuid
         self.update(self.base_config)
         self.__datastore_path = kw['datastore_path']
+
+        self['uuid'] = str(uuid.uuid4())
+
         del kw['datastore_path']
 
         if kw.get('default'):
@@ -65,34 +72,78 @@ class model(dict):
         return False
 
     @property
+    def history_n(self):
+        return self.__history_n
+
+    @property
     def history(self):
         tmp_history = {}
         import logging
         import time
-        logging.debug("Disk IO accessed "+str(time.time()))
 
         # Read the history file as a dict
         fname = os.path.join(self.__datastore_path, self.get('uuid'), "history.txt")
         if os.path.isfile(fname):
+            logging.debug("Disk IO accessed " + str(time.time()))
             with open(fname, "r") as f:
                 tmp_history = dict(i.strip().split(',', 2) for i in f.readlines())
+            self.__newest_history_key = list(tmp_history.keys())[-1]
+
+        self.__history_n = len(tmp_history)
 
         return tmp_history
 
+    @property
+    def has_history(self):
+        fname = os.path.join(self.__datastore_path, self.get('uuid'), "history.txt")
+        return os.path.isfile(fname)
 
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
     @property
     def newest_history_key(self):
-        if len(self.history) == 1:
+        if self.__newest_history_key is not None:
+            return self.__newest_history_key
+
+        if len(self.history) <= 1:
             return 0
 
-        dates = list(self.history.keys())
 
-        if len(dates):
-            # always keyed as str
-            return str(dates[-1])
+        bump = self.history
+        return self.__newest_history_key
 
-        return 0
+
+    # Save some text file to the appropriate path and bump the history
+    # result_obj from fetch_site_status.run()
+    def save_history_text(self, contents, timestamp):
+        import uuid
+        from os import mkdir, path, unlink
+        import logging
+
+        output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
+
+        # Incase the operator deleted it, check and create.
+        if not os.path.isdir(output_path):
+            mkdir(output_path)
+
+        snapshot_fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
+        logging.debug("Saving history text {}".format(snapshot_fname))
+
+        with open(snapshot_fname, 'wb') as f:
+            f.write(contents)
+            f.close()
+
+        # Append to index
+        # @todo check last char was \n
+        index_fname = "{}/history.txt".format(output_path)
+        with open(index_fname, 'a') as f:
+            f.write("{},{}\n".format(timestamp, snapshot_fname))
+            f.close()
+
+        self.__newest_history_key = timestamp
+        self.__history_n+=1
+
+        #@todo bump static cache of the last timestamp so we dont need to examine the file to set a proper ''viewed'' status
+        return snapshot_fname
 
     @property
     def has_empty_checktime(self):

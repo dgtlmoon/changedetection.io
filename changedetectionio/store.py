@@ -263,6 +263,7 @@ class ChangeDetectionStore:
             unlink(item)
 
     def add_watch(self, url, tag="", extras=None, write_to_disk_now=True):
+        logging.debug("Adding URL {}".format(url))
         if extras is None:
             extras = {}
         # should always be str
@@ -300,12 +301,10 @@ class ChangeDetectionStore:
         with self.lock:
 
             # #Re 569
-            # Not sure why deepcopy was needed here, sometimes new watches would appear to already have 'history' set
-            # I assumed this would instantiate a new object but somehow an existing dict was getting used
-            new_watch = deepcopy(Watch.model(datastore_path=self.datastore_path, default={
+            new_watch = Watch.model(datastore_path=self.datastore_path, default={
                 'url': url,
                 'tag': tag
-            }))
+            })
 
             new_uuid=new_watch['uuid']
 
@@ -326,35 +325,6 @@ class ChangeDetectionStore:
         if write_to_disk_now:
             self.sync_to_json()
         return new_uuid
-
-    # Save some text file to the appropriate path and bump the history
-    # result_obj from fetch_site_status.run()
-    def save_history_text(self, watch_uuid, contents, timestamp):
-        import uuid
-
-        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
-
-        # Incase the operator deleted it, check and create.
-        if not os.path.isdir(output_path):
-            mkdir(output_path)
-
-        snapshot_fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
-        logging.debug("Saving history text {}".format(snapshot_fname))
-
-
-        with open(snapshot_fname, 'wb') as f:
-            f.write(contents)
-            f.close()
-
-        # Append to index
-        # @todo check last char was \n
-        index_fname = "{}/history.txt".format(output_path)
-        with open(index_fname, 'a') as f:
-            f.write("{},{}\n".format(timestamp, snapshot_fname))
-            f.close()
-
-        #@todo bump static cache of the last timestamp so we dont need to examine the file to set a proper ''viewed'' status
-        return snapshot_fname
 
     def get_screenshot(self, watch_uuid):
         output_path = "{}/{}".format(self.datastore_path, watch_uuid)
