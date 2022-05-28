@@ -14,7 +14,7 @@ class model(dict):
     __newest_history_key = None
     __history_n=0
 
-    base_config = {
+    __base_config = {
             'url': None,
             'tag': None,
             'last_checked': 0,
@@ -50,7 +50,7 @@ class model(dict):
 
     def __init__(self, *arg, **kw):
         import uuid
-        self.update(self.base_config)
+        self.update(self.__base_config)
         self.__datastore_path = kw['datastore_path']
 
         self['uuid'] = str(uuid.uuid4())

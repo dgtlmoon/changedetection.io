@@ -68,7 +68,7 @@
                     {% endif %}
                 </td>
                 <td class="last-checked">{{watch|format_last_checked_time}}</td>
-                <td class="last-changed">{% if watch.has_useful_history and watch.last_changed %}
+                <td class="last-changed">{% if watch.history_n >=2 and watch.last_changed %}
                     {{watch.last_changed|format_timestamp_timeago}}
                     {% else %}
                     Not yet
