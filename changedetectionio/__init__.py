@@ -774,12 +774,8 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
-        dates = list(watch.history.keys())
-        # Convert to int, sort and back to str again
-        # @todo replace datastore getter that does this automatically
-        dates = [int(i) for i in dates]
-        dates.sort(reverse=True)
-        dates = [str(i) for i in dates]
+        history = watch.history
+        dates = list(history.keys())
 
         if len(dates) < 2:
             flash("Not enough saved change detection snapshots to produce a report.", "error")
@@ -787,7 +783,8 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, dates[0])
-        newest_file = watch.history[dates[0]]
+
+        newest_file = history[dates[0]]
 
         try:
             with open(newest_file, 'r') as f:
@@ -797,10 +794,10 @@ def changedetection_app(config=None, datastore_o=None):
 
         previous_version = request.args.get('previous_version')
         try:
-            previous_file = watch.history[previous_version]
+            previous_file = history[previous_version]
         except KeyError:
             # Not present, use a default value, the second one in the sorted list.
-            previous_file = watch.history[dates[1]]
+            previous_file = history[dates[1]]
 
         try:
             with open(previous_file, 'r') as f:
