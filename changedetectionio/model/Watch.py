@@ -18,7 +18,7 @@ class model(dict):
             'last_changed': 0,
             'paused': False,
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
-            'newest_history_key': 0,
+            #'newest_history_key': 0,
             'title': None,
             'previous_md5': False,
             'uuid': str(uuid_builder.uuid4()),
@@ -58,13 +58,18 @@ class model(dict):
         super(model, self).__init__(*arg, **kw)
 
     @property
+    def viewed(self):
+        if int(self.newest_history_key) <= int(self['last_viewed']):
+            return True
+
+        return False
+
+    @property
     def history(self):
         tmp_history = {}
         import logging
         import time
         logging.debug("Disk IO accessed "+str(time.time()))
-        if not self.get('uuid'):
-            return {}
 
         # Read the history file as a dict
         fname = os.path.join(self.__datastore_path, self.get('uuid'), "history.txt")

@@ -170,7 +170,7 @@ class ChangeDetectionStore:
     def data(self):
         has_unviewed = False
         for uuid, watch in self.__data['watching'].items():
-            self.__data['watching'][uuid]['viewed']=True
+            #self.__data['watching'][uuid]['viewed']=True
 #            if int(watch.newest_history_key) <= int(watch['last_viewed']):
 #                self.__data['watching'][uuid]['viewed'] = True
 
@@ -256,7 +256,7 @@ class ChangeDetectionStore:
     def scrub_watch(self, uuid):
         import pathlib
 
-        self.__data['watching'][uuid].update({'history': {}, 'last_checked': 0, 'last_changed': 0, 'newest_history_key': 0, 'previous_md5': False})
+        self.__data['watching'][uuid].update({'history': {}, 'last_checked': 0, 'last_changed': 0, 'previous_md5': False})
         self.needs_write_urgent = True
 
         for item in pathlib.Path(self.datastore_path).rglob(uuid+"/*.txt"):
@@ -333,11 +333,15 @@ class ChangeDetectionStore:
         import uuid
 
         output_path = "{}/{}".format(self.datastore_path, watch_uuid)
+
         # Incase the operator deleted it, check and create.
         if not os.path.isdir(output_path):
             mkdir(output_path)
 
         snapshot_fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
+        logging.debug("Saving history text {}".format(snapshot_fname))
+
+
         with open(snapshot_fname, 'wb') as f:
             f.write(contents)
             f.close()

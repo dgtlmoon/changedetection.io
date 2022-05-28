@@ -329,7 +329,7 @@ def changedetection_app(config=None, datastore_o=None):
             dates = [str(i) for i in dates]
             prev_fname = watch.history[dates[1]]
 
-            if not watch['viewed']:
+            if not watch.viewed:
                 # Re #239 - GUID needs to be individual for each event
                 # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
                 guid = "{}/{}".format(watch['uuid'], watch['last_changed'])
@@ -356,7 +356,7 @@ def changedetection_app(config=None, datastore_o=None):
                 fe.description(description="<![CDATA[<html><body><h4>{}</h4>{}</body></html>".format(watch_title, html_diff))
 
                 fe.guid(guid, permalink=False)
-                dt = datetime.datetime.fromtimestamp(int(watch['newest_history_key']))
+                dt = datetime.datetime.fromtimestamp(int(watch.newest_history_key))
                 dt = dt.replace(tzinfo=pytz.UTC)
                 fe.pubDate(dt)
 
@@ -754,7 +754,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Save the current newest history as the most recently viewed
         for watch_uuid, watch in datastore.data['watching'].items():
-            datastore.set_last_viewed(watch_uuid, watch['newest_history_key'])
+            datastore.set_last_viewed(watch_uuid, watch.newest_history_key)
 
         flash("Cleared all statuses.")
         return redirect(url_for('index'))
@@ -1249,6 +1249,7 @@ def notification_runner():
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     from changedetectionio import update_worker
+    import logging
 
     # Spin up Workers that do the fetching
     # Can be overriden by ENV or use the default settings
@@ -1291,6 +1292,7 @@ def ticker_thread_check_time_launch_checks():
 
             watch = datastore.data['watching'].get(uuid)
             if not watch:
+                logging.error("Watch: {} no longer present.".format(uuid))
                 continue
 
             # No need todo further processing if it's paused
