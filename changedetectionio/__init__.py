@@ -782,7 +782,7 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         # Save the current newest history as the most recently viewed
-        datastore.set_last_viewed(uuid, dates[0])
+        datastore.set_last_viewed(uuid, time.time())
 
         newest_file = history[dates[0]]
 
