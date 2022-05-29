@@ -784,7 +784,7 @@ def changedetection_app(config=None, datastore_o=None):
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, time.time())
 
-        newest_file = history[dates[0]]
+        newest_file = history[dates[-1]]
 
         try:
             with open(newest_file, 'r') as f:
@@ -797,7 +797,7 @@ def changedetection_app(config=None, datastore_o=None):
             previous_file = history[previous_version]
         except KeyError:
             # Not present, use a default value, the second one in the sorted list.
-            previous_file = history[dates[1]]
+            previous_file = history[dates[-2]]
 
         try:
             with open(previous_file, 'r') as f:
