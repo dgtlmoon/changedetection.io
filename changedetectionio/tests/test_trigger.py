@@ -95,6 +95,9 @@ def test_trigger_functionality(client, live_server):
     )
     assert bytes(trigger_text.encode('utf-8')) in res.data
 
+    # Give the thread time to pick it up
+    time.sleep(sleep_time_for_fetch_thread)
+    
     # so that we set the state to 'unviewed' after all the edits
     client.get(url_for("diff_history_page", uuid="first"))
 
