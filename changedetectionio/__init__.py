@@ -322,19 +322,13 @@ def changedetection_app(config=None, datastore_o=None):
             if len(dates) < 2:
                 continue
 
-            # Convert to int, sort and back to str again
-            # @todo replace datastore getter that does this automatically
-            dates = [int(i) for i in dates]
-            dates.sort(reverse=True)
-            dates = [str(i) for i in dates]
-            prev_fname = watch.history[dates[1]]
+            prev_fname = watch.history[dates[-2]]
 
             if not watch.viewed:
                 # Re #239 - GUID needs to be individual for each event
                 # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
                 guid = "{}/{}".format(watch['uuid'], watch['last_changed'])
                 fe = fg.add_entry()
-
 
                 # Include a link to the diff page, they will have to login here to see if password protection is enabled.
                 # Description is the page you watch, link takes you to the diff JS UI page
@@ -350,7 +344,7 @@ def changedetection_app(config=None, datastore_o=None):
 
                 watch_title = watch.get('title') if watch.get('title') else watch.get('url')
                 fe.title(title=watch_title)
-                latest_fname = watch.history[dates[0]]
+                latest_fname = watch.history[dates[-1]]
 
                 html_diff = diff.render_diff(prev_fname, latest_fname, include_equal=False, line_feed_sep="</br>")
                 fe.description(description="<![CDATA[<html><body><h4>{}</h4>{}</body></html>".format(watch_title, html_diff))
@@ -814,7 +808,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  extra_stylesheets=extra_stylesheets,
                                  versions=dates[1:],
                                  uuid=uuid,
-                                 newest_version_timestamp=dates[0],
+                                 newest_version_timestamp=dates[-1],
                                  current_previous_version=str(previous_version),
                                  current_diff_url=watch['url'],
                                  extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),

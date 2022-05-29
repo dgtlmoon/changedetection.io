@@ -89,13 +89,7 @@ class update_worker(threading.Thread):
                                 if len(watch.history) > 1:
 
                                     dates = list(watch.history.keys())
-                                    # Convert to int, sort and back to str again
-                                    # @todo replace datastore getter that does this automatically
-                                    dates = [int(i) for i in dates]
-                                    dates.sort(reverse=True)
-                                    dates = [str(i) for i in dates]
-
-                                    prev_fname = watch.history[dates[1]]
+                                    prev_fname = watch.history[dates[-2]]
 
 
                                     # Did it have any notification alerts to hit?
