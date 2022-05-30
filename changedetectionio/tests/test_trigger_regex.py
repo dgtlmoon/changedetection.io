@@ -78,3 +78,7 @@ def test_trigger_regex_functionality(client, live_server):
     time.sleep(sleep_time_for_fetch_thread)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
+
+    # Cleanup everything
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
