@@ -86,7 +86,7 @@ class update_worker(threading.Thread):
                                 print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))
 
                                 # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
-                                if len(watch.history) > 1:
+                                if watch.history_n >= 2:
 
                                     dates = list(watch.history.keys())
                                     prev_fname = watch.history[dates[-2]]

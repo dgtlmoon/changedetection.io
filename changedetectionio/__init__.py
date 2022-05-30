@@ -836,7 +836,7 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
-        if len(watch.history):
+        if watch.history_n >0:
             timestamps = sorted(watch.history.keys(), key=lambda x: int(x))
             filename = watch.history[timestamps[-1]]
             try:
@@ -1132,8 +1132,9 @@ def changedetection_app(config=None, datastore_o=None):
 
         # copy it to memory as trim off what we dont need (history)
         watch = deepcopy(datastore.data['watching'][uuid])
+        # For older versions that are not a @property
         if (watch.get('history')):
-            del (watch.history)
+            del (watch['history'])
 
         # for safety/privacy
         for k in list(watch.keys()):
