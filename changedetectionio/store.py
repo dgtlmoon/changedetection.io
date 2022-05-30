@@ -505,4 +505,5 @@ class ChangeDetectionStore:
                         logging.warning("Datastore history directory {} does not exist, skipping history import.".format(target_path))
 
                 # No longer needed, dynamically pulled from the disk when needed.
-                del (self.data['watching'][uuid]['history'])
+                # But we should set it back to an empty list so we don't break if this schema runs on an earlier version.
+                self.data['watching'][uuid]['history']=[]
