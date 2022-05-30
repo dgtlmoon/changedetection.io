@@ -492,14 +492,17 @@ class ChangeDetectionStore:
             history = []
 
             if watch.get('history', False):
-                for d, p in watch.history.items():
+                for d, p in watch['history'].items():
                     d = int(d)  # Used to be keyed as str, we'll fix this now too
                     history.append("{},{}\n".format(d,p))
 
                 if len(history):
-                    # in the future 'a'
-                    with open(os.path.join(self.datastore_path, uuid, "history.txt"), "w") as f:
-                        f.writelines(history)
+                    target_path = os.path.join(self.datastore_path, uuid)
+                    if os.path.exists(target_path):
+                        with open(os.path.join(target_path, "history.txt"), "w") as f:
+                            f.writelines(history)
+                    else:
+                        logging.warning("Datastore history directory {} does not exist, skipping history import.".format(target_path))
 
                 # No longer needed, dynamically pulled from the disk when needed.
                 del (self.data['watching'][uuid]['history'])
