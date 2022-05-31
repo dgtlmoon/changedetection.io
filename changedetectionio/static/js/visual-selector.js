@@ -152,6 +152,13 @@ $(document).ready(function() {
         ctx.clearRect(0, 0, c.width, c.height);
         current_selected_i=null;
 
+        // Add in offset
+        if ((typeof e.offsetX === "undefined" || typeof e.offsetY === "undefined") || (e.offsetX === 0 && e.offsetY === 0)) {
+          var targetOffset = $(e.target).offset();
+          e.offsetX = e.pageX - targetOffset.left;
+          e.offsetY = e.pageY - targetOffset.top;
+        }
+
         // Reverse order - the most specific one should be deeper/"laster"
         // Basically, find the most 'deepest'
         var found=0;
