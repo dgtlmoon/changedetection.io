@@ -87,8 +87,7 @@ class ChangeDetectionStore:
 
                 self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
                 self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
-                self.add_watch(url='https://www.gov.uk/coronavirus', tag='Covid')
-                self.add_watch(url='https://changedetection.io/CHANGELOG.txt')
+                self.add_watch(url='https://changedetection.io/CHANGELOG.txt', tag='changedetection.io')
 
         self.__data['version_tag'] = version_tag
 
