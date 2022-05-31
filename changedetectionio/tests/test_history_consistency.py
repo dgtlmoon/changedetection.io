@@ -3,9 +3,10 @@
 import time
 import os
 import json
+import logging
 from flask import url_for
 from .util import live_server_setup
-
+from urllib.parse import urlparse, parse_qs
 
 def test_consistent_history(client, live_server):
     live_server_setup(live_server)
@@ -27,9 +28,10 @@ def test_consistent_history(client, live_server):
     time.sleep(3)
     while True:
         res = client.get(url_for("index"))
+        logging.debug("Waiting for 'Checking now' to go away..")
         if b'Checking now' not in res.data:
             break
-        time.sleep(3)
+        time.sleep(0.5)
 
     time.sleep(3)
     # Essentially just triggers the DB write/update
@@ -67,7 +69,6 @@ def test_consistent_history(client, live_server):
         files_in_watch_dir = os.listdir(os.path.join(live_server.app.config['DATASTORE'].datastore_path,
                                                      w))
         # Find the snapshot one
-        from urllib.parse import urlparse,parse_qs
         for fname in files_in_watch_dir:
             if fname != 'history.txt':
                 # contents should match what we requested as content returned from the test url
