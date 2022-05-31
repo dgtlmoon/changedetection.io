@@ -178,6 +178,10 @@ def changedetection_app(config=None, datastore_o=None):
     global datastore
     datastore = datastore_o
 
+    # so far just for read-only via tests, but this will be moved eventually to be the main source
+    # (instead of the global var)
+    app.config['DATASTORE']=datastore_o
+
     #app.config.update(config or {})
 
     login_manager = flask_login.LoginManager(app)
