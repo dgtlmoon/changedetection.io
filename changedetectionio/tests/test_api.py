@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup
+from .util import live_server_setup, extract_api_key_from_UI
 
 import json
 import uuid
@@ -53,23 +53,10 @@ def is_valid_uuid(val):
         return False
 
 
-# kinda funky, but works for now
-def _extract_api_key_from_UI(client):
-    import re
-    res = client.get(
-        url_for("settings_page"),
-    )
-    # <span id="api-key">{{api_key}}</span>
-
-    m = re.search('<span id="api-key">(.+?)</span>', str(res.data))
-    api_key = m.group(1)
-    return api_key.strip()
-
-
 def test_api_simple(client, live_server):
     live_server_setup(live_server)
 
-    api_key = _extract_api_key_from_UI(client)
+    api_key = extract_api_key_from_UI(client)
 
     # Create a watch
     set_original_response()

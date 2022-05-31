@@ -224,6 +224,7 @@ class perform_site_check():
             result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
                                                   wordlist=watch['trigger_text'],
                                                   mode="line numbers")
+            # If it returned any lines that matched..
             if result:
                 blocked_by_not_found_trigger_text = False
 
