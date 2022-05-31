@@ -87,6 +87,8 @@ class model(dict):
             logging.debug("Disk IO accessed " + str(time.time()))
             with open(fname, "r") as f:
                 tmp_history = dict(i.strip().split(',', 2) for i in f.readlines())
+
+        if len(tmp_history):
             self.__newest_history_key = list(tmp_history.keys())[-1]
 
         self.__history_n = len(tmp_history)
