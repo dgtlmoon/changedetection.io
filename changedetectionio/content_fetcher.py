@@ -14,6 +14,14 @@ class EmptyReply(Exception):
         return
     pass
 
+class ScreenshotUnavailable(Exception):
+    def __init__(self, status_code, url):
+        # Set this so we can use it in other parts of the app
+        self.status_code = status_code
+        self.url = url
+        return
+    pass
+
 class ReplyWithContentButNoText(Exception):
     def __init__(self, status_code, url):
         # Set this so we can use it in other parts of the app
@@ -295,12 +303,18 @@ class base_html_playwright(Fetcher):
                 extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
                 page.wait_for_timeout(extra_wait * 1000)
             except playwright._impl._api_types.TimeoutError as e:
+                context.close()
+                browser.close()
                 raise EmptyReply(url=url, status_code=None)
 
             if response is None:
+                context.close()
+                browser.close()
                 raise EmptyReply(url=url, status_code=None)
 
             if len(page.content().strip()) == 0:
+                context.close()
+                browser.close()
                 raise EmptyReply(url=url, status_code=None)
 
             # Bug 2(?) Set the viewport size AFTER loading the page
@@ -316,11 +330,17 @@ class base_html_playwright(Fetcher):
                 page.evaluate("var css_filter=''")
 
             self.xpath_data = page.evaluate("async () => {" + self.xpath_element_js + "}")
+
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
-            page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
-            self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=92)
+            try:
+                page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
+                self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=92)
+            except Exception as e:
+                context.close()
+                browser.close()
+                raise ScreenshotUnavailable(url=url, status_code=None)
 
             context.close()
             browser.close()

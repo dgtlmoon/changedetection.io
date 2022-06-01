@@ -63,6 +63,10 @@ class update_worker(threading.Thread):
                         err_text = "EmptyReply: Status Code {}".format(e.status_code)
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
+                    except content_fetcher.ScreenshotUnavailable as e:
+                        err_text = "Screenshot unavailable, page did not render fully in the expected time"
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                           'last_check_status': e.status_code})
                     except Exception as e:
                         self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
