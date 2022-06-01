@@ -6,6 +6,14 @@ import requests
 import time
 import sys
 
+class PageUnloadable(Exception):
+    def __init__(self, status_code, url):
+        # Set this so we can use it in other parts of the app
+        self.status_code = status_code
+        self.url = url
+        return
+    pass
+
 class EmptyReply(Exception):
     def __init__(self, status_code, url):
         # Set this so we can use it in other parts of the app
@@ -306,6 +314,10 @@ class base_html_playwright(Fetcher):
                 context.close()
                 browser.close()
                 raise EmptyReply(url=url, status_code=None)
+            except Exception as e:
+                context.close()
+                browser.close()
+                raise PageUnloadable(url=url, status_code=None)
 
             if response is None:
                 context.close()
