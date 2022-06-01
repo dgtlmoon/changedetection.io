@@ -295,12 +295,18 @@ class base_html_playwright(Fetcher):
                 extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
                 page.wait_for_timeout(extra_wait * 1000)
             except playwright._impl._api_types.TimeoutError as e:
+                context.close()
+                browser.close()
                 raise EmptyReply(url=url, status_code=None)
 
             if response is None:
+                context.close()
+                browser.close()
                 raise EmptyReply(url=url, status_code=None)
 
             if len(page.content().strip()) == 0:
+                context.close()
+                browser.close()
                 raise EmptyReply(url=url, status_code=None)
 
             # Bug 2(?) Set the viewport size AFTER loading the page
