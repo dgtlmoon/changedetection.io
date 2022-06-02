@@ -128,6 +128,7 @@ class ChangeDetectionStore:
         save_data_thread = threading.Thread(target=self.save_datastore).start()
 
     def set_last_viewed(self, uuid, timestamp):
+        logging.debug("Setting watch UUID: {} last viewed to {}".format(uuid, int(timestamp)))
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
         self.needs_write = True
 
@@ -166,19 +167,19 @@ class ChangeDetectionStore:
         return max(seconds, minimum_seconds_recheck_time)
 
     @property
+    def has_unviewed(self):
+        for uuid, watch in self.__data['watching'].items():
+            if watch.viewed == False:
+                return True
+        return False
+
+    @property
     def data(self):
         has_unviewed = False
         for uuid, watch in self.__data['watching'].items():
-            #self.__data['watching'][uuid]['viewed']=True
-#            if int(watch.newest_history_key) <= int(watch['last_viewed']):
-#                self.__data['watching'][uuid]['viewed'] = True
-
- #           else:
-#                self.__data['watching'][uuid]['viewed'] = False
-#                has_unviewed = True
-
             # #106 - Be sure this is None on empty string, False, None, etc
             # Default var for fetch_backend
+            # @todo this may not be needed anymore, or could be easily removed
             if not self.__data['watching'][uuid]['fetch_backend']:
                 self.__data['watching'][uuid]['fetch_backend'] = self.__data['settings']['application']['fetch_backend']
 
@@ -186,8 +187,6 @@ class ChangeDetectionStore:
         env_base_url = os.getenv('BASE_URL','')
         if not self.__data['settings']['application']['base_url']:
           self.__data['settings']['application']['base_url'] = env_base_url.strip('" ')
-
-        self.__data['has_unviewed'] = has_unviewed
 
         return self.__data
 

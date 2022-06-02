@@ -303,7 +303,7 @@ class base_html_playwright(Fetcher):
             page = context.new_page()
             try:
                # Bug - never set viewport size BEFORE page.goto
-                response = page.goto(url, timeout=timeout * 1000, wait_until='commit')
+                response = page.goto(url, timeout=timeout * 1000, wait_until=None)
                 # Wait_until = commit
                 # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
                 # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
