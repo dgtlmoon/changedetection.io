@@ -3,14 +3,15 @@
 import time
 from flask import url_for
 from urllib.request import urlopen
-from . util import set_original_response, set_modified_response, live_server_setup
+from .util import set_original_response, set_modified_response, live_server_setup
 
 sleep_time_for_fetch_thread = 3
+
 
 # Basic test to check inscriptus is not adding return line chars, basically works etc
 def test_inscriptus():
     from inscriptis import get_text
-    html_content="<html><body>test!<br/>ok man</body></html>"
+    html_content = "<html><body>test!<br/>ok man</body></html>"
     stripped_text_from_html = get_text(html_content)
     assert stripped_text_from_html == 'test!\nok man'
 
@@ -82,7 +83,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
     # re #16 should have the diff in here too
     assert b'(into   ) which has this one new line' in res.data
     assert b'CDATA' in res.data
-    
+
     assert expected_url.encode('utf-8') in res.data
 
     # Following the 'diff' link, it should no longer display as 'unviewed' even after we recheck it a few times
@@ -101,7 +102,8 @@ def test_check_basic_change_detection_functionality(client, live_server):
         # It should report nothing found (no new 'unviewed' class)
         res = client.get(url_for("index"))
         assert b'unviewed' not in res.data
-        assert b'head title' not in res.data # Should not be present because this is off by default
+        assert b'Mark all viewed' not in res.data
+        assert b'head title' not in res.data  # Should not be present because this is off by default
         assert b'test-endpoint' in res.data
 
     set_original_response()
@@ -109,7 +111,8 @@ def test_check_basic_change_detection_functionality(client, live_server):
     # Enable auto pickup of <title> in settings
     res = client.post(
         url_for("settings_page"),
-        data={"application-extract_title_as_title": "1", "requests-time_between_check-minutes": 180, 'application-fetch_backend': "html_requests"},
+        data={"application-extract_title_as_title": "1", "requests-time_between_check-minutes": 180,
+              'application-fetch_backend': "html_requests"},
         follow_redirects=True
     )
 
@@ -118,11 +121,18 @@ def test_check_basic_change_detection_functionality(client, live_server):
 
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
+    assert b'Mark all viewed' in res.data
+
     # It should have picked up the <title>
     assert b'head title' in res.data
+
+    # hit the mark all viewed link
+    res = client.get(url_for("mark_all_viewed"), follow_redirects=True)
+
+    assert b'Mark all viewed' not in res.data
+    assert b'unviewed' not in res.data
 
     #
     # Cleanup everything
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
-

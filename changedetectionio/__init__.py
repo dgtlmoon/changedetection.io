@@ -413,11 +413,13 @@ def changedetection_app(config=None, datastore_o=None):
                                  tags=existing_tags,
                                  active_tag=limit_tag,
                                  app_rss_token=datastore.data['settings']['application']['rss_access_token'],
-                                 has_unviewed=datastore.data['has_unviewed'],
+                                 has_unviewed=datastore.has_unviewed,
                                  # Don't link to hosting when we're on the hosting environment
                                  hosted_sticky=os.getenv("SALTED_PASS", False) == False,
                                  guid=datastore.data['app_guid'],
                                  queued_uuids=update_q.queue)
+
+
         if session.get('share-link'):
             del(session['share-link'])
         return output
@@ -746,15 +748,14 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     # Clear all statuses, so we do not see the 'unviewed' class
-    @app.route("/api/mark-all-viewed", methods=['GET'])
+    @app.route("/form/mark-all-viewed", methods=['GET'])
     @login_required
     def mark_all_viewed():
 
         # Save the current newest history as the most recently viewed
         for watch_uuid, watch in datastore.data['watching'].items():
-            datastore.set_last_viewed(watch_uuid, watch.newest_history_key)
+            datastore.set_last_viewed(watch_uuid, int(time.time()))
 
-        flash("Cleared all statuses.")
         return redirect(url_for('index'))
 
     @app.route("/diff/<string:uuid>", methods=['GET'])
