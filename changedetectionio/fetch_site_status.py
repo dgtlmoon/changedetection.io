@@ -206,20 +206,23 @@ class perform_site_check():
 
         # 615 Extract text by regex
         extract_text = watch.get('extract_text', [])
-        if len(extract_text):
-            pending_stripped_text = ""
+        if len(extract_text) > 0:
+            regex_matched_output = []
             for s_re in extract_text:
-                result = re.findall(s_re.encode('utf8'), stripped_text_from_html, flags=re.MULTILINE | re.DOTALL | re.LOCALE)
+                result = re.findall(s_re.encode('utf8'), stripped_text_from_html,
+                                    flags=re.MULTILINE | re.DOTALL | re.LOCALE)
                 if result:
-                    x = 1
+                    regex_matched_output.append(result[0])
 
-
+            if regex_matched_output:
+                stripped_text_from_html = b'\n'.join(regex_matched_output)
+                text_content_before_ignored_filter = stripped_text_from_html
 
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
         if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
-            fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
-        else:
-            fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
+            stripped_text_from_html = stripped_text_from_html.translate(None, b'\r\n\t ')
+
+        fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
         # On the first run of a site, watch['previous_md5'] will be None, set it the current one.
         if not watch.get('previous_md5'):
