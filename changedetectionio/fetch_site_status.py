@@ -204,6 +204,20 @@ class perform_site_check():
         else:
             stripped_text_from_html = stripped_text_from_html.encode('utf8')
 
+        # 615 Extract text by regex
+        extract_text = watch.get('extract_text', [])
+        if len(extract_text) > 0:
+            regex_matched_output = []
+            for s_re in extract_text:
+                result = re.findall(s_re.encode('utf8'), stripped_text_from_html,
+                                    flags=re.MULTILINE | re.DOTALL | re.LOCALE)
+                if result:
+                    regex_matched_output.append(result[0])
+
+            if regex_matched_output:
+                stripped_text_from_html = b'\n'.join(regex_matched_output)
+                text_content_before_ignored_filter = stripped_text_from_html
+
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
         if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
             fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
@@ -221,6 +235,7 @@ class perform_site_check():
             # Yeah, lets block first until something matches
             blocked_by_not_found_trigger_text = True
             # Filter and trigger works the same, so reuse it
+            # It should return the line numbers that match
             result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
                                                   wordlist=watch['trigger_text'],
                                                   mode="line numbers")

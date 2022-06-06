@@ -35,7 +35,8 @@ class model(dict):
             'notification_title': default_notification_title,
             'notification_body': default_notification_body,
             'notification_format': default_notification_format,
-            'css_filter': "",
+            'css_filter': '',
+            'extract_text': [],  # Extract text by regex after filters
             'subtractive_selectors': [],
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'fetch_backend': None,
