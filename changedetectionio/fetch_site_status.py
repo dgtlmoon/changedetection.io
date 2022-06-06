@@ -108,6 +108,7 @@ class perform_site_check():
 
         if prefer_backend == 'html_webdriver':
             fetcher.browser_steps = watch.get('browser_steps', None)
+            fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, uuid)
 
         fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code, watch['css_filter'])
         fetcher.quit()

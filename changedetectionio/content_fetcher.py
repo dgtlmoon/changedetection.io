@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import chardet
 import json
+import logging
 import os
 import re
 import requests
@@ -47,6 +48,7 @@ class Fetcher():
     content = None
     headers = None
     browser_steps = None
+    browser_steps_screenshot_path = None
 
     fetcher_description = "No description"
     xpath_element_js = """               
@@ -210,17 +212,33 @@ class Fetcher():
         return self.status_code
 
     @abstractmethod
+    def screenshot_step(self, step_n):
+        return None
+
+    @abstractmethod
     # Return true/false if this checker is ready to run, in the case it needs todo some special config check etc
     def is_ready(self):
         return True
 
     def iterate_browser_steps(self):
+        step_n = 1
         if self.browser_steps is not None and len(self.browser_steps):
             for step in self.browser_steps:
                 step_machine_name = re.sub(r'\W', '_', step['operation'].lower()).strip('_')
+                logging.debug("Running browser step '{}'".format(step_machine_name))
                 getattr(self, step_machine_name)(step)
+                self.screenshot_step(step_n)
+                step_n += 1
                 time.sleep(0.2)
 
+    # It's always good to reset these
+    def delete_browser_steps_screenshots(self):
+        import glob
+        if self.browser_steps_screenshot_path is not None:
+            dest = os.path.join(self.browser_steps_screenshot_path, 'step_*.jpeg')
+            files = glob.glob(dest)
+            for f in files:
+                os.unlink(f)
 
 #   Maybe for the future, each fetcher provides its own diff output, could be used for text, image
 #   the current one would return javascript output (as we use JS to generate the diff)
@@ -279,6 +297,18 @@ class base_html_playwright(Fetcher, browsersteps_playwright):
         if proxy_override:
             self.proxy = {'server': proxy_override}
 
+    def screenshot_step(self, step_n):
+
+        # There's a bug where we need to do it twice or it doesnt take the whole page, dont know why.
+        self.page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
+        screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=85)
+
+        if self.browser_steps_screenshot_path is not None:
+            destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.jpeg'.format(step_n))
+            logging.debug("Saving step screenshot to {}".format(destination))
+            with open(destination, 'wb') as f:
+                f.write(screenshot)
+
     def run(self,
             url,
             timeout,
@@ -291,6 +321,8 @@ class base_html_playwright(Fetcher, browsersteps_playwright):
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
         from playwright._impl._api_types import Error, TimeoutError
+
+        self.delete_browser_steps_screenshots()
 
         with sync_playwright() as p:
             browser_type = getattr(p, self.browser_type)
