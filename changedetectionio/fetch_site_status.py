@@ -94,6 +94,7 @@ class perform_site_check():
             # If the klass doesnt exist, just use a default
             klass = getattr(content_fetcher, "html_requests")
 
+
         proxy_args = self.set_proxy_from_list(watch)
         fetcher = klass(proxy_override=proxy_args)
 
@@ -104,7 +105,8 @@ class perform_site_check():
         elif system_webdriver_delay is not None:
             fetcher.render_extract_delay = system_webdriver_delay
 
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code)
+        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code, watch['css_filter'])
+        fetcher.quit()
 
         # Fetching complete, now filters
         # @todo move to class / maybe inside of fetcher abstract base?
@@ -233,6 +235,7 @@ class perform_site_check():
             result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
                                                   wordlist=watch['trigger_text'],
                                                   mode="line numbers")
+            # If it returned any lines that matched..
             if result:
                 blocked_by_not_found_trigger_text = False
 
@@ -247,4 +250,4 @@ class perform_site_check():
                 if not watch['title'] or not len(watch['title']):
                     update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
 
-        return changed_detected, update_obj, text_content_before_ignored_filter, fetcher.screenshot
+        return changed_detected, update_obj, text_content_before_ignored_filter, fetcher.screenshot, fetcher.xpath_data

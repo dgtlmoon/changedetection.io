@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from flask import make_response, request
+from flask import url_for
 
 def set_original_response():
     test_return_data = """<html>
@@ -55,14 +56,32 @@ def set_more_modified_response():
     return None
 
 
+# kinda funky, but works for now
+def extract_api_key_from_UI(client):
+    import re
+    res = client.get(
+        url_for("settings_page"),
+    )
+    # <span id="api-key">{{api_key}}</span>
+
+    m = re.search('<span id="api-key">(.+?)</span>', str(res.data))
+    api_key = m.group(1)
+    return api_key.strip()
+
 def live_server_setup(live_server):
 
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
         ctype = request.args.get('content_type')
         status_code = request.args.get('status_code')
+        content = request.args.get('content') or None
 
         try:
+            if content is not None:
+                resp = make_response(content, status_code)
+                resp.headers['Content-Type'] = ctype if ctype else 'text/html'
+                return resp
+
             # Tried using a global var here but didn't seem to work, so reading from a file instead.
             with open("test-datastore/endpoint-content.txt", "r") as f:
                 resp = make_response(f.read(), status_code)

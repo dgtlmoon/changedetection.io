@@ -92,7 +92,7 @@ class import_distill_io_json(Importer):
 
         for d in data.get('data'):
             d_config = json.loads(d['config'])
-            extras = {'title': d['name']}
+            extras = {'title': d.get('name', None)}
 
             if len(d['uri']) and good < 5000:
                 try:
@@ -114,12 +114,9 @@ class import_distill_io_json(Importer):
                 except IndexError:
                     pass
 
-                try:
+
+                if d.get('tags', False):
                     extras['tag'] = ", ".join(d['tags'])
-                except KeyError:
-                    pass
-                except IndexError:
-                    pass
 
                 new_uuid = datastore.add_watch(url=d['uri'].strip(),
                                                extras=extras,

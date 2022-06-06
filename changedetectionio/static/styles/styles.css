@@ -338,7 +338,8 @@ footer {
     padding-top: 110px; }
   div.tabs.collapsable ul li {
     display: block;
-    border-radius: 0px; }
+    border-radius: 0px;
+    margin-right: 0px; }
   input[type='text'] {
     width: 100%; }
   /*
@@ -429,6 +430,15 @@ and also iPads specifically.
   .tab-pane-inner:target {
     display: block; }
 
+#beta-logo {
+  height: 50px;
+  right: -3px;
+  top: -3px;
+  position: absolute; }
+
+#selector-header {
+  padding-bottom: 1em; }
+
 .edit-form {
   min-width: 70%;
   /* so it cant overflow */
@@ -453,6 +463,24 @@ ul {
   display: inline; }
   .time-check-widget tr input[type="number"] {
     width: 5em; }
+
+#selector-wrapper {
+  height: 600px;
+  overflow-y: scroll;
+  position: relative; }
+  #selector-wrapper > img {
+    position: absolute;
+    z-index: 4;
+    max-width: 100%; }
+  #selector-wrapper > canvas {
+    position: relative;
+    z-index: 5;
+    max-width: 100%; }
+    #selector-wrapper > canvas:hover {
+      cursor: pointer; }
+
+#selector-current-xpath {
+  font-size: 80%; }
 
 #webdriver-override-options input[type="number"] {
   width: 5em; }

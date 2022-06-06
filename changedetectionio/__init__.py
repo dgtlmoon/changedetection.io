@@ -43,7 +43,7 @@ from flask_wtf import CSRFProtect
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.39.13.1'
+__version__ = '0.39.14'
 
 datastore = None
 
@@ -177,6 +177,10 @@ class User(flask_login.UserMixin):
 def changedetection_app(config=None, datastore_o=None):
     global datastore
     datastore = datastore_o
+
+    # so far just for read-only via tests, but this will be moved eventually to be the main source
+    # (instead of the global var)
+    app.config['DATASTORE']=datastore_o
 
     #app.config.update(config or {})
 
@@ -317,24 +321,18 @@ def changedetection_app(config=None, datastore_o=None):
 
         for watch in sorted_watches:
 
-            dates = list(watch['history'].keys())
+            dates = list(watch.history.keys())
             # Re #521 - Don't bother processing this one if theres less than 2 snapshots, means we never had a change detected.
             if len(dates) < 2:
                 continue
 
-            # Convert to int, sort and back to str again
-            # @todo replace datastore getter that does this automatically
-            dates = [int(i) for i in dates]
-            dates.sort(reverse=True)
-            dates = [str(i) for i in dates]
-            prev_fname = watch['history'][dates[1]]
+            prev_fname = watch.history[dates[-2]]
 
-            if not watch['viewed']:
+            if not watch.viewed:
                 # Re #239 - GUID needs to be individual for each event
                 # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
                 guid = "{}/{}".format(watch['uuid'], watch['last_changed'])
                 fe = fg.add_entry()
-
 
                 # Include a link to the diff page, they will have to login here to see if password protection is enabled.
                 # Description is the page you watch, link takes you to the diff JS UI page
@@ -350,13 +348,13 @@ def changedetection_app(config=None, datastore_o=None):
 
                 watch_title = watch.get('title') if watch.get('title') else watch.get('url')
                 fe.title(title=watch_title)
-                latest_fname = watch['history'][dates[0]]
+                latest_fname = watch.history[dates[-1]]
 
                 html_diff = diff.render_diff(prev_fname, latest_fname, include_equal=False, line_feed_sep="</br>")
                 fe.description(description="<![CDATA[<html><body><h4>{}</h4>{}</body></html>".format(watch_title, html_diff))
 
                 fe.guid(guid, permalink=False)
-                dt = datetime.datetime.fromtimestamp(int(watch['newest_history_key']))
+                dt = datetime.datetime.fromtimestamp(int(watch.newest_history_key))
                 dt = dt.replace(tzinfo=pytz.UTC)
                 fe.pubDate(dt)
 
@@ -415,11 +413,13 @@ def changedetection_app(config=None, datastore_o=None):
                                  tags=existing_tags,
                                  active_tag=limit_tag,
                                  app_rss_token=datastore.data['settings']['application']['rss_access_token'],
-                                 has_unviewed=datastore.data['has_unviewed'],
+                                 has_unviewed=datastore.has_unviewed,
                                  # Don't link to hosting when we're on the hosting environment
                                  hosted_sticky=os.getenv("SALTED_PASS", False) == False,
                                  guid=datastore.data['app_guid'],
                                  queued_uuids=update_q.queue)
+
+
         if session.get('share-link'):
             del(session['share-link'])
         return output
@@ -491,10 +491,10 @@ def changedetection_app(config=None, datastore_o=None):
 
         # 0 means that theres only one, so that there should be no 'unviewed' history available
         if newest_history_key == 0:
-            newest_history_key = list(datastore.data['watching'][uuid]['history'].keys())[0]
+            newest_history_key = list(datastore.data['watching'][uuid].history.keys())[0]
 
         if newest_history_key:
-            with open(datastore.data['watching'][uuid]['history'][newest_history_key],
+            with open(datastore.data['watching'][uuid].history[newest_history_key],
                       encoding='utf-8') as file:
                 raw_content = file.read()
 
@@ -588,12 +588,12 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
             if form_ignore_text:
-                if len(datastore.data['watching'][uuid]['history']):
+                if len(datastore.data['watching'][uuid].history):
                     extra_update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
             # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
             if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
-                if len(datastore.data['watching'][uuid]['history']):
+                if len(datastore.data['watching'][uuid].history):
                     extra_update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
             # Be sure proxy value is None
@@ -626,6 +626,12 @@ def changedetection_app(config=None, datastore_o=None):
             if request.method == 'POST' and not form.validate():
                 flash("An error occurred, please see below.", "error")
 
+            visualselector_data_is_ready = datastore.visualselector_data_is_ready(uuid)
+
+            # Only works reliably with Playwright
+            visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and default['fetch_backend'] == 'html_webdriver'
+
+
             output = render_template("edit.html",
                                      uuid=uuid,
                                      watch=datastore.data['watching'][uuid],
@@ -633,7 +639,9 @@ def changedetection_app(config=None, datastore_o=None):
                                      has_empty_checktime=using_default_check_time,
                                      using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
-                                     emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False)
+                                     emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                     visualselector_data_is_ready=visualselector_data_is_ready,
+                                     visualselector_enabled=visualselector_enabled
                                      )
 
         return output
@@ -740,15 +748,14 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     # Clear all statuses, so we do not see the 'unviewed' class
-    @app.route("/api/mark-all-viewed", methods=['GET'])
+    @app.route("/form/mark-all-viewed", methods=['GET'])
     @login_required
     def mark_all_viewed():
 
         # Save the current newest history as the most recently viewed
         for watch_uuid, watch in datastore.data['watching'].items():
-            datastore.set_last_viewed(watch_uuid, watch['newest_history_key'])
+            datastore.set_last_viewed(watch_uuid, int(time.time()))
 
-        flash("Cleared all statuses.")
         return redirect(url_for('index'))
 
     @app.route("/diff/<string:uuid>", methods=['GET'])
@@ -766,20 +773,17 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
-        dates = list(watch['history'].keys())
-        # Convert to int, sort and back to str again
-        # @todo replace datastore getter that does this automatically
-        dates = [int(i) for i in dates]
-        dates.sort(reverse=True)
-        dates = [str(i) for i in dates]
+        history = watch.history
+        dates = list(history.keys())
 
         if len(dates) < 2:
             flash("Not enough saved change detection snapshots to produce a report.", "error")
             return redirect(url_for('index'))
 
         # Save the current newest history as the most recently viewed
-        datastore.set_last_viewed(uuid, dates[0])
-        newest_file = watch['history'][dates[0]]
+        datastore.set_last_viewed(uuid, time.time())
+
+        newest_file = history[dates[-1]]
 
         try:
             with open(newest_file, 'r') as f:
@@ -789,10 +793,10 @@ def changedetection_app(config=None, datastore_o=None):
 
         previous_version = request.args.get('previous_version')
         try:
-            previous_file = watch['history'][previous_version]
+            previous_file = history[previous_version]
         except KeyError:
             # Not present, use a default value, the second one in the sorted list.
-            previous_file = watch['history'][dates[1]]
+            previous_file = history[dates[-2]]
 
         try:
             with open(previous_file, 'r') as f:
@@ -809,7 +813,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  extra_stylesheets=extra_stylesheets,
                                  versions=dates[1:],
                                  uuid=uuid,
-                                 newest_version_timestamp=dates[0],
+                                 newest_version_timestamp=dates[-1],
                                  current_previous_version=str(previous_version),
                                  current_diff_url=watch['url'],
                                  extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
@@ -837,9 +841,9 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
-        if len(watch['history']):
-            timestamps = sorted(watch['history'].keys(), key=lambda x: int(x))
-            filename = watch['history'][timestamps[-1]]
+        if watch.history_n >0:
+            timestamps = sorted(watch.history.keys(), key=lambda x: int(x))
+            filename = watch.history[timestamps[-1]]
             try:
                 with open(filename, 'r') as f:
                     tmp = f.readlines()
@@ -976,10 +980,9 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
+        from flask import make_response
+
         if group == 'screenshot':
-
-            from flask import make_response
-
             # Could be sensitive, follow password requirements
             if datastore.data['settings']['application']['password'] and not flask_login.current_user.is_authenticated:
                 abort(403)
@@ -990,6 +993,26 @@ def changedetection_app(config=None, datastore_o=None):
                 watch_dir = datastore_o.datastore_path + "/" + filename
                 response = make_response(send_from_directory(filename="last-screenshot.png", directory=watch_dir, path=watch_dir + "/last-screenshot.png"))
                 response.headers['Content-type'] = 'image/png'
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = 0
+                return response
+
+            except FileNotFoundError:
+                abort(404)
+
+
+        if group == 'visual_selector_data':
+            # Could be sensitive, follow password requirements
+            if datastore.data['settings']['application']['password'] and not flask_login.current_user.is_authenticated:
+                abort(403)
+
+            # These files should be in our subdirectory
+            try:
+                # set nocache, set content-type
+                watch_dir = datastore_o.datastore_path + "/" + filename
+                response = make_response(send_from_directory(filename="elements.json", directory=watch_dir, path=watch_dir + "/elements.json"))
+                response.headers['Content-type'] = 'application/json'
                 response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
                 response.headers['Pragma'] = 'no-cache'
                 response.headers['Expires'] = 0
@@ -1114,6 +1137,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # copy it to memory as trim off what we dont need (history)
         watch = deepcopy(datastore.data['watching'][uuid])
+        # For older versions that are not a @property
         if (watch.get('history')):
             del (watch['history'])
 
@@ -1149,7 +1173,6 @@ def changedetection_app(config=None, datastore_o=None):
         # in the browser - should give you a nice info page - wtf
         # paste in etc
         return redirect(url_for('index'))
-
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
@@ -1223,6 +1246,7 @@ def notification_runner():
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     from changedetectionio import update_worker
+    import logging
 
     # Spin up Workers that do the fetching
     # Can be overriden by ENV or use the default settings
@@ -1241,9 +1265,10 @@ def ticker_thread_check_time_launch_checks():
                 running_uuids.append(t.current_uuid)
 
         # Re #232 - Deepcopy the data incase it changes while we're iterating through it all
+        watch_uuid_list = []
         while True:
             try:
-                copied_datastore = deepcopy(datastore)
+                watch_uuid_list = datastore.data['watching'].keys()
             except RuntimeError as e:
                 # RuntimeError: dictionary changed size during iteration
                 time.sleep(0.1)
@@ -1260,7 +1285,12 @@ def ticker_thread_check_time_launch_checks():
         recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
         recheck_time_system_seconds = datastore.threshold_seconds
 
-        for uuid, watch in copied_datastore.data['watching'].items():
+        for uuid in watch_uuid_list:
+
+            watch = datastore.data['watching'].get(uuid)
+            if not watch:
+                logging.error("Watch: {} no longer present.".format(uuid))
+                continue
 
             # No need todo further processing if it's paused
             if watch['paused']:

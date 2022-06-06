@@ -35,7 +35,7 @@ class model(dict):
                     'fetch_backend': os.getenv("DEFAULT_FETCH_BACKEND", "html_requests"),
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
                     'global_subtractive_selectors': [],
-                    'ignore_whitespace': False,
+                    'ignore_whitespace': True,
                     'render_anchor_tag_content': False,
                     'notification_urls': [], # Apprise URL list
                     # Custom notification content

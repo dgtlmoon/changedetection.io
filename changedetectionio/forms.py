@@ -307,7 +307,7 @@ class ValidateCSSJSONXPATHInput(object):
 
 class quickWatchForm(Form):
     url = fields.URLField('URL', validators=[validateURL()])
-    tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)])
+    tag = StringField('Group tag', [validators.Optional()])
 
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
@@ -323,7 +323,7 @@ class commonSettingsForm(Form):
 class watchForm(commonSettingsForm):
 
     url = fields.URLField('URL', validators=[validateURL()])
-    tag = StringField('Group tag', [validators.Optional(), validators.Length(max=35)], default='')
+    tag = StringField('Group tag', [validators.Optional()], default='')
 
     time_between_check = FormField(TimeBetweenCheckForm)
 
