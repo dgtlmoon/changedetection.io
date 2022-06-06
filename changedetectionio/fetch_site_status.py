@@ -220,9 +220,9 @@ class perform_site_check():
 
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
         if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
-            stripped_text_from_html = stripped_text_from_html.translate(None, b'\r\n\t ')
-
-        fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
+            fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
+        else:
+            fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
         # On the first run of a site, watch['previous_md5'] will be None, set it the current one.
         if not watch.get('previous_md5'):
@@ -235,6 +235,7 @@ class perform_site_check():
             # Yeah, lets block first until something matches
             blocked_by_not_found_trigger_text = True
             # Filter and trigger works the same, so reuse it
+            # It should return the line numbers that match
             result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
                                                   wordlist=watch['trigger_text'],
                                                   mode="line numbers")
