@@ -118,5 +118,5 @@ def test_check_filter_and_regex_extract(client, live_server):
     )
 
     assert b'1000 online' in res.data
-    # Should not be here4
+    # Should not be here
     assert b'Some text that did change' not in res.data
