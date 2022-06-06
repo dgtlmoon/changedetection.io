@@ -1,0 +1,3 @@
+1654526734,./test-datastore/52613f52-c5b5-4778-b4fd-36651d39b14f/1d31605a-9180-47dc-8242-b9aa9146767c.stripped.txt
+1654526737,./test-datastore/52613f52-c5b5-4778-b4fd-36651d39b14f/629fadff-df8d-4f60-89c3-6e1fa50f2e16.stripped.txt
+1654526740,./test-datastore/52613f52-c5b5-4778-b4fd-36651d39b14f/caad4272-bf7d-46fa-a3a3-ed096d4e14af.stripped.txt

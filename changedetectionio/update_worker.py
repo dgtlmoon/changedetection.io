@@ -63,6 +63,15 @@ class update_worker(threading.Thread):
                         err_text = "EmptyReply: Status Code {}".format(e.status_code)
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
+                    except content_fetcher.ScreenshotUnavailable as e:
+                        err_text = "Screenshot unavailable, page did not render fully in the expected time"
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                           'last_check_status': e.status_code})
+                    except content_fetcher.PageUnloadable as e:
+                        err_text = "Page request from server didnt respond correctly"
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                           'last_check_status': e.status_code})
+
                     except Exception as e:
                         self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
@@ -75,9 +84,7 @@ class update_worker(threading.Thread):
                             # For the FIRST time we check a site, or a change detected, save the snapshot.
                             if changed_detected or not watch['last_checked']:
                                 # A change was detected
-                                fname = self.datastore.save_history_text(watch_uuid=uuid, contents=contents)
-                                # Should always be keyed by string(timestamp)
-                                self.datastore.update_watch(uuid, {"history": {str(round(time.time())): fname}})
+                                fname = watch.save_history_text(contents=contents, timestamp=str(round(time.time())))
 
                             # Generally update anything interesting returned
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
@@ -88,16 +95,10 @@ class update_worker(threading.Thread):
                                 print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))
 
                                 # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
-                                if len(watch['history']) > 1:
+                                if watch.history_n >= 2:
 
-                                    dates = list(watch['history'].keys())
-                                    # Convert to int, sort and back to str again
-                                    # @todo replace datastore getter that does this automatically
-                                    dates = [int(i) for i in dates]
-                                    dates.sort(reverse=True)
-                                    dates = [str(i) for i in dates]
-
-                                    prev_fname = watch['history'][dates[1]]
+                                    dates = list(watch.history.keys())
+                                    prev_fname = watch.history[dates[-2]]
 
 
                                     # Did it have any notification alerts to hit?

@@ -1,0 +1,11 @@
+<html>
+       <body>
+     Some initial text</br>
+     <p>which has this one new line</p>
+     </br>
+     So let's see what happens.  </br>
+     <div id="sametext">Some text thats the same</div>
+     <div id="changetext">Some text that did change ( 1000 online <br/> 80 guests)</div>
+     </body>
+     </html>
+    
