@@ -33,7 +33,7 @@ def set_modified_response():
      </br>
      So let's see what happens.  </br>
      <div id="sametext">Some text thats the same</div>
-     <div id="changetext">Some text that did change ( 1000 online )</div>
+     <div id="changetext">Some text that did change ( 1000 online <br/> 80 guests)</div>
      </body>
      </html>
     """
@@ -75,7 +75,7 @@ def test_check_filter_and_regex_extract(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"css_filter": css_filter,
-              'extract_text': '\d+ online',
+              'extract_text': '\d+ online\n\d+ guests',
               "url": test_url,
               "tag": "",
               "headers": "",
@@ -117,6 +117,11 @@ def test_check_filter_and_regex_extract(client, live_server):
         follow_redirects=True
     )
 
-    assert b'1000 online' in res.data
+    # Class will be blank for now because the frontend didnt apply the diff
+    assert b'<div class="">1000 online' in res.data
+    
+    # Both regexs should be here
+    assert b'<div class="">80 guests' in res.data
+
     # Should not be here
     assert b'Some text that did change' not in res.data
