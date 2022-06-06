@@ -49,6 +49,8 @@ $(document).ready(function() {
         }
         state_clicked=false;
         ctx.clearRect(0, 0, c.width, c.height);
+        xctx.clearRect(0, 0, c.width, c.height);
+        $("#css_filter").val('');
     });
 
 
