@@ -354,27 +354,18 @@ class base_html_playwright(Fetcher, browsersteps_playwright):
             else:
                 self.page.evaluate("var css_filter=''")
 
-<<<<<<< HEAD
             self.xpath_data = self.page.evaluate("async () => {" + self.xpath_element_js + "}")
-            # Bug 3 in Playwright screenshot handling
-            # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
-            # JPEG is better here because the screenshots can be very very large
-            self.page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
-            self.screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=92)
-=======
-            self.xpath_data = page.evaluate("async () => {" + self.xpath_element_js + "}")
 
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
             try:
-                page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
-                self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=92)
+                self.page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
+                self.screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=92)
             except Exception as e:
                 context.close()
                 browser.close()
                 raise ScreenshotUnavailable(url=url, status_code=None)
->>>>>>> master
 
             context.close()
             browser.close()
