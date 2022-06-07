@@ -9,6 +9,9 @@ $(document).ready(function () {
     function toggle(hash_name) {
         if (hash_name === '#screenshot') {
             $("img#screenshot-img").attr('src', screenshot_url);
+            $("#settings").hide();
+        } else {
+            $("#settings").show();
         }
     }
 });
