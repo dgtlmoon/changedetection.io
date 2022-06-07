@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<script>
+    const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
+</script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
+
 <div id="settings">
     <h1>Differences</h1>
     <form class="pure-form " action="" method="GET">
@@ -39,6 +44,7 @@
 <div class="tabs">
     <ul>
         <li class="tab" id="default-tab"><a href="#text">Text</a></li>
+        <li class="tab" id="screenshot-tab"><a href="#screenshot">Screenshot</a></li>
     </ul>
 </div>
 
@@ -59,6 +65,21 @@
              </tbody>
          </table>
          Diff algorithm from the amazing <a href="https://github.com/kpdecker/jsdiff">github.com/kpdecker/jsdiff</a>
+     </div>
+     <div class="tab-pane-inner" id="screenshot">
+         <div class="tip">
+             For now, Differences are performed on text, not graphically, only the latest screenshot is available.
+         </div>
+         </br>
+         {% if is_html_webdriver %}
+           {% if screenshot|length >1 %}
+             <img style="max-width: 80%" id="screenshot-img" alt="Current screenshot from most recent request"/>
+           {% else %}
+              No screenshot available just yet! Try rechecking the page.
+           {% endif %}
+         {% else %}
+           <strong>Screenshot requires Playwright/WebDriver enabled</strong>
+         {% endif %}
      </div>
 </div>
 

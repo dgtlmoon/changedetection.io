@@ -809,7 +809,13 @@ def changedetection_app(config=None, datastore_o=None):
 
         screenshot_url = datastore.get_screenshot(uuid)
 
-        output = render_template("diff.html", watch_a=watch,
+        system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
+
+        is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
+                    watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
+
+        output = render_template("diff.html",
+                                 watch_a=watch,
                                  newest=newest_version_file_contents,
                                  previous=previous_version_file_contents,
                                  extra_stylesheets=extra_stylesheets,
@@ -820,7 +826,8 @@ def changedetection_app(config=None, datastore_o=None):
                                  current_diff_url=watch['url'],
                                  extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
                                  left_sticky=True,
-                                 screenshot=screenshot_url)
+                                 screenshot=screenshot_url,
+                                 is_html_webdriver=is_html_webdriver)
 
         return output
 
@@ -881,6 +888,11 @@ def changedetection_app(config=None, datastore_o=None):
             content.append({'line': "No history found", 'classes': ''})
 
         screenshot_url = datastore.get_screenshot(uuid)
+        system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
+
+        is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
+                watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
+
         output = render_template("preview.html",
                                  content=content,
                                  extra_stylesheets=extra_stylesheets,
@@ -889,8 +901,9 @@ def changedetection_app(config=None, datastore_o=None):
                                  current_diff_url=watch['url'],
                                  screenshot=screenshot_url,
                                  watch=watch,
-                                 uuid=uuid)
-        
+                                 uuid=uuid,
+                                 is_html_webdriver=is_html_webdriver)
+
         return output
 
     @app.route("/settings/notification-logs", methods=['GET'])
