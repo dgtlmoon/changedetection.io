@@ -44,5 +44,17 @@ $(document).ready(function () {
     $('input[name=fetch_backend]').change(function () {
         toggle_ui();
     });
+
+
+    function attach_browserstep_screenshots() {
+        var step_n = 1;
+        $('ul#browser_steps > li > table').each(function () {
+            $(this).after('<img style="max-width: 500px; width: 100%" src = ' + screenshot_url + ' />');
+            step_n += 1
+        })
+    }
+
     toggle_ui();
+
+    attach_browserstep_screenshots();
 });
