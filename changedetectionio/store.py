@@ -287,7 +287,7 @@ class ChangeDetectionStore:
                                    'body', 'method',
                                    'ignore_text', 'css_filter',
                                    'subtractive_selectors', 'trigger_text',
-                                   'extract_title_as_title']:
+                                   'extract_title_as_title', 'extract_text']:
                     if res.get(k):
                         apply_extras[k] = res[k]
 
