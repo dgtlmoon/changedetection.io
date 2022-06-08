@@ -20,6 +20,7 @@ from copy import deepcopy
 from threading import Event
 
 import flask_login
+import logging
 import pytz
 import timeago
 from feedgen.feed import FeedGenerator
@@ -1195,7 +1196,8 @@ def changedetection_app(config=None, datastore_o=None):
 
 
         except Exception as e:
-            flash("Could not share, something went wrong while communicating with the share server.", 'error')
+            logging.error("Error sharing -{}".format(str(e)))
+            flash("Could not share, something went wrong while communicating with the share server - {}".format(str(e)), 'error')
 
         # https://changedetection.io/share/VrMv05wpXyQa
         # in the browser - should give you a nice info page - wtf
@@ -1257,7 +1259,7 @@ def notification_runner():
                 notification.process_notification(n_object, datastore)
 
             except Exception as e:
-                print("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
+                logging.error("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
 
                 # UUID wont be present when we submit a 'test' from the global settings
                 if 'uuid' in n_object:
