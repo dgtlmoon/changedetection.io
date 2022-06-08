@@ -254,11 +254,22 @@ class ChangeDetectionStore:
     def scrub_watch(self, uuid):
         import pathlib
 
-        self.__data['watching'][uuid].update({'history': {}, 'last_checked': 0, 'last_changed': 0, 'previous_md5': False})
-        self.needs_write_urgent = True
+        self.__data['watching'][uuid].update(
+            {'last_checked': 0,
+             'last_changed': 0,
+             'last_viewed': 0,
+             'previous_md5': False,
+             'last_notification_error': False,
+             'last_error': False})
 
-        for item in pathlib.Path(self.datastore_path).rglob(uuid+"/*.txt"):
+        # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
+        for item in pathlib.Path(os.path.join(self.datastore_path, uuid)).rglob("*.*"):
             unlink(item)
+
+        # Force the attr to recalculate
+        bump = self.__data['watching'][uuid].history
+
+        self.needs_write_urgent = True
 
     def add_watch(self, url, tag="", extras=None, write_to_disk_now=True):
 
