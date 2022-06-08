@@ -467,8 +467,8 @@ def changedetection_app(config=None, datastore_o=None):
         except KeyError:
             flash('Watch not found', 'error')
         else:
-            flash("Cleared snapshot history for watch {}".format(uuid))
-        #@todo gives 'Not enough saved change detection snapshots to produce a report.' after scrub.. interesting
+            flash("Scrubbed watch {}".format(uuid))
+
         return redirect(url_for('index'))
 
     @app.route("/scrub", methods=['GET', 'POST'])
