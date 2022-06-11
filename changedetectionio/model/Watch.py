@@ -13,7 +13,6 @@ from changedetectionio.notification import (
 class model(dict):
     __newest_history_key = None
     __history_n=0
-
     __base_config = {
             'url': None,
             'tag': None,
@@ -48,7 +47,8 @@ class model(dict):
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
             'webdriver_delay': None
         }
-
+    jitter_seconds = 0
+    mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
     def __init__(self, *arg, **kw):
         import uuid
         self.update(self.__base_config)
@@ -157,8 +157,7 @@ class model(dict):
 
     def threshold_seconds(self):
         seconds = 0
-        mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
-        for m, n in mtable.items():
+        for m, n in self.mtable.items():
             x = self.get('time_between_check', {}).get(m, None)
             if x:
                 seconds += x * n
