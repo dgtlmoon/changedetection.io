@@ -363,7 +363,9 @@ class watchForm(commonSettingsForm):
 class globalSettingsRequestForm(Form):
     time_between_check = FormField(TimeBetweenCheckForm)
     proxy = RadioField('Proxy')
-    jitter_seconds = IntegerField('Random jitter ± delay time for checks' , render_kw={"style": "width: 5em;"}, validators=[validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    jitter_seconds = IntegerField('Random jitter ± delay time for checks',
+                                  render_kw={"style": "width: 5em;"},
+                                  validators=[validators.NumberRange(min=0, message="Should contain zero or more seconds")])
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
