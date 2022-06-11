@@ -1277,7 +1277,7 @@ def ticker_thread_check_time_launch_checks():
     import random
     from changedetectionio import update_worker
 
-    recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
+    recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 20))
     print("System env MINIMUM_SECONDS_RECHECK_TIME", recheck_time_minimum_seconds)
 
     # Spin up Workers that do the fetching
@@ -1314,10 +1314,9 @@ def ticker_thread_check_time_launch_checks():
 
         recheck_time_system_seconds = int(datastore.threshold_seconds)
 
+        # Check for watches outside of the time threshold to put in the thread queue.
         for uuid in watch_uuid_list:
-
-            # Check for watches outside of the time threshold to put in the thread queue.
-            now = int(time.time())
+            now = time.time()
             watch = datastore.data['watching'].get(uuid)
             if not watch:
                 logging.error("Watch: {} no longer present.".format(uuid))
@@ -1328,12 +1327,9 @@ def ticker_thread_check_time_launch_checks():
                 continue
 
             # If they supplied an individual entry minutes to threshold.
-            threshold = now
+
             watch_threshold_seconds = watch.threshold_seconds()
-            if watch_threshold_seconds:
-                threshold -= watch_threshold_seconds
-            else:
-                threshold -= recheck_time_system_seconds
+            threshold = watch_threshold_seconds if watch_threshold_seconds > 0 else recheck_time_system_seconds
 
             # #580 - Jitter plus/minus amount of time to make the check seem more random to the server
             jitter = datastore.data['settings']['requests'].get('jitter_seconds', 0)
@@ -1341,21 +1337,22 @@ def ticker_thread_check_time_launch_checks():
                 if watch.jitter_seconds == 0:
                     watch.jitter_seconds = random.uniform(-abs(jitter), jitter)
 
-            # `threshold` set to "now" minus calculated seconds before it should be rechecked
-            # threshold = 1555555555-10 and so watch['last_checked'] = 1555555444
-            # anyone 'last_checked' less than "1555555555-10" should be rechecked
-            if watch['last_checked'] <= min(threshold - watch.jitter_seconds, threshold - recheck_time_minimum_seconds):
-                if not uuid in running_uuids and uuid not in update_q.queue:
 
-                    print("Watch UUID {} last checked at {} queued at {} jitter {:0.2f}, {}since".format(uuid,
-                                                                                            watch['last_checked'],
-                                                                                            str(int(time.time())),
-                                                                                            watch.jitter_seconds,
-                                                                                            int(time.time())-watch['last_checked']))
+            seconds_since_last_recheck = now - watch['last_checked']
+            if seconds_since_last_recheck >= (threshold + watch.jitter_seconds) and seconds_since_last_recheck >= recheck_time_minimum_seconds:
+                if not uuid in running_uuids and uuid not in update_q.queue:
+                    print("Queued watch UUID {} last checked at {} queued at {:0.2f} jitter {:0.2f}s, {:0.2f}s since last checked".format(uuid,
+                                                                                                         watch['last_checked'],
+                                                                                                         now,
+                                                                                                         watch.jitter_seconds,
+                                                                                                         now - watch['last_checked']))
+                    # Into the queue with you
                     update_q.put(uuid)
+
+                    # Reset for next time
                     watch.jitter_seconds = 0
 
-        # Wait before checking the list again
+        # Wait before checking the list again - saves CPU
         time.sleep(1)
 
         # Should be low so we can break this out in testing
