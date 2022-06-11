@@ -97,6 +97,10 @@ def process_notification(n_object, datastore):
                 if log_value and 'WARNING' in log_value or 'ERROR' in log_value:
                     raise Exception(log_value)
 
+                # Return some debug info
+                return {'url': url, 'title': n_title, 'body': n_body, 'body_format': n_format}
+
+
 # Notification title + body content parameters get created here.
 def create_notification_parameters(n_object, datastore):
     from copy import deepcopy

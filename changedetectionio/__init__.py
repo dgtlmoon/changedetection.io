@@ -924,7 +924,7 @@ def changedetection_app(config=None, datastore_o=None):
     def notification_logs():
         global notification_debug_log
         output = render_template("notification-log.html",
-                                 logs=notification_debug_log if len(notification_debug_log) else ["No errors or warnings detected"])
+                                 logs=notification_debug_log if len(notification_debug_log) else ["Notification logs are empty - no notifications sent yet."])
 
         return output
 
@@ -1244,6 +1244,9 @@ def check_for_new_version():
 
 def notification_runner():
     global notification_debug_log
+    from datetime import datetime
+    import json
+
     while not app.config.exit.is_set():
         try:
             # At the moment only one thread runs (single runner)
@@ -1252,9 +1255,12 @@ def notification_runner():
             time.sleep(1)
 
         else:
-            # Process notifications
+
+            now = datetime.now()
+
             try:
                 from changedetectionio import notification
+
                 notification.process_notification(n_object, datastore)
 
             except Exception as e:
@@ -1268,9 +1274,10 @@ def notification_runner():
                 log_lines = str(e).splitlines()
                 notification_debug_log += log_lines
 
-                # Trim the log length
-                notification_debug_log = notification_debug_log[-100:]
-
+            # Process notifications
+            notification_debug_log+= ["{} - SENDING {}".format(now.strftime("%Y/%m/%d %H:%M:%S,000"), json.dumps(n_object))]
+            # Trim the log length
+            notification_debug_log = notification_debug_log[-100:]
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
