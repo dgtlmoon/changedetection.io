@@ -56,7 +56,10 @@ class update_worker(threading.Thread):
                     except content_fetcher.ReplyWithContentButNoText as e:
                         # Totally fine, it's by choice - just continue on, nothing more to care about
                         # Page had elements/content but no renderable text
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found."})
+                        if self.datastore.data['watching'][uuid].get('css_filter'):
+                            self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found (CSS / xPath Filter not found in page?)"})
+                        else:
+                            self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found."})
                         pass
                     except content_fetcher.EmptyReply as e:
                         # Some kind of custom to-str handler in the exception handler that does this?

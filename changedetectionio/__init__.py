@@ -20,6 +20,7 @@ from copy import deepcopy
 from threading import Event
 
 import flask_login
+import logging
 import pytz
 import timeago
 from feedgen.feed import FeedGenerator
@@ -351,9 +352,8 @@ def changedetection_app(config=None, datastore_o=None):
                 latest_fname = watch.history[dates[-1]]
 
                 html_diff = diff.render_diff(prev_fname, latest_fname, include_equal=False, line_feed_sep="</br>")
-                fe.description(description="<![CDATA["
-                                           "<html><body><h4>{}</h4>{}</body></html>"
-                                           "]]>".format(watch_title, html_diff))
+                fe.content(content="<html><body><h4>{}</h4>{}</body></html>".format(watch_title, html_diff),
+                           type='CDATA')
 
                 fe.guid(guid, permalink=False)
                 dt = datetime.datetime.fromtimestamp(int(watch.newest_history_key))
@@ -457,6 +457,19 @@ def changedetection_app(config=None, datastore_o=None):
             return make_response({'error': str(e)}, 400)
 
         return 'OK'
+
+
+    @app.route("/scrub/<string:uuid>", methods=['GET'])
+    @login_required
+    def scrub_watch(uuid):
+        try:
+            datastore.scrub_watch(uuid)
+        except KeyError:
+            flash('Watch not found', 'error')
+        else:
+            flash("Scrubbed watch {}".format(uuid))
+
+        return redirect(url_for('index'))
 
     @app.route("/scrub", methods=['GET', 'POST'])
     @login_required
@@ -811,7 +824,13 @@ def changedetection_app(config=None, datastore_o=None):
 
         screenshot_url = datastore.get_screenshot(uuid)
 
-        output = render_template("diff.html", watch_a=watch,
+        system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
+
+        is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
+                    watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
+
+        output = render_template("diff.html",
+                                 watch_a=watch,
                                  newest=newest_version_file_contents,
                                  previous=previous_version_file_contents,
                                  extra_stylesheets=extra_stylesheets,
@@ -822,7 +841,8 @@ def changedetection_app(config=None, datastore_o=None):
                                  current_diff_url=watch['url'],
                                  extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
                                  left_sticky=True,
-                                 screenshot=screenshot_url)
+                                 screenshot=screenshot_url,
+                                 is_html_webdriver=is_html_webdriver)
 
         return output
 
@@ -883,6 +903,11 @@ def changedetection_app(config=None, datastore_o=None):
             content.append({'line': "No history found", 'classes': ''})
 
         screenshot_url = datastore.get_screenshot(uuid)
+        system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
+
+        is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
+                watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
+
         output = render_template("preview.html",
                                  content=content,
                                  extra_stylesheets=extra_stylesheets,
@@ -891,8 +916,9 @@ def changedetection_app(config=None, datastore_o=None):
                                  current_diff_url=watch['url'],
                                  screenshot=screenshot_url,
                                  watch=watch,
-                                 uuid=uuid)
-        
+                                 uuid=uuid,
+                                 is_html_webdriver=is_html_webdriver)
+
         return output
 
     @app.route("/settings/notification-logs", methods=['GET'])
@@ -1171,7 +1197,8 @@ def changedetection_app(config=None, datastore_o=None):
 
 
         except Exception as e:
-            flash("Could not share, something went wrong while communicating with the share server.", 'error')
+            logging.error("Error sharing -{}".format(str(e)))
+            flash("Could not share, something went wrong while communicating with the share server - {}".format(str(e)), 'error')
 
         # https://changedetection.io/share/VrMv05wpXyQa
         # in the browser - should give you a nice info page - wtf
@@ -1233,7 +1260,7 @@ def notification_runner():
                 notification.process_notification(n_object, datastore)
 
             except Exception as e:
-                print("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
+                logging.error("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
 
                 # UUID wont be present when we submit a 'test' from the global settings
                 if 'uuid' in n_object:
