@@ -38,6 +38,7 @@ class model(dict):
             'css_filter': '',
             'extract_text': [],  # Extract text by regex after filters
             'subtractive_selectors': [],
+            'check_unique_lines': False,
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'fetch_backend': None,
             'extract_title_as_title': False,
@@ -163,3 +164,14 @@ class model(dict):
             if x:
                 seconds += x * n
         return seconds
+
+    # Iterate over all history texts and see if something new exists
+    def lines_are_unique_in_history(self, lines=[]):
+        local_lines = [l.decode('utf-8').strip().lower() for l in lines]
+        for k, v in self.history.items():
+            alist = [line.decode('utf-8').strip().lower() for line in open(v, 'rb')]
+            diff = set(alist) - set(local_lines)
+            if len(diff):
+                return False
+
+        return True

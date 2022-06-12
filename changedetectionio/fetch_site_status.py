@@ -254,4 +254,10 @@ class perform_site_check():
                 if not watch['title'] or not len(watch['title']):
                     update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
 
+
+        if changed_detected:
+            if watch['check_unique_lines']:
+                if not watch.lines_are_unique_in_history(lines=stripped_text_from_html.splitlines()):
+                    changed_detected = False
+
         return changed_detected, update_obj, text_content_before_ignored_filter, fetcher.screenshot, fetcher.xpath_data
