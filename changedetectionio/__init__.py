@@ -855,6 +855,12 @@ def changedetection_app(config=None, datastore_o=None):
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
+        # Normally you would never reach this, because the 'preview' button is not available when there's no history
+        # However they may try to scrub and reload the page
+        if datastore.data['watching'][uuid].history_n == 0:
+            flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
+            return redirect(url_for('index'))
+
         extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
 
         try:
