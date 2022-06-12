@@ -171,6 +171,7 @@ class model(dict):
         for k, v in self.history.items():
             alist = [line.decode('utf-8').strip().lower() for line in open(v, 'rb')]
             diff = set(alist) - set(local_lines)
+            # @todo what about empty lines? iterate over diff and find a non-zero length line?
             if len(diff):
                 return False
 
