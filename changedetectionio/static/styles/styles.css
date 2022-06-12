@@ -353,6 +353,8 @@ and also iPads specifically.
     /* Hide table headers (but not display: none;, for accessibility) */ }
     .watch-table thead, .watch-table tbody, .watch-table th, .watch-table td, .watch-table tr {
       display: block; }
+    .watch-table .last-checked > span {
+      vertical-align: middle; }
     .watch-table .last-checked::before {
       color: #555;
       content: "Last Checked "; }
@@ -370,7 +372,8 @@ and also iPads specifically.
     .watch-table td {
       /* Behave  like a "row" */
       border: none;
-      border-bottom: 1px solid #eee; }
+      border-bottom: 1px solid #eee;
+      vertical-align: middle; }
       .watch-table td:before {
         /* Top/left values mimic padding */
         top: 6px;
@@ -490,3 +493,42 @@ ul {
 
 #api-key-copy {
   color: #0078e7; }
+
+/* spinner */
+.loader,
+.loader:after {
+  border-radius: 50%;
+  width: 10px;
+  height: 10px; }
+
+.loader {
+  margin: 0px auto;
+  font-size: 3px;
+  vertical-align: middle;
+  display: inline-block;
+  text-indent: -9999em;
+  border-top: 1.1em solid rgba(38, 104, 237, 0.2);
+  border-right: 1.1em solid rgba(38, 104, 237, 0.2);
+  border-bottom: 1.1em solid rgba(38, 104, 237, 0.2);
+  border-left: 1.1em solid #2668ed;
+  -webkit-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-animation: load8 1.1s infinite linear;
+  animation: load8 1.1s infinite linear; }
+
+@-webkit-keyframes load8 {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg); }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg); } }
+
+@keyframes load8 {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg); }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg); } }
