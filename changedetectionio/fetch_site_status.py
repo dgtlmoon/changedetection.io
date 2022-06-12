@@ -256,7 +256,7 @@ class perform_site_check():
 
 
         if changed_detected:
-            if watch['check_unique_lines']:
+            if watch.get('check_unique_lines', False):
                 if not watch.lines_are_unique_in_history(lines=stripped_text_from_html.splitlines()):
                     changed_detected = False
 
