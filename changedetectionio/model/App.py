@@ -23,6 +23,7 @@ class model(dict):
                 'requests': {
                     'timeout': 15,  # Default 15 seconds
                     'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
+                    'jitter_seconds': 0,
                     'workers': 10,  # Number of threads, lower is better for slow connections
                     'proxy': None # Preferred proxy connection
                 },

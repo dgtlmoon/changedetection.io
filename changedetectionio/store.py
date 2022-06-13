@@ -159,12 +159,11 @@ class ChangeDetectionStore:
     def threshold_seconds(self):
         seconds = 0
         mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
-        minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
         for m, n in mtable.items():
             x = self.__data['settings']['requests']['time_between_check'].get(m)
             if x:
                 seconds += x * n
-        return max(seconds, minimum_seconds_recheck_time)
+        return seconds
 
     @property
     def has_unviewed(self):
