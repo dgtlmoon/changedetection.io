@@ -46,7 +46,7 @@ class model(dict):
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
-            'webdriver_delay': None
+            'webdriver_delay': None,
             'stability_checks': None
         }
     jitter_seconds = 0
