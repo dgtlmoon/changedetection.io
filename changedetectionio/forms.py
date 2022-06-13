@@ -326,6 +326,7 @@ class watchForm(commonSettingsForm):
     tag = StringField('Group tag', [validators.Optional()], default='')
 
     time_between_check = FormField(TimeBetweenCheckForm)
+    stability_checks = IntegerField('Ensure X times before notify about change (stability check)', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should be greater than or equal to 1")] )
 
     css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()], default='')
 

@@ -50,6 +50,8 @@
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.time_between_check, class="time-check-widget") }}
+                        {{ render_field(form.stability_checks) }}
+                        <span class="pure-form-message-inline">If changes are frequent, stabilization may never occur and a notification will never be sent</span>
                         {% if has_empty_checktime %}
                         <span class="pure-form-message-inline">Currently using the <a
                                 href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>, change to another value if you want to be specific.</span>
