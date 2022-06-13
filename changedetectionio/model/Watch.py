@@ -13,6 +13,7 @@ from changedetectionio.notification import (
 class model(dict):
     __newest_history_key = None
     __history_n=0
+    __stability_checks_made = 0
     __base_config = {
             'url': None,
             'tag': None,
@@ -46,6 +47,7 @@ class model(dict):
             # Should be all None by default, so we use the system default in this case.
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
             'webdriver_delay': None
+            'stability_checks': None
         }
     jitter_seconds = 0
     mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
@@ -162,3 +164,13 @@ class model(dict):
             if x:
                 seconds += x * n
         return seconds
+
+    @property
+    def is_change_stable(self):
+        return self.__stability_checks_made >= self.get('stability_checks', 0)
+
+    def incr_stability_checks(self):
+        self.__stability_checks_made += 1
+
+    def reset_stability_checks(self):
+        self.__stability_checks_made = 0
