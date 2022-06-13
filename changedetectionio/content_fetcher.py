@@ -281,7 +281,7 @@ class base_html_playwright(Fetcher):
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
         from playwright._impl._api_types import Error, TimeoutError
-
+        response = None
         with sync_playwright() as p:
             browser_type = getattr(p, self.browser_type)
 
@@ -329,7 +329,6 @@ class base_html_playwright(Fetcher):
                 context.close()
                 browser.close()
                 print ("response object was none")
-                print (str(e))
                 raise EmptyReply(url=url, status_code=None)
 
             # Bug 2(?) Set the viewport size AFTER loading the page
@@ -343,8 +342,8 @@ class base_html_playwright(Fetcher):
                 context.close()
                 browser.close()
                 print ("Content was empty")
-                print (str(e))
                 raise EmptyReply(url=url, status_code=None)
+            
             self.headers = response.all_headers()
 
             if current_css_filter is not None:

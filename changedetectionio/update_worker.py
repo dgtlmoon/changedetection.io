@@ -63,11 +63,11 @@ class update_worker(threading.Thread):
                         pass
                     except content_fetcher.EmptyReply as e:
                         # Some kind of custom to-str handler in the exception handler that does this?
-                        err_text = "EmptyReply: Status Code {}".format(e.status_code)
+                        err_text = "EmptyReply - try increasing 'Wait seconds before extracting text', Status Code {}".format(e.status_code)
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                     except content_fetcher.ScreenshotUnavailable as e:
-                        err_text = "Screenshot unavailable, page did not render fully in the expected time"
+                        err_text = "Screenshot unavailable, page did not render fully in the expected time - try increasing 'Wait seconds before extracting text'"
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                     except content_fetcher.PageUnloadable as e:
