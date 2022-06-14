@@ -1267,7 +1267,7 @@ def notification_runner():
             try:
                 from changedetectionio import notification
 
-                notification.process_notification(n_object, datastore)
+                sent_obj = notification.process_notification(n_object, datastore)
 
             except Exception as e:
                 logging.error("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
@@ -1281,7 +1281,7 @@ def notification_runner():
                 notification_debug_log += log_lines
 
             # Process notifications
-            notification_debug_log+= ["{} - SENDING {}".format(now.strftime("%Y/%m/%d %H:%M:%S,000"), json.dumps(n_object))]
+            notification_debug_log+= ["{} - SENDING - {}".format(now.strftime("%Y/%m/%d %H:%M:%S,000"), json.dumps(sent_obj))]
             # Trim the log length
             notification_debug_log = notification_debug_log[-100:]
 
