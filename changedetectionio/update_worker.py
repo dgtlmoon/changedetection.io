@@ -45,7 +45,6 @@ class update_worker(threading.Thread):
 
                     try:
                         changed_detected, update_obj, contents, screenshot, xpath_data = update_handler.run(uuid)
-
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
                         # We then convert/.decode('utf-8') for the notification etc
@@ -56,7 +55,7 @@ class update_worker(threading.Thread):
                     except content_fetcher.ReplyWithContentButNoText as e:
                         # Totally fine, it's by choice - just continue on, nothing more to care about
                         # Page had elements/content but no renderable text
-                        if self.datastore.data['watching'][uuid].get('css_filter'):
+                        if self.datastore.data['watching'].get(uuid, False) and self.datastore.data['watching'][uuid].get('css_filter'):
                             self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found (CSS / xPath Filter not found in page?)"})
                         else:
                             self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found."})
