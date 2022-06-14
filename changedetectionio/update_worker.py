@@ -92,54 +92,26 @@ class update_worker(threading.Thread):
                             # Generally update anything interesting returned
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
+                            stability_checks_enabled = bool(watch['stability_checks'])
+
                             # A change was detected
                             if changed_detected:
-                                n_object = {}
                                 print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))
 
+                                if stability_checks_enabled:
+                                    watch.reset_stability_checks()
+
                                 # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
-                                if watch.history_n >= 2:
+                                if watch.history_n >= 2 and not stability_checks_enabled:
+                                    self.send_notification(watch, uuid, contents, fname)
 
+                            if not changed_detected and stability_checks_enabled:
+                                watch.incr_stability_checks()
+
+                                if watch.history_n >= 2 and watch.is_change_stable:
                                     dates = list(watch.history.keys())
-                                    prev_fname = watch.history[dates[-2]]
-
-
-                                    # Did it have any notification alerts to hit?
-                                    if len(watch['notification_urls']):
-                                        print(">>> Notifications queued for UUID from watch {}".format(uuid))
-                                        n_object['notification_urls'] = watch['notification_urls']
-                                        n_object['notification_title'] = watch['notification_title']
-                                        n_object['notification_body'] = watch['notification_body']
-                                        n_object['notification_format'] = watch['notification_format']
-
-                                    # No? maybe theres a global setting, queue them all
-                                    elif len(self.datastore.data['settings']['application']['notification_urls']):
-                                        print(">>> Watch notification URLs were empty, using GLOBAL notifications for UUID: {}".format(uuid))
-                                        n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
-                                        n_object['notification_title'] = self.datastore.data['settings']['application']['notification_title']
-                                        n_object['notification_body'] = self.datastore.data['settings']['application']['notification_body']
-                                        n_object['notification_format'] = self.datastore.data['settings']['application']['notification_format']
-                                    else:
-                                        print(">>> NO notifications queued, watch and global notification URLs were empty.")
-
-                                    # Only prepare to notify if the rules above matched
-                                    if 'notification_urls' in n_object:
-                                        # HTML needs linebreak, but MarkDown and Text can use a linefeed
-                                        if n_object['notification_format'] == 'HTML':
-                                            line_feed_sep = "</br>"
-                                        else:
-                                            line_feed_sep = "\n"
-
-                                        from changedetectionio import diff
-                                        n_object.update({
-                                            'watch_url': watch['url'],
-                                            'uuid': uuid,
-                                            'current_snapshot': contents.decode('utf-8'),
-                                            'diff': diff.render_diff(prev_fname, fname, line_feed_sep=line_feed_sep),
-                                            'diff_full': diff.render_diff(prev_fname, fname, True, line_feed_sep=line_feed_sep)
-                                        })
-
-                                        self.notification_q.put(n_object)
+                                    latest_fname = watch.history[dates[-1]]
+                                    self.send_notification(watch, uuid, contents, latest_fname)
 
                         except Exception as e:
                             # Catch everything possible here, so that if a worker crashes, we don't lose it until restart!
@@ -165,3 +137,45 @@ class update_worker(threading.Thread):
                 time.sleep(0.1)
 
             self.app.config.exit.wait(1)
+
+    def send_notification(self, watch, uuid, contents, fname):
+        n_object = {}
+        dates = list(watch.history.keys())
+        prev_fname = watch.history[dates[-2]]
+
+        # Did it have any notification alerts to hit?
+        if len(watch['notification_urls']):
+            print(">>> Notifications queued for UUID from watch {}".format(uuid))
+            n_object['notification_urls'] = watch['notification_urls']
+            n_object['notification_title'] = watch['notification_title']
+            n_object['notification_body'] = watch['notification_body']
+            n_object['notification_format'] = watch['notification_format']
+
+        # No? maybe theres a global setting, queue them all
+        elif len(self.datastore.data['settings']['application']['notification_urls']):
+            print(">>> Watch notification URLs were empty, using GLOBAL notifications for UUID: {}".format(uuid))
+            n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
+            n_object['notification_title'] = self.datastore.data['settings']['application']['notification_title']
+            n_object['notification_body'] = self.datastore.data['settings']['application']['notification_body']
+            n_object['notification_format'] = self.datastore.data['settings']['application']['notification_format']
+        else:
+            print(">>> NO notifications queued, watch and global notification URLs were empty.")
+
+        # Only prepare to notify if the rules above matched
+        if 'notification_urls' in n_object:
+            # HTML needs linebreak, but MarkDown and Text can use a linefeed
+            if n_object['notification_format'] == 'HTML':
+                line_feed_sep = "</br>"
+            else:
+                line_feed_sep = "\n"
+
+            from changedetectionio import diff
+            n_object.update({
+                'watch_url': watch['url'],
+                'uuid': uuid,
+                'current_snapshot': contents.decode('utf-8'),
+                'diff': diff.render_diff(prev_fname, fname, line_feed_sep=line_feed_sep),
+                'diff_full': diff.render_diff(prev_fname, fname, True, line_feed_sep=line_feed_sep)
+            })
+
+            self.notification_q.put(n_object)

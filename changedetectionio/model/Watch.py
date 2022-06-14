@@ -167,7 +167,7 @@ class model(dict):
 
     @property
     def is_change_stable(self):
-        return self.__stability_checks_made >= self.get('stability_checks', 0)
+        return self.__stability_checks_made == self.get('stability_checks', 0)
 
     def incr_stability_checks(self):
         self.__stability_checks_made += 1
