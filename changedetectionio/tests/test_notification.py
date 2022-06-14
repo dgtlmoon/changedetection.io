@@ -154,6 +154,10 @@ def test_check_notification(client, live_server):
     time.sleep(1)
     assert os.path.exists("test-datastore/notification.txt") == False
 
+    res = client.get(url_for("notification_logs"))
+    # be sure we see it in the output log
+    assert b'New ChangeDetection.io Notification - ' + test_url.encode('utf-8') in res.data
+
     # cleanup for the next
     client.get(
         url_for("form_delete", uuid="all"),
