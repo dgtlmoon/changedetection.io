@@ -224,11 +224,7 @@ class perform_site_check():
         else:
             fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
-        # On the first run of a site, watch['previous_md5'] will be None, set it the current one.
-        if not watch.get('previous_md5'):
-            watch['previous_md5'] = fetched_md5
-            update_obj["previous_md5"] = fetched_md5
-
+        ############ Blocking rules, after checksum #################
         blocked_by_not_found_trigger_text = False
 
         if len(watch['trigger_text']):
@@ -258,17 +254,28 @@ class perform_site_check():
             if result:
                 blocked_by_text_should_NOT_be_present = True
 
-        # Looks like something changed, but did it match all the rules?
+        # The main thing that all this at the moment comes down to :)
         if watch['previous_md5'] != fetched_md5:
-            if not blocked_by_not_found_trigger_text and not blocked_by_text_should_NOT_be_present :
-                changed_detected = True
-                update_obj["previous_md5"] = fetched_md5
-                update_obj["last_changed"] = timestamp
+            changed_detected = True
+
+        # Looks like something changed, but did it match all the rules?
+        if blocked_by_not_found_trigger_text or blocked_by_text_should_NOT_be_present :
+            changed_detected = False
+        else:
+            update_obj["last_changed"] = timestamp
+
 
         # Extract title as title
         if is_html:
             if self.datastore.data['settings']['application']['extract_title_as_title'] or watch['extract_title_as_title']:
                 if not watch['title'] or not len(watch['title']):
                     update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
+
+        # Always record the new checksum
+        update_obj["previous_md5"] = fetched_md5
+
+        # On the first run of a site, watch['previous_md5'] will be None, set it the current one.
+        if not watch.get('previous_md5'):
+            watch['previous_md5'] = fetched_md5
 
         return changed_detected, update_obj, text_content_before_ignored_filter, fetcher.screenshot, fetcher.xpath_data
