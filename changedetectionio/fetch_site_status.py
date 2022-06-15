@@ -243,10 +243,27 @@ class perform_site_check():
             if result:
                 blocked_by_not_found_trigger_text = False
 
-        if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:
-            changed_detected = True
-            update_obj["previous_md5"] = fetched_md5
-            update_obj["last_changed"] = timestamp
+        # #602 - ability to block change detection until some text is NOT on the page
+        blocked_by_text_should_NOT_be_present = False
+
+        if len(watch['text_should_not_be_present']):
+            # Yeah, lets block first until something matches
+            blocked_by_text_should_NOT_be_present = True
+
+            # If anything matched, then we should block a change from happening
+            result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
+                                                  wordlist=watch['trigger_text'],
+                                                  mode="line numbers")
+
+            if result:
+                blocked_by_text_should_NOT_be_present = True
+
+        # Looks like something changed, but did it match all the rules?
+        if watch['previous_md5'] != fetched_md5:
+            if not blocked_by_not_found_trigger_text and not blocked_by_text_should_NOT_be_present :
+                changed_detected = True
+                update_obj["previous_md5"] = fetched_md5
+                update_obj["last_changed"] = timestamp
 
         # Extract title as title
         if is_html:

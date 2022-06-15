@@ -38,6 +38,7 @@ class model(dict):
             'extract_text': [],  # Extract text by regex after filters
             'subtractive_selectors': [],
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
+            'text_should_not_be_present': [], # Text that should not present
             'fetch_backend': None,
             'extract_title_as_title': False,
             'proxy': None, # Preferred proxy connection
