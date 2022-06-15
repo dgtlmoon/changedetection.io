@@ -9,8 +9,6 @@
 # exit when any command fails
 set -e
 
-export MINIMUM_SECONDS_RECHECK_TIME=0
-
 find tests/test_*py -type f|while read test_name
 do
   echo "TEST RUNNING $test_name"
