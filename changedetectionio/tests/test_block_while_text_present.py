@@ -64,7 +64,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server):
     sleep_time_for_fetch_thread = 3
     live_server_setup(live_server)
     # Use a mix of case in ZzZ to prove it works case-insensitive.
-    ignore_text = "out of stOCK\r\nfoobar\r\n"
+    ignore_text = "out of stoCk\r\nfoobar"
 
     set_original_ignore_response()
 
@@ -80,9 +80,6 @@ def test_check_block_changedetection_text_NOT_present(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
@@ -95,6 +92,8 @@ def test_check_block_changedetection_text_NOT_present(client, live_server):
     )
     assert b"Updated watch." in res.data
 
+    # Give the thread time to pick it up
+    time.sleep(sleep_time_for_fetch_thread)
     # Check it saved
     res = client.get(
         url_for("edit_page", uuid="first"),

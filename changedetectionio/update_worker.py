@@ -98,9 +98,10 @@ class update_worker(threading.Thread):
 
                                 # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
                                 if watch.history_n >= 2:
-
-                                    dates = list(watch.history.keys())
-                                    prev_fname = watch.history[dates[-2]]
+                                    print(">> Change detected in UUID {} - {}".format(uuid, watch['url']))
+                                    watch_history = watch.history
+                                    dates = list(watch_history.keys())
+                                    prev_fname = watch_history[dates[-2]]
 
 
                                     # Did it have any notification alerts to hit?
@@ -141,6 +142,7 @@ class update_worker(threading.Thread):
                                         self.notification_q.put(n_object)
 
                         except Exception as e:
+                            raise(e)
                             # Catch everything possible here, so that if a worker crashes, we don't lose it until restart!
                             print("!!!! Exception in update_worker !!!\n", e)
                             self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
@@ -148,8 +150,7 @@ class update_worker(threading.Thread):
 
                     finally:
                         # Always record that we atleast tried
-                        self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
-                                                                           'last_checked': round(time.time())})
+                        self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3)})
                         # Always save the screenshot if it's available
                         if screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
