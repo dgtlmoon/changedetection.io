@@ -85,8 +85,8 @@ jobs:
           version: latest
           driver-opts: image=moby/buildkit:master
 
-      # master always builds :latest
-      - name: Build and push :latest
+      # master branch -> :dev container tag
+      - name: Build and push :dev
         id: docker_build
         if: ${{ github.ref }} == "refs/heads/master"
         uses: docker/build-push-action@v2
@@ -95,12 +95,12 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:latest,ghcr.io/${{ github.repository }}:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:dev,ghcr.io/${{ github.repository }}:dev
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 
-      # A new tagged release is required, which builds :tag
+      # A new tagged release is required, which builds :tag and :latest
       - name: Build and push :tag
         id: docker_build_tag_release
         if: github.event_name == 'release' && startsWith(github.event.release.tag_name, '0.')
@@ -110,7 +110,10 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:${{ github.event.release.tag_name }},ghcr.io/dgtlmoon/changedetection.io:${{ github.event.release.tag_name }}
+            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:${{ github.event.release.tag_name }}
+            ghcr.io/dgtlmoon/changedetection.io:${{ github.event.release.tag_name }}
+            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:latest
+            ghcr.io/dgtlmoon/changedetection.io:latest
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
@@ -125,5 +128,3 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
-
-

@@ -67,13 +67,17 @@ Available when connected to a <a href="https://github.com/dgtlmoon/changedetecti
 ### Docker
 
 With Docker composer, just clone this repository and..
+
 ```bash
 $ docker-compose up -d
 ```
+
 Docker standalone
 ```bash
 $ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
 ```
+
+`:latest` tag is our latest stable release, `:dev` tag is our bleeding edge `master` branch.
 
 ### Windows
 
