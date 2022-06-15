@@ -101,6 +101,13 @@ class update_worker(threading.Thread):
                                     print(">> Change detected in UUID {} - {}".format(uuid, watch['url']))
                                     watch_history = watch.history
                                     dates = list(watch_history.keys())
+                                    # Theoretically it's possible that this could be just 1 long,
+                                    # - In the case that the timestamp key was not unique
+                                    if len(dates) == 1:
+                                        raise ValueError(
+                                            "History index had 2 or more, but only 1 date loaded, timestamps were not unique? maybe two of the same timestamps got written, needs more delay?"
+                                        )
+                                    
                                     prev_fname = watch_history[dates[-2]]
 
 
@@ -142,7 +149,6 @@ class update_worker(threading.Thread):
                                         self.notification_q.put(n_object)
 
                         except Exception as e:
-                            raise(e)
                             # Catch everything possible here, so that if a worker crashes, we don't lose it until restart!
                             print("!!!! Exception in update_worker !!!\n", e)
                             self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
