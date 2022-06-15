@@ -31,7 +31,7 @@ def cleanup(datastore_path):
 def app(request):
     """Create application for the tests."""
     datastore_path = "./test-datastore"
-
+    os.environ["MINIMUM_SECONDS_RECHECK_TIME"] = "0"
     try:
         os.mkdir(datastore_path)
     except FileExistsError:
