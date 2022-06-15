@@ -48,6 +48,7 @@ def process_notification(n_object, datastore):
     # Anything higher than or equal to WARNING (which covers things like Connection errors)
     # raise it as an exception
     apobjs=[]
+    sent_objs=[]
     for url in n_object['notification_urls']:
 
         apobj = apprise.Apprise(debug=True)
@@ -101,11 +102,14 @@ def process_notification(n_object, datastore):
                 log_value = logs.getvalue()
                 if log_value and 'WARNING' in log_value or 'ERROR' in log_value:
                     raise Exception(log_value)
+                
+                sent_objs.append({'title': n_title,
+                                  'body': n_body,
+                                  'url' : url,
+                                  'body_format': n_format})
 
-                # Return what was sent for better logging
-                return {'title': n_title,
-                        'body': n_body,
-                        'body_format': n_format}
+    # Return what was sent for better logging - after the for loop
+    return sent_objs
 
 
 # Notification title + body content parameters get created here.
