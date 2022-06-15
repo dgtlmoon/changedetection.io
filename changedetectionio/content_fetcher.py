@@ -356,9 +356,15 @@ class base_html_playwright(Fetcher):
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
+
+            # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
+            # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
+            # acceptable screenshot quality here
             try:
-                page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
-                self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=92)
+                # Quality set to 1 because it's not used, just used as a work-around for a bug, no need to change this.
+                page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024}, quality=1)
+                # The actual screenshot
+                self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
             except Exception as e:
                 context.close()
                 browser.close()
