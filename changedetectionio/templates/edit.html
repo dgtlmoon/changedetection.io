@@ -201,10 +201,13 @@ nav
                 </fieldset>
                 <fieldset>
                     <div class="pure-control-group">
-                        {{ render_field(form.text_should_not_be_present, rows=5, placeholder="For example: Out of stock") }}
+                        {{ render_field(form.text_should_not_be_present, rows=5, placeholder="For example: Out of stock
+Sold out
+Not in stock
+Unavailable") }}
                         <span class="pure-form-message-inline">
                             <ul>
-                                <li>When this text is present it blocks a change detection from occuring, all text and regex are tested <i>case-insensitive</i>.</li>
+                                <li>Block change-detection while this text is on the page, all text and regex are tested <i>case-insensitive</i>, good for waiting for when a product is available again</li>
                                 <li>Block text is processed from the result-text that comes out of any CSS/JSON Filters for this watch</li>
                                 <li>All lines here must not exist (think of each line as "OR")</li>
                                 <li>Note: Wrap in forward slash / to use regex  example: <code>/foo\d/</code></li>
