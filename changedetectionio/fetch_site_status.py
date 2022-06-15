@@ -272,6 +272,4 @@ class perform_site_check():
         if not watch.get('previous_md5'):
             watch['previous_md5'] = fetched_md5
 
-        update_obj['last_checked'] = timestamp
-
         return changed_detected, update_obj, text_content_before_ignored_filter, fetcher.screenshot, fetcher.xpath_data

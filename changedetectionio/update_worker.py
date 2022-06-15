@@ -107,7 +107,6 @@ class update_worker(threading.Thread):
                                         raise ValueError(
                                             "History index had 2 or more, but only 1 date loaded, timestamps were not unique? maybe two of the same timestamps got written, needs more delay?"
                                         )
-                                    
                                     prev_fname = watch_history[dates[-2]]
 
 
@@ -156,7 +155,8 @@ class update_worker(threading.Thread):
 
                     finally:
                         # Always record that we atleast tried
-                        self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3)})
+                        self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
+                                                                           'last_checked': round(time.time())})
                         # Always save the screenshot if it's available
                         if screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
