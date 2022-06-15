@@ -85,7 +85,7 @@ jobs:
           version: latest
           driver-opts: image=moby/buildkit:master
 
-      # master always builds :latest
+      # master branch -> :dev container tag
       - name: Build and push :dev
         id: docker_build
         if: ${{ github.ref }} == "refs/heads/master"
@@ -100,7 +100,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 
-      # A new tagged release is required, which builds :tag
+      # A new tagged release is required, which builds :tag and :latest
       - name: Build and push :tag
         id: docker_build_tag_release
         if: github.event_name == 'release' && startsWith(github.event.release.tag_name, '0.')
