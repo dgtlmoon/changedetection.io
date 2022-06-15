@@ -1263,6 +1263,7 @@ def notification_runner():
         else:
 
             now = datetime.now()
+            sent_obj = None
 
             try:
                 from changedetectionio import notification

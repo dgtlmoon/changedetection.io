@@ -56,9 +56,9 @@ Easily see what changed, examine by word, line, or individual character.
 
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
 
-### Target elements with the Visual Selector tool.
+### Filter by elements using the Visual Selector tool.
 
-Available when connected to a <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher">playwright content fetcher</a> (available also as part of our subscription service)
+Available when connected to a <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher">playwright content fetcher</a> (included as part of our subscription service)
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/visualselector-anim.gif" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
 
