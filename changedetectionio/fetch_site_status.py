@@ -225,24 +225,39 @@ class perform_site_check():
             fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
         ############ Blocking rules, after checksum #################
-        blocked_by_not_found_trigger_text = False
+        blocked = False
 
         if len(watch['trigger_text']):
-            # Yeah, lets block first until something matches
-            blocked_by_not_found_trigger_text = True
+            # Assume blocked
+            blocked = True
             # Filter and trigger works the same, so reuse it
             # It should return the line numbers that match
             result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
                                                   wordlist=watch['trigger_text'],
                                                   mode="line numbers")
-            # If it returned any lines that matched..
+            # Unblock if the trigger was found
             if result:
-                blocked_by_not_found_trigger_text = False
+                blocked = False
 
-        if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:
+
+        if len(watch['text_should_not_be_present']):
+            # If anything matched, then we should block a change from happening
+            result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
+                                                  wordlist=watch['text_should_not_be_present'],
+                                                  mode="line numbers")
+            if result:
+                blocked = True
+
+        # The main thing that all this at the moment comes down to :)
+        if watch['previous_md5'] != fetched_md5:
             changed_detected = True
 
+        # Looks like something changed, but did it match all the rules?
+        if blocked:
+            changed_detected = False
+        else:
             update_obj["last_changed"] = timestamp
+
 
         # Extract title as title
         if is_html:
@@ -256,6 +271,5 @@ class perform_site_check():
         # On the first run of a site, watch['previous_md5'] will be None, set it the current one.
         if not watch.get('previous_md5'):
             watch['previous_md5'] = fetched_md5
-
 
         return changed_detected, update_obj, text_content_before_ignored_filter, fetcher.screenshot, fetcher.xpath_data

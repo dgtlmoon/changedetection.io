@@ -98,9 +98,16 @@ class update_worker(threading.Thread):
 
                                 # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
                                 if watch.history_n >= 2:
-
-                                    dates = list(watch.history.keys())
-                                    prev_fname = watch.history[dates[-2]]
+                                    print(">> Change detected in UUID {} - {}".format(uuid, watch['url']))
+                                    watch_history = watch.history
+                                    dates = list(watch_history.keys())
+                                    # Theoretically it's possible that this could be just 1 long,
+                                    # - In the case that the timestamp key was not unique
+                                    if len(dates) == 1:
+                                        raise ValueError(
+                                            "History index had 2 or more, but only 1 date loaded, timestamps were not unique? maybe two of the same timestamps got written, needs more delay?"
+                                        )
+                                    prev_fname = watch_history[dates[-2]]
 
 
                                     # Did it have any notification alerts to hit?

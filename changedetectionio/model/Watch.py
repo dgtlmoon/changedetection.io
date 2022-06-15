@@ -38,6 +38,7 @@ class model(dict):
             'extract_text': [],  # Extract text by regex after filters
             'subtractive_selectors': [],
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
+            'text_should_not_be_present': [], # Text that should not present
             'fetch_backend': None,
             'extract_title_as_title': False,
             'proxy': None, # Preferred proxy connection
@@ -85,7 +86,7 @@ class model(dict):
         # Read the history file as a dict
         fname = os.path.join(self.__datastore_path, self.get('uuid'), "history.txt")
         if os.path.isfile(fname):
-            logging.debug("Disk IO accessed " + str(time.time()))
+            logging.debug("Reading history index " + str(time.time()))
             with open(fname, "r") as f:
                 tmp_history = dict(i.strip().split(',', 2) for i in f.readlines())
 

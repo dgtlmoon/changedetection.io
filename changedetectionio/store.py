@@ -290,14 +290,15 @@ class ChangeDetectionStore:
                                      headers={'App-Guid': self.__data['app_guid']})
                 res = r.json()
 
-                # List of permisable stuff we accept from the wild internet
+                # List of permissible attributes we accept from the wild internet
                 for k in ['url', 'tag',
-                                   'paused', 'title',
-                                   'previous_md5', 'headers',
-                                   'body', 'method',
-                                   'ignore_text', 'css_filter',
-                                   'subtractive_selectors', 'trigger_text',
-                                   'extract_title_as_title', 'extract_text']:
+                          'paused', 'title',
+                          'previous_md5', 'headers',
+                          'body', 'method',
+                          'ignore_text', 'css_filter',
+                          'subtractive_selectors', 'trigger_text',
+                          'extract_title_as_title', 'extract_text',
+                          'text_should_not_be_present']:
                     if res.get(k):
                         apply_extras[k] = res[k]
 
