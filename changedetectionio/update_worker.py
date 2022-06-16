@@ -45,7 +45,6 @@ class update_worker(threading.Thread):
 
                     try:
                         changed_detected, update_obj, contents, screenshot, xpath_data = update_handler.run(uuid)
-
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
                         # We then convert/.decode('utf-8') for the notification etc
@@ -56,18 +55,18 @@ class update_worker(threading.Thread):
                     except content_fetcher.ReplyWithContentButNoText as e:
                         # Totally fine, it's by choice - just continue on, nothing more to care about
                         # Page had elements/content but no renderable text
-                        if self.datastore.data['watching'][uuid].get('css_filter'):
+                        if self.datastore.data['watching'].get(uuid, False) and self.datastore.data['watching'][uuid].get('css_filter'):
                             self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found (CSS / xPath Filter not found in page?)"})
                         else:
                             self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found."})
                         pass
                     except content_fetcher.EmptyReply as e:
                         # Some kind of custom to-str handler in the exception handler that does this?
-                        err_text = "EmptyReply: Status Code {}".format(e.status_code)
+                        err_text = "EmptyReply - try increasing 'Wait seconds before extracting text', Status Code {}".format(e.status_code)
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                     except content_fetcher.ScreenshotUnavailable as e:
-                        err_text = "Screenshot unavailable, page did not render fully in the expected time"
+                        err_text = "Screenshot unavailable, page did not render fully in the expected time - try increasing 'Wait seconds before extracting text'"
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                     except content_fetcher.PageUnloadable as e:
@@ -99,9 +98,16 @@ class update_worker(threading.Thread):
 
                                 # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
                                 if watch.history_n >= 2:
-
-                                    dates = list(watch.history.keys())
-                                    prev_fname = watch.history[dates[-2]]
+                                    print(">> Change detected in UUID {} - {}".format(uuid, watch['url']))
+                                    watch_history = watch.history
+                                    dates = list(watch_history.keys())
+                                    # Theoretically it's possible that this could be just 1 long,
+                                    # - In the case that the timestamp key was not unique
+                                    if len(dates) == 1:
+                                        raise ValueError(
+                                            "History index had 2 or more, but only 1 date loaded, timestamps were not unique? maybe two of the same timestamps got written, needs more delay?"
+                                        )
+                                    prev_fname = watch_history[dates[-2]]
 
 
                                     # Did it have any notification alerts to hit?

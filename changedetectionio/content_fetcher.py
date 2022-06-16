@@ -281,13 +281,14 @@ class base_html_playwright(Fetcher):
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
         from playwright._impl._api_types import Error, TimeoutError
-
+        response = None
         with sync_playwright() as p:
             browser_type = getattr(p, self.browser_type)
 
             # Seemed to cause a connection Exception even tho I can see it connect
             # self.browser = browser_type.connect(self.command_executor, timeout=timeout*1000)
-            browser = browser_type.connect_over_cdp(self.command_executor, timeout=timeout * 1000)
+            # 60,000 connection timeout only
+            browser = browser_type.connect_over_cdp(self.command_executor, timeout=60000)
 
             # Set user agent to prevent Cloudflare from blocking the browser
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
@@ -302,19 +303,24 @@ class base_html_playwright(Fetcher):
 
             page = context.new_page()
             try:
+                page.set_default_navigation_timeout(90000)
+                page.set_default_timeout(90000)
+
                # Bug - never set viewport size BEFORE page.goto
-                response = page.goto(url, timeout=timeout * 1000, wait_until='commit')
-                # Wait_until = commit
-                # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
-                # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
-                # This seemed to solve nearly all 'TimeoutErrors'
-                extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
-                page.wait_for_timeout(extra_wait * 1000)
+
+                # Waits for the next navigation. Using Python context manager
+                # prevents a race condition between clicking and waiting for a navigation.
+                with page.expect_navigation():
+                    response = page.goto(url, wait_until='load')
+
             except playwright._impl._api_types.TimeoutError as e:
                 context.close()
                 browser.close()
-                raise EmptyReply(url=url, status_code=None)
+                # This can be ok, we will try to grab what we could retrieve
+                pass
             except Exception as e:
+                print ("other exception when page.goto")
+                print (str(e))
                 context.close()
                 browser.close()
                 raise PageUnloadable(url=url, status_code=None)
@@ -322,18 +328,22 @@ class base_html_playwright(Fetcher):
             if response is None:
                 context.close()
                 browser.close()
-                raise EmptyReply(url=url, status_code=None)
-
-            if len(page.content().strip()) == 0:
-                context.close()
-                browser.close()
+                print ("response object was none")
                 raise EmptyReply(url=url, status_code=None)
 
             # Bug 2(?) Set the viewport size AFTER loading the page
-            page.set_viewport_size({"width": 1280, "height": 1024})
-
-            self.status_code = response.status
+            page.set_viewport_size({"width": 1280, "height": 1024})            
+            extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
+            time.sleep(extra_wait)
             self.content = page.content()
+            self.status_code = response.status
+
+            if len(self.content.strip()) == 0:
+                context.close()
+                browser.close()
+                print ("Content was empty")
+                raise EmptyReply(url=url, status_code=None)
+            
             self.headers = response.all_headers()
 
             if current_css_filter is not None:
@@ -346,9 +356,15 @@ class base_html_playwright(Fetcher):
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
+
+            # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
+            # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
+            # acceptable screenshot quality here
             try:
-                page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
-                self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=92)
+                # Quality set to 1 because it's not used, just used as a work-around for a bug, no need to change this.
+                page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024}, quality=1)
+                # The actual screenshot
+                self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
             except Exception as e:
                 context.close()
                 browser.close()

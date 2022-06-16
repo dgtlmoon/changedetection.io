@@ -56,9 +56,9 @@ Easily see what changed, examine by word, line, or individual character.
 
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
 
-### Target elements with the Visual Selector tool.
+### Filter by elements using the Visual Selector tool.
 
-Available when connected to a <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher">playwright content fetcher</a> (available also as part of our subscription service)
+Available when connected to a <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher">playwright content fetcher</a> (included as part of our subscription service)
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/visualselector-anim.gif" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
 
@@ -67,13 +67,17 @@ Available when connected to a <a href="https://github.com/dgtlmoon/changedetecti
 ### Docker
 
 With Docker composer, just clone this repository and..
+
 ```bash
 $ docker-compose up -d
 ```
+
 Docker standalone
 ```bash
 $ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
 ```
+
+`:latest` tag is our latest stable release, `:dev` tag is our bleeding edge `master` branch.
 
 ### Windows
 
@@ -114,7 +118,7 @@ See the wiki for more information https://github.com/dgtlmoon/changedetection.io
 ## Filters
 XPath, JSONPath and CSS support comes baked in! You can be as specific as you need, use XPath exported from various XPath element query creation tools.
 
-(We support LXML re:test, re:math and re:replace.)
+(We support LXML `re:test`, `re:math` and `re:replace`.)
 
 ## Notifications
 

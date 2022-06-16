@@ -32,6 +32,8 @@ def app(request):
     """Create application for the tests."""
     datastore_path = "./test-datastore"
 
+    # So they don't delay in fetching
+    os.environ["MINIMUM_SECONDS_RECHECK_TIME"] = "0"
     try:
         os.mkdir(datastore_path)
     except FileExistsError:

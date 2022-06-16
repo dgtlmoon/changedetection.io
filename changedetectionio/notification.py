@@ -48,6 +48,7 @@ def process_notification(n_object, datastore):
     # Anything higher than or equal to WARNING (which covers things like Connection errors)
     # raise it as an exception
     apobjs=[]
+    sent_objs=[]
     for url in n_object['notification_urls']:
 
         apobj = apprise.Apprise(debug=True)
@@ -67,6 +68,11 @@ def process_notification(n_object, datastore):
                     url += k + 'avatar_url=https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/changedetectionio/static/images/avatar-256x256.png'
 
                 if url.startswith('tgram://'):
+                    # Telegram only supports a limit subset of HTML, remove the '<br/>' we place in.
+                    # re https://github.com/dgtlmoon/changedetection.io/issues/555
+                    # @todo re-use an existing library we have already imported to strip all non-allowed tags
+                    n_body = n_body.replace('<br/>', '\n')
+                    n_body = n_body.replace('</br>', '\n')
                     # real limit is 4096, but minus some for extra metadata
                     payload_max_size = 3600
                     body_limit = max(0, payload_max_size - len(n_title))
@@ -96,7 +102,14 @@ def process_notification(n_object, datastore):
                 log_value = logs.getvalue()
                 if log_value and 'WARNING' in log_value or 'ERROR' in log_value:
                     raise Exception(log_value)
+                
+                sent_objs.append({'title': n_title,
+                                  'body': n_body,
+                                  'url' : url,
+                                  'body_format': n_format})
 
+    # Return what was sent for better logging - after the for loop
+    return sent_objs
 
 
 # Notification title + body content parameters get created here.
