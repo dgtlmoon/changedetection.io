@@ -118,7 +118,7 @@ See the wiki for more information https://github.com/dgtlmoon/changedetection.io
 ## Filters
 XPath, JSONPath and CSS support comes baked in! You can be as specific as you need, use XPath exported from various XPath element query creation tools.
 
-(We support LXML re:test, re:math and re:replace.)
+(We support LXML `re:test`, `re:math` and `re:replace`.)
 
 ## Notifications
 
