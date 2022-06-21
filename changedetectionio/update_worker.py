@@ -98,7 +98,9 @@ class update_worker(threading.Thread):
 
                                 # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
                                 if watch.history_n >= 2:
-                                    print(">> Change detected in UUID {} - {}".format(uuid, watch['url']))
+                                    # Atleast 2, means there really was a change
+                                    self.datastore.update_watch(uuid=uuid, update_obj={'last_changed': round(now)})
+
                                     watch_history = watch.history
                                     dates = list(watch_history.keys())
                                     # Theoretically it's possible that this could be just 1 long,
@@ -108,7 +110,6 @@ class update_worker(threading.Thread):
                                             "History index had 2 or more, but only 1 date loaded, timestamps were not unique? maybe two of the same timestamps got written, needs more delay?"
                                         )
                                     prev_fname = watch_history[dates[-2]]
-
 
                                     # Did it have any notification alerts to hit?
                                     if len(watch['notification_urls']):
@@ -157,6 +158,7 @@ class update_worker(threading.Thread):
                         # Always record that we atleast tried
                         self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
                                                                            'last_checked': round(time.time())})
+
                         # Always save the screenshot if it's available
                         if screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
