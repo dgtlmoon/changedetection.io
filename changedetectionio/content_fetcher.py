@@ -55,7 +55,6 @@ class Fetcher():
                 // Include the getXpath script directly, easier than fetching
                 !function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):(e=e||self).getXPath=n()}(this,function(){return function(e){var n=e;if(n&&n.id)return'//*[@id="'+n.id+'"]';for(var o=[];n&&Node.ELEMENT_NODE===n.nodeType;){for(var i=0,r=!1,d=n.previousSibling;d;)d.nodeType!==Node.DOCUMENT_TYPE_NODE&&d.nodeName===n.nodeName&&i++,d=d.previousSibling;for(d=n.nextSibling;d;){if(d.nodeName===n.nodeName){r=!0;break}d=d.nextSibling}o.push((n.prefix?n.prefix+":":"")+n.localName+(i||r?"["+(i+1)+"]":"")),n=n.parentNode}return o.length?"/"+o.reverse().join("/"):""}});
 
-
                 const findUpTag = (el) => {
                   let r = el
                   chained_css = [];
@@ -85,7 +84,7 @@ class Fetcher():
 
 
                 // @todo - if it's SVG or IMG, go into image diff mode
-                var elements = window.document.querySelectorAll("div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary");
+                var elements = window.document.querySelectorAll("%ELEMENTS%");
                 var size_pos=[];
                 // after page fetch, inject this JS
                 // build a map of all elements and their positions (maybe that only include text?)
@@ -405,7 +404,7 @@ class base_html_playwright(Fetcher, browsersteps_playwright):
             else:
                 self.page.evaluate("var css_filter=''")
 
-            self.xpath_data = self.page.evaluate("async () => {" + self.xpath_element_js + "}")
+            self.xpath_data = self.page.evaluate("async () => {" + self.xpath_element_js.replace('%ELEMENTS%', 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary') + "}")
 
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
