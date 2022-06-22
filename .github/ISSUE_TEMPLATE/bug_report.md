@@ -21,7 +21,7 @@ Steps to reproduce the behavior:
 3. Scroll down to '....'
 4. See error
 
-! ALWAYS INCLUDE AN EXAMPLE URL WHERE IT IS POSSIBLE TO RE-CREATE THE ISSUE !
+! ALWAYS INCLUDE AN EXAMPLE URL WHERE IT IS POSSIBLE TO RE-CREATE THE ISSUE - USE THE 'SHARE WATCH' FEATURE AND PASTE IN THE SHARE-LINK!
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.

@@ -159,12 +159,11 @@ class ChangeDetectionStore:
     def threshold_seconds(self):
         seconds = 0
         mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
-        minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
         for m, n in mtable.items():
             x = self.__data['settings']['requests']['time_between_check'].get(m)
             if x:
                 seconds += x * n
-        return max(seconds, minimum_seconds_recheck_time)
+        return seconds
 
     @property
     def has_unviewed(self):
@@ -291,14 +290,15 @@ class ChangeDetectionStore:
                                      headers={'App-Guid': self.__data['app_guid']})
                 res = r.json()
 
-                # List of permisable stuff we accept from the wild internet
+                # List of permissible attributes we accept from the wild internet
                 for k in ['url', 'tag',
-                                   'paused', 'title',
-                                   'previous_md5', 'headers',
-                                   'body', 'method',
-                                   'ignore_text', 'css_filter',
-                                   'subtractive_selectors', 'trigger_text',
-                                   'extract_title_as_title', 'extract_text']:
+                          'paused', 'title',
+                          'previous_md5', 'headers',
+                          'body', 'method',
+                          'ignore_text', 'css_filter',
+                          'subtractive_selectors', 'trigger_text',
+                          'extract_title_as_title', 'extract_text',
+                          'text_should_not_be_present']:
                     if res.get(k):
                         apply_extras[k] = res[k]
 

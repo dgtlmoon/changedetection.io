@@ -229,34 +229,52 @@ class perform_site_check():
         else:
             fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
-        # On the first run of a site, watch['previous_md5'] will be None, set it the current one.
-        if not watch.get('previous_md5'):
-            watch['previous_md5'] = fetched_md5
-            update_obj["previous_md5"] = fetched_md5
-
-        blocked_by_not_found_trigger_text = False
+        ############ Blocking rules, after checksum #################
+        blocked = False
 
         if len(watch['trigger_text']):
-            # Yeah, lets block first until something matches
-            blocked_by_not_found_trigger_text = True
+            # Assume blocked
+            blocked = True
             # Filter and trigger works the same, so reuse it
             # It should return the line numbers that match
             result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
                                                   wordlist=watch['trigger_text'],
                                                   mode="line numbers")
-            # If it returned any lines that matched..
+            # Unblock if the trigger was found
             if result:
-                blocked_by_not_found_trigger_text = False
+                blocked = False
 
-        if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:
+
+        if len(watch['text_should_not_be_present']):
+            # If anything matched, then we should block a change from happening
+            result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
+                                                  wordlist=watch['text_should_not_be_present'],
+                                                  mode="line numbers")
+            if result:
+                blocked = True
+
+        # The main thing that all this at the moment comes down to :)
+        if watch['previous_md5'] != fetched_md5:
             changed_detected = True
-            update_obj["previous_md5"] = fetched_md5
+
+        # Looks like something changed, but did it match all the rules?
+        if blocked:
+            changed_detected = False
+        else:
             update_obj["last_changed"] = timestamp
+
 
         # Extract title as title
         if is_html:
             if self.datastore.data['settings']['application']['extract_title_as_title'] or watch['extract_title_as_title']:
                 if not watch['title'] or not len(watch['title']):
                     update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
+
+        # Always record the new checksum
+        update_obj["previous_md5"] = fetched_md5
+
+        # On the first run of a site, watch['previous_md5'] will be None, set it the current one.
+        if not watch.get('previous_md5'):
+            watch['previous_md5'] = fetched_md5
 
         return changed_detected, update_obj, text_content_before_ignored_filter, fetcher.screenshot, fetcher.xpath_data

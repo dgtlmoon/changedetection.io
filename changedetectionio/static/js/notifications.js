@@ -40,13 +40,19 @@ $(document).ready(function() {
     $.ajax({
       type: "POST",
       url: notification_base_url,
-      data : data
+      data : data,
+        statusCode: {
+        400: function() {
+            // More than likely the CSRF token was lost when the server restarted
+          alert("There was a problem processing the request, please reload the page.");
+        }
+      }
     }).done(function(data){
       console.log(data);
       alert('Sent');
     }).fail(function(data){
       console.log(data);
-      alert('Error: '+data.responseJSON.error);
+      alert('There was an error communicating with the server.');
     })
   });
 });

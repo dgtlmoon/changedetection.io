@@ -67,7 +67,7 @@
                     <span class="watch-tag-list">{{ watch.tag}}</span>
                     {% endif %}
                 </td>
-                <td class="last-checked">{{watch|format_last_checked_time}}</td>
+                <td class="last-checked">{{watch|format_last_checked_time|safe}}</td>
                 <td class="last-changed">{% if watch.history_n >=2 and watch.last_changed %}
                     {{watch.last_changed|format_timestamp_timeago}}
                     {% else %}

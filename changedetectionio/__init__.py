@@ -44,7 +44,7 @@ from flask_wtf import CSRFProtect
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.39.14'
+__version__ = '0.39.15'
 
 datastore = None
 
@@ -108,7 +108,7 @@ def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
     # Worker thread tells us which UUID it is currently processing.
     for t in running_update_threads:
         if t.current_uuid == watch_obj['uuid']:
-            return "Checking now.."
+            return '<span class="loader"></span><span> Checking now</span>'
 
     if watch_obj['last_checked'] == 0:
         return 'Not yet'
@@ -857,6 +857,12 @@ def changedetection_app(config=None, datastore_o=None):
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
+        # Normally you would never reach this, because the 'preview' button is not available when there's no history
+        # However they may try to scrub and reload the page
+        if datastore.data['watching'][uuid].history_n == 0:
+            flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
+            return redirect(url_for('index'))
+
         extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
 
         try:
@@ -926,7 +932,7 @@ def changedetection_app(config=None, datastore_o=None):
     def notification_logs():
         global notification_debug_log
         output = render_template("notification-log.html",
-                                 logs=notification_debug_log if len(notification_debug_log) else ["No errors or warnings detected"])
+                                 logs=notification_debug_log if len(notification_debug_log) else ["Notification logs are empty - no notifications sent yet."])
 
         return output
 
@@ -1246,6 +1252,9 @@ def check_for_new_version():
 
 def notification_runner():
     global notification_debug_log
+    from datetime import datetime
+    import json
+
     while not app.config.exit.is_set():
         try:
             # At the moment only one thread runs (single runner)
@@ -1254,10 +1263,14 @@ def notification_runner():
             time.sleep(1)
 
         else:
-            # Process notifications
+
+            now = datetime.now()
+            sent_obj = None
+
             try:
                 from changedetectionio import notification
-                notification.process_notification(n_object, datastore)
+
+                sent_obj = notification.process_notification(n_object, datastore)
 
             except Exception as e:
                 logging.error("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
@@ -1270,14 +1283,18 @@ def notification_runner():
                 log_lines = str(e).splitlines()
                 notification_debug_log += log_lines
 
-                # Trim the log length
-                notification_debug_log = notification_debug_log[-100:]
-
+            # Process notifications
+            notification_debug_log+= ["{} - SENDING - {}".format(now.strftime("%Y/%m/%d %H:%M:%S,000"), json.dumps(sent_obj))]
+            # Trim the log length
+            notification_debug_log = notification_debug_log[-100:]
 
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
+    import random
     from changedetectionio import update_worker
-    import logging
+
+    recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 20))
+    print("System env MINIMUM_SECONDS_RECHECK_TIME", recheck_time_minimum_seconds)
 
     # Spin up Workers that do the fetching
     # Can be overriden by ENV or use the default settings
@@ -1310,14 +1327,12 @@ def ticker_thread_check_time_launch_checks():
         while update_q.qsize() >= 2000:
             time.sleep(1)
 
+
+        recheck_time_system_seconds = int(datastore.threshold_seconds)
+
         # Check for watches outside of the time threshold to put in the thread queue.
-        now = time.time()
-
-        recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
-        recheck_time_system_seconds = datastore.threshold_seconds
-
         for uuid in watch_uuid_list:
-
+            now = time.time()
             watch = datastore.data['watching'].get(uuid)
             if not watch:
                 logging.error("Watch: {} no longer present.".format(uuid))
@@ -1328,20 +1343,33 @@ def ticker_thread_check_time_launch_checks():
                 continue
 
             # If they supplied an individual entry minutes to threshold.
-            threshold = now
-            watch_threshold_seconds = watch.threshold_seconds()
-            if watch_threshold_seconds:
-                threshold -= watch_threshold_seconds
-            else:
-                threshold -= recheck_time_system_seconds
 
-            # Yeah, put it in the queue, it's more than time
-            if watch['last_checked'] <= max(threshold, recheck_time_minimum_seconds):
+            watch_threshold_seconds = watch.threshold_seconds()
+            threshold = watch_threshold_seconds if watch_threshold_seconds > 0 else recheck_time_system_seconds
+
+            # #580 - Jitter plus/minus amount of time to make the check seem more random to the server
+            jitter = datastore.data['settings']['requests'].get('jitter_seconds', 0)
+            if jitter > 0:
+                if watch.jitter_seconds == 0:
+                    watch.jitter_seconds = random.uniform(-abs(jitter), jitter)
+
+
+            seconds_since_last_recheck = now - watch['last_checked']
+            if seconds_since_last_recheck >= (threshold + watch.jitter_seconds) and seconds_since_last_recheck >= recheck_time_minimum_seconds:
                 if not uuid in running_uuids and uuid not in update_q.queue:
+                    print("Queued watch UUID {} last checked at {} queued at {:0.2f} jitter {:0.2f}s, {:0.2f}s since last checked".format(uuid,
+                                                                                                         watch['last_checked'],
+                                                                                                         now,
+                                                                                                         watch.jitter_seconds,
+                                                                                                         now - watch['last_checked']))
+                    # Into the queue with you
                     update_q.put(uuid)
 
-        # Wait a few seconds before checking the list again
-        time.sleep(3)
+                    # Reset for next time
+                    watch.jitter_seconds = 0
+
+        # Wait before checking the list again - saves CPU
+        time.sleep(1)
 
         # Should be low so we can break this out in testing
         app.config.exit.wait(1)
