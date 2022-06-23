@@ -830,7 +830,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  newest=newest_version_file_contents,
                                  previous=previous_version_file_contents,
                                  extra_stylesheets=extra_stylesheets,
-                                 versions=dates[1:],
+                                 versions=dates[:-1], # All except current/last
                                  uuid=uuid,
                                  newest_version_timestamp=dates[-1],
                                  current_previous_version=str(previous_version),
