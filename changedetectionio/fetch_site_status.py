@@ -255,9 +255,6 @@ class perform_site_check():
         # Looks like something changed, but did it match all the rules?
         if blocked:
             changed_detected = False
-        else:
-            update_obj["last_changed"] = timestamp
-
 
         # Extract title as title
         if is_html:

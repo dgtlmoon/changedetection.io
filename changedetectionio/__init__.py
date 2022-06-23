@@ -298,7 +298,7 @@ def changedetection_app(config=None, datastore_o=None):
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
 
-        # @todo needs a .itemsWithTag() or something
+        # @todo needs a .itemsWithTag() or something - then we can use that in Jinaj2 and throw this away
         for uuid, watch in datastore.data['watching'].items():
 
             if limit_tag != None:
@@ -402,8 +402,6 @@ def changedetection_app(config=None, datastore_o=None):
             else:
                 watch['uuid'] = uuid
                 sorted_watches.append(watch)
-
-        sorted_watches.sort(key=lambda x: x['last_changed'], reverse=True)
 
         existing_tags = datastore.get_all_tags()
 
