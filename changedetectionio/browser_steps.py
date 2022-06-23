@@ -2,6 +2,15 @@
 
 from abc import abstractmethod
 import os
+import time
+import logging
+from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
+import playwright._impl._api_types
+from playwright._impl._api_types import Error, TimeoutError
+import asyncio
+from playwright.async_api import async_playwright
+
 
 class BrowserStepBase():
 
@@ -81,37 +90,38 @@ class browsersteps_live_ui():
     context = None
     page = None
     render_extra_delay = 1
+    # bump and kill this if idle after X sec
+    age_start = 0
+
     command_executor = "ws://127.0.0.1:3000"
     browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
+    def __init__(self):
+        self.age_start = time.time()
+        if self.context is None:
+            self.connect()
+
+
     # Connect and setup a new context
     def connect(self):
-
+        logging.debug("browser_steps.py connecting")
         from playwright.sync_api import sync_playwright
-        import playwright._impl._api_types
-        from playwright._impl._api_types import Error, TimeoutError
-        with sync_playwright() as p:
-            browser_type = getattr(p, self.browser_type)
-            browser = browser_type.connect_over_cdp(self.command_executor, timeout=60000)
+        self.playwright = sync_playwright().start()
+        self.browser = self.playwright.chromium.connect_over_cdp(self.command_executor, timeout=60000)
 
-            # Set user agent to prevent Cloudflare from blocking the browser
-            # Use the default one configured in the App.py model that's passed from fetch_site_status.py
-            self.context = browser.new_context(
-                # @todo
-                #                user_agent=request_headers['User-Agent'] if request_headers.get('User-Agent') else 'Mozilla/5.0',
-                #               proxy=self.proxy,
-                # This is needed to enable JavaScript execution on GitHub and others
-                bypass_csp=True,
-                # Should never be needed
-                accept_downloads=False
-            )
+        self.context = self.browser.new_context(
+            # @todo
+            #                user_agent=request_headers['User-Agent'] if request_headers.get('User-Agent') else 'Mozilla/5.0',
+            #               proxy=self.proxy,
+            # This is needed to enable JavaScript execution on GitHub and others
+            bypass_csp=True,
+            # Should never be needed
+            accept_downloads=False
+        )
 
-            self.page = self.context.new_page()
-            try:
-                self.page.set_default_navigation_timeout(90000)
-                self.page.set_default_timeout(90000)
-            except Exception as e:
-                x=1
+        self.page = self.context.new_page()
+        self.page.set_default_navigation_timeout(90000)
+        self.page.set_default_timeout(90000)
 
     def action_goto_url(self, url):
         with self.page.expect_navigation():
@@ -120,22 +130,20 @@ class browsersteps_live_ui():
         # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
         # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
         # This seemed to solve nearly all 'TimeoutErrors'
-        extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
+        extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
         self.page.wait_for_timeout(extra_wait * 1000)
 
 
     def get_current_state(self):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""
-        if self.context is None:
-            self.connect()
 
-        from content_fetcher import xpath_element_js
+        from . import content_fetcher
         # Quality set to 1 because it's not used, just used as a work-around for a bug, no need to change this.
         self.page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024}, quality=1)
         # The actual screenshot
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
 
         self.page.evaluate("var css_filter=''")
-        xpath_data = self.page.evaluate("async () => {" + xpath_element_js.replace('%ELEMENTS%','input, button, textarea, img, a') + "}")
+        xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%','input, button, textarea, img, a') + "}")
 
         return (screenshot, xpath_data)

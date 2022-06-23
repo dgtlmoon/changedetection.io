@@ -1,5 +1,23 @@
 $(document).ready(function () {
 
+    $.ajax({
+        type: "GET",
+        url: browser_steps_sync_url,
+//      data : data,
+        statusCode: {
+            400: function () {
+                // More than likely the CSRF token was lost when the server restarted
+                alert("There was a problem processing the request, please reload the page.");
+            }
+        }
+    }).done(function (data) {
+        console.log(data);
+        $('#browsersteps-img').attr('src', data.screenshot);
+    }).fail(function (data) {
+        console.log(data);
+        alert('There was an error communicating with the server.');
+    });
+
     // Look up which step was selected, and enable or disable the related extra fields
     // So that people using it dont' get confused
     $('ul#browser_steps select').on("change", function () {
@@ -19,7 +37,6 @@ $(document).ready(function () {
         }
     });
     $('ul#browser_steps select').change();
-
 
 
     function r() {

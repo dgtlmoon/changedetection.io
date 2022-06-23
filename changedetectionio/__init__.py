@@ -47,6 +47,8 @@ from changedetectionio.api import api_v1
 __version__ = '0.39.15'
 
 datastore = None
+# global ?
+browsersteps_live_ui_o=None
 
 # Local
 running_update_threads = []
@@ -1156,6 +1158,22 @@ def changedetection_app(config=None, datastore_o=None):
                     i += 1
         flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
+
+    @login_required
+    @app.route("/api/browsersteps_update", methods=['GET'])
+    def browsersteps_update():
+        from . import browser_steps
+        global browsersteps_live_ui_o
+        import base64
+
+        if browsersteps_live_ui_o is None:
+            browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()
+
+        browsersteps_live_ui_o.action_goto_url("https://google.com")
+        state= browsersteps_live_ui_o.get_current_state()
+
+        p = {'screenshot': "data:image/png;base64,{}".format(base64.b64encode(state[0]).decode('ascii')), 'xpath_data': state[1]}
+        return p
 
     @app.route("/api/share-url", methods=['GET'])
     @login_required
