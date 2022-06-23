@@ -22,7 +22,7 @@
             {% if versions|length >= 1 %}
             <label for="diff-version">Compare newest (<span id="current-v-date"></span>) with</label>
             <select id="diff-version" name="previous_version">
-                {% for version in versions %}
+                {% for version in versions|reverse %}
                 <option value="{{version}}" {% if version== current_previous_version %} selected="" {% endif %}>
                     {{version}}
                 </option>
