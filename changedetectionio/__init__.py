@@ -457,37 +457,37 @@ def changedetection_app(config=None, datastore_o=None):
         return 'OK'
 
 
-    @app.route("/scrub/<string:uuid>", methods=['GET'])
+    @app.route("/purge/<string:uuid>", methods=['GET'])
     @login_required
-    def scrub_watch(uuid):
+    def purge_watch(uuid):
         try:
-            datastore.scrub_watch(uuid)
+            datastore.purge_watch(uuid)
         except KeyError:
             flash('Watch not found', 'error')
         else:
-            flash("Scrubbed watch {}".format(uuid))
+            flash("Purged snapshots for watch {}".format(uuid))
 
         return redirect(url_for('index'))
 
-    @app.route("/scrub", methods=['GET', 'POST'])
+    @app.route("/purge", methods=['GET', 'POST'])
     @login_required
-    def scrub_page():
+    def purge_page():
 
         if request.method == 'POST':
             confirmtext = request.form.get('confirmtext')
 
-            if confirmtext == 'scrub':
+            if confirmtext == 'purge':
                 changes_removed = 0
                 for uuid in datastore.data['watching'].keys():
-                    datastore.scrub_watch(uuid)
+                    datastore.purge_watch(uuid)
 
-                flash("Cleared all snapshot history")
+                flash("Purged all snapshots")
             else:
                 flash('Incorrect confirmation text.', 'error')
 
             return redirect(url_for('index'))
 
-        output = render_template("scrub.html")
+        output = render_template("purge.html")
         return output
 
 
@@ -854,7 +854,7 @@ def changedetection_app(config=None, datastore_o=None):
             uuid = list(datastore.data['watching'].keys()).pop()
 
         # Normally you would never reach this, because the 'preview' button is not available when there's no history
-        # However they may try to scrub and reload the page
+        # However they may try to purge snapshots and reload the page
         if datastore.data['watching'][uuid].history_n == 0:
             flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
             return redirect(url_for('index'))
