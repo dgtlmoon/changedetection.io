@@ -250,7 +250,7 @@ class ChangeDetectionStore:
         return self.data['watching'][uuid].get(val)
 
     # Remove a watchs data but keep the entry (URL etc)
-    def scrub_watch(self, uuid):
+    def clear_watch_history(self, uuid):
         import pathlib
 
         self.__data['watching'][uuid].update(
