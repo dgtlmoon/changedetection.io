@@ -1,9 +1,54 @@
 $(document).ready(function () {
 
+    var xpath_data;
+    var current_selected_i;
+    var state_clicked=false;
+    var c;
+    // greyed out fill context
+    var xctx;
+    // redline highlight context
+    var ctx;
+
+    function set_scale() {
+
+        // some things to check if the scaling doesnt work
+        // - that the widths/sizes really are about the actual screen size cat elements.json |grep -o width......|sort|uniq
+        selector_image = $("img#browsersteps-img")[0];
+        selector_image_rect = selector_image.getBoundingClientRect();
+
+        // make the canvas the same size as the image
+        $('#browsersteps-selector-canvas').attr('height', selector_image_rect.height).attr('width', selector_image_rect.width);
+        $('#browsersteps-selector-wrapper').attr('width', selector_image_rect.width);
+        x_scale = selector_image_rect.width / xpath_data['browser_width'];
+        y_scale = selector_image_rect.height / selector_image.naturalHeight;
+        ctx.strokeStyle = 'rgba(255,0,0, 0.9)';
+        ctx.fillStyle = 'rgba(255,0,0, 0.1)';
+        ctx.lineWidth = 3;
+        console.log("scaling set  x: " + x_scale + " by y:" + y_scale);
+        $("#browsersteps-selector-current-xpath").css('max-width', selector_image_rect.width);
+    }
+
+    // bootstrap it, this will trigger everything else
+    $('#browsersteps-img').bind('load', function () {
+        console.log("Loaded background...");
+
+        document.getElementById("browsersteps-selector-canvas");
+
+        c = document.getElementById("browsersteps-selector-canvas");
+        // greyed out fill context
+        xctx = c.getContext("2d");
+        // redline highlight context
+        ctx = c.getContext("2d");
+        $('#browsersteps-selector-canvas').off("mousemove mousedown");
+
+        // init
+        set_scale();
+    });
+
+
     $.ajax({
         type: "GET",
         url: browser_steps_sync_url,
-//      data : data,
         statusCode: {
             400: function () {
                 // More than likely the CSRF token was lost when the server restarted
@@ -11,12 +56,59 @@ $(document).ready(function () {
             }
         }
     }).done(function (data) {
-        console.log(data);
+        xpath_data = data.xpath_data;
         $('#browsersteps-img').attr('src', data.screenshot);
     }).fail(function (data) {
         console.log(data);
         alert('There was an error communicating with the server.');
     });
+
+    $('#browserstes-selector-canvas').bind('mousemove', function (e) {
+//        if (state_clicked) {
+//            return;
+//        }
+        ctx.clearRect(0, 0, c.width, c.height);
+        current_selected_i = null;
+
+        // Add in offset
+        if ((typeof e.offsetX === "undefined" || typeof e.offsetY === "undefined") || (e.offsetX === 0 && e.offsetY === 0)) {
+            var targetOffset = $(e.target).offset();
+            e.offsetX = e.pageX - targetOffset.left;
+            e.offsetY = e.pageY - targetOffset.top;
+        }
+
+        // Reverse order - the most specific one should be deeper/"laster"
+        // Basically, find the most 'deepest'
+        var found = 0;
+        ctx.fillStyle = 'rgba(205,0,0,0.35)';
+        for (var i = selector_data['size_pos'].length; i !== 0; i--) {
+            // draw all of them? let them choose somehow?
+            var sel = selector_data['size_pos'][i - 1];
+            // If we are in a bounding-box
+            if (e.offsetY > sel.top * y_scale && e.offsetY < sel.top * y_scale + sel.height * y_scale
+                &&
+                e.offsetX > sel.left * y_scale && e.offsetX < sel.left * y_scale + sel.width * y_scale
+
+            ) {
+
+                // FOUND ONE
+//                set_current_selected_text(sel.xpath);
+                ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+                ctx.fillRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+
+                // no need to keep digging
+                // @todo or, O to go out/up, I to go in
+                // or double click to go up/out the selector?
+                current_selected_i = i - 1;
+                found += 1;
+                break;
+            }
+        }
+
+    }.debounce(5));
+
+
+    ////////////////////////// STEPS UI ////////////////////
 
     // Look up which step was selected, and enable or disable the related extra fields
     // So that people using it dont' get confused

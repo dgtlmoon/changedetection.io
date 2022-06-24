@@ -1166,10 +1166,14 @@ def changedetection_app(config=None, datastore_o=None):
         global browsersteps_live_ui_o
         import base64
 
-        if browsersteps_live_ui_o is None:
-            browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()
 
-        browsersteps_live_ui_o.action_goto_url("https://google.com")
+        if browsersteps_live_ui_o is None:
+            # Because the page re-loaded, make a new one
+            del(browsersteps_live_ui_o)
+
+        browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()
+
+        browsersteps_live_ui_o.action_goto_url("https://scolarite.cohl.fr/faces/Login.xhtml")
         state= browsersteps_live_ui_o.get_current_state()
 
         p = {'screenshot': "data:image/png;base64,{}".format(base64.b64encode(state[0]).decode('ascii')), 'xpath_data': state[1]}
