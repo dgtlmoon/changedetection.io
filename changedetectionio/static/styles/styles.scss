@@ -810,13 +810,11 @@ ul {
   //width: 100%;
   > img {
     position: absolute;
-    z-index: 4;
     max-width: 100%;
   }
 
   > canvas {
     position: relative;
-    z-index: 5;
     max-width: 100%;
 
     &:hover {

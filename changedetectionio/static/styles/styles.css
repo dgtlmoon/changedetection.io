@@ -552,11 +552,9 @@ ul {
   position: relative; }
   #browsersteps-selector-wrapper > img {
     position: absolute;
-    z-index: 4;
     max-width: 100%; }
   #browsersteps-selector-wrapper > canvas {
     position: relative;
-    z-index: 5;
     max-width: 100%; }
     #browsersteps-selector-wrapper > canvas:hover {
       cursor: pointer; }
