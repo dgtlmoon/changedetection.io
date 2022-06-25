@@ -301,6 +301,8 @@ class base_html_playwright(Fetcher):
                 accept_downloads=False
             )
 
+            context.set_extra_http_headers(request_headers)
+
             page = context.new_page()
             try:
                 page.set_default_navigation_timeout(90000)

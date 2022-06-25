@@ -655,7 +655,8 @@ def changedetection_app(config=None, datastore_o=None):
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                      visualselector_data_is_ready=visualselector_data_is_ready,
-                                     visualselector_enabled=visualselector_enabled
+                                     visualselector_enabled=visualselector_enabled,
+                                     playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False)
                                      )
 
         return output
