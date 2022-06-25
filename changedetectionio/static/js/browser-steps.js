@@ -151,7 +151,7 @@ $(document).ready(function () {
     });
     $('ul#browser_steps select').change();
 
-    $('#browser-steps input[type=text]').on("focus", function () {
+    $('#browser-steps input[type=text]').first().on("focus", function () {
         current_focused_step_form_input = this;
     });
 

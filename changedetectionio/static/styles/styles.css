@@ -1,9 +1,7 @@
 /*
  * -- BASE STYLES --
  * Most of these are inherited from Base, but I want to change a few.
- * nvm use v14.18.1
- * npm install
- * npm run build
+nvm use v14.18.1 && npm install && npm run build
  * or npm run watch
  */
 body {
@@ -324,10 +322,13 @@ footer {
   /* convert rows to horizontal cells */ }
   #browser_steps th {
     display: none; }
-  #browser_steps tr {
-    display: inline-block; }
   #browser_steps li {
-    list-style: decimal; }
+    list-style: decimal;
+    padding: 5px; }
+    #browser_steps li.empty {
+      padding: 0px; }
+    #browser_steps li:hover {
+      background: #eee; }
     #browser_steps li > label {
       display: none; }
 

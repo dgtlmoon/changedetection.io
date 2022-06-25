@@ -1,9 +1,7 @@
 /*
  * -- BASE STYLES --
  * Most of these are inherited from Base, but I want to change a few.
- * nvm use v14.18.1
- * npm install
- * npm run build
+nvm use v14.18.1 && npm install && npm run build
  * or npm run watch
  */
 body {
@@ -467,13 +465,15 @@ footer {
     display: none;
   }
 
-  tr {
-    display: inline-block;
-  }
-
   li {
     list-style: decimal;
-
+    padding: 5px;
+    &.empty {
+      padding: 0px;
+    }
+    &:hover {
+      background: #eee;
+    }
     > label {
       display: none;
     }
