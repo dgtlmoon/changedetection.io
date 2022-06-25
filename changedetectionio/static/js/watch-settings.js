@@ -4,13 +4,16 @@ $(document).ready(function() {
             if(playwright_enabled) {
                 // playwright supports headers, so hide everything else
                 // See #664
-                $('#requests-override-options #method').parent().parent().hide();
-                $('#requests-override-options #body').parent().parent().hide();
+                $('#requests-override-options #request-method').hide();
+                $('#requests-override-options #request-body').hide();
+
+                // @todo connect this one up
                 $('#ignore-status-codes-option').hide();
             } else {
                 // selenium/webdriver doesnt support anything afaik, hide it all
                 $('#requests-override-options').hide();
             }
+
 
             $('#webdriver-override-options').show();
 

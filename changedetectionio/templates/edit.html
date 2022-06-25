@@ -103,15 +103,15 @@
                             <strong>Request override is currently only used by the <i>Basic fast Plaintext/HTTP Client</i> method.</strong>
                         </div>
                     {% endif %}
-                    <div class="pure-control-group">
+                    <div class="pure-control-group" id="request-method">
                         {{ render_field(form.method) }}
                     </div>
-                    <div class="pure-control-group">
+                    <div class="pure-control-group" id="request-headers">
 {{ render_field(form.headers, rows=5, placeholder="Example
 Cookie: foobar
 User-Agent: wonderbra 1.0") }}
                     </div>
-                    <div class="pure-control-group">
+                    <div class="pure-control-group" id="request-body">
                                         {{ render_field(form.body, rows=5, placeholder="Example
 {
    \"name\":\"John\",
