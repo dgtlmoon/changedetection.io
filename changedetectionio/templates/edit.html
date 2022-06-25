@@ -7,6 +7,7 @@
     const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
     const watch_visual_selector_data_url="{{url_for('static_content', group='visual_selector_data', filename=uuid)}}";
     const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
+    const playwright_enabled={% if playwright_enabled %} true {% else %} false {% endif %};
 
 {% if emailprefix %}
     const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
@@ -81,13 +82,14 @@
                     </div>
                 {% endif %}
                 <fieldset id="webdriver-override-options">
-                    <div class="pure-form-message-inline">
-                        <strong>If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here.</strong>
-                        <br/>
-                        This will wait <i>n</i> seconds before extracting the text.
-                    </div>
                     <div class="pure-control-group">
                         {{ render_field(form.webdriver_delay) }}
+                        <div class="pure-form-message-inline">
+                            <strong>If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here.</strong>
+                            <br/>
+                            This will wait <i>n</i> seconds before extracting the text.
+                        </div>
+
                     </div>
                     {% if using_global_webdriver_wait %}
                     <div class="pure-form-message-inline">
@@ -96,18 +98,20 @@
                     {% endif %}
                 </fieldset>
                 <fieldset class="pure-group" id="requests-override-options">
-                    <div class="pure-form-message-inline">
-                        <strong>Request override is currently only used by the <i>Basic fast Plaintext/HTTP Client</i> method.</strong>
-                    </div>
-                    <div class="pure-control-group">
+                    {% if not playwright_enabled %}
+                        <div class="pure-form-message-inline">
+                            <strong>Request override is currently only used by the <i>Basic fast Plaintext/HTTP Client</i> method.</strong>
+                        </div>
+                    {% endif %}
+                    <div class="pure-control-group" id="request-method">
                         {{ render_field(form.method) }}
                     </div>
-                    <div class="pure-control-group">
+                    <div class="pure-control-group" id="request-headers">
 {{ render_field(form.headers, rows=5, placeholder="Example
 Cookie: foobar
 User-Agent: wonderbra 1.0") }}
                     </div>
-                    <div class="pure-control-group">
+                    <div class="pure-control-group" id="request-body">
                                         {{ render_field(form.body, rows=5, placeholder="Example
 {
    \"name\":\"John\",
@@ -115,7 +119,7 @@ User-Agent: wonderbra 1.0") }}
    \"car\":null
 }") }}
                     </div>
-                    <div>
+                    <div id="ignore-status-codes-option">
                         {{ render_checkbox_field(form.ignore_status_codes) }}
                     </div>
                 </fieldset>
