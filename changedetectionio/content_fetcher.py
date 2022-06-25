@@ -93,7 +93,9 @@ xpath_element_js = """
                width: Math.round(bbox['width']), 
                height: Math.round(bbox['height']), 
                left: Math.floor(bbox['left']), 
-               top: Math.floor(bbox['top']), 
+               top: Math.floor(bbox['top']),
+               tagName: elements[i].tagName.toLowerCase(),
+               tagtype: elements[i].type.toLowerCase(),
                childCount: elements[i].childElementCount
              });                 
             }

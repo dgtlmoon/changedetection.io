@@ -2,12 +2,14 @@ $(document).ready(function () {
 
     var xpath_data;
     var current_selected_i;
-    var state_clicked=false;
+    var state_clicked = false;
     var c;
     // greyed out fill context
     var xctx;
     // redline highlight context
     var ctx;
+
+    var current_focused_step_form_input = false;
 
     function set_scale() {
 
@@ -33,7 +35,6 @@ $(document).ready(function () {
         console.log("Loaded background...");
 
         document.getElementById("browsersteps-selector-canvas");
-
         c = document.getElementById("browsersteps-selector-canvas");
         // greyed out fill context
         xctx = c.getContext("2d");
@@ -43,7 +44,71 @@ $(document).ready(function () {
 
         // init
         set_scale();
+        $('#browsersteps-selector-canvas').bind('mousedown', function (e) {
+            process_selected(current_selected_i);
+            current_selected_i=false;
+        });
+
+        $('#browsersteps-selector-canvas').bind('mousemove', function (e) {
+            ctx.clearRect(0, 0, c.width, c.height);
+
+            // Add in offset
+            if ((typeof e.offsetX === "undefined" || typeof e.offsetY === "undefined") || (e.offsetX === 0 && e.offsetY === 0)) {
+                var targetOffset = $(e.target).offset();
+                e.offsetX = e.pageX - targetOffset.left;
+                e.offsetY = e.pageY - targetOffset.top;
+            }
+
+            // Reverse order - the most specific one should be deeper/"laster"
+            // Basically, find the most 'deepest'
+            ctx.fillStyle = 'rgba(205,0,0,0.35)';
+            for (var i = xpath_data['size_pos'].length; i !== 0; i--) {
+                // draw all of them? let them choose somehow?
+                var sel = xpath_data['size_pos'][i - 1];
+                // If we are in a bounding-box
+                if (e.offsetY > sel.top * y_scale && e.offsetY < sel.top * y_scale + sel.height * y_scale
+                    &&
+                    e.offsetX > sel.left * y_scale && e.offsetX < sel.left * y_scale + sel.width * y_scale
+
+                ) {
+                    ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+                    ctx.fillRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+                    current_selected_i = i - 1;
+                    break;
+                }
+            }
+
+        }.debounce(5));
     });
+
+    // callback for clicking on an xpath on the canvas
+    function process_selected(xpath_data_index) {
+        console.log(xpath_data['size_pos'][xpath_data_index]);
+
+        // Fill in the current focused input
+        if (current_focused_step_form_input) {
+            $(current_focused_step_form_input).val(xpath_data['size_pos'][xpath_data_index]['xpath']);
+        } else {
+            if (xpath_data_index !== false) {
+                // Nothing focused, so fill in a new one
+                // if inpt type button or <button>
+                // from the top, find the next not used one and use it
+                var first_available = $("ul#browser_steps li.empty").first();
+                var x = xpath_data['size_pos'][xpath_data_index];
+                if (first_available.length) {
+                    if (x['tagtype'] === 'text' || x['tagtype'] === 'password') {
+                        $('input[type=text]', first_available).first().val(x['xpath']);
+                        $('select', first_available).val('Enter text in field').change();
+                    }
+                    if (x['tagtype'] === 'button' || x['tagtype'] === 'submit') {
+                        $('input[type=text]', first_available).first().val(x['xpath']);
+                        $('select', first_available).val('Click button').change();
+                    }
+                }
+            }
+        }
+
+    }
 
 
     $.ajax({
@@ -62,50 +127,6 @@ $(document).ready(function () {
         console.log(data);
         alert('There was an error communicating with the server.');
     });
-
-    $('#browserstes-selector-canvas').bind('mousemove', function (e) {
-//        if (state_clicked) {
-//            return;
-//        }
-        ctx.clearRect(0, 0, c.width, c.height);
-        current_selected_i = null;
-
-        // Add in offset
-        if ((typeof e.offsetX === "undefined" || typeof e.offsetY === "undefined") || (e.offsetX === 0 && e.offsetY === 0)) {
-            var targetOffset = $(e.target).offset();
-            e.offsetX = e.pageX - targetOffset.left;
-            e.offsetY = e.pageY - targetOffset.top;
-        }
-
-        // Reverse order - the most specific one should be deeper/"laster"
-        // Basically, find the most 'deepest'
-        var found = 0;
-        ctx.fillStyle = 'rgba(205,0,0,0.35)';
-        for (var i = selector_data['size_pos'].length; i !== 0; i--) {
-            // draw all of them? let them choose somehow?
-            var sel = selector_data['size_pos'][i - 1];
-            // If we are in a bounding-box
-            if (e.offsetY > sel.top * y_scale && e.offsetY < sel.top * y_scale + sel.height * y_scale
-                &&
-                e.offsetX > sel.left * y_scale && e.offsetX < sel.left * y_scale + sel.width * y_scale
-
-            ) {
-
-                // FOUND ONE
-//                set_current_selected_text(sel.xpath);
-                ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-                ctx.fillRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-
-                // no need to keep digging
-                // @todo or, O to go out/up, I to go in
-                // or double click to go up/out the selector?
-                current_selected_i = i - 1;
-                found += 1;
-                break;
-            }
-        }
-
-    }.debounce(5));
 
 
     ////////////////////////// STEPS UI ////////////////////
@@ -130,17 +151,17 @@ $(document).ready(function () {
     });
     $('ul#browser_steps select').change();
 
+    $('#browser-steps input[type=text]').on("focus", function () {
+        current_focused_step_form_input = this;
+    });
 
-    function r() {
-        $('ul#browser_steps select option:selected[value="Choose one"]').closest('li').css('opacity', 0.35);
+    function set_greyed_state() {
+        $('ul#browser_steps select ').not('option:selected[value="Choose one"]').closest('li').css('opacity', 1).removeClass('empty');
+        $('ul#browser_steps select option:selected[value="Choose one"]').closest('li').css('opacity', 0.35).addClass('empty');
     }
 
-    $("ul#browser_steps select ").change(function () {
-        $(this).closest('li').css('opacity', 1);
-        r();
+    $("ul#browser_steps select").change(function () {
+        set_greyed_state();
     });
-    r();
-
-
-    //attach_browserstep_screenshots();
+    set_greyed_state();
 });

@@ -1162,14 +1162,24 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     @app.route("/api/browsersteps_update", methods=['GET'])
     def browsersteps_update():
+
+        if os.path.isfile('/var/www/changedetection.io/result.bin'):
+            with open('/var/www/changedetection.io/result.bin', 'r') as f:
+                response = make_response(f.read())
+                response.headers['Content-type'] = 'application/json'
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = 0
+                return response
+
         from . import browser_steps
         global browsersteps_live_ui_o
         import base64
 
 
-        if browsersteps_live_ui_o is None:
-            # Because the page re-loaded, make a new one
-            del(browsersteps_live_ui_o)
+#        if browsersteps_live_ui_o is None:
+#            # Because the page re-loaded, make a new one
+#            del(browsersteps_live_ui_o)
 
         browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()
 
@@ -1177,6 +1187,9 @@ def changedetection_app(config=None, datastore_o=None):
         state= browsersteps_live_ui_o.get_current_state()
 
         p = {'screenshot': "data:image/png;base64,{}".format(base64.b64encode(state[0]).decode('ascii')), 'xpath_data': state[1]}
+        import json
+        with open('/var/www/changedetection.io/result.bin', 'w') as f:
+            f.write(json.dumps(p))
         return p
 
     @app.route("/api/share-url", methods=['GET'])
