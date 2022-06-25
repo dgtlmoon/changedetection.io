@@ -457,37 +457,38 @@ def changedetection_app(config=None, datastore_o=None):
         return 'OK'
 
 
-    @app.route("/scrub/<string:uuid>", methods=['GET'])
+    @app.route("/clear_history/<string:uuid>", methods=['GET'])
     @login_required
-    def scrub_watch(uuid):
+    def clear_watch_history(uuid):
         try:
-            datastore.scrub_watch(uuid)
+            datastore.clear_watch_history(uuid)
         except KeyError:
             flash('Watch not found', 'error')
         else:
-            flash("Scrubbed watch {}".format(uuid))
+            flash("Cleared snapshot history for watch {}".format(uuid))
 
         return redirect(url_for('index'))
 
-    @app.route("/scrub", methods=['GET', 'POST'])
+    @app.route("/clear_history", methods=['GET', 'POST'])
     @login_required
-    def scrub_page():
+    def clear_all_history():
 
         if request.method == 'POST':
             confirmtext = request.form.get('confirmtext')
 
-            if confirmtext == 'scrub':
+            if confirmtext == 'clear':
                 changes_removed = 0
                 for uuid in datastore.data['watching'].keys():
-                    datastore.scrub_watch(uuid)
+                    datastore.clear_watch_history(uuid)
+                    #TODO: KeyError not checked, as it is above
 
-                flash("Cleared all snapshot history")
+                flash("Cleared snapshot history for all watches")
             else:
                 flash('Incorrect confirmation text.', 'error')
 
             return redirect(url_for('index'))
 
-        output = render_template("scrub.html")
+        output = render_template("clear_all_history.html")
         return output
 
 
@@ -854,7 +855,7 @@ def changedetection_app(config=None, datastore_o=None):
             uuid = list(datastore.data['watching'].keys()).pop()
 
         # Normally you would never reach this, because the 'preview' button is not available when there's no history
-        # However they may try to scrub and reload the page
+        # However they may try to clear snapshots and reload the page
         if datastore.data['watching'][uuid].history_n == 0:
             flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
             return redirect(url_for('index'))
