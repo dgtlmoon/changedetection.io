@@ -87,6 +87,12 @@ xpath_element_js = """
              if(window.getComputedStyle(elements[i]).visibility === "hidden") {
                continue;
              }
+             
+             // Horrible hack, some websites lay this ontop with no content, and they always call it clearfix...
+             // Horrible sorry, really.
+             if (elements[i].className.includes("clearfix")) {
+               continue;
+             }
 
              size_pos.push({
                xpath: xpath_result,
@@ -95,8 +101,7 @@ xpath_element_js = """
                left: Math.floor(bbox['left']), 
                top: Math.floor(bbox['top']),
                tagName: elements[i].tagName.toLowerCase(),
-               tagtype: elements[i].type,
-               childCount: elements[i].childElementCount
+               tagtype: elements[i].type
              });                 
             }
 

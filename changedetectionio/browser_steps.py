@@ -144,6 +144,6 @@ class browsersteps_live_ui():
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
 
         self.page.evaluate("var css_filter=''")
-        xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%','input, button, textarea, img, a') + "}")
+        xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%','input, button, textarea, img, a, span, div') + "}")
 
         return (screenshot, xpath_data)

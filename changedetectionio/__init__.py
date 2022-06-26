@@ -1164,14 +1164,14 @@ def changedetection_app(config=None, datastore_o=None):
     def browsersteps_update():
 
         uuid = request.args.get('uuid')
-        if os.path.isfile('/var/www/changedetection.io/result.bin'):
-            with open('/var/www/changedetection.io/result.bin', 'r') as f:
-                response = make_response(f.read())
-                response.headers['Content-type'] = 'application/json'
-                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-                response.headers['Pragma'] = 'no-cache'
-                response.headers['Expires'] = 0
-                return response
+#        if os.path.isfile('/var/www/changedetection.io/result.bin'):
+#            with open('/var/www/changedetection.io/result.bin', 'r') as f:
+#                response = make_response(f.read())
+#                response.headers['Content-type'] = 'application/json'
+#                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+#                response.headers['Pragma'] = 'no-cache'
+#                response.headers['Expires'] = 0
+#                return response
 
         from . import browser_steps
         global browsersteps_live_ui_o

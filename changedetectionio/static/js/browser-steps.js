@@ -49,6 +49,7 @@ $(document).ready(function () {
             current_selected_i=false;
         });
 
+        ctx.fillStyle = 'rgba(205,0,0,0.35)';
         $('#browsersteps-selector-canvas').bind('mousemove', function (e) {
             ctx.clearRect(0, 0, c.width, c.height);
 
@@ -61,7 +62,6 @@ $(document).ready(function () {
 
             // Reverse order - the most specific one should be deeper/"laster"
             // Basically, find the most 'deepest'
-            ctx.fillStyle = 'rgba(205,0,0,0.35)';
             for (var i = xpath_data['size_pos'].length; i !== 0; i--) {
                 // draw all of them? let them choose somehow?
                 var sel = xpath_data['size_pos'][i - 1];
@@ -100,11 +100,10 @@ $(document).ready(function () {
                         $('input[type=text]', first_available).first().val(x['xpath']);
                         $('select', first_available).val('Enter text in field').change();
                     }
-                    else if (x['tagtype'] === 'button' || x['tagtype'] === 'submit'|| x['tagName'] === 'a' ) {
+                    else {
+                        // Assume it's just for clicking on
                         $('input[type=text]', first_available).first().val(x['xpath']);
                         $('select', first_available).val('Click button').change();
-                    } else {
-                        console.warn(x);
                     }
                 }
             }
