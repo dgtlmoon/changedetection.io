@@ -13,7 +13,7 @@
 {% endif %}
 
     const browser_steps_config=JSON.parse('{{ browser_steps_config|tojson }}');
-    const browser_steps_sync_url="{{url_for('browsersteps_update')}}";
+    const browser_steps_sync_url="{{url_for('browsersteps_update', uuid=uuid)}}";
 
 </script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>

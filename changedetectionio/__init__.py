@@ -1163,6 +1163,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/api/browsersteps_update", methods=['GET'])
     def browsersteps_update():
 
+        uuid = request.args.get('uuid')
         if os.path.isfile('/var/www/changedetection.io/result.bin'):
             with open('/var/www/changedetection.io/result.bin', 'r') as f:
                 response = make_response(f.read())
@@ -1183,7 +1184,8 @@ def changedetection_app(config=None, datastore_o=None):
 
         browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()
 
-        browsersteps_live_ui_o.action_goto_url("https://scolarite.cohl.fr/faces/Login.xhtml")
+        browsersteps_live_ui_o.action_goto_url(datastore.data['watching'][uuid]['url'])
+
         state= browsersteps_live_ui_o.get_current_state()
 
         p = {'screenshot': "data:image/png;base64,{}".format(base64.b64encode(state[0]).decode('ascii')), 'xpath_data': state[1]}

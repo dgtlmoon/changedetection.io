@@ -100,9 +100,11 @@ $(document).ready(function () {
                         $('input[type=text]', first_available).first().val(x['xpath']);
                         $('select', first_available).val('Enter text in field').change();
                     }
-                    if (x['tagtype'] === 'button' || x['tagtype'] === 'submit') {
+                    else if (x['tagtype'] === 'button' || x['tagtype'] === 'submit'|| x['tagName'] === 'a' ) {
                         $('input[type=text]', first_available).first().val(x['xpath']);
                         $('select', first_available).val('Click button').change();
+                    } else {
+                        console.warn(x);
                     }
                 }
             }

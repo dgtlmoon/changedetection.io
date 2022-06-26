@@ -95,7 +95,7 @@ xpath_element_js = """
                left: Math.floor(bbox['left']), 
                top: Math.floor(bbox['top']),
                tagName: elements[i].tagName.toLowerCase(),
-               tagtype: elements[i].type.toLowerCase(),
+               tagtype: elements[i].type,
                childCount: elements[i].childElementCount
              });                 
             }
