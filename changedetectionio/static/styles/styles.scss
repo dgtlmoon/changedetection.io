@@ -468,8 +468,18 @@ footer {
   li {
     list-style: decimal;
     padding: 5px;
+    .control {
+      padding-left: 5px;
+      padding-right: 5px;
+      a {
+        font-size: 70%;
+      }
+    }
     &.empty {
       padding: 0px;
+      .control {
+        display: none;
+      }
     }
     &:hover {
       background: #eee;

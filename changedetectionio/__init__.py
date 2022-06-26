@@ -1159,9 +1159,10 @@ def changedetection_app(config=None, datastore_o=None):
         flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
 
+
     @login_required
-    @app.route("/api/browsersteps_update", methods=['GET'])
-    def browsersteps_update():
+    @app.route("/api/browsersteps_update", methods=['GET', 'POST'])
+    def browsersteps_ui_update():
 
         uuid = request.args.get('uuid')
 #        if os.path.isfile('/var/www/changedetection.io/result.bin'):
@@ -1182,9 +1183,16 @@ def changedetection_app(config=None, datastore_o=None):
 #            # Because the page re-loaded, make a new one
 #            del(browsersteps_live_ui_o)
 
+        # @todo key by UUID?
         browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()
 
-        browsersteps_live_ui_o.action_goto_url(datastore.data['watching'][uuid]['url'])
+        if request.method == 'POST':
+            step_payload = request.form.get('step_payload')
+            # Try the browser step
+        else:
+            browsersteps_live_ui_o.action_goto_url(datastore.data['watching'][uuid]['url'])
+
+
 
         state= browsersteps_live_ui_o.get_current_state()
 

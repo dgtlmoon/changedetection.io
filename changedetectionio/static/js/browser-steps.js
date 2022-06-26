@@ -8,6 +8,7 @@ $(document).ready(function () {
     var xctx;
     // redline highlight context
     var ctx;
+    var last_click_xy={'x':-1, 'y':-1}
 
     var current_focused_step_form_input = false;
 
@@ -44,7 +45,10 @@ $(document).ready(function () {
 
         // init
         set_scale();
+
         $('#browsersteps-selector-canvas').bind('mousedown', function (e) {
+            // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
+            last_click_xy = {'x': e.clientX, 'y': e.clientY}
             process_selected(current_selected_i);
             current_selected_i=false;
         });
@@ -149,20 +153,59 @@ $(document).ready(function () {
         } else {
             $(elem_value).fadeIn();
         }
-    });
-    $('ul#browser_steps select').change();
+
+        if ($(this).val() === 'Click X,Y' && last_click_xy['x']>0 && $(elem_value).val().length===0) {
+            // @todo handle scale
+            $(elem_value).val(last_click_xy['x']+','+last_click_xy['y']);
+        }
+    }).change();
 
     $('#browser-steps input[type=text]').first().on("focus", function () {
         current_focused_step_form_input = this;
     });
 
     function set_greyed_state() {
-        $('ul#browser_steps select ').not('option:selected[value="Choose one"]').closest('li').css('opacity', 1).removeClass('empty');
+        $('ul#browser_steps select').not('option:selected[value="Choose one"]').closest('li').css('opacity', 1).removeClass('empty');
         $('ul#browser_steps select option:selected[value="Choose one"]').closest('li').css('opacity', 0.35).addClass('empty');
     }
 
+    // Add the extra buttons to the steps
+    $('ul#browser_steps li').each(function (i) {
+        $(this).append('<div class="control">' +
+            '<a data-step-index='+i+' class="pure-button button-secondary button-xsmall apply" >Apply</a>&nbsp;' +
+            '<a data-step-index='+i+' class="pure-button button-secondary button-xsmall clear" >Clear</a>' +
+            '</div>')
+        }
+    );
+
+    $('ul#browser_steps li .control .apply').click(function(element) {
+        var current_data = $(element).closest('table');
+        
+
+        $.ajax({
+            type: "POST",
+            url: browser_steps_sync_url,
+            data: {'action': '', 'selector': '', 'value': ''},
+            statusCode: {
+                400: function () {
+                    // More than likely the CSRF token was lost when the server restarted
+                    alert("There was a problem processing the request, please reload the page.");
+                }
+            }
+        }).done(function (data) {
+            // it should return the new state (selectors available and screenshot)
+            xpath_data = data.xpath_data;
+            $('#browsersteps-img').attr('src', data.screenshot);
+        }).fail(function (data) {
+            console.log(data);
+            alert('There was an error communicating with the server.');
+        });
+
+    });
+
+
     $("ul#browser_steps select").change(function () {
         set_greyed_state();
-    });
-    set_greyed_state();
+    }).change();
+
 });

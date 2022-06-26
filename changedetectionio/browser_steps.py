@@ -40,6 +40,9 @@ class BrowserStepBase():
     def click_button_containing_text(self, step):
         return
 
+    @abstractmethod
+    def click_x_y(self, step):
+        return
 
 # Good reference - https://playwright.dev/python/docs/input
 #                  https://pythonmana.com/2021/12/202112162236307035.html
@@ -57,6 +60,11 @@ class browsersteps_playwright(BrowserStepBase):
 
     def click_button(self, step):
         self.page.click(step['selector'])
+        return
+
+    def click_x_y(self, step):
+        x,y = step['optional_value'].split(',')
+        self.page.mouse.click('body', position={'x': x, 'y': y})
         return
 
     def click_button_containing_text(self, step):
@@ -132,6 +140,10 @@ class browsersteps_live_ui():
         # This seemed to solve nearly all 'TimeoutErrors'
         extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
         self.page.wait_for_timeout(extra_wait * 1000)
+
+    def action_enter_text_in_field(self, selector, value):
+        with self.page.expect_navigation():
+            response = self.page.fill(selector, value)
 
 
     def get_current_state(self):
