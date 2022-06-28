@@ -250,7 +250,7 @@ class ChangeDetectionStore:
         return self.data['watching'][uuid].get(val)
 
     # Remove a watchs data but keep the entry (URL etc)
-    def scrub_watch(self, uuid):
+    def clear_watch_history(self, uuid):
         import pathlib
 
         self.__data['watching'][uuid].update(
@@ -518,3 +518,11 @@ class ChangeDetectionStore:
                 # But we should set it back to a empty dict so we don't break if this schema runs on an earlier version.
                 # In the distant future we can remove this entirely
                 self.data['watching'][uuid]['history'] = {}
+
+    # We incorrectly stored last_changed when there was not a change, and then confused the output list table
+    def update_3(self):
+        for uuid, watch in self.data['watching'].items():
+            # Be sure it's recalculated
+            p = watch.history
+            if watch.history_n < 2:
+                watch['last_changed'] = 0

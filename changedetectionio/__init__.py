@@ -298,7 +298,7 @@ def changedetection_app(config=None, datastore_o=None):
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
 
-        # @todo needs a .itemsWithTag() or something
+        # @todo needs a .itemsWithTag() or something - then we can use that in Jinaj2 and throw this away
         for uuid, watch in datastore.data['watching'].items():
 
             if limit_tag != None:
@@ -403,8 +403,6 @@ def changedetection_app(config=None, datastore_o=None):
                 watch['uuid'] = uuid
                 sorted_watches.append(watch)
 
-        sorted_watches.sort(key=lambda x: x['last_changed'], reverse=True)
-
         existing_tags = datastore.get_all_tags()
 
         form = forms.quickWatchForm(request.form)
@@ -459,37 +457,38 @@ def changedetection_app(config=None, datastore_o=None):
         return 'OK'
 
 
-    @app.route("/scrub/<string:uuid>", methods=['GET'])
+    @app.route("/clear_history/<string:uuid>", methods=['GET'])
     @login_required
-    def scrub_watch(uuid):
+    def clear_watch_history(uuid):
         try:
-            datastore.scrub_watch(uuid)
+            datastore.clear_watch_history(uuid)
         except KeyError:
             flash('Watch not found', 'error')
         else:
-            flash("Scrubbed watch {}".format(uuid))
+            flash("Cleared snapshot history for watch {}".format(uuid))
 
         return redirect(url_for('index'))
 
-    @app.route("/scrub", methods=['GET', 'POST'])
+    @app.route("/clear_history", methods=['GET', 'POST'])
     @login_required
-    def scrub_page():
+    def clear_all_history():
 
         if request.method == 'POST':
             confirmtext = request.form.get('confirmtext')
 
-            if confirmtext == 'scrub':
+            if confirmtext == 'clear':
                 changes_removed = 0
                 for uuid in datastore.data['watching'].keys():
-                    datastore.scrub_watch(uuid)
+                    datastore.clear_watch_history(uuid)
+                    #TODO: KeyError not checked, as it is above
 
-                flash("Cleared all snapshot history")
+                flash("Cleared snapshot history for all watches")
             else:
                 flash('Incorrect confirmation text.', 'error')
 
             return redirect(url_for('index'))
 
-        output = render_template("scrub.html")
+        output = render_template("clear_all_history.html")
         return output
 
 
@@ -656,7 +655,8 @@ def changedetection_app(config=None, datastore_o=None):
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                      visualselector_data_is_ready=visualselector_data_is_ready,
-                                     visualselector_enabled=visualselector_enabled
+                                     visualselector_enabled=visualselector_enabled,
+                                     playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False)
                                      )
 
         return output
@@ -832,7 +832,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  newest=newest_version_file_contents,
                                  previous=previous_version_file_contents,
                                  extra_stylesheets=extra_stylesheets,
-                                 versions=dates[1:],
+                                 versions=dates[:-1], # All except current/last
                                  uuid=uuid,
                                  newest_version_timestamp=dates[-1],
                                  current_previous_version=str(previous_version),
@@ -856,7 +856,7 @@ def changedetection_app(config=None, datastore_o=None):
             uuid = list(datastore.data['watching'].keys()).pop()
 
         # Normally you would never reach this, because the 'preview' button is not available when there's no history
-        # However they may try to scrub and reload the page
+        # However they may try to clear snapshots and reload the page
         if datastore.data['watching'][uuid].history_n == 0:
             flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
             return redirect(url_for('index'))
