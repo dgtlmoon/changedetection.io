@@ -37,7 +37,6 @@ class model(dict):
             'css_filter': '',
             'extract_text': [],  # Extract text by regex after filters
             'subtractive_selectors': [],
-            'check_unique_lines': False,
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'text_should_not_be_present': [], # Text that should not present
             'fetch_backend': None,
