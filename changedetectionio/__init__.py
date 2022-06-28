@@ -1152,7 +1152,6 @@ def changedetection_app(config=None, datastore_o=None):
         else:
             # No tag, no uuid, add everything.
             for watch_uuid, watch in datastore.data['watching'].items():
-
                 if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                     update_q.put(watch_uuid)
                     i += 1
@@ -1163,38 +1162,42 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     @app.route("/api/browsersteps_update", methods=['GET', 'POST'])
     def browsersteps_ui_update():
-
         uuid = request.args.get('uuid')
-#        if os.path.isfile('/var/www/changedetection.io/result.bin'):
-#            with open('/var/www/changedetection.io/result.bin', 'r') as f:
-#                response = make_response(f.read())
-#                response.headers['Content-type'] = 'application/json'
-#                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-#                response.headers['Pragma'] = 'no-cache'
-#                response.headers['Expires'] = 0
-#                return response
+        if os.path.isfile('/var/www/changedetection.io/resxxxx ult.bin'):
+            with open('/var/www/changedetection.io/result.bin', 'r') as f:
+                response = make_response(f.read())
+                response.headers['Content-type'] = 'application/json'
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = 0
+                return response
 
         from . import browser_steps
         global browsersteps_live_ui_o
         import base64
-
 
 #        if browsersteps_live_ui_o is None:
 #            # Because the page re-loaded, make a new one
 #            del(browsersteps_live_ui_o)
 
         # @todo key by UUID?
-        browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()
 
         if request.method == 'POST':
-            step_payload = request.form.get('step_payload')
+            # @todo - should always be an existing session
+            step_operation = request.form.get('operation')
+            step_selector = request.form.get('selector')
+            step_optional_value = request.form.get('optional_value')
+
+            browsersteps_live_ui_o.call_action(step_operation, step_selector, step_optional_value)
+
             # Try the browser step
         else:
+            now=time.time()
+            browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()
             browsersteps_live_ui_o.action_goto_url(datastore.data['watching'][uuid]['url'])
 
 
-
-        state= browsersteps_live_ui_o.get_current_state()
+        state = browsersteps_live_ui_o.get_current_state()
 
         p = {'screenshot': "data:image/png;base64,{}".format(base64.b64encode(state[0]).decode('ascii')), 'xpath_data': state[1]}
         import json

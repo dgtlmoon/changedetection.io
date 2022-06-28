@@ -11,6 +11,7 @@ from playwright._impl._api_types import Error, TimeoutError
 import asyncio
 from playwright.async_api import async_playwright
 
+# @todo - auto-detect and deal with common 'accept cookie' situations
 
 class BrowserStepBase():
 
@@ -101,7 +102,18 @@ class browsersteps_live_ui():
     # bump and kill this if idle after X sec
     age_start = 0
 
-    command_executor = "ws://127.0.0.1:3000"
+    # use a special driver, maybe locally etc
+    command_executor = os.getenv(
+        "PLAYWRIGHT_BROWSERSTEPS_DRIVER_URL"
+    )
+    # if not..
+    if not command_executor:
+        command_executor = os.getenv(
+            "PLAYWRIGHT_DRIVER_URL",
+            'ws://playwright-chrome:3000'
+        ).strip('"')
+
+
     browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
     def __init__(self):
@@ -131,8 +143,21 @@ class browsersteps_live_ui():
         self.page.set_default_navigation_timeout(90000)
         self.page.set_default_timeout(90000)
 
+    # Convert and perform "Click Button" for example
+    def call_action(self, action_name, selector, optional_value):
+        import re
+        call_action_name = re.sub('[^0-9a-zA-Z]+', '_', action_name.lower())
+
+        # https://playwright.dev/python/docs/selectors#xpath-selectors
+        if selector.startswith('/') and not selector.startswith('//'):
+            selector = "xpath=" + selector
+
+        action_handler = getattr(self, "action_" + call_action_name)
+        action_handler(selector, optional_value)
+
     def action_goto_url(self, url):
         with self.page.expect_navigation():
+            self.page.set_viewport_size({"width": 1280, "height": 5000})
             response = self.page.goto(url, wait_until='load')
         # Wait_until = commit
         # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
@@ -142,9 +167,10 @@ class browsersteps_live_ui():
         self.page.wait_for_timeout(extra_wait * 1000)
 
     def action_enter_text_in_field(self, selector, value):
-        with self.page.expect_navigation():
-            response = self.page.fill(selector, value)
+        self.page.fill(selector, value)
 
+    def action_click_button(self, selector, value):
+        self.page.click(selector, value)
 
     def get_current_state(self):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""
@@ -153,6 +179,7 @@ class browsersteps_live_ui():
         # Quality set to 1 because it's not used, just used as a work-around for a bug, no need to change this.
         self.page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024}, quality=1)
         # The actual screenshot
+
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
 
         self.page.evaluate("var css_filter=''")

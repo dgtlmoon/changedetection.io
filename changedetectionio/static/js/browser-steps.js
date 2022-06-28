@@ -1,11 +1,21 @@
 $(document).ready(function () {
 
+    // duplicate
+    var csrftoken = $('input[name=csrf_token]').val();
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken)
+            }
+        }
+    })
+
+
     var xpath_data;
     var current_selected_i;
     var state_clicked = false;
     var c;
-    // greyed out fill context
-    var xctx;
+
     // redline highlight context
     var ctx;
     var last_click_xy={'x':-1, 'y':-1}
@@ -37,25 +47,27 @@ $(document).ready(function () {
 
         document.getElementById("browsersteps-selector-canvas");
         c = document.getElementById("browsersteps-selector-canvas");
-        // greyed out fill context
-        xctx = c.getContext("2d");
         // redline highlight context
         ctx = c.getContext("2d");
+        // @todo is click better?
         $('#browsersteps-selector-canvas').off("mousemove mousedown");
 
         // init
         set_scale();
 
+        // @todo click ? some better library?
         $('#browsersteps-selector-canvas').bind('mousedown', function (e) {
             // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
-            last_click_xy = {'x': e.clientX, 'y': e.clientY}
+            console.log(e);
+            last_click_xy = {'x': e.offsetX, 'y': e.offsetY}
             process_selected(current_selected_i);
-            current_selected_i=false;
+            current_selected_i = false;
         });
 
-        ctx.fillStyle = 'rgba(205,0,0,0.35)';
         $('#browsersteps-selector-canvas').bind('mousemove', function (e) {
+            // checkbox if find elements is enabled
             ctx.clearRect(0, 0, c.width, c.height);
+            ctx.fillStyle = 'rgba(255,0,0, 0.1)';
 
             // Add in offset
             if ((typeof e.offsetX === "undefined" || typeof e.offsetY === "undefined") || (e.offsetX === 0 && e.offsetY === 0)) {
@@ -63,7 +75,7 @@ $(document).ready(function () {
                 e.offsetX = e.pageX - targetOffset.left;
                 e.offsetY = e.pageY - targetOffset.top;
             }
-
+            current_selected_i=false;
             // Reverse order - the most specific one should be deeper/"laster"
             // Basically, find the most 'deepest'
             for (var i = xpath_data['size_pos'].length; i !== 0; i--) {
@@ -75,10 +87,18 @@ $(document).ready(function () {
                     e.offsetX > sel.left * y_scale && e.offsetX < sel.left * y_scale + sel.width * y_scale
 
                 ) {
-                    ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-                    ctx.fillRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-                    current_selected_i = i - 1;
-                    break;
+                    // Only highlight these interesting types
+                    if (sel['tagtype'] === 'text' ||
+                        sel['tagtype'] === 'password' ||
+                        sel['tagName'] === 'a' ||
+                        sel['tagName'] === 'button' ||
+                        sel['tagName'] === 'input') {
+                        ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+                        ctx.fillRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+                        current_selected_i = i - 1;
+                        break;
+
+                    }
                 }
             }
 
@@ -88,6 +108,8 @@ $(document).ready(function () {
     // callback for clicking on an xpath on the canvas
     function process_selected(xpath_data_index) {
         console.log(xpath_data['size_pos'][xpath_data_index]);
+        found_something = false;
+        var first_available = $("ul#browser_steps li.empty").first();
 
         // Fill in the current focused input
         if (current_focused_step_form_input) {
@@ -97,24 +119,40 @@ $(document).ready(function () {
                 // Nothing focused, so fill in a new one
                 // if inpt type button or <button>
                 // from the top, find the next not used one and use it
-                var first_available = $("ul#browser_steps li.empty").first();
                 var x = xpath_data['size_pos'][xpath_data_index];
                 if (first_available.length) {
-                    if (x['tagtype'] === 'text' || x['tagtype'] === 'password') {
-                        $('input[type=text]', first_available).first().val(x['xpath']);
+                    // @todo will it let you click shit that has a layer ontop? probably not.
+                    if (x['tagtype'] === 'text' || x['tagtype'] === 'email'|| x['tagtype'] === 'password') {
                         $('select', first_available).val('Enter text in field').change();
+                        $('input[type=text]', first_available).first().val(x['xpath']);
+                        found_something= true;
                     }
                     else {
                         // Assume it's just for clicking on
-                        $('input[type=text]', first_available).first().val(x['xpath']);
-                        $('select', first_available).val('Click button').change();
+                        // what are we clicking on?
+                        if (x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit') {
+                            $('select', first_available).val('Click button').change();
+                            $('input[type=text]', first_available).first().val(x['xpath']);
+                            found_something= true;
+                        }
                     }
                 }
             }
         }
 
+        if(xpath_data_index === false && !found_something) {
+            $('select', first_available).val('Click X,Y').change();
+            $('input[type=text]', first_available).first().val(last_click_xy['x']+','+last_click_xy['y']);
+            draw_circle_on_canvas(last_click_xy['x'], last_click_xy['y']);
+        }
     }
 
+    function draw_circle_on_canvas(x, y) {
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, 2 * Math.PI, false);
+        ctx.fillStyle = 'rgba(255,0,0, 0.6)';
+        ctx.fill();
+    }
 
     $.ajax({
         type: "GET",
@@ -178,14 +216,17 @@ $(document).ready(function () {
         }
     );
 
-    $('ul#browser_steps li .control .apply').click(function(element) {
-        var current_data = $(element).closest('table');
-        
-
+    $('ul#browser_steps li .control .apply').click(function (element) {
+        var current_data = $(element.currentTarget).closest('li');
+        // POST the currently clicked step form widget back and await response, redraw
         $.ajax({
-            type: "POST",
+            method: "POST",
             url: browser_steps_sync_url,
-            data: {'action': '', 'selector': '', 'value': ''},
+            data: {
+                'operation': $("select[id$='operation']", current_data).first().val(),
+                'selector': $("input[id$='selector']", current_data).first().val(),
+                'optional_value': $("input[id$='optional_value']", current_data).first().val()
+            },
             statusCode: {
                 400: function () {
                     // More than likely the CSRF token was lost when the server restarted
