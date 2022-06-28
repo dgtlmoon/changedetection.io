@@ -42,6 +42,7 @@ class model(dict):
             'text_should_not_be_present': [], # Text that should not present
             'fetch_backend': None,
             'extract_title_as_title': False,
+            'check_unique_lines': False, # On change-detected, compare against all history if its something new
             'proxy': None, # Preferred proxy connection
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
