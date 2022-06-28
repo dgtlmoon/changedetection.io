@@ -166,13 +166,14 @@ class model(dict):
         return seconds
 
     # Iterate over all history texts and see if something new exists
-    def lines_are_unique_in_history(self, lines=[]):
+    def lines_contain_something_unique_compared_to_history(self, lines=[]):
         local_lines = [l.decode('utf-8').strip().lower() for l in lines]
+
+        # Compare each lines (set) against each history text file (set) looking for something new..
         for k, v in self.history.items():
             alist = [line.decode('utf-8').strip().lower() for line in open(v, 'rb')]
-            diff = set(alist) - set(local_lines)
-            # @todo what about empty lines? iterate over diff and find a non-zero length line?
-            if len(diff):
-                return False
+            res = set(alist) != set(local_lines)
+            if res:
+                return True
 
-        return True
+        return False
