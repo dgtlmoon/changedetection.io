@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import os
 import re
 import time
@@ -261,6 +262,16 @@ class perform_site_check():
             if self.datastore.data['settings']['application']['extract_title_as_title'] or watch['extract_title_as_title']:
                 if not watch['title'] or not len(watch['title']):
                     update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
+
+        if changed_detected:
+            if watch.get('check_unique_lines', False):
+                has_unique_lines = watch.lines_contain_something_unique_compared_to_history(lines=stripped_text_from_html.splitlines())
+                # One or more lines? unsure?
+                if not has_unique_lines:
+                    logging.debug("check_unique_lines: UUID {} didnt have anything new setting change_detected=False".format(uuid))
+                    changed_detected = False
+                else:
+                    logging.debug("check_unique_lines: UUID {} had unique content".format(uuid))
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5

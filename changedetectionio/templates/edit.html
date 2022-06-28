@@ -147,6 +147,12 @@ User-Agent: wonderbra 1.0") }}
                                 </li>
                             </ul>
                     </div>
+                    <fieldset>
+                        <div class="pure-control-group">
+                            {{ render_checkbox_field(form.check_unique_lines) }}
+                            <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
+                        </div>
+                    </fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.css_filter, placeholder=".class-name or #some-id, or other CSS selector rule.",
                         class="m-d") }}

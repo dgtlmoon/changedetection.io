@@ -41,6 +41,7 @@ class model(dict):
             'text_should_not_be_present': [], # Text that should not present
             'fetch_backend': None,
             'extract_title_as_title': False,
+            'check_unique_lines': False, # On change-detected, compare against all history if its something new
             'proxy': None, # Preferred proxy connection
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
@@ -163,3 +164,16 @@ class model(dict):
             if x:
                 seconds += x * n
         return seconds
+
+    # Iterate over all history texts and see if something new exists
+    def lines_contain_something_unique_compared_to_history(self, lines=[]):
+        local_lines = [l.decode('utf-8').strip().lower() for l in lines]
+
+        # Compare each lines (set) against each history text file (set) looking for something new..
+        for k, v in self.history.items():
+            alist = [line.decode('utf-8').strip().lower() for line in open(v, 'rb')]
+            res = set(alist) != set(local_lines)
+            if res:
+                return True
+
+        return False
