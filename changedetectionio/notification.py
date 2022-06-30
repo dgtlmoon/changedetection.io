@@ -49,9 +49,9 @@ def process_notification(n_object, datastore):
     # raise it as an exception
     apobjs=[]
     sent_objs=[]
+    from .apprise_asset import asset
     for url in n_object['notification_urls']:
-
-        apobj = apprise.Apprise(debug=True)
+        apobj = apprise.Apprise(debug=True, asset=asset)
         url = url.strip()
         if len(url):
             print(">> Process Notification: AppRise notifying {}".format(url))

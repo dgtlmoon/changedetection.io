@@ -431,7 +431,9 @@ def changedetection_app(config=None, datastore_o=None):
     def ajax_callback_send_notification_test():
 
         import apprise
-        apobj = apprise.Apprise()
+        from .apprise_asset import asset
+        apobj = apprise.Apprise(asset=asset)
+
 
         # validate URLS
         if not len(request.form['notification_urls'].strip()):
