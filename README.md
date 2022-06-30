@@ -33,6 +33,7 @@ Free, Open-source web page monitoring, notification and change detection. Don't 
 - New software releases, security advisories when you're not on their mailing list.
 - Festivals with changes
 - Realestate listing changes
+- Know when your favourite whiskey is on sale, or other special deals are announced before anyone else
 - COVID related news from government websites
 - University/organisation news from their website
 - Detect and monitor changes in JSON API responses 
