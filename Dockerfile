@@ -62,7 +62,8 @@ RUN sed -i 's/^CipherString = .*/CipherString = DEFAULT@SECLEVEL=1/' /etc/ssl/op
 
 # Copy modules over to the final image and add their dir to PYTHONPATH
 COPY --from=builder /dependencies /usr/local
-ENV PYTHONPATH=/usr/local
+ENV PYTHONPATH=/usr/local \
+    DATASTORE_DIR="/datastore"
 
 EXPOSE 5000
 
