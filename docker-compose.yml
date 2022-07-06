@@ -78,9 +78,6 @@ services:
 #            - SCREEN_HEIGHT=1024
 #            - SCREEN_DEPTH=16
 #            - ENABLE_DEBUGGER=false
-#            - SCREEN_WIDTH=1280
-#            - SCREEN_HEIGHT=1024
-#            - SCREEN_DEPTH=16
 #            - PREBOOT_CHROME=true
 #            - CONNECTION_TIMEOUT=300000
 #            - MAX_CONCURRENT_SESSIONS=10
