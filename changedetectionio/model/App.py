@@ -21,7 +21,7 @@ class model(dict):
                     'Accept-Language': 'en-GB,en-US;q=0.9,en;'
                 },
                 'requests': {
-                    'timeout': 15,  # Default 15 seconds
+                    'timeout': int(os.getenv("SETTINGS_REQUESTS_TIMEOUT", 45)),  # Default 45 seconds
                     'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
                     'jitter_seconds': 0,
                     'workers': 10,  # Number of threads, lower is better for slow connections
