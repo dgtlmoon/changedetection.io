@@ -47,7 +47,8 @@ class model(dict):
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
-            'webdriver_delay': None
+            'webdriver_delay': None,
+            'webdriver_js_execute_code': None, # Run before change-detection
         }
     jitter_seconds = 0
     mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
