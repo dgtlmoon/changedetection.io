@@ -216,7 +216,7 @@ class perform_site_check():
                 result = re.findall(s_re.encode('utf8'), stripped_text_from_html,
                                     flags=re.MULTILINE | re.DOTALL | re.LOCALE)
                 if result:
-                    regex_matched_output.append(result[0])
+                    regex_matched_output = regex_matched_output + result
 
             if regex_matched_output:
                 stripped_text_from_html = b'\n'.join(regex_matched_output)
