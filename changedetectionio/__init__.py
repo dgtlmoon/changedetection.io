@@ -361,7 +361,7 @@ def changedetection_app(config=None, datastore_o=None):
                 fe.pubDate(dt)
 
         response = make_response(fg.rss_str())
-        response.headers.set('Content-Type', 'application/rss+xml')
+        response.headers.set('Content-Type', 'application/rss+xml;charset=utf-8')
         return response
 
     @app.route("/", methods=['GET'])
