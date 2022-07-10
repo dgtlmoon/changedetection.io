@@ -25,7 +25,7 @@
         <ul>
             <li class="tab" id="default-tab"><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
-            <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Selector</a></li>
+            <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
         </ul>
@@ -240,7 +240,7 @@ Unavailable") }}
 
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
                 <img id="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
-
+                <strong>Pro-tip:</strong> This tool is only for limiting which elements will be included on a change-detection, not for interacting with browser directly.
                 <fieldset>
                     <div class="pure-control-group">
                         {% if visualselector_enabled %}
