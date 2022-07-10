@@ -106,6 +106,9 @@ class perform_site_check():
         elif system_webdriver_delay is not None:
             fetcher.render_extract_delay = system_webdriver_delay
 
+        if watch['webdriver_js_execute_code'] is not None and watch['webdriver_js_execute_code'].strip():
+            fetcher.webdriver_js_execute_code = watch['webdriver_js_execute_code']
+
         fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code, watch['css_filter'])
         fetcher.quit()
 

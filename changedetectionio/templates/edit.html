@@ -88,14 +88,17 @@
                             <strong>If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here.</strong>
                             <br/>
                             This will wait <i>n</i> seconds before extracting the text.
+                            {% if using_global_webdriver_wait %}
+                            <br/><strong>Using the current global default settings</strong>
+                            {% endif %}
                         </div>
-
                     </div>
-                    {% if using_global_webdriver_wait %}
-                    <div class="pure-form-message-inline">
-                        <strong>Using the current global default settings</strong>
+                    <div class="pure-control-group">
+                        {{ render_field(form.webdriver_js_execute_code) }}
+                        <div class="pure-form-message-inline">
+                            Run this code before performing change detection, handy for filling in fields and other actions <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Run-JavaScript-before-change-detection">More help and examples here</a>
+                        </div>
                     </div>
-                    {% endif %}
                 </fieldset>
                 <fieldset class="pure-group" id="requests-override-options">
                     {% if not playwright_enabled %}

@@ -298,7 +298,8 @@ class ChangeDetectionStore:
                           'ignore_text', 'css_filter',
                           'subtractive_selectors', 'trigger_text',
                           'extract_title_as_title', 'extract_text',
-                          'text_should_not_be_present']:
+                          'text_should_not_be_present',
+                          'webdriver_js_execute_code']:
                     if res.get(k):
                         apply_extras[k] = res[k]
 
