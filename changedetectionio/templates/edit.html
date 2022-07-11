@@ -156,6 +156,18 @@ User-Agent: wonderbra 1.0") }}
                             <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
                         </div>
                     </fieldset>
+                    <fieldset>
+                        <div class="pure-control-group">
+                            <label for="trigger-type">Trigger On</label>
+                            {{ render_checkbox_field(form.trigger_on_add, class="trigger-type") }}
+                            {{ render_checkbox_field(form.trigger_on_del, class="trigger-type") }}
+                            {{ render_checkbox_field(form.trigger_on_modify, class="trigger-type") }}
+                            <span class="pure-form-message-inline">
+                                This filter only compares to the previous snapshot. This is different from the "Only trigger when new lines appear" setting which checks all previous snapshots.
+                                This is good for filtering out notifications for only content being removed.
+                            </span>
+                        </div>
+                    </fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.css_filter, placeholder=".class-name or #some-id, or other CSS selector rule.",
                         class="m-d") }}
