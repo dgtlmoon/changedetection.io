@@ -346,8 +346,6 @@ class watchForm(commonSettingsForm):
     text_should_not_be_present = StringListField('Block change-detection if text matches', [validators.Optional(), ValidateListRegex()])
     trigger_on_add = BooleanField('Additions', default=True)
     trigger_on_del = BooleanField('Deletions', default=True)
-    trigger_on_modify = BooleanField('Modifications', default=True)
-
 
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
 

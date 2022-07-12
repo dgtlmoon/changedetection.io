@@ -280,7 +280,6 @@ class perform_site_check():
             diff_filters = {
                 "add": watch.get('trigger_on_add', True),
                 "del": watch.get('trigger_on_del', True),
-                "modify": watch.get('trigger_on_modify', True)
             }
 
             if False in diff_filters.values(): # if we are supposed to filter any diff types

@@ -45,7 +45,6 @@ class model(dict):
             'check_unique_lines': False, # On change-detected, compare against all history if its something new
             'trigger_on_add': True, # Allow a trigger if there are additions from the last snapshot
             'trigger_on_del': True, # Allow a trigger if there are deletions from the last snapshot
-            'trigger_on_modify': True, # Allow a trigger if there are changes from the last snapshot
             'proxy': None, # Preferred proxy connection
             'previous_text': False, # Previous text from the last snapshot, this is updated after every fetch including if a diff was triggered or not
             # Re #110, so then if this is set to None, we know to use the default value instead
@@ -192,7 +191,6 @@ class model(dict):
         diff_types = {
             'add': False,
             'del': False,
-            'modify': False,
         }
 
         # get diff types using difflib
@@ -200,8 +198,6 @@ class model(dict):
         for tag, alo, ahi, blo, bhi in cruncher.get_opcodes():
             if tag == 'delete':
                 diff_types["del"] = True
-            elif tag == 'replace':
-                diff_types["modify"] = True
             elif tag == 'insert':
                 diff_types["add"] = True
 
