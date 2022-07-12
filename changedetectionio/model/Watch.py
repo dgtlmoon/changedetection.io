@@ -1,5 +1,6 @@
 import os
 import uuid as uuid_builder
+import difflib
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
 
@@ -46,6 +47,7 @@ class model(dict):
             'trigger_on_del': True, # Allow a trigger if there are deletions from the last snapshot
             'trigger_on_modify': True, # Allow a trigger if there are changes from the last snapshot
             'proxy': None, # Preferred proxy connection
+            'previous_text': False, # Previous text from the last snapshot, this is updated after every fetch including if a diff was triggered or not
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
@@ -181,3 +183,26 @@ class model(dict):
                 return True
 
         return False
+
+    # Get diff types (addition, deletion, modification) from the previous snapshot and new_text
+    # uses similar algorithm to customSequenceMatcher in diff.py
+    # Returns a dict of diff types and wether they are present in the diff
+    def get_diff_types(self, new_text):
+        
+        diff_types = {
+            'add': False,
+            'del': False,
+            'modify': False,
+        }
+
+        # get diff types using difflib
+        cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \\t", a=self.get("previous_text", ""), b=new_text)
+        for tag, alo, ahi, blo, bhi in cruncher.get_opcodes():
+            if tag == 'delete':
+                diff_types["del"] = True
+            elif tag == 'replace':
+                diff_types["modify"] = True
+            elif tag == 'insert':
+                diff_types["add"] = True
+
+        return diff_types
