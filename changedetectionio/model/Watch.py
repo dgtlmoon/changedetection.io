@@ -46,7 +46,7 @@ class model(dict):
             'trigger_on_add': True, # Allow a trigger if there are additions from the last snapshot
             'trigger_on_del': True, # Allow a trigger if there are deletions from the last snapshot
             'proxy': None, # Preferred proxy connection
-            'previous_text': False, # Previous text from the last snapshot, this is updated after every fetch including if a diff was triggered or not
+            'previous_text': "", # Previous text from the last snapshot, this is updated after every fetch including if a diff was triggered or not
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
@@ -194,7 +194,7 @@ class model(dict):
         }
 
         # get diff types using difflib
-        cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \\t", a=self.get("previous_text", ""), b=new_text)
+        cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \\t", a=self.get("previous_text", ""), b=str(new_text))
         for tag, alo, ahi, blo, bhi in cruncher.get_opcodes():
             if tag == 'delete':
                 diff_types["del"] = True
