@@ -277,28 +277,31 @@ class perform_site_check():
                 else:
                     logging.debug("check_unique_lines: UUID {} had unique content".format(uuid))
 
+        if changed_detected:
             diff_filters = {
                 "add": watch.get('trigger_on_add', True),
                 "del": watch.get('trigger_on_del', True),
             }
 
             if False in diff_filters.values(): # if we are supposed to filter any diff types
-                print(">>>>>>>>>>>> Filtering diffs")
+                print("Diff Filters Active: " + str(diff_filters))
+
                 # get the diff types present in the watch
-                diff_types = watch.get_diff_types(str(stripped_text_from_html))
-                
+                diff_types = watch.get_diff_types(text_content_before_ignored_filter)
+                print("Diff components found: " + str(diff_types))
+
                 # for each diff type, if the filter setting is false, and the diff type is present, then set the changed_detected to false
                 for diff_type in diff_types:
                     if not diff_filters[diff_type] and diff_types[diff_type]:
                         changed_detected = False
                         break # we only need to check one diff type
 
-        # Always record the new checksum
+        # Always record the new checksum and the new text
         update_obj["previous_md5"] = fetched_md5
+        watch.save_previous_text(text_content_before_ignored_filter)
 
         # On the first run of a site, watch['previous_md5'] will be None, set it the current one.
         if not watch.get('previous_md5'):
             watch['previous_md5'] = fetched_md5
-            watch['previous_text'] = str(stripped_text_from_html)
 
         return changed_detected, update_obj, text_content_before_ignored_filter, fetcher.screenshot, fetcher.xpath_data

@@ -230,7 +230,8 @@ class model(dict):
         }
 
         # get diff types using difflib
-        cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \\t", a=self.get_previous_text(), b=str(new_text))
+        cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \\t", a=str(self.get_previous_text()), b=str(new_text))
+
         for tag, alo, ahi, blo, bhi in cruncher.get_opcodes():
             if tag == 'delete':
                 diff_types["del"] = True
