@@ -46,7 +46,6 @@ class model(dict):
             'trigger_on_add': True, # Allow a trigger if there are additions from the last snapshot
             'trigger_on_del': True, # Allow a trigger if there are deletions from the last snapshot
             'proxy': None, # Preferred proxy connection
-            'previous_text': "", # Previous text from the last snapshot, this is updated after every fetch including if a diff was triggered or not
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
@@ -155,6 +154,43 @@ class model(dict):
         #@todo bump static cache of the last timestamp so we dont need to examine the file to set a proper ''viewed'' status
         return snapshot_fname
 
+    # Save previous text snapshot for diffing
+    def save_previous_text(self, contents):
+        from os import mkdir
+        import logging
+
+        output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
+
+        # Incase the operator deleted it, check and create.
+        if not os.path.isdir(output_path):
+            mkdir(output_path)
+
+        snapshot_fname = "{}/previous.txt".format(output_path)
+        logging.debug("Saving previous text {}".format(snapshot_fname))
+
+        with open(snapshot_fname, 'wb') as f:
+            f.write(contents)
+            f.close()
+
+        return snapshot_fname
+
+    # Get previous text snapshot for diffing
+    def get_previous_text(self):
+        from os import path
+
+        output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
+
+        snapshot_fname = "{}/previous.txt".format(output_path)
+        if not path.isfile(snapshot_fname):
+            self.save_previous_text(b'')
+            return ""
+
+        with open(snapshot_fname, 'rb') as f:
+            contents = f.read()
+            f.close()
+
+        return contents
+
     @property
     def has_empty_checktime(self):
         # using all() + dictionary comprehension
@@ -194,7 +230,7 @@ class model(dict):
         }
 
         # get diff types using difflib
-        cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \\t", a=self.get("previous_text", ""), b=str(new_text))
+        cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \\t", a=self.get_previous_text(), b=str(new_text))
         for tag, alo, ahi, blo, bhi in cruncher.get_opcodes():
             if tag == 'delete':
                 diff_types["del"] = True
