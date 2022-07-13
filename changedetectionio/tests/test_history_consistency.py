@@ -81,4 +81,4 @@ def test_consistent_history(client, live_server):
 
 
 
-        assert len(files_in_watch_dir) == 2, "Should be just two files in the dir, history.txt and the snapshot"
+        assert len(files_in_watch_dir) == 3, "Should be just three files in the dir, history.txt, previous.txt, and the snapshot"
