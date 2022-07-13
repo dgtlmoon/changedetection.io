@@ -619,10 +619,6 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)
 
-            # Fix the diff filters being changed in the creation of form object
-            datastore.data['watching'][uuid]['trigger_on_add'] = default['trigger_on_add']
-            datastore.data['watching'][uuid]['trigger_on_del'] = default['trigger_on_del']
-
             flash("Updated watch.")
 
             # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
