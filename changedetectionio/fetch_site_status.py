@@ -278,23 +278,18 @@ class perform_site_check():
                     logging.debug("check_unique_lines: UUID {} had unique content".format(uuid))
 
         if changed_detected:
-            diff_filters = {
-                "add": watch.get('trigger_on_add', True),
-                "del": watch.get('trigger_on_del', True),
-            }
-
-            if False in diff_filters.values(): # if we are supposed to filter any diff types
-                print("Diff Filters Active: " + str(diff_filters))
-
+            if watch.get("trigger_type", "all") != "all": # if we are supposed to filter any diff types
                 # get the diff types present in the watch
                 diff_types = watch.get_diff_types(text_content_before_ignored_filter)
                 print("Diff components found: " + str(diff_types))
 
-                # for each diff type, if the filter setting is false, and the diff type is present, then set the changed_detected to false
-                for diff_type in diff_types:
-                    if not diff_filters[diff_type] and diff_types[diff_type]:
-                        changed_detected = False
-                        break # we only need to check one diff type
+                # Only Additions
+                if watch["trigger_type"] == "add" and not diff_types["add"] and diff_types["del"]:
+                    changed_detected = False
+
+                # Only Deletions
+                elif watch["trigger_type"] == "delete" and not diff_types["del"] and diff_types["add"]:
+                    changed_detected = False
 
         # Always record the new checksum and the new text
         update_obj["previous_md5"] = fetched_md5

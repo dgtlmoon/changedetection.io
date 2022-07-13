@@ -43,8 +43,7 @@ class model(dict):
             'fetch_backend': None,
             'extract_title_as_title': False,
             'check_unique_lines': False, # On change-detected, compare against all history if its something new
-            'trigger_on_add': True, # Allow a trigger if there are additions from the last snapshot
-            'trigger_on_del': True, # Allow a trigger if there are deletions from the last snapshot
+            'trigger_type': "all",
             'proxy': None, # Preferred proxy connection
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default

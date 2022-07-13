@@ -8,7 +8,6 @@ from wtforms import (
     PasswordField,
     RadioField,
     SelectField,
-    SelectMultipleField,
     StringField,
     SubmitField,
     TextAreaField,
@@ -344,8 +343,7 @@ class watchForm(commonSettingsForm):
     check_unique_lines = BooleanField('Only trigger when new lines appear', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
     text_should_not_be_present = StringListField('Block change-detection if text matches', [validators.Optional(), ValidateListRegex()])
-    trigger_on_add = BooleanField('Additions', default=True)
-    trigger_on_del = BooleanField('Deletions', default=True)
+    trigger_type = SelectField(u'Trigger On', choices=[("all", "Any Changes"), ("add", "Only Additions"), ("delete", "Only Deletions")], coerce=str, default="add")
 
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
 
