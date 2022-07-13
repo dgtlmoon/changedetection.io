@@ -31,7 +31,7 @@ def set_add_response():
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
-def test_diff_filtering_functionality(client, live_server):
+def test_diff_filtering_no_add(client, live_server):
     live_server_setup(live_server)
 
     sleep_time_for_fetch_thread = 3
@@ -56,7 +56,7 @@ def test_diff_filtering_functionality(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"trigger_on_add": "y",
-              "trigger_on_delete": "n",
+              "trigger_on_del": "n",
               "url": test_url,
               "fetch_backend": "html_requests"},
         follow_redirects=True
