@@ -64,9 +64,19 @@ def test_diff_filtering_no_add(client, live_server):
 
     # We should NOT see the change
     res = client.get(url_for("index"))
-    # save res.data to a file
-    with open("./test-index.html", "w") as f:
-        f.write(res.data.decode("utf-8"))
-        
     assert b'unviewed' not in res.data
+
+    #  Make an delete change
+    set_original_response()
+
+    time.sleep(sleep_time_for_fetch_thread)
+    # Trigger a check
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+
+    # Give the thread time to pick it up
+    time.sleep(sleep_time_for_fetch_thread)
+
+    # We should see the change
+    res = client.get(url_for("index"))
+    assert b'unviewed' in res.data
 
