@@ -1,6 +1,5 @@
 import os
 import uuid as uuid_builder
-import difflib
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
 
@@ -221,6 +220,7 @@ class model(dict):
     # uses similar algorithm to customSequenceMatcher in diff.py
     # Returns a dict of diff types and wether they are present in the diff
     def get_diff_types(self, new_text):
+        import difflib
         
         diff_types = {
             'add': False,
