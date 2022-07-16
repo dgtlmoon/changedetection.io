@@ -154,14 +154,13 @@ class model(dict):
 
     # Save previous text snapshot for diffing - used for calculating additions and deletions
     def save_previous_text(self, contents):
-      
         import logging
 
         output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
 
         # Incase the operator deleted it, check and create.
         if not os.path.isdir(output_path):
-            mkdir(output_path)
+            os.mkdir(output_path)
 
         snapshot_fname = "{}/previous.txt".format(output_path)
         logging.debug("Saving previous text {}".format(snapshot_fname))
@@ -221,7 +220,7 @@ class model(dict):
     # Returns a dict of diff types and wether they are present in the diff
     def get_diff_types(self, new_text):
         import difflib
-        
+
         diff_types = {
             'add': False,
             'del': False,
