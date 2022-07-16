@@ -153,7 +153,7 @@ class model(dict):
         #@todo bump static cache of the last timestamp so we dont need to examine the file to set a proper ''viewed'' status
         return snapshot_fname
 
-    # Save previous text snapshot for diffing
+    # Save previous text snapshot for diffing - used for calculating additions and deletions
     def save_previous_text(self, contents):
         from os import mkdir
         import logging
