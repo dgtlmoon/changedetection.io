@@ -527,3 +527,22 @@ class ChangeDetectionStore:
             p = watch.history
             if watch.history_n < 2:
                 watch['last_changed'] = 0
+
+    # Generate a previous.txt for all watches that do not have one and contain history
+    def update_4(self):
+        for uuid, watch in self.data['watching'].items():
+            # Make sure we actually have history
+            if (watch.history_n == 0):
+                continue
+            latest_file_name = watch.history[watch.newest_history_key]
+
+
+            # Check if the previous.txt exists
+            if not os.path.exists(os.path.join(self.datastore_path, uuid, "previous.txt")):
+                # Generate a previous.txt
+                with open(os.path.join(self.datastore_path, uuid, "previous.txt"), "w") as f:
+                    # Fill it with the latest history
+                    latest_file_name = watch.history[watch.newest_history_key]
+                    with open(latest_file_name, "r") as f2:
+                        f.write(f2.read())
+ 
