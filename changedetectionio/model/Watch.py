@@ -177,8 +177,7 @@ class model(dict):
         output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
 
         snapshot_fname = "{}/previous.txt".format(output_path)
-        if not path.isfile(snapshot_fname):
-            self.save_previous_text(b'')
+        if self.history_n < 1:
             return ""
 
         with open(snapshot_fname, 'rb') as f:
