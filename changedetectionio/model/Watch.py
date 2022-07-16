@@ -169,7 +169,6 @@ class model(dict):
 
         with open(snapshot_fname, 'wb') as f:
             f.write(contents)
-            f.close()
 
         return snapshot_fname
 
