@@ -172,7 +172,7 @@ class model(dict):
 
         return snapshot_fname
 
-    # Get previous text snapshot for diffing
+    # Get previous text snapshot for diffing - used for calculating additions and deletions
     def get_previous_text(self):
         from os import path
 
