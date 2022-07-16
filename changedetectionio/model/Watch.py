@@ -154,7 +154,7 @@ class model(dict):
 
     # Save previous text snapshot for diffing - used for calculating additions and deletions
     def save_previous_text(self, contents):
-        from os import mkdir
+      
         import logging
 
         output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
