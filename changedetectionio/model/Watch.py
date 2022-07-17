@@ -182,7 +182,6 @@ class model(dict):
 
         with open(snapshot_fname, 'rb') as f:
             contents = f.read()
-            f.close()
 
         return contents
 
