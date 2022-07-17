@@ -12,7 +12,7 @@ fi
 # If we're running as root, by default make sure process uid/gid
 # and datadir permissions are correct. This can be skipped by setting
 # KEEP_PRIVILEGES to something non-empty.
-if [ "$(id -u)" = '0' -a -n "${KEEP_PRIVILEGES:-}" ]; then
+if [ "$(id -u)" = '0' -a -z "${KEEP_PRIVILEGES:-}" ]; then
     PUID=${PUID:-911}
     PGID=${PGID:-911}
 
