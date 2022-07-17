@@ -540,9 +540,9 @@ class ChangeDetectionStore:
             # Check if the previous.txt exists
             if not os.path.exists(os.path.join(self.datastore_path, uuid, "previous.txt")):
                 # Generate a previous.txt
-                with open(os.path.join(self.datastore_path, uuid, "previous.txt"), "w") as f:
+                with open(os.path.join(self.datastore_path, uuid, "previous.txt"), "wb") as f:
                     # Fill it with the latest history
                     latest_file_name = watch.history[watch.newest_history_key]
-                    with open(latest_file_name, "r") as f2:
+                    with open(latest_file_name, "rb") as f2:
                         f.write(f2.read())
  
