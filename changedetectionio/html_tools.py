@@ -209,9 +209,10 @@ def workarounds_for_obfuscations(content):
     """
 
     # HomeDepot.com style <span>$<!-- -->90<!-- -->.<!-- -->74</span>
+    # https://github.com/weblyzard/inscriptis/issues/45
     if not content:
         return content
-    
+
     content = re.sub('<!--\s+-->', '', content)
 
     return content
