@@ -3,9 +3,9 @@
 
 ![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master)
 
-## Self-Hosted, Open Source, Change Monitoring of Web Pages
+## Web Site Change Detection, Monitoring and Notification - Self-Hosted or SaaS.
 
-_Know when web pages change! Stay ontop of new information!_ 
+_Know when web pages change! Stay ontop of new information! get notifications when important website content changes_ 
 
 Live your data-life *pro-actively* instead of *re-actively*.
 
