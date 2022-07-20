@@ -202,3 +202,17 @@ def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
 
     return text_content
 
+def workarounds_for_obfuscations(content):
+    """
+    Some sites are using sneaky tactics to make prices and other information un-renderable by Inscriptis
+    This could go into its own Pip package in the future, for faster updates
+    """
+
+    # HomeDepot.com style <span>$<!-- -->90<!-- -->.<!-- -->74</span>
+    # https://github.com/weblyzard/inscriptis/issues/45
+    if not content:
+        return content
+
+    content = re.sub('<!--\s+-->', '', content)
+
+    return content

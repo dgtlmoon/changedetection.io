@@ -150,7 +150,9 @@ class perform_site_check():
                 is_html = False
 
         if is_html or is_source:
+            
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+            fetcher.content = html_tools.workarounds_for_obfuscations(fetcher.content)
             html_content = fetcher.content
 
             # If not JSON,  and if it's not text/plain..
