@@ -64,7 +64,7 @@ def process_notification(n_object, datastore):
 
                 # So if no avatar_url is specified, add one so it can be correctly calculated into the total payload
                 k = '?' if not '?' in url else '&'
-                if not 'avatar_url' in url:
+                if not 'avatar_url' in url and not url.startswith('mail'):
                     url += k + 'avatar_url=https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/changedetectionio/static/images/avatar-256x256.png'
 
                 if url.startswith('tgram://'):
@@ -85,6 +85,13 @@ def process_notification(n_object, datastore):
                     body_limit = max(0, payload_max_size - len(n_title))
                     n_title = n_title[0:payload_max_size]
                     n_body = n_body[0:body_limit]
+
+                elif url.startswith('mailto'):
+                    # Apprise will default to HTML, so we need to override it
+                    # So that whats' generated in n_body is in line with what is going to be sent.
+                    # https://github.com/caronc/apprise/issues/633#issuecomment-1191449321
+                    if not 'format=' in url and (n_format == 'text' or n_format == 'markdown'):
+                        url = "{}?format={}".format(url, n_format)
 
                 apobj.add(url)
 
