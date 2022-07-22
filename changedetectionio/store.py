@@ -9,6 +9,7 @@ import time
 import uuid as uuid_builder
 from copy import deepcopy
 from os import mkdir, path, unlink
+from model.Watch import mtable
 from threading import Lock
 import re
 import requests
@@ -158,7 +159,6 @@ class ChangeDetectionStore:
     @property
     def threshold_seconds(self):
         seconds = 0
-        mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
         for m, n in mtable.items():
             x = self.__data['settings']['requests']['time_between_check'].get(m)
             if x:

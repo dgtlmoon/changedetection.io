@@ -2,6 +2,7 @@ import os
 import uuid as uuid_builder
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
+mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
 
 from changedetectionio.notification import (
     default_notification_body,
@@ -51,7 +52,7 @@ class model(dict):
             'webdriver_js_execute_code': None, # Run before change-detection
         }
     jitter_seconds = 0
-    mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
+
     def __init__(self, *arg, **kw):
         import uuid
         self.update(self.__base_config)
@@ -160,7 +161,7 @@ class model(dict):
 
     def threshold_seconds(self):
         seconds = 0
-        for m, n in self.mtable.items():
+        for m, n in mtable.items():
             x = self.get('time_between_check', {}).get(m, None)
             if x:
                 seconds += x * n
