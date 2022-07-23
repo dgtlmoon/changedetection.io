@@ -122,15 +122,11 @@ def run_filter_test(client, content_filter):
 def test_setup(live_server):
     live_server_setup(live_server)
 
-# Hard to just add more live server URLs when one test is already running (I think)
-# So we add our test here (was in a different file)
 def test_check_css_filter_failure_notification(client, live_server):
     set_original_response()
     time.sleep(1)
     run_filter_test(client, '#nope-doesnt-exist')
 
-# Hard to just add more live server URLs when one test is already running (I think)
-# So we add our test here (was in a different file)
 def test_check_xpath_filter_failure_notification(client, live_server):
     set_original_response()
     time.sleep(1)
