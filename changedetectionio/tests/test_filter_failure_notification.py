@@ -22,12 +22,7 @@ def set_response_with_filter():
         f.write(test_return_data)
     return None
 
-
-# Hard to just add more live server URLs when one test is already running (I think)
-# So we add our test here (was in a different file)
-def test_check_notification(client, live_server):
-    live_server_setup(live_server)
-    set_original_response()
+def run_filter_test(client, content_filter):
 
     # Give the endpoint time to spin up
     time.sleep(1)
@@ -72,7 +67,7 @@ def test_check_notification(client, live_server):
         "tag": "my tag",
         "title": "my title",
         "headers": "",
-        "css_filter": '#nope-doesnt-exist',
+        "css_filter": content_filter,
         "fetch_backend": "html_requests"})
 
     res = client.post(
@@ -99,7 +94,7 @@ def test_check_notification(client, live_server):
     with open("test-datastore/notification.txt", 'r') as f:
         notification = f.read()
     assert 'CSS/xPath filter was not present in the page' in notification
-    assert '#nope-doesnt-exist' in notification
+    assert content_filter.replace('"', '\\"') in notification
 
     # Remove it and prove that it doesnt trigger when not expected
     os.unlink("test-datastore/notification.txt")
@@ -121,3 +116,19 @@ def test_check_notification(client, live_server):
         url_for("form_delete", uuid="all"),
         follow_redirects=True
     )
+    os.unlink("test-datastore/notification.txt")
+
+
+def test_setup(live_server):
+    live_server_setup(live_server)
+
+def test_check_css_filter_failure_notification(client, live_server):
+    set_original_response()
+    time.sleep(1)
+    run_filter_test(client, '#nope-doesnt-exist')
+
+def test_check_xpath_filter_failure_notification(client, live_server):
+    set_original_response()
+    time.sleep(1)
+    run_filter_test(client, '//*[@id="nope-doesnt-exist"]')
+
