@@ -108,7 +108,7 @@ def test_check_notification(client, live_server):
     for i in range(0, App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT):
         client.get(url_for("form_watch_checknow"), follow_redirects=True)
         time.sleep(3)
-        
+
     # It should have sent a notification, but..
     assert os.path.isfile("test-datastore/notification.txt")
     # but it should not contain the info about the failed filter

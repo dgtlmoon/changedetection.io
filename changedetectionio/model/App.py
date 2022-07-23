@@ -5,7 +5,7 @@ from changedetectionio.notification import (
     default_notification_title,
 )
 
-_FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT = 5
+_FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT = 6
 
 class model(dict):
     base_config = {
