@@ -91,10 +91,9 @@ class update_worker(threading.Thread):
                         c += 1
 
                         # Send notification if we reached the threshold?
-                        threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts',
-                                                                                       False)
+                        threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts', 0)
                         print("Filter for {} not found, consecutive_filter_failures: {}".format(uuid, c))
-                        if threshold and c >= threshold:
+                        if threshold >0 and c >= threshold:
                             self.send_filter_failure_notification(uuid)
                             c = 0
 

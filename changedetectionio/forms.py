@@ -391,7 +391,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
 
     filter_failure_notification_threshold_attempts = IntegerField('Number of times the filter can be missing before sending a notification',
                                                                   render_kw={"style": "width: 5em;"},
-                                                                  validators=[validators.NumberRange(min=10,
+                                                                  validators=[validators.NumberRange(min=0,
                                                                                                      message="Should contain zero or more attempts")])
 
 
