@@ -91,7 +91,8 @@ def process_notification(n_object, datastore):
                     # So that whats' generated in n_body is in line with what is going to be sent.
                     # https://github.com/caronc/apprise/issues/633#issuecomment-1191449321
                     if not 'format=' in url and (n_format == 'text' or n_format == 'markdown'):
-                        url = "{}?format={}".format(url, n_format)
+                        prefix = '?' if not '?' in url else '&'
+                        url = "{}{}format={}".format(url, prefix, n_format)
 
                 apobj.add(url)
 
