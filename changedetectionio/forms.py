@@ -349,6 +349,8 @@ class watchForm(commonSettingsForm):
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
     save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
     proxy = RadioField('Proxy')
+    filter_failure_notification_send = BooleanField(
+        'Send a notification when the filter can no longer be found on the page', default=False)
 
     def validate(self, **kwargs):
         if not super().validate():
@@ -386,6 +388,11 @@ class globalSettingsApplicationForm(commonSettingsForm):
     fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     api_access_token_enabled = BooleanField('API access token security check enabled', default=True, validators=[validators.Optional()])
     password = SaltyPasswordField()
+
+    filter_failure_notification_threshold_attempts = IntegerField('Number of times the filter can be missing before sending a notification',
+                                                                  render_kw={"style": "width: 5em;"},
+                                                                  validators=[validators.NumberRange(min=0,
+                                                                                                     message="Should contain zero or more attempts")])
 
 
 class globalSettingsForm(Form):

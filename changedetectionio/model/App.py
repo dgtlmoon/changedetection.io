@@ -5,6 +5,8 @@ from changedetectionio.notification import (
     default_notification_title,
 )
 
+_FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT = 6
+
 class model(dict):
     base_config = {
             'note': "Hello! If you change this file manually, please be sure to restart your changedetection.io instance!",
@@ -30,6 +32,7 @@ class model(dict):
                     'extract_title_as_title': False,
                     'empty_pages_are_a_change': False,
                     'fetch_backend': getenv("DEFAULT_FETCH_BACKEND", "html_requests"),
+                    'filter_failure_notification_threshold_attempts': _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT,
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
                     'global_subtractive_selectors': [],
                     'ignore_whitespace': True,

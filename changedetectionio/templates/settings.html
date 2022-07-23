@@ -36,7 +36,13 @@
                         {{ render_field(form.requests.form.jitter_seconds, class="jitter_seconds") }}
                         <span class="pure-form-message-inline">Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later</span>
                     </div>
-
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.filter_failure_notification_threshold_attempts, class="filter_failure_notification_threshold_attempts") }}
+                        <span class="pure-form-message-inline">After this many consecutive times that the CSS/xPath filter is missing, send a notification
+                            <br/>
+                        Set to <strong>0</strong> to disable
+                        </span>
+                    </div>
                     <div class="pure-control-group">
                         {% if not hide_remove_pass %}
                             {% if current_user.is_authenticated %}
