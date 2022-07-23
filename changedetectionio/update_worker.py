@@ -27,8 +27,9 @@ class update_worker(threading.Thread):
         watch = self.datastore.data['watching'].get(uuid, False)
 
         n_object = {'notification_title': 'CSS/xPath filter was not present in the page',
-                    'notification_body': "Your configured filter of '{}' did not appear on the page after {} attempts, did the page change layout?".format(
-                        watch['css_filter'], threshold),
+                    'notification_body': "Your configured filter of '{}' for {{watch_url}} did not appear on the page after {} attempts, did the page change layout?\n\nLink: {{base_url}}/edit/{{watch_uuid}}\n\nYour omniscient changedetection.io installation :)".format(
+                        watch['css_filter'],
+                        threshold),
                     'notification_format': 'text'}
 
         if len(watch['notification_urls']):
