@@ -41,6 +41,8 @@ class model(dict):
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'text_should_not_be_present': [], # Text that should not present
             'fetch_backend': None,
+            'filter_failure_notification_send': True,
+            'consecutive_filter_failures': 0, # Every time the CSS/xPath filter cannot be located, reset when all is fine.
             'extract_title_as_title': False,
             'check_unique_lines': False, # On change-detected, compare against all history if its something new
             'proxy': None, # Preferred proxy connection

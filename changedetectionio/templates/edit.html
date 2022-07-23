@@ -62,6 +62,12 @@
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.extract_title_as_title) }}
                     </div>
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.filter_failure_notification_send) }}
+                        <span class="pure-form-message-inline">
+                         Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and your filter will not work anymore.
+                        </span>
+                    </div>
                 </fieldset>
             </div>
 

@@ -34,7 +34,6 @@ def process_notification(n_object, datastore):
         valid_notification_formats[default_notification_format],
     )
 
-
     # Insert variables into the notification content
     notification_parameters = create_notification_parameters(n_object, datastore)
 

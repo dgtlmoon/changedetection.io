@@ -3,6 +3,8 @@ import queue
 import time
 
 from changedetectionio import content_fetcher
+from changedetectionio.html_tools import FilterNotFoundInResponse
+
 # A single update worker
 #
 # Requests for checking on a single site(watch) from a queue of watches
@@ -18,6 +20,31 @@ class update_worker(threading.Thread):
         self.notification_q = notification_q
         self.datastore = datastore
         super().__init__(*args, **kwargs)
+
+    def send_filter_failure_notification(self, uuid):
+
+        threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
+        watch = self.datastore.data['watching'].get(uuid, False)
+
+        n_object = {'notification_title': 'CSS/xPath filter was not present in the page',
+                    'notification_body': "Your configured filter of '{}' did not appear on the page after {} attempts, did the page change layout?".format(
+                        watch['css_filter'], threshold),
+                    'notification_format': 'text'}
+
+        if len(watch['notification_urls']):
+            n_object['notification_urls'] = watch['notification_urls']
+
+        elif len(self.datastore.data['settings']['application']['notification_urls']):
+            n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
+
+        # Only prepare to notify if the rules above matched
+        if 'notification_urls' in n_object:
+            n_object.update({
+                'watch_url': watch['url'],
+                'uuid': uuid
+            })
+            self.notification_q.put(n_object)
+            print("Sent filter not found notification for {}".format(uuid))
 
     def run(self):
         from changedetectionio import fetch_site_status
@@ -55,11 +82,24 @@ class update_worker(threading.Thread):
                     except content_fetcher.ReplyWithContentButNoText as e:
                         # Totally fine, it's by choice - just continue on, nothing more to care about
                         # Page had elements/content but no renderable text
-                        if self.datastore.data['watching'].get(uuid, False) and self.datastore.data['watching'][uuid].get('css_filter'):
-                            self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found (CSS / xPath Filter not found in page?)"})
-                        else:
-                            self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found."})
-                        pass
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found."})
+                    except FilterNotFoundInResponse as e:
+                        err_text = "Filter '{}' not found - Did the page change its layout?".format(str(e))
+                        c = 0
+                        if self.datastore.data['watching'].get(uuid, False):
+                            c = self.datastore.data['watching'][uuid].get('consecutive_filter_failures', 5)
+                        c += 1
+
+                        # Send notification if we reached the threshold?
+                        threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts',
+                                                                                       False)
+                        print("Filter for {} not found, consecutive_filter_failures: {}".format(uuid, c))
+                        if threshold and c >= threshold:
+                            self.send_filter_failure_notification(uuid)
+                            c = 0
+
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                           'consecutive_filter_failures': c})
                     except content_fetcher.EmptyReply as e:
                         # Some kind of custom to-str handler in the exception handler that does this?
                         err_text = "EmptyReply - try increasing 'Wait seconds before extracting text', Status Code {}".format(e.status_code)
@@ -89,6 +129,7 @@ class update_worker(threading.Thread):
                                 fname = watch.save_history_text(contents=contents, timestamp=str(round(time.time())))
 
                             # Generally update anything interesting returned
+                            update_obj['consecutive_filter_failures'] = 0
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
                             # A change was detected
