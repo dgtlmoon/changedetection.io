@@ -11,7 +11,8 @@ Live your data-life *pro-actively* instead of *re-actively*.
 
 Free, Open-source web page monitoring, notification and change detection. Don't have time? [**Try our $6.99/month subscription - unlimited checks and watches!**](https://lemonade.changedetection.io/start)
 
-[[Discord]](https://discord.com/channels/1000806276256780309/1000806276873334816) [[YouTube]](https://www.youtube.com/channel/UCbS09q1TRf0o4N2t-WA3emQ)
+[[ Discord ]](https://discord.com/channels/1000806276256780309/1000806276873334816) [[ YouTube ]](https://www.youtube.com/channel/UCbS09q1TRf0o4N2t-WA3emQ) [[ LinkedIn ]](https://www.linkedin.com/company/changedetection-io/)
+
 
 [<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />](https://lemonade.changedetection.io/start)
 
