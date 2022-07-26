@@ -77,7 +77,7 @@ def test_check_filter_and_regex_extract(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"css_filter": css_filter,
-              'extract_text': '\d+ online\r\n\d+ guests\r\n/somecase insensitive \d+/i\r\n',
+              'extract_text': '\d+ online\r\n\d+ guests\r\n/somecase insensitive \d+/i\r\n/somecase insensitive (345\d)/i',
               "url": test_url,
               "tag": "",
               "headers": "",
@@ -125,8 +125,10 @@ def test_check_filter_and_regex_extract(client, live_server):
     assert b'<div class="">80 guests' in res.data
 
     # Regex with flag handling should be here
-
     assert b'<div class="">SomeCase insensitive 3456' in res.data
+    
+    # Singular group from /somecase insensitive (345\d)/i
+    assert b'<div class="">3456' in res.data
 
     # Regex with multiline flag handling should be here
 
