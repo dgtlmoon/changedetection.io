@@ -64,9 +64,13 @@ def set_multiline_response():
 
     return None
 
-def test_check_filter_multiline(client, live_server):
+
+def test_setup(client, live_server):
 
     live_server_setup(live_server)
+
+def test_check_filter_multiline(client, live_server):
+
     set_multiline_response()
 
     # Add our URL to the import page
@@ -112,8 +116,6 @@ def test_check_filter_multiline(client, live_server):
 
 def test_check_filter_and_regex_extract(client, live_server):
     sleep_time_for_fetch_thread = 3
-
-    live_server_setup(live_server)
     css_filter = ".changetext"
 
     set_original_response()
