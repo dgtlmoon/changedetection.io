@@ -239,8 +239,15 @@ Unavailable") }}
                         {{ render_field(form.extract_text, rows=5, placeholder="\d+ online") }}
                         <span class="pure-form-message-inline">
                     <ul>
-                        <li>Extracts text in the final output after other filters using regular expressions, for example <code>\d+ online</code></li>
-                        <li>One line per regular-expression.</li>
+                        <li>Extracts text in the final output (line by line) after other filters using regular expressions;
+                            <ul>
+                                <li>Regular expression &dash; example <code>/reports.+?2022/i</code></li>
+                                <li>Use <code>//(?aiLmsux))</code> type flags (more <a href="https://docs.python.org/3/library/re.html#index-15">information here</a>)<br/></li>
+                                <li>Keyword example &dash; example <code>Out of stock</code></li>
+                                <li>Use groups to extract just that text &dash; example <code>/reports.+?(\d+)/i</code> returns a list of years only</li>
+                            </ul>
+                        </li>
+                        <li>One line per regular-expression/ string match</li>
                     </ul>
                         </span>
                     </div>
