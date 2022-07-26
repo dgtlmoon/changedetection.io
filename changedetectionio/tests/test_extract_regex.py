@@ -15,7 +15,7 @@ def set_original_response():
      </br>
      So let's see what happens.  </br>
      <div id="sametext">Some text thats the same</div>
-     <div id="changetext">Some text that will change</div>
+     <div class="changetext">Some text that will change</div>     
      </body>
      </html>
     """
@@ -33,7 +33,8 @@ def set_modified_response():
      </br>
      So let's see what happens.  </br>
      <div id="sametext">Some text thats the same</div>
-     <div id="changetext">Some text that did change ( 1000 online <br/> 80 guests<br/>  2000 online )</div>
+     <div class="changetext">Some text that did change ( 1000 online <br/> 80 guests<br/>  2000 online )</div>
+     <div class="changetext">SomeCase insensitive 3456</div>
      </body>
      </html>
     """
@@ -48,7 +49,7 @@ def test_check_filter_and_regex_extract(client, live_server):
     sleep_time_for_fetch_thread = 3
 
     live_server_setup(live_server)
-    css_filter = "#changetext"
+    css_filter = ".changetext"
 
     set_original_response()
 
@@ -76,7 +77,7 @@ def test_check_filter_and_regex_extract(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"css_filter": css_filter,
-              'extract_text': '\d+ online\n\d+ guests',
+              'extract_text': '\d+ online\r\n\d+ guests\r\n/somecase insensitive \d+/i\r\n',
               "url": test_url,
               "tag": "",
               "headers": "",
@@ -87,16 +88,10 @@ def test_check_filter_and_regex_extract(client, live_server):
 
     assert b"Updated watch." in res.data
 
-    time.sleep(2)
-
     # Check it saved
     res = client.get(
         url_for("edit_page", uuid="first"),
     )
-    assert b'\d+ online' in res.data
-
-    # Trigger a check
-#    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
@@ -128,6 +123,12 @@ def test_check_filter_and_regex_extract(client, live_server):
 
     # Both regexs should be here
     assert b'<div class="">80 guests' in res.data
+
+    # Regex with flag handling should be here
+
+    assert b'<div class="">SomeCase insensitive 3456' in res.data
+
+    # Regex with multiline flag handling should be here
 
     # Should not be here
     assert b'Some text that did change' not in res.data
