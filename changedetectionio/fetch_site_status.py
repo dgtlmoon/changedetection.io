@@ -215,14 +215,24 @@ class perform_site_check():
         if len(extract_text) > 0:
             regex_matched_output = []
             for s_re in extract_text:
-                result = re.findall(s_re.encode('utf8'), stripped_text_from_html,
-                                    flags=re.MULTILINE | re.DOTALL | re.LOCALE)
+                result = re.findall(s_re.encode('utf8'), stripped_text_from_html, flags=re.DOTALL)
                 if result:
-                    regex_matched_output = regex_matched_output + result
+                    for l in result:
+                        if type(l) is tuple:
+                            #@todo - some formatter option default (between groups)
+                            regex_matched_output += list(l) + [b'\n']
+                        else:
+                            # @todo - some formatter option default (between each ungrouped result)
+                            regex_matched_output += [l] + [b'\n']
 
+            # Now we will only show what the regex matched
+            stripped_text_from_html = b''
+            text_content_before_ignored_filter = b''
             if regex_matched_output:
-                stripped_text_from_html = b'\n'.join(regex_matched_output)
+                # @todo some formatter for presentation?
+                stripped_text_from_html = b''.join(regex_matched_output)
                 text_content_before_ignored_filter = stripped_text_from_html
+
 
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
         if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
