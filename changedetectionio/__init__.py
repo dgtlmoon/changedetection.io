@@ -1213,6 +1213,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
+    threading.Thread(target=ticker_thread_job_queue_processor).start()
 
     threading.Thread(target=notification_runner).start()
 
@@ -1288,25 +1289,63 @@ def notification_runner():
             # Trim the log length
             notification_debug_log = notification_debug_log[-100:]
 
+# Check the queue, when a job exists, start a fresh thread of update_worker
+def ticker_thread_job_queue_processor():
+
+    from changedetectionio import update_worker
+    n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
+
+    while not app.config.exit.is_set():
+        time.sleep(0.3)
+
+        # Check that some threads are free
+        running = 0
+        for t in threading.enumerate():
+            if t.name == 'update_worker':
+                running += 1
+
+        if running >= n_workers:
+            continue
+
+        try:
+            uuid = update_q.get(block=False)
+        except queue.Empty:
+            # Go back to waiting for exit and/or another entry from the queue
+            continue
+        print ("Starting a thread fetch")
+
+
+        try:
+            # Launch the update_worker thread that will handle picking items off a queue and sending them off
+            # in the event that playwright or others have a memory leak, this should clean it up better than gc.collect()
+            # (By letting it exit entirely)
+            update_worker.update_worker(update_q, notification_q, app, datastore, uuid).start()
+        except Exception as e:
+            print ("Error launching update_worker for UUID {}.".format(uuid))
+            print (str(e))
+
+        print ("Running now {}", running)
+
+
 # Thread runner to check every minute, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     import random
-    from changedetectionio import update_worker
+
 
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 20))
     print("System env MINIMUM_SECONDS_RECHECK_TIME", recheck_time_minimum_seconds)
 
+    # Can go in its own function
+
+    # Always maintain the minimum number of threads, each thread will terminate when it has processed exactly 1 queued watch
+    # This is to be totally sure that they don't leak memory
     # Spin up Workers that do the fetching
     # Can be overriden by ENV or use the default settings
-    n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
-    for _ in range(n_workers):
-        new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
-        running_update_threads.append(new_worker)
-        new_worker.start()
+
 
     while not app.config.exit.is_set():
 
-        # Get a list of watches by UUID that are currently fetching data
+        # Update our list of watches by UUID that are currently fetching data, used in the UI
         running_uuids = []
         for t in running_update_threads:
             if t.current_uuid:
