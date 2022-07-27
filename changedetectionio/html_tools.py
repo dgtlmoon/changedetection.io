@@ -4,8 +4,6 @@ from typing import List
 from bs4 import BeautifulSoup
 from jsonpath_ng.ext import parse
 import re
-from inscriptis import get_text
-from inscriptis.model.config import ParserConfig
 
 class FilterNotFoundInResponse(ValueError):
     def __init__(self, msg):
@@ -183,9 +181,16 @@ def strip_ignore_text(content, wordlist, mode="content"):
 
 
 def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
+    import multiprocessing
+
+    from inscriptis.model.config import ParserConfig
+
     """Converts html string to a string with just the text. If ignoring
     rendering anchor tag content is enable, anchor tag content are also
     included in the text
+    
+    @NOTE: HORRIBLE LXML INDUCED MEMORY LEAK WORKAROUND HERE 
+           https://www.reddit.com/r/Python/comments/j0gl8t/psa_pythonlxml_memory_leaks_and_a_solution/ 
 
     :param html_content: string with html content
     :param render_anchor_tag_content: boolean flag indicating whether to extract
@@ -207,8 +212,19 @@ def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
     else:
         parser_config = None
 
-    # get text and annotations via inscriptis
-    text_content = get_text(html_content, config=parser_config)
+
+    def parse_function(html_content, parser_config, results_queue):
+        from inscriptis import get_text
+        # get text and annotations via inscriptis
+        text_content = get_text(html_content, config=parser_config)
+        results_queue.put(text_content)
+
+    results_queue = multiprocessing.Queue()
+    parse_process = multiprocessing.Process(target=parse_function, args=(html_content, parser_config, results_queue))
+    parse_process.daemon = True
+    parse_process.start()
+    text_content = results_queue.get()  # blocks until results are available
+    parse_process.terminate()
 
     return text_content
 
