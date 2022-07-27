@@ -105,9 +105,10 @@ def init_app_secret(datastore_path):
 # running or something similar.
 @app.template_filter('format_last_checked_time')
 def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
+
     # Worker thread tells us which UUID it is currently processing.
-    for t in running_update_threads:
-        if t.current_uuid == watch_obj['uuid']:
+    for t in threading.enumerate():
+        if t.name == 'update_worker' and t.current_uuid == watch_obj['uuid']:
             return '<span class="loader"></span><span> Checking now</span>'
 
     if watch_obj['last_checked'] == 0:
