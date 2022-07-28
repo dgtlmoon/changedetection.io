@@ -308,6 +308,9 @@ class ValidateCSSJSONXPATHInput(object):
 class quickWatchForm(Form):
     url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional()])
+    watch_submit_button = SubmitField('Watch', render_kw={"class": "pure-button pure-button-primary"})
+    edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
+
 
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):

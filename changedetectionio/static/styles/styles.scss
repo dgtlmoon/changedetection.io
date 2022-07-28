@@ -1,9 +1,7 @@
 /*
  * -- BASE STYLES --
  * Most of these are inherited from Base, but I want to change a few.
- * nvm use v14.18.1
- * npm install
- * npm run build
+ * nvm use v14.18.1 && npm install && npm run build
  * or npm run watch
  */
 body {
@@ -269,8 +267,8 @@ body:after, body:before {
   border-radius: 10px;
   margin-bottom: 1em;
   input {
-    width: auto !important;
     display: inline-block;
+    margin-bottom: 5px;
   }
   .label {
     display: none;
@@ -278,6 +276,17 @@ body:after, body:before {
   legend {
     color: #fff;
     font-weight: bold;
+  }
+
+  #watch-add-wrapper-zone {
+    > div {
+      display: inline-block;
+    }
+    @media only screen and (max-width: 760px) {
+      #url {
+        width: 100%;
+      }
+    }
   }
 }
 
