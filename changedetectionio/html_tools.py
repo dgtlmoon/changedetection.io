@@ -53,7 +53,7 @@ def xpath_filter(xpath_filter, html_content):
         raise FilterNotFoundInResponse(xpath_filter)
 
     #@note: //title/text() wont work where <title>CDATA..
-    
+
     for element in r:
         if type(element) == etree._ElementStringResult:
             html_block += str(element) + "<br/>"
