@@ -86,6 +86,7 @@ def test_check_xpath_filter_utf8(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
+    time.sleep(1)
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"css_filter": filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
@@ -99,6 +100,68 @@ def test_check_xpath_filter_utf8(client, live_server):
     assert b'Deleted' in res.data
 
 
+# Handle utf-8 charset replies https://github.com/dgtlmoon/changedetection.io/pull/613
+def test_check_xpath_text_function_utf8(client, live_server):
+    filter='//item/title/text()'
+
+    d='''<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:taxo="http://purl.org/rss/1.0/modules/taxonomy/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
+	<channel>
+		<title>rpilocator.com</title>
+		<link>https://rpilocator.com</link>
+		<description>Find Raspberry Pi Computers in Stock</description>
+		<lastBuildDate>Thu, 19 May 2022 23:27:30 GMT</lastBuildDate>
+		<image>
+			<url>https://rpilocator.com/favicon.png</url>
+			<title>rpilocator.com</title>
+			<link>https://rpilocator.com/</link>
+			<width>32</width>
+			<height>32</height>
+		</image>
+		<item>
+			<title>Stock Alert (UK): RPi CM4</title>
+			<foo>something else unrelated</foo>
+		</item>
+		<item>
+			<title>Stock Alert (UK): Big monitor</title>
+			<foo>something else unrelated</foo>
+		</item>		
+	</channel>
+</rss>'''
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(d)
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True, content_type="application/rss+xml;charset=UTF-8")
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    time.sleep(1)
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"css_filter": filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    time.sleep(3)
+    res = client.get(url_for("index"))
+    assert b'Unicode strings with encoding declaration are not supported.' not in res.data
+
+    # The service should echo back the request headers
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    assert b'<div class="">Stock Alert (UK): RPi CM4' in res.data
+    assert b'<div class="">Stock Alert (UK): Big monitor' in res.data
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
 def test_check_markup_xpath_filter_restriction(client, live_server):
     sleep_time_for_fetch_thread = 3
