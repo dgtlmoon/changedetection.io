@@ -30,7 +30,7 @@ def run_filter_test(client, content_filter):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("form_watch_add"),
+        url_for("form_quick_watch_add"),
         data={"url": test_url, "tag": ''},
         follow_redirects=True
     )
