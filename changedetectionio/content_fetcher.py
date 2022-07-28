@@ -547,6 +547,43 @@ class html_requests(Fetcher):
         self.headers = r.headers
 
 
+# "html_requests" is listed as the default fetcher in store.py!
+class html_fetcher_with_weird_memory_leak(Fetcher):
+    fetcher_description = "HTTP Fetcher with unexplainable memory leak"
+
+    def __init__(self, proxy_override=None):
+        self.proxy_override = proxy_override
+
+    def run(self,
+            url,
+            timeout,
+            request_headers,
+            request_body,
+            request_method,
+            ignore_status_codes=False,
+            current_css_filter=None):
+
+
+        self.status_code = 200
+
+        # Does nothing to help
+        # with open('memory-leak.html', 'r', encoding="utf-8") as f:
+        # with open('memory-leak.html', 'r') as f:
+
+        # Works but is binary (no good for me)
+        with open('memory-leak.html', 'r') as f:
+            wtf = f.read()
+
+        # just to prove gc.collect doesnt help, i dont even use 'wtf'
+        del wtf
+        wtf="not much"
+        import gc
+        gc.collect()
+
+        self.content = "<html>foobar</html>"
+        self.headers = {}
+        self.xpath_data = '{}'
+
 # Decide which is the 'real' HTML webdriver, this is more a system wide config
 # rather than site-specific.
 use_playwright_as_chrome_fetcher = os.getenv('PLAYWRIGHT_DRIVER_URL', False)

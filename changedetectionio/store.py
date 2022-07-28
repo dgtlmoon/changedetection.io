@@ -82,9 +82,8 @@ class ChangeDetectionStore:
             if include_default_watches:
                 print("Creating JSON store at", self.datastore_path)
 
-                self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
-                self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
-                self.add_watch(url='https://changedetection.io/CHANGELOG.txt', tag='changedetection.io')
+                for i in range(50):
+                    self.add_watch(url='https://changedetection.io/CHANGELOG.txt?x='+str(i), tag='test')
 
         self.__data['version_tag'] = version_tag
 
