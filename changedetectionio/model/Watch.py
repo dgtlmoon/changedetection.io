@@ -172,13 +172,14 @@ class model(dict):
 
     # Iterate over all history texts and see if something new exists
     def lines_contain_something_unique_compared_to_history(self, lines=[]):
-        local_lines = [l.decode('utf-8').strip().lower() for l in lines]
+        local_lines = set([l.decode('utf-8').strip().lower() for l in lines])
 
         # Compare each lines (set) against each history text file (set) looking for something new..
+        existing_history = set({})
         for k, v in self.history.items():
-            alist = [line.decode('utf-8').strip().lower() for line in open(v, 'rb')]
-            res = set(alist) != set(local_lines)
-            if res:
-                return True
+            alist = set([line.decode('utf-8').strip().lower() for line in open(v, 'rb')])
+            existing_history = existing_history.union(alist)
 
-        return False
+        # Check that everything in local_lines(new stuff) already exists in existing_history - it should
+        # if not, something new happened
+        return not local_lines.issubset(existing_history)
