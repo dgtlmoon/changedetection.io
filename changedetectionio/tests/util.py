@@ -2,6 +2,8 @@
 
 from flask import make_response, request
 from flask import url_for
+import multiprocessing
+multiprocessing.set_start_method("fork")
 
 def set_original_response():
     test_return_data = """<html>
