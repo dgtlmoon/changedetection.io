@@ -370,20 +370,20 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio import forms
 
         limit_tag = request.args.get('tag')
-        pause_uuid = request.args.get('pause')
-
         # Redirect for the old rss path which used the /?rss=true
         if request.args.get('rss'):
             return redirect(url_for('rss', tag=limit_tag))
 
-        if pause_uuid:
-            try:
-                datastore.data['watching'][pause_uuid]['paused'] ^= True
-                datastore.needs_write = True
+        op = request.args.get('op')
+        if op:
+            uuid = request.args.get('uuid')
+            if op == 'pause':
+                datastore.data['watching'][uuid]['paused'] ^= True
+            elif op == 'mute':
+                datastore.data['watching'][uuid]['notification_muted'] ^= True
 
-                return redirect(url_for('index', tag = limit_tag))
-            except KeyError:
-                pass
+            datastore.needs_write = True
+            return redirect(url_for('index', tag = limit_tag))
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []

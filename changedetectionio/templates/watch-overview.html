@@ -56,11 +56,10 @@
                 {% if watch.newest_history_key| int > watch.last_viewed and watch.history_n>=2 %}unviewed{% endif %}
                 {% if watch.uuid in queued_uuids %}queued{% endif %}">
                 <td class="inline">{{ loop.index }}</td>
-                <td class="inline paused-state state-{{watch.paused}} watch-controls">
-                    <a href="{{url_for('index', pause=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause checks" title="Pause checks"/></a>
-                    <a href="{{url_for('index', pause=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="Mute notifications" title="Mute notifications"/></a>
+                <td class="inline watch-controls">
+                    <a class="state-{{'on' if watch.paused }}" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause checks" title="Pause checks"/></a>
+                    <a class="state-{{'on' if watch.notification_muted}}" href="{{url_for('index', op='mute', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="Mute notifications" title="Mute notifications"/></a>
                 </td>
-
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
                     <a class="external" target="_blank" rel="noopener" href="{{ watch.url.replace('source:','') }}"></a>
                     <a href="{{url_for('form_share_put_watch', uuid=watch.uuid)}}"><img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread.svg')}}" /></a>

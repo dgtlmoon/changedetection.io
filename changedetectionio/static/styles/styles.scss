@@ -363,16 +363,24 @@ footer {
 }
 
 .watch-controls {
-  &.state-False img {
-    opacity: 0.2;
-    transition: opacity 0.3s;
+  .state-on {
+    img {
+      opacity: 0.8;
+    }
   }
+
+  /* default */
+  img {
+    opacity: 0.2;
+  }
+
   img {
     &:hover {
       transition: opacity 0.3s;
       opacity: 0.8;
     }
   }
+
 }
 
 .monospaced-textarea {
