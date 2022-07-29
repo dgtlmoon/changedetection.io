@@ -2,6 +2,10 @@
 
 from flask import make_response, request
 from flask import url_for
+from werkzeug import Request
+from urllib import parse
+import io
+
 import multiprocessing
 multiprocessing.set_start_method("fork")
 
@@ -134,4 +138,35 @@ def live_server_setup(live_server):
         ret = " ".join([auth.username, auth.password, auth.type])
         return ret
 
+    # Make sure any checkboxes that are supposed to be defaulted to true are set during the post request
+    # This is due to the fact that defaults are set in the HTML which we are not using during tests.
+    # This does not affect the server when running outside of a test
+    class DefaultCheckboxMiddleware(object):
+        def __init__(self, app):
+            self.app = app
+
+        def __call__(self, environ, start_response):
+            request = Request(environ)
+            if request.method == "POST" and "/edit" in request.path:
+                body = environ['wsgi.input'].read()
+
+                # if the checkboxes are not set, set them to true
+                if b"trigger_add" not in body:
+                    body += b'&trigger_add=y'
+
+                if b"trigger_del" not in body:
+                    body += b'&trigger_del=y'
+
+                # remove any checkboxes set to "n" so wtforms processes them correctly
+                body = body.replace(b"trigger_add=n", b"")
+                body = body.replace(b"trigger_del=n", b"")
+                body = body.replace(b"&&", b"&")
+
+                new_stream = io.BytesIO(body)
+                environ["CONTENT_LENGTH"] = len(body)
+                environ['wsgi.input'] = new_stream
+
+            return self.app(environ, start_response)
+
+    live_server.app.wsgi_app = DefaultCheckboxMiddleware(live_server.app.wsgi_app)
     live_server.start()
