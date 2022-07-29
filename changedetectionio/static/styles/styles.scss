@@ -362,13 +362,16 @@ footer {
   color: #e07171;
 }
 
-.paused-state {
+.watch-controls {
   &.state-False img {
     opacity: 0.2;
+    transition: opacity 0.3s;
   }
-
-  &.state-False:hover img {
-    opacity: 0.8;
+  img {
+    &:hover {
+      transition: opacity 0.3s;
+      opacity: 0.8;
+    }
   }
 }
 
