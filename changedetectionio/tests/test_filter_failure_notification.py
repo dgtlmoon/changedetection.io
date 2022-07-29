@@ -41,8 +41,6 @@ def run_filter_test(client, content_filter):
         data={"url": test_url, "tag": ''},
         follow_redirects=True
     )
-    with open('/tmp/fuck.html', 'wb') as f:
-        f.write(res.data)
 
     assert b"Watch added" in res.data
 
