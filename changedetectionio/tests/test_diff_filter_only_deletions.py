@@ -44,7 +44,8 @@ def test_diff_filtering_no_add(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"trigger_type": "delete",
+        data={"trigger_add": "n",
+              "trigger_del": "y",
               "url": test_url,
               "fetch_backend": "html_requests"},
         follow_redirects=True
