@@ -33,7 +33,7 @@
 
     <div class="box-wrap inner">
         <form class="pure-form pure-form-stacked"
-              action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next') ) }}" method="POST">
+              action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next'), unpause_on_save = request.args.get('unpause_on_save')) }}" method="POST">
              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
             <div class="tab-pane-inner" id="general">
@@ -61,6 +61,12 @@
                     </div>
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.extract_title_as_title) }}
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.filter_failure_notification_send) }}
+                        <span class="pure-form-message-inline">
+                         Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and your filter will not work anymore.
+                        </span>
                     </div>
                 </fieldset>
             </div>
@@ -167,15 +173,26 @@ User-Agent: wonderbra 1.0") }}
                         </div>
                     </fieldset>
                     <div class="pure-control-group">
-                        {{ render_field(form.css_filter, placeholder=".class-name or #some-id, or other CSS selector rule.",
-                        class="m-d") }}
+                        {% set field = render_field(form.css_filter,
+                            placeholder=".class-name or #some-id, or other CSS selector rule.",
+                            class="m-d")
+                        %}
+                        {{ field }}
+                        {% if '/text()' in  field %}
+                          <span class="pure-form-message-inline"><strong>Note!: //text() function does not work where the &lt;element&gt; contains &lt;![CDATA[]]&gt;</strong></span><br/>
+                        {% endif %}
                         <span class="pure-form-message-inline">
                     <ul>
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
                         <li>JSON - Limit text to this JSON rule, using <a href="https://pypi.org/project/jsonpath-ng/">JSONPath</a>, prefix with <code>"json:"</code>, use <code>json:$</code> to force re-formatting if required,  <a
                                 href="https://jsonpath.com/" target="new">test your JSONPath here</a></li>
-                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash, example  <code>//*[contains(@class, 'sametext')]</code> or <code>xpath://*[contains(@class, 'sametext')]</code>, <a
+                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash,
+                            <ul>
+                                <li>Example:  <code>//*[contains(@class, 'sametext')]</code> or <code>xpath://*[contains(@class, 'sametext')]</code>, <a
                                 href="http://xpather.com/" target="new">test your XPath here</a></li>
+                                <li>Example: Get all titles from an RSS feed <code>//title/text()</code></li>
+                            </ul>
+                            </li>
                     </ul>
                     Please be sure that you thoroughly understand how to write CSS or JSONPath, XPath selector rules before filing an issue on GitHub! <a
                                 href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
@@ -200,7 +217,7 @@ nav
                     <span class="pure-form-message-inline">
                         <ul>
                             <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
-                            <li>Regular Expression support, wrap the line in forward slash <code>/regex/</code></li>
+                            <li>Regular Expression support, wrap the entire line in forward slash <code>/regex/</code></li>
                             <li>Changing this will affect the comparison checksum which may trigger an alert</li>
                             <li>Use the preview/show current tab to see ignores</li>
                         </ul>
@@ -243,8 +260,15 @@ Unavailable") }}
                         {{ render_field(form.extract_text, rows=5, placeholder="\d+ online") }}
                         <span class="pure-form-message-inline">
                     <ul>
-                        <li>Extracts text in the final output after other filters using regular expressions, for example <code>\d+ online</code></li>
-                        <li>One line per regular-expression.</li>
+                        <li>Extracts text in the final output (line by line) after other filters using regular expressions;
+                            <ul>
+                                <li>Regular expression &dash; example <code>/reports.+?2022/i</code></li>
+                                <li>Use <code>//(?aiLmsux))</code> type flags (more <a href="https://docs.python.org/3/library/re.html#index-15">information here</a>)<br/></li>
+                                <li>Keyword example &dash; example <code>Out of stock</code></li>
+                                <li>Use groups to extract just that text &dash; example <code>/reports.+?(\d+)/i</code> returns a list of years only</li>
+                            </ul>
+                        </li>
+                        <li>One line per regular-expression/ string match</li>
                     </ul>
                         </span>
                     </div>

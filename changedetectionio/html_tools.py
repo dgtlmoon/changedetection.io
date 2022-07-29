@@ -1,5 +1,4 @@
 import json
-import re
 from typing import List
 
 from bs4 import BeautifulSoup
@@ -8,16 +7,23 @@ import re
 from inscriptis import get_text
 from inscriptis.model.config import ParserConfig
 
+class FilterNotFoundInResponse(ValueError):
+    def __init__(self, msg):
+        ValueError.__init__(self, msg)
 
 class JSONNotFound(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
 
+
 # Given a CSS Rule, and a blob of HTML, return the blob of HTML that matches
 def css_filter(css_filter, html_content):
     soup = BeautifulSoup(html_content, "html.parser")
     html_block = ""
-    for item in soup.select(css_filter, separator=""):
+    r = soup.select(css_filter, separator="")
+    if len(html_content) > 0 and len(r) == 0:
+        raise FilterNotFoundInResponse(css_filter)
+    for item in r:
         html_block += str(item)
 
     return html_block + "\n"
@@ -42,8 +48,19 @@ def xpath_filter(xpath_filter, html_content):
     tree = html.fromstring(bytes(html_content, encoding='utf-8'))
     html_block = ""
 
-    for item in tree.xpath(xpath_filter.strip(), namespaces={'re':'http://exslt.org/regular-expressions'}):
-        html_block+= etree.tostring(item, pretty_print=True).decode('utf-8')+"<br/>"
+    r = tree.xpath(xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'})
+    if len(html_content) > 0 and len(r) == 0:
+        raise FilterNotFoundInResponse(xpath_filter)
+
+    #@note: //title/text() wont work where <title>CDATA..
+
+    for element in r:
+        if type(element) == etree._ElementStringResult:
+            html_block += str(element) + "<br/>"
+        elif type(element) == etree._ElementUnicodeResult:
+            html_block += str(element) + "<br/>"
+        else:
+            html_block += etree.tostring(element, pretty_print=True).decode('utf-8') + "<br/>"
 
     return html_block
 
@@ -202,3 +219,17 @@ def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
 
     return text_content
 
+def workarounds_for_obfuscations(content):
+    """
+    Some sites are using sneaky tactics to make prices and other information un-renderable by Inscriptis
+    This could go into its own Pip package in the future, for faster updates
+    """
+
+    # HomeDepot.com style <span>$<!-- -->90<!-- -->.<!-- -->74</span>
+    # https://github.com/weblyzard/inscriptis/issues/45
+    if not content:
+        return content
+
+    content = re.sub('<!--\s+-->', '', content)
+
+    return content

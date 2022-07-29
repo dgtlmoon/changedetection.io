@@ -44,7 +44,7 @@ from flask_wtf import CSRFProtect
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.39.16'
+__version__ = '0.39.17.1'
 
 datastore = None
 
@@ -580,6 +580,9 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST' and form.validate():
             extra_update_obj = {}
 
+            if request.args.get('unpause_on_save'):
+                extra_update_obj['paused'] = False
+
             # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
             # Assume we use the default value, unless something relevant is different, then use the form value
             # values could be None, 0 etc.
@@ -619,7 +622,10 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)
 
-            flash("Updated watch.")
+            if request.args.get('unpause_on_save'):
+                flash("Updated watch - unpaused!.")
+            else:
+                flash("Updated watch.")
 
             # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
             # But in the case something is added we should save straight away
@@ -1063,9 +1069,9 @@ def changedetection_app(config=None, datastore_o=None):
         except FileNotFoundError:
             abort(404)
 
-    @app.route("/api/add", methods=['POST'])
+    @app.route("/form/add/quickwatch", methods=['POST'])
     @login_required
-    def form_watch_add():
+    def form_quick_watch_add():
         from changedetectionio import forms
         form = forms.quickWatchForm(request.form)
 
@@ -1078,12 +1084,18 @@ def changedetection_app(config=None, datastore_o=None):
             flash('The URL {} already exists'.format(url), "error")
             return redirect(url_for('index'))
 
-        # @todo add_watch should throw a custom Exception for validation etc
-        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip())
-        if new_uuid:
+        add_paused = request.form.get('edit_and_watch_submit_button') != None
+        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip(), extras={'paused': add_paused})
+
+
+        if not add_paused and new_uuid:
             # Straight into the queue.
             update_q.put(new_uuid)
             flash("Watch added.")
+
+        if add_paused:
+            flash('Watch added in Paused state, saving will unpause.')
+            return redirect(url_for('edit_page', uuid=new_uuid, unpause_on_save=1))
 
         return redirect(url_for('index'))
 

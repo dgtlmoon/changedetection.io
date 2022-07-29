@@ -240,3 +240,4 @@ class model(dict):
                 diff_types["add"] = True
 
         return diff_types
+

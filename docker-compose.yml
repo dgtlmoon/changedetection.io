@@ -24,7 +24,7 @@ services:
   #             https://selenium-python.readthedocs.io/api.html#module-selenium.webdriver.common.proxy
   #
   #       Alternative Playwright URL, do not use "'s or 's!
-  #      - PLAYWRIGHT_DRIVER_URL=ws://playwright-chrome:3000/
+  #      - PLAYWRIGHT_DRIVER_URL=ws://playwright-chrome:3000/?stealth=1&--disable-web-security=true
   #
   #       Playwright proxy settings playwright_proxy_server, playwright_proxy_bypass, playwright_proxy_username, playwright_proxy_password
   #

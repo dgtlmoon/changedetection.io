@@ -63,12 +63,12 @@ class Fetcher():
                       break;
                     }
                     if('' !==r.id) {
-                      chained_css.unshift("#"+r.id);
-                      final_selector= chained_css.join('>');
+                      chained_css.unshift("#"+CSS.escape(r.id));
+                      final_selector= chained_css.join(' > ');
                       // Be sure theres only one, some sites have multiples of the same ID tag :-(
                       if (window.document.querySelectorAll(final_selector).length ==1 ) {
                         return final_selector;
-                      }
+                        }
                       return null;
                     } else {
                       chained_css.unshift(r.tagName.toLowerCase());
