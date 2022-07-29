@@ -3,7 +3,6 @@
 from flask import make_response, request
 from flask import url_for
 from werkzeug import Request
-from urllib import parse
 import io
 
 import multiprocessing
