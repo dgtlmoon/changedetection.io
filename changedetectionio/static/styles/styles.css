@@ -271,11 +271,15 @@ footer {
 #new-version-text a {
   color: #e07171; }
 
-.paused-state.state-False img {
-  opacity: 0.2; }
-
-.paused-state.state-False:hover img {
-  opacity: 0.8; }
+.watch-controls {
+  /* default */ }
+  .watch-controls .state-on img {
+    opacity: 0.8; }
+  .watch-controls img {
+    opacity: 0.2; }
+  .watch-controls img:hover {
+    transition: opacity 0.3s;
+    opacity: 0.8; }
 
 .monospaced-textarea textarea {
   width: 100%;

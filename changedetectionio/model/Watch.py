@@ -36,6 +36,7 @@ class model(dict):
             'notification_title': default_notification_title,
             'notification_body': default_notification_body,
             'notification_format': default_notification_format,
+            'notification_muted': False,
             'css_filter': '',
             'extract_text': [],  # Extract text by regex after filters
             'subtractive_selectors': [],

@@ -362,14 +362,25 @@ footer {
   color: #e07171;
 }
 
-.paused-state {
-  &.state-False img {
+.watch-controls {
+  .state-on {
+    img {
+      opacity: 0.8;
+    }
+  }
+
+  /* default */
+  img {
     opacity: 0.2;
   }
 
-  &.state-False:hover img {
-    opacity: 0.8;
+  img {
+    &:hover {
+      transition: opacity 0.3s;
+      opacity: 0.8;
+    }
   }
+
 }
 
 .monospaced-textarea {
