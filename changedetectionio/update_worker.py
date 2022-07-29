@@ -83,6 +83,8 @@ class update_worker(threading.Thread):
 
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
         watch = self.datastore.data['watching'].get(watch_uuid, False)
+        if not watch:
+            return
 
         n_object = {'notification_title': 'Changedetection.io - Alert - CSS/xPath filter was not present in the page',
                     'notification_body': "Your configured CSS/xPath filter of '{}' for {{watch_url}} did not appear on the page after {} attempts, did the page change layout?\n\nLink: {{base_url}}/edit/{{watch_uuid}}\n\nThanks - Your omniscient changedetection.io installation :)\n".format(
@@ -163,7 +165,7 @@ class update_worker(threading.Thread):
                                                                                            0)
                             print("Filter for {} not found, consecutive_filter_failures: {}".format(uuid, c))
                             if threshold > 0 and c >= threshold:
-                                if self.datastore.data['watching'][uuid].get('notification_muted'):
+                                if not self.datastore.data['watching'][uuid].get('notification_muted'):
                                     self.send_filter_failure_notification(uuid)
                                 c = 0
 
