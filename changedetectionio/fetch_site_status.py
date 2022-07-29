@@ -277,18 +277,19 @@ class perform_site_check():
                 else:
                     logging.debug("check_unique_lines: UUID {} had unique content".format(uuid))
 
+        print(watch.get("trigger_add"), watch.get("trigger_del"))
         if changed_detected:
-            if watch.get("trigger_type", "all") != "all": # if we are supposed to filter any diff types
+            if not watch.get("trigger_add", True) or not watch.get("trigger_del", True): # if we are supposed to filter any diff types
                 # get the diff types present in the watch
                 diff_types = watch.get_diff_types(text_content_before_ignored_filter)
                 print("Diff components found: " + str(diff_types))
 
-                # Only Additions
-                if watch["trigger_type"] == "add" and not diff_types["add"] and diff_types["del"]:
+                # Only Additions (deletions are turned off)
+                if not watch["trigger_del"] and diff_types["del"] and not diff_types["add"]:
                     changed_detected = False
 
-                # Only Deletions
-                elif watch["trigger_type"] == "delete" and not diff_types["del"] and diff_types["add"]:
+                # Only Deletions (additions are turned off)
+                elif not watch["trigger_add"] and not diff_types["add"] and diff_types["del"]:
                     changed_detected = False
 
         # Always record the new checksum and the new text

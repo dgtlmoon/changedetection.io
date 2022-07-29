@@ -157,11 +157,12 @@ User-Agent: wonderbra 1.0") }}
                         </div>
                     </fieldset>
                     <fieldset>
-                        <div class="pure-control-group" id="request-method">
-                            {{ render_field(form.trigger_type) }}
+                        <div class="pure-control-group">
+                            <label for="trigger-type">Limit filters and triggers to</label>
+                            {{ render_checkbox_field(form.trigger_add, class="trigger-type") }}
+                            {{ render_checkbox_field(form.trigger_del, class="trigger-type") }}
                             <span class="pure-form-message-inline">
-                                This filter only compares to the previous snapshot. This is different from the "Only trigger when new lines appear" setting which checks all previous snapshots.</br>
-                                This is good for filtering out notifications that only are showing deleted content. (i.e A notice being removed from a website)</br>
+                                Limits the change-detection of this watch to only this content
                             </span>
                         </div>
                     </fieldset>

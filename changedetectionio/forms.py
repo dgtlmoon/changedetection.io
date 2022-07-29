@@ -343,7 +343,8 @@ class watchForm(commonSettingsForm):
     check_unique_lines = BooleanField('Only trigger when new lines appear', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
     text_should_not_be_present = StringListField('Block change-detection if text matches', [validators.Optional(), ValidateListRegex()])
-    trigger_type = SelectField(u'Trigger On', choices=[("all", "Any Changes"), ("add", "Only Additions"), ("delete", "Only Deletions")], coerce=str, default="add")
+    trigger_add = BooleanField('Additions', default=True)
+    trigger_del = BooleanField('Deletions', default=True)
 
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
 
