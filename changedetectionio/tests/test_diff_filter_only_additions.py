@@ -21,7 +21,7 @@ def set_delete_response():
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
-def test_diff_filtering_no_add(client, live_server):
+def test_diff_filtering_no_del(client, live_server):
     live_server_setup(live_server)
 
     sleep_time_for_fetch_thread = 3
