@@ -65,10 +65,12 @@ class update_worker(threading.Thread):
                 if uuid in list(self.datastore.data['watching'].keys()):
 
                     changed_detected = False
-                    contents = ""
+                    contents = b''
                     screenshot = False
                     update_obj= {}
                     xpath_data = False
+                    process_changedetection_results = True
+
                     now = time.time()
 
                     try:
@@ -80,26 +82,35 @@ class update_worker(threading.Thread):
                             raise Exception("Error - returned data from the fetch handler SHOULD be bytes")
                     except PermissionError as e:
                         self.app.logger.error("File permission error updating", uuid, str(e))
+                        process_changedetection_results = False
                     except content_fetcher.ReplyWithContentButNoText as e:
                         # Totally fine, it's by choice - just continue on, nothing more to care about
                         # Page had elements/content but no renderable text
+                        # Backend (not filters) gave zero output
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found."})
+                        process_changedetection_results = False
+
                     except FilterNotFoundInResponse as e:
-                        err_text = "Filter '{}' not found - Did the page change its layout?".format(str(e))
-                        c = 0
-                        if self.datastore.data['watching'].get(uuid, False):
-                            c = self.datastore.data['watching'][uuid].get('consecutive_filter_failures', 5)
-                        c += 1
-
-                        # Send notification if we reached the threshold?
-                        threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts', 0)
-                        print("Filter for {} not found, consecutive_filter_failures: {}".format(uuid, c))
-                        if threshold >0 and c >= threshold:
-                            self.send_filter_failure_notification(uuid)
-                            c = 0
-
+                        err_text = "Warning, filter '{}' not found".format(str(e))
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
-                                                                           'consecutive_filter_failures': c})
+                                                                           # So that we get a trigger when the content is added again
+                                                                           'previous_md5': ''})
+
+                        # Only when enabled, send the notification
+                        if self.datastore.data['watching'][uuid].get('filter_failure_notification_send', False):
+                            c = self.datastore.data['watching'][uuid].get('consecutive_filter_failures', 5)
+                            c += 1
+                            # Send notification if we reached the threshold?
+                            threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts',
+                                                                                           0)
+                            print("Filter for {} not found, consecutive_filter_failures: {}".format(uuid, c))
+                            if threshold > 0 and c >= threshold:
+                                self.send_filter_failure_notification(uuid)
+                                c = 0
+                            self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
+
+                        process_changedetection_results = True
+
                     except content_fetcher.EmptyReply as e:
                         # Some kind of custom to-str handler in the exception handler that does this?
                         err_text = "EmptyReply - try increasing 'Wait seconds before extracting text', Status Code {}".format(e.status_code)
@@ -109,6 +120,7 @@ class update_worker(threading.Thread):
                         err_text = "Screenshot unavailable, page did not render fully in the expected time - try increasing 'Wait seconds before extracting text'"
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
+                        process_changedetection_results = False
                     except content_fetcher.PageUnloadable as e:
                         err_text = "Page request from server didnt respond correctly"
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
@@ -116,8 +128,14 @@ class update_worker(threading.Thread):
                     except Exception as e:
                         self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
-
+                        # Other serious error
+                        process_changedetection_results = False
                     else:
+                        # Mark that we never had any failures
+                        update_obj['consecutive_filter_failures'] = 0
+
+                    # Different exceptions mean that we may or may not want to bump the snapshot, trigger notifications etc
+                    if process_changedetection_results:
                         try:
                             watch = self.datastore.data['watching'][uuid]
                             fname = "" # Saved history text filename
@@ -127,8 +145,6 @@ class update_worker(threading.Thread):
                                 # A change was detected
                                 fname = watch.save_history_text(contents=contents, timestamp=str(round(time.time())))
 
-                            # Generally update anything interesting returned
-                            update_obj['consecutive_filter_failures'] = 0
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
                             # A change was detected
@@ -194,7 +210,7 @@ class update_worker(threading.Thread):
                             self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
                             self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
 
-                    finally:
+
                         # Always record that we atleast tried
                         self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
                                                                            'last_checked': round(time.time())})

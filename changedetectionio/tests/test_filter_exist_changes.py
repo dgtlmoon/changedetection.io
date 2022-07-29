@@ -1,12 +1,14 @@
+#!/usr/bin/python3
+
+# https://www.reddit.com/r/selfhosted/comments/wa89kp/comment/ii3a4g7/?context=3
 import os
 import time
-import re
 from flask import url_for
 from .util import set_original_response, live_server_setup
 from changedetectionio.model import App
 
 
-def set_response_with_filter():
+def set_response_without_filter():
     test_return_data = """<html>
        <body>
      Some initial text</br>
@@ -22,26 +24,41 @@ def set_response_with_filter():
         f.write(test_return_data)
     return None
 
-def run_filter_test(client, content_filter):
+
+def set_response_with_filter():
+    test_return_data = """<html>
+       <body>
+     Some initial text</br>
+     <p>Which is across multiple lines</p>
+     </br>
+     So let's see what happens.  </br>
+     <div class="ticket-available">Ticket now on sale!</div>     
+     </body>
+     </html>
+    """
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+    return None
+
+def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_server):
+#  Filter knowingly doesn't exist, like someone setting up a known filter to see if some cinema tickets are on sale again
+#  And the page has that filter available
+#  Then I should get a notification
+
+    live_server_setup(live_server)
 
     # Give the endpoint time to spin up
     time.sleep(1)
-    # cleanup for the next
-    client.get(
-        url_for("form_delete", uuid="all"),
-        follow_redirects=True
-    )
-    if os.path.isfile("test-datastore/notification.txt"):
-        os.unlink("test-datastore/notification.txt")
+    set_response_without_filter()
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("form_quick_watch_add"),
-        data={"url": test_url, "tag": ''},
+        data={"url": test_url, "tag": 'cinema'},
         follow_redirects=True
     )
-
     assert b"Watch added" in res.data
 
     # Give the thread time to pick up the first version
@@ -75,8 +92,7 @@ def run_filter_test(client, content_filter):
         "tag": "my tag",
         "title": "my title",
         "headers": "",
-        "filter_failure_notification_send": 'y',
-        "css_filter": content_filter,
+        "css_filter": '.ticket-available',
         "fetch_backend": "html_requests"})
 
     res = client.post(
@@ -87,58 +103,32 @@ def run_filter_test(client, content_filter):
     assert b"Updated watch." in res.data
     time.sleep(3)
 
-    # Now the notification should not exist, because we didnt reach the threshold
+    # Shouldn't exist, shouldn't have fired
+    assert not os.path.isfile("test-datastore/notification.txt")
+    # Now the filter should exist
+    set_response_with_filter()
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    time.sleep(3)
+
+    assert os.path.isfile("test-datastore/notification.txt")
+
+    with open("test-datastore/notification.txt", 'r') as f:
+        notification = f.read()
+
+    assert 'Ticket now on sale' in notification
+    os.unlink("test-datastore/notification.txt")
+
+
+    # Test that if it gets removed, then re-added, we get a notification
+    # Remove the target and re-add it, we should get a new notification
+    set_response_without_filter()
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    time.sleep(3)
     assert not os.path.isfile("test-datastore/notification.txt")
 
-    for i in range(0, App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT):
-        res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-        time.sleep(3)
-
-    # We should see something in the frontend
-    assert b'Warning, filter' in res.data
-
-    # Now it should exist and contain our "filter not found" alert
-    assert os.path.isfile("test-datastore/notification.txt")
-    notification = False
-    with open("test-datastore/notification.txt", 'r') as f:
-        notification = f.read()
-    assert 'CSS/xPath filter was not present in the page' in notification
-    assert content_filter.replace('"', '\\"') in notification
-
-    # Remove it and prove that it doesnt trigger when not expected
-    os.unlink("test-datastore/notification.txt")
     set_response_with_filter()
-
-    for i in range(0, App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT):
-        client.get(url_for("form_watch_checknow"), follow_redirects=True)
-        time.sleep(3)
-
-    # It should have sent a notification, but..
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    time.sleep(3)
     assert os.path.isfile("test-datastore/notification.txt")
-    # but it should not contain the info about the failed filter
-    with open("test-datastore/notification.txt", 'r') as f:
-        notification = f.read()
-    assert not 'CSS/xPath filter was not present in the page' in notification
 
-    # cleanup for the next
-    client.get(
-        url_for("form_delete", uuid="all"),
-        follow_redirects=True
-    )
-    os.unlink("test-datastore/notification.txt")
-
-
-def test_setup(live_server):
-    live_server_setup(live_server)
-
-def test_check_css_filter_failure_notification(client, live_server):
-    set_original_response()
-    time.sleep(1)
-    run_filter_test(client, '#nope-doesnt-exist')
-
-def test_check_xpath_filter_failure_notification(client, live_server):
-    set_original_response()
-    time.sleep(1)
-    run_filter_test(client, '//*[@id="nope-doesnt-exist"]')
-
-# Test that notification is never sent
+# Also test that the filter was updated after the first one was requested
