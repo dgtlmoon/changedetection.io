@@ -1,18 +1,25 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.jinja' import render_simple_field %}
+{% from '_helpers.jinja' import render_simple_field, render_field %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 
 <div class="box">
 
-    <form class="pure-form" action="{{ url_for('form_watch_add') }}" method="POST" id="new-watch-form">
+    <form class="pure-form" action="{{ url_for('form_quick_watch_add') }}" method="POST" id="new-watch-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <fieldset>
             <legend>Add a new change detection watch</legend>
-                {{ render_simple_field(form.url, placeholder="https://...", required=true) }}
-                {{ render_simple_field(form.tag, value=active_tag if active_tag else '', placeholder="watch group") }}
-            <button type="submit" class="pure-button pure-button-primary">Watch</button>
+            <div id="watch-add-wrapper-zone">
+                <div>
+                    {{ render_simple_field(form.url, placeholder="https://...", required=true) }}
+                    {{ render_simple_field(form.tag, value=active_tag if active_tag else '', placeholder="watch group") }}
+                </div>
+                <div>
+                    {{ render_simple_field(form.watch_submit_button, title="Watch this URL!" ) }}
+                    {{ render_simple_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
+                </div>
+            </div>
         </fieldset>
         <span style="color:#eee; font-size: 80%;"><img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread-white.svg')}}" /> Tip: You can also add 'shared' watches. <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">More info</a></a></span>
     </form>
