@@ -289,7 +289,7 @@ class perform_site_check():
                     changed_detected = False
 
                 # Only Deletions (additions are turned off)
-                elif not watch["trigger_add"] and not diff_types["add"] and diff_types["del"]:
+                elif not watch["trigger_add"] and  diff_types["add"] and not diff_types["del"]:
                     changed_detected = False
 
         # Always record the new checksum and the new text
