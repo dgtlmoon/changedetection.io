@@ -878,9 +878,7 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         if watch.history_n >0:
-            dates = list(watch.history.keys())
-            filename = watch.history[dates[-1]]
-
+            filename = list(watch.history.keys())[-1]
             try:
                 with open(filename, 'r') as f:
                     tmp = f.readlines()
