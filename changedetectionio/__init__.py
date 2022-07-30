@@ -877,42 +877,40 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
-        if watch.history_n >0:
-            timestamps = sorted(watch.history.keys(), key=lambda x: int(x))
-            filename = watch.history[timestamps[-1]]
-            try:
-                with open(filename, 'r') as f:
-                    tmp = f.readlines()
 
-                    # Get what needs to be highlighted
-                    ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
+        timestamp = list(watch.history.keys())[-1]
+        filename = watch.history[timestamp]
+        try:
+            with open(filename, 'r') as f:
+                tmp = f.readlines()
 
-                    # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
-                    ignored_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
-                                                                        wordlist=ignore_rules,
-                                                                        mode='line numbers'
-                                                                        )
+                # Get what needs to be highlighted
+                ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
 
-                    trigger_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
-                                                                        wordlist=watch['trigger_text'],
-                                                                        mode='line numbers'
-                                                                        )
-                    # Prepare the classes and lines used in the template
-                    i=0
-                    for l in tmp:
-                        classes=[]
-                        i+=1
-                        if i in ignored_line_numbers:
-                            classes.append('ignored')
-                        if i in trigger_line_numbers:
-                            classes.append('triggered')
-                        content.append({'line': l, 'classes': ' '.join(classes)})
+                # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
+                ignored_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
+                                                                    wordlist=ignore_rules,
+                                                                    mode='line numbers'
+                                                                    )
 
+                trigger_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
+                                                                    wordlist=watch['trigger_text'],
+                                                                    mode='line numbers'
+                                                                    )
+                # Prepare the classes and lines used in the template
+                i=0
+                for l in tmp:
+                    classes=[]
+                    i+=1
+                    if i in ignored_line_numbers:
+                        classes.append('ignored')
+                    if i in trigger_line_numbers:
+                        classes.append('triggered')
+                    content.append({'line': l, 'classes': ' '.join(classes)})
 
-            except Exception as e:
-                content.append({'line': "File doesnt exist or unable to read file {}".format(filename), 'classes': ''})
-        else:
-            content.append({'line': "No history found", 'classes': ''})
+        except Exception as e:
+            content.append({'line': "File doesnt exist or unable to read file {}".format(filename), 'classes': ''})
+
 
         screenshot_url = datastore.get_screenshot(uuid)
         system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
