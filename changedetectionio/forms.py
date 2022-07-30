@@ -304,6 +304,17 @@ class ValidateCSSJSONXPATHInput(object):
                 # Re #265 - maybe in the future fetch the page and offer a
                 # warning/notice that its possible the rule doesnt yet match anything?
 
+class ValidateDiffFilters(object):
+    """
+    Validates that at least one filter checkbox is selected
+    """
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        if not form.trigger_add.data and not form.trigger_del.data:
+            message = field.gettext('At least one filter checkbox must be selected')
+            raise ValidationError(message)
 
 class quickWatchForm(Form):
     url = fields.URLField('URL', validators=[validateURL()])
@@ -346,8 +357,8 @@ class watchForm(commonSettingsForm):
     check_unique_lines = BooleanField('Only trigger when new lines appear', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
     text_should_not_be_present = StringListField('Block change-detection if text matches', [validators.Optional(), ValidateListRegex()])
-    trigger_add = BooleanField('Additions', default=True)
-    trigger_del = BooleanField('Deletions', default=True)
+    trigger_add = BooleanField('Additions', [ValidateDiffFilters()], default=True)
+    trigger_del = BooleanField('Deletions', [ValidateDiffFilters()], default=True)
 
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
 
