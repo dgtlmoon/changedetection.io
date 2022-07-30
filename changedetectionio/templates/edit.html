@@ -164,11 +164,11 @@ User-Agent: wonderbra 1.0") }}
                     </fieldset>
                     <fieldset>
                         <div class="pure-control-group">
-                            <label for="trigger-type">Limit filters and triggers to</label>
+                            <label for="trigger-type">Filter and restrict change detection of content to</label>
                             {{ render_checkbox_field(form.trigger_add, class="trigger-type") }}
                             {{ render_checkbox_field(form.trigger_del, class="trigger-type") }}
                             <span class="pure-form-message-inline">
-                                Limits the change-detection of this watch to only this content
+                                Filters the change-detection of this watch to only this content change.
                             </span>
                         </div>
                     </fieldset>
