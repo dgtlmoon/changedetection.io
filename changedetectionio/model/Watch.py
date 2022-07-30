@@ -238,6 +238,9 @@ class model(dict):
                 diff_types["del"] = True
             elif tag == 'insert':
                 diff_types["add"] = True
+            elif tag == 'replace':
+                diff_types["del"] = True
+                diff_types["add"] = True
 
         return diff_types
 
