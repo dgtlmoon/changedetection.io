@@ -54,7 +54,7 @@ ticker_thread = None
 
 extra_stylesheets = []
 
-update_q = queue.Queue()
+update_q = queue.PriorityQueue()
 
 notification_q = queue.Queue()
 
@@ -406,7 +406,6 @@ def changedetection_app(config=None, datastore_o=None):
         existing_tags = datastore.get_all_tags()
 
         form = forms.quickWatchForm(request.form)
-
         output = render_template("watch-overview.html",
                                  form=form,
                                  watches=sorted_watches,
@@ -417,7 +416,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  # Don't link to hosting when we're on the hosting environment
                                  hosted_sticky=os.getenv("SALTED_PASS", False) == False,
                                  guid=datastore.data['app_guid'],
-                                 queued_uuids=update_q.queue)
+                                 queued_uuids=[uuid for p,uuid in update_q.queue])
 
 
         if session.get('share-link'):
@@ -631,8 +630,8 @@ def changedetection_app(config=None, datastore_o=None):
             # But in the case something is added we should save straight away
             datastore.needs_write_urgent = True
 
-            # Queue the watch for immediate recheck
-            update_q.put(uuid)
+            # Queue the watch for immediate recheck, with a higher priority
+            update_q.put((1, uuid))
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff' and not form.save_and_preview_button.data:
@@ -746,7 +745,7 @@ def changedetection_app(config=None, datastore_o=None):
                 importer = import_url_list()
                 importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore)
                 for uuid in importer.new_uuids:
-                    update_q.put(uuid)
+                    update_q.put((1, uuid))
 
                 if len(importer.remaining_data) == 0:
                     return redirect(url_for('index'))
@@ -759,7 +758,7 @@ def changedetection_app(config=None, datastore_o=None):
                 d_importer = import_distill_io_json()
                 d_importer.run(data=request.values.get('distill-io'), flash=flash, datastore=datastore)
                 for uuid in d_importer.new_uuids:
-                    update_q.put(uuid)
+                    update_q.put((1, uuid))
 
 
 
@@ -1088,7 +1087,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         if not add_paused and new_uuid:
             # Straight into the queue.
-            update_q.put(new_uuid)
+            update_q.put((1, new_uuid))
             flash("Watch added.")
 
         if add_paused:
@@ -1125,7 +1124,7 @@ def changedetection_app(config=None, datastore_o=None):
             uuid = list(datastore.data['watching'].keys()).pop()
 
         new_uuid = datastore.clone(uuid)
-        update_q.put(new_uuid)
+        update_q.put((5, new_uuid))
         flash('Cloned.')
 
         return redirect(url_for('index'))
@@ -1146,7 +1145,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         if uuid:
             if uuid not in running_uuids:
-                update_q.put(uuid)
+                update_q.put((1, uuid))
             i = 1
 
         elif tag != None:
@@ -1154,7 +1153,7 @@ def changedetection_app(config=None, datastore_o=None):
             for watch_uuid, watch in datastore.data['watching'].items():
                 if (tag != None and tag in watch['tag']):
                     if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
-                        update_q.put(watch_uuid)
+                        update_q.put((1, watch_uuid))
                         i += 1
 
         else:
@@ -1162,7 +1161,7 @@ def changedetection_app(config=None, datastore_o=None):
             for watch_uuid, watch in datastore.data['watching'].items():
 
                 if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
-                    update_q.put(watch_uuid)
+                    update_q.put((1, watch_uuid))
                     i += 1
         flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
@@ -1366,14 +1365,14 @@ def ticker_thread_check_time_launch_checks():
 
             seconds_since_last_recheck = now - watch['last_checked']
             if seconds_since_last_recheck >= (threshold + watch.jitter_seconds) and seconds_since_last_recheck >= recheck_time_minimum_seconds:
-                if not uuid in running_uuids and uuid not in update_q.queue:
-                    print("Queued watch UUID {} last checked at {} queued at {:0.2f} jitter {:0.2f}s, {:0.2f}s since last checked".format(uuid,
+                if not uuid in running_uuids and uuid not in [q_uuid for p,q_uuid in update_q.queue]:
+                    print("> Queued watch UUID {} last checked at {} queued at {:0.2f} jitter {:0.2f}s, {:0.2f}s since last checked".format(uuid,
                                                                                                          watch['last_checked'],
                                                                                                          now,
                                                                                                          watch.jitter_seconds,
                                                                                                          now - watch['last_checked']))
                     # Into the queue with you
-                    update_q.put(uuid)
+                    update_q.put((5, uuid))
 
                     # Reset for next time
                     watch.jitter_seconds = 0
