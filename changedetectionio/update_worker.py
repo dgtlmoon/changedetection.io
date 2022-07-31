@@ -115,7 +115,7 @@ class update_worker(threading.Thread):
         while not self.app.config.exit.is_set():
 
             try:
-                uuid = self.q.get(block=False)
+                priority, uuid = self.q.get(block=False)
             except queue.Empty:
                 pass
 
@@ -123,14 +123,13 @@ class update_worker(threading.Thread):
                 self.current_uuid = uuid
 
                 if uuid in list(self.datastore.data['watching'].keys()):
-
                     changed_detected = False
                     contents = b''
                     screenshot = False
                     update_obj= {}
                     xpath_data = False
                     process_changedetection_results = True
-
+                    print("> Processing UUID {} Priority {} URL {}".format(uuid, priority, self.datastore.data['watching'][uuid]['url']))
                     now = time.time()
 
                     try:
