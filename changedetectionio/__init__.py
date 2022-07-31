@@ -1145,7 +1145,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         if uuid:
             if uuid not in running_uuids:
-                update_q.put((5, uuid))
+                update_q.put((1, uuid))
             i = 1
 
         elif tag != None:
@@ -1153,7 +1153,7 @@ def changedetection_app(config=None, datastore_o=None):
             for watch_uuid, watch in datastore.data['watching'].items():
                 if (tag != None and tag in watch['tag']):
                     if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
-                        update_q.put((5, watch_uuid))
+                        update_q.put((1, watch_uuid))
                         i += 1
 
         else:
@@ -1161,7 +1161,7 @@ def changedetection_app(config=None, datastore_o=None):
             for watch_uuid, watch in datastore.data['watching'].items():
 
                 if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
-                    update_q.put((5, watch_uuid))
+                    update_q.put((1, watch_uuid))
                     i += 1
         flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
