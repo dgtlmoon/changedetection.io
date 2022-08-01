@@ -10,6 +10,7 @@ import multiprocessing
 
 if __name__ == '__main__':
 
+    # The only way I could find to get Flask to shutdown, is to wrap it and then rely on the subsystem issuing SIGTERM/SIGKILL
     parse_process = multiprocessing.Process(target=changedetection.main)
     parse_process.daemon = True
     parse_process.start()
