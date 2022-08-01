@@ -634,14 +634,10 @@ def changedetection_app(config=None, datastore_o=None):
             update_q.put((1, uuid))
 
             # Diff page [edit] link should go back to diff page
-            if request.args.get("next") and request.args.get("next") == 'diff' and not form.save_and_preview_button.data:
+            if request.args.get("next") and request.args.get("next") == 'diff':
                 return redirect(url_for('diff_history_page', uuid=uuid))
-            else:
-                if form.save_and_preview_button.data:
-                    flash('You may need to reload this page to see the new content.')
-                    return redirect(url_for('preview_page', uuid=uuid))
-                else:
-                    return redirect(url_for('index'))
+
+            return redirect(url_for('index'))
 
         else:
             if request.method == 'POST' and not form.validate():

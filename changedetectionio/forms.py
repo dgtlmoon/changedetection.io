@@ -350,7 +350,7 @@ class watchForm(commonSettingsForm):
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
-    save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
+
     proxy = RadioField('Proxy')
     filter_failure_notification_send = BooleanField(
         'Send a notification when the filter can no longer be found on the page', default=False)

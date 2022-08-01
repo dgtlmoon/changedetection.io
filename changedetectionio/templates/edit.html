@@ -307,9 +307,7 @@ Unavailable") }}
 
             <div id="actions">
                 <div class="pure-control-group">
-
-                      {{ render_button(form.save_button) }} {{ render_button(form.save_and_preview_button) }}
-
+                    {{ render_button(form.save_button) }}
                     <a href="{{url_for('form_delete', uuid=uuid)}}"
                        class="pure-button button-small button-error ">Delete</a>
                     <a href="{{url_for('clear_watch_history', uuid=uuid)}}"
