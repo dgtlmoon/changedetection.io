@@ -6,6 +6,19 @@
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
 from changedetectionio import changedetection
+import multiprocessing
 
 if __name__ == '__main__':
-    changedetection.main()
+
+    parse_process = multiprocessing.Process(target=changedetection.main)
+    parse_process.daemon = True
+    parse_process.start()
+    import time
+
+    try:
+        while True:
+            time.sleep(1)
+
+    except KeyboardInterrupt:
+        #parse_process.terminate() not needed, because this process will issue it to the sub-process anyway
+        print ("Exited - CTRL+C")

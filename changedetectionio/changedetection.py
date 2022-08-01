@@ -20,11 +20,10 @@ def sigterm_handler(_signo, _stack_frame):
     global app
     global datastore
 
-    print('Shutdown: got SIGINT, writing DB')
-    datastore.sync_to_json()
-    print('sync_to_json() done')
-    eventlet.is_accepting = False
     app.config.exit.set()
+    datastore.sync_to_json()
+    print('Shutdown: Got SIGTERM, DB saved to disk')
+    raise SystemExit
 
 
 
@@ -93,7 +92,7 @@ def main():
 
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=__version__)
     app = changedetection_app(app_config, datastore)
-    signal.signal(signal.SIGINT, sigterm_handler)
+    signal.signal(signal.SIGTERM, sigterm_handler)
 
     # Go into cleanup mode
     if do_cleanup:
