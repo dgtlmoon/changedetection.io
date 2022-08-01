@@ -25,8 +25,6 @@ def sigterm_handler(_signo, _stack_frame):
     print('Shutdown: Got SIGTERM, DB saved to disk')
     raise SystemExit
 
-
-
 def main():
     global datastore
     global app
@@ -129,5 +127,4 @@ def main():
 
     else:
         eventlet.wsgi.server(eventlet.listen((host, int(port))), app)
-
 
