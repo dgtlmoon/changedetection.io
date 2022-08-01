@@ -88,6 +88,7 @@ def main():
                 "Or use the -C parameter to create the directory.".format(app_config['datastore_path']), file=sys.stderr)
             sys.exit(2)
 
+
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=__version__)
     app = changedetection_app(app_config, datastore)
     signal.signal(signal.SIGTERM, sigterm_handler)

@@ -7,9 +7,17 @@
 
 from changedetectionio import changedetection
 import multiprocessing
+import signal
+
+
+def sigterm_handler(_signo, _stack_frame):
+    print('Shutdown: Got SIGCHLD')
+    print('Process: %d interupted %s. Done editing' % (_signo, _stack_frame))
+
+    raise SystemExit
 
 if __name__ == '__main__':
-
+    signal.signal(signal.SIGCHLD, sigterm_handler)
     # The only way I could find to get Flask to shutdown, is to wrap it and then rely on the subsystem issuing SIGTERM/SIGKILL
     parse_process = multiprocessing.Process(target=changedetection.main)
     parse_process.daemon = True
