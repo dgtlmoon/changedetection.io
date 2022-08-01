@@ -16,6 +16,12 @@ from . import __version__
 datastore = None
 app = None
 
+# Should be for when going into hibernate/suspend
+def sigstop_hander(_signo, _stack_frame):
+    global datastore
+    datastore.sync_to_json()
+    # @todo pause fetching/processing
+
 def sigterm_handler(_signo, _stack_frame):
     global app
     global datastore
@@ -91,6 +97,7 @@ def main():
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=__version__)
     app = changedetection_app(app_config, datastore)
     signal.signal(signal.SIGTERM, sigterm_handler)
+    signal.signal(signal.SIGSTOP, sigstop_hander)
 
     # Go into cleanup mode
     if do_cleanup:
