@@ -1,7 +1,9 @@
 import os
 import uuid as uuid_builder
+from distutils.util import strtobool
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
+mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
 
 from changedetectionio.notification import (
     default_notification_body,
@@ -34,12 +36,15 @@ class model(dict):
             'notification_title': default_notification_title,
             'notification_body': default_notification_body,
             'notification_format': default_notification_format,
+            'notification_muted': False,
             'css_filter': '',
             'extract_text': [],  # Extract text by regex after filters
             'subtractive_selectors': [],
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'text_should_not_be_present': [], # Text that should not present
             'fetch_backend': None,
+            'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
+            'consecutive_filter_failures': 0, # Every time the CSS/xPath filter cannot be located, reset when all is fine.
             'extract_title_as_title': False,
             'check_unique_lines': False, # On change-detected, compare against all history if its something new
             'proxy': None, # Preferred proxy connection
@@ -47,10 +52,11 @@ class model(dict):
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
-            'webdriver_delay': None
+            'webdriver_delay': None,
+            'webdriver_js_execute_code': None, # Run before change-detection
         }
     jitter_seconds = 0
-    mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
+
     def __init__(self, *arg, **kw):
         import uuid
         self.update(self.__base_config)
@@ -159,7 +165,7 @@ class model(dict):
 
     def threshold_seconds(self):
         seconds = 0
-        for m, n in self.mtable.items():
+        for m, n in mtable.items():
             x = self.get('time_between_check', {}).get(m, None)
             if x:
                 seconds += x * n
@@ -167,13 +173,14 @@ class model(dict):
 
     # Iterate over all history texts and see if something new exists
     def lines_contain_something_unique_compared_to_history(self, lines=[]):
-        local_lines = [l.decode('utf-8').strip().lower() for l in lines]
+        local_lines = set([l.decode('utf-8').strip().lower() for l in lines])
 
         # Compare each lines (set) against each history text file (set) looking for something new..
+        existing_history = set({})
         for k, v in self.history.items():
-            alist = [line.decode('utf-8').strip().lower() for line in open(v, 'rb')]
-            res = set(alist) != set(local_lines)
-            if res:
-                return True
+            alist = set([line.decode('utf-8').strip().lower() for line in open(v, 'rb')])
+            existing_history = existing_history.union(alist)
 
-        return False
+        # Check that everything in local_lines(new stuff) already exists in existing_history - it should
+        # if not, something new happened
+        return not local_lines.issubset(existing_history)

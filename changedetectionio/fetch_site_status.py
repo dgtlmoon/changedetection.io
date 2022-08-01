@@ -11,6 +11,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 # Some common stuff here that can be moved to a base class
+# (set_proxy_from_list)
 class perform_site_check():
 
     def __init__(self, *args, datastore, **kwargs):
@@ -44,6 +45,20 @@ class perform_site_check():
             proxy_args = self.datastore.proxy_list[0][0]
 
         return proxy_args
+
+    # Doesn't look like python supports forward slash auto enclosure in re.findall
+    # So convert it to inline flag "foobar(?i)" type configuration
+    def forward_slash_enclosed_regex_to_options(self, regex):
+        res = re.search(r'^/(.*?)/(\w+)$', regex, re.IGNORECASE)
+
+        if res:
+            regex = res.group(1)
+            regex += '(?{})'.format(res.group(2))
+        else:
+            regex += '(?{})'.format('i')
+
+        return regex
+
 
     def run(self, uuid):
         timestamp = int(time.time())  # used for storage etc too
@@ -106,6 +121,9 @@ class perform_site_check():
         elif system_webdriver_delay is not None:
             fetcher.render_extract_delay = system_webdriver_delay
 
+        if watch['webdriver_js_execute_code'] is not None and watch['webdriver_js_execute_code'].strip():
+            fetcher.webdriver_js_execute_code = watch['webdriver_js_execute_code']
+
         fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code, watch['css_filter'])
         fetcher.quit()
 
@@ -147,7 +165,9 @@ class perform_site_check():
                 is_html = False
 
         if is_html or is_source:
+            
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+            fetcher.content = html_tools.workarounds_for_obfuscations(fetcher.content)
             html_content = fetcher.content
 
             # If not JSON,  and if it's not text/plain..
@@ -210,14 +230,26 @@ class perform_site_check():
         if len(extract_text) > 0:
             regex_matched_output = []
             for s_re in extract_text:
-                result = re.findall(s_re.encode('utf8'), stripped_text_from_html,
-                                    flags=re.MULTILINE | re.DOTALL | re.LOCALE)
-                if result:
-                    regex_matched_output.append(result[0])
+                # incase they specified something in '/.../x'
+                regex = self.forward_slash_enclosed_regex_to_options(s_re)
+                result = re.findall(regex.encode('utf-8'), stripped_text_from_html)
 
+                for l in result:
+                    if type(l) is tuple:
+                        #@todo - some formatter option default (between groups)
+                        regex_matched_output += list(l) + [b'\n']
+                    else:
+                        # @todo - some formatter option default (between each ungrouped result)
+                        regex_matched_output += [l] + [b'\n']
+
+            # Now we will only show what the regex matched
+            stripped_text_from_html = b''
+            text_content_before_ignored_filter = b''
             if regex_matched_output:
-                stripped_text_from_html = b'\n'.join(regex_matched_output)
+                # @todo some formatter for presentation?
+                stripped_text_from_html = b''.join(regex_matched_output)
                 text_content_before_ignored_filter = stripped_text_from_html
+
 
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
         if self.datastore.data['settings']['application'].get('ignore_whitespace', False):

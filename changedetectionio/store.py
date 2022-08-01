@@ -158,8 +158,7 @@ class ChangeDetectionStore:
     @property
     def threshold_seconds(self):
         seconds = 0
-        mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
-        for m, n in mtable.items():
+        for m, n in Watch.mtable.items():
             x = self.__data['settings']['requests']['time_between_check'].get(m)
             if x:
                 seconds += x * n
@@ -298,7 +297,8 @@ class ChangeDetectionStore:
                           'ignore_text', 'css_filter',
                           'subtractive_selectors', 'trigger_text',
                           'extract_title_as_title', 'extract_text',
-                          'text_should_not_be_present']:
+                          'text_should_not_be_present',
+                          'webdriver_js_execute_code']:
                     if res.get(k):
                         apply_extras[k] = res[k]
 

@@ -46,6 +46,7 @@ class Fetcher():
     headers = None
 
     fetcher_description = "No description"
+    webdriver_js_execute_code = None
     xpath_element_js = """               
                 // Include the getXpath script directly, easier than fetching
                 !function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):(e=e||self).getXPath=n()}(this,function(){return function(e){var n=e;if(n&&n.id)return'//*[@id="'+n.id+'"]';for(var o=[];n&&Node.ELEMENT_NODE===n.nodeType;){for(var i=0,r=!1,d=n.previousSibling;d;)d.nodeType!==Node.DOCUMENT_TYPE_NODE&&d.nodeName===n.nodeName&&i++,d=d.previousSibling;for(d=n.nextSibling;d;){if(d.nodeName===n.nodeName){r=!0;break}d=d.nextSibling}o.push((n.prefix?n.prefix+":":"")+n.localName+(i||r?"["+(i+1)+"]":"")),n=n.parentNode}return o.length?"/"+o.reverse().join("/"):""}});
@@ -62,12 +63,12 @@ class Fetcher():
                       break;
                     }
                     if('' !==r.id) {
-                      chained_css.unshift("#"+r.id);
-                      final_selector= chained_css.join('>');
+                      chained_css.unshift("#"+CSS.escape(r.id));
+                      final_selector= chained_css.join(' > ');
                       // Be sure theres only one, some sites have multiples of the same ID tag :-(
                       if (window.document.querySelectorAll(final_selector).length ==1 ) {
                         return final_selector;
-                      }
+                        }
                       return null;
                     } else {
                       chained_css.unshift(r.tagName.toLowerCase());
@@ -175,7 +176,6 @@ class Fetcher():
 
     # Will be needed in the future by the VisualSelector, always get this where possible.
     screenshot = False
-    fetcher_description = "No description"
     system_http_proxy = os.getenv('HTTP_PROXY')
     system_https_proxy = os.getenv('HTTPS_PROXY')
 
@@ -309,12 +309,18 @@ class base_html_playwright(Fetcher):
                 page.set_default_navigation_timeout(90000)
                 page.set_default_timeout(90000)
 
-               # Bug - never set viewport size BEFORE page.goto
+                # Listen for all console events and handle errors
+                page.on("console", lambda msg: print(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
+
+                # Bug - never set viewport size BEFORE page.goto
 
                 # Waits for the next navigation. Using Python context manager
                 # prevents a race condition between clicking and waiting for a navigation.
                 with page.expect_navigation():
                     response = page.goto(url, wait_until='load')
+
+                if self.webdriver_js_execute_code is not None:
+                    page.evaluate(self.webdriver_js_execute_code)
 
             except playwright._impl._api_types.TimeoutError as e:
                 context.close()
@@ -447,6 +453,12 @@ class base_html_webdriver(Fetcher):
 
         self.driver.set_window_size(1280, 1024)
         self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
+
+        if self.webdriver_js_execute_code is not None:
+            self.driver.execute_script(self.webdriver_js_execute_code)
+            # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
+            self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
+
         self.screenshot = self.driver.get_screenshot_as_png()
 
         # @todo - how to check this? is it possible?

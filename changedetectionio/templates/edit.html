@@ -25,7 +25,7 @@
         <ul>
             <li class="tab" id="default-tab"><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
-            <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Selector</a></li>
+            <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
         </ul>
@@ -33,7 +33,7 @@
 
     <div class="box-wrap inner">
         <form class="pure-form pure-form-stacked"
-              action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next') ) }}" method="POST">
+              action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next'), unpause_on_save = request.args.get('unpause_on_save')) }}" method="POST">
              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
             <div class="tab-pane-inner" id="general">
@@ -62,6 +62,12 @@
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.extract_title_as_title) }}
                     </div>
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.filter_failure_notification_send) }}
+                        <span class="pure-form-message-inline">
+                         Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and your filter will not work anymore.
+                        </span>
+                    </div>
                 </fieldset>
             </div>
 
@@ -88,14 +94,17 @@
                             <strong>If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here.</strong>
                             <br/>
                             This will wait <i>n</i> seconds before extracting the text.
+                            {% if using_global_webdriver_wait %}
+                            <br/><strong>Using the current global default settings</strong>
+                            {% endif %}
                         </div>
-
                     </div>
-                    {% if using_global_webdriver_wait %}
-                    <div class="pure-form-message-inline">
-                        <strong>Using the current global default settings</strong>
+                    <div class="pure-control-group">
+                        {{ render_field(form.webdriver_js_execute_code) }}
+                        <div class="pure-form-message-inline">
+                            Run this code before performing change detection, handy for filling in fields and other actions <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Run-JavaScript-before-change-detection">More help and examples here</a>
+                        </div>
                     </div>
-                    {% endif %}
                 </fieldset>
                 <fieldset class="pure-group" id="requests-override-options">
                     {% if not playwright_enabled %}
@@ -154,15 +163,26 @@ User-Agent: wonderbra 1.0") }}
                         </div>
                     </fieldset>
                     <div class="pure-control-group">
-                        {{ render_field(form.css_filter, placeholder=".class-name or #some-id, or other CSS selector rule.",
-                        class="m-d") }}
+                        {% set field = render_field(form.css_filter,
+                            placeholder=".class-name or #some-id, or other CSS selector rule.",
+                            class="m-d")
+                        %}
+                        {{ field }}
+                        {% if '/text()' in  field %}
+                          <span class="pure-form-message-inline"><strong>Note!: //text() function does not work where the &lt;element&gt; contains &lt;![CDATA[]]&gt;</strong></span><br/>
+                        {% endif %}
                         <span class="pure-form-message-inline">
                     <ul>
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
                         <li>JSON - Limit text to this JSON rule, using <a href="https://pypi.org/project/jsonpath-ng/">JSONPath</a>, prefix with <code>"json:"</code>, use <code>json:$</code> to force re-formatting if required,  <a
                                 href="https://jsonpath.com/" target="new">test your JSONPath here</a></li>
-                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash, example  <code>//*[contains(@class, 'sametext')]</code> or <code>xpath://*[contains(@class, 'sametext')]</code>, <a
+                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash,
+                            <ul>
+                                <li>Example:  <code>//*[contains(@class, 'sametext')]</code> or <code>xpath://*[contains(@class, 'sametext')]</code>, <a
                                 href="http://xpather.com/" target="new">test your XPath here</a></li>
+                                <li>Example: Get all titles from an RSS feed <code>//title/text()</code></li>
+                            </ul>
+                            </li>
                     </ul>
                     Please be sure that you thoroughly understand how to write CSS or JSONPath, XPath selector rules before filing an issue on GitHub! <a
                                 href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
@@ -187,7 +207,7 @@ nav
                     <span class="pure-form-message-inline">
                         <ul>
                             <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
-                            <li>Regular Expression support, wrap the line in forward slash <code>/regex/</code></li>
+                            <li>Regular Expression support, wrap the entire line in forward slash <code>/regex/</code></li>
                             <li>Changing this will affect the comparison checksum which may trigger an alert</li>
                             <li>Use the preview/show current tab to see ignores</li>
                         </ul>
@@ -230,8 +250,15 @@ Unavailable") }}
                         {{ render_field(form.extract_text, rows=5, placeholder="\d+ online") }}
                         <span class="pure-form-message-inline">
                     <ul>
-                        <li>Extracts text in the final output after other filters using regular expressions, for example <code>\d+ online</code></li>
-                        <li>One line per regular-expression.</li>
+                        <li>Extracts text in the final output (line by line) after other filters using regular expressions;
+                            <ul>
+                                <li>Regular expression &dash; example <code>/reports.+?2022/i</code></li>
+                                <li>Use <code>//(?aiLmsux))</code> type flags (more <a href="https://docs.python.org/3/library/re.html#index-15">information here</a>)<br/></li>
+                                <li>Keyword example &dash; example <code>Out of stock</code></li>
+                                <li>Use groups to extract just that text &dash; example <code>/reports.+?(\d+)/i</code> returns a list of years only</li>
+                            </ul>
+                        </li>
+                        <li>One line per regular-expression/ string match</li>
                     </ul>
                         </span>
                     </div>
@@ -240,7 +267,7 @@ Unavailable") }}
 
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
                 <img id="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
-
+                <strong>Pro-tip:</strong> This tool is only for limiting which elements will be included on a change-detection, not for interacting with browser directly.
                 <fieldset>
                     <div class="pure-control-group">
                         {% if visualselector_enabled %}

@@ -44,7 +44,7 @@ from flask_wtf import CSRFProtect
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.39.15'
+__version__ = '0.39.17.1'
 
 datastore = None
 
@@ -54,7 +54,7 @@ ticker_thread = None
 
 extra_stylesheets = []
 
-update_q = queue.Queue()
+update_q = queue.PriorityQueue()
 
 notification_q = queue.Queue()
 
@@ -361,7 +361,7 @@ def changedetection_app(config=None, datastore_o=None):
                 fe.pubDate(dt)
 
         response = make_response(fg.rss_str())
-        response.headers.set('Content-Type', 'application/rss+xml')
+        response.headers.set('Content-Type', 'application/rss+xml;charset=utf-8')
         return response
 
     @app.route("/", methods=['GET'])
@@ -370,20 +370,20 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio import forms
 
         limit_tag = request.args.get('tag')
-        pause_uuid = request.args.get('pause')
-
         # Redirect for the old rss path which used the /?rss=true
         if request.args.get('rss'):
             return redirect(url_for('rss', tag=limit_tag))
 
-        if pause_uuid:
-            try:
-                datastore.data['watching'][pause_uuid]['paused'] ^= True
-                datastore.needs_write = True
+        op = request.args.get('op')
+        if op:
+            uuid = request.args.get('uuid')
+            if op == 'pause':
+                datastore.data['watching'][uuid]['paused'] ^= True
+            elif op == 'mute':
+                datastore.data['watching'][uuid]['notification_muted'] ^= True
 
-                return redirect(url_for('index', tag = limit_tag))
-            except KeyError:
-                pass
+            datastore.needs_write = True
+            return redirect(url_for('index', tag = limit_tag))
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
@@ -406,7 +406,6 @@ def changedetection_app(config=None, datastore_o=None):
         existing_tags = datastore.get_all_tags()
 
         form = forms.quickWatchForm(request.form)
-
         output = render_template("watch-overview.html",
                                  form=form,
                                  watches=sorted_watches,
@@ -417,7 +416,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  # Don't link to hosting when we're on the hosting environment
                                  hosted_sticky=os.getenv("SALTED_PASS", False) == False,
                                  guid=datastore.data['app_guid'],
-                                 queued_uuids=update_q.queue)
+                                 queued_uuids=[uuid for p,uuid in update_q.queue])
 
 
         if session.get('share-link'):
@@ -580,6 +579,9 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'POST' and form.validate():
             extra_update_obj = {}
 
+            if request.args.get('unpause_on_save'):
+                extra_update_obj['paused'] = False
+
             # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
             # Assume we use the default value, unless something relevant is different, then use the form value
             # values could be None, 0 etc.
@@ -619,14 +621,17 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)
 
-            flash("Updated watch.")
+            if request.args.get('unpause_on_save'):
+                flash("Updated watch - unpaused!.")
+            else:
+                flash("Updated watch.")
 
             # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
             # But in the case something is added we should save straight away
             datastore.needs_write_urgent = True
 
-            # Queue the watch for immediate recheck
-            update_q.put(uuid)
+            # Queue the watch for immediate recheck, with a higher priority
+            update_q.put((1, uuid))
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff' and not form.save_and_preview_button.data:
@@ -740,7 +745,7 @@ def changedetection_app(config=None, datastore_o=None):
                 importer = import_url_list()
                 importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore)
                 for uuid in importer.new_uuids:
-                    update_q.put(uuid)
+                    update_q.put((1, uuid))
 
                 if len(importer.remaining_data) == 0:
                     return redirect(url_for('index'))
@@ -753,7 +758,7 @@ def changedetection_app(config=None, datastore_o=None):
                 d_importer = import_distill_io_json()
                 d_importer.run(data=request.values.get('distill-io'), flash=flash, datastore=datastore)
                 for uuid in d_importer.new_uuids:
-                    update_q.put(uuid)
+                    update_q.put((1, uuid))
 
 
 
@@ -871,42 +876,40 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
 
-        if watch.history_n >0:
-            timestamps = sorted(watch.history.keys(), key=lambda x: int(x))
-            filename = watch.history[timestamps[-1]]
-            try:
-                with open(filename, 'r') as f:
-                    tmp = f.readlines()
 
-                    # Get what needs to be highlighted
-                    ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
+        timestamp = list(watch.history.keys())[-1]
+        filename = watch.history[timestamp]
+        try:
+            with open(filename, 'r') as f:
+                tmp = f.readlines()
 
-                    # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
-                    ignored_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
-                                                                        wordlist=ignore_rules,
-                                                                        mode='line numbers'
-                                                                        )
+                # Get what needs to be highlighted
+                ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
 
-                    trigger_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
-                                                                        wordlist=watch['trigger_text'],
-                                                                        mode='line numbers'
-                                                                        )
-                    # Prepare the classes and lines used in the template
-                    i=0
-                    for l in tmp:
-                        classes=[]
-                        i+=1
-                        if i in ignored_line_numbers:
-                            classes.append('ignored')
-                        if i in trigger_line_numbers:
-                            classes.append('triggered')
-                        content.append({'line': l, 'classes': ' '.join(classes)})
+                # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
+                ignored_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
+                                                                    wordlist=ignore_rules,
+                                                                    mode='line numbers'
+                                                                    )
 
+                trigger_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
+                                                                    wordlist=watch['trigger_text'],
+                                                                    mode='line numbers'
+                                                                    )
+                # Prepare the classes and lines used in the template
+                i=0
+                for l in tmp:
+                    classes=[]
+                    i+=1
+                    if i in ignored_line_numbers:
+                        classes.append('ignored')
+                    if i in trigger_line_numbers:
+                        classes.append('triggered')
+                    content.append({'line': l, 'classes': ' '.join(classes)})
 
-            except Exception as e:
-                content.append({'line': "File doesnt exist or unable to read file {}".format(filename), 'classes': ''})
-        else:
-            content.append({'line': "No history found", 'classes': ''})
+        except Exception as e:
+            content.append({'line': "File doesnt exist or unable to read file {}".format(filename), 'classes': ''})
+
 
         screenshot_url = datastore.get_screenshot(uuid)
         system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
@@ -1063,9 +1066,9 @@ def changedetection_app(config=None, datastore_o=None):
         except FileNotFoundError:
             abort(404)
 
-    @app.route("/api/add", methods=['POST'])
+    @app.route("/form/add/quickwatch", methods=['POST'])
     @login_required
-    def form_watch_add():
+    def form_quick_watch_add():
         from changedetectionio import forms
         form = forms.quickWatchForm(request.form)
 
@@ -1078,12 +1081,18 @@ def changedetection_app(config=None, datastore_o=None):
             flash('The URL {} already exists'.format(url), "error")
             return redirect(url_for('index'))
 
-        # @todo add_watch should throw a custom Exception for validation etc
-        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip())
-        if new_uuid:
+        add_paused = request.form.get('edit_and_watch_submit_button') != None
+        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip(), extras={'paused': add_paused})
+
+
+        if not add_paused and new_uuid:
             # Straight into the queue.
-            update_q.put(new_uuid)
+            update_q.put((1, new_uuid))
             flash("Watch added.")
+
+        if add_paused:
+            flash('Watch added in Paused state, saving will unpause.')
+            return redirect(url_for('edit_page', uuid=new_uuid, unpause_on_save=1))
 
         return redirect(url_for('index'))
 
@@ -1115,7 +1124,7 @@ def changedetection_app(config=None, datastore_o=None):
             uuid = list(datastore.data['watching'].keys()).pop()
 
         new_uuid = datastore.clone(uuid)
-        update_q.put(new_uuid)
+        update_q.put((5, new_uuid))
         flash('Cloned.')
 
         return redirect(url_for('index'))
@@ -1136,7 +1145,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         if uuid:
             if uuid not in running_uuids:
-                update_q.put(uuid)
+                update_q.put((1, uuid))
             i = 1
 
         elif tag != None:
@@ -1144,7 +1153,7 @@ def changedetection_app(config=None, datastore_o=None):
             for watch_uuid, watch in datastore.data['watching'].items():
                 if (tag != None and tag in watch['tag']):
                     if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
-                        update_q.put(watch_uuid)
+                        update_q.put((1, watch_uuid))
                         i += 1
 
         else:
@@ -1152,7 +1161,7 @@ def changedetection_app(config=None, datastore_o=None):
             for watch_uuid, watch in datastore.data['watching'].items():
 
                 if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
-                    update_q.put(watch_uuid)
+                    update_q.put((1, watch_uuid))
                     i += 1
         flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
@@ -1356,14 +1365,14 @@ def ticker_thread_check_time_launch_checks():
 
             seconds_since_last_recheck = now - watch['last_checked']
             if seconds_since_last_recheck >= (threshold + watch.jitter_seconds) and seconds_since_last_recheck >= recheck_time_minimum_seconds:
-                if not uuid in running_uuids and uuid not in update_q.queue:
-                    print("Queued watch UUID {} last checked at {} queued at {:0.2f} jitter {:0.2f}s, {:0.2f}s since last checked".format(uuid,
+                if not uuid in running_uuids and uuid not in [q_uuid for p,q_uuid in update_q.queue]:
+                    print("> Queued watch UUID {} last checked at {} queued at {:0.2f} jitter {:0.2f}s, {:0.2f}s since last checked".format(uuid,
                                                                                                          watch['last_checked'],
                                                                                                          now,
                                                                                                          watch.jitter_seconds,
                                                                                                          now - watch['last_checked']))
                     # Into the queue with you
-                    update_q.put(uuid)
+                    update_q.put((5, uuid))
 
                     # Reset for next time
                     watch.jitter_seconds = 0
