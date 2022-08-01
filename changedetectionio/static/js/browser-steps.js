@@ -219,6 +219,12 @@ $(document).ready(function () {
         }
     );
 
+    $('ul#browser_steps li .control .clear').click(function (element) {
+        $("select", $(this).closest('li')).val("Choose one").change();
+        $(":text", $(this).closest('li')).val('');
+    });
+
+
     $('ul#browser_steps li .control .apply').click(function (element) {
         var current_data = $(element.currentTarget).closest('li');
         // POST the currently clicked step form widget back and await response, redraw
