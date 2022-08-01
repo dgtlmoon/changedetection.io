@@ -124,6 +124,8 @@ class browsersteps_live_ui():
 
     # Connect and setup a new context
     def connect(self):
+        # Should only get called once - test that
+
         logging.debug("browser_steps.py connecting")
         from playwright.sync_api import sync_playwright
         self.playwright = sync_playwright().start()
@@ -145,9 +147,7 @@ class browsersteps_live_ui():
 
         self.page.set_default_navigation_timeout(keep_open)
         self.page.set_default_timeout(keep_open)
-        x=1
-        #self.page.pause()
-        y=2
+
 
     # Convert and perform "Click Button" for example
     def call_action(self, action_name, selector, optional_value):

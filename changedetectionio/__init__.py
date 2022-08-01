@@ -1162,15 +1162,8 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     @app.route("/api/browsersteps_update", methods=['GET', 'POST'])
     def browsersteps_ui_update():
+        import json
         uuid = request.args.get('uuid')
-        if os.path.isfile('/var/www/changedetection.io/resxxxx ult.bin'):
-            with open('/var/www/changedetection.io/result.bin', 'r') as f:
-                response = make_response(f.read())
-                response.headers['Content-type'] = 'application/json'
-                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-                response.headers['Pragma'] = 'no-cache'
-                response.headers['Expires'] = 0
-                return response
 
         from . import browser_steps
         global browsersteps_live_ui_o
@@ -1192,17 +1185,21 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Try the browser step
         else:
-            now=time.time()
             browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()
             browsersteps_live_ui_o.action_goto_url(datastore.data['watching'][uuid]['url'])
 
 
         state = browsersteps_live_ui_o.get_current_state()
-
         p = {'screenshot': "data:image/png;base64,{}".format(base64.b64encode(state[0]).decode('ascii')), 'xpath_data': state[1]}
-        import json
-        with open('/var/www/changedetection.io/result.bin', 'w') as f:
-            f.write(json.dumps(p))
+
+        # Update files for Visual Selector tool
+        with open(os.path.join(datastore_o.datastore_path, uuid, "last-screenshot.png"), 'wb') as f:
+            f.write(state[0])
+
+        with open(os.path.join(datastore_o.datastore_path, uuid, "elements.json"), 'w') as f:
+            f.write(json.dumps(state[1], indent=1, ensure_ascii=False))
+
+
         return p
 
     @app.route("/api/share-url", methods=['GET'])
