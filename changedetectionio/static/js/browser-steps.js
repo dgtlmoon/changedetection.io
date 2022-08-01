@@ -176,6 +176,14 @@ $(document).ready(function () {
 
 
     ////////////////////////// STEPS UI ////////////////////
+    $('ul#browser_steps [type="text"]').keydown(function (e) {
+        if (e.keyCode === 13) {
+            // hitting [enter] in a browser-step input should trigger the 'Apply'
+            e.preventDefault();
+            $(".apply", $(this).closest('li')).click();
+            return false;
+        }
+    });
 
     // Look up which step was selected, and enable or disable the related extra fields
     // So that people using it dont' get confused
@@ -227,6 +235,7 @@ $(document).ready(function () {
 
     $('ul#browser_steps li .control .apply').click(function (element) {
         var current_data = $(element.currentTarget).closest('li');
+        $('#browser-steps-ui .loader').fadeIn();
         // POST the currently clicked step form widget back and await response, redraw
         $.ajax({
             method: "POST",
@@ -246,6 +255,7 @@ $(document).ready(function () {
             // it should return the new state (selectors available and screenshot)
             xpath_data = data.xpath_data;
             $('#browsersteps-img').attr('src', data.screenshot);
+            $('#browser-steps-ui .loader').fadeOut();
         }).fail(function (data) {
             console.log(data);
             alert('There was an error communicating with the server.');

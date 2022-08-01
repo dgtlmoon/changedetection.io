@@ -127,7 +127,9 @@ class browsersteps_live_ui():
         logging.debug("browser_steps.py connecting")
         from playwright.sync_api import sync_playwright
         self.playwright = sync_playwright().start()
-        self.browser = self.playwright.chromium.connect_over_cdp(self.command_executor, timeout=60000)
+        keep_open = (1.5) * 60 * 1000
+
+        self.browser = self.playwright.chromium.connect_over_cdp(self.command_executor+"&keepalive={}".format(str(int(keep_open))))
 
         self.context = self.browser.new_context(
             # @todo
@@ -140,8 +142,12 @@ class browsersteps_live_ui():
         )
 
         self.page = self.context.new_page()
-        self.page.set_default_navigation_timeout(90000)
-        self.page.set_default_timeout(90000)
+
+        self.page.set_default_navigation_timeout(keep_open)
+        self.page.set_default_timeout(keep_open)
+        x=1
+        #self.page.pause()
+        y=2
 
     # Convert and perform "Click Button" for example
     def call_action(self, action_name, selector, optional_value):
@@ -170,7 +176,7 @@ class browsersteps_live_ui():
         self.page.fill(selector, value)
 
     def action_click_button(self, selector, value):
-        self.page.click(selector, value)
+        self.page.click(selector)
 
     def get_current_state(self):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""
@@ -185,4 +191,6 @@ class browsersteps_live_ui():
         self.page.evaluate("var css_filter=''")
         xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%','input, button, textarea, img, a, span, div') + "}")
 
+        # except
+        # playwright._impl._api_types.Error: Browser closed.
         return (screenshot, xpath_data)
