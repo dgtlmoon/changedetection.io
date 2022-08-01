@@ -137,15 +137,15 @@ User-Agent: wonderbra 1.0") }}
                         and/or report an error
                         <a id="play-steps" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Play steps  ▶</a>
                         -->
-                        <div style="display: flex; flex-flow: row;">
+                        <div class="flex-wrapper" >
                             <div id="browser-steps-ui"  style="width: 100%">
                                 <div id="browsersteps-selector-wrapper" style="width: 100%">
+                                    <span class="loader"></span>
                                     <img id="browsersteps-img" src="" style="max-width: 100%; width: 100%;" />
                                     <canvas id="browsersteps-selector-canvas" style="max-width: 100%; width: 100%;"></canvas>
                                 </div>
-                                <div id="browsersteps-selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
                             </div>
-                            <div id="browser-steps-fieldlist" style="padding-left: 1em;" >
+                            <div id="browser-steps-fieldlist" style="padding-left: 1em;  width: 300px; font-size: 80%;" >
                                 {{ render_field(form.browser_steps) }}
                             </div>
                         </div>

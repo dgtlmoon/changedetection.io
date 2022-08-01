@@ -29,21 +29,24 @@ $(document).ready(function () {
         selector_image = $("img#browsersteps-img")[0];
         selector_image_rect = selector_image.getBoundingClientRect();
 
-        // make the canvas the same size as the image
+        // make the canvas and input steps the same size as the image
+
         $('#browsersteps-selector-canvas').attr('height', selector_image_rect.height).attr('width', selector_image_rect.width);
-        $('#browsersteps-selector-wrapper').attr('width', selector_image_rect.width);
+        //$('#browsersteps-selector-wrapper').attr('width', selector_image_rect.width);
+        $('#browser-steps-ui').attr('width', selector_image_rect.width);
         x_scale = selector_image_rect.width / xpath_data['browser_width'];
         y_scale = selector_image_rect.height / selector_image.naturalHeight;
         ctx.strokeStyle = 'rgba(255,0,0, 0.9)';
         ctx.fillStyle = 'rgba(255,0,0, 0.1)';
         ctx.lineWidth = 3;
         console.log("scaling set  x: " + x_scale + " by y:" + y_scale);
-        $("#browsersteps-selector-current-xpath").css('max-width', selector_image_rect.width);
+        //$("#browsersteps-selector-current-xpath").css('max-width', selector_image_rect.width);
     }
 
     // bootstrap it, this will trigger everything else
     $('#browsersteps-img').bind('load', function () {
         console.log("Loaded background...");
+        $('#browsersteps-selector-wrapper .loader').fadeOut(2500);
 
         document.getElementById("browsersteps-selector-canvas");
         c = document.getElementById("browsersteps-selector-canvas");
@@ -210,7 +213,7 @@ $(document).ready(function () {
     // Add the extra buttons to the steps
     $('ul#browser_steps li').each(function (i) {
         $(this).append('<div class="control">' +
-            '<a data-step-index='+i+' class="pure-button button-secondary button-xsmall apply" >Apply</a>&nbsp;' +
+            '<a data-step-index='+i+' class="pure-button button-green button-xsmall apply" >Apply</a>&nbsp;' +
             '<a data-step-index='+i+' class="pure-button button-secondary button-xsmall clear" >Clear</a>' +
             '</div>')
         }
