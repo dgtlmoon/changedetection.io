@@ -1,7 +1,0 @@
-Some initial text
-
-Which is across multiple lines
-
-So let's see what happens.
-  Some text thats the same
-  Some text that will change
