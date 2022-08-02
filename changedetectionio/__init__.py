@@ -1190,7 +1190,7 @@ def changedetection_app(config=None, datastore_o=None):
 
             browsersteps_live_ui_o.call_action(step_operation, step_selector, step_optional_value)
 
-            # Try the browser step
+        # Try the browser step
         if request.method == 'GET':
             if not browsersteps_live_ui_o:
                 browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()

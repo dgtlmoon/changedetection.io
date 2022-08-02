@@ -125,9 +125,9 @@ class browsersteps_live_ui():
         logging.debug("browser_steps.py connecting")
         from playwright.sync_api import sync_playwright
         self.playwright = sync_playwright().start()
-        keep_open = (1.5) * 60 * 1000
+        keep_open = (60) * 60 * 1000
 
-        self.browser = self.playwright.chromium.connect_over_cdp(self.command_executor+"&keepalive={}".format(str(int(keep_open))))
+        self.browser = self.playwright.chromium.connect_over_cdp(self.command_executor+"&keepalive={}&timeout=600000".format(str(int(keep_open))))
 
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
         self.context = self.browser.new_context(
@@ -174,6 +174,13 @@ class browsersteps_live_ui():
 
     def action_click_button(self, selector, value):
         self.page.click(selector)
+
+    def action_click_x_y(self, selector, value):
+        x, y = selector.strip().split(',')
+        self.page.mouse.click(x=int(x), y=int(y))
+
+    def action_wait_for_seconds(self, selector, value):
+        self.page.wait_for_timeout(int(value)*1000)
 
     def get_current_state(self):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""

@@ -266,8 +266,15 @@ class Fetcher():
             for step in self.browser_steps:
                 step_machine_name = re.sub(r'\W', '_', step['operation'].lower()).strip('_')
                 logging.debug("Running browser step '{}'".format(step_machine_name))
-                getattr(self, step_machine_name)(step)
-                self.screenshot_step(step_n)
+                try:
+                    getattr(self, step_machine_name)(step)
+                    self.screenshot_step(step_n)
+                except TimeoutError:
+                    self.screenshot_step("TimeoutError_error")
+                    raise TimeoutError
+                except Exception as e:
+                    self.screenshot_step("error")
+
                 step_n += 1
                 time.sleep(0.2)
 
@@ -337,7 +344,7 @@ class base_html_playwright(Fetcher, browsersteps_playwright):
         if proxy_override:
             self.proxy = {'server': proxy_override}
 
-    def screenshot_step(self, step_n):
+    def screenshot_step(self, step_n=''):
 
         # There's a bug where we need to do it twice or it doesnt take the whole page, dont know why.
         self.page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
@@ -385,8 +392,6 @@ class base_html_playwright(Fetcher, browsersteps_playwright):
             self.page = context.new_page()
             if len(request_headers):
                 context.set_extra_http_headers(request_headers)
-
-            page = context.new_page()
 
             try:
                 self.page.set_default_navigation_timeout(90000)
