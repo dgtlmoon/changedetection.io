@@ -1186,7 +1186,9 @@ def changedetection_app(config=None, datastore_o=None):
             # Try the browser step
         else:
             browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()
-            browsersteps_live_ui_o.action_goto_url(datastore.data['watching'][uuid]['url'])
+
+        # On setup always goto the URL first
+        browsersteps_live_ui_o.action_goto_url(datastore.data['watching'][uuid]['url'])
 
 
         state = browsersteps_live_ui_o.get_current_state()
