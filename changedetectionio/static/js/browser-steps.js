@@ -52,18 +52,25 @@ $(document).ready(function () {
         // redline highlight context
         ctx = c.getContext("2d");
         // @todo is click better?
-        $('#browsersteps-selector-canvas').off("mousemove mousedown");
+        $('#browsersteps-selector-canvas').off("mousemove mousedown click");
 
         // init
         set_scale();
 
         // @todo click ? some better library?
+        $('#browsersteps-selector-canvas').bind('click', function (e) {
+            // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
+            e.preventDefault()
+        });
+
         $('#browsersteps-selector-canvas').bind('mousedown', function (e) {
             // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
+            e.preventDefault()
             console.log(e);
             last_click_xy = {'x': e.offsetX, 'y': e.offsetY}
             process_selected(current_selected_i);
             current_selected_i = false;
+
         });
 
         $('#browsersteps-selector-canvas').bind('mousemove', function (e) {
@@ -122,11 +129,12 @@ $(document).ready(function () {
                 // if inpt type button or <button>
                 // from the top, find the next not used one and use it
                 var x = xpath_data['size_pos'][xpath_data_index];
-                if (first_available.length) {
+                if (x && first_available.length) {
                     // @todo will it let you click shit that has a layer ontop? probably not.
                     if (x['tagtype'] === 'text' || x['tagtype'] === 'email' || x['tagtype'] === 'password') {
                         $('select', first_available).val('Enter text in field').change();
                         $('input[type=text]', first_available).first().val(x['xpath']);
+                        $('input[placeholder="Value"]', first_available).addClass('ok').click().focus();
                         found_something = true;
                     } else {
                         // Assume it's just for clicking on
