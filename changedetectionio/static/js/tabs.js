@@ -1,9 +1,10 @@
-// Rewrite this is a plugin.. is all this JS really 'worth it?'
+ // Rewrite this is a plugin.. is all this JS really 'worth it?'
 
 
 if(!window.location.hash) {
   var tab=document.querySelectorAll("#default-tab a");
   tab[0].click();
+  document.body.classList.remove('full-width');
 }
 
 window.addEventListener('hashchange', function() {
@@ -27,6 +28,7 @@ if (!has_errors.length) {
 }
 
 function set_active_tab() {
+  document.body.classList.remove('full-width');
   var tab=document.querySelectorAll("a[href='"+location.hash+"']");
   if (tab.length) {
     tab[0].parentElement.className="active";

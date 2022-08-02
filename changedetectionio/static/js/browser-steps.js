@@ -3,7 +3,7 @@ $(document).ready(function () {
     // duplicate
     var csrftoken = $('input[name=csrf_token]').val();
     $.ajaxSetup({
-        beforeSend: function(xhr, settings) {
+        beforeSend: function (xhr, settings) {
             if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
                 xhr.setRequestHeader("X-CSRFToken", csrftoken)
             }
@@ -18,7 +18,7 @@ $(document).ready(function () {
 
     // redline highlight context
     var ctx;
-    var last_click_xy={'x':-1, 'y':-1}
+    var last_click_xy = {'x': -1, 'y': -1}
 
     var current_focused_step_form_input = false;
 
@@ -30,7 +30,6 @@ $(document).ready(function () {
         selector_image_rect = selector_image.getBoundingClientRect();
 
         // make the canvas and input steps the same size as the image
-
         $('#browsersteps-selector-canvas').attr('height', selector_image_rect.height).attr('width', selector_image_rect.width);
         //$('#browsersteps-selector-wrapper').attr('width', selector_image_rect.width);
         $('#browser-steps-ui').attr('width', selector_image_rect.width);
@@ -40,11 +39,11 @@ $(document).ready(function () {
         ctx.fillStyle = 'rgba(255,0,0, 0.1)';
         ctx.lineWidth = 3;
         console.log("scaling set  x: " + x_scale + " by y:" + y_scale);
-        //$("#browsersteps-selector-current-xpath").css('max-width', selector_image_rect.width);
     }
 
     // bootstrap it, this will trigger everything else
     $('#browsersteps-img').bind('load', function () {
+        $('body').addClass('full-width');
         console.log("Loaded background...");
         $('#browsersteps-selector-wrapper .loader').fadeOut(2500);
 
@@ -78,7 +77,7 @@ $(document).ready(function () {
                 e.offsetX = e.pageX - targetOffset.left;
                 e.offsetY = e.pageY - targetOffset.top;
             }
-            current_selected_i=false;
+            current_selected_i = false;
             // Reverse order - the most specific one should be deeper/"laster"
             // Basically, find the most 'deepest'
             for (var i = xpath_data['size_pos'].length; i !== 0; i--) {
@@ -105,7 +104,7 @@ $(document).ready(function () {
                 }
             }
 
-        }.debounce(5));
+        }.debounce(10));
     });
 
     // callback for clicking on an xpath on the canvas
@@ -125,27 +124,26 @@ $(document).ready(function () {
                 var x = xpath_data['size_pos'][xpath_data_index];
                 if (first_available.length) {
                     // @todo will it let you click shit that has a layer ontop? probably not.
-                    if (x['tagtype'] === 'text' || x['tagtype'] === 'email'|| x['tagtype'] === 'password') {
+                    if (x['tagtype'] === 'text' || x['tagtype'] === 'email' || x['tagtype'] === 'password') {
                         $('select', first_available).val('Enter text in field').change();
                         $('input[type=text]', first_available).first().val(x['xpath']);
-                        found_something= true;
-                    }
-                    else {
+                        found_something = true;
+                    } else {
                         // Assume it's just for clicking on
                         // what are we clicking on?
                         if (x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit') {
                             $('select', first_available).val('Click button').change();
                             $('input[type=text]', first_available).first().val(x['xpath']);
-                            found_something= true;
+                            found_something = true;
                         }
                     }
                 }
             }
         }
 
-        if(xpath_data_index === false && !found_something) {
+        if (xpath_data_index === false && !found_something) {
             $('select', first_available).val('Click X,Y').change();
-            $('input[type=text]', first_available).first().val(last_click_xy['x']+','+last_click_xy['y']);
+            $('input[type=text]', first_available).first().val(last_click_xy['x'] + ',' + last_click_xy['y']);
             draw_circle_on_canvas(last_click_xy['x'], last_click_xy['y']);
         }
     }
@@ -203,9 +201,9 @@ $(document).ready(function () {
             $(elem_value).fadeIn();
         }
 
-        if ($(this).val() === 'Click X,Y' && last_click_xy['x']>0 && $(elem_value).val().length===0) {
+        if ($(this).val() === 'Click X,Y' && last_click_xy['x'] > 0 && $(elem_value).val().length === 0) {
             // @todo handle scale
-            $(elem_value).val(last_click_xy['x']+','+last_click_xy['y']);
+            $(elem_value).val(last_click_xy['x'] + ',' + last_click_xy['y']);
         }
     }).change();
 
@@ -220,10 +218,10 @@ $(document).ready(function () {
 
     // Add the extra buttons to the steps
     $('ul#browser_steps li').each(function (i) {
-        $(this).append('<div class="control">' +
-            '<a data-step-index='+i+' class="pure-button button-green button-xsmall apply" >Apply</a>&nbsp;' +
-            '<a data-step-index='+i+' class="pure-button button-secondary button-xsmall clear" >Clear</a>' +
-            '</div>')
+            $(this).append('<div class="control">' +
+                '<a data-step-index=' + i + ' class="pure-button button-green button-xsmall apply" >Apply</a>&nbsp;' +
+                '<a data-step-index=' + i + ' class="pure-button button-secondary button-xsmall clear" >Clear</a>' +
+                '</div>')
         }
     );
 

@@ -1169,10 +1169,6 @@ def changedetection_app(config=None, datastore_o=None):
         global browsersteps_live_ui_o
         import base64
 
-#        if browsersteps_live_ui_o is None:
-#            # Because the page re-loaded, make a new one
-#            del(browsersteps_live_ui_o)
-
         # @todo key by UUID?
 
         if request.method == 'POST':
@@ -1184,12 +1180,11 @@ def changedetection_app(config=None, datastore_o=None):
             browsersteps_live_ui_o.call_action(step_operation, step_selector, step_optional_value)
 
             # Try the browser step
-        else:
-            browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()
-
-        # On setup always goto the URL first
-        browsersteps_live_ui_o.action_goto_url(datastore.data['watching'][uuid]['url'])
-
+        if request.method == 'GET':
+            if not browsersteps_live_ui_o:
+                browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()
+                # On setup always goto the URL first
+                browsersteps_live_ui_o.action_goto_url(datastore.data['watching'][uuid]['url'])
 
         state = browsersteps_live_ui_o.get_current_state()
         p = {'screenshot': "data:image/png;base64,{}".format(base64.b64encode(state[0]).decode('ascii')), 'xpath_data': state[1]}
@@ -1201,6 +1196,7 @@ def changedetection_app(config=None, datastore_o=None):
         with open(os.path.join(datastore_o.datastore_path, uuid, "elements.json"), 'w') as f:
             f.write(json.dumps(state[1], indent=1, ensure_ascii=False))
 
+        # @todo BSON/binary JSON, faster xfer, OR pick it off the disk
 
         return p
 

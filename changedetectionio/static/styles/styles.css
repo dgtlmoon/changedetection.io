@@ -538,6 +538,9 @@ footer {
 #selector-header {
   padding-bottom: 1em; }
 
+body.full-width .edit-form {
+  width: 95%; }
+
 .edit-form {
   min-width: 70%;
   /* so it cant overflow */
@@ -592,3 +595,16 @@ ul {
 
 .button-green {
   background-color: #42dd53; }
+
+.noselect {
+  -webkit-touch-callout: none;
+  /* iOS Safari */
+  -webkit-user-select: none;
+  /* Safari */
+  -moz-user-select: none;
+  /* Old versions of Firefox */
+  -ms-user-select: none;
+  /* Internet Explorer/Edge */
+  user-select: none;
+  /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */ }

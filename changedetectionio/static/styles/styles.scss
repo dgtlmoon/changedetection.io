@@ -659,7 +659,11 @@ $form-edge-padding: 20px;
 #selector-header {
   padding-bottom: 1em;
 }
-
+body.full-width {
+  .edit-form {
+    width: 95%;
+  }
+}
 .edit-form {
   min-width: 70%;
   /* so it cant overflow */

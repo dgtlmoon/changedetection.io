@@ -133,6 +133,7 @@ class browsersteps_live_ui():
 
         self.browser = self.playwright.chromium.connect_over_cdp(self.command_executor+"&keepalive={}".format(str(int(keep_open))))
 
+        # @todo handle multiple contexts, bind a unique id from the browser on each req?
         self.context = self.browser.new_context(
             # @todo
             #                user_agent=request_headers['User-Agent'] if request_headers.get('User-Agent') else 'Mozilla/5.0',
