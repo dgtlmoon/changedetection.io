@@ -6,6 +6,34 @@
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
 from changedetectionio import changedetection
+import multiprocessing
+import signal
+import os
+
+def sigterm_handler(_signo, _stack_frame):
+    import sys
+    print('Shutdown: Got SIGCHLD')
+    # https://stackoverflow.com/questions/40453496/python-multiprocessing-capturing-signals-to-restart-child-processes-or-shut-do
+    pid, status = os.waitpid(-1, os.WNOHANG | os.WUNTRACED | os.WCONTINUED)
+
+    print('Sub-process: pid %d status %d' % (pid, status))
+    if status != 0:
+        sys.exit(1)
+
+    raise SystemExit
 
 if __name__ == '__main__':
-    changedetection.main()
+    signal.signal(signal.SIGCHLD, sigterm_handler)
+    # The only way I could find to get Flask to shutdown, is to wrap it and then rely on the subsystem issuing SIGTERM/SIGKILL
+    parse_process = multiprocessing.Process(target=changedetection.main)
+    parse_process.daemon = True
+    parse_process.start()
+    import time
+
+    try:
+        while True:
+            time.sleep(1)
+
+    except KeyboardInterrupt:
+        #parse_process.terminate() not needed, because this process will issue it to the sub-process anyway
+        print ("Exited - CTRL+C")
