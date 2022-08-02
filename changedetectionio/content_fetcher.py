@@ -183,12 +183,44 @@ class Fetcher():
     browser_steps_screenshot_path = None
 
     fetcher_description = "No description"
+    webdriver_js_execute_code = None
+    xpath_element_js = """               
+                // Include the getXpath script directly, easier than fetching
+                !function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):(e=e||self).getXPath=n()}(this,function(){return function(e){var n=e;if(n&&n.id)return'//*[@id="'+n.id+'"]';for(var o=[];n&&Node.ELEMENT_NODE===n.nodeType;){for(var i=0,r=!1,d=n.previousSibling;d;)d.nodeType!==Node.DOCUMENT_TYPE_NODE&&d.nodeName===n.nodeName&&i++,d=d.previousSibling;for(d=n.nextSibling;d;){if(d.nodeName===n.nodeName){r=!0;break}d=d.nextSibling}o.push((n.prefix?n.prefix+":":"")+n.localName+(i||r?"["+(i+1)+"]":"")),n=n.parentNode}return o.length?"/"+o.reverse().join("/"):""}});
+
+
+                const findUpTag = (el) => {
+                  let r = el
+                  chained_css = [];
+                  depth=0;
+            
+                // Strategy 1: Keep going up until we hit an ID tag, imagine it's like  #list-widget div h4
+                  while (r.parentNode) {
+                    if(depth==5) {
+                      break;
+                    }
+                    if('' !==r.id) {
+                      chained_css.unshift("#"+CSS.escape(r.id));
+                      final_selector= chained_css.join(' > ');
+                      // Be sure theres only one, some sites have multiples of the same ID tag :-(
+                      if (window.document.querySelectorAll(final_selector).length ==1 ) {
+                        return final_selector;
+                        }
+                      return null;
+                    } else {
+                      chained_css.unshift(r.tagName.toLowerCase());
+                    }
+                    r=r.parentNode;
+                    depth+=1;
+                  }
+                  return null;
+                }
+"""
 
     xpath_data = None
 
     # Will be needed in the future by the VisualSelector, always get this where possible.
     screenshot = False
-    fetcher_description = "No description"
     system_http_proxy = os.getenv('HTTP_PROXY')
     system_https_proxy = os.getenv('HTTPS_PROXY')
 
@@ -351,11 +383,21 @@ class base_html_playwright(Fetcher, browsersteps_playwright):
             )
 
             self.page = context.new_page()
+            if len(request_headers):
+                context.set_extra_http_headers(request_headers)
+
+            page = context.new_page()
+
             try:
                 self.page.set_default_navigation_timeout(90000)
                 self.page.set_default_timeout(90000)
 
-               # Bug - never set viewport size BEFORE page.goto
+                # Listen for all console events and handle errors
+                self.page.on("console", lambda msg: print(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
+
+                # Bug - never set viewport size BEFORE page.goto
+
+
                 # Waits for the next navigation. Using Python context manager
                 # prevents a race condition between clicking and waiting for a navigation.
                 with self.page.expect_navigation():
@@ -366,6 +408,9 @@ class base_html_playwright(Fetcher, browsersteps_playwright):
                 # This seemed to solve nearly all 'TimeoutErrors'
                 extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
                 self.page.wait_for_timeout(extra_wait * 1000)
+
+                if self.webdriver_js_execute_code is not None:
+                    self.page.evaluate(self.webdriver_js_execute_code)
 
             except playwright._impl._api_types.TimeoutError as e:
                 context.close()
@@ -509,6 +554,11 @@ class base_html_webdriver(Fetcher, browsersteps_selenium):
 
         # Run Browser Steps here
         self.iterate_browser_steps()
+
+        if self.webdriver_js_execute_code is not None:
+            self.driver.execute_script(self.webdriver_js_execute_code)
+            # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
+            self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
 
         self.screenshot = self.driver.get_screenshot_as_png()
 

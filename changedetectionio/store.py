@@ -158,8 +158,7 @@ class ChangeDetectionStore:
     @property
     def threshold_seconds(self):
         seconds = 0
-        mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
-        for m, n in mtable.items():
+        for m, n in Watch.mtable.items():
             x = self.__data['settings']['requests']['time_between_check'].get(m)
             if x:
                 seconds += x * n
@@ -250,7 +249,7 @@ class ChangeDetectionStore:
         return self.data['watching'][uuid].get(val)
 
     # Remove a watchs data but keep the entry (URL etc)
-    def scrub_watch(self, uuid):
+    def clear_watch_history(self, uuid):
         import pathlib
 
         self.__data['watching'][uuid].update(
@@ -298,7 +297,8 @@ class ChangeDetectionStore:
                           'ignore_text', 'css_filter',
                           'subtractive_selectors', 'trigger_text',
                           'extract_title_as_title', 'extract_text',
-                          'text_should_not_be_present']:
+                          'text_should_not_be_present',
+                          'webdriver_js_execute_code']:
                     if res.get(k):
                         apply_extras[k] = res[k]
 
@@ -518,3 +518,11 @@ class ChangeDetectionStore:
                 # But we should set it back to a empty dict so we don't break if this schema runs on an earlier version.
                 # In the distant future we can remove this entirely
                 self.data['watching'][uuid]['history'] = {}
+
+    # We incorrectly stored last_changed when there was not a change, and then confused the output list table
+    def update_3(self):
+        for uuid, watch in self.data['watching'].items():
+            # Be sure it's recalculated
+            p = watch.history
+            if watch.history_n < 2:
+                watch['last_changed'] = 0

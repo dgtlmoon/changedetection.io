@@ -95,6 +95,8 @@ def test_api_simple(client, live_server):
     assert watch_uuid in json.loads(res.data).keys()
     before_recheck_info = json.loads(res.data)[watch_uuid]
     assert before_recheck_info['last_checked'] != 0
+    #705 `last_changed` should be zero on the first check
+    assert before_recheck_info['last_changed'] == 0
     assert before_recheck_info['title'] == 'My test URL'
 
     set_modified_response()

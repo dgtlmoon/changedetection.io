@@ -90,6 +90,14 @@ def test_check_basic_change_detection_functionality(client, live_server):
     res = client.get(url_for("diff_history_page", uuid="first"))
     assert b'Compare newest' in res.data
 
+    # Check the [preview] pulls the right one
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+    assert b'which has this one new line' in res.data
+    assert b'Which is across multiple lines' not in res.data
+
     time.sleep(2)
 
     # Do this a few times.. ensures we dont accidently set the status
