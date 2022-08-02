@@ -1259,7 +1259,6 @@ def notification_runner():
     global notification_debug_log
     from datetime import datetime
     import json
-
     while not app.config.exit.is_set():
         try:
             # At the moment only one thread runs (single runner)

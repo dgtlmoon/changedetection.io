@@ -4,6 +4,7 @@
 
 import getopt
 import os
+import signal
 import sys
 
 import eventlet
@@ -11,7 +12,22 @@ import eventlet.wsgi
 from . import store, changedetection_app, content_fetcher
 from . import __version__
 
+# Only global so we can access it in the signal handler
+datastore = None
+app = None
+
+def sigterm_handler(_signo, _stack_frame):
+    global app
+    global datastore
+
+    app.config.exit.set()
+    datastore.sync_to_json()
+    print('Shutdown: Got SIGTERM, DB saved to disk')
+    raise SystemExit
+
 def main():
+    global datastore
+    global app
     ssl_mode = False
     host = ''
     port = os.environ.get('PORT') or 5000
@@ -72,8 +88,10 @@ def main():
                 "Or use the -C parameter to create the directory.".format(app_config['datastore_path']), file=sys.stderr)
             sys.exit(2)
 
+
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=__version__)
     app = changedetection_app(app_config, datastore)
+    signal.signal(signal.SIGTERM, sigterm_handler)
 
     # Go into cleanup mode
     if do_cleanup:
@@ -110,5 +128,4 @@ def main():
 
     else:
         eventlet.wsgi.server(eventlet.listen((host, int(port))), app)
-
 
