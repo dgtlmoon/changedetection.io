@@ -8,11 +8,17 @@
 from changedetectionio import changedetection
 import multiprocessing
 import signal
-
+import os
 
 def sigterm_handler(_signo, _stack_frame):
+    import sys
     print('Shutdown: Got SIGCHLD')
-    print('Process: %d interupted %s. Done editing' % (_signo, _stack_frame))
+    # https://stackoverflow.com/questions/40453496/python-multiprocessing-capturing-signals-to-restart-child-processes-or-shut-do
+    pid, status = os.waitpid(-1, os.WNOHANG | os.WUNTRACED | os.WCONTINUED)
+
+    print('Sub-process: pid %d status %d' % (pid, status))
+    if status != 0:
+        sys.exit(1)
 
     raise SystemExit
 
