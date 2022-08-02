@@ -4,12 +4,7 @@ from abc import abstractmethod
 import os
 import time
 import logging
-from playwright.async_api import async_playwright
-from playwright.sync_api import sync_playwright
-import playwright._impl._api_types
-from playwright._impl._api_types import Error, TimeoutError
-import asyncio
-from playwright.async_api import async_playwright
+
 
 # @todo - auto-detect and deal with common 'accept cookie' situations
 
@@ -48,6 +43,7 @@ class BrowserStepBase():
 # Good reference - https://playwright.dev/python/docs/input
 #                  https://pythonmana.com/2021/12/202112162236307035.html
 class browsersteps_playwright(BrowserStepBase):
+
     def enter_text_in_field(self, step):
         self.page.fill(step['selector'], step['optional_value'])
         return

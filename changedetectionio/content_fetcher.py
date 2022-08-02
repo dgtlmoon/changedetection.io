@@ -7,7 +7,7 @@ import re
 import requests
 import time
 import sys
-from .browser_steps import  browsersteps_playwright, browsersteps_selenium
+
 
 xpath_element_js = """               
             // Include the getXpath script directly, easier than fetching
@@ -297,7 +297,7 @@ def available_fetchers():
 
     return p
 
-
+from .browser_steps import  browsersteps_playwright, browsersteps_selenium
 class base_html_playwright(Fetcher, browsersteps_playwright):
     fetcher_description = "Playwright {}/Javascript".format(
         os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
