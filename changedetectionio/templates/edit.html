@@ -142,6 +142,7 @@ User-Agent: wonderbra 1.0") }}
             </div>
 
             <div class="tab-pane-inner" id="browser-steps">
+                <img class="beta-logo" src="/static/images/beta-logo.png">
                 <fieldset>
                     <div class="pure-control-group">
                         <!--
@@ -149,8 +150,13 @@ User-Agent: wonderbra 1.0") }}
                         and/or report an error
                         <a id="play-steps" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Play steps  ▶</a>
                         -->
+                        <div class="checkbox ">
+                            <input type=checkbox id="include_text_elements" > <label for="include_text_elements">Include elements with text</label>
+                        </div>
                         <div class="flex-wrapper" >
+
                             <div id="browser-steps-ui" class="noselect"  style="width: 100%; background-color: #eee; border-radius: 5px;">
+
                                 <div  class="noselect"  id="browsersteps-selector-wrapper" style="width: 100%">
                                     <span class="loader"></span>
                                     <img  class="noselect" id="browsersteps-img" src="" style="max-width: 100%; width: 100%;" />
@@ -330,7 +336,6 @@ Unavailable") }}
                                 <p>Sorry, this functionality only works with Playwright/Chrome enabled watches.</p>
                                 <p>Enable the Playwright Chrome fetcher, or alternatively try our <a href="https://lemonade.changedetection.io/start">very affordable subscription based service</a>.</p>
                                 <p>This is because Selenium/WebDriver can not extract full page screenshots reliably.</p>
-
                             </span>
                         {% endif %}
                     </div>

@@ -20,8 +20,11 @@ browser_step_ui_config = {'Choose one': '0 0',
                           #                 'Click button containing text': '0 1',
                           'Click X,Y': '0 1',
                           'Press Enter': '0 0',
-                          'Press Page Up': '0 0',
-                          'Press Page Down': '0 0',
+# weird bug, come back to it later
+#                          'Press Page Up': '0 0',
+#                          'Press Page Down': '0 0',
+                          'Check checkbox': '1 0',
+                          'Uncheck checkbox': '1 0',
                           'Extract text and use as filter': '1 0',
                           #                 'Scroll to top': '0 0',
                           #                 'Scroll to bottom': '0 0',
@@ -97,6 +100,12 @@ class steppable_browser_interface():
     def action_press_page_down(self, selector, value):
         self.page.keyboard.press("PageDown")
 
+    def action_check_checkbox(self, selector, value):
+        self.page.locator(selector).check()
+
+    def action_uncheck_checkbox(self, selector, value):
+        self.page.locator(selector).uncheck()
+
 
 # Responsible for maintaining a live 'context' with browserless
 # @todo - how long do contexts live for anyway?
@@ -162,6 +171,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""
 
         from . import content_fetcher
+        self.page.wait_for_timeout(1 * 1000)
         # Quality set to 1 because it's not used, just used as a work-around for a bug, no need to change this.
         self.page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024}, quality=1)
 
@@ -169,7 +179,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=50)
 
         self.page.evaluate("var css_filter=''")
-        elements = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
+        elements = 'input, select, p,i, div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
         xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%', elements) + "}")
 
         # except

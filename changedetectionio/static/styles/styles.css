@@ -102,6 +102,51 @@ nvm use v14.18.1 && npm install && npm run build
     height: 80px;
     font-size: 3px; }
 
+.switch input {
+  display: none; }
+
+.switch {
+  display: inline-block;
+  width: 20px;
+  /*=w*/
+  height: 10px;
+  /*=h*/
+  margin: 2px;
+  transform: translateY(50%);
+  position: relative; }
+
+.slider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 30px;
+  box-shadow: 0 0 0 2px #777, 0 0 4px #777;
+  cursor: pointer;
+  border: 4px solid transparent;
+  overflow: hidden;
+  transition: 0.2s; }
+
+.slider:before {
+  position: absolute;
+  content: "";
+  width: 100%;
+  height: 100%;
+  background-color: #777;
+  border-radius: 30px;
+  transform: translateX(-30px);
+  /*translateX(-(w-h))*/
+  transition: 0.2s; }
+
+input:checked + .slider:before {
+  transform: translateX(30px);
+  /*translateX(w-h)*/
+  background-color: limeGreen; }
+
+input:checked + .slider {
+  box-shadow: 0 0 0 2px limeGreen, 0 0 8px limeGreen; }
+
 body {
   color: #333;
   background: #262626; }

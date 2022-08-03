@@ -51,8 +51,8 @@ xpath_element_js = """
              bbox = elements[i].getBoundingClientRect();
 
              // forget really small ones
-             if (bbox['width'] <20 && bbox['height'] < 20 ) {
-               continue;
+             if (bbox['width'] <10 && bbox['height'] < 10 ) {
+               //continue;
              }
 
              // @todo the getXpath kind of sucks, it doesnt know when there is for example just one ID sometimes
@@ -90,9 +90,14 @@ xpath_element_js = """
              
              // Horrible hack, some websites lay this ontop with no content, and they always call it clearfix...
              // Horrible sorry, really.
+
+             try {             
              if (elements[i].className.includes("clearfix")) {
                continue;
-             }
+               }
+             } catch (e) {
+               console.log(e);                   
+             }  
 
              size_pos.push({
                xpath: xpath_result,

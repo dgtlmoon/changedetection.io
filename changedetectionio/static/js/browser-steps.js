@@ -11,7 +11,7 @@ $(document).ready(function () {
     })
 
     var apply_buttons_disabled = false;
-
+    var include_text_elements = $("#include_text_elements");
     var xpath_data;
     var current_selected_i;
     var state_clicked = false;
@@ -101,6 +101,8 @@ $(document).ready(function () {
                 ) {
                     // Only highlight these interesting types
                     if (sel['tagtype'] === 'text' ||
+                        sel['tagtype'] === 'search' ||
+                        sel['tagName'] === 'checkbox' ||
                         sel['tagtype'] === 'password' ||
                         sel['tagName'] === 'a' ||
                         sel['tagName'] === 'button' ||
@@ -110,15 +112,17 @@ $(document).ready(function () {
                         current_selected_i = i - 1;
                         break;
                     } else {
-                        ctx.fillStyle = 'rgba(0,0,255, 0.1)';
-                        ctx.strokeStyle = 'rgba(0,0,200, 0.7)';
-                        $('#browsersteps-selector-canvas').css('cursor', 'grab');
 
+                        if ( include_text_elements[0].checked === true) {
                         // blue one with background instead?
-                        ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-                        ctx.fillRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-                        current_selected_i = i - 1;
-                        break;
+                            ctx.fillStyle = 'rgba(0,0,255, 0.1)';
+                            ctx.strokeStyle = 'rgba(0,0,200, 0.7)';
+                            $('#browsersteps-selector-canvas').css('cursor', 'grab');
+                            ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+                            ctx.fillRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+                            current_selected_i = i - 1;
+                            break;
+                        }
                     }
                 }
             }
@@ -142,7 +146,7 @@ $(document).ready(function () {
                 var x = xpath_data['size_pos'][xpath_data_index];
                 if (x && first_available.length) {
                     // @todo will it let you click shit that has a layer ontop? probably not.
-                    if (x['tagtype'] === 'text' || x['tagtype'] === 'email' || x['tagtype'] === 'password') {
+                    if (x['tagtype'] === 'text' || x['tagtype'] === 'email' || x['tagtype'] === 'password' || x['tagtype'] === 'search' ) {
                         $('select', first_available).val('Enter text in field').change();
                         $('input[type=text]', first_available).first().val(x['xpath']);
                         $('input[placeholder="Value"]', first_available).addClass('ok').click().focus();
@@ -150,20 +154,23 @@ $(document).ready(function () {
                     } else {
                         // Assume it's just for clicking on
                         // what are we clicking on?
-                        if (x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit') {
+                        if (x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit'|| x['tagtype'] === 'checkbox') {
                             $('select', first_available).val('Click element').change();
                             $('input[type=text]', first_available).first().val(x['xpath']);
                             found_something = true;
                         }
                     }
                     if (!found_something) {
-                        // Suggest that we use as filter?
-                        // @todo filters should always be in the last steps, nothing non-filter after it
-                        found_something = true;
-                        ctx.strokeStyle = 'rgba(0,0,255, 0.9)';
-                        ctx.fillStyle = 'rgba(0,0,255, 0.1)';
-                        $('select', first_available).val('Extract text and use as filter').change();
-                        $('input[type=text]', first_available).first().val(x['xpath']);
+                        if ( include_text_elements[0].checked === true) {
+                            // Suggest that we use as filter?
+                            // @todo filters should always be in the last steps, nothing non-filter after it
+                            found_something = true;
+                            ctx.strokeStyle = 'rgba(0,0,255, 0.9)';
+                            ctx.fillStyle = 'rgba(0,0,255, 0.1)';
+                            $('select', first_available).val('Extract text and use as filter').change();
+                            $('input[type=text]', first_available).first().val(x['xpath']);
+                            include_text_elements[0].checked = false;
+                        }
                     }
                 }
             }
