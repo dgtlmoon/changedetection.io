@@ -1184,14 +1184,16 @@ def changedetection_app(config=None, datastore_o=None):
             step_selector = request.form.get('selector')
             step_optional_value = request.form.get('optional_value')
 
-            browsersteps_live_ui_o.call_action(step_operation, step_selector, step_optional_value)
+            browsersteps_live_ui_o.call_action(action_name=step_operation,
+                                               selector=step_selector,
+                                               optional_value=step_optional_value)
 
         # Try the browser step
         if request.method == 'GET':
             if not browsersteps_live_ui_o:
                 browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()
-                # On setup always goto the URL first
-                browsersteps_live_ui_o.action_goto_url(datastore.data['watching'][uuid]['url'])
+            # On page load always goto the URL first
+            browsersteps_live_ui_o.action_goto_url(datastore.data['watching'][uuid]['url'])
 
         state = browsersteps_live_ui_o.get_current_state()
         p = {'screenshot': "data:image/png;base64,{}".format(base64.b64encode(state[0]).decode('ascii')), 'xpath_data': state[1]}

@@ -4,93 +4,79 @@ from abc import abstractmethod
 import os
 import time
 import logging
-
-
-# @todo - auto-detect and deal with common 'accept cookie' situations
-
-class BrowserStepBase():
-
-    page = None # instance of
-
-    # Blank step
-    def choose_one(self, step):
-        return
-
-    @abstractmethod
-    def enter_text_in_field(self, step):
-        return
-
-    @abstractmethod
-    def wait_for_text(self, step):
-        return
-
-    @abstractmethod
-    def wait_for_seconds(self, step):
-        return
-
-    @abstractmethod
-    def click_button(self, step):
-        return
-
-    @abstractmethod
-    def click_button_containing_text(self, step):
-        return
-
-    @abstractmethod
-    def click_x_y(self, step):
-        return
+import re
 
 # Good reference - https://playwright.dev/python/docs/input
 #                  https://pythonmana.com/2021/12/202112162236307035.html
-class browsersteps_playwright(BrowserStepBase):
+#
+# ONLY Works in Playwright because we need the fullscreen screenshot
+class steppable_browser_interface():
+    page = None
 
-    def enter_text_in_field(self, step):
-        self.page.fill(step['selector'], step['optional_value'])
-        return
+    # Convert and perform "Click Button" for example
+    def call_action(self, action_name, selector, optional_value):
 
-    def wait_for_text(self, step):
-        return
+        call_action_name = re.sub('[^0-9a-zA-Z]+', '_', action_name.lower())
 
-    def wait_for_seconds(self, step):
-        self.page.wait_for_timeout(int(step['optional_value']) * 1000)
-        return
+        # https://playwright.dev/python/docs/selectors#xpath-selectors
+        if selector.startswith('/') and not selector.startswith('//'):
+            selector = "xpath=" + selector
 
-    def click_button(self, step):
-        self.page.click(step['selector'])
-        return
+        action_handler = getattr(self, "action_" + call_action_name)
+        action_handler(selector, optional_value)
+        self.page.wait_for_timeout(1 * 1000)
 
-    def click_x_y(self, step):
-        x,y = step['optional_value'].split(',')
-        self.page.mouse.click('body', position={'x': x, 'y': y})
-        return
+    def action_goto_url(self, url):
+        with self.page.expect_navigation():
+            self.page.set_viewport_size({"width": 1280, "height": 5000})
+            response = self.page.goto(url, wait_until='load')
+        # Wait_until = commit
+        # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
+        # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
+        # This seemed to solve nearly all 'TimeoutErrors'
+        extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
+        self.page.wait_for_timeout(extra_wait * 1000)
 
-    def click_button_containing_text(self, step):
-        self.page.click("text="+step['optional_value'])
-        return
+    def action_enter_text_in_field(self, selector, value):
+        if not len(selector.strip()):
+            return
+        self.page.fill(selector, value, timeout=5 * 1000)
 
-    def select_by_label(self, step):
-        self.page.select_option(step['selector'], label=step['optional_value'])
-        return
+    def action_click_button(self, selector, value):
+        if not len(selector.strip()):
+            return
+        self.page.click(selector, timeout=5 * 1000)
 
-class browsersteps_selenium(BrowserStepBase):
-    def enter_text_in_field(self, step):
-        return
+    def action_click_button_if_exists(self, selector, value):
+        if not len(selector.strip()):
+            return
+        try:
+            self.page.click(selector, timeout=3 * 1000)
+        except TimeoutError as e:
+            return
 
-    def wait_for_text(self, step):
-        return
+    def action_click_x_y(self, selector, value):
+        x, y = value.strip().split(',')
+        self.page.mouse.click(x=int(x.strip()), y=int(y.strip()))
 
-    def wait_for_seconds(self, step):
-        return
+    def action_wait_for_seconds(self, selector, value):
+        self.page.wait_for_timeout(int(value) * 1000)
 
-    def click_button(self, step):
-        return
+    # @todo - in the future make some popout interface to capture what needs to be set
+    # https://playwright.dev/python/docs/api/class-keyboard
+    def action_press_enter(self, selector, value):
+        self.page.keyboard.press("Enter")
 
-    def click_button_containing_text(self, step):
-        return
+    def action_press_page_up(self, selector, value):
+        self.page.keyboard.press("PageUp")
+
+    def action_press_page_down(self, selector, value):
+        self.page.keyboard.press("PageDown")
+
 
 # Responsible for maintaining a live 'context' with browserless
 # @todo - how long do contexts live for anyway?
-class browsersteps_live_ui():
+class browsersteps_live_ui(steppable_browser_interface):
 
     context = None
     page = None
@@ -146,41 +132,6 @@ class browsersteps_live_ui():
         self.page.set_default_timeout(keep_open)
 
 
-    # Convert and perform "Click Button" for example
-    def call_action(self, action_name, selector, optional_value):
-        import re
-        call_action_name = re.sub('[^0-9a-zA-Z]+', '_', action_name.lower())
-
-        # https://playwright.dev/python/docs/selectors#xpath-selectors
-        if selector.startswith('/') and not selector.startswith('//'):
-            selector = "xpath=" + selector
-
-        action_handler = getattr(self, "action_" + call_action_name)
-        action_handler(selector, optional_value)
-
-    def action_goto_url(self, url):
-        with self.page.expect_navigation():
-            self.page.set_viewport_size({"width": 1280, "height": 5000})
-            response = self.page.goto(url, wait_until='load')
-        # Wait_until = commit
-        # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
-        # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
-        # This seemed to solve nearly all 'TimeoutErrors'
-        extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
-        self.page.wait_for_timeout(extra_wait * 1000)
-
-    def action_enter_text_in_field(self, selector, value):
-        self.page.fill(selector, value)
-
-    def action_click_button(self, selector, value):
-        self.page.click(selector)
-
-    def action_click_x_y(self, selector, value):
-        x, y = selector.strip().split(',')
-        self.page.mouse.click(x=int(x), y=int(y))
-
-    def action_wait_for_seconds(self, selector, value):
-        self.page.wait_for_timeout(int(value)*1000)
 
     def get_current_state(self):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""

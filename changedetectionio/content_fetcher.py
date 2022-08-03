@@ -24,7 +24,7 @@ xpath_element_js = """
                   break;
                 }
                 if('' !==r.id) {
-                  chained_css.unshift("#"+r.id);
+                  chained_css.unshift("#"+CSS.escape(r.id));
                   final_selector= chained_css.join('>');
                   // Be sure theres only one, some sites have multiples of the same ID tag :-(
                   if (window.document.querySelectorAll(final_selector).length ==1 ) {
@@ -261,22 +261,33 @@ class Fetcher():
         return True
 
     def iterate_browser_steps(self):
-        step_n = 1
+        step_n = 0
+        from .browser_steps import steppable_browser_interface
         if self.browser_steps is not None and len(self.browser_steps):
+            interface = steppable_browser_interface()
+            interface.page = self.page
+
             for step in self.browser_steps:
+                step_n += 1
                 step_machine_name = re.sub(r'\W', '_', step['operation'].lower()).strip('_')
+
+                if not len(step['operation']) or step_machine_name == 'choose_one':
+                    print(">> skip step n {} - {}...".format(step_n, step_machine_name))
+                    continue
+
                 logging.debug("Running browser step '{}'".format(step_machine_name))
                 try:
-                    getattr(self, step_machine_name)(step)
+                    print(">> step n {} - {}...".format(step_n, step_machine_name))
+                    getattr(interface, "call_action")(action_name=step['operation'],
+                                                      selector=step['selector'],
+                                                      optional_value=step['optional_value'])
                     self.screenshot_step(step_n)
+
                 except TimeoutError:
                     self.screenshot_step("TimeoutError_error")
                     raise TimeoutError
                 except Exception as e:
                     self.screenshot_step("error")
-
-                step_n += 1
-                time.sleep(0.2)
 
     # It's always good to reset these
     def delete_browser_steps_screenshots(self):
@@ -304,8 +315,7 @@ def available_fetchers():
 
     return p
 
-from .browser_steps import  browsersteps_playwright, browsersteps_selenium
-class base_html_playwright(Fetcher, browsersteps_playwright):
+class base_html_playwright(Fetcher):
     fetcher_description = "Playwright {}/Javascript".format(
         os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
     )
@@ -414,7 +424,7 @@ class base_html_playwright(Fetcher, browsersteps_playwright):
                 extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
                 self.page.wait_for_timeout(extra_wait * 1000)
 
-                if self.webdriver_js_execute_code is not None:
+                if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
                     self.page.evaluate(self.webdriver_js_execute_code)
 
             except playwright._impl._api_types.TimeoutError as e:
@@ -429,8 +439,6 @@ class base_html_playwright(Fetcher, browsersteps_playwright):
                 browser.close()
                 raise PageUnloadable(url=url, status_code=None)
 
-            # Run Browser Steps here
-            self.iterate_browser_steps()
 
             if response is None:
                 context.close()
@@ -440,8 +448,14 @@ class base_html_playwright(Fetcher, browsersteps_playwright):
 
             # Bug 2(?) Set the viewport size AFTER loading the page
             self.page.set_viewport_size({"width": 1280, "height": 1024})
+
+            # Run Browser Steps here
+            self.iterate_browser_steps()
+
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
             time.sleep(extra_wait)
+
+
             self.content = self.page.content()
             self.status_code = response.status
 
@@ -486,7 +500,7 @@ class base_html_playwright(Fetcher, browsersteps_playwright):
             browser.close()
 
 
-class base_html_webdriver(Fetcher, browsersteps_selenium):
+class base_html_webdriver(Fetcher):
     if os.getenv("WEBDRIVER_URL"):
         fetcher_description = "WebDriver Chrome/Javascript via '{}'".format(os.getenv("WEBDRIVER_URL"))
     else:

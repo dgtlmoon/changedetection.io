@@ -10,6 +10,7 @@ $(document).ready(function () {
         }
     })
 
+    var apply_buttons_disabled = false;
 
     var xpath_data;
     var current_selected_i;
@@ -240,8 +241,17 @@ $(document).ready(function () {
 
 
     $('ul#browser_steps li .control .apply').click(function (element) {
+        // sequential requests @todo refactor
+        if(apply_buttons_disabled) {
+            return;
+        }
+
         var current_data = $(element.currentTarget).closest('li');
         $('#browser-steps-ui .loader').fadeIn();
+        apply_buttons_disabled=true;
+        $('ul#browser_steps li .control .apply').css('opacity',0.5);
+        $("#browsersteps-img").css('opacity',0.8);
+
         // POST the currently clicked step form widget back and await response, redraw
         $.ajax({
             method: "POST",
@@ -262,9 +272,15 @@ $(document).ready(function () {
             xpath_data = data.xpath_data;
             $('#browsersteps-img').attr('src', data.screenshot);
             $('#browser-steps-ui .loader').fadeOut();
+            apply_buttons_disabled=false;
+            $("#browsersteps-img").css('opacity',1);
+            $('ul#browser_steps li .control .apply').css('opacity',1);
         }).fail(function (data) {
             console.log(data);
             alert('There was an error communicating with the server.');
+            apply_buttons_disabled=false;
+            $('ul#browser_steps li .control .apply').css('opacity',1);
+            $("#browsersteps-img").css('opacity',1);
         });
 
     });

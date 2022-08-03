@@ -19,10 +19,11 @@ app = None
 def sigterm_handler(_signo, _stack_frame):
     global app
     global datastore
-
+    print('Shutdown: Got SIGTERM, DB saved to disk')
+    return
     app.config.exit.set()
     datastore.sync_to_json()
-    print('Shutdown: Got SIGTERM, DB saved to disk')
+
     raise SystemExit
 
 def main():
