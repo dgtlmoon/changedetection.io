@@ -6,6 +6,30 @@ import time
 import logging
 import re
 
+# Two flags, tell the JS which of the "Selector" or "Value" field should be enabled in the front end
+# 0- off, 1- on
+browser_step_ui_config = {'Choose one': '0 0',
+                          'Enter text in field': '1 1',
+                          'Select by label': '1 1',
+                          'Wait for text': '0 1',
+                          'Wait for seconds': '0 1',
+                          #                 'Check checkbox': '1 0',
+                          #                 'Uncheck checkbox': '1 0',
+                          'Click element': '1 0',
+                          'Click element if exists': '1 0',
+                          #                 'Click button containing text': '0 1',
+                          'Click X,Y': '0 1',
+                          'Press Enter': '0 0',
+                          'Press Page Up': '0 0',
+                          'Press Page Down': '0 0',
+                          'Extract text and use as filter': '1 0',
+                          #                 'Scroll to top': '0 0',
+                          #                 'Scroll to bottom': '0 0',
+                          #                 'Scroll to element': '1 0',
+                          # @todo
+                          #                 'Switch to iFrame by index number': '0 1'
+                          }
+
 # Good reference - https://playwright.dev/python/docs/input
 #                  https://pythonmana.com/2021/12/202112162236307035.html
 #
@@ -42,12 +66,12 @@ class steppable_browser_interface():
             return
         self.page.fill(selector, value, timeout=5 * 1000)
 
-    def action_click_button(self, selector, value):
+    def action_click_element(self, selector, value):
         if not len(selector.strip()):
             return
         self.page.click(selector, timeout=5 * 1000)
 
-    def action_click_button_if_exists(self, selector, value):
+    def action_click_element_if_exists(self, selector, value):
         if not len(selector.strip()):
             return
         try:
@@ -100,6 +124,7 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     def __init__(self):
         self.age_start = time.time()
+        #@ todo if content, and less than say 20 minutes in age_start to now remaining, create a new one
         if self.context is None:
             self.connect()
 
@@ -139,12 +164,13 @@ class browsersteps_live_ui(steppable_browser_interface):
         from . import content_fetcher
         # Quality set to 1 because it's not used, just used as a work-around for a bug, no need to change this.
         self.page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024}, quality=1)
-        # The actual screenshot
 
-        screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
+        # The actual screenshot
+        screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=50)
 
         self.page.evaluate("var css_filter=''")
-        xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%','input, button, textarea, img, a, span, div') + "}")
+        elements = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
+        xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%', elements) + "}")
 
         # except
         # playwright._impl._api_types.Error: Browser closed.

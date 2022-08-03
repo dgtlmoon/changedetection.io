@@ -536,6 +536,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     def edit_page(uuid):
         from changedetectionio import forms
+        from changedetectionio.browser_steps import browser_step_ui_config
 
         using_default_check_time = True
         # More for testing, possible to return the first/only
@@ -651,7 +652,6 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and default['fetch_backend'] == 'html_webdriver'
-
             output = render_template("edit.html",
                                      uuid=uuid,
                                      watch=datastore.data['watching'][uuid],
@@ -660,7 +660,7 @@ def changedetection_app(config=None, datastore_o=None):
                                      using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
-                                     browser_steps_config=forms.browser_steps,
+                                     browser_steps_config=browser_step_ui_config,
                                      visualselector_data_is_ready=visualselector_data_is_ready,
                                      visualselector_enabled=visualselector_enabled,
                                      playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False)
@@ -1184,6 +1184,7 @@ def changedetection_app(config=None, datastore_o=None):
             step_selector = request.form.get('selector')
             step_optional_value = request.form.get('optional_value')
 
+            # @todo try.. accept.. nice errors not popups..
             browsersteps_live_ui_o.call_action(action_name=step_operation,
                                                selector=step_selector,
                                                optional_value=step_optional_value)

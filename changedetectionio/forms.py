@@ -2,10 +2,8 @@ import re
 
 from wtforms import (
     BooleanField,
-    Field,
     Form,
     IntegerField,
-    PasswordField,
     RadioField,
     SelectField,
     StringField,
@@ -15,9 +13,12 @@ from wtforms import (
     validators,
     widgets
 )
-from wtforms.fields import FieldList, FormField
+from wtforms.fields import FieldList
 from wtforms.validators import ValidationError
-import json
+
+# default
+# each select <option data-enabled="enabled-0-0"
+from changedetectionio.browser_steps import browser_step_ui_config
 
 from changedetectionio import content_fetcher
 from changedetectionio.notification import (
@@ -39,30 +40,6 @@ valid_method = {
 
 default_method = 'GET'
 
-# Two flags, tell the JS which of the "Selector" or "Value" field should be enabled
-# 0- off, 1- on
-
-browser_steps = {'Choose one': '0 0',
-                 'Enter text in field': '1 1',
-                 'Select by label': '1 1',
-                 'Wait for text': '0 1',
-                 'Wait for seconds': '0 1',
-#                 'Check checkbox': '1 0',
-#                 'Uncheck checkbox': '1 0',
-                 'Click button': '1 0',
-                 'Click button if exists': '1 0',
-#                 'Click button containing text': '0 1',
-                 'Click X,Y': '0 1',
-                 'Press Enter': '0 0',
-                 'Press Page Up': '0 0',
-                 'Press Page Down': '0 0',
-
-                 #                 'Scroll to top': '0 0',
-#                 'Scroll to bottom': '0 0',
-#                 'Scroll to element': '1 0',
-# @todo
-#                 'Switch to iFrame by index number': '0 1'
-                 }
 
 class StringListField(StringField):
     widget = widgets.TextArea()
@@ -349,9 +326,8 @@ class commonSettingsForm(Form):
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")] )
 
 class SingleBrowserStep(Form):
-    # default
-    # each select <option data-enabled="enabled-0-0"
-    operation = SelectField('Operation', [validators.Optional()], choices=browser_steps.keys())
+
+    operation = SelectField('Operation', [validators.Optional()], choices=browser_step_ui_config.keys())
 
     # maybe better to set some <script>var..
     selector = StringField('Selector', [validators.Optional()], render_kw={"placeholder": "CSS or xPath selector"})

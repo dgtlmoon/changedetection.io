@@ -78,6 +78,7 @@ $(document).ready(function () {
             // checkbox if find elements is enabled
             ctx.clearRect(0, 0, c.width, c.height);
             ctx.fillStyle = 'rgba(255,0,0, 0.1)';
+            ctx.strokeStyle = 'rgba(255,0,0, 0.9)';
 
             // Add in offset
             if ((typeof e.offsetX === "undefined" || typeof e.offsetY === "undefined") || (e.offsetX === 0 && e.offsetY === 0)) {
@@ -88,6 +89,7 @@ $(document).ready(function () {
             current_selected_i = false;
             // Reverse order - the most specific one should be deeper/"laster"
             // Basically, find the most 'deepest'
+            $('#browsersteps-selector-canvas').css('cursor', 'pointer');
             for (var i = xpath_data['size_pos'].length; i !== 0; i--) {
                 // draw all of them? let them choose somehow?
                 var sel = xpath_data['size_pos'][i - 1];
@@ -107,7 +109,16 @@ $(document).ready(function () {
                         ctx.fillRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
                         current_selected_i = i - 1;
                         break;
+                    } else {
+                        ctx.fillStyle = 'rgba(0,0,255, 0.1)';
+                        ctx.strokeStyle = 'rgba(0,0,200, 0.7)';
+                        $('#browsersteps-selector-canvas').css('cursor', 'grab');
 
+                        // blue one with background instead?
+                        ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+                        ctx.fillRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+                        current_selected_i = i - 1;
+                        break;
                     }
                 }
             }
@@ -117,7 +128,6 @@ $(document).ready(function () {
 
     // callback for clicking on an xpath on the canvas
     function process_selected(xpath_data_index) {
-        console.log(xpath_data['size_pos'][xpath_data_index]);
         found_something = false;
         var first_available = $("ul#browser_steps li.empty").first();
 
@@ -141,10 +151,19 @@ $(document).ready(function () {
                         // Assume it's just for clicking on
                         // what are we clicking on?
                         if (x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit') {
-                            $('select', first_available).val('Click button').change();
+                            $('select', first_available).val('Click element').change();
                             $('input[type=text]', first_available).first().val(x['xpath']);
                             found_something = true;
                         }
+                    }
+                    if (!found_something) {
+                        // Suggest that we use as filter?
+                        // @todo filters should always be in the last steps, nothing non-filter after it
+                        found_something = true;
+                        ctx.strokeStyle = 'rgba(0,0,255, 0.9)';
+                        ctx.fillStyle = 'rgba(0,0,255, 0.1)';
+                        $('select', first_available).val('Extract text and use as filter').change();
+                        $('input[type=text]', first_available).first().val(x['xpath']);
                     }
                 }
             }
