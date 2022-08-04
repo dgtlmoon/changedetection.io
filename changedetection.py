@@ -10,7 +10,7 @@ import multiprocessing
 import signal
 import os
 
-def sigterm_handler(_signo, _stack_frame):
+def sigchld_handler(_signo, _stack_frame):
     import sys
     print('Shutdown: Got SIGCHLD')
     # https://stackoverflow.com/questions/40453496/python-multiprocessing-capturing-signals-to-restart-child-processes-or-shut-do
@@ -23,7 +23,9 @@ def sigterm_handler(_signo, _stack_frame):
     raise SystemExit
 
 if __name__ == '__main__':
-    signal.signal(signal.SIGCHLD, sigterm_handler)
+
+    #signal.signal(signal.SIGCHLD, sigchld_handler)
+
     # The only way I could find to get Flask to shutdown, is to wrap it and then rely on the subsystem issuing SIGTERM/SIGKILL
     parse_process = multiprocessing.Process(target=changedetection.main)
     parse_process.daemon = True
