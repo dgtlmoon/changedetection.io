@@ -704,10 +704,13 @@ def changedetection_app(config=None, datastore_o=None):
 
             if form.validate():
                 # Don't set password to False when a password is set - should be only removed with the `removepassword` button
-                if datastore.data['settings']['application'].get('password') and 'password' in form.data['application']:
-                    del(form.data['application']['password'])
+                app_update = dict(deepcopy(form.data['application']))
 
-                datastore.data['settings']['application'].update(form.data['application'])
+                # Never update password with '' or False (Added by wtforms when not in submission)
+                if 'password' in app_update and not app_update['password']:
+                    del (app_update['password'])
+
+                datastore.data['settings']['application'].update(app_update)
                 datastore.data['settings']['requests'].update(form.data['requests'])
 
                 if not os.getenv("SALTED_PASS", False) and len(form.application.form.password.encrypted_password):

@@ -19,7 +19,6 @@ def test_check_access_control(app, client):
         )
 
         assert b"Password protection enabled." in res.data
-        assert b"LOG OUT" not in res.data
 
         # Check we hit the login
         res = c.get(url_for("index"), follow_redirects=True)
@@ -38,7 +37,42 @@ def test_check_access_control(app, client):
             follow_redirects=True
         )
 
+        # Yes we are correctly logged in
         assert b"LOG OUT" in res.data
+
+        # 598 - Password should be set and not accidently removed
+        res = c.post(
+            url_for("settings_page"),
+            data={
+                  "requests-time_between_check-minutes": 180,
+                  'application-fetch_backend': "html_requests"},
+            follow_redirects=True
+        )
+
+        res = c.get(url_for("logout"),
+            follow_redirects=True)
+
+        res = c.get(url_for("settings_page"),
+            follow_redirects=True)
+
+
+        assert b"Login" in res.data
+
+        res = c.get(url_for("login"))
+        assert b"Login" in res.data
+
+
+        res = c.post(
+            url_for("login"),
+            data={"password": "foobar"},
+            follow_redirects=True
+        )
+
+        # Yes we are correctly logged in
+        assert b"LOG OUT" in res.data
+        return
+
+
         res = c.get(url_for("settings_page"))
 
         # Menu should be available now
