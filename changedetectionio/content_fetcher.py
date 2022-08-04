@@ -50,9 +50,9 @@ xpath_element_js = """
             for (var i = 0; i < elements.length; i++) {   
              bbox = elements[i].getBoundingClientRect();
 
-             // forget really small ones
-             if (bbox['width'] <10 && bbox['height'] < 10 ) {
-               //continue;
+             // forget really small ones, and filter out bad extractions
+             if (bbox['width'] <1 || bbox['height'] < 1 ) {
+               continue;
              }
 
              // @todo the getXpath kind of sucks, it doesnt know when there is for example just one ID sometimes
@@ -143,7 +143,7 @@ xpath_element_js = """
                  }
             }
             // Window.width required for proper scaling in the frontend
-            return {'size_pos':size_pos, 'browser_width': window.innerWidth};
+            return {'size_pos':size_pos, 'browser_width': window.innerWidth, 'browser_height': window.innerHeight};
 """
 
 class PageUnloadable(Exception):

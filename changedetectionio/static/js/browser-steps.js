@@ -21,7 +21,9 @@ $(document).ready(function () {
     var ctx;
     var last_click_xy = {'x': -1, 'y': -1}
 
-    var current_focused_step_form_input = false;
+    $(window).resize(function () {
+        set_scale();
+    });
 
     function set_scale() {
 
@@ -68,10 +70,9 @@ $(document).ready(function () {
             // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
             e.preventDefault()
             console.log(e);
-            last_click_xy = {'x': e.offsetX, 'y': e.offsetY}
+            last_click_xy = {'x': parseInt((1 / x_scale) * e.offsetX), 'y': parseInt((1 / y_scale) * e.offsetY)}
             process_selected(current_selected_i);
             current_selected_i = false;
-
         });
 
         $('#browsersteps-selector-canvas').bind('mousemove', function (e) {
@@ -130,51 +131,55 @@ $(document).ready(function () {
         }.debounce(10));
     });
 
+    $("#browser-steps-fieldlist").bind('mouseover', function(e) {
+        console.log(e.xpath_data_index);
+    });
+
     // callback for clicking on an xpath on the canvas
     function process_selected(xpath_data_index) {
         found_something = false;
         var first_available = $("ul#browser_steps li.empty").first();
 
-        // Fill in the current focused input
-        if (current_focused_step_form_input) {
-            $(current_focused_step_form_input).val(xpath_data['size_pos'][xpath_data_index]['xpath']);
-        } else {
-            if (xpath_data_index !== false) {
-                // Nothing focused, so fill in a new one
-                // if inpt type button or <button>
-                // from the top, find the next not used one and use it
-                var x = xpath_data['size_pos'][xpath_data_index];
-                if (x && first_available.length) {
-                    // @todo will it let you click shit that has a layer ontop? probably not.
-                    if (x['tagtype'] === 'text' || x['tagtype'] === 'email' || x['tagtype'] === 'password' || x['tagtype'] === 'search' ) {
-                        $('select', first_available).val('Enter text in field').change();
+
+        if (xpath_data_index !== false) {
+            // Nothing focused, so fill in a new one
+            // if inpt type button or <button>
+            // from the top, find the next not used one and use it
+            var x = xpath_data['size_pos'][xpath_data_index];
+            if (x && first_available.length) {
+                // @todo will it let you click shit that has a layer ontop? probably not.
+                if (x['tagtype'] === 'text' || x['tagtype'] === 'email' || x['tagtype'] === 'password' || x['tagtype'] === 'search' ) {
+                    $('select', first_available).val('Enter text in field').change();
+                    $('input[type=text]', first_available).first().val(x['xpath']);
+                    $('input[placeholder="Value"]', first_available).addClass('ok').click().focus();
+                    found_something = true;
+                } else {
+                    // Assume it's just for clicking on
+                    // what are we clicking on?
+                    if (x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit'|| x['tagtype'] === 'checkbox') {
+                        $('select', first_available).val('Click element').change();
                         $('input[type=text]', first_available).first().val(x['xpath']);
-                        $('input[placeholder="Value"]', first_available).addClass('ok').click().focus();
                         found_something = true;
-                    } else {
-                        // Assume it's just for clicking on
-                        // what are we clicking on?
-                        if (x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit'|| x['tagtype'] === 'checkbox') {
-                            $('select', first_available).val('Click element').change();
-                            $('input[type=text]', first_available).first().val(x['xpath']);
-                            found_something = true;
-                        }
                     }
-                    if (!found_something) {
-                        if ( include_text_elements[0].checked === true) {
-                            // Suggest that we use as filter?
-                            // @todo filters should always be in the last steps, nothing non-filter after it
-                            found_something = true;
-                            ctx.strokeStyle = 'rgba(0,0,255, 0.9)';
-                            ctx.fillStyle = 'rgba(0,0,255, 0.1)';
-                            $('select', first_available).val('Extract text and use as filter').change();
-                            $('input[type=text]', first_available).first().val(x['xpath']);
-                            include_text_elements[0].checked = false;
-                        }
+                }
+
+                first_available.xpath_data_index=xpath_data_index;
+
+                if (!found_something) {
+                    if ( include_text_elements[0].checked === true) {
+                        // Suggest that we use as filter?
+                        // @todo filters should always be in the last steps, nothing non-filter after it
+                        found_something = true;
+                        ctx.strokeStyle = 'rgba(0,0,255, 0.9)';
+                        ctx.fillStyle = 'rgba(0,0,255, 0.1)';
+                        $('select', first_available).val('Extract text and use as filter').change();
+                        $('input[type=text]', first_available).first().val(x['xpath']);
+                        include_text_elements[0].checked = false;
                     }
                 }
             }
         }
+
 
         if (xpath_data_index === false && !found_something) {
             $('select', first_available).val('Click X,Y').change();
@@ -242,10 +247,6 @@ $(document).ready(function () {
         }
     }).change();
 
-    $('#browser-steps input[type=text]').first().on("focus", function () {
-        current_focused_step_form_input = this;
-    });
-
     function set_greyed_state() {
         $('ul#browser_steps select').not('option:selected[value="Choose one"]').closest('li').css('opacity', 1).removeClass('empty');
         $('ul#browser_steps select option:selected[value="Choose one"]').closest('li').css('opacity', 0.35).addClass('empty');
@@ -276,7 +277,7 @@ $(document).ready(function () {
         $('#browser-steps-ui .loader').fadeIn();
         apply_buttons_disabled=true;
         $('ul#browser_steps li .control .apply').css('opacity',0.5);
-        $("#browsersteps-img").css('opacity',0.8);
+        $("#browsersteps-img").css('opacity',0.65);
 
         // POST the currently clicked step form widget back and await response, redraw
         $.ajax({

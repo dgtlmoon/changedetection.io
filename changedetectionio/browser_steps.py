@@ -84,7 +84,9 @@ class steppable_browser_interface():
 
     def action_click_x_y(self, selector, value):
         x, y = value.strip().split(',')
-        self.page.mouse.click(x=int(x.strip()), y=int(y.strip()))
+        x = int(float(x.strip()))
+        y = int(float(y.strip()))
+        self.page.mouse.click(x=x, y=y)
 
     def action_wait_for_seconds(self, selector, value):
         self.page.wait_for_timeout(int(value) * 1000)
