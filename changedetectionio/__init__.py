@@ -703,6 +703,10 @@ def changedetection_app(config=None, datastore_o=None):
                     return redirect(url_for('settings_page'))
 
             if form.validate():
+                # Don't set password to False when a password is set - should be only removed with the `removepassword` button
+                if datastore.data['settings']['application'].get('password') and 'password' in form.data['application']:
+                    del(form.data['application']['password'])
+
                 datastore.data['settings']['application'].update(form.data['application'])
                 datastore.data['settings']['requests'].update(form.data['requests'])
 
