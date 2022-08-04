@@ -73,6 +73,14 @@ $(document).ready(function () {
             last_click_xy = {'x': parseInt((1 / x_scale) * e.offsetX), 'y': parseInt((1 / y_scale) * e.offsetY)}
             process_selected(current_selected_i);
             current_selected_i = false;
+
+            // @todo
+// if process selected returned false..
+            //                    if (xpath_data_index === false && !found_something) {
+//            $('select', first_available).val('Click X,Y').change();
+//            $('input[type=text]', first_available).first().val(last_click_xy['x'] + ',' + last_click_xy['y']);
+//            draw_circle_on_canvas(e.offsetX, e.offsetY);
+  //      }
         });
 
         $('#browsersteps-selector-canvas').bind('mousemove', function (e) {
@@ -104,6 +112,7 @@ $(document).ready(function () {
                     if (sel['tagtype'] === 'text' ||
                         sel['tagtype'] === 'search' ||
                         sel['tagName'] === 'checkbox' ||
+                        sel['tagName'] === 'textarea' ||
                         sel['tagtype'] === 'password' ||
                         sel['tagName'] === 'a' ||
                         sel['tagName'] === 'button' ||
@@ -148,7 +157,7 @@ $(document).ready(function () {
             var x = xpath_data['size_pos'][xpath_data_index];
             if (x && first_available.length) {
                 // @todo will it let you click shit that has a layer ontop? probably not.
-                if (x['tagtype'] === 'text' || x['tagtype'] === 'email' || x['tagtype'] === 'password' || x['tagtype'] === 'search' ) {
+                if (x['tagtype'] === 'text' || x['tagtype'] === 'email' || x['tagName'] === 'textarea' || x['tagtype'] === 'password' || x['tagtype'] === 'search' ) {
                     $('select', first_available).val('Enter text in field').change();
                     $('input[type=text]', first_available).first().val(x['xpath']);
                     $('input[placeholder="Value"]', first_available).addClass('ok').click().focus();
@@ -178,13 +187,6 @@ $(document).ready(function () {
                     }
                 }
             }
-        }
-
-
-        if (xpath_data_index === false && !found_something) {
-            $('select', first_available).val('Click X,Y').change();
-            $('input[type=text]', first_available).first().val(last_click_xy['x'] + ',' + last_click_xy['y']);
-            draw_circle_on_canvas(last_click_xy['x'], last_click_xy['y']);
         }
     }
 

@@ -1170,6 +1170,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/api/browsersteps_update", methods=['GET', 'POST'])
     def browsersteps_ui_update():
         import json
+        import playwright._impl._api_types
         uuid = request.args.get('uuid')
 
         from . import browser_steps
@@ -1185,9 +1186,15 @@ def changedetection_app(config=None, datastore_o=None):
             step_optional_value = request.form.get('optional_value')
 
             # @todo try.. accept.. nice errors not popups..
-            browsersteps_live_ui_o.call_action(action_name=step_operation,
-                                               selector=step_selector,
-                                               optional_value=step_optional_value)
+            try:
+                browsersteps_live_ui_o.call_action(action_name=step_operation,
+                                                   selector=step_selector,
+                                                   optional_value=step_optional_value)
+            except playwright._impl._api_types.TimeoutError as e:
+                x=1
+                return 0
+
+
 
         # Try the browser step
         if request.method == 'GET':

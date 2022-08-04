@@ -149,7 +149,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         self.playwright = sync_playwright().start()
         keep_open = (60) * 60 * 1000
 
-        self.browser = self.playwright.chromium.connect_over_cdp(self.command_executor+"&keepalive={}&timeout=600000".format(str(int(keep_open))))
+        self.browser = self.playwright.chromium.connect_over_cdp(self.command_executor+"&keepalive={}&timeout=600000&blockAds=1".format(str(int(keep_open))))
 
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
         self.context = self.browser.new_context(
@@ -181,7 +181,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=50)
 
         self.page.evaluate("var css_filter=''")
-        elements = 'input, select, p,i, div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
+        elements = 'input, select, textarea, p,i, div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
         xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%', elements) + "}")
 
         # except
