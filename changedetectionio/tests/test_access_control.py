@@ -70,8 +70,6 @@ def test_check_access_control(app, client):
 
         # Yes we are correctly logged in
         assert b"LOG OUT" in res.data
-        return
-
 
         res = c.get(url_for("settings_page"))
 
