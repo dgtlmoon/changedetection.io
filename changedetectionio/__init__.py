@@ -44,7 +44,7 @@ from flask_wtf import CSRFProtect
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.39.17.1'
+__version__ = '0.39.17.2'
 
 datastore = None
 # global ?
@@ -707,7 +707,14 @@ def changedetection_app(config=None, datastore_o=None):
                     return redirect(url_for('settings_page'))
 
             if form.validate():
-                datastore.data['settings']['application'].update(form.data['application'])
+                # Don't set password to False when a password is set - should be only removed with the `removepassword` button
+                app_update = dict(deepcopy(form.data['application']))
+
+                # Never update password with '' or False (Added by wtforms when not in submission)
+                if 'password' in app_update and not app_update['password']:
+                    del (app_update['password'])
+
+                datastore.data['settings']['application'].update(app_update)
                 datastore.data['settings']['requests'].update(form.data['requests'])
 
                 if not os.getenv("SALTED_PASS", False) and len(form.application.form.password.encrypted_password):

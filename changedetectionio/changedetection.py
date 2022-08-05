@@ -19,12 +19,10 @@ app = None
 def sigterm_handler(_signo, _stack_frame):
     global app
     global datastore
+#    app.config.exit.set()
     print('Shutdown: Got SIGTERM, DB saved to disk')
-    return
-    app.config.exit.set()
     datastore.sync_to_json()
-
-    raise SystemExit
+#    raise SystemExit
 
 def main():
     global datastore
@@ -92,6 +90,7 @@ def main():
 
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=__version__)
     app = changedetection_app(app_config, datastore)
+
     signal.signal(signal.SIGTERM, sigterm_handler)
 
     # Go into cleanup mode
