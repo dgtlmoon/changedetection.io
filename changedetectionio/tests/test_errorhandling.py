@@ -60,5 +60,5 @@ def test_DNS_errors(client, live_server):
 
     res = client.get(url_for("index"))
     assert b'Name or service not known' in res.data
-    assert bytes("just now".encode('utf-8')) in res.data
+    assert bytes("just now".encode('utf-8')) not in res.data
 
