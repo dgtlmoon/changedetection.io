@@ -6,6 +6,16 @@ import requests
 import time
 import sys
 
+class Non200ErrorCodeReceived(Exception):
+    def __init__(self, status_code, url, screenshot=None, xpath_data=None):
+        # Set this so we can use it in other parts of the app
+        self.status_code = status_code
+        self.url = url
+        self.screenshot = screenshot
+        self.xpath_data = xpath_data
+        return
+    pass
+
 class PageUnloadable(Exception):
     def __init__(self, status_code, url):
         # Set this so we can use it in other parts of the app
@@ -15,10 +25,11 @@ class PageUnloadable(Exception):
     pass
 
 class EmptyReply(Exception):
-    def __init__(self, status_code, url):
+    def __init__(self, status_code, url, screenshot=None):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
+        self.screenshot = screenshot
         return
     pass
 
@@ -31,10 +42,11 @@ class ScreenshotUnavailable(Exception):
     pass
 
 class ReplyWithContentButNoText(Exception):
-    def __init__(self, status_code, url):
+    def __init__(self, status_code, url, screenshot = None):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
+        self.screenshot = screenshot
         return
     pass
 
@@ -327,6 +339,7 @@ class base_html_playwright(Fetcher):
                 browser.close()
                 # This can be ok, we will try to grab what we could retrieve
                 pass
+
             except Exception as e:
                 print ("other exception when page.goto")
                 print (str(e))
@@ -346,13 +359,6 @@ class base_html_playwright(Fetcher):
             time.sleep(extra_wait)
             self.content = page.content()
             self.status_code = response.status
-
-            if len(self.content.strip()) == 0:
-                context.close()
-                browser.close()
-                print ("Content was empty")
-                raise EmptyReply(url=url, status_code=None)
-            
             self.headers = response.all_headers()
 
             if current_css_filter is not None:
@@ -378,6 +384,12 @@ class base_html_playwright(Fetcher):
                 context.close()
                 browser.close()
                 raise ScreenshotUnavailable(url=url, status_code=None)
+
+            if len(self.content.strip()) == 0:
+                context.close()
+                browser.close()
+                print("Content was empty")
+                raise EmptyReply(url=url, status_code=None, screenshot = self.screenshot)
 
             context.close()
             browser.close()
@@ -539,7 +551,10 @@ class html_requests(Fetcher):
 
         # @todo test this
         # @todo maybe you really want to test zero-byte return pages?
-        if (not ignore_status_codes and not r) or not r.content or not len(r.content):
+        if (not ignore_status_codes and not r):
+            raise Non200ErrorCodeReceived(url=url, status_code=r.status_code)
+
+        if not r.content or not len(r.content):
             raise EmptyReply(url=url, status_code=r.status_code)
 
         self.status_code = r.status_code

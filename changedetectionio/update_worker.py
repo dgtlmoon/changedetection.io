@@ -146,7 +146,28 @@ class update_worker(threading.Thread):
                         # Totally fine, it's by choice - just continue on, nothing more to care about
                         # Page had elements/content but no renderable text
                         # Backend (not filters) gave zero output
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found."})
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found (With {} reply code).".format(e.status_code)})
+                        if e.screenshot:
+                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot)
+                        process_changedetection_results = False
+                    except content_fetcher.Non200ErrorCodeReceived as e:
+                        if e.status_code == 403:
+                            err_text = "Error - 403 (Access denied) received"
+                        elif e.status_code == 404:
+                            err_text = "Error - 404 (Page not found) received"
+                        elif e.status_code == 500:
+                            err_text = "Error - 500 (Internal server Error) received"
+                        else:
+                            err_text = "Error - Request returned a HTTP error code {}".format(str(e))
+
+                        if e.screenshot:
+                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot)
+                        if e.xpath_data:
+                            self.datastore.save_xpath_data(watch_uuid=uuid, data=e.xpath_data)
+
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                           # So that we get a trigger when the content is added again
+                                                                           'previous_md5': ''})
                         process_changedetection_results = False
 
                     except FilterNotFoundInResponse as e:
@@ -193,7 +214,8 @@ class update_worker(threading.Thread):
                         process_changedetection_results = False
                     else:
                         # Mark that we never had any failures
-                        update_obj['consecutive_filter_failures'] = 0
+                        if not self.datastore.get_val(uuid, 'ignore_status_codes'):
+                            update_obj['consecutive_filter_failures'] = 0
 
                     # Different exceptions mean that we may or may not want to bump the snapshot, trigger notifications etc
                     if process_changedetection_results:
