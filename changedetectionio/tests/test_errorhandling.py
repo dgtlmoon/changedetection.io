@@ -11,16 +11,12 @@ def test_setup(live_server):
     live_server_setup(live_server)
 
 
-def test_error_handler(client, live_server):
-
-
-    # Give the endpoint time to spin up
-    time.sleep(1)
-
+def _runner_test_http_errors(client, live_server, http_code, expected_text):
     # Add our URL to the import page
     test_url = url_for('test_endpoint',
-                       status_code=403,
+                       status_code=http_code,
                        _external=True)
+
     res = client.post(
         url_for("import_page"),
         data={"urls": test_url},
@@ -29,15 +25,25 @@ def test_error_handler(client, live_server):
     assert b"1 Imported" in res.data
 
     # Give the thread time to pick it up
-    time.sleep(3)
+    time.sleep(2)
 
     res = client.get(url_for("index"))
+    # no change
     assert b'unviewed' not in res.data
-    assert b'Status Code 403' in res.data
-    assert bytes("just now".encode('utf-8')) in res.data
+
+    assert bytes(expected_text.encode('utf-8')) in res.data
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+
+def test_http_error_handler(client, live_server):
+    _runner_test_http_errors(client, live_server, 403, 'Access denied')
+    _runner_test_http_errors(client, live_server, 404, 'Page not found')
+    _runner_test_http_errors(client, live_server, 500, '(Internal server Error) received')
+    _runner_test_http_errors(client, live_server, 400, 'Error - Request returned a HTTP error code 400')
 
 # Just to be sure error text is properly handled
-def test_error_text_handler(client, live_server):
+def test_DNS_errors(client, live_server):
     # Give the endpoint time to spin up
     time.sleep(1)
 

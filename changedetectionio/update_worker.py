@@ -158,7 +158,7 @@ class update_worker(threading.Thread):
                         elif e.status_code == 500:
                             err_text = "Error - 500 (Internal server Error) received"
                         else:
-                            err_text = "Error - Request returned a HTTP error code {}".format(str(e))
+                            err_text = "Error - Request returned a HTTP error code {}".format(str(e.status_code))
 
                         if e.screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot)
