@@ -43,7 +43,7 @@ docker run -d --name $$-test_browserless -e "DEFAULT_LAUNCH_ARGS=[\"--window-siz
 sleep 5
 export PLAYWRIGHT_DRIVER_URL=ws://127.0.0.1:3000
 pytest tests/fetchers/test_content.py
-pytest tests/fetchers/test_errorhandling.py
+pytest tests/test_errorhandling.py
 
 unset PLAYWRIGHT_DRIVER_URL
 docker kill $$-test_browserless
