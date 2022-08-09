@@ -122,7 +122,7 @@ class update_worker(threading.Thread):
             else:
                 self.current_uuid = uuid
 
-                if uuid in list(self.datastore.data['watching'].keys()):
+                if uuid in list(self.datastore.data['watching'].keys()) and not self.datastore.data['watching'][uuid].get('paused'):
                     changed_detected = False
                     contents = b''
                     screenshot = False
