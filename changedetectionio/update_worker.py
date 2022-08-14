@@ -194,6 +194,10 @@ class update_worker(threading.Thread):
                     else:
                         # Mark that we never had any failures
                         update_obj['consecutive_filter_failures'] = 0
+                        
+                    # Crash protection, the watch entry could have been removed by this point (during a slow chrome fetch etc)
+                    if not self.datastore.data['watching'].get(uuid):
+                        continue
 
                     # Different exceptions mean that we may or may not want to bump the snapshot, trigger notifications etc
                     if process_changedetection_results:
