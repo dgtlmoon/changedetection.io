@@ -122,7 +122,6 @@ class model(dict):
         bump = self.history
         return self.__newest_history_key
 
-
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
     def save_history_text(self, contents, timestamp):

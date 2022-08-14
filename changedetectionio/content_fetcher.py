@@ -6,15 +6,21 @@ import requests
 import time
 import sys
 
+
 class Non200ErrorCodeReceived(Exception):
-    def __init__(self, status_code, url, screenshot=None, xpath_data=None):
+    def __init__(self, status_code, url, screenshot=None, xpath_data=None, page_html=None):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
         self.screenshot = screenshot
         self.xpath_data = xpath_data
+        self.page_text = None
+
+        if page_html:
+            from changedetectionio import html_tools
+            self.page_text = html_tools.html_to_text(page_html)
         return
-    pass
+
 
 class PageUnloadable(Exception):
     def __init__(self, status_code, url):
@@ -22,7 +28,6 @@ class PageUnloadable(Exception):
         self.status_code = status_code
         self.url = url
         return
-    pass
 
 class EmptyReply(Exception):
     def __init__(self, status_code, url, screenshot=None):
@@ -31,25 +36,24 @@ class EmptyReply(Exception):
         self.url = url
         self.screenshot = screenshot
         return
-    pass
 
 class ScreenshotUnavailable(Exception):
-    def __init__(self, status_code, url):
+    def __init__(self, status_code, url, page_html=None):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
+        if page_html:
+            from html_tools import html_to_text
+            self.page_text = html_to_text(page_html)
         return
-    pass
 
 class ReplyWithContentButNoText(Exception):
-    def __init__(self, status_code, url, screenshot = None):
+    def __init__(self, status_code, url, screenshot=None):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
         self.screenshot = screenshot
         return
-    pass
-
 
 class Fetcher():
     error = None
@@ -192,7 +196,7 @@ class Fetcher():
     system_https_proxy = os.getenv('HTTPS_PROXY')
 
     # Time ONTOP of the system defined env minimum time
-    render_extract_delay=0
+    render_extract_delay = 0
 
     @abstractmethod
     def get_error(self):
@@ -341,8 +345,8 @@ class base_html_playwright(Fetcher):
                 pass
 
             except Exception as e:
-                print ("other exception when page.goto")
-                print (str(e))
+                print("other exception when page.goto")
+                print(str(e))
                 context.close()
                 browser.close()
                 raise PageUnloadable(url=url, status_code=None)
@@ -350,11 +354,11 @@ class base_html_playwright(Fetcher):
             if response is None:
                 context.close()
                 browser.close()
-                print ("response object was none")
+                print("response object was none")
                 raise EmptyReply(url=url, status_code=None)
 
             # Bug 2(?) Set the viewport size AFTER loading the page
-            page.set_viewport_size({"width": 1280, "height": 1024})            
+            page.set_viewport_size({"width": 1280, "height": 1024})
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
             time.sleep(extra_wait)
             self.content = page.content()
@@ -389,11 +393,14 @@ class base_html_playwright(Fetcher):
                 context.close()
                 browser.close()
                 print("Content was empty")
-                raise EmptyReply(url=url, status_code=None, screenshot = self.screenshot)
+                raise EmptyReply(url=url, status_code=None, screenshot=self.screenshot)
 
             context.close()
             browser.close()
 
+            if not ignore_status_codes and self.status_code!=200:
+                # Why didnt this pick up in the CI?
+                raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, page_html=self.content, screenshot=self.screenshot)
 
 class base_html_webdriver(Fetcher):
     if os.getenv("WEBDRIVER_URL"):
@@ -521,7 +528,7 @@ class html_requests(Fetcher):
             ignore_status_codes=False,
             current_css_filter=None):
 
-        proxies={}
+        proxies = {}
 
         # Allows override the proxy on a per-request basis
         if self.proxy_override:
@@ -549,13 +556,14 @@ class html_requests(Fetcher):
             if encoding:
                 r.encoding = encoding
 
-        # @todo test this
-        # @todo maybe you really want to test zero-byte return pages?
-        if (not ignore_status_codes and not r):
-            raise Non200ErrorCodeReceived(url=url, status_code=r.status_code)
-
         if not r.content or not len(r.content):
             raise EmptyReply(url=url, status_code=r.status_code)
+
+        # @todo test this
+        # @todo maybe you really want to test zero-byte return pages?
+        if r.status_code != 200 and not ignore_status_codes:
+            # maybe check with content works?
+            raise Non200ErrorCodeReceived(url=url, status_code=r.status_code, page_html=r.text)
 
         self.status_code = r.status_code
         self.content = r.text

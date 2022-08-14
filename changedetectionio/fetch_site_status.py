@@ -94,7 +94,7 @@ class perform_site_check():
         url = self.datastore.get_val(uuid, 'url')
         request_body = self.datastore.get_val(uuid, 'body')
         request_method = self.datastore.get_val(uuid, 'method')
-        ignore_status_code = self.datastore.get_val(uuid, 'ignore_status_codes')
+        ignore_status_codes = self.datastore.data['watching'][uuid].get('ignore_status_codes', False)
 
         # source: support
         is_source = False
@@ -124,7 +124,7 @@ class perform_site_check():
         if watch['webdriver_js_execute_code'] is not None and watch['webdriver_js_execute_code'].strip():
             fetcher.webdriver_js_execute_code = watch['webdriver_js_execute_code']
 
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code, watch['css_filter'])
+        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch['css_filter'])
         fetcher.quit()
 
         # Fetching complete, now filters

@@ -150,6 +150,7 @@ class update_worker(threading.Thread):
                         if e.screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot)
                         process_changedetection_results = False
+
                     except content_fetcher.Non200ErrorCodeReceived as e:
                         if e.status_code == 403:
                             err_text = "Error - 403 (Access denied) received"
@@ -161,9 +162,11 @@ class update_worker(threading.Thread):
                             err_text = "Error - Request returned a HTTP error code {}".format(str(e.status_code))
 
                         if e.screenshot:
-                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot)
+                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot, as_error=True)
                         if e.xpath_data:
-                            self.datastore.save_xpath_data(watch_uuid=uuid, data=e.xpath_data)
+                            self.datastore.save_xpath_data(watch_uuid=uuid, data=e.xpath_data, as_error=True)
+                        if e.page_text:
+                            self.datastore.save_error_text(watch_uuid=uuid, contents=e.page_text)
 
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            # So that we get a trigger when the content is added again
@@ -213,8 +216,12 @@ class update_worker(threading.Thread):
                         # Other serious error
                         process_changedetection_results = False
                     else:
+                        # Crash protection, the watch entry could have been removed by this point (during a slow chrome fetch etc)
+                        if not self.datastore.data['watching'].get(uuid):
+                            continue
+
                         # Mark that we never had any failures
-                        if not self.datastore.get_val(uuid, 'ignore_status_codes'):
+                        if not self.datastore.data['watching'][uuid].get('ignore_status_codes'):
                             update_obj['consecutive_filter_failures'] = 0
 
                     # Different exceptions mean that we may or may not want to bump the snapshot, trigger notifications etc
