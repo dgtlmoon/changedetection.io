@@ -12,6 +12,11 @@ def test_setup(live_server):
 
 
 def _runner_test_http_errors(client, live_server, http_code, expected_text):
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write("Now you going to get a {} error code\n".format(http_code))
+
+
     # Add our URL to the import page
     test_url = url_for('test_endpoint',
                        status_code=http_code,
