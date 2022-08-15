@@ -883,12 +883,9 @@ def changedetection_app(config=None, datastore_o=None):
         is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
                 watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
 
-        # Normally you would never reach this, because the 'preview' button is not available when there's no history
-        # However they may try to clear snapshots and reload the page
+        # Never requested successfully, but we detected a fetch error
         if datastore.data['watching'][uuid].history_n == 0 and (watch.get_error_text() or watch.get_error_snapshot()):
-
             flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
-
             output = render_template("preview.html",
                                      content=content,
                                      history_n=watch.history_n,
@@ -901,9 +898,6 @@ def changedetection_app(config=None, datastore_o=None):
                                      last_error_text=watch.get_error_text(),
                                      last_error_screenshot=watch.get_error_snapshot())
             return output
-
-#            return redirect(url_for('index'))
-
 
         timestamp = list(watch.history.keys())[-1]
         filename = watch.history[timestamp]
@@ -940,6 +934,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         output = render_template("preview.html",
                                  content=content,
+                                 history_n=watch.history_n,
                                  extra_stylesheets=extra_stylesheets,
                                  ignored_line_numbers=ignored_line_numbers,
                                  triggered_line_numbers=trigger_line_numbers,
