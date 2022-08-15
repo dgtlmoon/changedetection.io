@@ -336,14 +336,6 @@ class ChangeDetectionStore:
             self.sync_to_json()
         return new_uuid
 
-    def get_screenshot(self, watch_uuid):
-        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
-        fname = "{}/last-screenshot.png".format(output_path)
-        if path.isfile(fname):
-            return fname
-
-        return False
-
     def visualselector_data_is_ready(self, watch_uuid):
         output_path = "{}/{}".format(self.datastore_path, watch_uuid)
         screenshot_filename = "{}/last-screenshot.png".format(output_path)
@@ -354,17 +346,32 @@ class ChangeDetectionStore:
         return False
 
     # Save as PNG, PNG is larger but better for doing visual diff in the future
-    def save_screenshot(self, watch_uuid, screenshot: bytes):
-        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
-        fname = "{}/last-screenshot.png".format(output_path)
-        with open(fname, 'wb') as f:
+    def save_screenshot(self, watch_uuid, screenshot: bytes, as_error=False):
+
+        if as_error:
+            target_path = os.path.join(self.datastore_path, watch_uuid, "last-error-screenshot.png")
+        else:
+            target_path = os.path.join(self.datastore_path, watch_uuid, "last-screenshot.png")
+
+        with open(target_path, 'wb') as f:
             f.write(screenshot)
             f.close()
 
-    def save_xpath_data(self, watch_uuid, data):
-        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
-        fname = "{}/elements.json".format(output_path)
-        with open(fname, 'w') as f:
+    def save_error_text(self, watch_uuid, contents):
+
+        target_path = os.path.join(self.datastore_path, watch_uuid, "last-error.txt")
+
+        with open(target_path, 'w') as f:
+            f.write(contents)
+
+    def save_xpath_data(self, watch_uuid, data, as_error=False):
+
+        if as_error:
+            target_path = os.path.join(self.datastore_path, watch_uuid, "elements.json")
+        else:
+            target_path = os.path.join(self.datastore_path, watch_uuid, "elements-error.json")
+
+        with open(target_path, 'w') as f:
             f.write(json.dumps(data))
             f.close()
 

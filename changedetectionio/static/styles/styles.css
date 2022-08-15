@@ -539,3 +539,13 @@ ul {
   100% {
     -webkit-transform: rotate(360deg);
     transform: rotate(360deg); } }
+
+.snapshot-age {
+  padding: 4px;
+  background-color: #dfdfdf;
+  border-radius: 3px;
+  font-weight: bold;
+  margin-bottom: 4px; }
+  .snapshot-age.error {
+    background-color: #ff0000;
+    color: #fff; }

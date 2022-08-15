@@ -32,6 +32,7 @@ docker run -d --name $$-test_selenium  -p 4444:4444 --rm --shm-size="2g"  seleni
 sleep 5
 export WEBDRIVER_URL=http://localhost:4444/wd/hub
 pytest tests/fetchers/test_content.py
+pytest tests/test_errorhandling.py
 unset WEBDRIVER_URL
 docker kill $$-test_selenium
 
@@ -43,5 +44,7 @@ docker run -d --name $$-test_browserless -e "DEFAULT_LAUNCH_ARGS=[\"--window-siz
 sleep 5
 export PLAYWRIGHT_DRIVER_URL=ws://127.0.0.1:3000
 pytest tests/fetchers/test_content.py
+pytest tests/test_errorhandling.py
+
 unset PLAYWRIGHT_DRIVER_URL
 docker kill $$-test_browserless

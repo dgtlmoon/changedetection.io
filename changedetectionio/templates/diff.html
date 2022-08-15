@@ -3,6 +3,9 @@
 {% block content %}
 <script>
     const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
+    {% if last_error_screenshot %}
+    const error_screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid, error_screenshot=1) }}";
+    {% endif %}
 </script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
@@ -43,15 +46,31 @@
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <div class="tabs">
     <ul>
-        <li class="tab" id="default-tab"><a href="#text">Text</a></li>
+        {% if last_error_text %}<li class="tab" id="error-text-tab"><a href="#error-text">Error Text</a></li> {% endif %}
+        {% if last_error_screenshot %}<li class="tab" id="error-screenshot-tab"><a href="#error-screenshot">Error Screenshot</a></li> {% endif %}
+        <li class="tab" id=""><a href="#text">Text</a></li>
         <li class="tab" id="screenshot-tab"><a href="#screenshot">Screenshot</a></li>
     </ul>
 </div>
 
 <div id="diff-ui">
+    <div class="tab-pane-inner" id="error-text">
+        <div class="snapshot-age error">{{watch_a.error_text_ctime|format_seconds_ago}} seconds ago</div>
+        <pre>
+            {{ last_error_text }}
+        </pre>
+    </div>
+
+    <div class="tab-pane-inner" id="error-screenshot">
+        <div class="snapshot-age error">{{watch_a.snapshot_error_screenshot_ctime|format_seconds_ago}} seconds ago</div>
+        <img id="error-screenshot-img"  style="max-width: 80%" alt="Current error-ing screenshot from most recent request"/>
+    </div>
+
      <div class="tab-pane-inner" id="text">
          <div class="tip">Pro-tip: Use <strong>show current snapshot</strong> tab to visualise what will be ignored.
          </div>
+         <div class="snapshot-age">{{watch_a.snapshot_text_ctime|format_timestamp_timeago}}</div>
+
          <table>
              <tbody>
              <tr>
@@ -70,10 +89,10 @@
          <div class="tip">
              For now, Differences are performed on text, not graphically, only the latest screenshot is available.
          </div>
-         </br>
          {% if is_html_webdriver %}
            {% if screenshot %}
-             <img style="max-width: 80%" id="screenshot-img" alt="Current screenshot from most recent request"/>
+            <div class="snapshot-age">{{watch_a.snapshot_screenshot_ctime|format_timestamp_timeago}}</div>
+            <img style="max-width: 80%" id="screenshot-img" alt="Current screenshot from most recent request"/>
            {% else %}
               No screenshot available just yet! Try rechecking the page.
            {% endif %}
@@ -87,7 +106,6 @@
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff.js')}}"></script>
 
 <script defer="">
-
 
 var a = document.getElementById('a');
 var b = document.getElementById('b');

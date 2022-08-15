@@ -38,6 +38,7 @@ class model(dict):
             'notification_format': default_notification_format,
             'notification_muted': False,
             'css_filter': '',
+            'last_error': False,
             'extract_text': [],  # Extract text by regex after filters
             'subtractive_selectors': [],
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
@@ -122,19 +123,17 @@ class model(dict):
         bump = self.history
         return self.__newest_history_key
 
-
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
     def save_history_text(self, contents, timestamp):
         import uuid
-        from os import mkdir, path, unlink
         import logging
 
         output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
 
         # Incase the operator deleted it, check and create.
         if not os.path.isdir(output_path):
-            mkdir(output_path)
+            os.mkdir(output_path)
 
         snapshot_fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
         logging.debug("Saving history text {}".format(snapshot_fname))
@@ -172,7 +171,7 @@ class model(dict):
         return seconds
 
     # Iterate over all history texts and see if something new exists
-    def lines_contain_something_unique_compared_to_history(self, lines=[]):
+    def lines_contain_something_unique_compared_to_history(self, lines: list):
         local_lines = set([l.decode('utf-8').strip().lower() for l in lines])
 
         # Compare each lines (set) against each history text file (set) looking for something new..
@@ -184,3 +183,51 @@ class model(dict):
         # Check that everything in local_lines(new stuff) already exists in existing_history - it should
         # if not, something new happened
         return not local_lines.issubset(existing_history)
+
+    def get_screenshot(self):
+        fname = os.path.join(self.__datastore_path, self['uuid'], "last-screenshot.png")
+        if os.path.isfile(fname):
+            return fname
+
+        return False
+
+    def __get_file_ctime(self, filename):
+        fname = os.path.join(self.__datastore_path, self['uuid'], filename)
+        if os.path.isfile(fname):
+            return int(os.path.getmtime(fname))
+        return False
+
+    @property
+    def error_text_ctime(self):
+        return self.__get_file_ctime('last-error.txt')
+
+    @property
+    def snapshot_text_ctime(self):
+        if self.history_n==0:
+            return False
+
+        timestamp = list(self.history.keys())[-1]
+        return int(timestamp)
+
+    @property
+    def snapshot_screenshot_ctime(self):
+        return self.__get_file_ctime('last-screenshot.png')
+
+    @property
+    def snapshot_error_screenshot_ctime(self):
+        return self.__get_file_ctime('last-error-screenshot.png')
+
+    def get_error_text(self):
+        """Return the text saved from a previous request that resulted in a non-200 error"""
+        fname = os.path.join(self.__datastore_path, self['uuid'], "last-error.txt")
+        if os.path.isfile(fname):
+            with open(fname, 'r') as f:
+                return f.read()
+        return False
+
+    def get_error_snapshot(self):
+        """Return path to the screenshot that resulted in a non-200 error"""
+        fname = os.path.join(self.__datastore_path, self['uuid'], "last-error-screenshot.png")
+        if os.path.isfile(fname):
+            return fname
+        return False
