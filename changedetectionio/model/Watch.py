@@ -19,7 +19,6 @@ class model(dict):
             'url': None,
             'tag': None,
             'last_checked': 0,
-            'last_changed': 0,
             'paused': False,
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
             #'newest_history_key': 0,
@@ -59,11 +58,11 @@ class model(dict):
     jitter_seconds = 0
 
     def __init__(self, *arg, **kw):
-        import uuid
+
         self.update(self.__base_config)
         self.__datastore_path = kw['datastore_path']
 
-        self['uuid'] = str(uuid.uuid4())
+        self['uuid'] = str(uuid_builder.uuid4())
 
         del kw['datastore_path']
 
@@ -71,7 +70,10 @@ class model(dict):
             self.update(kw['default'])
             del kw['default']
 
-        # goes at the end so we update the default object with the initialiser
+        # Be sure the cached timestamp is ready
+        bump = self.history
+
+        # Goes at the end so we update the default object with the initialiser
         super(model, self).__init__(*arg, **kw)
 
     @property
@@ -80,6 +82,15 @@ class model(dict):
             return True
 
         return False
+
+    @property
+    def last_changed(self):
+        # last_changed will be the newest snapshot, but when we have just one snapshot, it should be 0
+        if self.__history_n <= 1:
+            return 0
+        if self.__newest_history_key:
+            return int(self.__newest_history_key)
+        return 0
 
     @property
     def history_n(self):

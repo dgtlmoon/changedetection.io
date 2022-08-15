@@ -314,7 +314,7 @@ def changedetection_app(config=None, datastore_o=None):
                 watch['uuid'] = uuid
                 sorted_watches.append(watch)
 
-        sorted_watches.sort(key=lambda x: x['last_changed'], reverse=True)
+        sorted_watches.sort(key=lambda x: x.last_changed, reverse=False)
 
         fg = FeedGenerator()
         fg.title('changedetection.io')
@@ -333,7 +333,7 @@ def changedetection_app(config=None, datastore_o=None):
             if not watch.viewed:
                 # Re #239 - GUID needs to be individual for each event
                 # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
-                guid = "{}/{}".format(watch['uuid'], watch['last_changed'])
+                guid = "{}/{}".format(watch['uuid'], watch.last_changed)
                 fe = fg.add_entry()
 
                 # Include a link to the diff page, they will have to login here to see if password protection is enabled.

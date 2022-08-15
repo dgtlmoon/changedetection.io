@@ -113,7 +113,7 @@ class CreateWatch(Resource):
             list[k] = {'url': v['url'],
                        'title': v['title'],
                        'last_checked': v['last_checked'],
-                       'last_changed': v['last_changed'],
+                       'last_changed': v.last_changed,
                        'last_error': v['last_error']}
 
         if request.args.get('recheck_all'):

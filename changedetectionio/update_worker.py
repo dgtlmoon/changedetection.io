@@ -264,8 +264,6 @@ class update_worker(threading.Thread):
 
                                 # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
                                 if watch.history_n >= 2:
-                                    # Atleast 2, means there really was a change
-                                    self.datastore.update_watch(uuid=uuid, update_obj={'last_changed': round(now)})
                                     if not self.datastore.data['watching'][uuid].get('notification_muted'):
                                         self.send_content_changed_notification(self, watch_uuid=uuid)
 

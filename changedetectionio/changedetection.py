@@ -50,11 +50,6 @@ def main():
     create_datastore_dir = False
 
     for opt, arg in opts:
-        #        if opt == '--clear-all-history':
-        # Remove history, the actual files you need to delete manually.
-        #            for uuid, watch in datastore.data['watching'].items():
-        #                watch.update({'history': {}, 'last_checked': 0, 'last_changed': 0, 'previous_md5': None})
-
         if opt == '-s':
             ssl_mode = True
 
