@@ -319,8 +319,6 @@ class base_html_playwright(Fetcher):
                 with page.expect_navigation():
                     response = page.goto(url, wait_until='load')
 
-                if self.webdriver_js_execute_code is not None:
-                    page.evaluate(self.webdriver_js_execute_code)
 
             except playwright._impl._api_types.TimeoutError as e:
                 context.close()
@@ -344,6 +342,11 @@ class base_html_playwright(Fetcher):
             page.set_viewport_size({"width": 1280, "height": 1024})            
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
             time.sleep(extra_wait)
+
+            if self.webdriver_js_execute_code is not None:
+                page.evaluate(self.webdriver_js_execute_code)
+                time.sleep(2)
+
             self.content = page.content()
             self.status_code = response.status
 
