@@ -527,8 +527,5 @@ class ChangeDetectionStore:
 
     # We incorrectly stored last_changed when there was not a change, and then confused the output list table
     def update_3(self):
-        for uuid, watch in self.data['watching'].items():
-            # Be sure it's recalculated
-            p = watch.history
-            if watch.history_n < 2:
-                watch['last_changed'] = 0
+        # see https://github.com/dgtlmoon/changedetection.io/pull/835
+        return
