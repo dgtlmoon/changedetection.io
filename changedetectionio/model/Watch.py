@@ -82,7 +82,9 @@ class model(dict):
 
     @property
     def last_changed(self):
-        return self.__newest_history_key
+        if self.__newest_history_key:
+            return int(self.__newest_history_key)
+        return 0
 
     @property
     def history_n(self):
