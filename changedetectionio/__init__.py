@@ -314,7 +314,7 @@ def changedetection_app(config=None, datastore_o=None):
                 watch['uuid'] = uuid
                 sorted_watches.append(watch)
 
-        sorted_watches.sort(key=lambda x: x.last_changed, reverse=False)
+        sorted_watches.sort(key=lambda x: x.last_changed, reverse=True)
 
         fg = FeedGenerator()
         fg.title('changedetection.io')
