@@ -891,6 +891,7 @@ def changedetection_app(config=None, datastore_o=None):
 
             output = render_template("preview.html",
                                      content=content,
+                                     history_n=watch.history_n,
                                      extra_stylesheets=extra_stylesheets,
 #                                     current_diff_url=watch['url'],
                                      watch=watch,

@@ -2,8 +2,7 @@
 
 
 if(!window.location.hash) {
-  var tab=document.querySelectorAll("#default-tab a");
-  tab[0].click();
+  document.querySelector(".tabs ul li:first-child");
 }
 
 window.addEventListener('hashchange', function() {
@@ -18,7 +17,7 @@ var has_errors=document.querySelectorAll(".messages .error");
 if (!has_errors.length) {
     if (document.location.hash == "" ) {
         document.location.hash = "#general";
-        document.getElementById("default-tab").className = "active";
+        document.querySelector(".tabs ul li:first-child").className = "active";
     } else {
         set_active_tab();
     }
