@@ -58,11 +58,11 @@ class model(dict):
     jitter_seconds = 0
 
     def __init__(self, *arg, **kw):
-        import uuid
+
         self.update(self.__base_config)
         self.__datastore_path = kw['datastore_path']
 
-        self['uuid'] = str(uuid.uuid4())
+        self['uuid'] = str(uuid_builder.uuid4())
 
         del kw['datastore_path']
 
@@ -70,7 +70,10 @@ class model(dict):
             self.update(kw['default'])
             del kw['default']
 
-        # goes at the end so we update the default object with the initialiser
+        # Be sure the cached timestamp is ready
+        bump = self.history
+
+        # Goes at the end so we update the default object with the initialiser
         super(model, self).__init__(*arg, **kw)
 
     @property
