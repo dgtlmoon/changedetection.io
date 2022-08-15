@@ -203,6 +203,9 @@ class model(dict):
 
     @property
     def snapshot_text_ctime(self):
+        if self.history_n==0:
+            return False
+
         timestamp = list(self.history.keys())[-1]
         return int(timestamp)
 

@@ -277,15 +277,15 @@ class update_worker(threading.Thread):
                             self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
 
 
-                        # Always record that we atleast tried
-                        self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
-                                                                           'last_checked': round(time.time())})
+                    # Always record that we atleast tried
+                    self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
+                                                                       'last_checked': round(time.time())})
 
-                        # Always save the screenshot if it's available
-                        if screenshot:
-                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
-                        if xpath_data:
-                            self.datastore.save_xpath_data(watch_uuid=uuid, data=xpath_data)
+                    # Always save the screenshot if it's available
+                    if screenshot:
+                        self.datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
+                    if xpath_data:
+                        self.datastore.save_xpath_data(watch_uuid=uuid, data=xpath_data)
 
 
                 self.current_uuid = None  # Done

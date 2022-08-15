@@ -90,7 +90,7 @@
                     {% if watch.history_n >= 2 %}
                     <a href="{{ url_for('diff_history_page', uuid=watch.uuid) }}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary diff-link">Diff</a>
                     {% else %}
-                        {% if watch.history_n == 1 %}
+                        {% if watch.history_n == 1 or (watch.history_n ==0 and watch.error_text_ctime )%}
                             <a href="{{ url_for('preview_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary">Preview</a>
                         {% endif %}
                     {% endif %}

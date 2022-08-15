@@ -35,8 +35,21 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text):
     res = client.get(url_for("index"))
     # no change
     assert b'unviewed' not in res.data
-
     assert bytes(expected_text.encode('utf-8')) in res.data
+
+
+    # Error viewing tabs should appear
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    assert b'Error Text' in res.data
+
+    # 'Error Screenshot' only when in playwright mode
+    #assert b'Error Screenshot' in res.data
+
+
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
@@ -65,5 +78,6 @@ def test_DNS_errors(client, live_server):
 
     res = client.get(url_for("index"))
     assert b'Name or service not known' in res.data
-    assert bytes("just now".encode('utf-8')) not in res.data
+    # Should always record that we tried
+    assert bytes("just now".encode('utf-8')) in res.data
 

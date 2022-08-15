@@ -117,12 +117,16 @@ def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
 
 @app.template_filter('format_timestamp_timeago')
 def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
+    if timestamp == False:
+        return 'Not yet'
+
     return timeago.format(timestamp, time.time())
-    # return timeago.format(timestamp, time.time())
-    #
 
 @app.template_filter('format_seconds_ago')
 def _jinja2_filter_seconds_precise(timestamp):
+    if timestamp == False:
+        return 'Not yet'
+
     return format(int(time.time()-timestamp), ',d')
 
 # When nobody is logged in Flask-Login's current_user is set to an AnonymousUser object.
@@ -866,19 +870,38 @@ def changedetection_app(config=None, datastore_o=None):
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
-        # Normally you would never reach this, because the 'preview' button is not available when there's no history
-        # However they may try to clear snapshots and reload the page
-        if datastore.data['watching'][uuid].history_n == 0:
-            flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
-            return redirect(url_for('index'))
-
-        extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
-
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
+
+        system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
+        extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
+
+
+        is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
+                watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
+
+        # Normally you would never reach this, because the 'preview' button is not available when there's no history
+        # However they may try to clear snapshots and reload the page
+        if datastore.data['watching'][uuid].history_n == 0 and (watch.get_error_text() or watch.get_error_snapshot()):
+
+            flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
+
+            output = render_template("preview.html",
+                                     content=content,
+                                     extra_stylesheets=extra_stylesheets,
+#                                     current_diff_url=watch['url'],
+                                     watch=watch,
+                                     uuid=uuid,
+                                     is_html_webdriver=is_html_webdriver,
+                                     last_error=watch['last_error'],
+                                     last_error_text=watch.get_error_text(),
+                                     last_error_screenshot=watch.get_error_snapshot())
+            return output
+
+#            return redirect(url_for('index'))
 
 
         timestamp = list(watch.history.keys())[-1]
@@ -913,12 +936,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         except Exception as e:
             content.append({'line': "File doesnt exist or unable to read file {}".format(filename), 'classes': ''})
-
-
-        system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
-
-        is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
-                watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
 
         output = render_template("preview.html",
                                  content=content,
