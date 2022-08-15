@@ -82,6 +82,9 @@ class model(dict):
 
     @property
     def last_changed(self):
+        # last_changed will be the newest snapshot, but when we have just one snapshot, it should be 0
+        if self.__history_n <= 1:
+            return 0
         if self.__newest_history_key:
             return int(self.__newest_history_key)
         return 0
