@@ -847,7 +847,11 @@ def changedetection_app(config=None, datastore_o=None):
                                  extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
                                  left_sticky=True,
                                  screenshot=screenshot_url,
-                                 is_html_webdriver=is_html_webdriver)
+                                 is_html_webdriver=is_html_webdriver,
+                                 last_error=watch['last_error'],
+                                 last_error_text=watch.get_error_text(),
+                                 last_error_screenshot=watch.get_error_snapshot()
+                                 )
 
         return output
 

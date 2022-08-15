@@ -207,6 +207,10 @@ class model(dict):
         return int(timestamp)
 
     @property
+    def snapshot_screenshot_ctime(self):
+        return self.__get_file_ctime('last-screenshot.png')
+
+    @property
     def snapshot_error_screenshot_ctime(self):
         return self.__get_file_ctime('last-error-screenshot.png')
 
