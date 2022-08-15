@@ -399,7 +399,6 @@ class base_html_playwright(Fetcher):
             browser.close()
 
             if not ignore_status_codes and self.status_code!=200:
-                # Why didnt this pick up in the CI?
                 raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, page_html=self.content, screenshot=self.screenshot)
 
 class base_html_webdriver(Fetcher):

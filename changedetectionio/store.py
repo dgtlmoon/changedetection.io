@@ -336,14 +336,6 @@ class ChangeDetectionStore:
             self.sync_to_json()
         return new_uuid
 
-    def get_screenshot(self, watch_uuid):
-        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
-        fname = "{}/last-screenshot.png".format(output_path)
-        if path.isfile(fname):
-            return fname
-
-        return False
-
     def visualselector_data_is_ready(self, watch_uuid):
         output_path = "{}/{}".format(self.datastore_path, watch_uuid)
         screenshot_filename = "{}/last-screenshot.png".format(output_path)

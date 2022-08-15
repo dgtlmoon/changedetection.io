@@ -115,18 +115,15 @@ def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
 
     return timeago.format(int(watch_obj['last_checked']), time.time())
 
-
-# @app.context_processor
-# def timeago():
-#    def _timeago(lower_time, now):
-#        return timeago.format(lower_time, now)
-#    return dict(timeago=_timeago)
-
 @app.template_filter('format_timestamp_timeago')
 def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     return timeago.format(timestamp, time.time())
     # return timeago.format(timestamp, time.time())
-    # return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
+    #
+
+@app.template_filter('format_seconds_ago')
+def _jinja2_filter_seconds_precise(timestamp):
+    return format(int(time.time()-timestamp), ',d')
 
 # When nobody is logged in Flask-Login's current_user is set to an AnonymousUser object.
 class User(flask_login.UserMixin):
@@ -830,7 +827,7 @@ def changedetection_app(config=None, datastore_o=None):
             previous_version_file_contents = "Unable to read {}.\n".format(previous_file)
 
 
-        screenshot_url = datastore.get_screenshot(uuid)
+        screenshot_url = watch.get_screenshot()
 
         system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
 
@@ -914,7 +911,6 @@ def changedetection_app(config=None, datastore_o=None):
             content.append({'line': "File doesnt exist or unable to read file {}".format(filename), 'classes': ''})
 
 
-        screenshot_url = datastore.get_screenshot(uuid)
         system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
 
         is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
@@ -926,10 +922,13 @@ def changedetection_app(config=None, datastore_o=None):
                                  ignored_line_numbers=ignored_line_numbers,
                                  triggered_line_numbers=trigger_line_numbers,
                                  current_diff_url=watch['url'],
-                                 screenshot=screenshot_url,
+                                 screenshot=watch.get_screenshot(),
                                  watch=watch,
                                  uuid=uuid,
-                                 is_html_webdriver=is_html_webdriver)
+                                 is_html_webdriver=is_html_webdriver,
+                                 last_error=watch['last_error'],
+                                 last_error_text=watch.get_error_text(),
+                                 last_error_screenshot=watch.get_error_snapshot())
 
         return output
 
@@ -1029,11 +1028,12 @@ def changedetection_app(config=None, datastore_o=None):
             if datastore.data['settings']['application']['password'] and not flask_login.current_user.is_authenticated:
                 abort(403)
 
+            screenshot_filename = "last-screenshot.png" if not request.args.get('error_screenshot') else "last-error-screenshot.png"
+
             # These files should be in our subdirectory
             try:
                 # set nocache, set content-type
-                watch_dir = datastore_o.datastore_path + "/" + filename
-                response = make_response(send_from_directory(filename="last-screenshot.png", directory=watch_dir, path=watch_dir + "/last-screenshot.png"))
+                response = make_response(send_from_directory(os.path.join(datastore_o.datastore_path, filename), screenshot_filename))
                 response.headers['Content-type'] = 'image/png'
                 response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
                 response.headers['Pragma'] = 'no-cache'
