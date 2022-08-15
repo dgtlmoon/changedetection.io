@@ -19,7 +19,6 @@ class model(dict):
             'url': None,
             'tag': None,
             'last_checked': 0,
-            'last_changed': 0,
             'paused': False,
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
             #'newest_history_key': 0,
@@ -80,6 +79,10 @@ class model(dict):
             return True
 
         return False
+
+    @property
+    def last_changed(self):
+        return self.__newest_history_key
 
     @property
     def history_n(self):

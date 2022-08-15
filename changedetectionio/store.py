@@ -254,7 +254,6 @@ class ChangeDetectionStore:
 
         self.__data['watching'][uuid].update(
             {'last_checked': 0,
-             'last_changed': 0,
              'last_viewed': 0,
              'previous_md5': False,
              'last_notification_error': False,
