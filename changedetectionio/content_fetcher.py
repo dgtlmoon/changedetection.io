@@ -22,11 +22,20 @@ class Non200ErrorCodeReceived(Exception):
         return
 
 
+class JSActionExceptions(Exception):
+    def __init__(self, status_code, url, screenshot, message=''):
+        self.status_code = status_code
+        self.url = url
+        self.screenshot = screenshot
+        self.message = message
+        return
+
 class PageUnloadable(Exception):
-    def __init__(self, status_code, url):
+    def __init__(self, status_code, url, screenshot=False):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
+        self.screenshot = screenshot
         return
 
 class EmptyReply(Exception):
@@ -361,8 +370,24 @@ class base_html_playwright(Fetcher):
             time.sleep(extra_wait)
 
             if self.webdriver_js_execute_code is not None:
-                page.evaluate(self.webdriver_js_execute_code)
-                time.sleep(2)
+                try:
+                    page.evaluate(self.webdriver_js_execute_code)
+                except Exception as e:
+                    # Is it possible to get a screenshot?
+                    error_screenshot = False
+                    try:
+                        page.screenshot(type='jpeg',
+                                        clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024},
+                                        quality=1)
+
+                        # The actual screenshot
+                        error_screenshot = page.screenshot(type='jpeg',
+                                                           full_page=True,
+                                                           quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
+                    except Exception as s:
+                        pass
+
+                    raise JSActionExceptions(status_code=response.status, screenshot=error_screenshot, message=str(e), url=url)
 
             self.content = page.content()
             self.status_code = response.status

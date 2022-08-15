@@ -1,3 +1,4 @@
+import os
 import threading
 import queue
 import time
@@ -107,6 +108,14 @@ class update_worker(threading.Thread):
             self.notification_q.put(n_object)
             print("Sent filter not found notification for {}".format(watch_uuid))
 
+    def cleanup_error_artifacts(self, uuid):
+        # All went fine, remove error artifacts
+        cleanup_files = ["last-error-screenshot.png", "last-error.txt"]
+        for f in cleanup_files:
+            full_path = os.path.join(self.datastore.datastore_path, uuid, f)
+            if os.path.isfile(full_path):
+                os.unlink(full_path)
+
     def run(self):
         from changedetectionio import fetch_site_status
 
@@ -206,8 +215,17 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                         process_changedetection_results = False
+                    except content_fetcher.JSActionExceptions as e:
+                        err_text = "Error running JS Actions - Page request - "+e.message
+                        if e.screenshot:
+                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot, as_error=True)
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                           'last_check_status': e.status_code})
                     except content_fetcher.PageUnloadable as e:
                         err_text = "Page request from server didnt respond correctly"
+                        if e.screenshot:
+                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot, as_error=True)
+
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                     except Exception as e:
@@ -220,6 +238,8 @@ class update_worker(threading.Thread):
                         # Mark that we never had any failures
                         if not self.datastore.data['watching'][uuid].get('ignore_status_codes'):
                             update_obj['consecutive_filter_failures'] = 0
+
+                        self.cleanup_error_artifacts(uuid)
 
                     # Crash protection, the watch entry could have been removed by this point (during a slow chrome fetch etc)
                     if not self.datastore.data['watching'].get(uuid):
