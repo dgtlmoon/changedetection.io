@@ -68,6 +68,12 @@ code {
 
   th {
     white-space: nowrap;
+    a {
+      font-weight: normal;
+      &.active {
+        font-weight: bolder;
+      }
+    }
   }
 
   .title-col a[target="_blank"]::after, .current-diff-url::after {
@@ -512,6 +518,7 @@ and also iPads specifically.
         vertical-align: middle;
       }
     }
+
     .last-checked::before {
       color: #555;
       content: "Last Checked ";

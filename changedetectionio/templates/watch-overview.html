@@ -44,9 +44,9 @@
                 <th>#</th>
                 <th></th>
                 {% set link_order = "asc" if sort_order else "desc" %}
-                <th><a href="{{url_for('index', sort='label', order=link_order)}}">Website</a></th>
-                <th><a href="{{url_for('index', sort='last_checked', order=link_order)}}">Last Checked</a></th>
-                <th><a href="{{url_for('index', sort='last_changed', order=link_order)}}">Last Changed</a></th>
+                <th><a class="{{ 'active '+link_order if sort_attribute == 'label' }}" href="{{url_for('index', sort='label', order=link_order)}}">Website</a></th>
+                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' }}" href="{{url_for('index', sort='last_checked', order=link_order)}}">Last Checked</a></th>
+                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' }}" href="{{url_for('index', sort='last_changed', order=link_order)}}">Last Changed</a></th>
                 <th></th>
             </tr>
             </thead>
