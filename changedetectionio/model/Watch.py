@@ -83,6 +83,12 @@ class model(dict):
 
         return False
 
+    def ensure_data_dir_exists(self):
+        target_path = os.path.join(self.__datastore_path, self['uuid'])
+        if not os.path.isdir(target_path):
+            print ("> Creating data dir {}".format(target_path))
+            os.mkdir(target_path)
+
     @property
     def label(self):
         # Used for sorting
@@ -149,9 +155,7 @@ class model(dict):
 
         output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
 
-        # Incase the operator deleted it, check and create.
-        if not os.path.isdir(output_path):
-            os.mkdir(output_path)
+        self.ensure_data_dir_exists()
 
         snapshot_fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
         logging.debug("Saving history text {}".format(snapshot_fname))
