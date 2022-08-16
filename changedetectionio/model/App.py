@@ -42,7 +42,6 @@ class model(dict):
                     'notification_title': default_notification_title,
                     'notification_body': default_notification_body,
                     'notification_format': default_notification_format,
-                    'real_browser_save_screenshot': True,
                     'schema_version' : 0,
                     'webdriver_delay': None  # Extra delay in seconds before extracting text
                 }
