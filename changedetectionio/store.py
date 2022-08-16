@@ -8,7 +8,7 @@ import threading
 import time
 import uuid as uuid_builder
 from copy import deepcopy
-from os import mkdir, path, unlink
+from os import path, unlink
 from threading import Lock
 import re
 import requests
@@ -324,12 +324,7 @@ class ChangeDetectionStore:
             new_watch.update(apply_extras)
             self.__data['watching'][new_uuid]=new_watch
 
-        # Get the directory ready
-        output_path = "{}/{}".format(self.datastore_path, new_uuid)
-        try:
-            mkdir(output_path)
-        except FileExistsError:
-            print(output_path, "already exists.")
+        self.__data['watching'][new_uuid].ensure_data_dir_exists()
 
         if write_to_disk_now:
             self.sync_to_json()
@@ -351,6 +346,8 @@ class ChangeDetectionStore:
             target_path = os.path.join(self.datastore_path, watch_uuid, "last-error-screenshot.png")
         else:
             target_path = os.path.join(self.datastore_path, watch_uuid, "last-screenshot.png")
+
+        self.data['watching'][watch_uuid].ensure_data_dir_exists()
 
         with open(target_path, 'wb') as f:
             f.write(screenshot)
