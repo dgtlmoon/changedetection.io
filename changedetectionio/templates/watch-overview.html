@@ -55,8 +55,9 @@
             {% set sorted_watches = watches|sort(attribute=sort_attribute, reverse=sort_order) %}
             {% for watch in sorted_watches %}
 
-            {% if not ( loop.index >= 3 and loop.index <=4) %}{% continue %}{% endif %}
-
+            {# WIP for pagination, disabled for now
+              {% if not ( loop.index >= 3 and loop.index <=4) %}{% continue %}{% endif %} -->
+             #}
             <tr id="{{ watch.uuid }}"
                 class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }}
                 {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
@@ -122,7 +123,10 @@
                 <a href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>
             </li>
         </ul>
-        {{ pagination(sorted_watches,3, pagination_page) }}
+        {# WIP for pagination, disabled for now
+         {{ pagination(sorted_watches,3, pagination_page) }}
+         #}
+
     </div>
 </div>
 {% endblock %}
