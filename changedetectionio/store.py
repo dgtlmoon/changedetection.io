@@ -363,9 +363,9 @@ class ChangeDetectionStore:
     def save_xpath_data(self, watch_uuid, data, as_error=False):
 
         if as_error:
-            target_path = os.path.join(self.datastore_path, watch_uuid, "elements.json")
-        else:
             target_path = os.path.join(self.datastore_path, watch_uuid, "elements-error.json")
+        else:
+            target_path = os.path.join(self.datastore_path, watch_uuid, "elements.json")
 
         with open(target_path, 'w') as f:
             f.write(json.dumps(data))
