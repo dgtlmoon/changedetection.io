@@ -76,7 +76,7 @@ app.config['LOGIN_DISABLED'] = False
 
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
-
+app.jinja_env.add_extension('jinja2.ext.loopcontrols')
 csrf = CSRFProtect()
 csrf.init_app(app)
 
