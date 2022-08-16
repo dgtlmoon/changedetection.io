@@ -529,3 +529,13 @@ class ChangeDetectionStore:
     def update_3(self):
         # see https://github.com/dgtlmoon/changedetection.io/pull/835
         return
+
+    # `last_changed` not needed, we pull that information from the history.txt index
+    def update_4(self):
+        for uuid, watch in self.data['watching'].items():
+            try:
+                # Remove it from the struct
+                del(watch['last_changed'])
+            except:
+                continue
+        return

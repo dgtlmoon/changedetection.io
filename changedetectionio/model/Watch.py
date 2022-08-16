@@ -84,6 +84,13 @@ class model(dict):
         return False
 
     @property
+    def label(self):
+        # Used for sorting
+        if self['title']:
+            return self['title']
+        return self['url']
+
+    @property
     def last_changed(self):
         # last_changed will be the newest snapshot, but when we have just one snapshot, it should be 0
         if self.__history_n <= 1:
