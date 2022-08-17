@@ -13,6 +13,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
 class perform_site_check():
+    screenshot = None
+    xpath_data = None
 
     def __init__(self, *args, datastore, **kwargs):
         super().__init__(*args, **kwargs)
@@ -126,6 +128,9 @@ class perform_site_check():
 
         fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch['css_filter'])
         fetcher.quit()
+
+        self.screenshot = fetcher.screenshot
+        self.xpath_data = fetcher.xpath_data
 
         # Fetching complete, now filters
         # @todo move to class / maybe inside of fetcher abstract base?
@@ -312,4 +317,4 @@ class perform_site_check():
         if not watch.get('previous_md5'):
             watch['previous_md5'] = fetched_md5
 
-        return changed_detected, update_obj, text_content_before_ignored_filter, fetcher.screenshot, fetcher.xpath_data
+        return changed_detected, update_obj, text_content_before_ignored_filter

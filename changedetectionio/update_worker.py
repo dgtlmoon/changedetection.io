@@ -142,7 +142,7 @@ class update_worker(threading.Thread):
                     now = time.time()
 
                     try:
-                        changed_detected, update_obj, contents, screenshot, xpath_data = update_handler.run(uuid)
+                        changed_detected, update_obj, contents = update_handler.run(uuid)
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
                         # We then convert/.decode('utf-8') for the notification etc
@@ -222,6 +222,7 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                     except content_fetcher.PageUnloadable as e:
+                        # @todo connection-refused ?
                         err_text = "Page request from server didnt respond correctly"
                         if e.screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot, as_error=True)
@@ -280,10 +281,10 @@ class update_worker(threading.Thread):
                                                                        'last_checked': round(time.time())})
 
                     # Always save the screenshot if it's available
-                    if screenshot:
-                        self.datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
-                    if xpath_data:
-                        self.datastore.save_xpath_data(watch_uuid=uuid, data=xpath_data)
+                    if update_handler.screenshot:
+                        self.datastore.save_screenshot(watch_uuid=uuid, screenshot=update_handler.screenshot)
+                    if update_handler.xpath_data:
+                        self.datastore.save_xpath_data(watch_uuid=uuid, data=update_handler.xpath_data)
 
 
                 self.current_uuid = None  # Done
