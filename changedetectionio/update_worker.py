@@ -222,8 +222,10 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                     except content_fetcher.PageUnloadable as e:
-                        # @todo connection-refused ?
                         err_text = "Page request from server didnt respond correctly"
+                        if e.message:
+                            err_text = "{} - {}".format(err_text, e.message)
+
                         if e.screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot, as_error=True)
 
