@@ -3,23 +3,39 @@
 {% block content %}
 <script>
     const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
+    {% if last_error_screenshot %}
+    const error_screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid, error_screenshot=1) }}";
+    {% endif %}
 </script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
-
-<div id="settings">
-    <h1>Current - {{watch.last_checked|format_timestamp_timeago}}</h1>
-</div>
 
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <div class="tabs">
     <ul>
-        <li class="tab" id="default-tab"><a href="#text">Text</a></li>
+        {% if last_error_text %}<li class="tab" id="error-text-tab"><a href="#error-text">Error Text</a></li> {% endif %}
+        {% if last_error_screenshot %}<li class="tab" id="error-screenshot-tab"><a href="#error-screenshot">Error Screenshot</a></li> {% endif %}
+        {% if history_n > 0 %}
+        <li class="tab" id="text-tab"><a href="#text">Text</a></li>
         <li class="tab" id="screenshot-tab"><a href="#screenshot">Screenshot</a></li>
+        {% endif %}
     </ul>
 </div>
 
 <div id="diff-ui">
+    <div class="tab-pane-inner" id="error-text">
+        <div class="snapshot-age error">{{watch.error_text_ctime|format_seconds_ago}} seconds ago</div>
+        <pre>
+            {{ last_error_text }}
+        </pre>
+    </div>
+
+    <div class="tab-pane-inner" id="error-screenshot">
+        <div class="snapshot-age error">{{watch.snapshot_error_screenshot_ctime|format_seconds_ago}} seconds ago</div>
+        <img id="error-screenshot-img"  style="max-width: 80%" alt="Current erroring screenshot from most recent request"/>
+    </div>
+
     <div class="tab-pane-inner" id="text">
+        <div class="snapshot-age">{{watch.snapshot_text_ctime|format_timestamp_timeago}}</div>
         <span class="ignored">Grey lines are ignored</span> <span class="triggered">Blue lines are triggers</span>
         <table>
             <tbody>
@@ -33,6 +49,7 @@
             </tbody>
         </table>
     </div>
+
      <div class="tab-pane-inner" id="screenshot">
          <div class="tip">
              For now, Differences are performed on text, not graphically, only the latest screenshot is available.

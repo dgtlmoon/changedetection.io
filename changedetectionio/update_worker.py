@@ -1,3 +1,4 @@
+import os
 import threading
 import queue
 import time
@@ -21,10 +22,70 @@ class update_worker(threading.Thread):
         self.datastore = datastore
         super().__init__(*args, **kwargs)
 
-    def send_filter_failure_notification(self, uuid):
+    def send_content_changed_notification(self, t, watch_uuid):
+
+        from changedetectionio import diff
+
+        n_object = {}
+        watch = self.datastore.data['watching'].get(watch_uuid, False)
+        if not watch:
+            return
+
+        watch_history = watch.history
+        dates = list(watch_history.keys())
+        # Theoretically it's possible that this could be just 1 long,
+        # - In the case that the timestamp key was not unique
+        if len(dates) == 1:
+            raise ValueError(
+                "History index had 2 or more, but only 1 date loaded, timestamps were not unique? maybe two of the same timestamps got written, needs more delay?"
+            )
+
+        # Did it have any notification alerts to hit?
+        if len(watch['notification_urls']):
+            print(">>> Notifications queued for UUID from watch {}".format(watch_uuid))
+            n_object['notification_urls'] = watch['notification_urls']
+            n_object['notification_title'] = watch['notification_title']
+            n_object['notification_body'] = watch['notification_body']
+            n_object['notification_format'] = watch['notification_format']
+
+        # No? maybe theres a global setting, queue them all
+        elif len(self.datastore.data['settings']['application']['notification_urls']):
+            print(">>> Watch notification URLs were empty, using GLOBAL notifications for UUID: {}".format(watch_uuid))
+            n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
+            n_object['notification_title'] = self.datastore.data['settings']['application']['notification_title']
+            n_object['notification_body'] = self.datastore.data['settings']['application']['notification_body']
+            n_object['notification_format'] = self.datastore.data['settings']['application']['notification_format']
+        else:
+            print(">>> NO notifications queued, watch and global notification URLs were empty.")
+
+        # Only prepare to notify if the rules above matched
+        if 'notification_urls' in n_object:
+            # HTML needs linebreak, but MarkDown and Text can use a linefeed
+            if n_object['notification_format'] == 'HTML':
+                line_feed_sep = "</br>"
+            else:
+                line_feed_sep = "\n"
+
+            snapshot_contents = ''
+            with open(watch_history[dates[-1]], 'rb') as f:
+                snapshot_contents = f.read()
+
+            n_object.update({
+                'watch_url': watch['url'],
+                'uuid': watch_uuid,
+                'current_snapshot': snapshot_contents.decode('utf-8'),
+                'diff': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], line_feed_sep=line_feed_sep),
+                'diff_full': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], True, line_feed_sep=line_feed_sep)
+            })
+
+            self.notification_q.put(n_object)
+
+    def send_filter_failure_notification(self, watch_uuid):
 
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
-        watch = self.datastore.data['watching'].get(uuid, False)
+        watch = self.datastore.data['watching'].get(watch_uuid, False)
+        if not watch:
+            return
 
         n_object = {'notification_title': 'Changedetection.io - Alert - CSS/xPath filter was not present in the page',
                     'notification_body': "Your configured CSS/xPath filter of '{}' for {{watch_url}} did not appear on the page after {} attempts, did the page change layout?\n\nLink: {{base_url}}/edit/{{watch_uuid}}\n\nThanks - Your omniscient changedetection.io installation :)\n".format(
@@ -42,10 +103,18 @@ class update_worker(threading.Thread):
         if 'notification_urls' in n_object:
             n_object.update({
                 'watch_url': watch['url'],
-                'uuid': uuid
+                'uuid': watch_uuid
             })
             self.notification_q.put(n_object)
-            print("Sent filter not found notification for {}".format(uuid))
+            print("Sent filter not found notification for {}".format(watch_uuid))
+
+    def cleanup_error_artifacts(self, uuid):
+        # All went fine, remove error artifacts
+        cleanup_files = ["last-error-screenshot.png", "last-error.txt"]
+        for f in cleanup_files:
+            full_path = os.path.join(self.datastore.datastore_path, uuid, f)
+            if os.path.isfile(full_path):
+                os.unlink(full_path)
 
     def run(self):
         from changedetectionio import fetch_site_status
@@ -55,7 +124,7 @@ class update_worker(threading.Thread):
         while not self.app.config.exit.is_set():
 
             try:
-                uuid = self.q.get(block=False)
+                priority, uuid = self.q.get(block=False)
             except queue.Empty:
                 pass
 
@@ -63,18 +132,17 @@ class update_worker(threading.Thread):
                 self.current_uuid = uuid
 
                 if uuid in list(self.datastore.data['watching'].keys()):
-
                     changed_detected = False
                     contents = b''
                     screenshot = False
                     update_obj= {}
                     xpath_data = False
                     process_changedetection_results = True
-
+                    print("> Processing UUID {} Priority {} URL {}".format(uuid, priority, self.datastore.data['watching'][uuid]['url']))
                     now = time.time()
 
                     try:
-                        changed_detected, update_obj, contents, screenshot, xpath_data = update_handler.run(uuid)
+                        changed_detected, update_obj, contents = update_handler.run(uuid)
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
                         # We then convert/.decode('utf-8') for the notification etc
@@ -87,7 +155,31 @@ class update_worker(threading.Thread):
                         # Totally fine, it's by choice - just continue on, nothing more to care about
                         # Page had elements/content but no renderable text
                         # Backend (not filters) gave zero output
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found."})
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found (With {} reply code).".format(e.status_code)})
+                        if e.screenshot:
+                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot)
+                        process_changedetection_results = False
+
+                    except content_fetcher.Non200ErrorCodeReceived as e:
+                        if e.status_code == 403:
+                            err_text = "Error - 403 (Access denied) received"
+                        elif e.status_code == 404:
+                            err_text = "Error - 404 (Page not found) received"
+                        elif e.status_code == 500:
+                            err_text = "Error - 500 (Internal server Error) received"
+                        else:
+                            err_text = "Error - Request returned a HTTP error code {}".format(str(e.status_code))
+
+                        if e.screenshot:
+                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot, as_error=True)
+                        if e.xpath_data:
+                            self.datastore.save_xpath_data(watch_uuid=uuid, data=e.xpath_data, as_error=True)
+                        if e.page_text:
+                            self.datastore.save_error_text(watch_uuid=uuid, contents=e.page_text)
+
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                           # So that we get a trigger when the content is added again
+                                                                           'previous_md5': ''})
                         process_changedetection_results = False
 
                     except FilterNotFoundInResponse as e:
@@ -105,8 +197,10 @@ class update_worker(threading.Thread):
                                                                                            0)
                             print("Filter for {} not found, consecutive_filter_failures: {}".format(uuid, c))
                             if threshold > 0 and c >= threshold:
-                                self.send_filter_failure_notification(uuid)
+                                if not self.datastore.data['watching'][uuid].get('notification_muted'):
+                                    self.send_filter_failure_notification(uuid)
                                 c = 0
+
                             self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
 
                         process_changedetection_results = True
@@ -121,8 +215,20 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                         process_changedetection_results = False
+                    except content_fetcher.JSActionExceptions as e:
+                        err_text = "Error running JS Actions - Page request - "+e.message
+                        if e.screenshot:
+                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot, as_error=True)
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                           'last_check_status': e.status_code})
                     except content_fetcher.PageUnloadable as e:
                         err_text = "Page request from server didnt respond correctly"
+                        if e.message:
+                            err_text = "{} - {}".format(err_text, e.message)
+
+                        if e.screenshot:
+                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot, as_error=True)
+
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                     except Exception as e:
@@ -131,8 +237,15 @@ class update_worker(threading.Thread):
                         # Other serious error
                         process_changedetection_results = False
                     else:
+                        # Crash protection, the watch entry could have been removed by this point (during a slow chrome fetch etc)
+                        if not self.datastore.data['watching'].get(uuid):
+                            continue
+
                         # Mark that we never had any failures
-                        update_obj['consecutive_filter_failures'] = 0
+                        if not self.datastore.data['watching'][uuid].get('ignore_status_codes'):
+                            update_obj['consecutive_filter_failures'] = 0
+
+                        self.cleanup_error_artifacts(uuid)
 
                     # Different exceptions mean that we may or may not want to bump the snapshot, trigger notifications etc
                     if process_changedetection_results:
@@ -143,66 +256,19 @@ class update_worker(threading.Thread):
                             # For the FIRST time we check a site, or a change detected, save the snapshot.
                             if changed_detected or not watch['last_checked']:
                                 # A change was detected
-                                fname = watch.save_history_text(contents=contents, timestamp=str(round(time.time())))
+                                watch.save_history_text(contents=contents, timestamp=str(round(time.time())))
 
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
                             # A change was detected
                             if changed_detected:
-                                n_object = {}
                                 print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))
 
                                 # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
                                 if watch.history_n >= 2:
-                                    # Atleast 2, means there really was a change
-                                    self.datastore.update_watch(uuid=uuid, update_obj={'last_changed': round(now)})
+                                    if not self.datastore.data['watching'][uuid].get('notification_muted'):
+                                        self.send_content_changed_notification(self, watch_uuid=uuid)
 
-                                    watch_history = watch.history
-                                    dates = list(watch_history.keys())
-                                    # Theoretically it's possible that this could be just 1 long,
-                                    # - In the case that the timestamp key was not unique
-                                    if len(dates) == 1:
-                                        raise ValueError(
-                                            "History index had 2 or more, but only 1 date loaded, timestamps were not unique? maybe two of the same timestamps got written, needs more delay?"
-                                        )
-                                    prev_fname = watch_history[dates[-2]]
-
-                                    # Did it have any notification alerts to hit?
-                                    if len(watch['notification_urls']):
-                                        print(">>> Notifications queued for UUID from watch {}".format(uuid))
-                                        n_object['notification_urls'] = watch['notification_urls']
-                                        n_object['notification_title'] = watch['notification_title']
-                                        n_object['notification_body'] = watch['notification_body']
-                                        n_object['notification_format'] = watch['notification_format']
-
-                                    # No? maybe theres a global setting, queue them all
-                                    elif len(self.datastore.data['settings']['application']['notification_urls']):
-                                        print(">>> Watch notification URLs were empty, using GLOBAL notifications for UUID: {}".format(uuid))
-                                        n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
-                                        n_object['notification_title'] = self.datastore.data['settings']['application']['notification_title']
-                                        n_object['notification_body'] = self.datastore.data['settings']['application']['notification_body']
-                                        n_object['notification_format'] = self.datastore.data['settings']['application']['notification_format']
-                                    else:
-                                        print(">>> NO notifications queued, watch and global notification URLs were empty.")
-
-                                    # Only prepare to notify if the rules above matched
-                                    if 'notification_urls' in n_object:
-                                        # HTML needs linebreak, but MarkDown and Text can use a linefeed
-                                        if n_object['notification_format'] == 'HTML':
-                                            line_feed_sep = "</br>"
-                                        else:
-                                            line_feed_sep = "\n"
-
-                                        from changedetectionio import diff
-                                        n_object.update({
-                                            'watch_url': watch['url'],
-                                            'uuid': uuid,
-                                            'current_snapshot': contents.decode('utf-8'),
-                                            'diff': diff.render_diff(prev_fname, fname, line_feed_sep=line_feed_sep),
-                                            'diff_full': diff.render_diff(prev_fname, fname, True, line_feed_sep=line_feed_sep)
-                                        })
-
-                                        self.notification_q.put(n_object)
 
                         except Exception as e:
                             # Catch everything possible here, so that if a worker crashes, we don't lose it until restart!
@@ -211,15 +277,15 @@ class update_worker(threading.Thread):
                             self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
 
 
-                        # Always record that we atleast tried
-                        self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
-                                                                           'last_checked': round(time.time())})
+                    # Always record that we atleast tried
+                    self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
+                                                                       'last_checked': round(time.time())})
 
-                        # Always save the screenshot if it's available
-                        if screenshot:
-                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
-                        if xpath_data:
-                            self.datastore.save_xpath_data(watch_uuid=uuid, data=xpath_data)
+                    # Always save the screenshot if it's available
+                    if update_handler.screenshot:
+                        self.datastore.save_screenshot(watch_uuid=uuid, screenshot=update_handler.screenshot)
+                    if update_handler.xpath_data:
+                        self.datastore.save_xpath_data(watch_uuid=uuid, data=update_handler.xpath_data)
 
 
                 self.current_uuid = None  # Done

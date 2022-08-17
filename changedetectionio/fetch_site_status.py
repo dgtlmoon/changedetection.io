@@ -14,6 +14,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
 class perform_site_check():
+    screenshot = None
+    xpath_data = None
 
     def __init__(self, *args, datastore, **kwargs):
         super().__init__(*args, **kwargs)
@@ -95,7 +97,7 @@ class perform_site_check():
         url = self.datastore.get_val(uuid, 'url')
         request_body = self.datastore.get_val(uuid, 'body')
         request_method = self.datastore.get_val(uuid, 'method')
-        ignore_status_code = self.datastore.get_val(uuid, 'ignore_status_codes')
+        ignore_status_codes = self.datastore.data['watching'][uuid].get('ignore_status_codes', False)
 
         # source: support
         is_source = False
@@ -125,8 +127,11 @@ class perform_site_check():
         if watch['webdriver_js_execute_code'] is not None and watch['webdriver_js_execute_code'].strip():
             fetcher.webdriver_js_execute_code = watch['webdriver_js_execute_code']
 
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code, watch['css_filter'])
+        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch['css_filter'])
         fetcher.quit()
+
+        self.screenshot = fetcher.screenshot
+        self.xpath_data = fetcher.xpath_data
 
         # Fetching complete, now filters
         # @todo move to class / maybe inside of fetcher abstract base?
@@ -211,7 +216,7 @@ class perform_site_check():
         # Treat pages with no renderable text content as a change? No by default
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
         if not is_json and not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
-            raise content_fetcher.ReplyWithContentButNoText(url=url, status_code=200)
+            raise content_fetcher.ReplyWithContentButNoText(url=url, status_code=fetcher.get_last_status_code(), screenshot=screenshot)
 
         # We rely on the actual text in the html output.. many sites have random script vars etc,
         # in the future we'll implement other mechanisms.
@@ -328,4 +333,4 @@ class perform_site_check():
         if not watch.get('previous_md5'):
             watch['previous_md5'] = fetched_md5
 
-        return changed_detected, update_obj, text_content_before_ignored_filter, fetcher.screenshot, fetcher.xpath_data
+        return changed_detected, update_obj, text_content_before_ignored_filter

@@ -8,7 +8,7 @@ import threading
 import time
 import uuid as uuid_builder
 from copy import deepcopy
-from os import mkdir, path, unlink
+from os import path, unlink
 from threading import Lock
 import re
 import requests
@@ -254,7 +254,6 @@ class ChangeDetectionStore:
 
         self.__data['watching'][uuid].update(
             {'last_checked': 0,
-             'last_changed': 0,
              'last_viewed': 0,
              'previous_md5': False,
              'last_notification_error': False,
@@ -325,24 +324,11 @@ class ChangeDetectionStore:
             new_watch.update(apply_extras)
             self.__data['watching'][new_uuid]=new_watch
 
-        # Get the directory ready
-        output_path = "{}/{}".format(self.datastore_path, new_uuid)
-        try:
-            mkdir(output_path)
-        except FileExistsError:
-            print(output_path, "already exists.")
+        self.__data['watching'][new_uuid].ensure_data_dir_exists()
 
         if write_to_disk_now:
             self.sync_to_json()
         return new_uuid
-
-    def get_screenshot(self, watch_uuid):
-        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
-        fname = "{}/last-screenshot.png".format(output_path)
-        if path.isfile(fname):
-            return fname
-
-        return False
 
     def visualselector_data_is_ready(self, watch_uuid):
         output_path = "{}/{}".format(self.datastore_path, watch_uuid)
@@ -354,17 +340,34 @@ class ChangeDetectionStore:
         return False
 
     # Save as PNG, PNG is larger but better for doing visual diff in the future
-    def save_screenshot(self, watch_uuid, screenshot: bytes):
-        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
-        fname = "{}/last-screenshot.png".format(output_path)
-        with open(fname, 'wb') as f:
+    def save_screenshot(self, watch_uuid, screenshot: bytes, as_error=False):
+
+        if as_error:
+            target_path = os.path.join(self.datastore_path, watch_uuid, "last-error-screenshot.png")
+        else:
+            target_path = os.path.join(self.datastore_path, watch_uuid, "last-screenshot.png")
+
+        self.data['watching'][watch_uuid].ensure_data_dir_exists()
+
+        with open(target_path, 'wb') as f:
             f.write(screenshot)
             f.close()
 
-    def save_xpath_data(self, watch_uuid, data):
-        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
-        fname = "{}/elements.json".format(output_path)
-        with open(fname, 'w') as f:
+    def save_error_text(self, watch_uuid, contents):
+
+        target_path = os.path.join(self.datastore_path, watch_uuid, "last-error.txt")
+
+        with open(target_path, 'w') as f:
+            f.write(contents)
+
+    def save_xpath_data(self, watch_uuid, data, as_error=False):
+
+        if as_error:
+            target_path = os.path.join(self.datastore_path, watch_uuid, "elements-error.json")
+        else:
+            target_path = os.path.join(self.datastore_path, watch_uuid, "elements.json")
+
+        with open(target_path, 'w') as f:
             f.write(json.dumps(data))
             f.close()
 
@@ -521,14 +524,26 @@ class ChangeDetectionStore:
 
     # We incorrectly stored last_changed when there was not a change, and then confused the output list table
     def update_3(self):
+        # see https://github.com/dgtlmoon/changedetection.io/pull/835
+        return
+
+    # `last_changed` not needed, we pull that information from the history.txt index
+    def update_4(self):
         for uuid, watch in self.data['watching'].items():
             # Be sure it's recalculated
             p = watch.history
             if watch.history_n < 2:
                 watch['last_changed'] = 0
+            try:
+                # Remove it from the struct
+                del(watch['last_changed'])
+            except:
+                continue
+        return
+
 
     # Generate a previous.txt for all watches that do not have one and contain history
-    def update_4(self):
+    def update_5(self):
         for uuid, watch in self.data['watching'].items():
             # Make sure we actually have history
             if (watch.history_n == 0):
@@ -544,4 +559,3 @@ class ChangeDetectionStore:
                     latest_file_name = watch.history[watch.newest_history_key]
                     with open(latest_file_name, "rb") as f2:
                         f.write(f2.read())
- 

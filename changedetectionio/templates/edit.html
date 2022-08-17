@@ -23,7 +23,7 @@
 
     <div class="tabs collapsable">
         <ul>
-            <li class="tab" id="default-tab"><a href="#general">General</a></li>
+            <li class="tab" id=""><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
             <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
@@ -87,6 +87,9 @@
                         </span>
                     </div>
                 {% endif %}
+                    <div  class="pure-control-group inline-radio">
+                        {{ render_checkbox_field(form.ignore_status_codes) }}
+                    </div>
                 <fieldset id="webdriver-override-options">
                     <div class="pure-control-group">
                         {{ render_field(form.webdriver_delay) }}
@@ -128,11 +131,7 @@ User-Agent: wonderbra 1.0") }}
    \"car\":null
 }") }}
                     </div>
-                    <div id="ignore-status-codes-option">
-                        {{ render_checkbox_field(form.ignore_status_codes) }}
-                    </div>
                 </fieldset>
-                <br/>
             </div>
 
             <div class="tab-pane-inner" id="notifications">
@@ -317,9 +316,7 @@ Unavailable") }}
 
             <div id="actions">
                 <div class="pure-control-group">
-
-                      {{ render_button(form.save_button) }} {{ render_button(form.save_and_preview_button) }}
-
+                    {{ render_button(form.save_button) }}
                     <a href="{{url_for('form_delete', uuid=uuid)}}"
                        class="pure-button button-small button-error ">Delete</a>
                     <a href="{{url_for('clear_watch_history', uuid=uuid)}}"
