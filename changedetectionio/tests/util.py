@@ -4,6 +4,12 @@ from flask import make_response, request
 from flask import url_for
 import logging
 import time
+from werkzeug import Request
+import io
+
+# This is a fix for macOS running tests.
+import multiprocessing
+multiprocessing.set_start_method("fork")
 
 def set_original_response():
     test_return_data = """<html>
