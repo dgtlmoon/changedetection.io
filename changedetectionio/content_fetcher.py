@@ -31,11 +31,12 @@ class JSActionExceptions(Exception):
         return
 
 class PageUnloadable(Exception):
-    def __init__(self, status_code, url, screenshot=False):
+    def __init__(self, status_code, url, screenshot=False, message=False):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
         self.screenshot = screenshot
+        self.message = message
         return
 
 class EmptyReply(Exception):
@@ -356,7 +357,7 @@ class base_html_playwright(Fetcher):
                 print(str(e))
                 context.close()
                 browser.close()
-                raise PageUnloadable(url=url, status_code=None)
+                raise PageUnloadable(url=url, status_code=None, message=e.message)
 
             if response is None:
                 context.close()
