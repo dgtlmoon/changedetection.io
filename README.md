@@ -1,19 +1,15 @@
-#  changedetection.io
-[![Release Version][release-shield]][release-link] [![Docker Pulls][docker-pulls]][docker-link] [![License][license-shield]](LICENSE.md)
+## Web Site Change Detection, Monitoring and Notification.
 
-![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master)
-
-## Web Site Change Detection, Monitoring and Notification - Self-Hosted or SaaS.
-
-_Know when web pages change! Stay ontop of new information! get notifications when important website content changes_ 
-
-[**Try our $6.99/month subscription - unlimited checks and watches!**](https://lemonade.changedetection.io/start)
+[**Try our $6.99/month subscription - Unlimited checks and watches!**](https://lemonade.changedetection.io/start)
  
 
 [<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />](https://lemonade.changedetection.io/start)
 
+[![Release Version][release-shield]][release-link] [![Docker Pulls][docker-pulls]][docker-link] [![License][license-shield]](LICENSE.md)
 
-**Get your own private instance now! Let us host it for you!**
+![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master)
+
+Know when important content changes, we support notifications via Discord, Telegram, Home-Assistant, Slack, Email and 70+ more
 
 [**Try our $6.99/month subscription - unlimited checks and watches!**](https://lemonade.changedetection.io/start) , _half the price of other website change monitoring services and comes with unlimited watches & checks!_
 
