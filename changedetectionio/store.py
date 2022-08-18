@@ -341,6 +341,8 @@ class ChangeDetectionStore:
 
     # Save as PNG, PNG is larger but better for doing visual diff in the future
     def save_screenshot(self, watch_uuid, screenshot: bytes, as_error=False):
+        if not self.data['watching'].get(watch_uuid):
+            return
 
         if as_error:
             target_path = os.path.join(self.datastore_path, watch_uuid, "last-error-screenshot.png")
@@ -354,14 +356,16 @@ class ChangeDetectionStore:
             f.close()
 
     def save_error_text(self, watch_uuid, contents):
-
+        if not self.data['watching'].get(watch_uuid):
+            return
         target_path = os.path.join(self.datastore_path, watch_uuid, "last-error.txt")
 
         with open(target_path, 'w') as f:
             f.write(contents)
 
     def save_xpath_data(self, watch_uuid, data, as_error=False):
-
+        if not self.data['watching'].get(watch_uuid):
+            return
         if as_error:
             target_path = os.path.join(self.datastore_path, watch_uuid, "elements-error.json")
         else:
