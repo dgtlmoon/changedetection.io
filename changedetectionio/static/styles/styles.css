@@ -555,3 +555,13 @@ ul {
   .snapshot-age.error {
     background-color: #ff0000;
     color: #fff; }
+
+#checkbox-operations {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1em;
+  border-radius: 10px;
+  margin-bottom: 1em;
+  display: none; }
+
+.checkbox-uuid > * {
+  vertical-align: middle; }
