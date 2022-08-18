@@ -293,7 +293,15 @@ class base_html_playwright(Fetcher):
 
         # allow per-watch proxy selection override
         if proxy_override:
-            self.proxy = {'server': proxy_override}
+            # https://playwright.dev/docs/network#http-proxy
+            from urllib.parse import urlparse
+            parsed = urlparse(proxy_override)
+            proxy_url = "{}://{}:{}".format(parsed.scheme, parsed.hostname, parsed.port)
+            self.proxy = {'server': proxy_url}
+            if parsed.username:
+                self.proxy['username'] = parsed.username
+            if parsed.password:
+                self.proxy['password'] = parsed.password
 
     def run(self,
             url,
