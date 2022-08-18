@@ -1385,13 +1385,18 @@ def ticker_thread_check_time_launch_checks():
             seconds_since_last_recheck = now - watch['last_checked']
             if seconds_since_last_recheck >= (threshold + watch.jitter_seconds) and seconds_since_last_recheck >= recheck_time_minimum_seconds:
                 if not uuid in running_uuids and uuid not in [q_uuid for p,q_uuid in update_q.queue]:
-                    print("> Queued watch UUID {} last checked at {} queued at {:0.2f} jitter {:0.2f}s, {:0.2f}s since last checked".format(uuid,
-                                                                                                         watch['last_checked'],
-                                                                                                         now,
-                                                                                                         watch.jitter_seconds,
-                                                                                                         now - watch['last_checked']))
+                    # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
+                    priority = int(time.time())
+                    print(
+                        "> Queued watch UUID {} last checked at {} queued at {:0.2f} priority {} jitter {:0.2f}s, {:0.2f}s since last checked".format(
+                            uuid,
+                            watch['last_checked'],
+                            now,
+                            priority,
+                            watch.jitter_seconds,
+                            now - watch['last_checked']))
                     # Into the queue with you
-                    update_q.put((5, uuid))
+                    update_q.put((priority, uuid))
 
                     # Reset for next time
                     watch.jitter_seconds = 0
