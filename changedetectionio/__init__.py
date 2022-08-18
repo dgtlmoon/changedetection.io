@@ -1186,6 +1186,36 @@ def changedetection_app(config=None, datastore_o=None):
         flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
 
+    @app.route("/form/checkbox-operations", methods=['POST'])
+    @login_required
+    def form_watch_list_checkbox_operations():
+        op = request.form['op']
+        uuids = request.form.getlist('uuids')
+
+        if (op == 'delete'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.delete(uuid.strip())
+            flash("{} watches deleted".format(len(uuids)))
+
+        if (op == 'pause'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid.strip()]['paused'] = True
+
+            flash("{} watches paused".format(len(uuids)))
+
+        if (op == 'unpause'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid.strip()]['paused'] = False
+            flash("{} watches unpaused".format(len(uuids)))
+
+        return redirect(url_for('index'))
+
     @app.route("/api/share-url", methods=['GET'])
     @login_required
     def form_share_put_watch():

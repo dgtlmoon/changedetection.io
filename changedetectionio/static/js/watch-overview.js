@@ -22,5 +22,18 @@ $(function () {
       });
   });
 
+    // checkboxes - check all
+    $("#check-all").click(function (e) {
+        $('input[type=checkbox]').not(this).prop('checked', this.checked);
+    });
+    // checkboxes - show/hide buttons
+    $("input[type=checkbox]").click(function (e) {
+        if ($('input[type=checkbox]:checked').length) {
+            $('#checkbox-operations').slideDown();
+        } else {
+            $('#checkbox-operations').slideUp();
+        }
+    });
+
 });
 
