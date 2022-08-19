@@ -32,9 +32,10 @@ class model(dict):
             'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
             # Custom notification content
             'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
-            'notification_title': default_notification_title,
-            'notification_body': default_notification_body,
-            'notification_format': default_notification_format,
+            'notification_use_default': True, # A checkbox to make it easier to understand if we are using this or not
+            'notification_title': None,
+            'notification_body': None,
+            'notification_format': None,
             'notification_muted': False,
             'css_filter': '',
             'last_error': False,

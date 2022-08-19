@@ -540,3 +540,9 @@ class ChangeDetectionStore:
             except:
                 continue
         return
+
+    # Any watch notification that exactly the same as the default
+    # Then set the 'notification_use_default' to True and the other values to None
+    def update_5(self):
+        # @todo
+        return
