@@ -40,7 +40,18 @@ Know when important content changes, we support notifications via Discord, Teleg
 - Monitor HTML source code for unexpected changes, strengthen your PCI compliance
 - You have a very sensitive list of URLs to watch and you do _not_ want to use the paid alternatives. (Remember, _you_ are the product)
 
-_Need an actual Chrome runner with Javascript support? We support fetching via WebDriver!</a>_
+_Need an actual Chrome runner with Javascript support? We support fetching via WebDriver and Playwright!</a>_
+
+#### Key Features
+
+- Lots of trigger filters, such as "Trigger on text", "Remove text by selector", "Ignore text", "Extract text", also using regular-expressions!
+- Target elements with xPath and CSS Selectors, Easily monitor complex JSON with JsonPath rules
+- Switch between fast non-JS and Chrome JS based "fetchers"
+- Easily specify how often a site should be checked
+- Execute JS before extracting text (Good for logging in, see examples in the UI!)
+- Override Request Headers, Specify `POST` or `GET` and other methods
+- Use the "Visual Selector" to help target specific elements
+
 
 ## Screenshots
 
