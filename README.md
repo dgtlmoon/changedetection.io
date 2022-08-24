@@ -10,7 +10,7 @@ Live your data-life pro-actively, track changes and receive notifications via Di
 
 Know when important content changes, we support notifications via Discord, Telegram, Home-Assistant, Slack, Email and 70+ more
 
-[**Try our $6.99/month subscription - unlimited checks and watches!**](https://lemonade.changedetection.io/start) , _half the price of other website change monitoring services and comes with unlimited watches & checks!_
+[**Don't have time? Let us host it for you! try our $6.99/month subscription - use our proxies and support!**](https://lemonade.changedetection.io/start) , _half the price of other website change monitoring services and comes with unlimited watches & checks!_
 
 
 
