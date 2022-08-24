@@ -286,6 +286,9 @@ class update_worker(threading.Thread):
                         self.datastore.save_screenshot(watch_uuid=uuid, screenshot=update_handler.screenshot)
                     if update_handler.xpath_data:
                         self.datastore.save_xpath_data(watch_uuid=uuid, data=update_handler.xpath_data)
+                    if update_handler.fetched_response:
+                        # @todo mimetype?
+                        self.datastore.save_last_response(watch_uuid=uuid, data=update_handler.fetched_response)
 
 
                 self.current_uuid = None  # Done

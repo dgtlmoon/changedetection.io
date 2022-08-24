@@ -375,6 +375,17 @@ class ChangeDetectionStore:
             f.write(json.dumps(data))
             f.close()
 
+    # Save whatever was returned from the fetcher
+    def save_last_response(self, watch_uuid, data):
+        if not self.data['watching'].get(watch_uuid):
+            return
+
+        target_path = os.path.join(self.datastore_path, watch_uuid, "last-response.bin")
+        # mimetype? binary? text? @todo
+        # gzip if its non-binary? auto get encoding?
+        with open(target_path, 'wb') as f:
+            f.write(data)
+            f.close()
 
     def sync_to_json(self):
         logging.info("Saving JSON..")

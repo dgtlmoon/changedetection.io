@@ -15,6 +15,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class perform_site_check():
     screenshot = None
     xpath_data = None
+    fetched_response = None
 
     def __init__(self, *args, datastore, **kwargs):
         super().__init__(*args, **kwargs)
@@ -131,6 +132,7 @@ class perform_site_check():
 
         self.screenshot = fetcher.screenshot
         self.xpath_data = fetcher.xpath_data
+        self.fetched_response = fetcher.content
 
         # Fetching complete, now filters
         # @todo move to class / maybe inside of fetcher abstract base?
