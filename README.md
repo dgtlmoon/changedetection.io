@@ -1,6 +1,6 @@
 ## Web Site Change Detection, Monitoring and Notification.
 
-Live your data-life pro-actively, track changes and receive notifications via Discord, Email, Slack, Telegram and 70+ more
+Live your data-life pro-actively, track website content changes and receive notifications via Discord, Email, Slack, Telegram and 70+ more
 
 [<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />](https://lemonade.changedetection.io/start)
 
