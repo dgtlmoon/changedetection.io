@@ -308,6 +308,9 @@ class ValidateCSSJSONXPATHInput(object):
 class quickWatchForm(Form):
     url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional()])
+    watch_submit_button = SubmitField('Watch', render_kw={"class": "pure-button pure-button-primary"})
+    edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
+
 
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
@@ -347,7 +350,7 @@ class watchForm(commonSettingsForm):
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
-    save_and_preview_button = SubmitField('Save & Preview', render_kw={"class": "pure-button pure-button-primary"})
+
     proxy = RadioField('Proxy')
     filter_failure_notification_send = BooleanField(
         'Send a notification when the filter can no longer be found on the page', default=False)
@@ -381,7 +384,6 @@ class globalSettingsApplicationForm(commonSettingsForm):
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     ignore_whitespace = BooleanField('Ignore whitespace')
-    real_browser_save_screenshot = BooleanField('Save last screenshot when using Chrome?')
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
     empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)

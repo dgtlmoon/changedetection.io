@@ -78,7 +78,7 @@ def process_notification(n_object, datastore):
                     n_title = n_title[0:payload_max_size]
                     n_body = n_body[0:body_limit]
 
-                elif url.startswith('discord://') or url.startswith('https://discordapp.com/api/webhooks'):
+                elif url.startswith('discord://') or url.startswith('https://discordapp.com/api/webhooks') or url.startswith('https://discord.com/api'):
                     # real limit is 2000, but minus some for extra metadata
                     payload_max_size = 1700
                     body_limit = max(0, payload_max_size - len(n_title))

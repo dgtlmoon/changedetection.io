@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from ..util import live_server_setup
+from ..util import live_server_setup, wait_for_all_checks
 import logging
 
 
@@ -29,14 +29,8 @@ def test_fetch_webdriver_content(client, live_server):
 
     assert b"1 Imported" in res.data
     time.sleep(3)
-    attempt = 0
-    while attempt < 20:
-        res = client.get(url_for("index"))
-        if not b'Checking now' in res.data:
-            break
-        logging.getLogger().info("Waiting for check to not say 'Checking now'..")
-        time.sleep(3)
-        attempt += 1
+
+    wait_for_all_checks(client)
 
 
     res = client.get(

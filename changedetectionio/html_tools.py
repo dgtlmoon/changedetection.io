@@ -50,8 +50,15 @@ def xpath_filter(xpath_filter, html_content):
     if len(html_content) > 0 and len(r) == 0:
         raise FilterNotFoundInResponse(xpath_filter)
 
-    for item in r:
-        html_block += etree.tostring(item, pretty_print=True).decode('utf-8') + "<br/>"
+    #@note: //title/text() wont work where <title>CDATA..
+
+    for element in r:
+        if type(element) == etree._ElementStringResult:
+            html_block += str(element) + "<br/>"
+        elif type(element) == etree._ElementUnicodeResult:
+            html_block += str(element) + "<br/>"
+        else:
+            html_block += etree.tostring(element, pretty_print=True).decode('utf-8') + "<br/>"
 
     return html_block
 

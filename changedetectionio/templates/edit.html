@@ -23,7 +23,7 @@
 
     <div class="tabs collapsable">
         <ul>
-            <li class="tab" id="default-tab"><a href="#general">General</a></li>
+            <li class="tab" id=""><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
             <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
@@ -33,7 +33,7 @@
 
     <div class="box-wrap inner">
         <form class="pure-form pure-form-stacked"
-              action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next') ) }}" method="POST">
+              action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next'), unpause_on_save = request.args.get('unpause_on_save')) }}" method="POST">
              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
             <div class="tab-pane-inner" id="general">
@@ -87,6 +87,9 @@
                         </span>
                     </div>
                 {% endif %}
+                    <div  class="pure-control-group inline-radio">
+                        {{ render_checkbox_field(form.ignore_status_codes) }}
+                    </div>
                 <fieldset id="webdriver-override-options">
                     <div class="pure-control-group">
                         {{ render_field(form.webdriver_delay) }}
@@ -128,11 +131,7 @@ User-Agent: wonderbra 1.0") }}
    \"car\":null
 }") }}
                     </div>
-                    <div id="ignore-status-codes-option">
-                        {{ render_checkbox_field(form.ignore_status_codes) }}
-                    </div>
                 </fieldset>
-                <br/>
             </div>
 
             <div class="tab-pane-inner" id="notifications">
@@ -163,15 +162,26 @@ User-Agent: wonderbra 1.0") }}
                         </div>
                     </fieldset>
                     <div class="pure-control-group">
-                        {{ render_field(form.css_filter, placeholder=".class-name or #some-id, or other CSS selector rule.",
-                        class="m-d") }}
+                        {% set field = render_field(form.css_filter,
+                            placeholder=".class-name or #some-id, or other CSS selector rule.",
+                            class="m-d")
+                        %}
+                        {{ field }}
+                        {% if '/text()' in  field %}
+                          <span class="pure-form-message-inline"><strong>Note!: //text() function does not work where the &lt;element&gt; contains &lt;![CDATA[]]&gt;</strong></span><br/>
+                        {% endif %}
                         <span class="pure-form-message-inline">
                     <ul>
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
                         <li>JSON - Limit text to this JSON rule, using <a href="https://pypi.org/project/jsonpath-ng/">JSONPath</a>, prefix with <code>"json:"</code>, use <code>json:$</code> to force re-formatting if required,  <a
                                 href="https://jsonpath.com/" target="new">test your JSONPath here</a></li>
-                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash, example  <code>//*[contains(@class, 'sametext')]</code> or <code>xpath://*[contains(@class, 'sametext')]</code>, <a
+                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash,
+                            <ul>
+                                <li>Example:  <code>//*[contains(@class, 'sametext')]</code> or <code>xpath://*[contains(@class, 'sametext')]</code>, <a
                                 href="http://xpather.com/" target="new">test your XPath here</a></li>
+                                <li>Example: Get all titles from an RSS feed <code>//title/text()</code></li>
+                            </ul>
+                            </li>
                     </ul>
                     Please be sure that you thoroughly understand how to write CSS or JSONPath, XPath selector rules before filing an issue on GitHub! <a
                                 href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
@@ -296,9 +306,7 @@ Unavailable") }}
 
             <div id="actions">
                 <div class="pure-control-group">
-
-                      {{ render_button(form.save_button) }} {{ render_button(form.save_and_preview_button) }}
-
+                    {{ render_button(form.save_button) }}
                     <a href="{{url_for('form_delete', uuid=uuid)}}"
                        class="pure-button button-small button-error ">Delete</a>
                     <a href="{{url_for('clear_watch_history', uuid=uuid)}}"
