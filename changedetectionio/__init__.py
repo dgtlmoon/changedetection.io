@@ -18,6 +18,7 @@ import threading
 import time
 from copy import deepcopy
 from threading import Event
+from PriorityThreadPoolExecutor import PriorityThreadPoolExecutor
 
 import flask_login
 import logging
@@ -49,12 +50,12 @@ __version__ = '0.39.18'
 datastore = None
 
 # Local
-running_update_threads = []
+running_update_uuids = set()
 ticker_thread = None
 
 extra_stylesheets = []
 
-update_q = queue.PriorityQueue()
+pool = None
 
 notification_q = queue.Queue()
 
@@ -105,10 +106,9 @@ def init_app_secret(datastore_path):
 # running or something similar.
 @app.template_filter('format_last_checked_time')
 def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
-    # Worker thread tells us which UUID it is currently processing.
-    for t in running_update_threads:
-        if t.current_uuid == watch_obj['uuid']:
-            return '<span class="loader"></span><span> Checking now</span>'
+
+    if watch_obj['uuid'] in running_update_uuids:
+        return '<span class="loader"></span><span> Checking now</span>'
 
     if watch_obj['last_checked'] == 0:
         return 'Not yet'
@@ -178,13 +178,15 @@ class User(flask_login.UserMixin):
 
 def changedetection_app(config=None, datastore_o=None):
     global datastore
+    global pool
     datastore = datastore_o
 
     # so far just for read-only via tests, but this will be moved eventually to be the main source
     # (instead of the global var)
     app.config['DATASTORE']=datastore_o
 
-    #app.config.update(config or {})
+    pool = PriorityThreadPoolExecutor(max_workers=int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers'])))
+
 
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
@@ -193,20 +195,17 @@ def changedetection_app(config=None, datastore_o=None):
 
     watch_api.add_resource(api_v1.WatchSingleHistory,
                            '/api/v1/watch/<string:uuid>/history/<string:timestamp>',
-                           resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
+                           resource_class_kwargs={'datastore': datastore, 'queue_single_watch': queue_single_watch})
 
     watch_api.add_resource(api_v1.WatchHistory,
                            '/api/v1/watch/<string:uuid>/history',
                            resource_class_kwargs={'datastore': datastore})
 
     watch_api.add_resource(api_v1.CreateWatch, '/api/v1/watch',
-                           resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
+                           resource_class_kwargs={'datastore': datastore, 'queue_single_watch': queue_single_watch})
 
     watch_api.add_resource(api_v1.Watch, '/api/v1/watch/<string:uuid>',
-                           resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
-
-
-
+                           resource_class_kwargs={'datastore': datastore, 'queue_single_watch': queue_single_watch})
 
 
     # Setup cors headers to allow all domains
@@ -417,8 +416,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  # Don't link to hosting when we're on the hosting environment
                                  hosted_sticky=os.getenv("SALTED_PASS", False) == False,
                                  guid=datastore.data['app_guid'],
-                                 queued_uuids=[uuid for p,uuid in update_q.queue])
-
+                                 queued_uuids=get_uuids_in_queue())
 
         if session.get('share-link'):
             del(session['share-link'])
@@ -632,7 +630,7 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.needs_write_urgent = True
 
             # Queue the watch for immediate recheck, with a higher priority
-            update_q.put((1, uuid))
+            queue_single_watch(uuid=uuid, priority=1)
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff':
@@ -749,7 +747,7 @@ def changedetection_app(config=None, datastore_o=None):
                 importer = import_url_list()
                 importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore)
                 for uuid in importer.new_uuids:
-                    update_q.put((1, uuid))
+                    queue_single_watch(uuid=uuid, priority=1)
 
                 if len(importer.remaining_data) == 0:
                     return redirect(url_for('index'))
@@ -762,7 +760,7 @@ def changedetection_app(config=None, datastore_o=None):
                 d_importer = import_distill_io_json()
                 d_importer.run(data=request.values.get('distill-io'), flash=flash, datastore=datastore)
                 for uuid in d_importer.new_uuids:
-                    update_q.put((1, uuid))
+                    queue_single_watch(uuid=uuid, priority=1)
 
 
 
@@ -1107,7 +1105,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         if not add_paused and new_uuid:
             # Straight into the queue.
-            update_q.put((1, new_uuid))
+            queue_single_watch(uuid=uuid, priority=1)
             flash("Watch added.")
 
         if add_paused:
@@ -1144,7 +1142,7 @@ def changedetection_app(config=None, datastore_o=None):
             uuid = list(datastore.data['watching'].keys()).pop()
 
         new_uuid = datastore.clone(uuid)
-        update_q.put((5, new_uuid))
+        queue_single_watch(uuid=uuid, priority=5)
         flash('Cloned.')
 
         return redirect(url_for('index'))
@@ -1157,31 +1155,25 @@ def changedetection_app(config=None, datastore_o=None):
         uuid = request.args.get('uuid')
         i = 0
 
-        running_uuids = []
-        for t in running_update_threads:
-            running_uuids.append(t.current_uuid)
-
-        # @todo check thread is running and skip
-
         if uuid:
-            if uuid not in running_uuids:
-                update_q.put((1, uuid))
+            if uuid not in get_uuids_in_queue():
+                queue_single_watch(uuid=uuid, priority=1)
             i = 1
 
         elif tag != None:
             # Items that have this current tag
             for watch_uuid, watch in datastore.data['watching'].items():
                 if (tag != None and tag in watch['tag']):
-                    if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
-                        update_q.put((1, watch_uuid))
+                    if watch_uuid not in get_uuids_in_queue() and not datastore.data['watching'][watch_uuid]['paused']:
+                        queue_single_watch(uuid=watch_uuid, priority=1)
                         i += 1
 
         else:
             # No tag, no uuid, add everything.
             for watch_uuid, watch in datastore.data['watching'].items():
 
-                if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
-                    update_q.put((1, watch_uuid))
+                if watch_uuid not in get_uuids_in_queue() and not datastore.data['watching'][watch_uuid]['paused']:
+                    queue_single_watch(uuid=watch_uuid, priority=1)
                     i += 1
         flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
@@ -1346,33 +1338,31 @@ def notification_runner():
             # Trim the log length
             notification_debug_log = notification_debug_log[-100:]
 
-# Thread runner to check every minute, look for new watches to feed into the Queue.
+def queue_single_watch(uuid, priority=1):
+    pool.submit(process_single_watch, uuid, priority=int(time.time()) - priority)
+
+def process_single_watch(uuid):
+    running_update_uuids.add(uuid)
+    from changedetectionio import update_worker
+    worker = update_worker.update_worker(notification_q=notification_q, datastore=datastore)
+    worker.run(uuid)
+    running_update_uuids.remove(uuid)
+
+def get_uuids_in_queue():
+    return [workitem.args[0] for p, workitem in pool._work_queue.queue]
+
+# Thread runner to load watch jobs into the queue as they become ready/due for checking again
 def ticker_thread_check_time_launch_checks():
     import random
-    from changedetectionio import update_worker
 
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 20))
     print("System env MINIMUM_SECONDS_RECHECK_TIME", recheck_time_minimum_seconds)
 
-    # Spin up Workers that do the fetching
-    # Can be overriden by ENV or use the default settings
-    n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
-    for _ in range(n_workers):
-        new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
-        running_update_threads.append(new_worker)
-        new_worker.start()
-
     while not app.config.exit.is_set():
-
-        # Get a list of watches by UUID that are currently fetching data
-        running_uuids = []
-        for t in running_update_threads:
-            if t.current_uuid:
-                running_uuids.append(t.current_uuid)
 
         # Re #232 - Deepcopy the data incase it changes while we're iterating through it all
         watch_uuid_list = []
-        while True:
+        while not app.config.exit.is_set():
             try:
                 watch_uuid_list = datastore.data['watching'].keys()
             except RuntimeError as e:
@@ -1382,8 +1372,9 @@ def ticker_thread_check_time_launch_checks():
                 break
 
         # Re #438 - Don't place more watches in the queue to be checked if the queue is already large
-        while update_q.qsize() >= 2000:
-            time.sleep(1)
+        while pool._work_queue.qsize() >= 2000:
+            if not app.config.exit.is_set():
+                time.sleep(1)
 
 
         recheck_time_system_seconds = int(datastore.threshold_seconds)
@@ -1414,7 +1405,8 @@ def ticker_thread_check_time_launch_checks():
 
             seconds_since_last_recheck = now - watch['last_checked']
             if seconds_since_last_recheck >= (threshold + watch.jitter_seconds) and seconds_since_last_recheck >= recheck_time_minimum_seconds:
-                if not uuid in running_uuids and uuid not in [q_uuid for p,q_uuid in update_q.queue]:
+                #@todo check 'not in running_uuids'
+                if not uuid and uuid not in get_uuids_in_queue():
                     # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
                     priority = int(time.time())
                     print(
@@ -1425,8 +1417,8 @@ def ticker_thread_check_time_launch_checks():
                             priority,
                             watch.jitter_seconds,
                             now - watch['last_checked']))
-                    # Into the queue with you
-                    update_q.put((priority, uuid))
+
+                    queue_single_watch(uuid=uuid, priority=priority)
 
                     # Reset for next time
                     watch.jitter_seconds = 0

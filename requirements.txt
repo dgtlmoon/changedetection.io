@@ -33,6 +33,8 @@ bs4
 # XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
 lxml
 
+PriorityThreadPoolExecutor
+
 # 3.141 was missing socksVersion, 3.150 was not in pypi, so we try 4.1.0
 selenium ~= 4.1.0
 

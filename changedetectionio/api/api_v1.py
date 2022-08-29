@@ -1,6 +1,8 @@
 from flask_restful import abort, Resource
 from flask import request, make_response
+
 import validators
+
 from . import auth
 
 
@@ -11,7 +13,7 @@ class Watch(Resource):
     def __init__(self, **kwargs):
         # datastore is a black box dependency
         self.datastore = kwargs['datastore']
-        self.update_q = kwargs['update_q']
+        self.queue_single_watch = kwargs['queue_single_watch']
 
     # Get information about a single watch, excluding the history list (can be large)
     # curl http://localhost:4000/api/v1/watch/<string:uuid>
@@ -24,7 +26,7 @@ class Watch(Resource):
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
 
         if request.args.get('recheck'):
-            self.update_q.put((1, uuid))
+            self.queue_single_watch(uuid, priority=1)
             return "OK", 200
 
         # Return without history, get that via another API call
@@ -86,7 +88,7 @@ class CreateWatch(Resource):
     def __init__(self, **kwargs):
         # datastore is a black box dependency
         self.datastore = kwargs['datastore']
-        self.update_q = kwargs['update_q']
+        self.queue_single_watch = kwargs['queue_single_watch']
 
     @auth.check_token
     def post(self):
@@ -100,7 +102,7 @@ class CreateWatch(Resource):
         extras = {'title': json_data['title'].strip()} if json_data.get('title') else {}
 
         new_uuid = self.datastore.add_watch(url=json_data['url'].strip(), tag=tag, extras=extras)
-        self.update_q.put((1, new_uuid))
+        self.queue_single_watch(new_uuid, priority=1)
         return {'uuid': new_uuid}, 201
 
     # Return concise list of available watches and some very basic info
@@ -118,7 +120,7 @@ class CreateWatch(Resource):
 
         if request.args.get('recheck_all'):
             for uuid in self.datastore.data['watching'].keys():
-                self.update_q.put((1, uuid))
+                self.queue_single_watch(uuid, priority=1)
             return {'status': "OK"}, 200
 
         return list, 200
