@@ -1105,7 +1105,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         if not add_paused and new_uuid:
             # Straight into the queue.
-            queue_single_watch(uuid=uuid, priority=1)
+            queue_single_watch(uuid=new_uuid, priority=1)
             flash("Watch added.")
 
         if add_paused:
