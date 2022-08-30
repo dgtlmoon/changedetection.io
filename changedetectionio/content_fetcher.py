@@ -407,7 +407,8 @@ class base_html_playwright(Fetcher):
             else:
                 page.evaluate("var css_filter=''")
 
-            self.xpath_data = page.evaluate("async () => {" + self.xpath_element_js + "}")
+            # str() here must create a dereferenced copy, which allows the GC to release correctly
+            self.xpath_data = str(page.evaluate("async () => {" + self.xpath_element_js + "}"))
 
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
