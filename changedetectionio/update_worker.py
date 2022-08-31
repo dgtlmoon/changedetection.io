@@ -41,7 +41,7 @@ class update_worker(threading.Thread):
             )
 
         # Did it have any notification alerts to hit?
-        if len(watch['notification_urls']):
+        if not watch.get('notification_use_default') and len(watch['notification_urls']):
             print(">>> Notifications queued for UUID from watch {}".format(watch_uuid))
             n_object['notification_urls'] = watch['notification_urls']
             n_object['notification_title'] = watch['notification_title']
@@ -49,7 +49,7 @@ class update_worker(threading.Thread):
             n_object['notification_format'] = watch['notification_format']
 
         # No? maybe theres a global setting, queue them all
-        elif len(self.datastore.data['settings']['application']['notification_urls']):
+        elif watch.get('notification_use_default') and len(self.datastore.data['settings']['application']['notification_urls']):
             print(">>> Watch notification URLs were empty, using GLOBAL notifications for UUID: {}".format(watch_uuid))
             n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
             n_object['notification_title'] = self.datastore.data['settings']['application']['notification_title']
