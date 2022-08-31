@@ -148,9 +148,7 @@ class model(dict):
         bump = self.history
         return self.__newest_history_key
 
-    # Save some text file to the appropriate path and bump the history
-    # result_obj from fetch_site_status.run()
-    def save_history_text(self, contents, timestamp):
+    def save_history_artifact(self, contents: bytes, timestamp, suffix='txt'):
         import uuid
         import logging
 
@@ -158,8 +156,8 @@ class model(dict):
 
         self.ensure_data_dir_exists()
 
-        snapshot_fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
-        logging.debug("Saving history text {}".format(snapshot_fname))
+        snapshot_fname = "{}/{}.{}".format(output_path, uuid.uuid4(), suffix)
+        logging.debug("Saving history artifact {}".format(snapshot_fname))
 
         with open(snapshot_fname, 'wb') as f:
             f.write(contents)

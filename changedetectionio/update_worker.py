@@ -250,12 +250,11 @@ class update_worker(threading.Thread):
                     if process_changedetection_results:
                         try:
                             watch = self.datastore.data['watching'][uuid]
-                            fname = "" # Saved history text filename
 
                             # For the FIRST time we check a site, or a change detected, save the snapshot.
                             if changed_detected or not watch['last_checked']:
                                 # A change was detected
-                                watch.save_history_text(contents=update_handler.contents, timestamp=str(round(time.time())))
+                                watch.save_history_artifact(contents=update_handler.contents, timestamp=str(round(time.time())), suffix=update_handler.history_artifact_suffix)
 
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
 

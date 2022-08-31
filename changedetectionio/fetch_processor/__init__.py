@@ -1,6 +1,7 @@
 class fetch_processor():
     contents = b''
     screenshot = None
+    history_artifact_suffix = 'txt'
 
     """
     base class for all fetch processors
