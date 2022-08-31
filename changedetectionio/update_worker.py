@@ -117,9 +117,9 @@ class update_worker(threading.Thread):
                 os.unlink(full_path)
 
     def run(self):
-        from changedetectionio import fetch_site_status
+        from changedetectionio.fetch_processor import json_html_plaintext
 
-        update_handler = fetch_site_status.perform_site_check(datastore=self.datastore)
+        update_handler = json_html_plaintext.perform_site_check(datastore=self.datastore)
 
         while not self.app.config.exit.is_set():
 

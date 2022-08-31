@@ -11,7 +11,7 @@ def test_setup(live_server):
 # Unit test of the stripper
 # Always we are dealing in utf-8
 def test_strip_text_func():
-    from changedetectionio import fetch_site_status
+    from ..fetch_processor import json_html_plaintext
 
     test_content = """
     Some content

@@ -71,7 +71,6 @@ def set_modified_response():
 
 
 def test_element_removal_output():
-    from changedetectionio import fetch_site_status
     from inscriptis import get_text
 
     # Check text with sub-parts renders correctly

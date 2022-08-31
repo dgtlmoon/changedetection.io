@@ -500,7 +500,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         import hashlib
 
-        from changedetectionio import fetch_site_status
+        from changedetectionio.fetch_processor import json_html_plaintext
 
         # Get the most recent one
         newest_history_key = datastore.data['watching'][uuid].get('newest_history_key')
@@ -514,7 +514,7 @@ def changedetection_app(config=None, datastore_o=None):
                       encoding='utf-8') as file:
                 raw_content = file.read()
 
-                handler = fetch_site_status.perform_site_check(datastore=datastore)
+                handler = json_html_plaintext.perform_site_check(datastore=datastore)
                 stripped_content = html_tools.strip_ignore_text(raw_content,
                                                              datastore.data['watching'][uuid]['ignore_text'])
 

@@ -47,7 +47,6 @@ def set_modified_response():
 
 # Test that the CSS extraction works how we expect, important here is the right placing of new lines \n's
 def test_css_filter_output():
-    from changedetectionio import fetch_site_status
     from inscriptis import get_text
 
     # Check text with sub-parts renders correctly
