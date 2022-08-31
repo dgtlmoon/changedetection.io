@@ -217,14 +217,81 @@ def test_notification_validation(client, live_server):
         follow_redirects=True
     )
 
+# Check that the default VS watch specific notification is hit
 def test_check_notification_use_default(client, live_server):
     set_original_response()
+    notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
     test_url = url_for('test_endpoint', _external=True)
+
     res = client.post(
         url_for("form_quick_watch_add"),
         data={"url": test_url, "tag": ''},
         follow_redirects=True
     )
     assert b"Watch added" in res.data
-    #@todo set something in global
-    # @todo set something else in the watch
+
+    ## Setup the local one and enable it
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"notification_urls": notification_url,
+              "notification_title": "watch-notification",
+              "notification_body": "watch-body",
+              'notification_use_default': "True",
+              "notification_format": "Text",
+              "url": test_url,
+              "tag": "my tag",
+              "title": "my title",
+              "headers": "",
+              "fetch_backend": "html_requests"},
+        follow_redirects=True
+    )
+
+    res = client.post(
+        url_for("settings_page"),
+        data={"application-notification_title": "global-notifications-title",
+              "application-notification_body": "global-notifications-body\n",
+              "application-notification_format": "Text",
+              "application-notification_urls": notification_url,
+              "requests-time_between_check-minutes": 180,
+              "fetch_backend": "html_requests"
+              },
+        follow_redirects=True
+    )
+
+    # A change should by default trigger a notification of the global-notifications
+    time.sleep(1)
+    set_modified_response()
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    time.sleep(2)
+    with open("test-datastore/notification.txt", "r") as f:
+        assert 'global-notifications-title' in f.read()
+
+    ## Setup the local one and enable it
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"notification_urls": notification_url,
+              "notification_title": "watch-notification",
+              "notification_body": "watch-body",
+              # No 'notification_use_default' here, so it's effectively False/off = "dont use default, use this one"
+              "notification_format": "Text",
+              "url": test_url,
+              "tag": "my tag",
+              "title": "my title",
+              "headers": "",
+              "fetch_backend": "html_requests"},
+        follow_redirects=True
+    )
+    set_original_response()
+
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    time.sleep(2)
+    assert os.path.isfile("test-datastore/notification.txt")
+    with open("test-datastore/notification.txt", "r") as f:
+        assert 'watch-notification' in f.read()
+
+
+    # cleanup for the next
+    client.get(
+        url_for("form_delete", uuid="all"),
+        follow_redirects=True
+    )
