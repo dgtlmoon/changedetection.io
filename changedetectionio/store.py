@@ -244,10 +244,6 @@ class ChangeDetectionStore:
 
         return False
 
-    def get_val(self, uuid, val):
-        # Probably their should be dict...
-        return self.data['watching'][uuid].get(val)
-
     # Remove a watchs data but keep the entry (URL etc)
     def clear_watch_history(self, uuid):
         import pathlib

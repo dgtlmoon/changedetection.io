@@ -503,7 +503,7 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio import fetch_site_status
 
         # Get the most recent one
-        newest_history_key = datastore.get_val(uuid, 'newest_history_key')
+        newest_history_key = datastore.data['watching'][uuid].get('newest_history_key')
 
         # 0 means that theres only one, so that there should be no 'unviewed' history available
         if newest_history_key == 0:
