@@ -14,7 +14,7 @@ from . import fetch_processor
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
 class perform_site_check(fetch_processor):
-    screenshot = None
+
     xpath_data = None
 
     # Doesn't look like python supports forward slash auto enclosure in re.findall
@@ -284,5 +284,6 @@ class perform_site_check(fetch_processor):
         if not watch.get('previous_md5'):
             watch['previous_md5'] = fetched_md5
 
-        # @todo text_content_before_ignored_filter can be removed? save it here?
-        return changed_detected, update_obj, text_content_before_ignored_filter
+        self.contents = text_content_before_ignored_filter
+
+        return changed_detected, update_obj

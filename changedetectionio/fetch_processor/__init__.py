@@ -1,4 +1,7 @@
 class fetch_processor():
+    contents = b''
+    screenshot = None
+
     """
     base class for all fetch processors
     - json_html_plaintext
