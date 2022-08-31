@@ -71,6 +71,7 @@ def test_check_notification(client, live_server):
         "url": test_url,
         "tag": "my tag",
         "title": "my title",
+        # No 'notification_use_default' here, so it's effectively False/off
         "headers": "",
         "fetch_backend": "html_requests"})
 
@@ -215,3 +216,15 @@ def test_notification_validation(client, live_server):
         url_for("form_delete", uuid="all"),
         follow_redirects=True
     )
+
+def test_check_notification_use_default(client, live_server):
+    set_original_response()
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url, "tag": ''},
+        follow_redirects=True
+    )
+    assert b"Watch added" in res.data
+    #@todo set something in global
+    # @todo set something else in the watch
