@@ -119,7 +119,7 @@ class update_worker(threading.Thread):
     def run(self):
         from .fetch_processor import json_html_plaintext
 
-        update_handler = json_html_plaintext.perform_site_check(datastore=self.datastore)
+
 
         while not self.app.config.exit.is_set():
 
@@ -142,6 +142,7 @@ class update_worker(threading.Thread):
                     now = time.time()
 
                     try:
+                        update_handler = json_html_plaintext.perform_site_check(datastore=self.datastore)
                         changed_detected, update_obj, contents = update_handler.run(uuid)
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
