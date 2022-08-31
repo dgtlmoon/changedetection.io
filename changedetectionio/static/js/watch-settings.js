@@ -29,12 +29,14 @@ $(document).ready(function () {
     function toggle_default_notifications() {
         var n=$('#notification_urls, #notification_title, #notification_body, #notification_format');
         if ($('#notification_use_default').is(':checked')) {
+            $('#notification-field-group').fadeOut();
             $(n).each(function (e) {
-                $(this).attr('readonly', true).css('opacity',0.5);
+                $(this).attr('readonly', true);
             });
         } else {
+            $('#notification-field-group').show();
             $(n).each(function (e) {
-                $(this).attr('readonly', false).css('opacity',1);
+                $(this).attr('readonly', false);
             });
         }
     }
