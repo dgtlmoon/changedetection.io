@@ -7,6 +7,7 @@ from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_cli
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready
 def test_visual_selector_content_ready(client, live_server):
     import os
+    import json
 
     assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
     live_server_setup(live_server)
@@ -33,3 +34,7 @@ def test_visual_selector_content_ready(client, live_server):
     uuid = extract_UUID_from_client(client)
     assert os.path.isfile(os.path.join('test-datastore', uuid, 'last-screenshot.png')), "last-screenshot.png should exist"
     assert os.path.isfile(os.path.join('test-datastore', uuid, 'elements.json')), "xpath elements.json data should exist"
+
+    # Open it and see if it roughly looks correct
+    with open(os.path.join('test-datastore', uuid, 'elements.json'), 'r') as f:
+        json.load(f)
