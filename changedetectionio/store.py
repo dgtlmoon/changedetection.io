@@ -540,3 +540,26 @@ class ChangeDetectionStore:
             except:
                 continue
         return
+
+
+    def update_5(self):
+
+        from changedetectionio.notification import (
+            default_notification_body,
+            default_notification_format,
+            default_notification_title,
+        )
+
+        for uuid, watch in self.data['watching'].items():
+            try:
+                # If it's all the same to the system settings, then prefer system notification settings
+                if watch.get('notification_body') == default_notification_body and \
+                        watch.get('notification_format') == default_notification_format and \
+                        watch.get('notification_title') == default_notification_title and \
+                        watch.get('notification_urls') == self.__data['settings']['application']['notification_urls']:
+                        watch['notification_use_default'] = True
+                else:
+                    watch['notification_use_default'] = False
+            except:
+                continue
+        return
