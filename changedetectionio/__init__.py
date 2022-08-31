@@ -500,7 +500,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         import hashlib
 
-        from changedetectionio.fetch_processor import json_html_plaintext
+        from .fetch_processor import json_html_plaintext
 
         # Get the most recent one
         newest_history_key = datastore.data['watching'][uuid].get('newest_history_key')
