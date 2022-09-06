@@ -356,6 +356,7 @@ class watchForm(commonSettingsForm):
         'Send a notification when the filter can no longer be found on the page', default=False)
 
     notification_use_default = BooleanField('Use default/system notification settings', default=True)
+    notification_muted = BooleanField('Paused / Off', default=False)
 
     def validate(self, **kwargs):
         if not super().validate():

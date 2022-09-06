@@ -557,6 +557,8 @@ class ChangeDetectionStore:
                         watch['notification_use_default'] = True
                 else:
                     watch['notification_use_default'] = False
+
+                # if system wide had a URL, but
             except:
                 continue
         return
