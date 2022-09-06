@@ -786,3 +786,21 @@ ul {
     vertical-align: middle;
   }
 }
+
+.inline-warning {
+  >span {
+    display: inline-block;
+    vertical-align: middle;
+    &.inline-warning-icon {
+      height: 20px;
+      img {
+        height: 100%;
+      }
+    }
+  }
+    border: 1px solid #ff3300;
+    padding: 0.5rem;
+    border-radius: 5px;
+  color: #ff3300;
+}
+

@@ -655,6 +655,7 @@ def changedetection_app(config=None, datastore_o=None):
                                      watch=datastore.data['watching'][uuid],
                                      form=form,
                                      has_empty_checktime=using_default_check_time,
+                                     has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
                                      using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
