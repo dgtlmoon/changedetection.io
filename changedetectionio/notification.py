@@ -18,6 +18,8 @@ valid_notification_formats = {
     'Text': NotifyFormat.TEXT,
     'Markdown': NotifyFormat.MARKDOWN,
     'HTML': NotifyFormat.HTML,
+    # Used only for editing  awatch
+    'System default': 'System default'
 }
 
 default_notification_format = 'Text'

@@ -553,10 +553,6 @@ def changedetection_app(config=None, datastore_o=None):
         default = deepcopy(datastore.data['watching'][uuid])
 
         # Show system wide default if nothing configured
-        if datastore.data['watching'][uuid]['fetch_backend'] is None:
-            default['fetch_backend'] = datastore.data['settings']['application']['fetch_backend']
-
-        # Show system wide default if nothing configured
         if all(value == 0 or value == None for value in datastore.data['watching'][uuid]['time_between_check'].values()):
             default['time_between_check'] = deepcopy(datastore.data['settings']['requests']['time_between_check'])
 
@@ -598,10 +594,8 @@ def changedetection_app(config=None, datastore_o=None):
             if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
                 extra_update_obj['fetch_backend'] = None
 
-            # Notification URLs
-            datastore.data['watching'][uuid]['notification_urls'] = form.notification_urls.data
 
-            # Ignore text
+             # Ignore text
             form_ignore_text = form.ignore_text.data
             datastore.data['watching'][uuid]['ignore_text'] = form_ignore_text
 
@@ -656,9 +650,12 @@ def changedetection_app(config=None, datastore_o=None):
                                      form=form,
                                      has_empty_checktime=using_default_check_time,
                                      has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
+
                                      using_global_webdriver_wait=default['webdriver_delay'] is None,
+                                     # @todo remove dupe
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                     settings_application=datastore.data['settings']['application'],
                                      visualselector_data_is_ready=visualselector_data_is_ready,
                                      visualselector_enabled=visualselector_enabled,
                                      playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False)
@@ -733,7 +730,8 @@ def changedetection_app(config=None, datastore_o=None):
                                  current_base_url = datastore.data['settings']['application']['base_url'],
                                  hide_remove_pass=os.getenv("SALTED_PASS", False),
                                  api_key=datastore.data['settings']['application'].get('api_access_token'),
-                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False))
+                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                 settings_application=datastore.data['settings']['application'])
 
         return output
 
