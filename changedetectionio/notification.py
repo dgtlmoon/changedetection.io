@@ -14,12 +14,13 @@ valid_tokens = {
     'current_snapshot': ''
 }
 
+default_notification_format_for_watch = 'System default'
 valid_notification_formats = {
     'Text': NotifyFormat.TEXT,
     'Markdown': NotifyFormat.MARKDOWN,
     'HTML': NotifyFormat.HTML,
     # Used only for editing  awatch
-    'System default': 'System default'
+    default_notification_format_for_watch: default_notification_format_for_watch
 }
 
 default_notification_format = 'Text'

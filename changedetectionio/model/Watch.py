@@ -6,9 +6,7 @@ minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60)
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
 
 from changedetectionio.notification import (
-    default_notification_body,
-    default_notification_format,
-    default_notification_title,
+    default_notification_format_for_watch
 )
 
 
@@ -34,7 +32,7 @@ class model(dict):
             'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
             'notification_title': None,
             'notification_body': None,
-            'notification_format': 'System default',
+            'notification_format': default_notification_format_for_watch,
             'notification_muted': False,
             'css_filter': '',
             'last_error': False,

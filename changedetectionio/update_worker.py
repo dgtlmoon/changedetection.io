@@ -26,6 +26,10 @@ class update_worker(threading.Thread):
 
         from changedetectionio import diff
 
+        from changedetectionio.notification import (
+            default_notification_format_for_watch
+        )
+
         n_object = {}
         watch = self.datastore.data['watching'].get(watch_uuid, False)
         if not watch:
@@ -40,33 +44,28 @@ class update_worker(threading.Thread):
                 "History index had 2 or more, but only 1 date loaded, timestamps were not unique? maybe two of the same timestamps got written, needs more delay?"
             )
 
-        # Did it have any notification alerts to hit?
-        if len(watch['notification_urls']):
-            print(">>> Notifications queued for UUID from watch {}".format(watch_uuid))
-            n_object['notification_urls'] = watch['notification_urls']
-            n_object['notification_title'] = watch['notification_title']
-            n_object['notification_body'] = watch['notification_body']
-            n_object['notification_format'] = watch['notification_format']
+        n_object['notification_urls'] = watch['notification_urls'] if len(watch['notification_urls']) else \
+            self.datastore.data['settings']['application']['notification_urls']
 
-        # No? maybe theres a global setting, queue them all
-        elif len(self.datastore.data['settings']['application']['notification_urls']):
-            print(">>> Watch notification URLs were empty, using GLOBAL notifications for UUID: {}".format(watch_uuid))
-            n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
-            n_object['notification_title'] = self.datastore.data['settings']['application']['notification_title']
-            n_object['notification_body'] = self.datastore.data['settings']['application']['notification_body']
-            n_object['notification_format'] = self.datastore.data['settings']['application']['notification_format']
-        else:
-            print(">>> NO notifications queued, watch and global notification URLs were empty.")
+        n_object['notification_title'] = watch['notification_title'] if watch['notification_title'] else \
+            self.datastore.data['settings']['application']['notification_title']
+
+        n_object['notification_body'] = watch['notification_body'] if watch['notification_body'] else \
+            self.datastore.data['settings']['application']['notification_body']
+
+        n_object['notification_format'] = watch['notification_format'] if watch['notification_format'] != default_notification_format_for_watch else \
+            self.datastore.data['settings']['application']['notification_format']
+
+#        print(">>> NO notifications queued, watch and global notification URLs were empty.")
 
         # Only prepare to notify if the rules above matched
-        if 'notification_urls' in n_object:
+        if 'notification_urls' in n_object and n_object['notification_urls']:
             # HTML needs linebreak, but MarkDown and Text can use a linefeed
             if n_object['notification_format'] == 'HTML':
                 line_feed_sep = "</br>"
             else:
                 line_feed_sep = "\n"
 
-            snapshot_contents = ''
             with open(watch_history[dates[-1]], 'rb') as f:
                 snapshot_contents = f.read()
 

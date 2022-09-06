@@ -180,20 +180,20 @@ def test_notification_validation(client, live_server):
     assert b"Watch added" in res.data
 
     # Re #360 some validation
-    res = client.post(
-        url_for("edit_page", uuid="first"),
-        data={"notification_urls": 'json://localhost/foobar',
-              "notification_title": "",
-              "notification_body": "",
-              "notification_format": "Text",
-              "url": test_url,
-              "tag": "my tag",
-              "title": "my title",
-              "headers": "",
-              "fetch_backend": "html_requests"},
-        follow_redirects=True
-    )
-    assert b"Notification Body and Title is required when a Notification URL is used" in res.data
+#    res = client.post(
+#        url_for("edit_page", uuid="first"),
+#        data={"notification_urls": 'json://localhost/foobar',
+#              "notification_title": "",
+#              "notification_body": "",
+#              "notification_format": "Text",
+#              "url": test_url,
+#              "tag": "my tag",
+#              "title": "my title",
+#              "headers": "",
+#              "fetch_backend": "html_requests"},
+#        follow_redirects=True
+#    )
+#    assert b"Notification Body and Title is required when a Notification URL is used" in res.data
 
     # Now adding a wrong token should give us an error
     res = client.post(
