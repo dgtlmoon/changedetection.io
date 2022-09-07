@@ -574,7 +574,7 @@ ul {
   .inline-warning > span {
     display: inline-block;
     vertical-align: middle; }
-    .inline-warning > span.inline-warning-icon {
-      height: 20px; }
-      .inline-warning > span.inline-warning-icon img {
-        height: 100%; }
+  .inline-warning img.inline-warning-icon {
+    display: inline;
+    height: 26px;
+    vertical-align: middle; }
