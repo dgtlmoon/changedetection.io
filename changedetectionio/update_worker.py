@@ -183,6 +183,9 @@ class update_worker(threading.Thread):
                         process_changedetection_results = False
 
                     except FilterNotFoundInResponse as e:
+                        if not self.datastore.data['watching'].get(uuid):
+                            continue
+
                         err_text = "Warning, filter '{}' not found".format(str(e))
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            # So that we get a trigger when the content is added again
