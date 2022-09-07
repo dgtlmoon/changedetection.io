@@ -685,6 +685,10 @@ def changedetection_app(config=None, datastore_o=None):
         form = forms.globalSettingsForm(formdata=request.form if request.method == 'POST' else None,
                                         data=default
                                         )
+
+        # Remove the last option 'System default'
+        form.application.form.notification_format.choices.pop()
+
         if datastore.proxy_list is None:
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
             del form.requests.form.proxy
