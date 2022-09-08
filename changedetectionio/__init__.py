@@ -1,16 +1,5 @@
 #!/usr/bin/python3
 
-
-# @todo logging
-# @todo extra options for url like , verify=False etc.
-# @todo enable https://urllib3.readthedocs.io/en/latest/user-guide.html#ssl as option?
-# @todo option for interval day/6 hour/etc
-# @todo on change detected, config for calling some API
-# @todo fetch title into json
-# https://distill.io/features
-# proxy per check
-#  - flask_cors, itsdangerous,MarkupSafe
-
 import datetime
 import os
 import queue
@@ -650,9 +639,7 @@ def changedetection_app(config=None, datastore_o=None):
                                      form=form,
                                      has_empty_checktime=using_default_check_time,
                                      has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
-
                                      using_global_webdriver_wait=default['webdriver_delay'] is None,
-                                     # @todo remove dupe
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                      settings_application=datastore.data['settings']['application'],

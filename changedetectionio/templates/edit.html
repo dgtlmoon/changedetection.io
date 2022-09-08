@@ -146,7 +146,7 @@ User-Agent: wonderbra 1.0") }}
                             There are <a href="{{ url_for('settings_page')}}#notifications">system-wide notification URLs enabled</a>, this form will override notification settings for this watch only &dash; an empty Notification URL list here will still send notifications.
                         </div>
                         {% endif %}
-                        {{ render_common_settings_form(form, current_base_url, emailprefix, settings_application) }}
+                        {{ render_common_settings_form(form, emailprefix, settings_application) }}
                     </div>
                 </fieldset>
             </div>
