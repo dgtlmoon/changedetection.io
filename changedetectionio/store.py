@@ -536,27 +536,3 @@ class ChangeDetectionStore:
             except:
                 continue
         return
-
-
-    def update_5(self):
-
-        from changedetectionio.notification import (
-            default_notification_body,
-            default_notification_format,
-            default_notification_title,
-        )
-
-        for uuid, watch in self.data['watching'].items():
-            try:
-                # If it's all the same to the system settings, then prefer system notification settings
-                # include \r\n -> \n incase they already hit submit and the browser put \r in
-                if watch.get('notification_body').replace('\r\n', '\n') == default_notification_body.replace('\r\n', '\n') and \
-                        watch.get('notification_format') == default_notification_format and \
-                        watch.get('notification_title').replace('\r\n', '\n') == default_notification_title.replace('\r\n', '\n') and \
-                        watch.get('notification_urls') == self.__data['settings']['application']['notification_urls']:
-                        watch['notification_use_default'] = True
-                else:
-                    watch['notification_use_default'] = False
-            except:
-                continue
-        return

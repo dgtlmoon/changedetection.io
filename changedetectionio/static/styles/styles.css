@@ -565,3 +565,16 @@ ul {
 
 .checkbox-uuid > * {
   vertical-align: middle; }
+
+.inline-warning {
+  border: 1px solid #ff3300;
+  padding: 0.5rem;
+  border-radius: 5px;
+  color: #ff3300; }
+  .inline-warning > span {
+    display: inline-block;
+    vertical-align: middle; }
+  .inline-warning img.inline-warning-icon {
+    display: inline;
+    height: 26px;
+    vertical-align: middle; }
