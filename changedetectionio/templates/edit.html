@@ -135,10 +135,18 @@ User-Agent: wonderbra 1.0") }}
             </div>
 
             <div class="tab-pane-inner" id="notifications">
-                <strong>Note: <i>These settings override the global settings for this watch.</i></strong>
                 <fieldset>
-                    <div class="field-group">
-                        {{ render_common_settings_form(form, current_base_url, emailprefix) }}
+                    <div  class="pure-control-group inline-radio">
+                      {{ render_checkbox_field(form.notification_muted) }}
+                    </div>
+                    <div class="field-group" id="notification-field-group">
+                        {% if has_default_notification_urls %}
+                        <div class="inline-warning">
+                            <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="Look out!" title="Lookout!"/>
+                            There are <a href="{{ url_for('settings_page')}}#notifications">system-wide notification URLs enabled</a>, this form will override notification settings for this watch only &dash; an empty Notification URL list here will still send notifications.
+                        </div>
+                        {% endif %}
+                        {{ render_common_settings_form(form, emailprefix, settings_application) }}
                     </div>
                 </fieldset>
             </div>

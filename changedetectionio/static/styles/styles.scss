@@ -774,3 +774,33 @@ ul {
   }
 }
 
+#checkbox-operations {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1em;
+  border-radius: 10px;
+  margin-bottom: 1em;
+  display: none;
+}
+.checkbox-uuid {
+  > * {
+    vertical-align: middle;
+  }
+}
+
+.inline-warning {
+  > span {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  img.inline-warning-icon {
+    display: inline;
+    height: 26px;
+    vertical-align: middle;
+  }
+
+  border: 1px solid #ff3300;
+  padding: 0.5rem;
+  border-radius: 5px;
+  color: #ff3300;
+}

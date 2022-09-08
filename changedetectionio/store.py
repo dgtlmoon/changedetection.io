@@ -244,10 +244,6 @@ class ChangeDetectionStore:
 
         return False
 
-    def get_val(self, uuid, val):
-        # Probably their should be dict...
-        return self.data['watching'][uuid].get(val)
-
     # Remove a watchs data but keep the entry (URL etc)
     def clear_watch_history(self, uuid):
         import pathlib
@@ -341,6 +337,8 @@ class ChangeDetectionStore:
 
     # Save as PNG, PNG is larger but better for doing visual diff in the future
     def save_screenshot(self, watch_uuid, screenshot: bytes, as_error=False):
+        if not self.data['watching'].get(watch_uuid):
+            return
 
         if as_error:
             target_path = os.path.join(self.datastore_path, watch_uuid, "last-error-screenshot.png")
@@ -354,14 +352,16 @@ class ChangeDetectionStore:
             f.close()
 
     def save_error_text(self, watch_uuid, contents):
-
+        if not self.data['watching'].get(watch_uuid):
+            return
         target_path = os.path.join(self.datastore_path, watch_uuid, "last-error.txt")
 
         with open(target_path, 'w') as f:
             f.write(contents)
 
     def save_xpath_data(self, watch_uuid, data, as_error=False):
-
+        if not self.data['watching'].get(watch_uuid):
+            return
         if as_error:
             target_path = os.path.join(self.datastore_path, watch_uuid, "elements-error.json")
         else:
@@ -541,7 +541,6 @@ class ChangeDetectionStore:
                 continue
         return
 
-
     # Generate a previous.txt for all watches that do not have one and contain history
     def update_5(self):
         for uuid, watch in self.data['watching'].items():
@@ -559,3 +558,4 @@ class ChangeDetectionStore:
                     latest_file_name = watch.history[watch.newest_history_key]
                     with open(latest_file_name, "rb") as f2:
                         f.write(f2.read())
+

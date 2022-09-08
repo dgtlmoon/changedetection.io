@@ -11,11 +11,14 @@ from changedetectionio.html_tools import FilterNotFoundInResponse
 # Requests for checking on a single site(watch) from a queue of watches
 # (another process inserts watches into the queue that are time-ready for checking)
 
+import logging
+import sys
 
 class update_worker(threading.Thread):
     current_uuid = None
 
     def __init__(self, q, notification_q, app, datastore, *args, **kwargs):
+        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
         self.q = q
         self.app = app
         self.notification_q = notification_q
@@ -25,6 +28,10 @@ class update_worker(threading.Thread):
     def send_content_changed_notification(self, t, watch_uuid):
 
         from changedetectionio import diff
+
+        from changedetectionio.notification import (
+            default_notification_format_for_watch
+        )
 
         n_object = {}
         watch = self.datastore.data['watching'].get(watch_uuid, False)
@@ -40,33 +47,27 @@ class update_worker(threading.Thread):
                 "History index had 2 or more, but only 1 date loaded, timestamps were not unique? maybe two of the same timestamps got written, needs more delay?"
             )
 
-        # Did it have any notification alerts to hit?
-        if len(watch['notification_urls']):
-            print(">>> Notifications queued for UUID from watch {}".format(watch_uuid))
-            n_object['notification_urls'] = watch['notification_urls']
-            n_object['notification_title'] = watch['notification_title']
-            n_object['notification_body'] = watch['notification_body']
-            n_object['notification_format'] = watch['notification_format']
+        n_object['notification_urls'] = watch['notification_urls'] if len(watch['notification_urls']) else \
+            self.datastore.data['settings']['application']['notification_urls']
 
-        # No? maybe theres a global setting, queue them all
-        elif len(self.datastore.data['settings']['application']['notification_urls']):
-            print(">>> Watch notification URLs were empty, using GLOBAL notifications for UUID: {}".format(watch_uuid))
-            n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
-            n_object['notification_title'] = self.datastore.data['settings']['application']['notification_title']
-            n_object['notification_body'] = self.datastore.data['settings']['application']['notification_body']
-            n_object['notification_format'] = self.datastore.data['settings']['application']['notification_format']
-        else:
-            print(">>> NO notifications queued, watch and global notification URLs were empty.")
+        n_object['notification_title'] = watch['notification_title'] if watch['notification_title'] else \
+            self.datastore.data['settings']['application']['notification_title']
+
+        n_object['notification_body'] = watch['notification_body'] if watch['notification_body'] else \
+            self.datastore.data['settings']['application']['notification_body']
+
+        n_object['notification_format'] = watch['notification_format'] if watch['notification_format'] != default_notification_format_for_watch else \
+            self.datastore.data['settings']['application']['notification_format']
+
 
         # Only prepare to notify if the rules above matched
-        if 'notification_urls' in n_object:
+        if 'notification_urls' in n_object and n_object['notification_urls']:
             # HTML needs linebreak, but MarkDown and Text can use a linefeed
             if n_object['notification_format'] == 'HTML':
                 line_feed_sep = "</br>"
             else:
                 line_feed_sep = "\n"
 
-            snapshot_contents = ''
             with open(watch_history[dates[-1]], 'rb') as f:
                 snapshot_contents = f.read()
 
@@ -77,8 +78,10 @@ class update_worker(threading.Thread):
                 'diff': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], line_feed_sep=line_feed_sep),
                 'diff_full': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], True, line_feed_sep=line_feed_sep)
             })
-
+            logging.info (">> SENDING NOTIFICATION")
             self.notification_q.put(n_object)
+        else:
+            logging.info (">> NO Notification sent, notification_url was empty in both watch and system")
 
     def send_filter_failure_notification(self, watch_uuid):
 
@@ -183,6 +186,9 @@ class update_worker(threading.Thread):
                         process_changedetection_results = False
 
                     except FilterNotFoundInResponse as e:
+                        if not self.datastore.data['watching'].get(uuid):
+                            continue
+
                         err_text = "Warning, filter '{}' not found".format(str(e))
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            # So that we get a trigger when the content is added again

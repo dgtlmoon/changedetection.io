@@ -64,13 +64,11 @@ class perform_site_check():
 
 
     def run(self, uuid):
-        timestamp = int(time.time())  # used for storage etc too
-
         changed_detected = False
         screenshot = False  # as bytes
         stripped_text_from_html = ""
 
-        watch = self.datastore.data['watching'][uuid]
+        watch = self.datastore.data['watching'].get(uuid)
 
         # Protect against file:// access
         if re.search(r'^file', watch['url'], re.IGNORECASE) and not os.getenv('ALLOW_FILE_URI', False):
@@ -81,7 +79,7 @@ class perform_site_check():
         # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False}
 
-        extra_headers = self.datastore.get_val(uuid, 'headers')
+        extra_headers =self.datastore.data['watching'][uuid].get('headers')
 
         # Tweak the base config with the per-watch ones
         request_headers = self.datastore.data['settings']['headers'].copy()
@@ -94,9 +92,9 @@ class perform_site_check():
             request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
 
         timeout = self.datastore.data['settings']['requests']['timeout']
-        url = self.datastore.get_val(uuid, 'url')
-        request_body = self.datastore.get_val(uuid, 'body')
-        request_method = self.datastore.get_val(uuid, 'method')
+        url = watch.get('url')
+        request_body = self.datastore.data['watching'][uuid].get('body')
+        request_method = self.datastore.data['watching'][uuid].get('method')
         ignore_status_codes = self.datastore.data['watching'][uuid].get('ignore_status_codes', False)
 
         # source: support

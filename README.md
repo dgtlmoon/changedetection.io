@@ -1,23 +1,16 @@
-#  changedetection.io
+## Web Site Change Detection, Monitoring and Notification.
+
+Live your data-life pro-actively, track website content changes and receive notifications via Discord, Email, Slack, Telegram and 70+ more
+
+[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />](https://lemonade.changedetection.io/start?src=github)
+
 [![Release Version][release-shield]][release-link] [![Docker Pulls][docker-pulls]][docker-link] [![License][license-shield]](LICENSE.md)
 
 ![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master)
 
-## Web Site Change Detection, Monitoring and Notification - Self-Hosted or SaaS.
+Know when important content changes, we support notifications via Discord, Telegram, Home-Assistant, Slack, Email and 70+ more
 
-_Know when web pages change! Stay ontop of new information! get notifications when important website content changes_ 
-
-Live your data-life *pro-actively* instead of *re-actively*.
-
-Free, Open-source web page monitoring, notification and change detection. Don't have time? [**Try our $6.99/month subscription - unlimited checks and watches!**](https://lemonade.changedetection.io/start)
-
-
-[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />](https://lemonade.changedetection.io/start)
-
-
-**Get your own private instance now! Let us host it for you!**
-
-[**Try our $6.99/month subscription - unlimited checks and watches!**](https://lemonade.changedetection.io/start) , _half the price of other website change monitoring services and comes with unlimited watches & checks!_
+[**Don't have time? Let us host it for you! try our $6.99/month subscription - use our proxies and support!**](https://lemonade.changedetection.io/start) , _half the price of other website change monitoring services and comes with unlimited watches & checks!_
 
 
 
@@ -46,7 +39,18 @@ Free, Open-source web page monitoring, notification and change detection. Don't 
 - Monitor HTML source code for unexpected changes, strengthen your PCI compliance
 - You have a very sensitive list of URLs to watch and you do _not_ want to use the paid alternatives. (Remember, _you_ are the product)
 
-_Need an actual Chrome runner with Javascript support? We support fetching via WebDriver!</a>_
+_Need an actual Chrome runner with Javascript support? We support fetching via WebDriver and Playwright!</a>_
+
+#### Key Features
+
+- Lots of trigger filters, such as "Trigger on text", "Remove text by selector", "Ignore text", "Extract text", also using regular-expressions!
+- Target elements with xPath and CSS Selectors, Easily monitor complex JSON with JsonPath rules
+- Switch between fast non-JS and Chrome JS based "fetchers"
+- Easily specify how often a site should be checked
+- Execute JS before extracting text (Good for logging in, see examples in the UI!)
+- Override Request Headers, Specify `POST` or `GET` and other methods
+- Use the "Visual Selector" to help target specific elements
+
 
 ## Screenshots
 

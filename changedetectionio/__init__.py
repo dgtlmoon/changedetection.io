@@ -1,16 +1,5 @@
 #!/usr/bin/python3
 
-
-# @todo logging
-# @todo extra options for url like , verify=False etc.
-# @todo enable https://urllib3.readthedocs.io/en/latest/user-guide.html#ssl as option?
-# @todo option for interval day/6 hour/etc
-# @todo on change detected, config for calling some API
-# @todo fetch title into json
-# https://distill.io/features
-# proxy per check
-#  - flask_cors, itsdangerous,MarkupSafe
-
 import datetime
 import os
 import queue
@@ -44,7 +33,7 @@ from flask_wtf import CSRFProtect
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.39.17.2'
+__version__ = '0.39.19'
 
 datastore = None
 
@@ -503,7 +492,7 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio import fetch_site_status
 
         # Get the most recent one
-        newest_history_key = datastore.get_val(uuid, 'newest_history_key')
+        newest_history_key = datastore.data['watching'][uuid].get('newest_history_key')
 
         # 0 means that theres only one, so that there should be no 'unviewed' history available
         if newest_history_key == 0:
@@ -553,10 +542,6 @@ def changedetection_app(config=None, datastore_o=None):
         default = deepcopy(datastore.data['watching'][uuid])
 
         # Show system wide default if nothing configured
-        if datastore.data['watching'][uuid]['fetch_backend'] is None:
-            default['fetch_backend'] = datastore.data['settings']['application']['fetch_backend']
-
-        # Show system wide default if nothing configured
         if all(value == 0 or value == None for value in datastore.data['watching'][uuid]['time_between_check'].values()):
             default['time_between_check'] = deepcopy(datastore.data['settings']['requests']['time_between_check'])
 
@@ -598,10 +583,8 @@ def changedetection_app(config=None, datastore_o=None):
             if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
                 extra_update_obj['fetch_backend'] = None
 
-            # Notification URLs
-            datastore.data['watching'][uuid]['notification_urls'] = form.notification_urls.data
 
-            # Ignore text
+             # Ignore text
             form_ignore_text = form.ignore_text.data
             datastore.data['watching'][uuid]['ignore_text'] = form_ignore_text
 
@@ -655,9 +638,11 @@ def changedetection_app(config=None, datastore_o=None):
                                      watch=datastore.data['watching'][uuid],
                                      form=form,
                                      has_empty_checktime=using_default_check_time,
+                                     has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
                                      using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                     settings_application=datastore.data['settings']['application'],
                                      visualselector_data_is_ready=visualselector_data_is_ready,
                                      visualselector_enabled=visualselector_enabled,
                                      playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False)
@@ -687,6 +672,10 @@ def changedetection_app(config=None, datastore_o=None):
         form = forms.globalSettingsForm(formdata=request.form if request.method == 'POST' else None,
                                         data=default
                                         )
+
+        # Remove the last option 'System default'
+        form.application.form.notification_format.choices.pop()
+
         if datastore.proxy_list is None:
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
             del form.requests.form.proxy
@@ -732,7 +721,8 @@ def changedetection_app(config=None, datastore_o=None):
                                  current_base_url = datastore.data['settings']['application']['base_url'],
                                  hide_remove_pass=os.getenv("SALTED_PASS", False),
                                  api_key=datastore.data['settings']['application'].get('api_access_token'),
-                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False))
+                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                 settings_application=datastore.data['settings']['application'])
 
         return output
 
@@ -1186,6 +1176,36 @@ def changedetection_app(config=None, datastore_o=None):
         flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
 
+    @app.route("/form/checkbox-operations", methods=['POST'])
+    @login_required
+    def form_watch_list_checkbox_operations():
+        op = request.form['op']
+        uuids = request.form.getlist('uuids')
+
+        if (op == 'delete'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.delete(uuid.strip())
+            flash("{} watches deleted".format(len(uuids)))
+
+        if (op == 'pause'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid.strip()]['paused'] = True
+
+            flash("{} watches paused".format(len(uuids)))
+
+        if (op == 'unpause'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid.strip()]['paused'] = False
+            flash("{} watches unpaused".format(len(uuids)))
+
+        return redirect(url_for('index'))
+
     @app.route("/api/share-url", methods=['GET'])
     @login_required
     def form_share_put_watch():
@@ -1385,13 +1405,18 @@ def ticker_thread_check_time_launch_checks():
             seconds_since_last_recheck = now - watch['last_checked']
             if seconds_since_last_recheck >= (threshold + watch.jitter_seconds) and seconds_since_last_recheck >= recheck_time_minimum_seconds:
                 if not uuid in running_uuids and uuid not in [q_uuid for p,q_uuid in update_q.queue]:
-                    print("> Queued watch UUID {} last checked at {} queued at {:0.2f} jitter {:0.2f}s, {:0.2f}s since last checked".format(uuid,
-                                                                                                         watch['last_checked'],
-                                                                                                         now,
-                                                                                                         watch.jitter_seconds,
-                                                                                                         now - watch['last_checked']))
+                    # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
+                    priority = int(time.time())
+                    print(
+                        "> Queued watch UUID {} last checked at {} queued at {:0.2f} priority {} jitter {:0.2f}s, {:0.2f}s since last checked".format(
+                            uuid,
+                            watch['last_checked'],
+                            now,
+                            priority,
+                            watch.jitter_seconds,
+                            now - watch['last_checked']))
                     # Into the queue with you
-                    update_q.put((5, uuid))
+                    update_q.put((priority, uuid))
 
                     # Reset for next time
                     watch.jitter_seconds = 0
