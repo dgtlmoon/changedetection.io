@@ -213,7 +213,7 @@ class update_worker(threading.Thread):
 
                     except content_fetcher.checksumFromPreviousCheckWasTheSame as e:
                         # Yes fine, so nothing todo
-                        continue
+                        pass
 
                     except content_fetcher.EmptyReply as e:
                         # Some kind of custom to-str handler in the exception handler that does this?
