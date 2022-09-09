@@ -211,6 +211,10 @@ class update_worker(threading.Thread):
 
                         process_changedetection_results = True
 
+                    except content_fetcher.checksumFromPreviousCheckWasTheSame as e:
+                        # Yes fine, so nothing todo
+                        continue
+
                     except content_fetcher.EmptyReply as e:
                         # Some kind of custom to-str handler in the exception handler that does this?
                         err_text = "EmptyReply - try increasing 'Wait seconds before extracting text', Status Code {}".format(e.status_code)

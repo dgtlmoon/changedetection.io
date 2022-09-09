@@ -21,6 +21,7 @@ class model(dict):
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
             #'newest_history_key': 0,
             'title': None,
+            'previous_md5_before_filters': False, # Used for skipping changedetection entirely
             'previous_md5': False,
             'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send

@@ -130,6 +130,12 @@ class perform_site_check():
         self.screenshot = fetcher.screenshot
         self.xpath_data = fetcher.xpath_data
 
+        # Do we even need to run at all?
+        update_obj['previous_md5_before_filters'] = hashlib.md5(fetcher.content.encode('utf-8')).hexdigest()
+        if update_obj['previous_md5_before_filters'] == watch.get('previous_md5_before_filters'):
+            raise content_fetcher.checksumFromPreviousCheckWasTheSame()
+
+
         # Fetching complete, now filters
         # @todo move to class / maybe inside of fetcher abstract base?
 

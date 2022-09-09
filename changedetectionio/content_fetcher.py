@@ -21,6 +21,9 @@ class Non200ErrorCodeReceived(Exception):
             self.page_text = html_tools.html_to_text(page_html)
         return
 
+class checksumFromPreviousCheckWasTheSame(Exception):
+    def __init__(self):
+        return
 
 class JSActionExceptions(Exception):
     def __init__(self, status_code, url, screenshot, message=''):
