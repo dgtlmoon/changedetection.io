@@ -1189,7 +1189,7 @@ def changedetection_app(config=None, datastore_o=None):
                     datastore.delete(uuid.strip())
             flash("{} watches deleted".format(len(uuids)))
 
-        if (op == 'pause'):
+        elif (op == 'pause'):
             for uuid in uuids:
                 uuid = uuid.strip()
                 if datastore.data['watching'].get(uuid):
@@ -1197,12 +1197,39 @@ def changedetection_app(config=None, datastore_o=None):
 
             flash("{} watches paused".format(len(uuids)))
 
-        if (op == 'unpause'):
+        elif (op == 'unpause'):
             for uuid in uuids:
                 uuid = uuid.strip()
                 if datastore.data['watching'].get(uuid):
                     datastore.data['watching'][uuid.strip()]['paused'] = False
             flash("{} watches unpaused".format(len(uuids)))
+
+        elif (op == 'mute'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid.strip()]['notification_muted'] = True
+            flash("{} watches muted".format(len(uuids)))
+
+        elif (op == 'unmute'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid.strip()]['notification_muted'] = False
+            flash("{} watches un-muted".format(len(uuids)))
+
+        elif (op == 'notification-default'):
+            from changedetectionio.notification import (
+                default_notification_format_for_watch
+            )
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid.strip()]['notification_title'] = None
+                    datastore.data['watching'][uuid.strip()]['notification_body'] = None
+                    datastore.data['watching'][uuid.strip()]['notification_urls'] = []
+                    datastore.data['watching'][uuid.strip()]['notification_format'] = default_notification_format_for_watch
+            flash("{} watches set to use default notification settings".format(len(uuids)))
 
         return redirect(url_for('index'))
 
