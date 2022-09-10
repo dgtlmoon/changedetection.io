@@ -34,6 +34,7 @@ $(document).ready(function() {
         $('#notification_title').val('');
         $('#notification_body').val('');
         $('#notification_format').val('System default');
-
+        $('#notification_urls').val('');
+        e.preventDefault();
     });
 });

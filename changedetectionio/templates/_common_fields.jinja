@@ -26,7 +26,6 @@
                             <a href="{{url_for('notification_logs')}}" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Notification debug logs</a>
                         </div>
                         <div id="notification-customisation" class="pure-control-group">
-                            <a href="#notifications" id="notification-setting-reset-to-default" class="pure-button button-xsmall" style="float: right; background-color: #5f42dd; border-radius: 4px; font-size: 70%; color: #fff">Use defaults</a>
                             <div class="pure-control-group">
                                 {{ render_field(form.notification_title, class="m-d notification-title", placeholder=settings_application['notification_title']) }}
                                 <span class="pure-form-message-inline">Title for all notifications</span>
