@@ -314,14 +314,14 @@ class quickWatchForm(Form):
 
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
-
     notification_urls = StringListField('Notification URL list', validators=[validators.Optional(), ValidateAppRiseServers()])
-    notification_title = StringField('Notification title', default=default_notification_title, validators=[validators.Optional(), ValidateTokensList()])
-    notification_body = TextAreaField('Notification body', default=default_notification_body, validators=[validators.Optional(), ValidateTokensList()])
-    notification_format = SelectField('Notification format', choices=valid_notification_formats.keys(), default=default_notification_format)
+    notification_title = StringField('Notification title', validators=[validators.Optional(), ValidateTokensList()])
+    notification_body = TextAreaField('Notification body', validators=[validators.Optional(), ValidateTokensList()])
+    notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
     fetch_backend = RadioField(u'Fetch method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
-    webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")] )
+    webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1,
+                                                                                                                                    message="Should contain one or more seconds")])
 
 class watchForm(commonSettingsForm):
 
