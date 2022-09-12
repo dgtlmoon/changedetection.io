@@ -27,7 +27,7 @@ class model(dict):
             'extract_text': [],  # Extract text by regex after filters
             'extract_title_as_title': False,
             'fetch_backend': None,
-            'fetch_processor': None, # default None, json_html_plaintext, image
+            'fetch_processor': 'json_html_plaintext', # json_html_plaintext, image
             'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
             'headers': {},  # Extra headers to send
             'ignore_text': [],  # List of text to ignore when calculating the comparison checksum

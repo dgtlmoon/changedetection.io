@@ -782,6 +782,48 @@ def changedetection_app(config=None, datastore_o=None):
 
         return redirect(url_for('index'))
 
+
+    @app.route("/diff/image/<string:uuid>", methods=['GET'])
+    @login_required
+    def diff_image_history_page(uuid):
+
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
+        extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            flash("No history found for the specified link, bad link?", "error")
+            return redirect(url_for('index'))
+
+        history = watch.history
+        dates = list(history.keys())
+
+        if len(dates) < 2:
+            flash("Not enough saved change detection snapshots to produce a report.", "error")
+            return redirect(url_for('index'))
+
+        previous_version = dates[-2]
+
+        output = render_template("diff-image.html",
+                                 watch=watch,
+                                 extra_stylesheets=extra_stylesheets,
+                                 versions=dates[:-1], # All except current/last
+                                 uuid=uuid,
+                                 newest_version_timestamp=dates[-1],
+                                 current_previous_version=str(previous_version),
+                                 current_diff_url=watch['url'],
+                                 extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
+                                 left_sticky=True,
+                                 last_error=watch['last_error'],
+                                 last_error_text=watch.get_error_text(),
+                                 last_error_screenshot=watch.get_error_snapshot()
+                                 )
+        return output
+
+
     @app.route("/diff/<string:uuid>", methods=['GET'])
     @login_required
     def diff_history_page(uuid):
@@ -947,6 +989,61 @@ def changedetection_app(config=None, datastore_o=None):
 
         return output
 
+    @app.route("/preview/image/<string:uuid>/<string:history_timestamp>")
+    def render_single_image(uuid, history_timestamp):
+
+        watch = datastore.data['watching'].get(uuid)
+        dates = list(watch.history.keys())
+
+
+        if not history_timestamp or history_timestamp == 'None':
+            history_timestamp = dates[-2]
+
+
+        filename = watch.history[history_timestamp]
+        with open(filename, 'rb') as f:
+            img = f.read()
+
+        response = make_response(img)
+
+        response.headers['Content-type'] = 'image/png'
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = 0
+
+        return response
+
+
+
+    # Diff renderer for images
+    # Renders the diff which includes the red box around what changes
+    # We always compare the newest against whatever compare_date we are given
+    @app.route("/diff/image/<string:uuid>/<string:compare_date>")
+    def render_diff_image(uuid, compare_date):
+        from changedetectionio import image_diff
+
+        from flask import make_response
+        watch = datastore.data['watching'].get(uuid)
+
+        dates = list(watch.history.keys())
+        if len(dates) < 2:
+            flash("Not enough saved change detection snapshots to produce a report.", "error")
+            return redirect(url_for('index'))
+
+        if not compare_date or compare_date == 'None':
+            compare_date = dates[-2]
+
+        new_img = watch.history[watch.newest_history_key]
+        prev_img = watch.history[compare_date]
+
+        img = image_diff.render_diff(new_img, prev_img)
+
+        resp = make_response(img)
+        resp.headers['Content-Type'] = 'image/jpeg'
+        return resp
+
+
+
     @app.route("/settings/notification-logs", methods=['GET'])
     @login_required
     def notification_logs():
@@ -1095,12 +1192,16 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         url = request.form.get('url').strip()
+        fetch_processor =request.form.get('fetch_processor').strip()
         if datastore.url_exists(url):
             flash('The URL {} already exists'.format(url), "error")
             return redirect(url_for('index'))
 
         add_paused = request.form.get('edit_and_watch_submit_button') != None
-        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip(), extras={'paused': add_paused})
+        new_uuid = datastore.add_watch(url=url,
+                                       tag=request.form.get('tag').strip(),
+                                       extras={'paused': add_paused, 'fetch_processor': fetch_processor}
+                                       )
 
 
         if not add_paused and new_uuid:
@@ -1241,7 +1342,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         return redirect(url_for('index'))
 
-    @app.route("/api/share-url", methods=['GET'])
+    @app.route("/api/r-url", methods=['GET'])
     @login_required
     def form_share_put_watch():
         """Given a watch UUID, upload the info and return a share-link

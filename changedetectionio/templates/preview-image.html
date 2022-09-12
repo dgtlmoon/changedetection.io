@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<div id="settings">
+    <h1>Preview</h1>
+ </div>
+
+<div id="diff-ui">
+    <img style="max-width: 100%" src="{{ url_for('render_single_image', uuid=uuid, date=current_previous_version) }}" />
+</div>
+
+{% endblock %}
