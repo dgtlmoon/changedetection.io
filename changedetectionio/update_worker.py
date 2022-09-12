@@ -120,8 +120,9 @@ class update_worker(threading.Thread):
                 os.unlink(full_path)
 
     def run(self):
-        from .fetch_processor import json_html_plaintext
 
+
+        from .fetch_processor import json_html_plaintext as processor_json_html_plaintext, image as processor_image
 
 
         while not self.app.config.exit.is_set():
@@ -135,16 +136,25 @@ class update_worker(threading.Thread):
                 self.current_uuid = uuid
 
                 if uuid in list(self.datastore.data['watching'].keys()):
-                    update_handler = None # Interface object
+                    update_handler = None  # Interface object
                     changed_detected = False
-                    update_obj= {}
+                    update_obj = {}
                     process_changedetection_results = True
-                    print("> Processing UUID {} Priority {} URL {}".format(uuid, priority, self.datastore.data['watching'][uuid]['url']))
+                    watch = self.datastore.data['watching'].get(uuid)
+                    print("> Processing UUID {} Priority {} URL {}".format(uuid, priority, watch.get('url')))
                     now = time.time()
 
                     try:
-                        update_handler = json_html_plaintext.perform_site_check(datastore=self.datastore)
+                        update_handler = None
+
+                        if watch.get('fetch_processor') == 'image':
+                            update_handler = processor_image.perform_site_check(datastore=self.datastore)
+                        else:
+                            # Anything else for now will be `json_html_plaintext`
+                            update_handler = processor_json_html_plaintext.perform_site_check(datastore=self.datastore)
+
                         changed_detected, update_obj = update_handler.run(uuid)
+
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
                         # We then convert/.decode('utf-8') for the notification etc

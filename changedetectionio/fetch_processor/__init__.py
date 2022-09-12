@@ -1,3 +1,5 @@
+available_fetchers = [('json_html_plaintext', 'JSON/HTML/Text'), ('image', 'Static Image')]
+
 class fetch_processor():
     contents = b''
     screenshot = None

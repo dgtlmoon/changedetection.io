@@ -66,13 +66,14 @@ class ReplyWithContentButNoText(Exception):
         return
 
 class Fetcher():
-    error = None
-    status_code = None
     content = None
-    headers = None
-
+    error = None
     fetcher_description = "No description"
+    headers = None
+    raw_content = None
+    status_code = None
     webdriver_js_execute_code = None
+
     xpath_element_js = """               
                 // Include the getXpath script directly, easier than fetching
                 !function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):(e=e||self).getXPath=n()}(this,function(){return function(e){var n=e;if(n&&n.id)return'//*[@id="'+n.id+'"]';for(var o=[];n&&Node.ELEMENT_NODE===n.nodeType;){for(var i=0,r=!1,d=n.previousSibling;d;)d.nodeType!==Node.DOCUMENT_TYPE_NODE&&d.nodeName===n.nodeName&&i++,d=d.previousSibling;for(d=n.nextSibling;d;){if(d.nodeName===n.nodeName){r=!0;break}d=d.nextSibling}o.push((n.prefix?n.prefix+":":"")+n.localName+(i||r?"["+(i+1)+"]":"")),n=n.parentNode}return o.length?"/"+o.reverse().join("/"):""}});
@@ -399,6 +400,8 @@ class base_html_playwright(Fetcher):
                     raise JSActionExceptions(status_code=response.status, screenshot=error_screenshot, message=str(e), url=url)
 
             self.content = page.content()
+            self.raw_content = page.content()
+
             self.status_code = response.status
             self.headers = response.all_headers()
 
@@ -524,6 +527,7 @@ class base_html_webdriver(Fetcher):
         # @todo - dom wait loaded?
         time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay)
         self.content = self.driver.page_source
+        self.raw_content = self.driver.page_source
         self.headers = {}
 
     # Does the connection to the webdriver work? run a test connection.
@@ -603,6 +607,7 @@ class html_requests(Fetcher):
 
         self.status_code = r.status_code
         self.content = r.text
+        self.raw_content = r.content
         self.headers = r.headers
 
 

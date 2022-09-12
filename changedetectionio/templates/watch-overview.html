@@ -15,6 +15,8 @@
                 <div>
                     {{ render_simple_field(form.url, placeholder="https://...", required=true) }}
                     {{ render_simple_field(form.tag, value=active_tag if active_tag else '', placeholder="watch group") }}
+                    <br/>
+                    {{ render_field(form.fetch_processor) }}
                 </div>
                 <div>
                     {{ render_simple_field(form.watch_submit_button, title="Watch this URL!" ) }}

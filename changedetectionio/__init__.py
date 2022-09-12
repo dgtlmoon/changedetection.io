@@ -632,11 +632,19 @@ def changedetection_app(config=None, datastore_o=None):
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and default['fetch_backend'] == 'html_webdriver'
 
+            watch = datastore.data['watching'].get(uuid)
+
+            # Which tabs to show/hide ?
+            enabled_tabs = []
+            if watch.get('fetch_processor') == 'json_html_plaintext' or not watch.get('fetch_processor'):
+                enabled_tabs.append('visual-selector')
+                enabled_tabs.append('text-filters-and-triggers')
 
             output = render_template("edit.html",
                                      uuid=uuid,
-                                     watch=datastore.data['watching'][uuid],
+                                     watch=watch,
                                      form=form,
+                                     enabled_tabs = enabled_tabs,
                                      has_empty_checktime=using_default_check_time,
                                      has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
                                      using_global_webdriver_wait=default['webdriver_delay'] is None,

@@ -306,8 +306,11 @@ class ValidateCSSJSONXPATHInput(object):
 
 
 class quickWatchForm(Form):
+    from . import fetch_processor
+
     url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional()])
+    fetch_processor = RadioField(u'Compare as', choices=fetch_processor.available_fetchers, default=fetch_processor.available_fetchers[0][0])
     watch_submit_button = SubmitField('Watch', render_kw={"class": "pure-button pure-button-primary"})
     edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
 

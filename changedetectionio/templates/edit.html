@@ -25,8 +25,13 @@
         <ul>
             <li class="tab" id=""><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
+            {% if 'visual-selector' in enabled_tabs %}
             <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
+            {%endif%}
+            {% if 'text-filters-and-triggers' in enabled_tabs %}
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
+            {%endif%}
+
             <li class="tab"><a href="#notifications">Notifications</a></li>
         </ul>
     </div>
