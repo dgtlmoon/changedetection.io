@@ -46,3 +46,4 @@ werkzeug ~= 2.0.0
 
 imagehash ~= 4.3.0
 pillow
+python-magic

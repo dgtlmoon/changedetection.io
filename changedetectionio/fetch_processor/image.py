@@ -80,6 +80,8 @@ class perform_site_check(fetch_processor):
 
         update_obj["last_check_status"] = fetcher.get_last_status_code()
 
+        self.contents = fetcher.raw_content
+
         image = Image.open(io.BytesIO(fetcher.raw_content))
 
         # @todo different choice?
@@ -96,7 +98,5 @@ class perform_site_check(fetch_processor):
         # On the first run of a site, watch['previous_md5'] will be None, set it the current one.
         if not watch.get('previous_md5'):
             watch['previous_md5'] = fetched_hash
-
-        #self.contents = fetcher.screenshot
 
         return changed_detected, update_obj

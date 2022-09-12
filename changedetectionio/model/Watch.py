@@ -146,9 +146,18 @@ class model(dict):
         bump = self.history
         return self.__newest_history_key
 
-    def save_history_artifact(self, contents: bytes, timestamp, suffix='txt'):
+    def save_history_artifact(self, contents: bytes, timestamp):
         import uuid
         import logging
+        import magic
+        import re
+        suffix = 'bin'
+        # detect extension type
+        mtype = magic.from_buffer(contents, mime=True)
+        if mtype:
+            r = re.search(r'image/(\w+)', mtype, re.IGNORECASE)
+            if r:
+                suffix = r.group(1)
 
         output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
 
