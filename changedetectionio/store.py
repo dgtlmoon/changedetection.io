@@ -537,26 +537,23 @@ class ChangeDetectionStore:
                 continue
         return
 
-
     def update_5(self):
-
-        from changedetectionio.notification import (
-            default_notification_body,
-            default_notification_format,
-            default_notification_title,
-        )
-
+        # If the watch notification body, title look the same as the global one, unset it, so the watch defaults back to using the main settings
+        # In other words - the watch notification_title and notification_body are not needed if they are the same as the default one
+        current_system_body = self.data['settings']['application']['notification_body'].translate(str.maketrans('', '', "\r\n "))
+        current_system_title = self.data['settings']['application']['notification_body'].translate(str.maketrans('', '', "\r\n "))
         for uuid, watch in self.data['watching'].items():
             try:
-                # If it's all the same to the system settings, then prefer system notification settings
-                # include \r\n -> \n incase they already hit submit and the browser put \r in
-                if watch.get('notification_body').replace('\r\n', '\n') == default_notification_body.replace('\r\n', '\n') and \
-                        watch.get('notification_format') == default_notification_format and \
-                        watch.get('notification_title').replace('\r\n', '\n') == default_notification_title.replace('\r\n', '\n') and \
-                        watch.get('notification_urls') == self.__data['settings']['application']['notification_urls']:
-                        watch['notification_use_default'] = True
-                else:
-                    watch['notification_use_default'] = False
-            except:
+                watch_body = watch.get('notification_body', '')
+                if watch_body and watch_body.translate(str.maketrans('', '', "\r\n ")) == current_system_body:
+                    # Looks the same as the default one, so unset it
+                    watch['notification_body'] = None
+
+                watch_title = watch.get('notification_title', '')
+                if watch_title and watch_title.translate(str.maketrans('', '', "\r\n ")) == current_system_title:
+                    # Looks the same as the default one, so unset it
+                    watch['notification_title'] = None
+            except Exception as e:
                 continue
         return
+

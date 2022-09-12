@@ -30,6 +30,9 @@
     <div id="checkbox-operations">
         <button class="pure-button button-secondary button-xsmall" style="font-size: 70%"  name="op" value="pause">Pause</button>
         <button class="pure-button button-secondary button-xsmall" style="font-size: 70%"  name="op" value="unpause">UnPause</button>
+        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%"  name="op" value="mute">Mute</button>
+        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%"  name="op" value="unmute">UnMute</button>
+        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%" name="op" value="notification-default">Use default notification</button>
         <button class="pure-button button-secondary button-xsmall" style="background: #dd4242; font-size: 70%" name="op" value="delete">Delete</button>
     </div>
     <div>
@@ -76,7 +79,11 @@
                 {% if watch.uuid in queued_uuids %}queued{% endif %}">
                 <td class="inline checkbox-uuid" ><input name="uuids"  type="checkbox" value="{{ watch.uuid}} "/> <span>{{ loop.index }}</span></td>
                 <td class="inline watch-controls">
-                    <a class="state-{{'on' if watch.paused }}" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause checks" title="Pause checks"/></a>
+                    {% if not watch.paused %}
+                    <a class="state-off" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause checks" title="Pause checks"/></a>
+                    {% else %}
+                    <a class="state-on" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="UnPause checks" title="UnPause checks"/></a>
+                    {% endif %}
                     <a class="state-{{'on' if watch.notification_muted}}" href="{{url_for('index', op='mute', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="Mute notifications" title="Mute notifications"/></a>
                 </td>
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}

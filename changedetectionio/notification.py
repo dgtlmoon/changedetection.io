@@ -14,15 +14,18 @@ valid_tokens = {
     'current_snapshot': ''
 }
 
+default_notification_format_for_watch = 'System default'
+default_notification_format = 'Text'
+default_notification_body = '{watch_url} had a change.\n---\n{diff}\n---\n'
+default_notification_title = 'ChangeDetection.io Notification - {watch_url}'
+
 valid_notification_formats = {
     'Text': NotifyFormat.TEXT,
     'Markdown': NotifyFormat.MARKDOWN,
     'HTML': NotifyFormat.HTML,
+    # Used only for editing a watch (not for global)
+    default_notification_format_for_watch: default_notification_format_for_watch
 }
-
-default_notification_format = 'Text'
-default_notification_body = '{watch_url} had a change.\n---\n{diff}\n---\n'
-default_notification_title = 'ChangeDetection.io Notification - {watch_url}'
 
 def process_notification(n_object, datastore):
 

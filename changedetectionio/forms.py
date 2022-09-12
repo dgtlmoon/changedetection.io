@@ -314,14 +314,14 @@ class quickWatchForm(Form):
 
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
-
-    notification_urls = StringListField('Notification URL list', validators=[validators.Optional(), ValidateNotificationBodyAndTitleWhenURLisSet(), ValidateAppRiseServers()])
-    notification_title = StringField('Notification title', default=default_notification_title, validators=[validators.Optional(), ValidateTokensList()])
-    notification_body = TextAreaField('Notification body', default=default_notification_body, validators=[validators.Optional(), ValidateTokensList()])
-    notification_format = SelectField('Notification format', choices=valid_notification_formats.keys(), default=default_notification_format)
+    notification_urls = StringListField('Notification URL list', validators=[validators.Optional(), ValidateAppRiseServers()])
+    notification_title = StringField('Notification title', validators=[validators.Optional(), ValidateTokensList()])
+    notification_body = TextAreaField('Notification body', validators=[validators.Optional(), ValidateTokensList()])
+    notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
     fetch_backend = RadioField(u'Fetch method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
-    webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")] )
+    webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1,
+                                                                                                                                    message="Should contain one or more seconds")])
 
 class watchForm(commonSettingsForm):
 
@@ -355,7 +355,7 @@ class watchForm(commonSettingsForm):
     filter_failure_notification_send = BooleanField(
         'Send a notification when the filter can no longer be found on the page', default=False)
 
-    notification_use_default = BooleanField('Use default/system notification settings', default=True)
+    notification_muted = BooleanField('Notifications Muted / Off', default=False)
 
     def validate(self, **kwargs):
         if not super().validate():

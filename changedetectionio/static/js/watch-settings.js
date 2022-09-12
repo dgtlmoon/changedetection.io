@@ -1,7 +1,7 @@
-$(document).ready(function () {
-    function toggle_fetch_backend() {
+$(document).ready(function() {
+    function toggle() {
         if ($('input[name="fetch_backend"]:checked').val() == 'html_webdriver') {
-            if (playwright_enabled) {
+            if(playwright_enabled) {
                 // playwright supports headers, so hide everything else
                 // See #664
                 $('#requests-override-options #request-method').hide();
@@ -13,8 +13,12 @@ $(document).ready(function () {
                 // selenium/webdriver doesnt support anything afaik, hide it all
                 $('#requests-override-options').hide();
             }
+
+
             $('#webdriver-override-options').show();
+
         } else {
+
             $('#requests-override-options').show();
             $('#requests-override-options *:hidden').show();
             $('#webdriver-override-options').hide();
@@ -22,27 +26,15 @@ $(document).ready(function () {
     }
 
     $('input[name="fetch_backend"]').click(function (e) {
-        toggle_fetch_backend();
+        toggle();
     });
-    toggle_fetch_backend();
+    toggle();
 
-    function toggle_default_notifications() {
-        var n=$('#notification_urls, #notification_title, #notification_body, #notification_format');
-        if ($('#notification_use_default').is(':checked')) {
-            $('#notification-field-group').fadeOut();
-            $(n).each(function (e) {
-                $(this).attr('readonly', true);
-            });
-        } else {
-            $('#notification-field-group').show();
-            $(n).each(function (e) {
-                $(this).attr('readonly', false);
-            });
-        }
-    }
-
-    $('#notification_use_default').click(function (e) {
-        toggle_default_notifications();
+    $('#notification-setting-reset-to-default').click(function (e) {
+        $('#notification_title').val('');
+        $('#notification_body').val('');
+        $('#notification_format').val('System default');
+        $('#notification_urls').val('');
+        e.preventDefault();
     });
-    toggle_default_notifications();
 });

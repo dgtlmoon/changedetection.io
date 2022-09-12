@@ -1,16 +1,5 @@
 #!/usr/bin/python3
 
-
-# @todo logging
-# @todo extra options for url like , verify=False etc.
-# @todo enable https://urllib3.readthedocs.io/en/latest/user-guide.html#ssl as option?
-# @todo option for interval day/6 hour/etc
-# @todo on change detected, config for calling some API
-# @todo fetch title into json
-# https://distill.io/features
-# proxy per check
-#  - flask_cors, itsdangerous,MarkupSafe
-
 import datetime
 import os
 import queue
@@ -44,7 +33,7 @@ from flask_wtf import CSRFProtect
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.39.18'
+__version__ = '0.39.19.1'
 
 datastore = None
 
@@ -553,10 +542,6 @@ def changedetection_app(config=None, datastore_o=None):
         default = deepcopy(datastore.data['watching'][uuid])
 
         # Show system wide default if nothing configured
-        if datastore.data['watching'][uuid]['fetch_backend'] is None:
-            default['fetch_backend'] = datastore.data['settings']['application']['fetch_backend']
-
-        # Show system wide default if nothing configured
         if all(value == 0 or value == None for value in datastore.data['watching'][uuid]['time_between_check'].values()):
             default['time_between_check'] = deepcopy(datastore.data['settings']['requests']['time_between_check'])
 
@@ -598,10 +583,8 @@ def changedetection_app(config=None, datastore_o=None):
             if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
                 extra_update_obj['fetch_backend'] = None
 
-            # Notification URLs
-            datastore.data['watching'][uuid]['notification_urls'] = form.notification_urls.data
 
-            # Ignore text
+             # Ignore text
             form_ignore_text = form.ignore_text.data
             datastore.data['watching'][uuid]['ignore_text'] = form_ignore_text
 
@@ -655,9 +638,11 @@ def changedetection_app(config=None, datastore_o=None):
                                      watch=datastore.data['watching'][uuid],
                                      form=form,
                                      has_empty_checktime=using_default_check_time,
+                                     has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
                                      using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                     settings_application=datastore.data['settings']['application'],
                                      visualselector_data_is_ready=visualselector_data_is_ready,
                                      visualselector_enabled=visualselector_enabled,
                                      playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False)
@@ -687,6 +672,10 @@ def changedetection_app(config=None, datastore_o=None):
         form = forms.globalSettingsForm(formdata=request.form if request.method == 'POST' else None,
                                         data=default
                                         )
+
+        # Remove the last option 'System default'
+        form.application.form.notification_format.choices.pop()
+
         if datastore.proxy_list is None:
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
             del form.requests.form.proxy
@@ -732,7 +721,8 @@ def changedetection_app(config=None, datastore_o=None):
                                  current_base_url = datastore.data['settings']['application']['base_url'],
                                  hide_remove_pass=os.getenv("SALTED_PASS", False),
                                  api_key=datastore.data['settings']['application'].get('api_access_token'),
-                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False))
+                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                 settings_application=datastore.data['settings']['application'])
 
         return output
 
@@ -1199,7 +1189,7 @@ def changedetection_app(config=None, datastore_o=None):
                     datastore.delete(uuid.strip())
             flash("{} watches deleted".format(len(uuids)))
 
-        if (op == 'pause'):
+        elif (op == 'pause'):
             for uuid in uuids:
                 uuid = uuid.strip()
                 if datastore.data['watching'].get(uuid):
@@ -1207,12 +1197,39 @@ def changedetection_app(config=None, datastore_o=None):
 
             flash("{} watches paused".format(len(uuids)))
 
-        if (op == 'unpause'):
+        elif (op == 'unpause'):
             for uuid in uuids:
                 uuid = uuid.strip()
                 if datastore.data['watching'].get(uuid):
                     datastore.data['watching'][uuid.strip()]['paused'] = False
             flash("{} watches unpaused".format(len(uuids)))
+
+        elif (op == 'mute'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid.strip()]['notification_muted'] = True
+            flash("{} watches muted".format(len(uuids)))
+
+        elif (op == 'unmute'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid.strip()]['notification_muted'] = False
+            flash("{} watches un-muted".format(len(uuids)))
+
+        elif (op == 'notification-default'):
+            from changedetectionio.notification import (
+                default_notification_format_for_watch
+            )
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid.strip()]['notification_title'] = None
+                    datastore.data['watching'][uuid.strip()]['notification_body'] = None
+                    datastore.data['watching'][uuid.strip()]['notification_urls'] = []
+                    datastore.data['watching'][uuid.strip()]['notification_format'] = default_notification_format_for_watch
+            flash("{} watches set to use default notification settings".format(len(uuids)))
 
         return redirect(url_for('index'))
 
