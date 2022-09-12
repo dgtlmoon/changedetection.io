@@ -23,8 +23,21 @@
 </div>
 
 <div id="diff-ui">
-  <img style="max-width: 100%" src="{{ url_for('render_diff_image', uuid=uuid, compare_date=current_previous_version) }}" />
-    <img style="max-width: 100%" src="{{ url_for('render_single_image', uuid=uuid, history_timestamp=current_previous_version) }}" />
+    <script
+  defer
+  src="https://unpkg.com/img-comparison-slider@7/dist/index.js"
+></script>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/img-comparison-slider@7/dist/styles.css"
+/>
+
+<img-comparison-slider>
+  <img  slot="first"  src="{{ url_for('render_diff_image', uuid=uuid, compare_date=current_previous_version) }}" />
+    <img  slot="second" src="{{ url_for('render_single_image', uuid=uuid, history_timestamp=current_previous_version) }}" />
+
+</img-comparison-slider>
+
 </div>
 
 
