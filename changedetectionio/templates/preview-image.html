@@ -5,7 +5,7 @@
  </div>
 
 <div id="diff-ui">
-    <img style="max-width: 100%" src="{{ url_for('render_single_image', uuid=uuid, date=current_previous_version) }}" />
+    <img style="max-width: 100%" src="{{ url_for('render_single_image', uuid=uuid, history_timestamp=newest_history_key) }}" />
 </div>
 
 {% endblock %}

@@ -116,15 +116,20 @@
                        class="recheck pure-button button-small pure-button-primary">{% if watch.uuid in queued_uuids %}Queued{% else %}Recheck{% endif %}</a>
                     <a href="{{ url_for('edit_page', uuid=watch.uuid)}}" class="pure-button button-small pure-button-primary">Edit</a>
                     {% if watch.history_n >= 2 %}
-                      {% if watch.fetch_processor == "image" %}
+                      {% if watch.fetch_processor == "image" or watch.fetch_processor == "rendered_webpage" %}
                         <a href="{{ url_for('diff_image_history_page', uuid=watch.uuid) }}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary diff-link">Diff</a>
                       {% else %}
                         <a href="{{ url_for('diff_history_page', uuid=watch.uuid) }}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary diff-link">Diff</a>
-                        {% endif %}
+                      {% endif %}
 
                     {% else %}
                         {% if watch.history_n == 1 or (watch.history_n ==0 and watch.error_text_ctime )%}
-                            <a href="{{ url_for('preview_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary">Preview</a>
+
+                    {% if watch.fetch_processor == "image" or watch.fetch_processor == "rendered_webpage" %}
+                        <a href="{{ url_for('preview_image_history_page', uuid=watch.uuid) }}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary diff-link">Preview</a>
+                      {% else %}
+                        <a href="{{ url_for('preview_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary">Preview</a>
+                      {% endif %}
                         {% endif %}
                     {% endif %}
                 </td>

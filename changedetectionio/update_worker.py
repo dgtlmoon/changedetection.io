@@ -120,11 +120,6 @@ class update_worker(threading.Thread):
                 os.unlink(full_path)
 
     def run(self):
-
-
-        from .fetch_processor import json_html_plaintext as processor_json_html_plaintext, image as processor_image
-
-
         while not self.app.config.exit.is_set():
 
             try:
@@ -148,9 +143,14 @@ class update_worker(threading.Thread):
                         update_handler = None
 
                         if watch.get('fetch_processor') == 'image':
+                            from .fetch_processor import image as processor_image
                             update_handler = processor_image.perform_site_check(datastore=self.datastore)
+                        elif watch.get('fetch_processor') == 'rendered_webpage':
+                            from .fetch_processor import image as processor_rendered_webpage
+                            update_handler = processor_rendered_webpage.perform_site_check(datastore=self.datastore)
                         else:
                             # Anything else for now will be `json_html_plaintext`
+                            from .fetch_processor import json_html_plaintext as processor_json_html_plaintext
                             update_handler = processor_json_html_plaintext.perform_site_check(datastore=self.datastore)
 
                         changed_detected, update_obj = update_handler.run(uuid)

@@ -824,6 +824,42 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
 
+    @app.route("/preview/image/<string:uuid>", methods=['GET'])
+    @login_required
+    def preview_image_history_page(uuid):
+
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
+        extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            flash("No history found for the specified link, bad link?", "error")
+            return redirect(url_for('index'))
+
+        history = watch.history
+        dates = list(history.keys())
+
+        if len(dates) < 1:
+            flash("Not enough saved change detection snapshots to produce a report.", "error")
+            return redirect(url_for('index'))
+
+        output = render_template("preview-image.html",
+                                 watch=watch,
+                                 extra_stylesheets=extra_stylesheets,
+                                 uuid=uuid,
+                                 current_diff_url=watch['url'],
+                                 newest_history_key = watch.newest_history_key,
+                                 extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
+                                 left_sticky=True,
+                                 last_error=watch['last_error'],
+                                 last_error_text=watch.get_error_text(),
+                                 last_error_screenshot=watch.get_error_snapshot()
+                                 )
+        return output
+
     @app.route("/diff/<string:uuid>", methods=['GET'])
     @login_required
     def diff_history_page(uuid):
