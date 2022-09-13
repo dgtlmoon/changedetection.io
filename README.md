@@ -12,11 +12,14 @@ Know when important content changes, we support notifications via Discord, Teleg
 
 [**Don't have time? Let us host it for you! try our $6.99/month subscription - use our proxies and support!**](https://lemonade.changedetection.io/start) , _half the price of other website change monitoring services and comes with unlimited watches & checks!_
 
+- Chrome browser included.
+- Super fast, no registration needed setup.
+- Start watching and receiving change notifications instantly.
 
 
-- Automatic Updates, Automatic Backups, No Heroku "paused application", don't miss a change!
-- Javascript browser included
-- Unlimited checks and watches!
+Easily see what changed, examine by word, line, or individual character.
+
+<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
 
 
 #### Example use cases
@@ -53,12 +56,6 @@ _Need an actual Chrome runner with Javascript support? We support fetching via W
 
 
 ## Screenshots
-
-### Examine differences in content.
-
-Easily see what changed, examine by word, line, or individual character.
-
-<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
 
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
 
