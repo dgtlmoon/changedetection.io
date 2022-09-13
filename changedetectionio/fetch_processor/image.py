@@ -89,7 +89,12 @@ class perform_site_check(fetch_processor):
         if 'image' in fetcher.headers['content-type']:
             self.contents = fetcher.raw_content
         else:
+            # should be element if the filter is set, no?
             self.contents = fetcher.screenshot
+
+        # Used for visual-selector
+        self.xpath_data = fetcher.xpath_data
+        self.screenshot = fetcher.screenshot
 
         image = Image.open(io.BytesIO(self.contents))
 

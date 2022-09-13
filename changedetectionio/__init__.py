@@ -642,20 +642,23 @@ def changedetection_app(config=None, datastore_o=None):
                 enabled_tabs.append('visual-selector')
                 enabled_tabs.append('text-filters-and-triggers')
 
+            if watch.get('fetch_processor') == 'image':
+                enabled_tabs.append('visual-selector')
+
             output = render_template("edit.html",
-                                     uuid=uuid,
-                                     watch=watch,
-                                     form=form,
-                                     enabled_tabs = enabled_tabs,
-                                     has_empty_checktime=using_default_check_time,
-                                     has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
-                                     using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                     enabled_tabs = enabled_tabs,
+                                     form=form,
+                                     has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
+                                     has_empty_checktime=using_default_check_time,
+                                     playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False),
                                      settings_application=datastore.data['settings']['application'],
+                                     using_global_webdriver_wait=default['webdriver_delay'] is None,
+                                     uuid=uuid,
                                      visualselector_data_is_ready=visualselector_data_is_ready,
                                      visualselector_enabled=visualselector_enabled,
-                                     playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False)
+                                     watch=watch,
                                      )
 
         return output
@@ -808,6 +811,8 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         previous_version = dates[-2]
+
+        datastore.set_last_viewed(uuid, time.time())
 
         output = render_template("diff-image.html",
                                  watch=watch,
@@ -1074,7 +1079,13 @@ def changedetection_app(config=None, datastore_o=None):
         new_img = watch.history[watch.newest_history_key]
         prev_img = watch.history[compare_date]
 
-        img = image_diff.render_diff(new_img, prev_img)
+        try:
+            img = image_diff.render_diff(new_img, prev_img)
+        except ValueError as e:
+            print ("EXCEPTION: Diff image - got exception {} reverting to raw image without rendering difference".format(str(e)))
+            with open(new_img, 'rb') as f:
+                img = f.read()
+
 
         resp = make_response(img)
         resp.headers['Content-Type'] = 'image/jpeg'
@@ -1243,7 +1254,7 @@ def changedetection_app(config=None, datastore_o=None):
             extras['fetch_processor']=fetch_processor
             if fetch_processor == 'image':
                 extras['fetch_backend'] = 'html_webdriver'
-                
+
         new_uuid = datastore.add_watch(url=url,
                                        tag=request.form.get('tag').strip(),
                                        extras=extras

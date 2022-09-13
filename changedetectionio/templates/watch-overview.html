@@ -15,14 +15,18 @@
                 <div>
                     {{ render_simple_field(form.url, placeholder="https://...", required=true) }}
                     {{ render_simple_field(form.tag, value=active_tag if active_tag else '', placeholder="watch group") }}
+                    <span>
+                        {{ render_simple_field(form.watch_submit_button, title="Watch this URL!" ) }}
+                        {{ render_simple_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
+                    </span>
                     {% if webdriver_enabled %}
-                    <br/>
-                    {{ render_field(form.fetch_processor) }}
+                    <div id="quickwatch-fetch-processor">
+                        {{ render_field(form.fetch_processor) }}
+                    </div>
                     {% endif %}
                 </div>
                 <div>
-                    {{ render_simple_field(form.watch_submit_button, title="Watch this URL!" ) }}
-                    {{ render_simple_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
+
                 </div>
             </div>
         </fieldset>
@@ -95,7 +99,7 @@
                     <a href="{{url_for('form_share_put_watch', uuid=watch.uuid)}}"><img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread.svg')}}" /></a>
 
                     {%if watch.fetch_backend == "html_webdriver" %}<img style="height: 1em; display:inline-block;" src="{{url_for('static_content', group='images', filename='Google-Chrome-icon.png')}}" />{% endif %}
-
+                    {%if watch.fetch_processor == "image" %}<img style="height: 1em; display:inline-block;" src="{{url_for('static_content', group='images', filename='picture-frame.svg')}}" />{% endif %}
                     {% if watch.last_error is defined and watch.last_error != False %}
                     <div class="fetch-error">{{ watch.last_error }}</div>
                     {% endif %}

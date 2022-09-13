@@ -578,3 +578,15 @@ ul {
     display: inline;
     height: 26px;
     vertical-align: middle; }
+
+#quickwatch-fetch-processor {
+  color: #fff;
+  font-size: 80%; }
+  #quickwatch-fetch-processor ul {
+    padding: 0px;
+    list-style-type: none; }
+    #quickwatch-fetch-processor ul li {
+      display: inline-block;
+      margin-right: 1em; }
+      #quickwatch-fetch-processor ul li label:hover {
+        cursor: pointer; }

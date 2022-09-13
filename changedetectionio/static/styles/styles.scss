@@ -804,3 +804,23 @@ ul {
   border-radius: 5px;
   color: #ff3300;
 }
+
+#quickwatch-fetch-processor {
+  color: #fff;
+  font-size: 80%;
+
+  ul {
+    padding: 0px;
+    list-style-type: none;
+    li {
+      display: inline-block;
+      margin-right: 1em;
+      label {
+            &:hover {
+        cursor: pointer;
+      }
+      }
+    }
+  }
+}
+

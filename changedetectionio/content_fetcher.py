@@ -421,9 +421,9 @@ class base_html_playwright(Fetcher):
             # acceptable screenshot quality here
             try:
                 # Quality set to 1 because it's not used, just used as a work-around for a bug, no need to change this.
-                page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024}, quality=1)
+                #page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024}, quality=1)
                 # The actual screenshot
-                self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
+                self.screenshot = page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 82)))
             except Exception as e:
                 context.close()
                 browser.close()

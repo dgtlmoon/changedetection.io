@@ -28,9 +28,7 @@
             {% if 'visual-selector' in enabled_tabs %}
             <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
             {%endif%}
-            {% if 'text-filters-and-triggers' in enabled_tabs %}
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
-            {%endif%}
             <li class="tab"><a href="#notifications">Notifications</a></li>
         </ul>
     </div>
@@ -158,6 +156,7 @@ User-Agent: wonderbra 1.0") }}
             </div>
 
             <div class="tab-pane-inner" id="filters-and-triggers">
+                {% if 'text-filters-and-triggers' in enabled_tabs %}
                     <div class="pure-control-group">
                             <strong>Pro-tips:</strong><br/>
                             <ul>
@@ -169,12 +168,14 @@ User-Agent: wonderbra 1.0") }}
                                 </li>
                             </ul>
                     </div>
+
                     <fieldset>
                         <div class="pure-control-group">
                             {{ render_checkbox_field(form.check_unique_lines) }}
                             <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
                         </div>
                     </fieldset>
+                {% endif %}
                     <div class="pure-control-group">
                         {% set field = render_field(form.css_filter,
                             placeholder=".class-name or #some-id, or other CSS selector rule.",
@@ -201,6 +202,9 @@ User-Agent: wonderbra 1.0") }}
                                 href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
                 </span>
                     </div>
+
+                            {% if 'text-filters-and-triggers' in enabled_tabs %}
+
                     <div class="pure-control-group">
                       {{ render_field(form.subtractive_selectors, rows=5, placeholder="header
 footer
@@ -276,6 +280,8 @@ Unavailable") }}
                         </span>
                     </div>
                 </fieldset>
+
+                {% endif %}
             </div>
 
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
