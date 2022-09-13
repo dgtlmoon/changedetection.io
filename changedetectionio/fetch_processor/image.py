@@ -34,6 +34,12 @@ class perform_site_check(fetch_processor):
 
         watch = self.datastore.data['watching'].get(uuid)
 
+
+        if watch.get('fetch_backend') != 'html_webdriver':
+            raise Exception(
+                "Requires a Chrome compatible fetcher enabled."
+            )
+
         # Protect against file:// access
         if re.search(r'^file', watch['url'], re.IGNORECASE) and not os.getenv('ALLOW_FILE_URI', False):
             raise Exception(
@@ -80,9 +86,12 @@ class perform_site_check(fetch_processor):
 
         update_obj["last_check_status"] = fetcher.get_last_status_code()
 
-        self.contents = fetcher.raw_content
+        if 'image' in fetcher.headers['content-type']:
+            self.contents = fetcher.raw_content
+        else:
+            self.contents = fetcher.screenshot
 
-        image = Image.open(io.BytesIO(fetcher.raw_content))
+        image = Image.open(io.BytesIO(self.contents))
 
         # @todo different choice?
         # https://github.com/JohannesBuchner/imagehash#references

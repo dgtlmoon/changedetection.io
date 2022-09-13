@@ -1,4 +1,4 @@
-available_fetchers = [('json_html_plaintext', 'JSON/HTML/Text'), ('image', 'Static Image'), ('rendered_webpage', 'Screenshot of page or element')]
+available_fetchers = [('json_html_plaintext', 'JSON/HTML/Text'), ('image', 'Graphically by image or web-page')]
 
 class fetch_processor():
     contents = b''

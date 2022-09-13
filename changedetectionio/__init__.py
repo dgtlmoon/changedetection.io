@@ -396,18 +396,20 @@ def changedetection_app(config=None, datastore_o=None):
         existing_tags = datastore.get_all_tags()
 
         form = forms.quickWatchForm(request.form)
+        webdriver_enabled = True if os.getenv('PLAYWRIGHT_DRIVER_URL', False) or os.getenv('PLAYWRIGHT_DRIVER_URL', False) else False
+
         output = render_template("watch-overview.html",
-                                 form=form,
-                                 watches=sorted_watches,
-                                 tags=existing_tags,
                                  active_tag=limit_tag,
                                  app_rss_token=datastore.data['settings']['application']['rss_access_token'],
-                                 has_unviewed=datastore.has_unviewed,
-                                 # Don't link to hosting when we're on the hosting environment
-                                 hosted_sticky=os.getenv("SALTED_PASS", False) == False,
+                                 form=form,
                                  guid=datastore.data['app_guid'],
-                                 queued_uuids=[uuid for p,uuid in update_q.queue])
-
+                                 has_unviewed=datastore.has_unviewed,
+                                 hosted_sticky=os.getenv("SALTED_PASS", False) == False,
+                                 queued_uuids=[uuid for p, uuid in update_q.queue],
+                                 tags=existing_tags,
+                                 watches=sorted_watches,
+                                 webdriver_enabled=webdriver_enabled
+                                 )
 
         if session.get('share-link'):
             del(session['share-link'])
@@ -1228,15 +1230,23 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         url = request.form.get('url').strip()
-        fetch_processor =request.form.get('fetch_processor').strip()
+
         if datastore.url_exists(url):
             flash('The URL {} already exists'.format(url), "error")
             return redirect(url_for('index'))
 
         add_paused = request.form.get('edit_and_watch_submit_button') != None
+        fetch_processor = request.form.get('fetch_processor')
+
+        extras = {'paused': add_paused}
+        if fetch_processor:
+            extras['fetch_processor']=fetch_processor
+            if fetch_processor == 'image':
+                extras['fetch_backend'] = 'html_webdriver'
+                
         new_uuid = datastore.add_watch(url=url,
                                        tag=request.form.get('tag').strip(),
-                                       extras={'paused': add_paused, 'fetch_processor': fetch_processor}
+                                       extras=extras
                                        )
 
 
