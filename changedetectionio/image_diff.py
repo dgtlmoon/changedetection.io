@@ -6,6 +6,9 @@ import cv2
 # From https://www.pyimagesearch.com/2017/06/19/image-difference-with-opencv-and-python/
 def render_diff(fpath_imageA, fpath_imageB):
 
+	import time
+	now = time.time()
+
 	imageA = cv2.imread(fpath_imageA)
 	imageB = cv2.imread(fpath_imageB)
 
@@ -37,4 +40,5 @@ def render_diff(fpath_imageA, fpath_imageB):
 		cv2.rectangle(imageB, (x, y), (x + w, y + h), (0, 0, 255), 1)
 
 	#return cv2.imencode('.jpg', imageB)[1].tobytes()
+	print ("Image comparison processing time", time.time()-now)
 	return cv2.imencode('.jpg', imageA)[1].tobytes()

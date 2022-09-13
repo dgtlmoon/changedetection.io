@@ -77,7 +77,16 @@ class perform_site_check(fetch_processor):
         proxy_args = self.set_proxy_from_list(watch)
         fetcher = klass(proxy_override=proxy_args)
 
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes)
+        fetcher.run(
+            ignore_status_codes=ignore_status_codes,
+            request_body=request_body,
+            request_headers=request_headers,
+            request_method=request_method,
+            current_css_filter=watch.get('css_filter'),
+            timeout=timeout,
+            url=url
+        )
+
         fetcher.quit()
 
         # if not image/foobar in mimetype
@@ -89,18 +98,19 @@ class perform_site_check(fetch_processor):
         if 'image' in fetcher.headers['content-type']:
             self.contents = fetcher.raw_content
         else:
-            # should be element if the filter is set, no?
-            self.contents = fetcher.screenshot
+            self.contents = fetcher.element_screenshot if fetcher.element_screenshot else fetcher.screenshot
 
         # Used for visual-selector
         self.xpath_data = fetcher.xpath_data
         self.screenshot = fetcher.screenshot
 
+        now = time.time()
         image = Image.open(io.BytesIO(self.contents))
 
         # @todo different choice?
         # https://github.com/JohannesBuchner/imagehash#references
         fetched_hash = str(imagehash.average_hash(image))
+        print(uuid, "Time to image hash", time.time() - now)
 
         # The main thing that all this at the moment comes down to :)
         if watch['previous_md5'] != fetched_hash:

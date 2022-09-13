@@ -21,7 +21,6 @@ class Non200ErrorCodeReceived(Exception):
             self.page_text = html_tools.html_to_text(page_html)
         return
 
-
 class JSActionExceptions(Exception):
     def __init__(self, status_code, url, screenshot, message=''):
         self.status_code = status_code
@@ -203,6 +202,7 @@ class Fetcher():
 
     # Will be needed in the future by the VisualSelector, always get this where possible.
     screenshot = False
+    element_screenshot = None
     system_http_proxy = os.getenv('HTTP_PROXY')
     system_https_proxy = os.getenv('HTTPS_PROXY')
 
@@ -311,7 +311,8 @@ class base_html_playwright(Fetcher):
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_css_filter=None):
+            current_css_filter=None
+            ):
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
@@ -405,8 +406,13 @@ class base_html_playwright(Fetcher):
             self.status_code = response.status
             self.headers = response.all_headers()
 
-            if current_css_filter is not None:
+            if current_css_filter is not None and len(current_css_filter):
                 page.evaluate("var css_filter={}".format(json.dumps(current_css_filter)))
+
+                el = page.locator(current_css_filter)
+                if el:
+                    el.scroll_into_view_if_needed()
+                    self.element_screenshot = el.screenshot()
             else:
                 page.evaluate("var css_filter=''")
 
