@@ -195,7 +195,7 @@ Or BTC `1PLFN327GyUarpJd7nVe7Reqg9qHx5frNn`
 
 ## Commercial Support
 
-I offer commercial support, this software is depended on by network security, aerospace , data-science and data-journalist professionals just to name a few, please reach out at dgtlmoon@gmail.com for any enquiries, I am more than glad to work with your organisation to further the possibilities of what can be done with changedetection.io
+I offer commercial support, this software is depended on by network security, aerospace , data-science and data-journalist professionals just to name a few, please reach out at dgtlmoon@gmail.com for any inquiries, I am more than glad to work with your organization to further the possibilities of what can be done with changedetection.io
 
 
 [release-shield]: https://img.shields.io:/github/v/release/dgtlmoon/changedetection.io?style=for-the-badge
