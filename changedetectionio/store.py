@@ -113,9 +113,7 @@ class ChangeDetectionStore:
             self.__data['settings']['application']['api_access_token'] = secret
 
         # Proxy list support - available as a selection in settings when text file is imported
-        # CSV list
-        # "name, address", or just "name"
-        proxy_list_file = "{}/proxies.txt".format(self.datastore_path)
+        proxy_list_file = "{}/proxies.json".format(self.datastore_path)
         if path.isfile(proxy_list_file):
             self.import_proxy_list(proxy_list_file)
 
@@ -437,18 +435,10 @@ class ChangeDetectionStore:
                     unlink(item)
 
     def import_proxy_list(self, filename):
-        import csv
-        with open(filename, newline='') as f:
-            reader = csv.reader(f, skipinitialspace=True)
-            # @todo This loop can could be improved
-            l = []
-            for row in reader:
-                if len(row):
-                    if len(row)>=2:
-                        l.append(tuple(row[:2]))
-                    else:
-                        l.append(tuple([row[0], row[0]]))
-            self.proxy_list = l if len(l) else None
+        with open(filename) as f:
+            self.proxy_list = json.load(f)
+            print ("Registered proxy list", list(self.proxy_list.keys()))
+
 
 
     # Run all updates

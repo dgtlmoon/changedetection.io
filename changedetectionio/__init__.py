@@ -547,6 +547,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Defaults for proxy choice
         if datastore.proxy_list is not None:  # When enabled
+            # @todo
             # Radio needs '' not None, or incase that the chosen one no longer exists
             if default['proxy'] is None or not any(default['proxy'] in tup for tup in datastore.proxy_list):
                 default['proxy'] = ''
@@ -560,7 +561,10 @@ def changedetection_app(config=None, datastore_o=None):
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
             del form.proxy
         else:
-            form.proxy.choices = [('', 'Default')] + datastore.proxy_list
+            form.proxy.choices = [('', 'Default')]
+            for p in datastore.proxy_list:
+                form.proxy.choices.append(tuple((p, datastore.proxy_list[p]['label'])))
+
 
         if request.method == 'POST' and form.validate():
             extra_update_obj = {}
@@ -1368,6 +1372,8 @@ def ticker_thread_check_time_launch_checks():
     import random
     from changedetectionio import update_worker
 
+    proxy_last_called_time = {}
+
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 20))
     print("System env MINIMUM_SECONDS_RECHECK_TIME", recheck_time_minimum_seconds)
 
@@ -1428,10 +1434,27 @@ def ticker_thread_check_time_launch_checks():
                 if watch.jitter_seconds == 0:
                     watch.jitter_seconds = random.uniform(-abs(jitter), jitter)
 
-
             seconds_since_last_recheck = now - watch['last_checked']
+
             if seconds_since_last_recheck >= (threshold + watch.jitter_seconds) and seconds_since_last_recheck >= recheck_time_minimum_seconds:
                 if not uuid in running_uuids and uuid not in [q_uuid for p,q_uuid in update_q.queue]:
+
+                    # Proxies can be set to have a limit on seconds between which they can be called
+                    watch_proxy = watch.get('proxy')
+                    if watch_proxy and any([watch_proxy in p for p in datastore.proxy_list]):
+                        # Proxy may also have some threshold minimum
+                        proxy_list_reuse_time_minimum = int(datastore.proxy_list.get(watch_proxy, {}).get('reuse_time_minimum', 0))
+                        if proxy_list_reuse_time_minimum:
+                            proxy_last_used_time = proxy_last_called_time.get(watch_proxy, 0)
+                            time_since_proxy_used = time.time() - proxy_last_used_time
+                            if time_since_proxy_used < proxy_list_reuse_time_minimum:
+                                # Not enough time difference reached, skip this watch
+                                print("Skipped UUID {} on proxy {}, not enough time between proxy requests".format(uuid, watch_proxy))
+                                continue
+                            else:
+                                # Record the last used time
+                                proxy_last_called_time[watch_proxy] = int(time.time())
+
                     # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
                     priority = int(time.time())
                     print(
