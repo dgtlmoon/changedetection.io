@@ -1455,10 +1455,13 @@ def ticker_thread_check_time_launch_checks():
                         proxy_list_reuse_time_minimum = int(datastore.proxy_list.get(watch_proxy, {}).get('reuse_time_minimum', 0))
                         if proxy_list_reuse_time_minimum:
                             proxy_last_used_time = proxy_last_called_time.get(watch_proxy, 0)
-                            time_since_proxy_used = time.time() - proxy_last_used_time
+                            time_since_proxy_used = int(time.time() - proxy_last_used_time)
                             if time_since_proxy_used < proxy_list_reuse_time_minimum:
                                 # Not enough time difference reached, skip this watch
-                                print("Skipped UUID {} on proxy {}, not enough time between proxy requests".format(uuid, watch_proxy))
+                                print("> Skipped UUID {} using proxy '{}', not enough time between proxy requests {}s/{}s".format(uuid,
+                                                                                                                         watch_proxy,
+                                                                                                                         time_since_proxy_used,
+                                                                                                                         proxy_list_reuse_time_minimum))
                                 continue
                             else:
                                 # Record the last used time
