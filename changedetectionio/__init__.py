@@ -661,15 +661,16 @@ def changedetection_app(config=None, datastore_o=None):
 
         default = deepcopy(datastore.data['settings'])
         if datastore.proxy_list is not None:
+            available_proxies = list(datastore.proxy_list.keys())
             # When enabled
             system_proxy = datastore.data['settings']['requests']['proxy']
             # In the case it doesnt exist anymore
-            if not any([system_proxy in tup for tup in datastore.proxy_list]):
+            if not system_proxy in available_proxies:
                 system_proxy = None
 
-            default['requests']['proxy'] = system_proxy if system_proxy is not None else datastore.proxy_list[0][0]
+            default['requests']['proxy'] = system_proxy if system_proxy is not None else available_proxies[0]
             # Used by the form handler to keep or remove the proxy settings
-            default['proxy_list'] = datastore.proxy_list
+            default['proxy_list'] = available_proxies[0]
 
 
         # Don't use form.data on POST so that it doesnt overrid the checkbox status from the POST status
@@ -684,7 +685,10 @@ def changedetection_app(config=None, datastore_o=None):
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
             del form.requests.form.proxy
         else:
-            form.requests.form.proxy.choices = datastore.proxy_list
+            form.requests.form.proxy.choices = []
+            for p in datastore.proxy_list:
+                form.requests.form.proxy.choices.append(tuple((p, datastore.proxy_list[p]['label'])))
+
 
         if request.method == 'POST':
             # Password unset is a GET, but we can lock the session to a salted env password to always need the password
@@ -1441,7 +1445,12 @@ def ticker_thread_check_time_launch_checks():
 
                     # Proxies can be set to have a limit on seconds between which they can be called
                     watch_proxy = watch.get('proxy')
-                    if watch_proxy and any([watch_proxy in p for p in datastore.proxy_list]):
+                    if not watch_proxy:
+                        watch_proxy = datastore.data['settings']['requests']['proxy']
+                        if not watch_proxy:
+                            watch_proxy = list(datastore.proxy_list.keys())[0]
+
+                    if watch_proxy and watch_proxy in list(datastore.proxy_list.keys()):
                         # Proxy may also have some threshold minimum
                         proxy_list_reuse_time_minimum = int(datastore.proxy_list.get(watch_proxy, {}).get('reuse_time_minimum', 0))
                         if proxy_list_reuse_time_minimum:

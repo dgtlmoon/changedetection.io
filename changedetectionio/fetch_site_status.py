@@ -33,14 +33,14 @@ class perform_site_check():
             return None
 
         # If its a valid one
-        if any([watch['proxy'] in p for p in self.datastore.proxy_list]):
+        if watch['proxy'] and watch['proxy'] in list(self.datastore.proxy_list.keys()):
             proxy_args = self.datastore.proxy_list.get(watch['proxy']).get('url')
 
         # not valid (including None), try the system one
         else:
             system_proxy = self.datastore.data['settings']['requests']['proxy']
             # Is not None and exists
-            if self.datastore.proxy_list.get():
+            if self.datastore.proxy_list.get(system_proxy):
                 proxy_args = self.datastore.proxy_list.get(system_proxy).get('url')
 
         # Fallback - Did not resolve anything, use the first available
