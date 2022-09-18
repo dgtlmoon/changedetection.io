@@ -128,6 +128,8 @@ class perform_site_check():
 
         if watch['webdriver_js_execute_code'] is not None and watch['webdriver_js_execute_code'].strip():
             fetcher.webdriver_js_execute_code = watch['webdriver_js_execute_code']
+        if watch['webdriver_xpath_execute_click_code'] is not None and watch['webdriver_xpath_execute_click_code'].strip():
+            fetcher.webdriver_xpath_execute_click_code = watch['webdriver_xpath_execute_click_code']
 
         fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch['css_filter'])
         fetcher.quit()

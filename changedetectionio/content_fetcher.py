@@ -73,6 +73,7 @@ class Fetcher():
 
     fetcher_description = "No description"
     webdriver_js_execute_code = None
+    webdriver_xpath_execute_click_code = None
     xpath_element_js = """               
                 // Include the getXpath script directly, easier than fetching
                 !function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):(e=e||self).getXPath=n()}(this,function(){return function(e){var n=e;if(n&&n.id)return'//*[@id="'+n.id+'"]';for(var o=[];n&&Node.ELEMENT_NODE===n.nodeType;){for(var i=0,r=!1,d=n.previousSibling;d;)d.nodeType!==Node.DOCUMENT_TYPE_NODE&&d.nodeName===n.nodeName&&i++,d=d.previousSibling;for(d=n.nextSibling;d;){if(d.nodeName===n.nodeName){r=!0;break}d=d.nextSibling}o.push((n.prefix?n.prefix+":":"")+n.localName+(i||r?"["+(i+1)+"]":"")),n=n.parentNode}return o.length?"/"+o.reverse().join("/"):""}});
@@ -398,6 +399,29 @@ class base_html_playwright(Fetcher):
 
                     raise JSActionExceptions(status_code=response.status, screenshot=error_screenshot, message=str(e), url=url)
 
+            if self.webdriver_xpath_execute_click_code is not None:
+                try:
+                    print(self.webdriver_xpath_execute_click_code)
+                    for my_plywright_selector in self.webdriver_xpath_execute_click_code.split('\n'):
+                        print(my_plywright_selector)
+                        page.locator("xpath=" + my_plywright_selector).click();
+                except Exception as e:
+                    # Is it possible to get a screenshot?
+                    error_screenshot = False
+                    try:
+                        page.screenshot(type='jpeg',
+                                        clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024},
+                                        quality=1)
+
+                        # The actual screenshot
+                        error_screenshot = page.screenshot(type='jpeg',
+                                                           full_page=True,
+                                                           quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
+                    except Exception as s:
+                        pass
+
+                    raise JSActionExceptions(status_code=response.status, screenshot=error_screenshot, message=str(e), url=url)
+
             self.content = page.content()
             self.status_code = response.status
             self.headers = response.all_headers()
@@ -512,6 +536,13 @@ class base_html_webdriver(Fetcher):
         if self.webdriver_js_execute_code is not None:
             self.driver.execute_script(self.webdriver_js_execute_code)
             # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
+            self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
+
+        if self.webdriver_xpath_execute_click_code is not None:
+            print(self.webdriver_xpath_execute_click_code)
+            for my_plywright_selector in self.webdriver_xpath_execute_click_code.split('\n'):
+                print(my_plywright_selector)
+                self.driver.find_element_by_xpath(my_plywright_selector).click();
             self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
 
         self.screenshot = self.driver.get_screenshot_as_png()

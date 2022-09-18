@@ -348,6 +348,7 @@ class watchForm(commonSettingsForm):
     text_should_not_be_present = StringListField('Block change-detection if text matches', [validators.Optional(), ValidateListRegex()])
 
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
+    webdriver_xpath_execute_click_code = TextAreaField('Execute "click"-operation on elements selected by XPATH before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
 
