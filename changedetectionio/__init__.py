@@ -1444,12 +1444,7 @@ def ticker_thread_check_time_launch_checks():
                 if not uuid in running_uuids and uuid not in [q_uuid for p,q_uuid in update_q.queue]:
 
                     # Proxies can be set to have a limit on seconds between which they can be called
-                    watch_proxy = watch.get('proxy')
-                    if not watch_proxy:
-                        watch_proxy = datastore.data['settings']['requests']['proxy']
-                        if not watch_proxy:
-                            watch_proxy = list(datastore.proxy_list.keys())[0]
-
+                    watch_proxy = datastore.get_preferred_proxy_for_watch(uuid=uuid)
                     if watch_proxy and watch_proxy in list(datastore.proxy_list.keys()):
                         # Proxy may also have some threshold minimum
                         proxy_list_reuse_time_minimum = int(datastore.proxy_list.get(watch_proxy, {}).get('reuse_time_minimum', 0))

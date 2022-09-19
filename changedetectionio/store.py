@@ -440,6 +440,36 @@ class ChangeDetectionStore:
             print ("Registered proxy list", list(self.proxy_list.keys()))
 
 
+    def get_preferred_proxy_for_watch(self, uuid):
+        """
+        Returns the preferred proxy by ID key
+        :param uuid: UUID
+        :return: proxy "key" id
+        """
+
+        proxy_id = None
+        if self.proxy_list is None:
+            return None
+
+        # If its a valid one
+        watch = self.data['watching'].get(uuid)
+
+        if watch.get('proxy') and watch.get('proxy') in list(self.proxy_list.keys()):
+            return watch.get('proxy')
+
+        # not valid (including None), try the system one
+        else:
+            system_proxy_id = self.data['settings']['requests'].get('proxy')
+            # Is not None and exists
+            if self.proxy_list.get(system_proxy_id):
+                return system_proxy_id
+
+        # Fallback - Did not resolve anything, use the first available
+        if system_proxy_id is None:
+            first_default = list(self.proxy_list)[0]
+            return first_default
+
+        return None
 
     # Run all updates
     # IMPORTANT - Each update could be run even when they have a new install and the schema is correct

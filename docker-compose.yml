@@ -6,6 +6,8 @@ services:
       hostname: changedetection
       volumes:
         - changedetection-data:/datastore
+# Configurable proxy list support, see https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#proxy-list-support
+#        - ./proxies.json:/datastore/proxies.json
 
   #    environment:
   #        Default listening port, can also be changed with the -p option

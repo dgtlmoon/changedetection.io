@@ -20,36 +20,6 @@ class perform_site_check():
         super().__init__(*args, **kwargs)
         self.datastore = datastore
 
-    # If there was a proxy list enabled, figure out what proxy_args/which proxy to use
-    # Returns the proxy as a URL
-    # if watch.proxy use that
-    # fetcher.proxy_override = watch.proxy or main config proxy
-    # Allows override the proxy on a per-request basis
-    # ALWAYS use the first one is nothing selected
-
-    def set_proxy_from_list(self, watch):
-        proxy_args = None
-        if self.datastore.proxy_list is None:
-            return None
-
-        # If its a valid one
-        if watch['proxy'] and watch['proxy'] in list(self.datastore.proxy_list.keys()):
-            proxy_args = self.datastore.proxy_list.get(watch['proxy']).get('url')
-
-        # not valid (including None), try the system one
-        else:
-            system_proxy = self.datastore.data['settings']['requests']['proxy']
-            # Is not None and exists
-            if self.datastore.proxy_list.get(system_proxy):
-                proxy_args = self.datastore.proxy_list.get(system_proxy).get('url')
-
-        # Fallback - Did not resolve anything, use the first available
-        if proxy_args is None:
-            first_default = list(self.datastore.proxy_list)[0]
-            proxy_args = self.datastore.proxy_list.get(first_default).get('url')
-
-        return proxy_args
-
     # Doesn't look like python supports forward slash auto enclosure in re.findall
     # So convert it to inline flag "foobar(?i)" type configuration
     def forward_slash_enclosed_regex_to_options(self, regex):
@@ -114,9 +84,12 @@ class perform_site_check():
             # If the klass doesnt exist, just use a default
             klass = getattr(content_fetcher, "html_requests")
 
-        proxy_url = self.set_proxy_from_list(watch)
-        if proxy_url:
+        proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=uuid)
+        proxy_url = None
+        if proxy_id:
+            proxy_url = self.datastore.proxy_list.get(proxy_id).get('url')
             print ("UUID {} Using proxy {}".format(uuid, proxy_url))
+
         fetcher = klass(proxy_override=proxy_url)
 
         # Configurable per-watch or global extra delay before extracting text (for webDriver types)
