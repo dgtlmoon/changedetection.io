@@ -18,7 +18,7 @@ def test_preferred_proxy(client, live_server):
         follow_redirects=True
     )
 
-    assert b"2 Imported" in res.data
+    assert b"1 Imported" in res.data
 
     time.sleep(2)
     res = client.post(
