@@ -316,6 +316,7 @@ class base_html_playwright(Fetcher):
         import playwright._impl._api_types
         from playwright._impl._api_types import Error, TimeoutError
         response = None
+
         with sync_playwright() as p:
             browser_type = getattr(p, self.browser_type)
 
@@ -373,8 +374,11 @@ class base_html_playwright(Fetcher):
                 print("response object was none")
                 raise EmptyReply(url=url, status_code=None)
 
-            # Bug 2(?) Set the viewport size AFTER loading the page
-            page.set_viewport_size({"width": 1280, "height": 1024})
+
+            # Removed browser-set-size, seemed to be needed to make screenshots work reliably in older playwright versions
+            # Was causing exceptions like 'waiting for page but content is changing' etc
+            # https://www.browserstack.com/docs/automate/playwright/change-browser-window-size 1280x720 should be the default
+                        
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
             time.sleep(extra_wait)
 
@@ -397,6 +401,8 @@ class base_html_playwright(Fetcher):
                         pass
 
                     raise JSActionExceptions(status_code=response.status, screenshot=error_screenshot, message=str(e), url=url)
+
+            page.wait_for_timeout(500)
 
             self.content = page.content()
             self.status_code = response.status
