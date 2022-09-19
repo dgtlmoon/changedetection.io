@@ -265,7 +265,7 @@ class update_worker(threading.Thread):
                     # Different exceptions mean that we may or may not want to bump the snapshot, trigger notifications etc
                     if process_changedetection_results:
                         try:
-                            watch = self.datastore.data['watching'][uuid]
+                            watch = self.datastore.data['watching'].get(uuid)
 
                             # For the FIRST time we check a site, or a change detected, save the snapshot.
                             if changed_detected or not watch['last_checked']:

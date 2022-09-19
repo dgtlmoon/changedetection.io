@@ -1407,7 +1407,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         return redirect(url_for('index'))
 
-    @app.route("/api/r-url", methods=['GET'])
+    @app.route("/api/share-url", methods=['GET'])
     @login_required
     def form_share_put_watch():
         """Given a watch UUID, upload the info and return a share-link
