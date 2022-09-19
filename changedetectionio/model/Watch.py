@@ -24,6 +24,7 @@ class model(dict):
             'previous_md5': False,
             'uuid': str(uuid_builder.uuid4()),
             'headers': {},  # Extra headers to send
+            'cookies': {},  # Cookies to send
             'body': None,
             'method': 'GET',
             #'history': {},  # Dict of timestamp and output stripped filename

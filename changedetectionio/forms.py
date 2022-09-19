@@ -340,6 +340,7 @@ class watchForm(commonSettingsForm):
 
     ignore_text = StringListField('Ignore text', [ValidateListRegex()])
     headers = StringDictKeyValue('Request headers')
+    cookies = StringDictKeyValue('Request cookies')
     body = TextAreaField('Request body', [validators.Optional()])
     method = SelectField('Request method', choices=valid_method, default=default_method)
     ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)

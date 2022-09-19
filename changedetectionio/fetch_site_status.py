@@ -83,6 +83,7 @@ class perform_site_check():
         update_obj = {'last_notification_error': False, 'last_error': False}
 
         extra_headers =self.datastore.data['watching'][uuid].get('headers')
+        cookies = self.datastore.data['watching'][uuid].get('cookies')
 
         # Tweak the base config with the per-watch ones
         request_headers = self.datastore.data['settings']['headers'].copy()
@@ -129,7 +130,7 @@ class perform_site_check():
         if watch['webdriver_js_execute_code'] is not None and watch['webdriver_js_execute_code'].strip():
             fetcher.webdriver_js_execute_code = watch['webdriver_js_execute_code']
 
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch['css_filter'])
+        fetcher.run(url, timeout, request_headers, request_body, cookies, request_method, ignore_status_codes, watch['css_filter'])
         fetcher.quit()
 
         self.screenshot = fetcher.screenshot

@@ -218,6 +218,7 @@ class Fetcher():
             timeout,
             request_headers,
             request_body,
+            request_cookies,
             request_method,
             ignore_status_codes=False,
             current_css_filter=None):
@@ -560,6 +561,7 @@ class html_requests(Fetcher):
             timeout,
             request_headers,
             request_body,
+            request_cookies,
             request_method,
             ignore_status_codes=False,
             current_css_filter=None):
@@ -579,6 +581,7 @@ class html_requests(Fetcher):
                              data=request_body,
                              url=url,
                              headers=request_headers,
+                             cookies=request_cookies,
                              timeout=timeout,
                              proxies=proxies,
                              verify=False)

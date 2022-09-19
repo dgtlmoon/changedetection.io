@@ -122,6 +122,10 @@
 {{ render_field(form.headers, rows=5, placeholder="Example
 Cookie: foobar
 User-Agent: wonderbra 1.0") }}
+                    <div class="pure-control-group" id="request-cookies">
+                        {{ render_field(form.cookies, rows=5, placeholder="Example
+Cookie: value
+") }}
                     </div>
                     <div class="pure-control-group" id="request-body">
                                         {{ render_field(form.body, rows=5, placeholder="Example

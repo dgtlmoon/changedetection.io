@@ -286,6 +286,7 @@ class ChangeDetectionStore:
                 for k in ['url', 'tag',
                           'paused', 'title',
                           'previous_md5', 'headers',
+                          'cookies',
                           'body', 'method',
                           'ignore_text', 'css_filter',
                           'subtractive_selectors', 'trigger_text',
