@@ -113,9 +113,7 @@ class ChangeDetectionStore:
             self.__data['settings']['application']['api_access_token'] = secret
 
         # Proxy list support - available as a selection in settings when text file is imported
-        # CSV list
-        # "name, address", or just "name"
-        proxy_list_file = "{}/proxies.txt".format(self.datastore_path)
+        proxy_list_file = "{}/proxies.json".format(self.datastore_path)
         if path.isfile(proxy_list_file):
             self.import_proxy_list(proxy_list_file)
 
@@ -437,19 +435,41 @@ class ChangeDetectionStore:
                     unlink(item)
 
     def import_proxy_list(self, filename):
-        import csv
-        with open(filename, newline='') as f:
-            reader = csv.reader(f, skipinitialspace=True)
-            # @todo This loop can could be improved
-            l = []
-            for row in reader:
-                if len(row):
-                    if len(row)>=2:
-                        l.append(tuple(row[:2]))
-                    else:
-                        l.append(tuple([row[0], row[0]]))
-            self.proxy_list = l if len(l) else None
+        with open(filename) as f:
+            self.proxy_list = json.load(f)
+            print ("Registered proxy list", list(self.proxy_list.keys()))
 
+
+    def get_preferred_proxy_for_watch(self, uuid):
+        """
+        Returns the preferred proxy by ID key
+        :param uuid: UUID
+        :return: proxy "key" id
+        """
+
+        proxy_id = None
+        if self.proxy_list is None:
+            return None
+
+        # If its a valid one
+        watch = self.data['watching'].get(uuid)
+
+        if watch.get('proxy') and watch.get('proxy') in list(self.proxy_list.keys()):
+            return watch.get('proxy')
+
+        # not valid (including None), try the system one
+        else:
+            system_proxy_id = self.data['settings']['requests'].get('proxy')
+            # Is not None and exists
+            if self.proxy_list.get(system_proxy_id):
+                return system_proxy_id
+
+        # Fallback - Did not resolve anything, use the first available
+        if system_proxy_id is None:
+            first_default = list(self.proxy_list)[0]
+            return first_default
+
+        return None
 
     # Run all updates
     # IMPORTANT - Each update could be run even when they have a new install and the schema is correct

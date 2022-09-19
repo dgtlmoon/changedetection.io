@@ -49,3 +49,47 @@ pytest tests/visualselector/test_fetch_data.py
 
 unset PLAYWRIGHT_DRIVER_URL
 docker kill $$-test_browserless
+
+# Test proxy list handling, starting two squids on different ports
+# Each squid adds a different header to the response, which is the main thing we test for.
+docker run -d --name $$-squid-one --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf -p 3128:3128 ubuntu/squid:4.13-21.10_edge
+docker run -d --name $$-squid-two --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf -p 3129:3128 ubuntu/squid:4.13-21.10_edge
+
+
+# So, basic HTTP as env var test
+export HTTP_PROXY=http://localhost:3128
+export HTTPS_PROXY=http://localhost:3128
+pytest tests/proxy_list/test_proxy.py
+docker logs $$-squid-one 2>/dev/null|grep one.changedetection.io
+if [ $? -ne 0 ]
+then
+  echo "Did not see a request to one.changedetection.io in the squid logs (while checking env vars HTTP_PROXY/HTTPS_PROXY)"
+fi
+unset HTTP_PROXY
+unset HTTPS_PROXY
+
+
+# 2nd test actually choose the preferred proxy from proxies.json
+cp tests/proxy_list/proxies.json-example ./test-datastore/proxies.json
+# Makes a watch use a preferred proxy
+pytest tests/proxy_list/test_multiple_proxy.py
+
+# Should be a request in the default "first" squid
+docker logs $$-squid-one 2>/dev/null|grep chosen.changedetection.io
+if [ $? -ne 0 ]
+then
+  echo "Did not see a request to chosen.changedetection.io in the squid logs (while checking preferred proxy)"
+fi
+
+# And one in the 'second' squid (user selects this as preferred)
+docker logs $$-squid-two 2>/dev/null|grep chosen.changedetection.io
+if [ $? -ne 0 ]
+then
+  echo "Did not see a request to chosen.changedetection.io in the squid logs (while checking preferred proxy)"
+fi
+
+# @todo - test system override proxy selection and watch defaults, setup a 3rd squid?
+docker kill $$-squid-one
+docker kill $$-squid-two
+
+

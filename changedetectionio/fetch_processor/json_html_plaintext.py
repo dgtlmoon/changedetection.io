@@ -14,8 +14,12 @@ from . import fetch_processor
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
 class perform_site_check(fetch_processor):
-
+    screenshot = None
     xpath_data = None
+
+    def __init__(self, *args, datastore, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.datastore = datastore
 
     # Doesn't look like python supports forward slash auto enclosure in re.findall
     # So convert it to inline flag "foobar(?i)" type configuration
@@ -37,6 +41,8 @@ class perform_site_check(fetch_processor):
         stripped_text_from_html = ""
 
         watch = self.datastore.data['watching'].get(uuid)
+        if not watch:
+            return
 
         # Protect against file:// access
         if re.search(r'^file', watch['url'], re.IGNORECASE) and not os.getenv('ALLOW_FILE_URI', False):
@@ -59,7 +65,7 @@ class perform_site_check(fetch_processor):
         if 'Accept-Encoding' in request_headers and "br" in request_headers['Accept-Encoding']:
             request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
 
-        timeout = self.datastore.data['settings']['requests']['timeout']
+        timeout = self.datastore.data['settings']['requests'].get('timeout')
         url = watch.get('url')
         request_body = self.datastore.data['watching'][uuid].get('body')
         request_method = self.datastore.data['watching'][uuid].get('method')
@@ -79,9 +85,13 @@ class perform_site_check(fetch_processor):
             # If the klass doesnt exist, just use a default
             klass = getattr(content_fetcher, "html_requests")
 
+        proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=uuid)
+        proxy_url = None
+        if proxy_id:
+            proxy_url = self.datastore.proxy_list.get(proxy_id).get('url')
+            print ("UUID {} Using proxy {}".format(uuid, proxy_url))
 
-        proxy_args = self.set_proxy_from_list(watch)
-        fetcher = klass(proxy_override=proxy_args)
+        fetcher = klass(proxy_override=proxy_url)
 
         # Configurable per-watch or global extra delay before extracting text (for webDriver types)
         system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
