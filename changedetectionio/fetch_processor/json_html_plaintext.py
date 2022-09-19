@@ -18,8 +18,9 @@ class perform_site_check(fetch_processor):
     xpath_data = None
 
     def __init__(self, *args, datastore, **kwargs):
-        super().__init__(*args, **kwargs)
         self.datastore = datastore
+        super().__init__(*args, **kwargs)
+
 
     # Doesn't look like python supports forward slash auto enclosure in re.findall
     # So convert it to inline flag "foobar(?i)" type configuration

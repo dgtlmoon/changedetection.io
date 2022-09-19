@@ -27,6 +27,10 @@ from . import fetch_processor
 class perform_site_check(fetch_processor):
     xpath_data = None
 
+    def __init__(self, *args, datastore, **kwargs):
+        self.datastore = datastore
+        super().__init__(*args, **kwargs)
+
     def run(self, uuid):
         changed_detected = False
         screenshot = False  # as bytes
@@ -74,7 +78,7 @@ class perform_site_check(fetch_processor):
             # If the klass doesnt exist, just use a default
             klass = getattr(content_fetcher, "html_requests")
 
-        proxy_args = self.set_proxy_from_list(watch)
+        proxy_args = self.datastore.get_preferred_proxy_for_watch(uuid)
         fetcher = klass(proxy_override=proxy_args)
 
         fetcher.run(
