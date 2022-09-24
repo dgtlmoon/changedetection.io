@@ -22,7 +22,7 @@ RUN pip install --target=/dependencies -r /requirements.txt
 
 # Playwright is an alternative to Selenium
 # Excluded this package from requirements.txt to prevent arm/v6 and arm/v7 builds from failing
-RUN pip install --target=/dependencies playwright~=1.25 \
+RUN pip install --target=/dependencies playwright~=1.26 \
     || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
 
 # Final image stage
