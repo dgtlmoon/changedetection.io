@@ -402,6 +402,11 @@ class base_html_playwright(Fetcher):
 
                     raise JSActionExceptions(status_code=response.status, screenshot=error_screenshot, message=str(e), url=url)
 
+                else:
+                    # JS eval was run, now we also wait some time if possible to let the page settle
+                    if self.render_extract_delay:
+                        page.wait_for_timeout(self.render_extract_delay * 1000)
+
             page.wait_for_timeout(500)
 
             self.content = page.content()
