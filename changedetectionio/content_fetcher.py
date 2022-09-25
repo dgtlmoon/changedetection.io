@@ -525,8 +525,6 @@ class base_html_webdriver(Fetcher):
             # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
             self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
 
-        self.screenshot = self.driver.get_screenshot_as_png()
-
         # @todo - how to check this? is it possible?
         self.status_code = 200
         # @todo somehow we should try to get this working for WebDriver
@@ -536,6 +534,8 @@ class base_html_webdriver(Fetcher):
         time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay)
         self.content = self.driver.page_source
         self.headers = {}
+
+        self.screenshot = self.driver.get_screenshot_as_png()
 
     # Does the connection to the webdriver work? run a test connection.
     def is_ready(self):
