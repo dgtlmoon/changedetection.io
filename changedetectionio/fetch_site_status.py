@@ -157,17 +157,17 @@ class perform_site_check():
                 stripped_text_from_html = html_content
             else:
                 # Then we assume HTML
+                if has_subtractive_selectors:
+                    html_content = html_tools.element_removal(subtractive_selectors, html_content)
+
                 if has_filter_rule:
                     # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
                     if css_filter_rule[0] == '/' or css_filter_rule.startswith('xpath:'):
                         html_content = html_tools.xpath_filter(xpath_filter=css_filter_rule.replace('xpath:', ''),
-                                                               html_content=fetcher.content)
+                                                               html_content=html_content)
                     else:
                         # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-                        html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
-
-                if has_subtractive_selectors:
-                    html_content = html_tools.element_removal(subtractive_selectors, html_content)
+                        html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=html_content)
 
                 if not is_source:
                     # extract text
