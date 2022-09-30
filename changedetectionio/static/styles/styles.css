@@ -68,7 +68,8 @@ code {
     white-space: nowrap; }
   .watch-table td.title-col {
     word-break: break-all;
-    white-space: normal; }
+    white-space: normal;
+    text-align: left; }
   .watch-table th {
     white-space: nowrap; }
     .watch-table th a {
