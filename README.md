@@ -186,7 +186,7 @@ The example below adds the price in dollars to each item in the JSON data, and t
 ```
 
 #### Sample jq
-`.items[] | . + { "priceInDollars": (.priceInCents / 100) } | select(.priceInDollars > 10)`
+`jq:.items[] | . + { "priceInDollars": (.priceInCents / 100) } | select(.priceInDollars > 10)`
 
 #### Sample output data
 ```
