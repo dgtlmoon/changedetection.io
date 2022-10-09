@@ -5,13 +5,14 @@ FROM python:3.8-slim as builder
 ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libssl-dev \
-    libffi-dev \
+    g++ \
     gcc \
     libc-dev \
+    libffi-dev \
+    libssl-dev \
     libxslt-dev \
-    zlib1g-dev \
-    g++
+    make \
+    zlib1g-dev
 
 RUN mkdir /install
 WORKDIR /install

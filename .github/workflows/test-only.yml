@@ -1,21 +1,17 @@
-name: ChangeDetection.io Test
+name: ChangeDetection.io App Test
 
 # Triggers the workflow on push or pull request events
 on: [push, pull_request]
 
 jobs:
-  test-build:
+  test-application:
     runs-on: ubuntu-latest
     steps:
-
       - uses: actions/checkout@v2
       - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
-
-      - name: Show env vars
-        run: set
 
       - name: Install dependencies
         run: |
@@ -23,6 +19,7 @@ jobs:
           pip install flake8 pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
@@ -39,19 +36,4 @@ jobs:
           # Each test is totally isolated and performs its own cleanup/reset
           cd changedetectionio; ./run_all_tests.sh
 
-      # Just test that the build works, some libraries wont compile on ARM/rPi etc
-      - name: Test that the docker containers can build
-        id: docker_build
-        uses: docker/build-push-action@v2
-        with:
-          context: ./
-          file: ./Dockerfile
-          push: false
-          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
 
-      # https://github.com/docker/build-push-action/blob/master/docs/advanced/test-before-push.md ?
-      # https://github.com/docker/buildx/issues/59 ? Needs to be one platform?
-
-      # https://github.com/docker/buildx/issues/495#issuecomment-918925854
