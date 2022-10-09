@@ -29,7 +29,7 @@ jobs:
           install: true
           version: latest
           driver-opts: image=moby/buildkit:master
-          
+
       - name: Test that the docker containers can build
         id: docker_build
         if: ${{ github.ref }} == "refs/heads/master"
@@ -39,7 +39,9 @@ jobs:
           context: ./
           file: ./Dockerfile
           platforms: linux/arm/v7,linux/arm/v6,linux/amd64,linux/arm64,
-
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
