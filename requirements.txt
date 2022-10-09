@@ -10,7 +10,10 @@ flask_restful
 pytz
 
 # Set these versions together to avoid a RequestsDependencyWarning
-requests[socks] ~= 2.26
+# >= 2.26 also adds Brotli support if brotli is installed
+brotli ~= 1.0
+requests[socks] ~= 2.28
+
 urllib3 > 1.26
 chardet > 2.3.0
 
