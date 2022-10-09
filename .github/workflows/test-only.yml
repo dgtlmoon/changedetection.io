@@ -39,6 +39,18 @@ jobs:
           # Each test is totally isolated and performs its own cleanup/reset
           cd changedetectionio; ./run_all_tests.sh
 
+      # Just test that the build works, some libraries wont compile on ARM/rPi etc
+      - name: Test that the docker containers can build
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./Dockerfile
+          push: false
+          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+
       # https://github.com/docker/build-push-action/blob/master/docs/advanced/test-before-push.md ?
       # https://github.com/docker/buildx/issues/59 ? Needs to be one platform?
 
