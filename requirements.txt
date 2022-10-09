@@ -18,7 +18,7 @@ wtforms ~= 3.0
 jsonpath-ng ~= 1.5.3
 
 # Notification library
-apprise ~= 1.0.0
+apprise ~= 1.1.0
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 paho-mqtt
