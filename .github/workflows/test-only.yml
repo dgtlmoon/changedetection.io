@@ -16,6 +16,12 @@ jobs:
 
       # Just test that the build works, some libraries wont compile on ARM/rPi etc
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+        with:
+          image: tonistiigi/binfmt:latest
+          platforms: all
+
       - name: Test that the docker containers can build
         id: docker_build
         if: ${{ github.ref }} == "refs/heads/master"
@@ -27,7 +33,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:dev,ghcr.io/${{ github.repository }}:dev
           platforms: linux/arm/v7,linux/arm/v6,linux/amd64,linux/arm64,
-          no-cache: true
+          
 
 
 
