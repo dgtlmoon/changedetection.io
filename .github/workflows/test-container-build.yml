@@ -7,13 +7,12 @@ on:
       - requirements.txt
       - Dockerfile
 
-jobs:
   # Changes to requirements.txt packages and Dockerfile may or may not always be compatible with arm etc, so worth testing
   # @todo: some kind of path filter for requirements.txt and Dockerfile
-  test-build:
+jobs:
+  test-container-build:
     runs-on: ubuntu-latest
-      steps:
-
+    steps:
         - uses: actions/checkout@v2
         - name: Set up Python 3.9
           uses: actions/setup-python@v2
