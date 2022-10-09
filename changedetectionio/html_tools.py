@@ -3,6 +3,7 @@ from typing import List
 
 from bs4 import BeautifulSoup
 from jsonpath_ng.ext import parse
+import jq
 import re
 from inscriptis import get_text
 from inscriptis.model.config import ParserConfig
@@ -79,19 +80,26 @@ def extract_element(find='title', html_content=''):
     return element_text
 
 #
-def _parse_json(json_data, jsonpath_filter):
-    s=[]
-    jsonpath_expression = parse(jsonpath_filter.replace('json:', ''))
-    match = jsonpath_expression.find(json_data)
+def _parse_json(json_data, json_filter):
+    if 'json:' in json_filter:
+        jsonpath_expression = parse(json_filter.replace('json:', ''))
+        match = jsonpath_expression.find(json_data)
+        return _get_stripped_text_from_json_match(match)
+    if 'jq:' in json_filter:
+        jq_expression = jq.compile(json_filter.replace('jq:', ''))
+        match = jq_expression.input(json_data).all()
+        return _get_stripped_text_from_json_match(match)
 
+def _get_stripped_text_from_json_match(match):
+    s = []
     # More than one result, we will return it as a JSON list.
     if len(match) > 1:
         for i in match:
-            s.append(i.value)
+            s.append(i.value if hasattr(i, 'value') else i)
 
     # Single value, use just the value, as it could be later used in a token in notifications.
     if len(match) == 1:
-        s = match[0].value
+        s = match[0].value if hasattr(match[0], 'value') else match[0]
 
     # Re #257 - Better handling where it does not exist, in the case the original 's' value was False..
     if not match:
@@ -103,16 +111,16 @@ def _parse_json(json_data, jsonpath_filter):
 
     return stripped_text_from_html
 
-def extract_json_as_string(content, jsonpath_filter):
+def extract_json_as_string(content, json_filter):
 
     stripped_text_from_html = False
 
     # Try to parse/filter out the JSON, if we get some parser error, then maybe it's embedded <script type=ldjson>
     try:
-        stripped_text_from_html = _parse_json(json.loads(content), jsonpath_filter)
+        stripped_text_from_html = _parse_json(json.loads(content), json_filter)
     except json.JSONDecodeError:
 
-        # Foreach <script json></script> blob.. just return the first that matches jsonpath_filter
+        # Foreach <script json></script> blob.. just return the first that matches json_filter
         s = []
         soup = BeautifulSoup(content, 'html.parser')
         bs_result = soup.findAll('script')
@@ -131,7 +139,7 @@ def extract_json_as_string(content, jsonpath_filter):
                 # Just skip it
                 continue
             else:
-                stripped_text_from_html = _parse_json(json_data, jsonpath_filter)
+                stripped_text_from_html = _parse_json(json_data, json_filter)
                 if stripped_text_from_html:
                     break
 
