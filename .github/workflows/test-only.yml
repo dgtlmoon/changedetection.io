@@ -15,19 +15,20 @@ jobs:
           python-version: 3.9
 
       # Just test that the build works, some libraries wont compile on ARM/rPi etc
+      
       - name: Test that the docker containers can build
         id: docker_build
-        uses: docker/build-push-action@v2
+        uses: docker/setup-buildx-action@v1
         with:
-          context: ./
-          file: ./Dockerfile
-          push: false
-          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
-          # hopefully fixes cache error
           driver: docker-container
           driver-opts: |
             image=moby/buildkit:master
             network=host
+          context: ./
+          file: ./Dockerfile
+          push: false
+          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
+
 
       - name: Install dependencies
         run: |
