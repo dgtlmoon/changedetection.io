@@ -575,15 +575,10 @@ class html_requests(Fetcher):
             ignore_status_codes=False,
             current_css_filter=None):
 
-        if not 'Accept-Encoding' in request_headers:
-            # Some sites will assume Requests can use Brotli, but Brotli is not yet supported
-            # So just announce that we only accept gzip and deflate.
-            request_headers['Accept-Encoding'] = 'gzip, deflate',
-
         # Make requests use a more modern looking user-agent
         if not 'User-Agent' in request_headers:
             request_headers['User-Agent'] = os.getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT",
-                                                      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36'),
+                                                      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36')
 
         proxies = {}
 
