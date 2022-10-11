@@ -26,11 +26,11 @@ def test_visual_selector_content_ready(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first", unpause_on_save=1),
         data={
-            "url": test_url,
-            "tag": "",
-            "headers": "",
-            'fetch_backend': "html_webdriver",
-            'webdriver_js_execute_code': 'document.querySelector("button[name=test-button]").click();'
+              "url": test_url,
+              "tag": "",
+              "headers": "",
+              'fetch_backend': "html_webdriver",
+              'webdriver_js_execute_code': 'document.querySelector("button[name=test-button]").click();'
         },
         follow_redirects=True
     )
