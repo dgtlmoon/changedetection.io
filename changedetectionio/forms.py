@@ -304,6 +304,21 @@ class ValidateCSSJSONXPATHInput(object):
                 # Re #265 - maybe in the future fetch the page and offer a
                 # warning/notice that its possible the rule doesnt yet match anything?
 
+            if 'jq:' in line:
+                if not self.allow_json:
+                    raise ValidationError("jq not permitted in this field!")
+
+                import jq
+                input = line.replace('jq:', '')
+
+                try:
+                    jq.compile(input)
+                except (ValueError) as e:
+                    message = field.gettext('\'%s\' is not a valid jq expression. (%s)')
+                    raise ValidationError(message % (input, str(e)))
+                except:
+                    raise ValidationError("A system-error occurred when validating your jq expression")
+
 class ValidateDiffFilters(object):
     """
     Validates that at least one filter checkbox is selected
@@ -316,6 +331,7 @@ class ValidateDiffFilters(object):
             message = field.gettext('At least one filter checkbox must be selected')
             raise ValidationError(message)
 
+
 class quickWatchForm(Form):
     url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional()])
@@ -325,14 +341,14 @@ class quickWatchForm(Form):
 
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
-
     notification_urls = StringListField('Notification URL list', validators=[validators.Optional(), ValidateAppRiseServers()])
-    notification_title = StringField('Notification title', default=default_notification_title, validators=[validators.Optional(), ValidateTokensList()])
-    notification_body = TextAreaField('Notification body', default=default_notification_body, validators=[validators.Optional(), ValidateTokensList()])
-    notification_format = SelectField('Notification format', choices=valid_notification_formats.keys(), default=default_notification_format)
+    notification_title = StringField('Notification title', validators=[validators.Optional(), ValidateTokensList()])
+    notification_body = TextAreaField('Notification body', validators=[validators.Optional(), ValidateTokensList()])
+    notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
     fetch_backend = RadioField(u'Fetch method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
-    webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")] )
+    webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1,
+                                                                                                                                    message="Should contain one or more seconds")])
 
 class watchForm(commonSettingsForm):
 
