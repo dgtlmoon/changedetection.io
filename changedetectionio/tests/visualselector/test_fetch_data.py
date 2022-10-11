@@ -25,7 +25,12 @@ def test_visual_selector_content_ready(client, live_server):
 
     res = client.post(
         url_for("edit_page", uuid="first", unpause_on_save=1),
-        data={"css_filter": ".does-not-exist", "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_webdriver"},
+        data={
+            "url": test_url,
+            "tag": "",
+            "headers": "",
+            'fetch_backend': "html_webdriver"
+        },
         follow_redirects=True
     )
     assert b"unpaused" in res.data

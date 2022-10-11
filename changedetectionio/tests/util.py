@@ -92,7 +92,6 @@ def wait_for_all_checks(client):
         if not b'Checking now' in res.data:
             break
         logging.getLogger().info("Waiting for watch-list to not say 'Checking now'.. {}".format(attempt))
-
         attempt += 1
 
 def live_server_setup(live_server):
