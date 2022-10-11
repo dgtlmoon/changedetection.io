@@ -13,9 +13,9 @@ def test_visual_selector_content_ready(client, live_server):
     live_server_setup(live_server)
     time.sleep(1)
 
-    # Add our URL to the import page, maybe better to use something we control?
-    # We use an external URL because the docker container is too difficult to setup to connect back to the pytest socket
-    test_url = 'https://news.ycombinator.com'
+    # Add our URL to the import page, because the docker container (playwright/selenium) wont be able to connect to our usual test url
+    test_url = "https://changedetection.io/ci-test/test-runjs.html"
+
     res = client.post(
         url_for("form_quick_watch_add"),
         data={"url": test_url, "tag": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
@@ -29,7 +29,8 @@ def test_visual_selector_content_ready(client, live_server):
             "url": test_url,
             "tag": "",
             "headers": "",
-            'fetch_backend': "html_webdriver"
+            'fetch_backend': "html_webdriver",
+            'webdriver_js_execute_code': 'document.querySelector("button[name=test-button]").click();'
         },
         follow_redirects=True
     )
@@ -37,6 +38,14 @@ def test_visual_selector_content_ready(client, live_server):
     time.sleep(1)
     wait_for_all_checks(client)
     uuid = extract_UUID_from_client(client)
+
+    # Check the JS execute code before extract worked
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+    assert b'I smell JavaScript' in res.data
+
     assert os.path.isfile(os.path.join('test-datastore', uuid, 'last-screenshot.png')), "last-screenshot.png should exist"
     assert os.path.isfile(os.path.join('test-datastore', uuid, 'elements.json')), "xpath elements.json data should exist"
 
