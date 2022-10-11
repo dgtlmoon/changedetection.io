@@ -582,7 +582,7 @@ class ChangeDetectionStore:
 
     # We incorrectly used common header overrides that should only apply to Requests
     # These are now handled in content_fetcher::html_requests and shouldnt be passed to Playwright/Selenium
-    def update_6(self):
+    def update_8(self):
         # These were hard-coded in early versions
         for v in ['User-Agent', 'Accept', 'Accept-Encoding', 'Accept-Language']:
             if self.data['settings']['headers'].get(v):
