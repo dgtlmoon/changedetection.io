@@ -143,8 +143,9 @@ class perform_site_check(fetch_processor):
             has_filter_rule = True
 
         if has_filter_rule:
-            if 'json:' in css_filter_rule:
-                stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, jsonpath_filter=css_filter_rule)
+            json_filter_prefixes = ['json:', 'jq:']
+            if any(prefix in css_filter_rule for prefix in json_filter_prefixes):
+                stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, json_filter=css_filter_rule)
                 is_html = False
 
         if is_html or is_source:

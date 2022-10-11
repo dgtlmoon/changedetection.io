@@ -81,8 +81,6 @@ class ChangeDetectionStore:
         except (FileNotFoundError, json.decoder.JSONDecodeError):
             if include_default_watches:
                 print("Creating JSON store at", self.datastore_path)
-
-                self.add_watch(url='http://www.quotationspage.com/random.php', tag='test')
                 self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
                 self.add_watch(url='https://changedetection.io/CHANGELOG.txt', tag='changedetection.io')
 
@@ -577,3 +575,11 @@ class ChangeDetectionStore:
                 continue
         return
 
+
+    # We incorrectly used common header overrides that should only apply to Requests
+    # These are now handled in content_fetcher::html_requests and shouldnt be passed to Playwright/Selenium
+    def update_7(self):
+        # These were hard-coded in early versions
+        for v in ['User-Agent', 'Accept', 'Accept-Encoding', 'Accept-Language']:
+            if self.data['settings']['headers'].get(v):
+                del self.data['settings']['headers'][v]
