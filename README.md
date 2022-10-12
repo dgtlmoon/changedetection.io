@@ -121,8 +121,8 @@ See the wiki for more information https://github.com/dgtlmoon/changedetection.io
 
 
 ## Filters
-XPath, JSONPath, jq, and CSS support comes baked in! You can be as specific as you need, use XPath exported from various XPath element query creation tools.
 
+XPath, JSONPath, jq, and CSS support comes baked in! You can be as specific as you need, use XPath exported from various XPath element query creation tools. 
 (We support LXML `re:test`, `re:math` and `re:replace`.)
 
 ## Notifications
@@ -163,7 +163,11 @@ This will re-parse the JSON and apply formatting to the text, making it super ea
 
 For more complex parsing, filtering, and modifying of JSON data, jq is recommended due to the built-in operators and functions. Refer to the [documentation](https://stedolan.github.io/jq/manual/) for more information on jq.
 
-The example below adds the price in dollars to each item in the JSON data, and then filters to only show items that are greater than 10.
+Notes:
+- `jq` must be added manually separately from the installation of changedetection.io (simply run `pip3 install jq`)
+- `jq` is not available on Windows or must be manually compiled (No "wheel" package available on pypi)
+
+- The example below adds the price in dollars to each item in the JSON data, and then filters to only show items that are greater than 10.
 
 #### Sample input data from API
 ```

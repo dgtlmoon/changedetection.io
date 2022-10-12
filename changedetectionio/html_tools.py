@@ -1,12 +1,11 @@
-import json
-from typing import List
 
 from bs4 import BeautifulSoup
-from jsonpath_ng.ext import parse
-import jq
-import re
 from inscriptis import get_text
 from inscriptis.model.config import ParserConfig
+from jsonpath_ng.ext import parse
+from typing import List
+import json
+import re
 
 class FilterNotFoundInResponse(ValueError):
     def __init__(self, msg):
@@ -85,9 +84,18 @@ def _parse_json(json_data, json_filter):
         jsonpath_expression = parse(json_filter.replace('json:', ''))
         match = jsonpath_expression.find(json_data)
         return _get_stripped_text_from_json_match(match)
+
     if 'jq:' in json_filter:
+
+        try:
+            import jq
+        except ModuleNotFoundError:
+            # `jq` requires full compilation in windows and so isn't generally available
+            raise Exception("jq not support not found")
+
         jq_expression = jq.compile(json_filter.replace('jq:', ''))
         match = jq_expression.input(json_data).all()
+
         return _get_stripped_text_from_json_match(match)
 
 def _get_stripped_text_from_json_match(match):
