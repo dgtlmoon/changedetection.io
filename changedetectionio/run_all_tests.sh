@@ -23,6 +23,13 @@ export BASE_URL="https://really-unique-domain.io"
 pytest tests/test_notification.py
 
 
+## JQ + JSON: filter test
+# jq is not available on windows and we should just test it when the package is installed
+# This will test the json and jq filters
+pip3 install jq~=1.3
+pytest tests/DISABLED_test_jsonpath_jq_selector.py
+
+
 # Now for the selenium and playwright/browserless fetchers
 # Note - this is not UI functional tests - just checking that each one can fetch the content
 
