@@ -582,14 +582,14 @@ class ChangeDetectionStore:
 
     # We incorrectly used common header overrides that should only apply to Requests
     # These are now handled in content_fetcher::html_requests and shouldnt be passed to Playwright/Selenium
-    def update_8(self):
+    def update_7(self):
         # These were hard-coded in early versions
         for v in ['User-Agent', 'Accept', 'Accept-Encoding', 'Accept-Language']:
             if self.data['settings']['headers'].get(v):
                 del self.data['settings']['headers'][v]
                 
     # Generate a previous.txt for all watches that do not have one and contain history
-    def update_7(self):
+    def update_8(self):
         for uuid, watch in self.data['watching'].items():
             # Make sure we actually have history
             if (watch.history_n == 0):
