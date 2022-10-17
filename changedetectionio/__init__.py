@@ -816,9 +816,11 @@ def changedetection_app(config=None, datastore_o=None):
 
         newest_file = history[dates[-1]]
 
+        # Read as binary and force decode as UTF-8
+        # Windows may fail decode in python if we just use 'r' mode (chardet decode exception)
         try:
-            with open(newest_file, 'r') as f:
-                newest_version_file_contents = f.read()
+            with open(newest_file, 'rb') as f:
+                newest_version_file_contents = f.read().decode('utf-8')
         except Exception as e:
             newest_version_file_contents = "Unable to read {}.\n".format(newest_file)
 
@@ -830,8 +832,8 @@ def changedetection_app(config=None, datastore_o=None):
             previous_file = history[dates[-2]]
 
         try:
-            with open(previous_file, 'r') as f:
-                previous_version_file_contents = f.read()
+            with open(previous_file, 'rb') as f:
+                previous_version_file_contents = f.read().decode('utf-8')
         except Exception as e:
             previous_version_file_contents = "Unable to read {}.\n".format(previous_file)
 

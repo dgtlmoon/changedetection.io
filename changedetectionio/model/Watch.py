@@ -151,28 +151,29 @@ class model(dict):
         import uuid
         import logging
 
-        output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
+        output_path = os.path.join(self.__datastore_path, self['uuid'])
 
         self.ensure_data_dir_exists()
+        snapshot_fname = os.path.join(output_path, str(uuid.uuid4()))
 
-        snapshot_fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
         logging.debug("Saving history text {}".format(snapshot_fname))
 
+        # in /diff/ we are going to assume for now that it's UTF-8 when reading
         with open(snapshot_fname, 'wb') as f:
             f.write(contents)
             f.close()
 
         # Append to index
         # @todo check last char was \n
-        index_fname = "{}/history.txt".format(output_path)
+        index_fname = os.path.join(output_path, "history.txt")
         with open(index_fname, 'a') as f:
             f.write("{},{}\n".format(timestamp, snapshot_fname))
             f.close()
 
         self.__newest_history_key = timestamp
-        self.__history_n+=1
+        self.__history_n += 1
 
-        #@todo bump static cache of the last timestamp so we dont need to examine the file to set a proper ''viewed'' status
+        # @todo bump static cache of the last timestamp so we dont need to examine the file to set a proper ''viewed'' status
         return snapshot_fname
 
     @property
