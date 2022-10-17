@@ -33,7 +33,7 @@ from flask_wtf import CSRFProtect
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.39.20.1'
+__version__ = '0.39.20.2'
 
 datastore = None
 
@@ -636,20 +636,27 @@ def changedetection_app(config=None, datastore_o=None):
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and default['fetch_backend'] == 'html_webdriver'
 
+            # JQ is difficult to install on windows and must be manually added (outside requirements.txt)
+            jq_support = True
+            try:
+                import jq
+            except ModuleNotFoundError:
+                jq_support = False
 
             output = render_template("edit.html",
-                                     uuid=uuid,
-                                     watch=datastore.data['watching'][uuid],
-                                     form=form,
-                                     has_empty_checktime=using_default_check_time,
-                                     has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
-                                     using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                     form=form,
+                                     has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
+                                     has_empty_checktime=using_default_check_time,
+                                     jq_support=jq_support,
+                                     playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False),
                                      settings_application=datastore.data['settings']['application'],
+                                     using_global_webdriver_wait=default['webdriver_delay'] is None,
+                                     uuid=uuid,
                                      visualselector_data_is_ready=visualselector_data_is_ready,
                                      visualselector_enabled=visualselector_enabled,
-                                     playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False)
+                                     watch=datastore.data['watching'][uuid],
                                      )
 
         return output
