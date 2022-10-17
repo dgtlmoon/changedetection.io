@@ -158,7 +158,8 @@ class model(dict):
 
         logging.debug("Saving history text {}".format(snapshot_fname))
 
-        # in /diff/ we are going to assume for now that it's UTF-8 when reading
+        # in /diff/ and /preview/ we are going to assume for now that it's UTF-8 when reading
+        # most sites are utf-8 and some are even broken utf-8
         with open(snapshot_fname, 'wb') as f:
             f.write(contents)
             f.close()
