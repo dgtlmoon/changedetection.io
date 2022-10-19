@@ -10,7 +10,6 @@ from changedetectionio import content_fetcher, html_tools
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
 class perform_site_check():
