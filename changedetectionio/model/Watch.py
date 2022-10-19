@@ -118,7 +118,10 @@ class model(dict):
         if os.path.isfile(fname):
             logging.debug("Reading history index " + str(time.time()))
             with open(fname, "r") as f:
-                tmp_history = dict(i.strip().split(',', 2) for i in f.readlines())
+                for i in f.readlines():
+                    if ',' in i:
+                        k, v = i.strip().split(',', 2)
+                        tmp_history[k] = v
 
         if len(tmp_history):
             self.__newest_history_key = list(tmp_history.keys())[-1]
