@@ -12,48 +12,37 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 # Some common stuff here that can be moved to a base class
+# (set_proxy_from_list)
 class perform_site_check():
+    screenshot = None
+    xpath_data = None
 
     def __init__(self, *args, datastore, **kwargs):
         super().__init__(*args, **kwargs)
         self.datastore = datastore
 
-    # If there was a proxy list enabled, figure out what proxy_args/which proxy to use
-    # if watch.proxy use that
-    # fetcher.proxy_override = watch.proxy or main config proxy
-    # Allows override the proxy on a per-request basis
-    # ALWAYS use the first one is nothing selected
+    # Doesn't look like python supports forward slash auto enclosure in re.findall
+    # So convert it to inline flag "foobar(?i)" type configuration
+    def forward_slash_enclosed_regex_to_options(self, regex):
+        res = re.search(r'^/(.*?)/(\w+)$', regex, re.IGNORECASE)
 
-    def set_proxy_from_list(self, watch):
-        proxy_args = None
-        if self.datastore.proxy_list is None:
-            return None
-
-        # If its a valid one
-        if any([watch['proxy'] in p for p in self.datastore.proxy_list]):
-            proxy_args = watch['proxy']
-
-        # not valid (including None), try the system one
+        if res:
+            regex = res.group(1)
+            regex += '(?{})'.format(res.group(2))
         else:
-            system_proxy = self.datastore.data['settings']['requests']['proxy']
-            # Is not None and exists
-            if any([system_proxy in p for p in self.datastore.proxy_list]):
-                proxy_args = system_proxy
+            regex += '(?{})'.format('i')
 
-        # Fallback - Did not resolve anything, use the first available
-        if proxy_args is None:
-            proxy_args = self.datastore.proxy_list[0][0]
+        return regex
 
-        return proxy_args
 
     def run(self, uuid):
-        timestamp = int(time.time())  # used for storage etc too
-
         changed_detected = False
         screenshot = False  # as bytes
         stripped_text_from_html = ""
 
-        watch = self.datastore.data['watching'][uuid]
+        watch = self.datastore.data['watching'].get(uuid)
+        if not watch:
+            return
 
         # Protect against file:// access
         if re.search(r'^file', watch['url'], re.IGNORECASE) and not os.getenv('ALLOW_FILE_URI', False):
@@ -64,7 +53,7 @@ class perform_site_check():
         # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False}
 
-        extra_headers = self.datastore.get_val(uuid, 'headers')
+        extra_headers =self.datastore.data['watching'][uuid].get('headers')
 
         # Tweak the base config with the per-watch ones
         request_headers = self.datastore.data['settings']['headers'].copy()
@@ -88,11 +77,11 @@ class perform_site_check():
         if 'Accept-Encoding' in request_headers and "br" in request_headers['Accept-Encoding']:
             request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
 
-        timeout = self.datastore.data['settings']['requests']['timeout']
-        url = self.datastore.get_val(uuid, 'url')
-        request_body = self.datastore.get_val(uuid, 'body')
-        request_method = self.datastore.get_val(uuid, 'method')
-        ignore_status_code = self.datastore.get_val(uuid, 'ignore_status_codes')
+        timeout = self.datastore.data['settings']['requests'].get('timeout')
+        url = watch.get('url')
+        request_body = self.datastore.data['watching'][uuid].get('body')
+        request_method = self.datastore.data['watching'][uuid].get('method')
+        ignore_status_codes = self.datastore.data['watching'][uuid].get('ignore_status_codes', False)
 
         # source: support
         is_source = False
@@ -108,9 +97,13 @@ class perform_site_check():
             # If the klass doesnt exist, just use a default
             klass = getattr(content_fetcher, "html_requests")
 
+        proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=uuid)
+        proxy_url = None
+        if proxy_id:
+            proxy_url = self.datastore.proxy_list.get(proxy_id).get('url')
+            print ("UUID {} Using proxy {}".format(uuid, proxy_url))
 
-        proxy_args = self.set_proxy_from_list(watch)
-        fetcher = klass(proxy_override=proxy_args)
+        fetcher = klass(proxy_override=proxy_url)
 
         # Configurable per-watch or global extra delay before extracting text (for webDriver types)
         system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
@@ -122,8 +115,11 @@ class perform_site_check():
         if watch['webdriver_js_execute_code'] is not None and watch['webdriver_js_execute_code'].strip():
             fetcher.webdriver_js_execute_code = watch['webdriver_js_execute_code']
 
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_code, watch['css_filter'])
+        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch['css_filter'])
         fetcher.quit()
+
+        self.screenshot = fetcher.screenshot
+        self.xpath_data = fetcher.xpath_data
 
         # Fetching complete, now filters
         # @todo move to class / maybe inside of fetcher abstract base?
@@ -158,12 +154,15 @@ class perform_site_check():
             has_filter_rule = True
 
         if has_filter_rule:
-            if 'json:' in css_filter_rule:
-                stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, jsonpath_filter=css_filter_rule)
+            json_filter_prefixes = ['json:', 'jq:']
+            if any(prefix in css_filter_rule for prefix in json_filter_prefixes):
+                stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, json_filter=css_filter_rule)
                 is_html = False
 
         if is_html or is_source:
+            
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+            fetcher.content = html_tools.workarounds_for_obfuscations(fetcher.content)
             html_content = fetcher.content
 
             # If not JSON,  and if it's not text/plain..
@@ -206,7 +205,7 @@ class perform_site_check():
         # Treat pages with no renderable text content as a change? No by default
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
         if not is_json and not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
-            raise content_fetcher.ReplyWithContentButNoText(url=url, status_code=200)
+            raise content_fetcher.ReplyWithContentButNoText(url=url, status_code=fetcher.get_last_status_code(), screenshot=screenshot)
 
         # We rely on the actual text in the html output.. many sites have random script vars etc,
         # in the future we'll implement other mechanisms.
@@ -226,14 +225,26 @@ class perform_site_check():
         if len(extract_text) > 0:
             regex_matched_output = []
             for s_re in extract_text:
-                result = re.findall(s_re.encode('utf8'), stripped_text_from_html,
-                                    flags=re.MULTILINE | re.DOTALL | re.LOCALE)
-                if result:
-                    regex_matched_output = regex_matched_output + result
+                # incase they specified something in '/.../x'
+                regex = self.forward_slash_enclosed_regex_to_options(s_re)
+                result = re.findall(regex.encode('utf-8'), stripped_text_from_html)
 
+                for l in result:
+                    if type(l) is tuple:
+                        #@todo - some formatter option default (between groups)
+                        regex_matched_output += list(l) + [b'\n']
+                    else:
+                        # @todo - some formatter option default (between each ungrouped result)
+                        regex_matched_output += [l] + [b'\n']
+
+            # Now we will only show what the regex matched
+            stripped_text_from_html = b''
+            text_content_before_ignored_filter = b''
             if regex_matched_output:
-                stripped_text_from_html = b'\n'.join(regex_matched_output)
+                # @todo some formatter for presentation?
+                stripped_text_from_html = b''.join(regex_matched_output)
                 text_content_before_ignored_filter = stripped_text_from_html
+
 
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
         if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
@@ -296,4 +307,4 @@ class perform_site_check():
         if not watch.get('previous_md5'):
             watch['previous_md5'] = fetched_md5
 
-        return changed_detected, update_obj, text_content_before_ignored_filter, fetcher.screenshot, fetcher.xpath_data
+        return changed_detected, update_obj, text_content_before_ignored_filter

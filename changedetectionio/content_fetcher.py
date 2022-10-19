@@ -6,38 +6,64 @@ import requests
 import time
 import sys
 
-class PageUnloadable(Exception):
-    def __init__(self, status_code, url):
+
+class Non200ErrorCodeReceived(Exception):
+    def __init__(self, status_code, url, screenshot=None, xpath_data=None, page_html=None):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
+        self.screenshot = screenshot
+        self.xpath_data = xpath_data
+        self.page_text = None
+
+        if page_html:
+            from changedetectionio import html_tools
+            self.page_text = html_tools.html_to_text(page_html)
         return
-    pass
+
+
+class JSActionExceptions(Exception):
+    def __init__(self, status_code, url, screenshot, message=''):
+        self.status_code = status_code
+        self.url = url
+        self.screenshot = screenshot
+        self.message = message
+        return
+
+class PageUnloadable(Exception):
+    def __init__(self, status_code, url, screenshot=False, message=False):
+        # Set this so we can use it in other parts of the app
+        self.status_code = status_code
+        self.url = url
+        self.screenshot = screenshot
+        self.message = message
+        return
 
 class EmptyReply(Exception):
-    def __init__(self, status_code, url):
+    def __init__(self, status_code, url, screenshot=None):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
+        self.screenshot = screenshot
         return
-    pass
 
 class ScreenshotUnavailable(Exception):
-    def __init__(self, status_code, url):
+    def __init__(self, status_code, url, page_html=None):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
+        if page_html:
+            from html_tools import html_to_text
+            self.page_text = html_to_text(page_html)
         return
-    pass
 
 class ReplyWithContentButNoText(Exception):
-    def __init__(self, status_code, url):
+    def __init__(self, status_code, url, screenshot=None):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
+        self.screenshot = screenshot
         return
-    pass
-
 
 class Fetcher():
     error = None
@@ -63,12 +89,12 @@ class Fetcher():
                       break;
                     }
                     if('' !==r.id) {
-                      chained_css.unshift("#"+r.id);
-                      final_selector= chained_css.join('>');
+                      chained_css.unshift("#"+CSS.escape(r.id));
+                      final_selector= chained_css.join(' > ');
                       // Be sure theres only one, some sites have multiples of the same ID tag :-(
                       if (window.document.querySelectorAll(final_selector).length ==1 ) {
                         return final_selector;
-                      }
+                        }
                       return null;
                     } else {
                       chained_css.unshift(r.tagName.toLowerCase());
@@ -180,7 +206,7 @@ class Fetcher():
     system_https_proxy = os.getenv('HTTPS_PROXY')
 
     # Time ONTOP of the system defined env minimum time
-    render_extract_delay=0
+    render_extract_delay = 0
 
     @abstractmethod
     def get_error(self):
@@ -267,7 +293,15 @@ class base_html_playwright(Fetcher):
 
         # allow per-watch proxy selection override
         if proxy_override:
-            self.proxy = {'server': proxy_override}
+            # https://playwright.dev/docs/network#http-proxy
+            from urllib.parse import urlparse
+            parsed = urlparse(proxy_override)
+            proxy_url = "{}://{}:{}".format(parsed.scheme, parsed.hostname, parsed.port)
+            self.proxy = {'server': proxy_url}
+            if parsed.username:
+                self.proxy['username'] = parsed.username
+            if parsed.password:
+                self.proxy['password'] = parsed.password
 
     def run(self,
             url,
@@ -282,6 +316,7 @@ class base_html_playwright(Fetcher):
         import playwright._impl._api_types
         from playwright._impl._api_types import Error, TimeoutError
         response = None
+
         with sync_playwright() as p:
             browser_type = getattr(p, self.browser_type)
 
@@ -319,40 +354,63 @@ class base_html_playwright(Fetcher):
                 with page.expect_navigation():
                     response = page.goto(url, wait_until='load')
 
-                if self.webdriver_js_execute_code is not None:
-                    page.evaluate(self.webdriver_js_execute_code)
 
             except playwright._impl._api_types.TimeoutError as e:
                 context.close()
                 browser.close()
                 # This can be ok, we will try to grab what we could retrieve
                 pass
+
             except Exception as e:
-                print ("other exception when page.goto")
-                print (str(e))
+                print("other exception when page.goto")
+                print(str(e))
                 context.close()
                 browser.close()
-                raise PageUnloadable(url=url, status_code=None)
+                raise PageUnloadable(url=url, status_code=None, message=e.message)
 
             if response is None:
                 context.close()
                 browser.close()
-                print ("response object was none")
+                print("response object was none")
                 raise EmptyReply(url=url, status_code=None)
 
-            # Bug 2(?) Set the viewport size AFTER loading the page
-            page.set_viewport_size({"width": 1280, "height": 1024})            
+
+            # Removed browser-set-size, seemed to be needed to make screenshots work reliably in older playwright versions
+            # Was causing exceptions like 'waiting for page but content is changing' etc
+            # https://www.browserstack.com/docs/automate/playwright/change-browser-window-size 1280x720 should be the default
+                        
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
             time.sleep(extra_wait)
+
+            if self.webdriver_js_execute_code is not None:
+                try:
+                    page.evaluate(self.webdriver_js_execute_code)
+                except Exception as e:
+                    # Is it possible to get a screenshot?
+                    error_screenshot = False
+                    try:
+                        page.screenshot(type='jpeg',
+                                        clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024},
+                                        quality=1)
+
+                        # The actual screenshot
+                        error_screenshot = page.screenshot(type='jpeg',
+                                                           full_page=True,
+                                                           quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
+                    except Exception as s:
+                        pass
+
+                    raise JSActionExceptions(status_code=response.status, screenshot=error_screenshot, message=str(e), url=url)
+
+                else:
+                    # JS eval was run, now we also wait some time if possible to let the page settle
+                    if self.render_extract_delay:
+                        page.wait_for_timeout(self.render_extract_delay * 1000)
+
+            page.wait_for_timeout(500)
+
             self.content = page.content()
             self.status_code = response.status
-
-            if len(self.content.strip()) == 0:
-                context.close()
-                browser.close()
-                print ("Content was empty")
-                raise EmptyReply(url=url, status_code=None)
-            
             self.headers = response.all_headers()
 
             if current_css_filter is not None:
@@ -379,9 +437,17 @@ class base_html_playwright(Fetcher):
                 browser.close()
                 raise ScreenshotUnavailable(url=url, status_code=None)
 
+            if len(self.content.strip()) == 0:
+                context.close()
+                browser.close()
+                print("Content was empty")
+                raise EmptyReply(url=url, status_code=None, screenshot=self.screenshot)
+
             context.close()
             browser.close()
 
+            if not ignore_status_codes and self.status_code!=200:
+                raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, page_html=self.content, screenshot=self.screenshot)
 
 class base_html_webdriver(Fetcher):
     if os.getenv("WEBDRIVER_URL"):
@@ -459,8 +525,6 @@ class base_html_webdriver(Fetcher):
             # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
             self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
 
-        self.screenshot = self.driver.get_screenshot_as_png()
-
         # @todo - how to check this? is it possible?
         self.status_code = 200
         # @todo somehow we should try to get this working for WebDriver
@@ -470,6 +534,8 @@ class base_html_webdriver(Fetcher):
         time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay)
         self.content = self.driver.page_source
         self.headers = {}
+
+        self.screenshot = self.driver.get_screenshot_as_png()
 
     # Does the connection to the webdriver work? run a test connection.
     def is_ready(self):
@@ -509,7 +575,12 @@ class html_requests(Fetcher):
             ignore_status_codes=False,
             current_css_filter=None):
 
-        proxies={}
+        # Make requests use a more modern looking user-agent
+        if not 'User-Agent' in request_headers:
+            request_headers['User-Agent'] = os.getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT",
+                                                      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36')
+
+        proxies = {}
 
         # Allows override the proxy on a per-request basis
         if self.proxy_override:
@@ -537,10 +608,14 @@ class html_requests(Fetcher):
             if encoding:
                 r.encoding = encoding
 
+        if not r.content or not len(r.content):
+            raise EmptyReply(url=url, status_code=r.status_code)
+
         # @todo test this
         # @todo maybe you really want to test zero-byte return pages?
-        if (not ignore_status_codes and not r) or not r.content or not len(r.content):
-            raise EmptyReply(url=url, status_code=r.status_code)
+        if r.status_code != 200 and not ignore_status_codes:
+            # maybe check with content works?
+            raise Non200ErrorCodeReceived(url=url, status_code=r.status_code, page_html=r.text)
 
         self.status_code = r.status_code
         self.content = r.text

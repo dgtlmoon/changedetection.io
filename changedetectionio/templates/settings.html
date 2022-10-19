@@ -16,7 +16,7 @@
 <div class="edit-form">
     <div class="tabs collapsable">
         <ul>
-            <li class="tab" id="default-tab"><a href="#general">General</a></li>
+            <li class="tab" id=""><a href="#general">General</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
             <li class="tab"><a href="#fetching">Fetching</a></li>
             <li class="tab"><a href="#filters">Global Filters</a></li>
@@ -36,7 +36,13 @@
                         {{ render_field(form.requests.form.jitter_seconds, class="jitter_seconds") }}
                         <span class="pure-form-message-inline">Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later</span>
                     </div>
-
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.filter_failure_notification_threshold_attempts, class="filter_failure_notification_threshold_attempts") }}
+                        <span class="pure-form-message-inline">After this many consecutive times that the CSS/xPath filter is missing, send a notification
+                            <br/>
+                        Set to <strong>0</strong> to disable
+                        </span>
+                    </div>
                     <div class="pure-control-group">
                         {% if not hide_remove_pass %}
                             {% if current_user.is_authenticated %}
@@ -54,7 +60,7 @@
                         {{ render_field(form.application.form.base_url, placeholder="http://yoursite.com:5000/",
                         class="m-d") }}
                         <span class="pure-form-message-inline">
-                            Base URL used for the {base_url} token in notifications and RSS links.<br/>Default value is the ENV var 'BASE_URL' (Currently "{{current_base_url}}"),
+                            Base URL used for the <code>{base_url}</code> token in notifications and RSS links.<br/>Default value is the ENV var 'BASE_URL' (Currently "{{settings_application['current_base_url']}}"),
                             <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Configurable-BASE_URL-setting">read more here</a>.
                         </span>
                     </div>
@@ -63,12 +69,6 @@
                         {{ render_checkbox_field(form.application.form.extract_title_as_title) }}
                         <span class="pure-form-message-inline">Note: This will automatically apply to all existing watches.</span>
                     </div>
-
-                    <div class="pure-control-group">
-                        {{ render_checkbox_field(form.application.form.real_browser_save_screenshot) }}
-                        <span class="pure-form-message-inline">When using a Chrome browser, a screenshot from the last check will be available on the Diff page</span>
-                    </div>
-
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.application.form.empty_pages_are_a_change) }}
                         <span class="pure-form-message-inline">When a page contains HTML, but no renderable text appears (empty page), is this considered a change?</span>
@@ -87,7 +87,7 @@
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div class="field-group">
-                        {{ render_common_settings_form(form.application.form, current_base_url, emailprefix) }}
+                        {{ render_common_settings_form(form.application.form, emailprefix, settings_application) }}
                     </div>
                 </fieldset>
             </div>
@@ -99,6 +99,8 @@
                         <p>Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render.</p>
                         <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
                     </span>
+                    <br/>
+                    Tip: <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">Connect using BrightData Proxies, find out more here.</a>
                 </div>
                 <fieldset class="pure-group" id="webdriver-override-options">
                     <div class="pure-form-message-inline">
@@ -148,7 +150,7 @@ nav
                         <ul>
                             <li>Note: This is applied globally in addition to the per-watch rules.</li>
                             <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
-                            <li>Regular Expression support, wrap the line in forward slash <code>/regex/</code></li>
+                            <li>Regular Expression support, wrap the entire line in forward slash <code>/regex/</code></li>
                             <li>Changing this will affect the comparison checksum which may trigger an alert</li>
                             <li>Use the preview/show current tab to see ignores</li>
                         </ul>

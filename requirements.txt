@@ -10,15 +10,20 @@ flask_restful
 pytz
 
 # Set these versions together to avoid a RequestsDependencyWarning
-requests[socks] ~= 2.26
+# >= 2.26 also adds Brotli support if brotli is installed
+brotli ~= 1.0
+requests[socks] ~= 2.28
+
 urllib3 > 1.26
 chardet > 2.3.0
 
 wtforms ~= 3.0
 jsonpath-ng ~= 1.5.3
 
+# jq not available on Windows so must be installed manually
+
 # Notification library
-apprise ~= 0.9.9
+apprise ~= 1.1.0
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 paho-mqtt
