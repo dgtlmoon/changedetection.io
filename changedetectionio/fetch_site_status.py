@@ -4,7 +4,8 @@ import os
 import re
 import time
 import urllib3
-
+import requests
+import simplejson
 from changedetectionio import content_fetcher, html_tools
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -67,6 +68,18 @@ class perform_site_check():
 
         # Tweak the base config with the per-watch ones
         request_headers = self.datastore.data['settings']['headers'].copy()
+
+        if self.datastore.get_val(uuid, 'external_header_server') is not None:
+            try:
+                resp = requests.get(self.datastore.get_val(uuid, 'external_header_server'))
+                if resp.status_code != 200:
+                    raise Exception("External header server returned non-200 response. Please check the URL for the server")
+            
+                request_headers.update(resp.json())
+
+            except simplejson.errors.JSONDecodeError:
+                raise Exception("Failed to decode JSON response from external header server")
+                
         request_headers.update(extra_headers)
 
         # https://github.com/psf/requests/issues/4525

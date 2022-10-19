@@ -109,6 +109,12 @@
                     <div class="pure-control-group" id="request-method">
                         {{ render_field(form.method) }}
                     </div>
+                    <div class="pure-control-group" id="external-header-server">
+                        {{ render_field(form.external_header_server, placeholder="http://example.com/watch1") }}
+                        <div class="pure-form-message-inline">
+                            The watch will perform a GET request before each check to this URL and will use the headers in addition to the ones listed below and in global settings. <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Run-JavaScript-before-change-detection">More help and examples here</a>
+                        </div>
+                    </div>
                     <div class="pure-control-group" id="request-headers">
 {{ render_field(form.headers, rows=5, placeholder="Example
 Cookie: foobar
