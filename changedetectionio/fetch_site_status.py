@@ -56,7 +56,7 @@ class perform_site_check():
         # Tweak the base config with the per-watch ones
         request_headers = self.datastore.data['settings']['headers'].copy()
 
-        if self.datastore.data['watching'][uuid].get('external_header_server') is not None:
+        if self.datastore.data['watching'][uuid].get('external_header_server') is not None or self.datastore.data['watching'][uuid].get('external_header_server') != "":
             try:
                 resp = requests.get(self.datastore.data['watching'][uuid].get('external_header_server'))
                 if resp.status_code != 200:
