@@ -52,6 +52,7 @@ class model(dict):
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
             'webdriver_delay': None,
             'webdriver_js_execute_code': None, # Run before change-detection
+            'webdriver_custom_code': None # Run before change-detection
         }
     jitter_seconds = 0
 

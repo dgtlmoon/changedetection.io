@@ -109,6 +109,12 @@
                             Run this code before performing change detection, handy for filling in fields and other actions <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Run-JavaScript-before-change-detection">More help and examples here</a>
                         </div>
                     </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.webdriver_custom_code) }}
+                        <div class="pure-form-message-inline">
+                            Run webdriver operations before performing change detection. This is using selenium or playwright and is more reliable for clicking and filling elements than doing this by pure javascript.
+                        </div>
+                    </div>
                 </fieldset>
                 <fieldset class="pure-group" id="requests-override-options">
                     {% if not playwright_enabled %}
