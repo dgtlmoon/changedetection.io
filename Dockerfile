@@ -40,6 +40,7 @@ ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 # Re #93, #73, excluding rustc (adds another 430Mb~)
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
     libssl-dev \
     libffi-dev \
     gcc \
@@ -59,6 +60,9 @@ RUN sed -i 's/^CipherString = .*/CipherString = DEFAULT@SECLEVEL=1/' /etc/ssl/op
 # Copy modules over to the final image and add their dir to PYTHONPATH
 COPY --from=builder /dependencies /usr/local
 ENV PYTHONPATH=/usr/local
+
+HEALTHCHECK --interval=5m --timeout=3s \
+  CMD curl -f http://localhost:5000/ || exit 1
 
 EXPOSE 5000
 
