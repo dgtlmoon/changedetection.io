@@ -141,9 +141,13 @@ class SystemInfo(Resource):
             # this is not super accurate (maybe they just edited it) but better than nothing
             t = watch.threshold_seconds()
             if not t:
+                # Use the system wide default
                 t = self.datastore.threshold_seconds
+
             time_since_check = time.time() - watch.get('last_checked')
-            if time_since_check > t:
+
+            # Allow 5 minutes of grace time before we decide it's overdue
+            if time_since_check - (5 * 60) > t:
                 overdue_watches.append(uuid)
 
         return {
