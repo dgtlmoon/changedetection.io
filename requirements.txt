@@ -1,8 +1,8 @@
-flask~= 2.0
+flask ~= 2.0
 flask_wtf
-eventlet>=0.31.0
+eventlet >= 0.31.0
 validators
-timeago ~=1.0
+timeago ~= 1.0
 inscriptis ~= 2.2
 feedgen ~= 0.9
 flask-login ~= 0.5

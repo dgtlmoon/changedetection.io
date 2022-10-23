@@ -2,9 +2,9 @@ name: ChangeDetection.io Container Build Test
 
 # Triggers the workflow on push or pull request events
 on: [push, pull_request]
-    paths:
-      - requirements.txt
-      - Dockerfile
+  paths:
+    - requirements.txt
+    - Dockerfile
 
   # Changes to requirements.txt packages and Dockerfile may or may not always be compatible with arm etc, so worth testing
   # @todo: some kind of path filter for requirements.txt and Dockerfile
