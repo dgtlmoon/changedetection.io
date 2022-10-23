@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+import multiprocessing
+import platform
 
 from flask import make_response, request
 from flask import url_for
@@ -96,6 +98,11 @@ def wait_for_all_checks(client):
         attempt += 1
 
 def live_server_setup(live_server):
+
+    # Pickling error on OS X - pytest-flask
+    # see this: https://github.com/pytest-dev/pytest-flask/issues/104
+    if platform.system() == 'Darwin':
+        multiprocessing.set_start_method("fork")
 
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
