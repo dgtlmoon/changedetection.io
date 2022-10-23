@@ -1,8 +1,7 @@
 name: ChangeDetection.io Container Build Test
 
 # Triggers the workflow on push or pull request events
-on:
-  push:
+on: [push, pull_request]
     paths:
       - requirements.txt
       - Dockerfile
