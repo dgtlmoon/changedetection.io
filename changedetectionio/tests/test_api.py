@@ -147,6 +147,16 @@ def test_api_simple(client, live_server):
     # @todo how to handle None/default global values?
     assert watch['history_n'] == 2, "Found replacement history section, which is in its own API"
 
+    # basic systeminfo check
+    res = client.get(
+        url_for("systeminfo"),
+        headers={'x-api-key': api_key},
+    )
+    info = json.loads(res.data)
+    assert info.get('watch_count') == 1
+    assert info.get('uptime') > 0.5
+
+
     # Finally delete the watch
     res = client.delete(
         url_for("watch", uuid=watch_uuid),
