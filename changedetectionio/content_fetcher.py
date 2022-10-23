@@ -5,8 +5,8 @@ import os
 import requests
 import time
 import sys
-import argparse
-import shlex
+
+from changedetectionio.webdriver_custom_code_runner import WebdriverMode, WebdriverCustomCodeRunner
 
 
 class Non200ErrorCodeReceived(Exception):
@@ -409,43 +409,11 @@ class base_html_playwright(Fetcher):
                     # JS eval was run, now we also wait some time if possible to let the page settle
                     if self.render_extract_delay:
                         page.wait_for_timeout(self.render_extract_delay * 1000)
-                
-
-            parser = argparse.ArgumentParser()
-            parser.add_argument('--action', type=str, nargs=1, choices=['click', 'fill', 'press'], required=True)
-            parser.add_argument('--selector', type=str, nargs=1, required=True)
-            parser.add_argument('--first', action='store_true', default=False)
-            parser.add_argument('--fill_value', type=str, nargs=1)
-            parser.add_argument('--press_value', type=str, nargs=1)
 
             if self.webdriver_custom_code:
                 try:
-                    for webdriver_command in self.webdriver_custom_code.split('\n'):
-                        webdriver_command = webdriver_command.strip()
-                        if not webdriver_command:
-                            continue
-                        args = parser.parse_args(shlex.split(webdriver_command))
-
-                        def auto_locator(selector: str, first: bool):
-                            if first:
-                                return page.locator(selector).first
-                            else:
-                                return page.locator(selector)
-
-                        if args.action[0] == 'click':
-                            auto_locator(args.selector[0], args.first).click()
-                        elif args.action[0] == 'fill':
-                            if not args.fill_value:
-                                raise argparse.ArgumentError('missing "--fill_value" argument')
-                            else:
-                                auto_locator(args.selector[0], args.first).fill(args.fill_value[0])
-                        elif args.action[0] == 'press':
-                            if not args.press_value:
-                                raise argparse.ArgumentError('missing "--press_value" argument')
-                            else:
-                                auto_locator(args.selector[0], args.first).press(args.press_value[0])
-                        else:
-                            raise argparse.ArgumentError(f'action "{args.action[0]}" is not supported!')
+                    webdriver_custom_code_runner = WebdriverCustomCodeRunner(page, WebdriverMode.PLAYWRIGHT)
+                    webdriver_custom_code_runner.run(self.webdriver_custom_code)
                 except Exception as e:
                     # Is it possible to get a screenshot?
                     error_screenshot = False
@@ -583,53 +551,9 @@ class base_html_webdriver(Fetcher):
             # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
             self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
 
-        parser = argparse.ArgumentParser()
-        parser.add_argument('--action', type=str, nargs=1, choices=['click', 'send_keys'], required=True)
-        parser.add_argument('--selector', type=str, nargs=1, required=True)
-        parser.add_argument('--selector_type', type=str, nargs=1, choices=['id', 'name', 'xpath', 'link_text', 'partial_link_text', 'tag_name', 'class_name', 'css_selector'], required=True)
-        parser.add_argument('--send_keys_value', type=str, nargs=1)
-
         if self.webdriver_custom_code:
-            for webdriver_command in self.webdriver_custom_code.split('\n'):
-                webdriver_command = webdriver_command.strip()
-                if not webdriver_command:
-                    continue
-                args = parser.parse_args(shlex.split(webdriver_command))
-
-                def find_element_by_selector_type(selector_type: str, value: str):
-                    if selector_type == 'id':
-                        return self.driver.find_element(by=By.ID, value=value)
-                    elif selector_type == 'name':
-                        return self.driver.find_element(by=By.NAME, value=value)
-                    elif selector_type == 'xpath':
-                        return self.driver.find_element(by=By.XPATH, value=value)
-                    elif selector_type == 'link_text':
-                        return self.driver.find_element(by=By.LINK_TEXT, value=value)
-                    elif selector_type == 'partial_link_text':
-                        return self.driver.find_element(by=By.PARTIAL_LINK_TEXT, value=value)
-                    elif selector_type == 'tag_name':
-                        return self.driver.find_element(by=By.TAG_NAME, value=value)
-                    elif selector_type == 'class_name':
-                        return self.driver.find_element(by=By.CLASS_NAME, value=value)
-                    elif selector_type == 'css_selector':
-                        return self.driver.find_element(by=By.CSS_SELECTOR, value=value)
-                    else:
-                        raise argparse.ArgumentError(f'selector_type "{args.selector_type[0]}" is not supported!')
-
-                if args.action[0] == 'click':
-                    find_element_by_selector_type(args.selector_type[0], args.selector[0]).click()
-                elif args.action[0] == 'send_keys':
-                    send_keys_value_mapped = args.send_keys_value[0]
-                    selenium_keys_dict = {key:value for key, value in Keys.__dict__.items() if not key.startswith('__') and not callable(key)}
-                    if send_keys_value_mapped and send_keys_value_mapped in selenium_keys_dict.keys():
-                        send_keys_value_mapped = selenium_keys_dict[send_keys_value_mapped]
-
-                    if not args.send_keys_value:
-                        raise argparse.ArgumentError('missing "--send_keys_value" argument')
-                    else:
-                        find_element_by_selector_type(args.selector_type[0], args.selector[0]).send_keys(send_keys_value_mapped)
-                else:
-                    raise argparse.ArgumentError(f'action "{args.action[0]}" is not supported!')
+            webdriver_custom_code_runner = WebdriverCustomCodeRunner(self.driver, WebdriverMode.SELENIUM)
+            webdriver_custom_code_runner.run(self.webdriver_custom_code)
             self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
 
         self.screenshot = self.driver.get_screenshot_as_png()
