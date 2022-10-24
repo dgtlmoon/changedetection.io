@@ -161,50 +161,14 @@ This will re-parse the JSON and apply formatting to the text, making it super ea
 
 ### JSONPath or jq?
 
-For more complex parsing, filtering, and modifying of JSON data, jq is recommended due to the built-in operators and functions. Refer to the [documentation](https://stedolan.github.io/jq/manual/) for more information on jq.
+For more complex parsing, filtering, and modifying of JSON data, jq is recommended due to the built-in operators and functions. Refer to the [documentation](https://stedolan.github.io/jq/manual/) for more specifc information on jq.
 
-Notes:
-- `jq` must be added manually separately from the installation of changedetection.io (simply run `pip3 install jq`)
-- `jq` is not available on Windows or must be manually compiled (No "wheel" package available on pypi)
+One big advantage of `jq` is that you can use logic in your JSON filter, such as filters to only show items that have a value greater than/less than etc.
 
-- The example below adds the price in dollars to each item in the JSON data, and then filters to only show items that are greater than 10.
+See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/JSON-Selector-Filter-help for more information and examples
 
-#### Sample input data from API
-```
-{
-    "items": [
-        {
-           "name": "Product A",
-           "priceInCents": 2500
-        },
-        {
-           "name": "Product B",
-           "priceInCents": 500
-        },
-        {
-           "name": "Product C",
-           "priceInCents": 2000
-        }
-    ]
-}
-```
+Note: `jq` library must be added separately (`pip3 install jq`)
 
-#### Sample jq
-`jq:.items[] | . + { "priceInDollars": (.priceInCents / 100) } | select(.priceInDollars > 10)`
-
-#### Sample output data
-```
-{
-  "name": "Product A",
-  "priceInCents": 2500,
-  "priceInDollars": 25
-}
-{
-  "name": "Product C",
-  "priceInCents": 2000,
-  "priceInDollars": 20
-}
-```
 
 ### Parse JSON embedded in HTML!
 

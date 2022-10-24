@@ -45,6 +45,9 @@ services:
   #        Respect proxy_pass type settings, `proxy_set_header Host "localhost";` and `proxy_set_header X-Forwarded-Prefix /app;`
   #        More here https://github.com/dgtlmoon/changedetection.io/wiki/Running-changedetection.io-behind-a-reverse-proxy-sub-directory
   #      - USE_X_SETTINGS=1
+  #
+  #        Hides the `Referer` header so that monitored websites can't see the changedetection.io hostname.
+  #      - HIDE_REFERER=true
 
       # Comment out ports: when using behind a reverse proxy , enable networks: etc.
       ports:
