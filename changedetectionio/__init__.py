@@ -1006,11 +1006,11 @@ def changedetection_app(config=None, datastore_o=None):
             zipObj.write(os.path.join(datastore_o.datastore_path, "secret.txt"), arcname="secret.txt")
 
             # Add any snapshot data we find, use the full path to access the file, but make the file 'relative' in the Zip.
-            for txt_file_path in Path(datastore_o.datastore_path).rglob('*.txt'):
+            for txt_file_path in Path(datastore_o.datastore_path).rglob('*-*-*-*/*.txt'):
                 parent_p = txt_file_path.parent
                 if parent_p.name in uuids:
                     zipObj.write(txt_file_path,
-                                 arcname=str(txt_file_path).replace(datastore_o.datastore_path, ''),
+                                 arcname=os.path.join(txt_file_path.parts[-2], txt_file_path.parts[-1]),
                                  compress_type=zipfile.ZIP_DEFLATED,
                                  compresslevel=8)
 
