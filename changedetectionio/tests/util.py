@@ -159,5 +159,10 @@ def live_server_setup(live_server):
         ret = " ".join([auth.username, auth.password, auth.type])
         return ret
 
+    # Just return some GET var
+    @live_server.app.route('/test-return-query', methods=['GET'])
+    def test_return_query():
+        return request.query_string
+
     live_server.start()
 
