@@ -2,13 +2,12 @@ import hashlib
 import logging
 import os
 import re
-import time
 import urllib3
-
+import requests
+import json
 from changedetectionio import content_fetcher, html_tools
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
@@ -56,6 +55,19 @@ class perform_site_check():
 
         # Tweak the base config with the per-watch ones
         request_headers = self.datastore.data['settings']['headers'].copy()
+
+        if self.datastore.data['watching'][uuid].get('external_header_server') is not None and self.datastore.data['watching'][uuid].get('external_header_server') != "" and self.datastore.data['watching'][uuid].get('external_header_server') != "None":
+            try:
+                resp = requests.get(self.datastore.data['watching'][uuid].get('external_header_server'))
+                if resp.status_code != 200:
+                    raise Exception("External header server returned non-200 response. Please check the URL for the server")
+            
+                data = json.loads(resp.text.strip())
+                request_headers.update(resp.json())
+
+            except json.decoder.JSONDecodeError:
+                raise Exception("Failed to decode JSON response from external header server")
+            
         request_headers.update(extra_headers)
 
         # https://github.com/psf/requests/issues/4525

@@ -358,6 +358,7 @@ class watchForm(commonSettingsForm):
     title = StringField('Title', default='')
 
     ignore_text = StringListField('Ignore text', [ValidateListRegex()])
+    external_header_server = fields.URLField('External Header Server', validators=[validators.Optional(), validateURL()])
     headers = StringDictKeyValue('Request headers')
     body = TextAreaField('Request body', [validators.Optional()])
     method = SelectField('Request method', choices=valid_method, default=default_method)
