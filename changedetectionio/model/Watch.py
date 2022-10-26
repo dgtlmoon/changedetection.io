@@ -1,6 +1,9 @@
-import os
-import uuid as uuid_builder
 from distutils.util import strtobool
+import logging
+import os
+import time
+import uuid
+import uuid as uuid_builder
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
@@ -110,8 +113,6 @@ class model(dict):
     @property
     def history(self):
         tmp_history = {}
-        import logging
-        import time
 
         # Read the history file as a dict
         fname = os.path.join(self.__datastore_path, self.get('uuid'), "history.txt")
@@ -121,6 +122,11 @@ class model(dict):
                 for i in f.readlines():
                     if ',' in i:
                         k, v = i.strip().split(',', 2)
+
+                        # The index history could contain a relative path
+                        if not '/' in v and not '\'' in v:
+                            v = os.path.join(self.__datastore_path, self.get('uuid'), v)
+
                         tmp_history[k] = v
 
         if len(tmp_history):
@@ -151,25 +157,24 @@ class model(dict):
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
     def save_history_text(self, contents, timestamp):
-        import uuid
-        import logging
-
-        output_path = os.path.join(self.__datastore_path, self['uuid'])
 
         self.ensure_data_dir_exists()
-        snapshot_fname = os.path.join(output_path, str(uuid.uuid4()))
+
+        # The base dir of the watch
+        watch_data_dir = os.path.join(self.__datastore_path, self['uuid'])
+        snapshot_fname = "{}.txt".format(str(uuid.uuid4()))
 
         logging.debug("Saving history text {}".format(snapshot_fname))
 
         # in /diff/ and /preview/ we are going to assume for now that it's UTF-8 when reading
         # most sites are utf-8 and some are even broken utf-8
-        with open(snapshot_fname, 'wb') as f:
+        with open(os.path.join(watch_data_dir, snapshot_fname), 'wb') as f:
             f.write(contents)
             f.close()
 
         # Append to index
         # @todo check last char was \n
-        index_fname = os.path.join(output_path, "history.txt")
+        index_fname = os.path.join(watch_data_dir, "history.txt")
         with open(index_fname, 'a') as f:
             f.write("{},{}\n".format(timestamp, snapshot_fname))
             f.close()
