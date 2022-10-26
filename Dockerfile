@@ -26,6 +26,11 @@ RUN pip install --target=/dependencies -r /requirements.txt
 RUN pip install --target=/dependencies playwright~=1.26 \
     || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
 
+
+RUN pip install --target=/dependencies jq~=1.3 \
+    || echo "WARN: Failed to install JQ. The application can still run, but the Jq: filter option will be disabled."
+
+
 # Final image stage
 FROM python:3.8-slim
 
@@ -59,6 +64,7 @@ EXPOSE 5000
 
 # The actual flask app
 COPY changedetectionio /app/changedetectionio
+
 # The eventlet server wrapper
 COPY changedetection.py /app/changedetection.py
 

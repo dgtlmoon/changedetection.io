@@ -121,8 +121,8 @@ See the wiki for more information https://github.com/dgtlmoon/changedetection.io
 
 
 ## Filters
-XPath, JSONPath, jq, and CSS support comes baked in! You can be as specific as you need, use XPath exported from various XPath element query creation tools.
 
+XPath, JSONPath, jq, and CSS support comes baked in! You can be as specific as you need, use XPath exported from various XPath element query creation tools. 
 (We support LXML `re:test`, `re:math` and `re:replace`.)
 
 ## Notifications
@@ -161,46 +161,14 @@ This will re-parse the JSON and apply formatting to the text, making it super ea
 
 ### JSONPath or jq?
 
-For more complex parsing, filtering, and modifying of JSON data, jq is recommended due to the built-in operators and functions. Refer to the [documentation](https://stedolan.github.io/jq/manual/) for more information on jq.
+For more complex parsing, filtering, and modifying of JSON data, jq is recommended due to the built-in operators and functions. Refer to the [documentation](https://stedolan.github.io/jq/manual/) for more specifc information on jq.
 
-The example below adds the price in dollars to each item in the JSON data, and then filters to only show items that are greater than 10.
+One big advantage of `jq` is that you can use logic in your JSON filter, such as filters to only show items that have a value greater than/less than etc.
 
-#### Sample input data from API
-```
-{
-    "items": [
-        {
-           "name": "Product A",
-           "priceInCents": 2500
-        },
-        {
-           "name": "Product B",
-           "priceInCents": 500
-        },
-        {
-           "name": "Product C",
-           "priceInCents": 2000
-        }
-    ]
-}
-```
+See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/JSON-Selector-Filter-help for more information and examples
 
-#### Sample jq
-`jq:.items[] | . + { "priceInDollars": (.priceInCents / 100) } | select(.priceInDollars > 10)`
+Note: `jq` library must be added separately (`pip3 install jq`)
 
-#### Sample output data
-```
-{
-  "name": "Product A",
-  "priceInCents": 2500,
-  "priceInDollars": 25
-}
-{
-  "name": "Product C",
-  "priceInCents": 2000,
-  "priceInDollars": 20
-}
-```
 
 ### Parse JSON embedded in HTML!
 

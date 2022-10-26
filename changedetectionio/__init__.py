@@ -33,7 +33,7 @@ from flask_wtf import CSRFProtect
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.39.20.1'
+__version__ = '0.39.20.4'
 
 datastore = None
 
@@ -192,6 +192,9 @@ def changedetection_app(config=None, datastore_o=None):
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
     watch_api.add_resource(api_v1.Watch, '/api/v1/watch/<string:uuid>',
+                           resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
+
+    watch_api.add_resource(api_v1.SystemInfo, '/api/v1/systeminfo',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
 
@@ -636,20 +639,27 @@ def changedetection_app(config=None, datastore_o=None):
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and default['fetch_backend'] == 'html_webdriver'
 
+            # JQ is difficult to install on windows and must be manually added (outside requirements.txt)
+            jq_support = True
+            try:
+                import jq
+            except ModuleNotFoundError:
+                jq_support = False
 
             output = render_template("edit.html",
-                                     uuid=uuid,
-                                     watch=datastore.data['watching'][uuid],
-                                     form=form,
-                                     has_empty_checktime=using_default_check_time,
-                                     has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
-                                     using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                     form=form,
+                                     has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
+                                     has_empty_checktime=using_default_check_time,
+                                     jq_support=jq_support,
+                                     playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False),
                                      settings_application=datastore.data['settings']['application'],
+                                     using_global_webdriver_wait=default['webdriver_delay'] is None,
+                                     uuid=uuid,
                                      visualselector_data_is_ready=visualselector_data_is_ready,
                                      visualselector_enabled=visualselector_enabled,
-                                     playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False)
+                                     watch=datastore.data['watching'][uuid],
                                      )
 
         return output
@@ -809,8 +819,10 @@ def changedetection_app(config=None, datastore_o=None):
 
         newest_file = history[dates[-1]]
 
+        # Read as binary and force decode as UTF-8
+        # Windows may fail decode in python if we just use 'r' mode (chardet decode exception)
         try:
-            with open(newest_file, 'r') as f:
+            with open(newest_file, 'r', encoding='utf-8', errors='ignore') as f:
                 newest_version_file_contents = f.read()
         except Exception as e:
             newest_version_file_contents = "Unable to read {}.\n".format(newest_file)
@@ -823,7 +835,7 @@ def changedetection_app(config=None, datastore_o=None):
             previous_file = history[dates[-2]]
 
         try:
-            with open(previous_file, 'r') as f:
+            with open(previous_file, 'r', encoding='utf-8', errors='ignore') as f:
                 previous_version_file_contents = f.read()
         except Exception as e:
             previous_version_file_contents = "Unable to read {}.\n".format(previous_file)
@@ -900,7 +912,7 @@ def changedetection_app(config=None, datastore_o=None):
         timestamp = list(watch.history.keys())[-1]
         filename = watch.history[timestamp]
         try:
-            with open(filename, 'r') as f:
+            with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
                 tmp = f.readlines()
 
                 # Get what needs to be highlighted

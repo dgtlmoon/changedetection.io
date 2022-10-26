@@ -303,12 +303,16 @@ class ValidateCSSJSONXPATHInput(object):
 
                 # Re #265 - maybe in the future fetch the page and offer a
                 # warning/notice that its possible the rule doesnt yet match anything?
-
-            if 'jq:' in line:
                 if not self.allow_json:
                     raise ValidationError("jq not permitted in this field!")
 
-                import jq
+            if 'jq:' in line:
+                try:
+                    import jq
+                except ModuleNotFoundError:
+                    # `jq` requires full compilation in windows and so isn't generally available
+                    raise ValidationError("jq not support not found")
+
                 input = line.replace('jq:', '')
 
                 try:
@@ -366,6 +370,7 @@ class watchForm(commonSettingsForm):
     title = StringField('Title', default='')
 
     ignore_text = StringListField('Ignore text', [ValidateListRegex()])
+    external_header_server = fields.URLField('External Header Server', validators=[validators.Optional(), validateURL()])
     headers = StringDictKeyValue('Request headers')
     body = TextAreaField('Request body', [validators.Optional()])
     method = SelectField('Request method', choices=valid_method, default=default_method)

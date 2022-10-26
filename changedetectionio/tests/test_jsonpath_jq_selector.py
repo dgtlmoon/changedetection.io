@@ -5,7 +5,12 @@ import time
 from flask import url_for, escape
 from . util import live_server_setup
 import pytest
+jq_support = True
 
+try:
+    import jq
+except ModuleNotFoundError:
+    jq_support = False
 
 def test_setup(live_server):
     live_server_setup(live_server)
@@ -40,13 +45,14 @@ and it can also be repeated
     assert text == "23.5"
 
     # also check for jq
-    text = html_tools.extract_json_as_string(content, "jq:.offers.price")
-    assert text == "23.5"
+    if jq_support:
+        text = html_tools.extract_json_as_string(content, "jq:.offers.price")
+        assert text == "23.5"
+
+        text = html_tools.extract_json_as_string('{"id":5}', "jq:.id")
+        assert text == "5"
 
     text = html_tools.extract_json_as_string('{"id":5}', "json:$.id")
-    assert text == "5"
-
-    text = html_tools.extract_json_as_string('{"id":5}', "jq:.id")
     assert text == "5"
 
     # When nothing at all is found, it should throw JSONNOTFound
@@ -54,8 +60,9 @@ and it can also be repeated
     with pytest.raises(html_tools.JSONNotFound) as e_info:
         html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "json:$.id")
 
-    with pytest.raises(html_tools.JSONNotFound) as e_info:
-        html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jq:.id")
+    if jq_support:
+        with pytest.raises(html_tools.JSONNotFound) as e_info:
+            html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jq:.id")
 
 def set_original_ext_response():
     data = """
@@ -271,7 +278,8 @@ def test_check_jsonpath_filter(client, live_server):
     check_json_filter('json:boss.name', client, live_server)
 
 def test_check_jq_filter(client, live_server):
-    check_json_filter('jq:.boss.name', client, live_server)
+    if jq_support:
+        check_json_filter('jq:.boss.name', client, live_server)
 
 def check_json_filter_bool_val(json_filter, client, live_server):
     set_original_response()
@@ -329,7 +337,8 @@ def test_check_jsonpath_filter_bool_val(client, live_server):
     check_json_filter_bool_val("json:$['available']", client, live_server)
 
 def test_check_jq_filter_bool_val(client, live_server):
-    check_json_filter_bool_val("jq:.available", client, live_server)
+    if jq_support:
+        check_json_filter_bool_val("jq:.available", client, live_server)
 
 # Re #265 - Extended JSON selector test
 # Stuff to consider here
@@ -408,4 +417,5 @@ def test_check_jsonpath_ext_filter(client, live_server):
     check_json_ext_filter('json:$[?(@.status==Sold)]', client, live_server)
 
 def test_check_jq_ext_filter(client, live_server):
-    check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server)
+    if jq_support:
+        check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server)
