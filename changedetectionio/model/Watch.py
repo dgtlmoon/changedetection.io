@@ -26,7 +26,6 @@ class model(dict):
             'previous_md5': False,
             'uuid': str(uuid.uuid4()),
             'headers': {},  # Extra headers to send
-            'external_header_server': None,  # URL to a server that will return headers
             'body': None,
             'method': 'GET',
             #'history': {},  # Dict of timestamp and output stripped filename

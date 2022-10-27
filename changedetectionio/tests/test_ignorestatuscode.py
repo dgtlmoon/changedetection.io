@@ -114,7 +114,7 @@ def test_403_page_check_works_with_ignore_status_code(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"ignore_status_codes": "y", "url": test_url, "tag": "", "headers": "", "external_header_server": "",'fetch_backend': "html_requests"},
+        data={"ignore_status_codes": "y", "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
