@@ -4,7 +4,7 @@ import queue
 import time
 
 from changedetectionio import content_fetcher
-from changedetectionio.html_tools import FilterNotFoundInResponse
+from changedetectionio.fetch_site_status import FilterNotFoundInResponse
 
 # A single update worker
 #
@@ -189,7 +189,7 @@ class update_worker(threading.Thread):
                         if not self.datastore.data['watching'].get(uuid):
                             continue
 
-                        err_text = "Warning, filter '{}' not found".format(str(e))
+                        err_text = "Warning, no filters were found, no change detection ran."
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            # So that we get a trigger when the content is added again
                                                                            'previous_md5': ''})

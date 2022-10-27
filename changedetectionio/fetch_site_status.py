@@ -10,6 +10,12 @@ from changedetectionio import content_fetcher, html_tools
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+class FilterNotFoundInResponse(ValueError):
+    def __init__(self, msg):
+        ValueError.__init__(self, msg)
+
+
+
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
 class perform_site_check():
@@ -171,6 +177,9 @@ class perform_site_check():
                         else:
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                             html_content += html_tools.css_filter(css_filter=filter_rule, html_content=fetcher.content)
+
+                    if not html_content.strip():
+                        raise FilterNotFoundInResponse(css_filter_rule)
 
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)

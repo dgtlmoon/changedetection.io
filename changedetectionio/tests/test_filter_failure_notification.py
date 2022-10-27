@@ -95,7 +95,7 @@ def run_filter_test(client, content_filter):
         time.sleep(3)
 
     # We should see something in the frontend
-    assert b'Warning, filter' in res.data
+    assert b'Warning, no filters were found' in res.data
 
     # Now it should exist and contain our "filter not found" alert
     assert os.path.isfile("test-datastore/notification.txt")

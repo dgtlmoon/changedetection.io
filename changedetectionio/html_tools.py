@@ -7,23 +7,16 @@ from typing import List
 import json
 import re
 
-class FilterNotFoundInResponse(ValueError):
-    def __init__(self, msg):
-        ValueError.__init__(self, msg)
-
 class JSONNotFound(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
-
-
+        
 # Given a CSS Rule, and a blob of HTML, return the blob of HTML that matches
 def css_filter(css_filter, html_content):
     soup = BeautifulSoup(html_content, "html.parser")
     html_block = ""
     r = soup.select(css_filter, separator="")
-# @todo refactor
-#    if len(html_content) > 0 and len(r) == 0:
-#        raise FilterNotFoundInResponse(css_filter)
+
     for item in r:
         html_block += str(item)
 
