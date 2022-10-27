@@ -98,7 +98,7 @@ def test_check_markup_css_filter_restriction(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": css_filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"css_filter": css_filter, "url": test_url, "tag": "", "headers": "", "external_header_server": "",'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data

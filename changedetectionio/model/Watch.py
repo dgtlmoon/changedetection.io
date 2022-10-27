@@ -1,6 +1,8 @@
-import os
-import uuid as uuid_builder
 from distutils.util import strtobool
+import logging
+import os
+import time
+import uuid
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
@@ -22,8 +24,9 @@ class model(dict):
             #'newest_history_key': 0,
             'title': None,
             'previous_md5': False,
-            'uuid': str(uuid_builder.uuid4()),
+            'uuid': str(uuid.uuid4()),
             'headers': {},  # Extra headers to send
+            'external_header_server': None,  # URL to a server that will return headers
             'body': None,
             'method': 'GET',
             #'history': {},  # Dict of timestamp and output stripped filename
@@ -62,7 +65,7 @@ class model(dict):
         self.update(self.__base_config)
         self.__datastore_path = kw['datastore_path']
 
-        self['uuid'] = str(uuid_builder.uuid4())
+        self['uuid'] = str(uuid.uuid4())
 
         del kw['datastore_path']
 
@@ -84,10 +87,9 @@ class model(dict):
         return False
 
     def ensure_data_dir_exists(self):
-        target_path = os.path.join(self.__datastore_path, self['uuid'])
-        if not os.path.isdir(target_path):
-            print ("> Creating data dir {}".format(target_path))
-            os.mkdir(target_path)
+        if not os.path.isdir(self.watch_data_dir):
+            print ("> Creating data dir {}".format(self.watch_data_dir))
+            os.mkdir(self.watch_data_dir)
 
     @property
     def label(self):
@@ -111,18 +113,39 @@ class model(dict):
 
     @property
     def history(self):
+        """History index is just a text file as a list
+            {watch-uuid}/history.txt
+
+            contains a list like
+
+            {epoch-time},{filename}\n
+
+            We read in this list as the history information
+
+        """
         tmp_history = {}
-        import logging
-        import time
 
         # Read the history file as a dict
-        fname = os.path.join(self.__datastore_path, self.get('uuid'), "history.txt")
+        fname = os.path.join(self.watch_data_dir, "history.txt")
         if os.path.isfile(fname):
             logging.debug("Reading history index " + str(time.time()))
             with open(fname, "r") as f:
                 for i in f.readlines():
                     if ',' in i:
                         k, v = i.strip().split(',', 2)
+
+                        # The index history could contain a relative path, so we need to make the fullpath
+                        # so that python can read it
+                        if not '/' in v and not '\'' in v:
+                            v = os.path.join(self.watch_data_dir, v)
+                        else:
+                            # It's possible that they moved the datadir on older versions
+                            # So the snapshot exists but is in a different path
+                            snapshot_fname = v.split('/')[-1]
+                            proposed_new_path = os.path.join(self.watch_data_dir, snapshot_fname)
+                            if not os.path.exists(v) and os.path.exists(proposed_new_path):
+                                v = proposed_new_path
+
                         tmp_history[k] = v
 
         if len(tmp_history):
@@ -134,7 +157,7 @@ class model(dict):
 
     @property
     def has_history(self):
-        fname = os.path.join(self.__datastore_path, self.get('uuid'), "history.txt")
+        fname = os.path.join(self.watch_data_dir, "history.txt")
         return os.path.isfile(fname)
 
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
@@ -153,25 +176,19 @@ class model(dict):
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
     def save_history_text(self, contents, timestamp):
-        import uuid
-        import logging
-
-        output_path = os.path.join(self.__datastore_path, self['uuid'])
 
         self.ensure_data_dir_exists()
-        snapshot_fname = os.path.join(output_path, str(uuid.uuid4()))
-
-        logging.debug("Saving history text {}".format(snapshot_fname))
+        snapshot_fname = "{}.txt".format(str(uuid.uuid4()))
 
         # in /diff/ and /preview/ we are going to assume for now that it's UTF-8 when reading
         # most sites are utf-8 and some are even broken utf-8
-        with open(snapshot_fname, 'wb') as f:
+        with open(os.path.join(self.watch_data_dir, snapshot_fname), 'wb') as f:
             f.write(contents)
             f.close()
 
         # Append to index
         # @todo check last char was \n
-        index_fname = os.path.join(output_path, "history.txt")
+        index_fname = os.path.join(self.watch_data_dir, "history.txt")
         with open(index_fname, 'a') as f:
             f.write("{},{}\n".format(timestamp, snapshot_fname))
             f.close()
@@ -270,14 +287,14 @@ class model(dict):
         return diff_types
 
     def get_screenshot(self):
-        fname = os.path.join(self.__datastore_path, self['uuid'], "last-screenshot.png")
+        fname = os.path.join(self.watch_data_dir, "last-screenshot.png")
         if os.path.isfile(fname):
             return fname
 
         return False
 
     def __get_file_ctime(self, filename):
-        fname = os.path.join(self.__datastore_path, self['uuid'], filename)
+        fname = os.path.join(self.watch_data_dir, filename)
         if os.path.isfile(fname):
             return int(os.path.getmtime(fname))
         return False
@@ -302,9 +319,14 @@ class model(dict):
     def snapshot_error_screenshot_ctime(self):
         return self.__get_file_ctime('last-error-screenshot.png')
 
+    @property
+    def watch_data_dir(self):
+        # The base dir of the watch data
+        return os.path.join(self.__datastore_path, self['uuid'])
+    
     def get_error_text(self):
         """Return the text saved from a previous request that resulted in a non-200 error"""
-        fname = os.path.join(self.__datastore_path, self['uuid'], "last-error.txt")
+        fname = os.path.join(self.watch_data_dir, "last-error.txt")
         if os.path.isfile(fname):
             with open(fname, 'r') as f:
                 return f.read()
@@ -312,7 +334,7 @@ class model(dict):
 
     def get_error_snapshot(self):
         """Return path to the screenshot that resulted in a non-200 error"""
-        fname = os.path.join(self.__datastore_path, self['uuid'], "last-error-screenshot.png")
+        fname = os.path.join(self.watch_data_dir, "last-error-screenshot.png")
         if os.path.isfile(fname):
             return fname
         return False

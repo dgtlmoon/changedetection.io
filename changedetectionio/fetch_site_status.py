@@ -2,14 +2,14 @@ import hashlib
 import logging
 import os
 import re
-import time
 import urllib3
 import difflib
+import requests
+import json
 
 from changedetectionio import content_fetcher, html_tools
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
@@ -36,6 +36,8 @@ class perform_site_check():
 
 
     def run(self, uuid):
+        from jinja2 import Environment
+
         changed_detected = False
         screenshot = False  # as bytes
         stripped_text_from_html = ""
@@ -57,6 +59,19 @@ class perform_site_check():
 
         # Tweak the base config with the per-watch ones
         request_headers = self.datastore.data['settings']['headers'].copy()
+
+        if self.datastore.data['watching'][uuid].get('external_header_server') is not None and self.datastore.data['watching'][uuid].get('external_header_server') != "" and self.datastore.data['watching'][uuid].get('external_header_server') != "None":
+            try:
+                resp = requests.get(self.datastore.data['watching'][uuid].get('external_header_server'))
+                if resp.status_code != 200:
+                    raise Exception("External header server returned non-200 response. Please check the URL for the server")
+            
+                data = json.loads(resp.text.strip())
+                request_headers.update(resp.json())
+
+            except json.decoder.JSONDecodeError:
+                raise Exception("Failed to decode JSON response from external header server")
+            
         request_headers.update(extra_headers)
 
         # https://github.com/psf/requests/issues/4525
@@ -66,7 +81,11 @@ class perform_site_check():
             request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
 
         timeout = self.datastore.data['settings']['requests'].get('timeout')
-        url = watch.get('url')
+
+        # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
+        jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
+        url = str(jinja2_env.from_string(watch.get('url')).render())
+
         request_body = self.datastore.data['watching'][uuid].get('body')
         request_method = self.datastore.data['watching'][uuid].get('method')
         ignore_status_codes = self.datastore.data['watching'][uuid].get('ignore_status_codes', False)
