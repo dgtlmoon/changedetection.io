@@ -35,8 +35,6 @@ class perform_site_check():
 
 
     def run(self, uuid):
-        from jinja2 import Environment
-
         changed_detected = False
         screenshot = False  # as bytes
         stripped_text_from_html = ""
@@ -68,9 +66,7 @@ class perform_site_check():
 
         timeout = self.datastore.data['settings']['requests'].get('timeout')
 
-        # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
-        jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
-        url = str(jinja2_env.from_string(watch.get('url')).render())
+        url = watch.link
 
         request_body = self.datastore.data['watching'][uuid].get('body')
         request_method = self.datastore.data['watching'][uuid].get('method')
