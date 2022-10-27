@@ -46,6 +46,6 @@ def test_backup(client, live_server):
     uuid4hex = re.compile('^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}.*txt', re.I)
     newlist = list(filter(uuid4hex.match, l))  # Read Note below
 
-    # Should be two txt files in the archive (history and the snapshot)
-    assert len(newlist) == 2
+    # Should be three txt files in the archive (history and the snapshot)
+    assert len(newlist) == 3
 
