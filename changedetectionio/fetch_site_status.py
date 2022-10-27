@@ -145,7 +145,7 @@ class perform_site_check():
         has_subtractive_selectors = subtractive_selectors and len(subtractive_selectors[0].strip())
 
         if is_json and not has_filter_rule:
-            css_filter_rule = "json:$"
+            css_filter_rule.append("json:$")
             has_filter_rule = True
 
         if has_filter_rule:
