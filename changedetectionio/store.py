@@ -583,3 +583,14 @@ class ChangeDetectionStore:
         for v in ['User-Agent', 'Accept', 'Accept-Encoding', 'Accept-Language']:
             if self.data['settings']['headers'].get(v):
                 del self.data['settings']['headers'][v]
+
+    # Convert filters to a list of filters
+    def update_8(self):
+        for uuid, watch in self.data['watching'].items():
+            try:
+                existing_filter = watch.get('css_filter')
+                if not isinstance(existing_filter, list):
+                    watch['css_filter'] = [existing_filter]
+            except:
+                continue
+        return

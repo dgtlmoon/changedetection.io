@@ -135,7 +135,7 @@ class perform_site_check():
             "global_subtractive_selectors", []
         )
 
-        has_filter_rule = css_filter_rule and len(css_filter_rule.strip())
+        has_filter_rule = css_filter_rule and len("".join(css_filter_rule).strip())
         has_subtractive_selectors = subtractive_selectors and len(subtractive_selectors[0].strip())
 
         if is_json and not has_filter_rule:
@@ -144,9 +144,10 @@ class perform_site_check():
 
         if has_filter_rule:
             json_filter_prefixes = ['json:', 'jq:']
-            if any(prefix in css_filter_rule for prefix in json_filter_prefixes):
-                stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, json_filter=css_filter_rule)
-                is_html = False
+            for filter in css_filter_rule:
+                if any(prefix in filter for prefix in json_filter_prefixes):
+                    stripped_text_from_html += html_tools.extract_json_as_string(content=fetcher.content, json_filter=filter)
+                    is_html = False
 
         if is_html or is_source:
             
@@ -161,13 +162,15 @@ class perform_site_check():
             else:
                 # Then we assume HTML
                 if has_filter_rule:
-                    # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
-                    if css_filter_rule[0] == '/' or css_filter_rule.startswith('xpath:'):
-                        html_content = html_tools.xpath_filter(xpath_filter=css_filter_rule.replace('xpath:', ''),
-                                                               html_content=fetcher.content)
-                    else:
-                        # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-                        html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
+                    for filter_rule in css_filter_rule:
+
+                        # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
+                        if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
+                            html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
+                                                                   html_content=fetcher.content)
+                        else:
+                            # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+                            html_content += html_tools.css_filter(css_filter=filter_rule, html_content=fetcher.content)
 
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)

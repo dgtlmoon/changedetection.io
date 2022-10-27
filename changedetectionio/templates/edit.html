@@ -175,6 +175,7 @@ User-Agent: wonderbra 1.0") }}
                     </fieldset>
                     <div class="pure-control-group">
                         {% set field = render_field(form.css_filter,
+                            rows=5,
                             placeholder=".class-name or #some-id, or other CSS selector rule.",
                             class="m-d")
                         %}
