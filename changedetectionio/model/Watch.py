@@ -208,7 +208,7 @@ class model(dict):
         if not os.path.isdir(output_path):
             os.mkdir(output_path)
 
-        snapshot_fname = os.path.join(output_path, "previous.txt")
+        snapshot_fname = os.path.join(self.watch_data_dir, "previous.txt")
         logging.debug("Saving previous text {}".format(snapshot_fname))
 
         with open(snapshot_fname, 'wb') as f:
@@ -220,7 +220,6 @@ class model(dict):
     def get_previous_text(self):
         from os import path
 
-        output_path = os.path.join(self.__datastore_path, self['uuid'])
 
         snapshot_fname = os.path.join(output_path, "previous.txt")
         if self.history_n < 1:
