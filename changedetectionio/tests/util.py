@@ -196,5 +196,11 @@ def live_server_setup(live_server):
             return self.app(environ, start_response)
 
     live_server.app.wsgi_app = DefaultCheckboxMiddleware(live_server.app.wsgi_app)
+
+    # Just return some GET var
+    @live_server.app.route('/test-return-query', methods=['GET'])
+    def test_return_query():
+        return request.query_string
+
     live_server.start()
 
