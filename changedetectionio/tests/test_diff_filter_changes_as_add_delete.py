@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
++ @NOTE:  THIS RELIES ON SOME MIDDLEWARE TO MAKE CHECKBOXES WORK WITH WTFORMS UNDER TEST CONDITION, see changedetectionio/tests/util.py
 import time
 from flask import url_for
 from .util import live_server_setup
