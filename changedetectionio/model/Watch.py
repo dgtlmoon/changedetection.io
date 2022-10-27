@@ -221,7 +221,7 @@ class model(dict):
         from os import path
 
 
-        snapshot_fname = os.path.join(output_path, "previous.txt")
+        snapshot_fname = os.path.join(self.watch_data_dir, "previous.txt")
         if self.history_n < 1:
             return ""
 
