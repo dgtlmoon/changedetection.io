@@ -125,3 +125,58 @@ def test_check_markup_css_filter_restriction(client, live_server):
     # Because it should be looking at only that 'sametext' id
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
+
+
+# Tests the whole stack works with the CSS Filter
+def test_check_multiple_filters(client, live_server):
+    sleep_time_for_fetch_thread = 3
+
+    css_filter = "#blob-a\r\nxpath://*[contains(@id,'blob-b')]"
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write("""<html><body>
+     <div id="blob-a">Blob A</div>
+     <div id="blob-b">Blob B</div>
+     <div id="blob-c">Blob C</div>
+     </body>
+     </html>
+    """)
+
+    # Give the endpoint time to spin up
+    time.sleep(1)
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    time.sleep(1)
+
+    # Goto the edit page, add our ignore text
+    # Add our URL to the import page
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"css_filter": css_filter,
+              "url": test_url,
+              "tag": "",
+              "headers": "",
+              'fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+
+    # Give the thread time to pick it up
+    time.sleep(sleep_time_for_fetch_thread)
+
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    # Only the two blobs should be here
+    assert b"Blob A" in res.data # CSS was ok
+    assert b"Blob B" in res.data # xPath was ok
+    assert b"Blob C" not in res.data # Should not be included

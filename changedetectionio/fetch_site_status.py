@@ -162,8 +162,8 @@ class perform_site_check():
             else:
                 # Then we assume HTML
                 if has_filter_rule:
+                    html_content = ""
                     for filter_rule in css_filter_rule:
-
                         # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
                         if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
                             html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
