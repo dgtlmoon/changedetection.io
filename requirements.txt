@@ -47,7 +47,7 @@ selenium ~= 4.1.0
 werkzeug ~= 2.0.0
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
-jinja2
+jinja2 ~= 3.1
 jinja2-time
 
 # playwright is installed at Dockerfile build time because it's not available on all platforms
