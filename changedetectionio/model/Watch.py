@@ -202,13 +202,13 @@ class model(dict):
     def save_previous_text(self, contents):
         import logging
 
-        output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
+        output_path = os.path.join(self.__datastore_path, self['uuid'])
 
         # Incase the operator deleted it, check and create.
         if not os.path.isdir(output_path):
             os.mkdir(output_path)
 
-        snapshot_fname = "{}/previous.txt".format(output_path)
+        snapshot_fname = os.path.join(output_path, "previous.txt")
         logging.debug("Saving previous text {}".format(snapshot_fname))
 
         with open(snapshot_fname, 'wb') as f:
@@ -220,9 +220,9 @@ class model(dict):
     def get_previous_text(self):
         from os import path
 
-        output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
+        output_path = os.path.join(self.__datastore_path, self['uuid'])
 
-        snapshot_fname = "{}/previous.txt".format(output_path)
+        snapshot_fname = os.path.join(output_path, "previous.txt")
         if self.history_n < 1:
             return ""
 
