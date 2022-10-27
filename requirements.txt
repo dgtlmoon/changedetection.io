@@ -50,6 +50,9 @@ werkzeug~=2.0.0
 jinja2~=3.1
 jinja2-time
 
+# https://peps.python.org/pep-0508/#environment-markers
+# https://github.com/dgtlmoon/changedetection.io/pull/1009
+jq ~= 1.3 ;python_version >= "3.8" and sys_platform == "linux"
 playwright~=1.26; python_version >= "3.8" and "arm" not in platform_machine and "aarch" not in platform_machine
 
 
