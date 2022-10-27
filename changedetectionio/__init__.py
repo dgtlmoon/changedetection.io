@@ -586,24 +586,9 @@ def changedetection_app(config=None, datastore_o=None):
                     using_default_check_time = False
                     break
 
-            # Use the default if its the same as system wide
+            # Use the default if it's the same as system-wide.
             if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
                 extra_update_obj['fetch_backend'] = None
-
-
-             # Ignore text
-            form_ignore_text = form.ignore_text.data
-            datastore.data['watching'][uuid]['ignore_text'] = form_ignore_text
-
-            # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
-            if form_ignore_text:
-                if len(datastore.data['watching'][uuid].history):
-                    extra_update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
-
-            # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
-            if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
-                if len(datastore.data['watching'][uuid].history):
-                    extra_update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
             # Be sure proxy value is None
             if datastore.proxy_list is not None and form.data['proxy'] == '':
