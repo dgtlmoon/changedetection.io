@@ -205,8 +205,7 @@ class model(dict):
         output_path = os.path.join(self.__datastore_path, self['uuid'])
 
         # Incase the operator deleted it, check and create.
-        if not os.path.isdir(output_path):
-            os.mkdir(output_path)
+        self.ensure_data_dir_exists()
 
         snapshot_fname = os.path.join(self.watch_data_dir, "previous.txt")
         logging.debug("Saving previous text {}".format(snapshot_fname))
