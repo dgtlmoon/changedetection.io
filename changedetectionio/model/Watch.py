@@ -217,8 +217,6 @@ class model(dict):
 
     # Get previous text snapshot for diffing - used for calculating additions and deletions
     def get_previous_text(self):
-        from os import path
-
 
         snapshot_fname = os.path.join(self.watch_data_dir, "previous.txt")
         if self.history_n < 1:
