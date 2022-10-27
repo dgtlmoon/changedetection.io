@@ -89,6 +89,16 @@ class model(dict):
             os.mkdir(self.watch_data_dir)
 
     @property
+    def link(self):
+        url = self.get('url', '')
+        if '{%' in url or '{{' in url:
+            from jinja2 import Environment
+            # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
+            jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
+            return str(jinja2_env.from_string(url).render())
+        return url
+
+    @property
     def label(self):
         # Used for sorting
         if self['title']:
