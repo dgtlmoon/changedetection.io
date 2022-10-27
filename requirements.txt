@@ -1,36 +1,36 @@
-flask ~= 2.0
+flask~=2.0
 flask_wtf
-eventlet >= 0.31.0
+eventlet>=0.31.0
 validators
-timeago ~= 1.0
-inscriptis ~= 2.2
-feedgen ~= 0.9
-flask-login ~= 0.5
+timeago~=1.0
+inscriptis~=2.2
+feedgen~=0.9
+flask-login~=0.5
 flask_restful
 pytz
 
 # Set these versions together to avoid a RequestsDependencyWarning
 # >= 2.26 also adds Brotli support if brotli is installed
-brotli ~= 1.0
-requests[socks] ~= 2.28
+brotli~=1.0
+requests[socks] ~=2.28
 
-urllib3 > 1.26
-chardet > 2.3.0
+urllib3>1.26
+chardet>2.3.0
 
-wtforms ~= 3.0
-jsonpath-ng ~= 1.5.3
+wtforms~=3.0
+jsonpath-ng~=1.5.3
 
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise ~= 1.1.0
+apprise~=1.1.0
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 paho-mqtt
 
 # Pinned version of cryptography otherwise
 # ERROR: Could not build wheels for cryptography which use PEP 517 and cannot be installed directly
-cryptography ~= 3.4
+cryptography~=3.4
 
 # Used for CSS filtering
 bs4
@@ -39,16 +39,17 @@ bs4
 lxml
 
 # 3.141 was missing socksVersion, 3.150 was not in pypi, so we try 4.1.0
-selenium ~= 4.1.0
+selenium~=4.1.0
 
 # https://stackoverflow.com/questions/71652965/importerror-cannot-import-name-safe-str-cmp-from-werkzeug-security/71653849#71653849
 # ImportError: cannot import name 'safe_str_cmp' from 'werkzeug.security'
 # need to revisit flask login versions
-werkzeug ~= 2.0.0
+werkzeug~=2.0.0
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
-jinja2 ~= 3.1
+jinja2~=3.1
 jinja2-time
 
-# playwright is installed at Dockerfile build time because it's not available on all platforms
+playwright~=1.26; python_version >= "3.8" and "arm" not in platform_machine and "aarch" not in platform_machine
+
 
