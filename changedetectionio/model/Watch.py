@@ -3,7 +3,6 @@ import logging
 import os
 import time
 import uuid
-import uuid as uuid_builder
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
@@ -25,7 +24,7 @@ class model(dict):
             #'newest_history_key': 0,
             'title': None,
             'previous_md5': False,
-            'uuid': str(uuid_builder.uuid4()),
+            'uuid': str(uuid.uuid4()),
             'headers': {},  # Extra headers to send
             'body': None,
             'method': 'GET',
@@ -63,7 +62,7 @@ class model(dict):
         self.update(self.__base_config)
         self.__datastore_path = kw['datastore_path']
 
-        self['uuid'] = str(uuid_builder.uuid4())
+        self['uuid'] = str(uuid.uuid4())
 
         del kw['datastore_path']
 
