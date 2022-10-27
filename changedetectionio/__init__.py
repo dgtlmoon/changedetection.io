@@ -33,7 +33,7 @@ from flask_wtf import CSRFProtect
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.39.19'
+__version__ = '0.39.20.4'
 
 datastore = None
 
@@ -192,6 +192,9 @@ def changedetection_app(config=None, datastore_o=None):
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
     watch_api.add_resource(api_v1.Watch, '/api/v1/watch/<string:uuid>',
+                           resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
+
+    watch_api.add_resource(api_v1.SystemInfo, '/api/v1/systeminfo',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
 
@@ -547,6 +550,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Defaults for proxy choice
         if datastore.proxy_list is not None:  # When enabled
+            # @todo
             # Radio needs '' not None, or incase that the chosen one no longer exists
             if default['proxy'] is None or not any(default['proxy'] in tup for tup in datastore.proxy_list):
                 default['proxy'] = ''
@@ -560,7 +564,10 @@ def changedetection_app(config=None, datastore_o=None):
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
             del form.proxy
         else:
-            form.proxy.choices = [('', 'Default')] + datastore.proxy_list
+            form.proxy.choices = [('', 'Default')]
+            for p in datastore.proxy_list:
+                form.proxy.choices.append(tuple((p, datastore.proxy_list[p]['label'])))
+
 
         if request.method == 'POST' and form.validate():
             extra_update_obj = {}
@@ -632,20 +639,27 @@ def changedetection_app(config=None, datastore_o=None):
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and default['fetch_backend'] == 'html_webdriver'
 
+            # JQ is difficult to install on windows and must be manually added (outside requirements.txt)
+            jq_support = True
+            try:
+                import jq
+            except ModuleNotFoundError:
+                jq_support = False
 
             output = render_template("edit.html",
-                                     uuid=uuid,
-                                     watch=datastore.data['watching'][uuid],
-                                     form=form,
-                                     has_empty_checktime=using_default_check_time,
-                                     has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
-                                     using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                     form=form,
+                                     has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
+                                     has_empty_checktime=using_default_check_time,
+                                     jq_support=jq_support,
+                                     playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False),
                                      settings_application=datastore.data['settings']['application'],
+                                     using_global_webdriver_wait=default['webdriver_delay'] is None,
+                                     uuid=uuid,
                                      visualselector_data_is_ready=visualselector_data_is_ready,
                                      visualselector_enabled=visualselector_enabled,
-                                     playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False)
+                                     watch=datastore.data['watching'][uuid],
                                      )
 
         return output
@@ -657,15 +671,16 @@ def changedetection_app(config=None, datastore_o=None):
 
         default = deepcopy(datastore.data['settings'])
         if datastore.proxy_list is not None:
+            available_proxies = list(datastore.proxy_list.keys())
             # When enabled
             system_proxy = datastore.data['settings']['requests']['proxy']
             # In the case it doesnt exist anymore
-            if not any([system_proxy in tup for tup in datastore.proxy_list]):
+            if not system_proxy in available_proxies:
                 system_proxy = None
 
-            default['requests']['proxy'] = system_proxy if system_proxy is not None else datastore.proxy_list[0][0]
+            default['requests']['proxy'] = system_proxy if system_proxy is not None else available_proxies[0]
             # Used by the form handler to keep or remove the proxy settings
-            default['proxy_list'] = datastore.proxy_list
+            default['proxy_list'] = available_proxies[0]
 
 
         # Don't use form.data on POST so that it doesnt overrid the checkbox status from the POST status
@@ -680,7 +695,10 @@ def changedetection_app(config=None, datastore_o=None):
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
             del form.requests.form.proxy
         else:
-            form.requests.form.proxy.choices = datastore.proxy_list
+            form.requests.form.proxy.choices = []
+            for p in datastore.proxy_list:
+                form.requests.form.proxy.choices.append(tuple((p, datastore.proxy_list[p]['label'])))
+
 
         if request.method == 'POST':
             # Password unset is a GET, but we can lock the session to a salted env password to always need the password
@@ -801,8 +819,10 @@ def changedetection_app(config=None, datastore_o=None):
 
         newest_file = history[dates[-1]]
 
+        # Read as binary and force decode as UTF-8
+        # Windows may fail decode in python if we just use 'r' mode (chardet decode exception)
         try:
-            with open(newest_file, 'r') as f:
+            with open(newest_file, 'r', encoding='utf-8', errors='ignore') as f:
                 newest_version_file_contents = f.read()
         except Exception as e:
             newest_version_file_contents = "Unable to read {}.\n".format(newest_file)
@@ -815,7 +835,7 @@ def changedetection_app(config=None, datastore_o=None):
             previous_file = history[dates[-2]]
 
         try:
-            with open(previous_file, 'r') as f:
+            with open(previous_file, 'r', encoding='utf-8', errors='ignore') as f:
                 previous_version_file_contents = f.read()
         except Exception as e:
             previous_version_file_contents = "Unable to read {}.\n".format(previous_file)
@@ -892,7 +912,7 @@ def changedetection_app(config=None, datastore_o=None):
         timestamp = list(watch.history.keys())[-1]
         filename = watch.history[timestamp]
         try:
-            with open(filename, 'r') as f:
+            with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
                 tmp = f.readlines()
 
                 # Get what needs to be highlighted
@@ -967,9 +987,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         # create a ZipFile object
         backupname = "changedetection-backup-{}.zip".format(int(time.time()))
-
-        # We only care about UUIDS from the current index file
-        uuids = list(datastore.data['watching'].keys())
         backup_filepath = os.path.join(datastore_o.datastore_path, backupname)
 
         with zipfile.ZipFile(backup_filepath, "w",
@@ -985,12 +1002,12 @@ def changedetection_app(config=None, datastore_o=None):
             # Add the flask app secret
             zipObj.write(os.path.join(datastore_o.datastore_path, "secret.txt"), arcname="secret.txt")
 
-            # Add any snapshot data we find, use the full path to access the file, but make the file 'relative' in the Zip.
-            for txt_file_path in Path(datastore_o.datastore_path).rglob('*.txt'):
-                parent_p = txt_file_path.parent
-                if parent_p.name in uuids:
-                    zipObj.write(txt_file_path,
-                                 arcname=str(txt_file_path).replace(datastore_o.datastore_path, ''),
+            # Add any data in the watch data directory.
+            for uuid, w in datastore.data['watching'].items():
+                for f in Path(w.watch_data_dir).glob('*'):
+                    zipObj.write(f,
+                                 # Use the full path to access the file, but make the file 'relative' in the Zip.
+                                 arcname=os.path.join(f.parts[-2], f.parts[-1]),
                                  compress_type=zipfile.ZIP_DEFLATED,
                                  compresslevel=8)
 
@@ -1189,7 +1206,7 @@ def changedetection_app(config=None, datastore_o=None):
                     datastore.delete(uuid.strip())
             flash("{} watches deleted".format(len(uuids)))
 
-        if (op == 'pause'):
+        elif (op == 'pause'):
             for uuid in uuids:
                 uuid = uuid.strip()
                 if datastore.data['watching'].get(uuid):
@@ -1197,12 +1214,39 @@ def changedetection_app(config=None, datastore_o=None):
 
             flash("{} watches paused".format(len(uuids)))
 
-        if (op == 'unpause'):
+        elif (op == 'unpause'):
             for uuid in uuids:
                 uuid = uuid.strip()
                 if datastore.data['watching'].get(uuid):
                     datastore.data['watching'][uuid.strip()]['paused'] = False
             flash("{} watches unpaused".format(len(uuids)))
+
+        elif (op == 'mute'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid.strip()]['notification_muted'] = True
+            flash("{} watches muted".format(len(uuids)))
+
+        elif (op == 'unmute'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid.strip()]['notification_muted'] = False
+            flash("{} watches un-muted".format(len(uuids)))
+
+        elif (op == 'notification-default'):
+            from changedetectionio.notification import (
+                default_notification_format_for_watch
+            )
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid.strip()]['notification_title'] = None
+                    datastore.data['watching'][uuid.strip()]['notification_body'] = None
+                    datastore.data['watching'][uuid.strip()]['notification_urls'] = []
+                    datastore.data['watching'][uuid.strip()]['notification_format'] = default_notification_format_for_watch
+            flash("{} watches set to use default notification settings".format(len(uuids)))
 
         return redirect(url_for('index'))
 
@@ -1341,6 +1385,8 @@ def ticker_thread_check_time_launch_checks():
     import random
     from changedetectionio import update_worker
 
+    proxy_last_called_time = {}
+
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 20))
     print("System env MINIMUM_SECONDS_RECHECK_TIME", recheck_time_minimum_seconds)
 
@@ -1401,10 +1447,30 @@ def ticker_thread_check_time_launch_checks():
                 if watch.jitter_seconds == 0:
                     watch.jitter_seconds = random.uniform(-abs(jitter), jitter)
 
-
             seconds_since_last_recheck = now - watch['last_checked']
+
             if seconds_since_last_recheck >= (threshold + watch.jitter_seconds) and seconds_since_last_recheck >= recheck_time_minimum_seconds:
                 if not uuid in running_uuids and uuid not in [q_uuid for p,q_uuid in update_q.queue]:
+
+                    # Proxies can be set to have a limit on seconds between which they can be called
+                    watch_proxy = datastore.get_preferred_proxy_for_watch(uuid=uuid)
+                    if watch_proxy and watch_proxy in list(datastore.proxy_list.keys()):
+                        # Proxy may also have some threshold minimum
+                        proxy_list_reuse_time_minimum = int(datastore.proxy_list.get(watch_proxy, {}).get('reuse_time_minimum', 0))
+                        if proxy_list_reuse_time_minimum:
+                            proxy_last_used_time = proxy_last_called_time.get(watch_proxy, 0)
+                            time_since_proxy_used = int(time.time() - proxy_last_used_time)
+                            if time_since_proxy_used < proxy_list_reuse_time_minimum:
+                                # Not enough time difference reached, skip this watch
+                                print("> Skipped UUID {} using proxy '{}', not enough time between proxy requests {}s/{}s".format(uuid,
+                                                                                                                         watch_proxy,
+                                                                                                                         time_since_proxy_used,
+                                                                                                                         proxy_list_reuse_time_minimum))
+                                continue
+                            else:
+                                # Record the last used time
+                                proxy_last_called_time[watch_proxy] = int(time.time())
+
                     # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
                     priority = int(time.time())
                     print(

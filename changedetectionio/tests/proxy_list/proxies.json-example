@@ -1,0 +1,10 @@
+{
+  "proxy-one": {
+    "label": "One",
+    "url": "http://127.0.0.1:3128"
+  },
+  "proxy-two": {
+    "label": "two",
+    "url": "http://127.0.0.1:3129"
+  }
+}

@@ -1,8 +1,8 @@
-flask~= 2.0
+flask ~= 2.0
 flask_wtf
-eventlet>=0.31.0
+eventlet >= 0.31.0
 validators
-timeago ~=1.0
+timeago ~= 1.0
 inscriptis ~= 2.2
 feedgen ~= 0.9
 flask-login ~= 0.5
@@ -10,15 +10,20 @@ flask_restful
 pytz
 
 # Set these versions together to avoid a RequestsDependencyWarning
-requests[socks] ~= 2.26
+# >= 2.26 also adds Brotli support if brotli is installed
+brotli ~= 1.0
+requests[socks] ~= 2.28
+
 urllib3 > 1.26
 chardet > 2.3.0
 
 wtforms ~= 3.0
 jsonpath-ng ~= 1.5.3
 
+# jq not available on Windows so must be installed manually
+
 # Notification library
-apprise ~= 1.0.0
+apprise ~= 1.1.0
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 paho-mqtt
@@ -41,4 +46,9 @@ selenium ~= 4.1.0
 # need to revisit flask login versions
 werkzeug ~= 2.0.0
 
+# Templating, so far just in the URLs but in the future can be for the notifications also
+jinja2 ~= 3.1
+jinja2-time
+
 # playwright is installed at Dockerfile build time because it's not available on all platforms
+

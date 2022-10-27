@@ -20,34 +20,6 @@ class perform_site_check():
         super().__init__(*args, **kwargs)
         self.datastore = datastore
 
-    # If there was a proxy list enabled, figure out what proxy_args/which proxy to use
-    # if watch.proxy use that
-    # fetcher.proxy_override = watch.proxy or main config proxy
-    # Allows override the proxy on a per-request basis
-    # ALWAYS use the first one is nothing selected
-
-    def set_proxy_from_list(self, watch):
-        proxy_args = None
-        if self.datastore.proxy_list is None:
-            return None
-
-        # If its a valid one
-        if any([watch['proxy'] in p for p in self.datastore.proxy_list]):
-            proxy_args = watch['proxy']
-
-        # not valid (including None), try the system one
-        else:
-            system_proxy = self.datastore.data['settings']['requests']['proxy']
-            # Is not None and exists
-            if any([system_proxy in p for p in self.datastore.proxy_list]):
-                proxy_args = system_proxy
-
-        # Fallback - Did not resolve anything, use the first available
-        if proxy_args is None:
-            proxy_args = self.datastore.proxy_list[0][0]
-
-        return proxy_args
-
     # Doesn't look like python supports forward slash auto enclosure in re.findall
     # So convert it to inline flag "foobar(?i)" type configuration
     def forward_slash_enclosed_regex_to_options(self, regex):
@@ -68,6 +40,8 @@ class perform_site_check():
         stripped_text_from_html = ""
 
         watch = self.datastore.data['watching'].get(uuid)
+        if not watch:
+            return
 
         # Protect against file:// access
         if re.search(r'^file', watch['url'], re.IGNORECASE) and not os.getenv('ALLOW_FILE_URI', False):
@@ -90,8 +64,10 @@ class perform_site_check():
         if 'Accept-Encoding' in request_headers and "br" in request_headers['Accept-Encoding']:
             request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
 
-        timeout = self.datastore.data['settings']['requests']['timeout']
-        url = watch.get('url')
+        timeout = self.datastore.data['settings']['requests'].get('timeout')
+
+        url = watch.link
+
         request_body = self.datastore.data['watching'][uuid].get('body')
         request_method = self.datastore.data['watching'][uuid].get('method')
         ignore_status_codes = self.datastore.data['watching'][uuid].get('ignore_status_codes', False)
@@ -110,9 +86,13 @@ class perform_site_check():
             # If the klass doesnt exist, just use a default
             klass = getattr(content_fetcher, "html_requests")
 
+        proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=uuid)
+        proxy_url = None
+        if proxy_id:
+            proxy_url = self.datastore.proxy_list.get(proxy_id).get('url')
+            print ("UUID {} Using proxy {}".format(uuid, proxy_url))
 
-        proxy_args = self.set_proxy_from_list(watch)
-        fetcher = klass(proxy_override=proxy_args)
+        fetcher = klass(proxy_override=proxy_url)
 
         # Configurable per-watch or global extra delay before extracting text (for webDriver types)
         system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
@@ -169,8 +149,9 @@ class perform_site_check():
             has_filter_rule = True
 
         if has_filter_rule:
-            if 'json:' in css_filter_rule:
-                stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, jsonpath_filter=css_filter_rule)
+            json_filter_prefixes = ['json:', 'jq:']
+            if any(prefix in css_filter_rule for prefix in json_filter_prefixes):
+                stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, json_filter=css_filter_rule)
                 is_html = False
 
         if is_html or is_source:

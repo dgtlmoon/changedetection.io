@@ -6,6 +6,8 @@ services:
       hostname: changedetection
       volumes:
         - changedetection-data:/datastore
+# Configurable proxy list support, see https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#proxy-list-support
+#        - ./proxies.json:/datastore/proxies.json
 
   #    environment:
   #        Default listening port, can also be changed with the -p option
@@ -30,7 +32,7 @@ services:
   #
   #             https://playwright.dev/python/docs/api/class-browsertype#browser-type-launch-option-proxy
   #
-  #        Plain requsts - proxy support example.
+  #        Plain requests - proxy support example.
   #      - HTTP_PROXY=socks5h://10.10.1.10:1080
   #      - HTTPS_PROXY=socks5h://10.10.1.10:1080
   #
@@ -43,6 +45,9 @@ services:
   #        Respect proxy_pass type settings, `proxy_set_header Host "localhost";` and `proxy_set_header X-Forwarded-Prefix /app;`
   #        More here https://github.com/dgtlmoon/changedetection.io/wiki/Running-changedetection.io-behind-a-reverse-proxy-sub-directory
   #      - USE_X_SETTINGS=1
+  #
+  #        Hides the `Referer` header so that monitored websites can't see the changedetection.io hostname.
+  #      - HIDE_REFERER=true
 
       # Comment out ports: when using behind a reverse proxy , enable networks: etc.
       ports:

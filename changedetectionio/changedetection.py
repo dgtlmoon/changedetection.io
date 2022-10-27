@@ -102,6 +102,14 @@ def main():
                     has_password=datastore.data['settings']['application']['password'] != False
                     )
 
+    # Monitored websites will not receive a Referer header
+    # when a user clicks on an outgoing link.
+    @app.after_request
+    def hide_referrer(response):
+        if os.getenv("HIDE_REFERER", False):
+            response.headers["Referrer-Policy"] = "no-referrer"
+        return response
+
     # Proxy sub-directory support
     # Set environment var USE_X_SETTINGS=1 on this script
     # And then in your proxy_pass settings

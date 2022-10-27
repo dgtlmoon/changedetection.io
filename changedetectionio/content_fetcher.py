@@ -319,6 +319,7 @@ class base_html_playwright(Fetcher):
         import playwright._impl._api_types
         from playwright._impl._api_types import Error, TimeoutError
         response = None
+
         with sync_playwright() as p:
             browser_type = getattr(p, self.browser_type)
 
@@ -376,8 +377,11 @@ class base_html_playwright(Fetcher):
                 print("response object was none")
                 raise EmptyReply(url=url, status_code=None)
 
-            # Bug 2(?) Set the viewport size AFTER loading the page
-            page.set_viewport_size({"width": 1280, "height": 1024})
+
+            # Removed browser-set-size, seemed to be needed to make screenshots work reliably in older playwright versions
+            # Was causing exceptions like 'waiting for page but content is changing' etc
+            # https://www.browserstack.com/docs/automate/playwright/change-browser-window-size 1280x720 should be the default
+                        
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
             time.sleep(extra_wait)
 
@@ -400,6 +404,13 @@ class base_html_playwright(Fetcher):
                         pass
 
                     raise JSActionExceptions(status_code=response.status, screenshot=error_screenshot, message=str(e), url=url)
+
+                else:
+                    # JS eval was run, now we also wait some time if possible to let the page settle
+                    if self.render_extract_delay:
+                        page.wait_for_timeout(self.render_extract_delay * 1000)
+
+            page.wait_for_timeout(500)
 
             self.content = page.content()
             self.status_code = response.status
@@ -517,8 +528,6 @@ class base_html_webdriver(Fetcher):
             # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
             self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
 
-        self.screenshot = self.driver.get_screenshot_as_png()
-
         # @todo - how to check this? is it possible?
         self.status_code = 200
         # @todo somehow we should try to get this working for WebDriver
@@ -528,6 +537,8 @@ class base_html_webdriver(Fetcher):
         time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay)
         self.content = self.driver.page_source
         self.headers = {}
+
+        self.screenshot = self.driver.get_screenshot_as_png()
 
     # Does the connection to the webdriver work? run a test connection.
     def is_ready(self):
@@ -566,6 +577,11 @@ class html_requests(Fetcher):
             request_method,
             ignore_status_codes=False,
             current_css_filter=None):
+
+        # Make requests use a more modern looking user-agent
+        if not 'User-Agent' in request_headers:
+            request_headers['User-Agent'] = os.getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT",
+                                                      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36')
 
         proxies = {}
 
