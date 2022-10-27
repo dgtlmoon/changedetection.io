@@ -26,7 +26,6 @@ class model(dict):
             'previous_md5': False,
             'uuid': str(uuid.uuid4()),
             'headers': {},  # Extra headers to send
-            'external_header_server': None,  # URL to a server that will return headers
             'body': None,
             'method': 'GET',
             #'history': {},  # Dict of timestamp and output stripped filename
@@ -203,13 +202,12 @@ class model(dict):
     def save_previous_text(self, contents):
         import logging
 
-        output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
+        output_path = os.path.join(self.__datastore_path, self['uuid'])
 
         # Incase the operator deleted it, check and create.
-        if not os.path.isdir(output_path):
-            os.mkdir(output_path)
+        self.ensure_data_dir_exists()
 
-        snapshot_fname = "{}/previous.txt".format(output_path)
+        snapshot_fname = os.path.join(self.watch_data_dir, "previous.txt")
         logging.debug("Saving previous text {}".format(snapshot_fname))
 
         with open(snapshot_fname, 'wb') as f:
@@ -219,11 +217,8 @@ class model(dict):
 
     # Get previous text snapshot for diffing - used for calculating additions and deletions
     def get_previous_text(self):
-        from os import path
 
-        output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
-
-        snapshot_fname = "{}/previous.txt".format(output_path)
+        snapshot_fname = os.path.join(self.watch_data_dir, "previous.txt")
         if self.history_n < 1:
             return ""
 

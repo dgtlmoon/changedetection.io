@@ -89,7 +89,7 @@ def test_check_xpath_filter_utf8(client, live_server):
     time.sleep(1)
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": filter, "url": test_url, "tag": "", "headers": "", "external_header_server": "",'fetch_backend': "html_requests"},
+        data={"css_filter": filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -143,7 +143,7 @@ def test_check_xpath_text_function_utf8(client, live_server):
     time.sleep(1)
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": filter, "url": test_url, "tag": "", "headers": "", "external_header_server": "",'fetch_backend': "html_requests"},
+        data={"css_filter": filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -192,7 +192,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": xpath_filter, "url": test_url, "tag": "", "headers": "", "external_header_server": "",'fetch_backend': "html_requests"},
+        data={"css_filter": xpath_filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -233,7 +233,7 @@ def test_xpath_validation(client, live_server):
 
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": "/something horrible", "url": test_url, "tag": "", "headers": "", "external_header_server": "",'fetch_backend': "html_requests"},
+        data={"css_filter": "/something horrible", "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"is not a valid XPath expression" in res.data
@@ -263,7 +263,7 @@ def test_check_with_prefix_css_filter(client, live_server):
 
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter":  "xpath://*[contains(@class, 'sametext')]", "url": test_url, "tag": "", "headers": "", "external_header_server": "",'fetch_backend': "html_requests"},
+        data={"css_filter":  "xpath://*[contains(@class, 'sametext')]", "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
 

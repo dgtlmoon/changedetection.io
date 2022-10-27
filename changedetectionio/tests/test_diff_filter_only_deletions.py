@@ -66,8 +66,8 @@ def test_diff_filtering_no_add(client, live_server):
     # We should NOT see the change
     res = client.get(url_for("index"))
     # save res.data to a file
-    with open("./test-index.html", "w") as f:
-        f.write(res.data.decode("utf-8"))
+    
+        
         
     assert b'unviewed' not in res.data
 
