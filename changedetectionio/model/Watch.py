@@ -111,6 +111,16 @@ class model(dict):
 
     @property
     def history(self):
+        """History index is just a text file as a list
+            {watch-uuid}/history.txt
+
+            contains a list like
+
+            {epoch-time},{filename}\n
+
+            We read in this list as the history information
+
+        """
         tmp_history = {}
 
         # Read the history file as a dict
@@ -122,9 +132,17 @@ class model(dict):
                     if ',' in i:
                         k, v = i.strip().split(',', 2)
 
-                        # The index history could contain a relative path
+                        # The index history could contain a relative path, so we need to make the fullpath
+                        # so that python can read it
                         if not '/' in v and not '\'' in v:
                             v = os.path.join(self.watch_data_dir, v)
+                        else:
+                            # It's possible that they moved the datadir on older versions
+                            # So the snapshot exists but is in a different path
+                            snapshot_fname = v.split('/')[-1]
+                            proposed_new_path = os.path.join(self.watch_data_dir, snapshot_fname)
+                            if not os.path.exists(v) and os.path.exists(proposed_new_path):
+                                v = proposed_new_path
 
                         tmp_history[k] = v
 
