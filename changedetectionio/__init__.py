@@ -987,9 +987,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         # create a ZipFile object
         backupname = "changedetection-backup-{}.zip".format(int(time.time()))
-
-        # We only care about UUIDS from the current index file
-        uuids = list(datastore.data['watching'].keys())
         backup_filepath = os.path.join(datastore_o.datastore_path, backupname)
 
         with zipfile.ZipFile(backup_filepath, "w",
@@ -1005,13 +1002,12 @@ def changedetection_app(config=None, datastore_o=None):
             # Add the flask app secret
             zipObj.write(os.path.join(datastore_o.datastore_path, "secret.txt"), arcname="secret.txt")
 
-            # Add any data in the watch datadir
-            # Use the full path to access the file, but make the file 'relative' in the Zip.
-            for txt_file_path in Path(datastore_o.datastore_path).rglob('*-*-*-*'):
-                parent_p = txt_file_path.parent
-                if parent_p.name in uuids:
-                    zipObj.write(txt_file_path,
-                                 arcname=os.path.join(txt_file_path.parts[-2], txt_file_path.parts[-1]),
+            # Add any data in the watch data directory.
+            for uuid, w in datastore.data['watching'].items():
+                for f in Path(w.watch_data_dir).glob('*'):
+                    zipObj.write(f,
+                                 # Use the full path to access the file, but make the file 'relative' in the Zip.
+                                 arcname=os.path.join(f.parts[-2], f.parts[-1]),
                                  compress_type=zipfile.ZIP_DEFLATED,
                                  compresslevel=8)
 
