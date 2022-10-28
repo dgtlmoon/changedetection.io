@@ -594,11 +594,11 @@ class ChangeDetectionStore:
             # Make sure we actually have history
             if (watch.history_n == 0):
                 continue
-            latest_file_name = watch.history[watch.newest_history_key]
+            
 
 
             # Check if the previous.txt exists
-            if not os.path.exists(os.path.join(watch.watch_data_dir, "previous.txt")):
+            if os.path.exists(watch.watch_data_dir) and not os.path.exists(os.path.join(watch.watch_data_dir, "previous.txt")):
                 # Generate a previous.txt
                 with open(os.path.join(watch.watch_data_dir, "previous.txt"), "wb") as f:
                     # Fill it with the latest history

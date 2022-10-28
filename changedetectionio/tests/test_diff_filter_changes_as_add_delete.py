@@ -70,3 +70,34 @@ def test_diff_filter_changes_as_add_delete(client, live_server):
     # We should see the change
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
+    
+    
+    # Now check 'changes' are always going to be triggered
+    set_original_response()
+    client.post(
+        url_for("edit_page", uuid="first"),
+        # Neither trigger add nor del? then we should see changes still
+        data={"trigger_add": "n",
+              "trigger_del": "n",
+              "url": test_url,
+              "fetch_backend": "html_requests"},
+        follow_redirects=True
+    )
+    time.sleep(sleep_time_for_fetch_thread)
+    client.get(url_for("mark_all_viewed"), follow_redirects=True)
+    
+    # Same as original response but 'is->ix'
+    test_return_data = """
+        Here
+        ix
+        some
+        text
+    """
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+        
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    time.sleep(sleep_time_for_fetch_thread)
+    res = client.get(url_for("index"))
+    assert b'unviewed' in res.data
