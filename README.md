@@ -184,9 +184,9 @@ When you enable a `json:` or `jq:` filter, you can even automatically extract an
 
 `json:$.price` or `jq:.price` would give `23.50`, or you can extract the whole structure
 
-## Proxy configuration
+## Proxy Configuration
 
-See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration
+See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration , we also support using [BrightData proxy services where possible]( https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support)
 
 ## Raspberry Pi support?
 
