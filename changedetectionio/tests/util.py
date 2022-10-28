@@ -86,6 +86,7 @@ def extract_UUID_from_client(client):
 def wait_for_all_checks(client):
     # Loop waiting until done..
     attempt=0
+    time.sleep(0.1)
     while attempt < 60:
         time.sleep(1)
         res = client.get(url_for("index"))

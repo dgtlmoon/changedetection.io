@@ -185,6 +185,12 @@ class model(dict):
     def save_history_text(self, contents, timestamp):
 
         self.ensure_data_dir_exists()
+
+        # Small hack so that we sleep just enough to allow 1 second  between history snapshots
+        # this is because history.txt indexes/keys snapshots by epoch seconds and we dont want dupe keys
+        if self.__newest_history_key and int(timestamp) == int(self.__newest_history_key):
+            time.sleep(timestamp - self.__newest_history_key)
+
         snapshot_fname = "{}.txt".format(str(uuid.uuid4()))
 
         # in /diff/ and /preview/ we are going to assume for now that it's UTF-8 when reading
