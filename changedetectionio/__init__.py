@@ -599,10 +599,9 @@ def changedetection_app(config=None, datastore_o=None):
                     extra_update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
             # Reset the previous_md5 so we process a new snapshot including stripping ignore text.
-            # Maybe not needed if the md5 didnt change?
-#            if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
-#                if len(datastore.data['watching'][uuid].history):
-#                    extra_update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
+            if form.css_filter.data.strip() != datastore.data['watching'][uuid]['css_filter']:
+                if len(datastore.data['watching'][uuid].history):
+                    extra_update_obj['previous_md5'] = get_current_checksum_include_ignore_text(uuid=uuid)
 
             # Be sure proxy value is None
             if datastore.proxy_list is not None and form.data['proxy'] == '':
