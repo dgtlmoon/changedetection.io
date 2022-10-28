@@ -588,7 +588,7 @@ class ChangeDetectionStore:
     def update_8(self):
         for uuid, watch in self.data['watching'].items():
             try:
-                existing_filter = watch.get('css_filter')
+                existing_filter = watch.get('css_filter', [])
                 if not isinstance(existing_filter, list):
                     watch['css_filter'] = [existing_filter]
             except:
