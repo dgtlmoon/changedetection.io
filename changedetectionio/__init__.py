@@ -7,6 +7,7 @@ import threading
 import time
 from copy import deepcopy
 from threading import Event
+from parsel import Selector
 
 import flask_login
 import logging
@@ -316,6 +317,41 @@ def changedetection_app(config=None, datastore_o=None):
         for watch in sorted_watches:
 
             dates = list(watch.history.keys())
+
+            ##################### Displaying individual rss####################
+            rss_uuid = request.args.get('uuid')
+
+            css_filter_rule = watch['css_filter']
+            has_filter_rule = css_filter_rule and len(css_filter_rule.strip())
+
+            if rss_uuid == watch['uuid']:
+                latest_fname = watch.history[dates[-1]]
+
+                with open(latest_fname, 'r', encoding='UTF-8') as f:
+                    newest_version_file_contents = f.read()
+
+                # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+                html_content = html_tools.workarounds_for_obfuscations(newest_version_file_contents)
+                res = Selector(text=html_content)
+
+                # Then we assume HTML
+                if has_filter_rule:
+                    # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
+                    if css_filter_rule[0] == '/' or css_filter_rule.startswith('xpath:'):
+                        html_content = html_tools.xpath_filter(xpath_filter=css_filter_rule.replace('xpath:', ''),
+                                                               html_content=html_content)
+                    else:
+                        # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+                        # html_content = html_tools.css_filter(css_filter=css_filter_rule,
+                        #                                      html_content=html_content)
+                        posts = res.css(css_filter_rule)
+                        for post in posts:
+                            description = post.css(".text").get()
+
+                            print(description)
+
+
+            ##############        Original code  BELOW     #################
             # Re #521 - Don't bother processing this one if theres less than 2 snapshots, means we never had a change detected.
             if len(dates) < 2:
                 continue
