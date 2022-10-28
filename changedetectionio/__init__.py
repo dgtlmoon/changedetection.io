@@ -199,8 +199,6 @@ def changedetection_app(config=None, datastore_o=None):
 
 
 
-
-
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
     #    CORS(app)
