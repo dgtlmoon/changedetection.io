@@ -185,9 +185,6 @@ class perform_site_check():
                 elif is_source:
                     stripped_text_from_html = html_content
 
-            # Re #340 - return the content before the 'ignore text' was applied
-            text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
-
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 
