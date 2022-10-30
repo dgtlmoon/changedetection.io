@@ -167,9 +167,6 @@ One big advantage of `jq` is that you can use logic in your JSON filter, such as
 
 See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/JSON-Selector-Filter-help for more information and examples
 
-Note: `jq` library must be added separately (`pip3 install jq`)
-
-
 ### Parse JSON embedded in HTML!
 
 When you enable a `json:` or `jq:` filter, you can even automatically extract and parse embedded JSON inside a HTML page! Amazingly handy for sites that build content based on JSON, such as many e-commerce websites. 
@@ -184,9 +181,9 @@ When you enable a `json:` or `jq:` filter, you can even automatically extract an
 
 `json:$.price` or `jq:.price` would give `23.50`, or you can extract the whole structure
 
-## Proxy configuration
+## Proxy Configuration
 
-See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration
+See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration , we also support using [BrightData proxy services where possible]( https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support)
 
 ## Raspberry Pi support?
 
