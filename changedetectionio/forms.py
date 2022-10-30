@@ -351,6 +351,8 @@ class watchForm(commonSettingsForm):
 
     css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()], default='')
 
+    rss_selectors = StringListField('CSS/XPATH Filter for generating RSS', [ValidateCSSJSONXPATHInput(allow_xpath=True, allow_json=False)])
+
     subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
 
     extract_text = StringListField('Extract text', [ValidateListRegex()])

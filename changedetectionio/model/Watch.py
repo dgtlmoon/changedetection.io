@@ -37,6 +37,7 @@ class model(dict):
             'css_filter': '',
             'last_error': False,
             'extract_text': [],  # Extract text by regex after filters
+            'rss_selectors': [],  # List of css or xpath filter for extracting rss elements
             'subtractive_selectors': [],
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'text_should_not_be_present': [], # Text that should not present

@@ -197,7 +197,7 @@ User-Agent: wonderbra 1.0") }}
                         </li>
                         <li>XPath - Limit text to this XPath rule, simply start with a forward-slash,
                             <ul>
-                                <li>Example:  <code>//*[contains(@class, 'sametext')]</code> or <code>xpath://*[contains(@class, 'sametext')]</code>, <a
+                                <li>Example:  <code>//*[contains(@class, 'sametext')]</code> or <code>xpath://*[contains(@class, 'sametext')]</code>  or <code>//[@class='sametext']</code>, <a
                                 href="http://xpather.com/" target="new">test your XPath here</a></li>
                                 <li>Example: Get all titles from an RSS feed <code>//title/text()</code></li>
                             </ul>
@@ -206,6 +206,24 @@ User-Agent: wonderbra 1.0") }}
                     Please be sure that you thoroughly understand how to write CSS, JSONPath, XPath{% if jq_support %}, or jq selector{%endif%} rules before filing an issue on GitHub! <a
                                 href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
                 </span>
+                    </div>
+                    <div class="pure-control-group">
+                      {{ render_field(form.rss_selectors, rows=5, placeholder=".class-name or #some-id, or other CSS selector rule.
+Example:
+title: .title
+author: .author
+link: .link
+description: .description ")}}
+                      <span class="pure-form-message-inline">
+                           <p style="color:red">It works only under <a href = "https://github.com/dgtlmoon/changedetection.io/wiki/Detecting-changes-in-HTML-page-sources">HTML page sources</a>.</p>
+                        <ul>
+                          <li> HTML element(s) for CSS or XPATH selector.</li>
+                          <li> <code>title: .title</code> OR <code>.//div[@class='title']//text()</code></li>
+                          <li> <code>author: .author</code> OR <code>.//small[@class='author']//text()</code></li>
+                          <li> <code>link: span a::attr(href)</code> OR <code>.//a/@href</code></li>
+                          <li> <code>description: .description</code> OR <code>./span[@class='description']//text()</code></li>
+                        </ul>
+                      </span>
                     </div>
                     <div class="pure-control-group">
                       {{ render_field(form.subtractive_selectors, rows=5, placeholder="header

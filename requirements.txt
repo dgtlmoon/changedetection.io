@@ -34,6 +34,7 @@ cryptography ~= 3.4
 
 # Used for CSS filtering
 bs4
+parsel
 
 # XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
 lxml

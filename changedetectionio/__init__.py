@@ -309,22 +309,25 @@ def changedetection_app(config=None, datastore_o=None):
 
         sorted_watches.sort(key=lambda x: x.last_changed, reverse=False)
 
-        fg = FeedGenerator()
-        fg.title('changedetection.io')
-        fg.description('Feed description')
-        fg.link(href='https://changedetection.io')
-
         for watch in sorted_watches:
 
             dates = list(watch.history.keys())
 
-            ##################### Displaying individual rss####################
+            fg = FeedGenerator()
+            fg.title('changedetection.io')
+            fg.description('Feed description')
+            fg.link(href='https://changedetection.io')
+
+            # Generating individual RSS by uuid
             rss_uuid = request.args.get('uuid')
 
             css_filter_rule = watch['css_filter']
             has_filter_rule = css_filter_rule and len(css_filter_rule.strip())
 
-            if rss_uuid == watch['uuid']:
+            rss_selectors = watch.get("rss_selectors", [])
+            has_rss_selectors = rss_selectors and len(rss_selectors[0].strip())
+
+            if rss_uuid == watch['uuid'] and dates:
                 latest_fname = watch.history[dates[-1]]
 
                 with open(latest_fname, 'r', encoding='UTF-8') as f:
@@ -335,23 +338,59 @@ def changedetection_app(config=None, datastore_o=None):
                 res = Selector(text=html_content)
 
                 # Then we assume HTML
-                if has_filter_rule:
+                if has_filter_rule and has_rss_selectors:
+
                     # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
                     if css_filter_rule[0] == '/' or css_filter_rule.startswith('xpath:'):
-                        html_content = html_tools.xpath_filter(xpath_filter=css_filter_rule.replace('xpath:', ''),
-                                                               html_content=html_content)
+                        posts = res.xpath(css_filter_rule)
+
+                        for post in posts:
+                            fe = fg.add_entry()
+
+                            for selector in rss_selectors:
+                                if selector.startswith("title"):
+                                    _title = selector.strip().split(':')[1]
+                                    title = post.xpath(_title).get()
+                                    fe.title(title)
+                                elif selector.startswith("author"):
+                                    _author = selector.strip().split(':')[1]
+                                    author = post.xpath(_author).get()
+                                    fe.author(name = author, email='jdoe@example.com')
+                                elif selector.startswith("link"):
+                                    _link = selector.strip().split(':')[1]
+                                    link = post.xpath(_link).get()
+                                    fe.link(href=link, rel='alternate', type='CDATA')
+                                elif selector.startswith("description"):
+                                    _description = selector.strip().split(':')[1]
+                                    description = post.xpath(_description).get()
+                                    fe.content(description, type='CDATA')
                     else:
-                        # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-                        # html_content = html_tools.css_filter(css_filter=css_filter_rule,
-                        #                                      html_content=html_content)
                         posts = res.css(css_filter_rule)
                         for post in posts:
-                            description = post.css(".text").get()
+                            fe = fg.add_entry()
 
-                            print(description)
+                            for selector in rss_selectors:
+                                if selector.startswith("title"):
+                                    _title = selector.strip().split(':')[1]
+                                    title = post.css(_title).get()
+                                    fe.title(title)
+                                elif selector.startswith("author"):
+                                    _author = selector.strip().split(':')[1]
+                                    author = post.css(_author).get()
+                                    fe.author(name = author, email='jdoe@example.com')
+                                elif selector.startswith("link"):
+                                    _link = selector.strip().split(':')[1]
+                                    link = post.css(_link).get()
+                                    fe.link(href=link, rel='alternate', type='CDATA')
+                                elif selector.startswith("description"):
+                                    _description = selector.strip().split(':')[1]
+                                    description = post.css(_description).get()
+                                    fe.content(description, type='CDATA')
 
+                    response = make_response(fg.rss_str(pretty=True))
+                    response.headers.set('Content-Type', 'application/rss+xml;charset=utf-8')
+                    return response
 
-            ##############        Original code  BELOW     #################
             # Re #521 - Don't bother processing this one if theres less than 2 snapshots, means we never had a change detected.
             if len(dates) < 2:
                 continue
