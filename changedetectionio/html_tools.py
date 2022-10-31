@@ -7,6 +7,8 @@ from typing import List
 import json
 import re
 
+TEXT_FILTER_LIST_LINE_SUFFIX = "<br/>\n"
+
 class JSONNotFound(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
@@ -18,12 +20,12 @@ def css_filter(css_filter, html_content):
     r = soup.select(css_filter, separator="")
 
     for item in r:
+        # When there's more than 1 match, then add the suffix to separate each line
+        if len(html_block):
+            html_block += TEXT_FILTER_LIST_LINE_SUFFIX
         html_block += str(item)
 
-# @todo - refactor - this should be some option incase they want each line separate (I would think on by default?)
-#        html_block += "\n\n<p>"+str(item)+"</p>\n\n"
-
-    return html_block + "\n"
+    return html_block
 
 def subtractive_css_selector(css_selector, html_content):
     soup = BeautifulSoup(html_content, "html.parser")
@@ -49,12 +51,16 @@ def xpath_filter(xpath_filter, html_content):
     #@note: //title/text() wont work where <title>CDATA..
 
     for element in r:
+        # When there's more than 1 match, then add the suffix to separate each line
+        if len(html_block):
+            html_block +=TEXT_FILTER_LIST_LINE_SUFFIX
+
         if type(element) == etree._ElementStringResult:
-            html_block += str(element) + "<br/>"
+            html_block += str(element)
         elif type(element) == etree._ElementUnicodeResult:
-            html_block += str(element) + "<br/>"
+            html_block += str(element)
         else:
-            html_block += etree.tostring(element, pretty_print=True).decode('utf-8') + "<br/>"
+            html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
 
     return html_block
 

@@ -81,8 +81,13 @@ class ChangeDetectionStore:
         except (FileNotFoundError, json.decoder.JSONDecodeError):
             if include_default_watches:
                 print("Creating JSON store at", self.datastore_path)
-                self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
-                self.add_watch(url='https://changedetection.io/CHANGELOG.txt', tag='changedetection.io')
+                self.add_watch(url='https://news.ycombinator.com/',
+                               tag='Tech news',
+                               extras={'fetch_backend': 'html_requests'})
+
+                self.add_watch(url='https://changedetection.io/CHANGELOG.txt',
+                               tag='changedetection.io',
+                               extras={'fetch_backend': 'html_requests'})
 
         self.__data['version_tag'] = version_tag
 
@@ -266,7 +271,7 @@ class ChangeDetectionStore:
             extras = {}
         # should always be str
         if tag is None or not tag:
-            tag=''
+            tag = ''
 
         # Incase these are copied across, assume it's a reference and deepcopy()
         apply_extras = deepcopy(extras)
@@ -314,12 +319,13 @@ class ChangeDetectionStore:
                     del apply_extras[k]
 
             new_watch.update(apply_extras)
-            self.__data['watching'][new_uuid]=new_watch
+            self.__data['watching'][new_uuid] = new_watch
 
         self.__data['watching'][new_uuid].ensure_data_dir_exists()
 
         if write_to_disk_now:
             self.sync_to_json()
+
         return new_uuid
 
     def visualselector_data_is_ready(self, watch_uuid):
