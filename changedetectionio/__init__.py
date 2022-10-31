@@ -311,11 +311,6 @@ def changedetection_app(config=None, datastore_o=None):
 
             dates = list(watch.history.keys())
 
-            fg = FeedGenerator()
-            fg.title('changedetection.io')
-            fg.description('Feed description')
-            fg.link(href='https://changedetection.io')
-
             # Generating individual RSS by uuid
             rss_uuid = request.args.get('uuid')
 
@@ -335,6 +330,13 @@ def changedetection_app(config=None, datastore_o=None):
                 html_content = html_tools.workarounds_for_obfuscations(newest_version_file_contents)
                 res = Selector(text=html_content)
 
+                feed_title = watch['title'] if watch['title'] else 'changedetection.io'
+                feed_link = watch['url'].replace('source:', '')
+                indiv_fg = FeedGenerator()
+                indiv_fg.title(feed_title)
+                indiv_fg.description('Feed description')
+                indiv_fg.link(href=feed_link)
+
                 # Then we assume HTML
                 if has_filter_rule and has_rss_selectors:
 
@@ -343,7 +345,7 @@ def changedetection_app(config=None, datastore_o=None):
                         posts = res.xpath(css_filter_rule)
 
                         for post in posts:
-                            fe = fg.add_entry()
+                            fe = indiv_fg.add_entry()
 
                             for selector in rss_selectors:
                                 if selector.startswith("title"):
@@ -365,7 +367,7 @@ def changedetection_app(config=None, datastore_o=None):
                     else:
                         posts = res.css(css_filter_rule)
                         for post in posts:
-                            fe = fg.add_entry()
+                            fe = indiv_fg.add_entry()
 
                             for selector in rss_selectors:
                                 if selector.startswith("title"):
@@ -385,9 +387,14 @@ def changedetection_app(config=None, datastore_o=None):
                                     description = post.css(_description).get()
                                     fe.content(description, type='CDATA')
 
-                    response = make_response(fg.rss_str(pretty=True))
+                    response = make_response(indiv_fg.rss_str(pretty=True))
                     response.headers.set('Content-Type', 'application/rss+xml;charset=utf-8')
                     return response
+
+            fg = FeedGenerator()
+            fg.title('changedetection.io')
+            fg.description('Feed description')
+            fg.link(href='https://changedetection.io')
 
             # Re #521 - Don't bother processing this one if theres less than 2 snapshots, means we never had a change detected.
             if len(dates) < 2:
