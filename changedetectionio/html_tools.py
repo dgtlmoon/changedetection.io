@@ -46,10 +46,6 @@ def xpath_filter(xpath_filter, html_content):
     html_block = ""
 
     r = tree.xpath(xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'})
-    # @todo refactor
-    #if len(html_content) > 0 and len(r) == 0:
-#        raise FilterNotFoundInResponse(xpath_filter)
-
     #@note: //title/text() wont work where <title>CDATA..
 
     for element in r:
