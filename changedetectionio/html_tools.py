@@ -7,7 +7,8 @@ from typing import List
 import json
 import re
 
-TEXT_FILTER_LIST_LINE_SUFFIX = "<br/>\n"
+# HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
+TEXT_FILTER_LIST_LINE_SUFFIX = "<br/>"
 
 class JSONNotFound(ValueError):
     def __init__(self, msg):
@@ -19,11 +20,15 @@ def css_filter(css_filter, html_content):
     html_block = ""
     r = soup.select(css_filter, separator="")
 
-    for item in r:
+    for element in r:
         # When there's more than 1 match, then add the suffix to separate each line
-        if len(html_block):
+        # And where the matched result doesn't include something that will cause Inscriptis to add a newline
+        # (This way each 'match' reliably has a new-line in the diff)
+        # Divs are converted to 4 whitespaces by inscriptis
+        if len(html_block) and not element.name in (['br', 'hr', 'div', 'p']):
             html_block += TEXT_FILTER_LIST_LINE_SUFFIX
-        html_block += str(item)
+
+        html_block += str(element)
 
     return html_block
 
@@ -52,15 +57,14 @@ def xpath_filter(xpath_filter, html_content):
 
     for element in r:
         # When there's more than 1 match, then add the suffix to separate each line
-        if len(html_block):
-            html_block +=TEXT_FILTER_LIST_LINE_SUFFIX
+        # And where the matched result doesn't include something that will cause Inscriptis to add a newline
+        # (This way each 'match' reliably has a new-line in the diff)
+        # Divs are converted to 4 whitespaces by inscriptis
+        if len(html_block) and not element.tag in (['br', 'hr', 'div', 'p']):
+            html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+# Wikipedians question Wikimedia fundraising ethics after “somewhat-viral” tweet
 
-        if type(element) == etree._ElementStringResult:
-            html_block += str(element)
-        elif type(element) == etree._ElementUnicodeResult:
-            html_block += str(element)
-        else:
-            html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
+        html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
 
     return html_block
 

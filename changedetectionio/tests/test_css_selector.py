@@ -57,9 +57,11 @@ def test_css_filter_output():
 
     content = """<html> <body>
     <p>foo bar blah</p>
-    <div class="parts">Block A</div> <div class="parts">Block B</div></body> 
+    <DIV class="parts">Block A</DiV> <div class="parts">Block B</DIV></body> 
     </html>
 """
+
+    # in xPath this would be //*[@class='parts']
     html_blob = css_filter(css_filter=".parts", html_content=content)
     text = get_text(html_blob)
 
