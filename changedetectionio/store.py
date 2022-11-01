@@ -27,6 +27,8 @@ class ChangeDetectionStore:
     # For when we edit, we should write to disk
     needs_write_urgent = False
 
+    __version_check = True
+
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         # Should only be active for docker
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
@@ -37,7 +39,6 @@ class ChangeDetectionStore:
         self.proxy_list = None
         self.start_time = time.time()
         self.stop_thread = False
-
         # Base definition for all watchers
         # deepcopy part of #569 - not sure why its needed exactly
         self.generic_definition = deepcopy(Watch.model(datastore_path = datastore_path, default={}))
