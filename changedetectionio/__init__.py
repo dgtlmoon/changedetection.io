@@ -1307,8 +1307,8 @@ def changedetection_app(config=None, datastore_o=None):
 
     threading.Thread(target=notification_runner).start()
 
-    # Check for new release version, but not when running in test/build
-    if not os.getenv("GITHUB_REF", False):
+    # Check for new release version, but not when running in test/build or pytest
+    if not os.getenv("GITHUB_REF", False) and not config.get('disable_checkver') == True:
         threading.Thread(target=check_for_new_version).start()
 
     return app
