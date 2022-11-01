@@ -30,13 +30,13 @@ class ChangeDetectionStore:
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         # Should only be active for docker
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
-        self.needs_write = False
+        self.__data = App.model()
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
+        self.needs_write = False
         self.proxy_list = None
+        self.start_time = time.time()
         self.stop_thread = False
-
-        self.__data = App.model()
 
         # Base definition for all watchers
         # deepcopy part of #569 - not sure why its needed exactly

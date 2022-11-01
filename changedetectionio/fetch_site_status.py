@@ -65,7 +65,9 @@ class perform_site_check():
             request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
 
         timeout = self.datastore.data['settings']['requests'].get('timeout')
-        url = watch.get('url')
+
+        url = watch.link
+
         request_body = self.datastore.data['watching'][uuid].get('body')
         request_method = self.datastore.data['watching'][uuid].get('method')
         ignore_status_codes = self.datastore.data['watching'][uuid].get('ignore_status_codes', False)
@@ -184,9 +186,6 @@ class perform_site_check():
 
                 elif is_source:
                     stripped_text_from_html = html_content
-
-            # Re #340 - return the content before the 'ignore text' was applied
-            text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')

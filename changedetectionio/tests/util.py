@@ -88,6 +88,7 @@ def extract_UUID_from_client(client):
 def wait_for_all_checks(client):
     # Loop waiting until done..
     attempt=0
+    time.sleep(0.1)
     while attempt < 60:
         time.sleep(1)
         res = client.get(url_for("index"))
@@ -165,6 +166,11 @@ def live_server_setup(live_server):
         auth = request.authorization
         ret = " ".join([auth.username, auth.password, auth.type])
         return ret
+
+    # Just return some GET var
+    @live_server.app.route('/test-return-query', methods=['GET'])
+    def test_return_query():
+        return request.query_string
 
     live_server.start()
 
