@@ -173,10 +173,13 @@ class perform_site_check():
                         # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
                         if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
                             html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
-                                                                   html_content=fetcher.content)
+                                                                    html_content=fetcher.content,
+                                                                    append_pretty_line_formatting=not is_source)
                         else:
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-                            html_content += html_tools.css_filter(css_filter=filter_rule, html_content=fetcher.content)
+                            html_content += html_tools.css_filter(css_filter=filter_rule,
+                                                                  html_content=fetcher.content,
+                                                                  append_pretty_line_formatting=not is_source)
 
                     if not html_content.strip():
                         raise FilterNotFoundInResponse(css_filter_rule)
@@ -184,7 +187,9 @@ class perform_site_check():
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)
 
-                if not is_source:
+                if is_source:
+                    stripped_text_from_html = html_content
+                else:
                     # extract text
                     stripped_text_from_html = \
                         html_tools.html_to_text(
@@ -193,9 +198,6 @@ class perform_site_check():
                                 "application"].get(
                                 "render_anchor_tag_content", False)
                         )
-
-                elif is_source:
-                    stripped_text_from_html = html_content
 
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')

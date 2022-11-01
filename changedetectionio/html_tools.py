@@ -15,7 +15,7 @@ class JSONNotFound(ValueError):
         ValueError.__init__(self, msg)
         
 # Given a CSS Rule, and a blob of HTML, return the blob of HTML that matches
-def css_filter(css_filter, html_content):
+def css_filter(css_filter, html_content, append_pretty_line_formatting=False):
     soup = BeautifulSoup(html_content, "html.parser")
     html_block = ""
     r = soup.select(css_filter, separator="")
@@ -25,7 +25,7 @@ def css_filter(css_filter, html_content):
         # And where the matched result doesn't include something that will cause Inscriptis to add a newline
         # (This way each 'match' reliably has a new-line in the diff)
         # Divs are converted to 4 whitespaces by inscriptis
-        if len(html_block) and not element.name in (['br', 'hr', 'div', 'p']):
+        if append_pretty_line_formatting and len(html_block) and not element.name in (['br', 'hr', 'div', 'p']):
             html_block += TEXT_FILTER_LIST_LINE_SUFFIX
 
         html_block += str(element)
@@ -46,7 +46,7 @@ def element_removal(selectors: List[str], html_content):
 
 
 # Return str Utf-8 of matched rules
-def xpath_filter(xpath_filter, html_content):
+def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False):
     from lxml import etree, html
 
     tree = html.fromstring(bytes(html_content, encoding='utf-8'))
@@ -60,7 +60,7 @@ def xpath_filter(xpath_filter, html_content):
         # And where the matched result doesn't include something that will cause Inscriptis to add a newline
         # (This way each 'match' reliably has a new-line in the diff)
         # Divs are converted to 4 whitespaces by inscriptis
-        if len(html_block) and not element.tag in (['br', 'hr', 'div', 'p']):
+        if append_pretty_line_formatting and len(html_block) and not element.tag in (['br', 'hr', 'div', 'p']):
             html_block += TEXT_FILTER_LIST_LINE_SUFFIX
 # Wikipedians question Wikimedia fundraising ethics after “somewhat-viral” tweet
 
