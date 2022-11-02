@@ -3,13 +3,6 @@
 # Some packages wont install via pypi because they dont have a wheel available under this architecture.
 
 FROM ghcr.io/linuxserver/baseimage-alpine:3.16
-
-ARG BUILD_DATE
-ARG VERSION
-ARG CHANGEDETECTION_RELEASE
-LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
-LABEL maintainer="thespad"
-
 ENV PYTHONUNBUFFERED=1
 
 RUN \
