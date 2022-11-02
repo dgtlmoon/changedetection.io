@@ -293,7 +293,6 @@ class perform_site_check():
                 else:
                     logging.debug("check_unique_lines: UUID {} had unique content".format(uuid))
 
-        if changed_detected:
             if not watch.get("trigger_add", True) or not watch.get("trigger_del", True): # if we are supposed to filter any diff types
                 # get the diff types present in the watch
                 diff_types = watch.get_diff_types(text_content_before_ignored_filter)
