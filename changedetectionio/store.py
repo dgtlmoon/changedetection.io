@@ -591,12 +591,12 @@ class ChangeDetectionStore:
             if self.data['settings']['headers'].get(v):
                 del self.data['settings']['headers'][v]
 
-    # Convert filters to a list of filters
+    # Convert filters to a list of filters css_filter -> include_filters
     def update_8(self):
         for uuid, watch in self.data['watching'].items():
             try:
-                existing_filter = watch.get('include_filters', [])
-                if not isinstance(existing_filter, list):
+                existing_filter = watch.get('css_filter', '')
+                if existing_filter:
                     watch['include_filters'] = [existing_filter]
             except:
                 continue
