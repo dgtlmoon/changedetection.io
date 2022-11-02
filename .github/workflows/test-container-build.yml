@@ -43,17 +43,18 @@ jobs:
             version: latest
             driver-opts: image=moby/buildkit:master
 
+        # https://github.com/dgtlmoon/changedetection.io/pull/1067
+        # Check we can still build under alpine/musl
         - name: Test that the docker containers can build (musl via alpine check)
           id: docker_build
           uses: docker/build-push-action@v2
-          # https://github.com/docker/build-push-action#customizing
           with:
             context: ./
             file: ./.github/test/Dockerfile-alpine
             platforms: linux/amd64,linux/arm64,
             cache-from: type=local,src=/tmp/.buildx-cache
             cache-to: type=local,dest=/tmp/.buildx-cache
-            
+
         - name: Test that the docker containers can build
           id: docker_build
           uses: docker/build-push-action@v2
