@@ -226,7 +226,7 @@ def check_json_filter(json_filter, client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": json_filter,
+        data={"include_filters": json_filter,
               "url": test_url,
               "tag": "",
               "headers": "",
@@ -293,7 +293,7 @@ def check_json_filter_bool_val(json_filter, client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": json_filter,
+        data={"include_filters": json_filter,
               "url": test_url,
               "tag": "",
               "headers": "",
@@ -354,7 +354,7 @@ def check_json_ext_filter(json_filter, client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": json_filter,
+        data={"include_filters": json_filter,
               "url": test_url,
               "tag": "",
               "headers": "",

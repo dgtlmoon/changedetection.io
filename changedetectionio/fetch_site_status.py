@@ -110,7 +110,7 @@ class perform_site_check():
         if watch['webdriver_js_execute_code'] is not None and watch['webdriver_js_execute_code'].strip():
             fetcher.webdriver_js_execute_code = watch['webdriver_js_execute_code']
 
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch['css_filter'])
+        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch['include_filters'])
         fetcher.quit()
 
         self.screenshot = fetcher.screenshot
@@ -134,23 +134,23 @@ class perform_site_check():
             is_html = False
             is_json = False
 
-        css_filter_rule = watch['css_filter']
+        include_filters_rule = watch['include_filters']
         subtractive_selectors = watch.get(
             "subtractive_selectors", []
         ) + self.datastore.data["settings"]["application"].get(
             "global_subtractive_selectors", []
         )
 
-        has_filter_rule = css_filter_rule and len("".join(css_filter_rule).strip())
+        has_filter_rule = include_filters_rule and len("".join(include_filters_rule).strip())
         has_subtractive_selectors = subtractive_selectors and len(subtractive_selectors[0].strip())
 
         if is_json and not has_filter_rule:
-            css_filter_rule.append("json:$")
+            include_filters_rule.append("json:$")
             has_filter_rule = True
 
         if has_filter_rule:
             json_filter_prefixes = ['json:', 'jq:']
-            for filter in css_filter_rule:
+            for filter in include_filters_rule:
                 if any(prefix in filter for prefix in json_filter_prefixes):
                     stripped_text_from_html += html_tools.extract_json_as_string(content=fetcher.content, json_filter=filter)
                     is_html = False
@@ -169,7 +169,7 @@ class perform_site_check():
                 # Then we assume HTML
                 if has_filter_rule:
                     html_content = ""
-                    for filter_rule in css_filter_rule:
+                    for filter_rule in include_filters_rule:
                         # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
                         if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
                             html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
@@ -177,12 +177,12 @@ class perform_site_check():
                                                                     append_pretty_line_formatting=not is_source)
                         else:
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-                            html_content += html_tools.css_filter(css_filter=filter_rule,
+                            html_content += html_tools.include_filters(include_filters=filter_rule,
                                                                   html_content=fetcher.content,
                                                                   append_pretty_line_formatting=not is_source)
 
                     if not html_content.strip():
-                        raise FilterNotFoundInResponse(css_filter_rule)
+                        raise FilterNotFoundInResponse(include_filters_rule)
 
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)

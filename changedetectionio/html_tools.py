@@ -15,10 +15,10 @@ class JSONNotFound(ValueError):
         ValueError.__init__(self, msg)
         
 # Given a CSS Rule, and a blob of HTML, return the blob of HTML that matches
-def css_filter(css_filter, html_content, append_pretty_line_formatting=False):
+def include_filters(include_filters, html_content, append_pretty_line_formatting=False):
     soup = BeautifulSoup(html_content, "html.parser")
     html_block = ""
-    r = soup.select(css_filter, separator="")
+    r = soup.select(include_filters, separator="")
 
     for element in r:
         # When there's more than 1 match, then add the suffix to separate each line

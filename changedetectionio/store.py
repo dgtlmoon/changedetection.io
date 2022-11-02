@@ -291,7 +291,7 @@ class ChangeDetectionStore:
                           'paused', 'title',
                           'previous_md5', 'headers',
                           'body', 'method',
-                          'ignore_text', 'css_filter',
+                          'ignore_text', 'include_filters',
                           'subtractive_selectors', 'trigger_text',
                           'extract_title_as_title', 'extract_text',
                           'text_should_not_be_present',
@@ -595,9 +595,9 @@ class ChangeDetectionStore:
     def update_8(self):
         for uuid, watch in self.data['watching'].items():
             try:
-                existing_filter = watch.get('css_filter', [])
+                existing_filter = watch.get('include_filters', [])
                 if not isinstance(existing_filter, list):
-                    watch['css_filter'] = [existing_filter]
+                    watch['include_filters'] = [existing_filter]
             except:
                 continue
         return

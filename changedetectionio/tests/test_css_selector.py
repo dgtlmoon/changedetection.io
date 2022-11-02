@@ -46,12 +46,12 @@ def set_modified_response():
 
 
 # Test that the CSS extraction works how we expect, important here is the right placing of new lines \n's
-def test_css_filter_output():
+def test_include_filters_output():
     from inscriptis import get_text
 
     # Check text with sub-parts renders correctly
     content = """<html> <body><div id="thingthing" >  Some really <b>bold</b> text  </div> </body> </html>"""
-    html_blob = css_filter(css_filter="#thingthing", html_content=content)
+    html_blob = include_filters(include_filters="#thingthing", html_content=content)
     text = get_text(html_blob)
     assert text == "  Some really bold text"
 
@@ -62,7 +62,7 @@ def test_css_filter_output():
 """
 
     # in xPath this would be //*[@class='parts']
-    html_blob = css_filter(css_filter=".parts", html_content=content)
+    html_blob = include_filters(include_filters=".parts", html_content=content)
     text = get_text(html_blob)
 
     # Divs are converted to 4 whitespaces by inscriptis
@@ -70,10 +70,10 @@ def test_css_filter_output():
 
 
 # Tests the whole stack works with the CSS Filter
-def test_check_markup_css_filter_restriction(client, live_server):
+def test_check_markup_include_filters_restriction(client, live_server):
     sleep_time_for_fetch_thread = 3
 
-    css_filter = "#sametext"
+    include_filters = "#sametext"
 
     set_original_response()
 
@@ -99,7 +99,7 @@ def test_check_markup_css_filter_restriction(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": css_filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"include_filters": include_filters, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -108,7 +108,7 @@ def test_check_markup_css_filter_restriction(client, live_server):
     res = client.get(
         url_for("edit_page", uuid="first"),
     )
-    assert bytes(css_filter.encode('utf-8')) in res.data
+    assert bytes(include_filters.encode('utf-8')) in res.data
 
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
@@ -133,7 +133,7 @@ def test_check_markup_css_filter_restriction(client, live_server):
 def test_check_multiple_filters(client, live_server):
     sleep_time_for_fetch_thread = 3
 
-    css_filter = "#blob-a\r\nxpath://*[contains(@id,'blob-b')]"
+    include_filters = "#blob-a\r\nxpath://*[contains(@id,'blob-b')]"
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("""<html><body>
@@ -161,7 +161,7 @@ def test_check_multiple_filters(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": css_filter,
+        data={"include_filters": include_filters,
               "url": test_url,
               "tag": "",
               "headers": "",

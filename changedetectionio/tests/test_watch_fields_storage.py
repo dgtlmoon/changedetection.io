@@ -22,7 +22,7 @@ def test_check_watch_field_storage(client, live_server):
         url_for("edit_page", uuid="first"),
         data={ "notification_urls": "json://127.0.0.1:30000\r\njson://128.0.0.1\r\n",
                "time_between_check-minutes": 126,
-               "css_filter" : ".fooclass",
+               "include_filters" : ".fooclass",
                "title" : "My title",
                "ignore_text" : "ignore this",
                "url": test_url,

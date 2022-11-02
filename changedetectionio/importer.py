@@ -103,12 +103,12 @@ class import_distill_io_json(Importer):
                     pass
                 except IndexError:
                     pass
-                extras['css_filter'] = []
+                extras['include_filters'] = []
                 try:
                     if d_config['selections'][0]['frames'][0]['includes'][0]['type'] == 'xpath':
-                        extras['css_filter'].append('xpath:' + d_config['selections'][0]['frames'][0]['includes'][0]['expr'])
+                        extras['include_filters'].append('xpath:' + d_config['selections'][0]['frames'][0]['includes'][0]['expr'])
                     else:
-                        extras['css_filter'].append(d_config['selections'][0]['frames'][0]['includes'][0]['expr'])
+                        extras['include_filters'].append(d_config['selections'][0]['frames'][0]['includes'][0]['expr'])
                 except KeyError:
                     pass
                 except IndexError:

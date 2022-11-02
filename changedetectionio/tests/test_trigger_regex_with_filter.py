@@ -49,7 +49,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server):
         url_for("edit_page", uuid="first"),
         data={"trigger_text": "/cool.stuff/",
               "url": test_url,
-              "css_filter": '#in-here',
+              "include_filters": '#in-here',
               "fetch_backend": "html_requests"},
         follow_redirects=True
     )
