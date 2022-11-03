@@ -74,3 +74,7 @@ def test_share_watch(client, live_server):
         url_for("edit_page", uuid="first"),
     )
     assert bytes(include_filters.encode('utf-8')) in res.data
+
+    # Check it saved the URL
+    res = client.get(url_for("index"))
+    assert bytes(test_url.encode('utf-8')) in res.data
