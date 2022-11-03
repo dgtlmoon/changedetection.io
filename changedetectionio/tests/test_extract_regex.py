@@ -88,7 +88,7 @@ def test_check_filter_multiline(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": '',
+        data={"include_filters": '',
               'extract_text': '/something.+?6 billion.+?lines/si',
               "url": test_url,
               "tag": "",
@@ -116,7 +116,7 @@ def test_check_filter_multiline(client, live_server):
 
 def test_check_filter_and_regex_extract(client, live_server):
     sleep_time_for_fetch_thread = 3
-    css_filter = ".changetext"
+    include_filters = ".changetext"
 
     set_original_response()
 
@@ -143,7 +143,7 @@ def test_check_filter_and_regex_extract(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": css_filter,
+        data={"include_filters": include_filters,
               'extract_text': '\d+ online\r\n\d+ guests\r\n/somecase insensitive \d+/i\r\n/somecase insensitive (345\d)/i',
               "url": test_url,
               "tag": "",

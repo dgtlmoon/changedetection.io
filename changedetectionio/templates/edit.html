@@ -174,15 +174,17 @@ User-Agent: wonderbra 1.0") }}
                         </div>
                     </fieldset>
                     <div class="pure-control-group">
-                        {% set field = render_field(form.css_filter,
-                            placeholder=".class-name or #some-id, or other CSS selector rule.",
+                        {% set field = render_field(form.include_filters,
+                            rows=5,
+                            placeholder="#example
+xpath://body/div/span[contains(@class, 'example-class')]",
                             class="m-d")
                         %}
                         {{ field }}
                         {% if '/text()' in  field %}
                           <span class="pure-form-message-inline"><strong>Note!: //text() function does not work where the &lt;element&gt; contains &lt;![CDATA[]]&gt;</strong></span><br/>
                         {% endif %}
-                        <span class="pure-form-message-inline">
+                        <span class="pure-form-message-inline">One rule per line, <i>any</i> rules that matches will be used.<br/>
                     <ul>
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
                         <li>JSON - Limit text to this JSON rule, using either <a href="https://pypi.org/project/jsonpath-ng/" target="new">JSONPath</a> or <a href="https://stedolan.github.io/jq/" target="new">jq</a> (if installed).

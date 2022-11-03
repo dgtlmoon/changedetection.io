@@ -36,7 +36,7 @@ class model(dict):
             'notification_body': None,
             'notification_format': default_notification_format_for_watch,
             'notification_muted': False,
-            'css_filter': '',
+            'include_filters': [],
             'last_error': False,
             'extract_text': [],  # Extract text by regex after filters
             'subtractive_selectors': [],

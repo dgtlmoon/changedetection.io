@@ -7,26 +7,30 @@ from typing import List
 import json
 import re
 
-class FilterNotFoundInResponse(ValueError):
-    def __init__(self, msg):
-        ValueError.__init__(self, msg)
+# HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
+TEXT_FILTER_LIST_LINE_SUFFIX = "<br/>"
 
 class JSONNotFound(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
-
-
+        
 # Given a CSS Rule, and a blob of HTML, return the blob of HTML that matches
-def css_filter(css_filter, html_content):
+def include_filters(include_filters, html_content, append_pretty_line_formatting=False):
     soup = BeautifulSoup(html_content, "html.parser")
     html_block = ""
-    r = soup.select(css_filter, separator="")
-    if len(html_content) > 0 and len(r) == 0:
-        raise FilterNotFoundInResponse(css_filter)
-    for item in r:
-        html_block += str(item)
+    r = soup.select(include_filters, separator="")
 
-    return html_block + "\n"
+    for element in r:
+        # When there's more than 1 match, then add the suffix to separate each line
+        # And where the matched result doesn't include something that will cause Inscriptis to add a newline
+        # (This way each 'match' reliably has a new-line in the diff)
+        # Divs are converted to 4 whitespaces by inscriptis
+        if append_pretty_line_formatting and len(html_block) and not element.name in (['br', 'hr', 'div', 'p']):
+            html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+
+        html_block += str(element)
+
+    return html_block
 
 def subtractive_css_selector(css_selector, html_content):
     soup = BeautifulSoup(html_content, "html.parser")
@@ -42,25 +46,29 @@ def element_removal(selectors: List[str], html_content):
 
 
 # Return str Utf-8 of matched rules
-def xpath_filter(xpath_filter, html_content):
+def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False):
     from lxml import etree, html
 
     tree = html.fromstring(bytes(html_content, encoding='utf-8'))
     html_block = ""
 
     r = tree.xpath(xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'})
-    if len(html_content) > 0 and len(r) == 0:
-        raise FilterNotFoundInResponse(xpath_filter)
-
     #@note: //title/text() wont work where <title>CDATA..
 
     for element in r:
+        # When there's more than 1 match, then add the suffix to separate each line
+        # And where the matched result doesn't include something that will cause Inscriptis to add a newline
+        # (This way each 'match' reliably has a new-line in the diff)
+        # Divs are converted to 4 whitespaces by inscriptis
+        if append_pretty_line_formatting and len(html_block) and (not hasattr( element, 'tag' ) or not element.tag in (['br', 'hr', 'div', 'p'])):
+            html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+
         if type(element) == etree._ElementStringResult:
-            html_block += str(element) + "<br/>"
+            html_block += str(element)
         elif type(element) == etree._ElementUnicodeResult:
-            html_block += str(element) + "<br/>"
+            html_block += str(element)
         else:
-            html_block += etree.tostring(element, pretty_print=True).decode('utf-8') + "<br/>"
+            html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
 
     return html_block
 

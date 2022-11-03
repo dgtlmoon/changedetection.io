@@ -4,7 +4,7 @@ import queue
 import time
 
 from changedetectionio import content_fetcher
-from changedetectionio.html_tools import FilterNotFoundInResponse
+from changedetectionio.fetch_site_status import FilterNotFoundInResponse
 
 # A single update worker
 #
@@ -91,8 +91,8 @@ class update_worker(threading.Thread):
             return
 
         n_object = {'notification_title': 'Changedetection.io - Alert - CSS/xPath filter was not present in the page',
-                    'notification_body': "Your configured CSS/xPath filter of '{}' for {{watch_url}} did not appear on the page after {} attempts, did the page change layout?\n\nLink: {{base_url}}/edit/{{watch_uuid}}\n\nThanks - Your omniscient changedetection.io installation :)\n".format(
-                        watch['css_filter'],
+                    'notification_body': "Your configured CSS/xPath filters of '{}' for {{watch_url}} did not appear on the page after {} attempts, did the page change layout?\n\nLink: {{base_url}}/edit/{{watch_uuid}}\n\nThanks - Your omniscient changedetection.io installation :)\n".format(
+                        ", ".join(watch['include_filters']),
                         threshold),
                     'notification_format': 'text'}
 
@@ -189,7 +189,7 @@ class update_worker(threading.Thread):
                         if not self.datastore.data['watching'].get(uuid):
                             continue
 
-                        err_text = "Warning, filter '{}' not found".format(str(e))
+                        err_text = "Warning, no filters were found, no change detection ran."
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            # So that we get a trigger when the content is added again
                                                                            'previous_md5': ''})

@@ -132,7 +132,7 @@ def set_original_response():
     return None
 
 
-def set_response_with_html():
+def set_json_response_with_html():
     test_return_data = """
     {
       "test": [
@@ -176,7 +176,7 @@ def set_modified_response():
 def test_check_json_without_filter(client, live_server):
     # Request a JSON document from a application/json source containing HTML
     # and be sure it doesn't get chewed up by instriptis
-    set_response_with_html()
+    set_json_response_with_html()
 
     # Give the endpoint time to spin up
     time.sleep(1)
@@ -189,9 +189,6 @@ def test_check_json_without_filter(client, live_server):
         follow_redirects=True
     )
 
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-
     # Give the thread time to pick it up
     time.sleep(3)
 
@@ -200,6 +197,7 @@ def test_check_json_without_filter(client, live_server):
         follow_redirects=True
     )
 
+    # Should still see '"html": "<b>"'
     assert b'&#34;&lt;b&gt;' in res.data
     assert res.data.count(b'{\n') >= 2
 
@@ -221,9 +219,6 @@ def check_json_filter(json_filter, client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-
     # Give the thread time to pick it up
     time.sleep(3)
 
@@ -231,7 +226,7 @@ def check_json_filter(json_filter, client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": json_filter,
+        data={"include_filters": json_filter,
               "url": test_url,
               "tag": "",
               "headers": "",
@@ -246,9 +241,6 @@ def check_json_filter(json_filter, client, live_server):
         url_for("edit_page", uuid="first"),
     )
     assert bytes(escape(json_filter).encode('utf-8')) in res.data
-
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(3)
@@ -301,7 +293,7 @@ def check_json_filter_bool_val(json_filter, client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": json_filter,
+        data={"include_filters": json_filter,
               "url": test_url,
               "tag": "",
               "headers": "",
@@ -310,11 +302,6 @@ def check_json_filter_bool_val(json_filter, client, live_server):
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-
-    time.sleep(3)
-
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(3)
@@ -360,9 +347,6 @@ def check_json_ext_filter(json_filter, client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-
     # Give the thread time to pick it up
     time.sleep(3)
 
@@ -370,7 +354,7 @@ def check_json_ext_filter(json_filter, client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": json_filter,
+        data={"include_filters": json_filter,
               "url": test_url,
               "tag": "",
               "headers": "",
@@ -385,9 +369,6 @@ def check_json_ext_filter(json_filter, client, live_server):
         url_for("edit_page", uuid="first"),
     )
     assert bytes(escape(json_filter).encode('utf-8')) in res.data
-
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(3)

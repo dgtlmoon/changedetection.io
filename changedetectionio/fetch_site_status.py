@@ -10,6 +10,12 @@ from changedetectionio import content_fetcher, html_tools
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+class FilterNotFoundInResponse(ValueError):
+    def __init__(self, msg):
+        ValueError.__init__(self, msg)
+
+
+
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
 class perform_site_check():
@@ -104,7 +110,7 @@ class perform_site_check():
         if watch['webdriver_js_execute_code'] is not None and watch['webdriver_js_execute_code'].strip():
             fetcher.webdriver_js_execute_code = watch['webdriver_js_execute_code']
 
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch['css_filter'])
+        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch['include_filters'])
         fetcher.quit()
 
         self.screenshot = fetcher.screenshot
@@ -128,25 +134,26 @@ class perform_site_check():
             is_html = False
             is_json = False
 
-        css_filter_rule = watch['css_filter']
+        include_filters_rule = watch['include_filters']
         subtractive_selectors = watch.get(
             "subtractive_selectors", []
         ) + self.datastore.data["settings"]["application"].get(
             "global_subtractive_selectors", []
         )
 
-        has_filter_rule = css_filter_rule and len(css_filter_rule.strip())
+        has_filter_rule = include_filters_rule and len("".join(include_filters_rule).strip())
         has_subtractive_selectors = subtractive_selectors and len(subtractive_selectors[0].strip())
 
         if is_json and not has_filter_rule:
-            css_filter_rule = "json:$"
+            include_filters_rule.append("json:$")
             has_filter_rule = True
 
         if has_filter_rule:
             json_filter_prefixes = ['json:', 'jq:']
-            if any(prefix in css_filter_rule for prefix in json_filter_prefixes):
-                stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, json_filter=css_filter_rule)
-                is_html = False
+            for filter in include_filters_rule:
+                if any(prefix in filter for prefix in json_filter_prefixes):
+                    stripped_text_from_html += html_tools.extract_json_as_string(content=fetcher.content, json_filter=filter)
+                    is_html = False
 
         if is_html or is_source:
             
@@ -161,18 +168,28 @@ class perform_site_check():
             else:
                 # Then we assume HTML
                 if has_filter_rule:
-                    # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
-                    if css_filter_rule[0] == '/' or css_filter_rule.startswith('xpath:'):
-                        html_content = html_tools.xpath_filter(xpath_filter=css_filter_rule.replace('xpath:', ''),
-                                                               html_content=fetcher.content)
-                    else:
-                        # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-                        html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
+                    html_content = ""
+                    for filter_rule in include_filters_rule:
+                        # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
+                        if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
+                            html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
+                                                                    html_content=fetcher.content,
+                                                                    append_pretty_line_formatting=not is_source)
+                        else:
+                            # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+                            html_content += html_tools.include_filters(include_filters=filter_rule,
+                                                                  html_content=fetcher.content,
+                                                                  append_pretty_line_formatting=not is_source)
+
+                    if not html_content.strip():
+                        raise FilterNotFoundInResponse(include_filters_rule)
 
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)
 
-                if not is_source:
+                if is_source:
+                    stripped_text_from_html = html_content
+                else:
                     # extract text
                     stripped_text_from_html = \
                         html_tools.html_to_text(
@@ -181,9 +198,6 @@ class perform_site_check():
                                 "application"].get(
                                 "render_anchor_tag_content", False)
                         )
-
-                elif is_source:
-                    stripped_text_from_html = html_content
 
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')

@@ -82,8 +82,13 @@ class ChangeDetectionStore:
         except (FileNotFoundError, json.decoder.JSONDecodeError):
             if include_default_watches:
                 print("Creating JSON store at", self.datastore_path)
-                self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
-                self.add_watch(url='https://changedetection.io/CHANGELOG.txt', tag='changedetection.io')
+                self.add_watch(url='https://news.ycombinator.com/',
+                               tag='Tech news',
+                               extras={'fetch_backend': 'html_requests'})
+
+                self.add_watch(url='https://changedetection.io/CHANGELOG.txt',
+                               tag='changedetection.io',
+                               extras={'fetch_backend': 'html_requests'})
 
         self.__data['version_tag'] = version_tag
 
@@ -267,7 +272,7 @@ class ChangeDetectionStore:
             extras = {}
         # should always be str
         if tag is None or not tag:
-            tag=''
+            tag = ''
 
         # Incase these are copied across, assume it's a reference and deepcopy()
         apply_extras = deepcopy(extras)
@@ -282,17 +287,31 @@ class ChangeDetectionStore:
                 res = r.json()
 
                 # List of permissible attributes we accept from the wild internet
-                for k in ['url', 'tag',
-                          'paused', 'title',
-                          'previous_md5', 'headers',
-                          'body', 'method',
-                          'ignore_text', 'css_filter',
-                          'subtractive_selectors', 'trigger_text',
-                          'extract_title_as_title', 'extract_text',
-                          'text_should_not_be_present',
-                          'webdriver_js_execute_code']:
+                for k in [
+                    'body',
+                    'css_filter',
+                    'extract_text',
+                    'extract_title_as_title',
+                    'headers',
+                    'ignore_text',
+                    'include_filters',
+                    'method',
+                    'paused',
+                    'previous_md5',
+                    'subtractive_selectors',
+                    'tag',
+                    'text_should_not_be_present',
+                    'title',
+                    'trigger_text',
+                    'webdriver_js_execute_code',
+                    'url',
+                ]:
                     if res.get(k):
-                        apply_extras[k] = res[k]
+                        if k != 'css_filter':
+                            apply_extras[k] = res[k]
+                        else:
+                            # We renamed the field and made it a list
+                            apply_extras['include_filters'] = [res['css_filter']]
 
             except Exception as e:
                 logging.error("Error fetching metadata for shared watch link", url, str(e))
@@ -315,12 +334,13 @@ class ChangeDetectionStore:
                     del apply_extras[k]
 
             new_watch.update(apply_extras)
-            self.__data['watching'][new_uuid]=new_watch
+            self.__data['watching'][new_uuid] = new_watch
 
         self.__data['watching'][new_uuid].ensure_data_dir_exists()
 
         if write_to_disk_now:
             self.sync_to_json()
+
         return new_uuid
 
     def visualselector_data_is_ready(self, watch_uuid):
@@ -584,3 +604,14 @@ class ChangeDetectionStore:
         for v in ['User-Agent', 'Accept', 'Accept-Encoding', 'Accept-Language']:
             if self.data['settings']['headers'].get(v):
                 del self.data['settings']['headers'][v]
+
+    # Convert filters to a list of filters css_filter -> include_filters
+    def update_8(self):
+        for uuid, watch in self.data['watching'].items():
+            try:
+                existing_filter = watch.get('css_filter', '')
+                if existing_filter:
+                    watch['include_filters'] = [existing_filter]
+            except:
+                continue
+        return

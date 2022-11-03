@@ -14,7 +14,7 @@ def test_share_watch(client, live_server):
     live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
-    css_filter = ".nice-filter"
+    include_filters = ".nice-filter"
 
     # Add our URL to the import page
     res = client.post(
@@ -29,7 +29,7 @@ def test_share_watch(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": css_filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"include_filters": include_filters, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -37,7 +37,7 @@ def test_share_watch(client, live_server):
     res = client.get(
         url_for("edit_page", uuid="first"),
     )
-    assert bytes(css_filter.encode('utf-8')) in res.data
+    assert bytes(include_filters.encode('utf-8')) in res.data
 
     # click share the link
     res = client.get(
@@ -73,4 +73,8 @@ def test_share_watch(client, live_server):
     res = client.get(
         url_for("edit_page", uuid="first"),
     )
-    assert bytes(css_filter.encode('utf-8')) in res.data
+    assert bytes(include_filters.encode('utf-8')) in res.data
+
+    # Check it saved the URL
+    res = client.get(url_for("index"))
+    assert bytes(test_url.encode('utf-8')) in res.data

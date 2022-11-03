@@ -50,7 +50,7 @@ $(document).ready(function() {
         state_clicked=false;
         ctx.clearRect(0, 0, c.width, c.height);
         xctx.clearRect(0, 0, c.width, c.height);
-        $("#css_filter").val('');
+        $("#include_filters").val('');
     });
 
 
@@ -68,7 +68,7 @@ $(document).ready(function() {
                xctx = c.getContext("2d");
                 // redline highlight context
                ctx = c.getContext("2d");
-               current_default_xpath =$("#css_filter").val();
+               current_default_xpath =$("#include_filters").val();
                fetch_data();
                $('#selector-canvas').off("mousemove mousedown");
                // screenshot_url defined in the edit.html template
@@ -205,9 +205,9 @@ $(document).ready(function() {
         var sel = selector_data['size_pos'][current_selected_i];
         if (sel[0] == '/') {
         // @todo - not sure just checking / is right
-            $("#css_filter").val('xpath:'+sel.xpath);
+            $("#include_filters").val('xpath:'+sel.xpath);
         } else {
-            $("#css_filter").val(sel.xpath);
+            $("#include_filters").val(sel.xpath);
         }
         xctx.fillStyle = 'rgba(205,205,205,0.95)';
         xctx.strokeStyle = 'rgba(225,0,0,0.9)';
