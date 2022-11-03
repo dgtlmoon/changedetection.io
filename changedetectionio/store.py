@@ -287,17 +287,31 @@ class ChangeDetectionStore:
                 res = r.json()
 
                 # List of permissible attributes we accept from the wild internet
-                for k in ['url', 'tag',
-                          'paused', 'title',
-                          'previous_md5', 'headers',
-                          'body', 'method',
-                          'ignore_text', 'include_filters',
-                          'subtractive_selectors', 'trigger_text',
-                          'extract_title_as_title', 'extract_text',
-                          'text_should_not_be_present',
-                          'webdriver_js_execute_code']:
+                for k in [
+                    'body',
+                    'css_filter',
+                    'extract_text',
+                    'extract_title_as_title',
+                    'headers',
+                    'ignore_text',
+                    'include_filters',
+                    'method',
+                    'paused',
+                    'previous_md5',
+                    'subtractive_selectors',
+                    'tag',
+                    'text_should_not_be_present',
+                    'title',
+                    'trigger_text',
+                    'webdriver_js_execute_code'
+                    'url',
+                ]:
                     if res.get(k):
-                        apply_extras[k] = res[k]
+                        if k != 'css_filter':
+                            apply_extras[k] = res[k]
+                        else:
+                            # We renamed the field and made it a list
+                            apply_extras['include_filters'] = [res['css_filter']]
 
             except Exception as e:
                 logging.error("Error fetching metadata for shared watch link", url, str(e))
