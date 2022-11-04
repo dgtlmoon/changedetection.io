@@ -23,24 +23,25 @@ class model(dict):
                     'proxy': None # Preferred proxy connection
                 },
                 'application': {
+                    # Custom notification content
                     'api_access_token_enabled': True,
-                    'password': False,
                     'base_url' : None,
-                    'extract_title_as_title': False,
                     'empty_pages_are_a_change': False,
+                    'extract_title_as_title': False,
                     'fetch_backend': getenv("DEFAULT_FETCH_BACKEND", "html_requests"),
                     'filter_failure_notification_threshold_attempts': _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT,
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
                     'global_subtractive_selectors': [],
                     'ignore_whitespace': True,
-                    'render_anchor_tag_content': False,
-                    'notification_urls': [], # Apprise URL list
-                    # Custom notification content
-                    'notification_title': default_notification_title,
                     'notification_body': default_notification_body,
                     'notification_format': default_notification_format,
+                    'notification_title': default_notification_title,
+                    'notification_urls': [], # Apprise URL list
+                    'password': False,
+                    'render_anchor_tag_content': False,
                     'schema_version' : 0,
-                    'webdriver_delay': None  # Extra delay in seconds before extracting text
+                    'timezone': None,
+                    'webdriver_delay': None,  # Extra delay in seconds before extracting text
                 }
             }
         }

@@ -1441,7 +1441,7 @@ def ticker_thread_check_time_launch_checks():
                 if not watch.is_schedule_permitted:
                     # Skip if the schedule (day of week and time) isnt permitted
                     continue
-                
+
                 if not uuid in running_uuids and uuid not in [q_uuid for p,q_uuid in update_q.queue]:
                     # Proxies can be set to have a limit on seconds between which they can be called
                     watch_proxy = datastore.get_preferred_proxy_for_watch(uuid=uuid)

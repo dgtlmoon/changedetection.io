@@ -1,5 +1,5 @@
 import re
-
+import pytz
 from wtforms import (
     BooleanField,
     Field,
@@ -407,7 +407,6 @@ class watchForm(commonSettingsForm):
 
         return result
 
-
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     time_between_check = FormField(TimeBetweenCheckForm)
@@ -420,21 +419,21 @@ class globalSettingsRequestForm(Form):
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
 
-    base_url = StringField('Base URL', validators=[validators.Optional()])
-    global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
-    global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
-    ignore_whitespace = BooleanField('Ignore whitespace')
-    removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
-    empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
-    render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
-    fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     api_access_token_enabled = BooleanField('API access token security check enabled', default=True, validators=[validators.Optional()])
-    password = SaltyPasswordField()
-
+    base_url = StringField('Base URL', validators=[validators.Optional()])
+    empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
+    fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     filter_failure_notification_threshold_attempts = IntegerField('Number of times the filter can be missing before sending a notification',
                                                                   render_kw={"style": "width: 5em;"},
                                                                   validators=[validators.NumberRange(min=0,
                                                                                                      message="Should contain zero or more attempts")])
+    global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
+    global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
+    ignore_whitespace = BooleanField('Ignore whitespace')
+    password = SaltyPasswordField()
+    removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
+    render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
+    timezone = SelectField('Timezone', choices=pytz.all_timezones)
 
 
 class globalSettingsForm(Form):
