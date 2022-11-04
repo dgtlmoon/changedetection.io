@@ -387,28 +387,22 @@ class watchForm(commonSettingsForm):
     url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional()], default='')
 
+    body = TextAreaField('Request body', [validators.Optional()])
+    check_unique_lines = BooleanField('Only trigger when new lines appear', default=False)
+    extract_text = StringListField('Extract text', [ValidateListRegex()])
+    headers = StringDictKeyValue('Request headers')
+    ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
+    ignore_text = StringListField('Ignore text', [ValidateListRegex()])
+    include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
+    method = SelectField('Request method', choices=valid_method, default=default_method)
+    subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
+    text_should_not_be_present = StringListField('Block change-detection if text matches', [validators.Optional(), ValidateListRegex()])
     time_between_check = FormField(TimeBetweenCheckForm)
     time_schedule_check_limit = FormField(TimeScheduleCheckLimitForm)
-
-    include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
-
-    subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
-
-    extract_text = StringListField('Extract text', [ValidateListRegex()])
-
+    time_use_system_default = BooleanField('Use system/default check time', default=False, validators=[validators.Optional()])
     title = StringField('Title', default='')
-
-    ignore_text = StringListField('Ignore text', [ValidateListRegex()])
-    headers = StringDictKeyValue('Request headers')
-    body = TextAreaField('Request body', [validators.Optional()])
-    method = SelectField('Request method', choices=valid_method, default=default_method)
-    ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
-    check_unique_lines = BooleanField('Only trigger when new lines appear', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
-    text_should_not_be_present = StringListField('Block change-detection if text matches', [validators.Optional(), ValidateListRegex()])
-
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
-
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
 
     proxy = RadioField('Proxy')

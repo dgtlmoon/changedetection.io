@@ -51,9 +51,12 @@
                         <span class="pure-form-message-inline">Organisational tag/group name used in the main listing page</span>
                     </div>
                     <div class="pure-control-group">
+                        {{ render_checkbox_field(form.time_use_system_default) }}
+                        <div style="opacity: 0.5">
                         {{ render_field(form.time_between_check, class="time-check-widget") }}
                         {{ render_field(form.time_schedule_check_limit, class="time-schedule-check-limit-widget") }}
 @todo - add 'use default' checkbox
+                        </div>
                         {% if has_empty_checktime %}
                         {% endif %}
 
