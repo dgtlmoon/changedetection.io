@@ -623,8 +623,6 @@ def changedetection_app(config=None, datastore_o=None):
 
             visualselector_data_is_ready = datastore.visualselector_data_is_ready(uuid)
 
-
-
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and default['fetch_backend'] == 'html_webdriver'
 

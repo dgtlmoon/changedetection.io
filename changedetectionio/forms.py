@@ -103,21 +103,16 @@ class MultiCheckboxDayOfWeekField(SelectMultipleField):
     widget = widgets.ListWidget(prefix_label=False)
     option_widget = widgets.CheckboxInput()
 
-    def _choices_generator(self, choices):
-        _choices = []
-        i=0
-        for d in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']:
-            _choices.append((i, d))
-            i += 1
-
-        for value, label in _choices:
-            selected = self.data is not None and self.coerce(value) in self.data
-            yield (value, label, selected)
-
 class TimeScheduleCheckLimitForm(Form):
-    day_of_week = MultiCheckboxDayOfWeekField('',coerce=int)
-    from_time = TimeField('From')
-    until_time = TimeField('Until')
+    # @todo must be a better python way todo this c/i list
+    c=[]
+    i=0
+    for d in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']:
+        c.append((i, d))
+        i+=1
+    day_of_week = MultiCheckboxDayOfWeekField('',coerce=int, choices=c)
+    from_time = TimeField('From', validators=[validators.Optional()])
+    until_time = TimeField('Until', validators=[validators.Optional()])
 
 # Separated by  key:value
 class StringDictKeyValue(StringField):
