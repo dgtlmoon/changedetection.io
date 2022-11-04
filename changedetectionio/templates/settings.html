@@ -21,6 +21,7 @@
             <li class="tab"><a href="#fetching">Fetching</a></li>
             <li class="tab"><a href="#filters">Global Filters</a></li>
             <li class="tab"><a href="#api">API</a></li>
+            <li class="tab"><a href="#date-time">Date / Time</a></li>
         </ul>
     </div>
     <div class="box-wrap inner">
@@ -92,7 +93,6 @@
                     </div>
                 </fieldset>
             </div>
-
             <div class="tab-pane-inner" id="fetching">
                 <div class="pure-control-group inline-radio">
                     {{ render_field(form.application.form.fetch_backend, class="fetch-backend") }}
@@ -170,6 +170,14 @@ nav
                         <span style="display:none;" id="api-key-copy" >copy</span>
                     </div>
                 </div>
+            </div>
+            <div class="tab-pane-inner" id="date-time">
+                <fieldset>
+                    <div class="field-group">
+                        Current Date / Time and timezone is <br/>
+                        Select your timezone name<br/>
+                    </div>
+                </fieldset>
             </div>
 
             <div id="actions">
