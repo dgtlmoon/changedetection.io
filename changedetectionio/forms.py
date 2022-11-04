@@ -114,6 +114,25 @@ class TimeScheduleCheckLimitForm(Form):
     from_time = TimeField('From', validators=[validators.Optional()])
     until_time = TimeField('Until', validators=[validators.Optional()])
 
+    def validate(self, **kwargs):
+        if not super().validate():
+            return False
+
+        result = True
+
+        f = self.data.get('from_time')
+        u = self.data.get('until_time')
+        if f and u:
+            import time
+            f = time.strptime(str(f), '%H:%M:%S')
+            u = time.strptime(str(u), '%H:%M:%S')
+            if f >= u:
+                #@todo doesnt present
+                self.from_time.errors.append('From time must be LESS than the until/end time')
+                result = False
+
+        return result
+
 # Separated by  key:value
 class StringDictKeyValue(StringField):
     widget = widgets.TextArea()
