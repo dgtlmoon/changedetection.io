@@ -677,6 +677,28 @@ ul {
         }
     }
 }
+.pure-control-group table  label {
+  color: #333;
+  font-weight: normal;
+}
+
+.time-schedule-check-limit-widget {
+  tr {
+    display: inline-block;
+  }
+
+  li {
+    text-decoration: none;
+  }
+
+  ul {
+    li {
+      display: inline-block;
+      width: 3em;
+    }
+  }
+}
+
 
 #selector-wrapper {
  height: 600px;

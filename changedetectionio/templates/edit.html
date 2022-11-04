@@ -52,13 +52,11 @@
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.time_between_check, class="time-check-widget") }}
+                        {{ render_field(form.time_schedule_check_limit, class="time-schedule-check-limit-widget") }}
+@todo - add 'use default' checkbox
                         {% if has_empty_checktime %}
-                        <span class="pure-form-message-inline">Currently using the <a
-                                href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>, change to another value if you want to be specific.</span>
-                        {% else %}
-                        <span class="pure-form-message-inline">Set to blank to use the <a
-                                href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>.</span>
                         {% endif %}
+
                     </div>
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.extract_title_as_title) }}

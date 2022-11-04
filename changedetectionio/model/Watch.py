@@ -52,6 +52,7 @@ class model(dict):
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
+            'time_schedule_check_limit': {'day_of_week': [1,1,1,1,1,1,1], 'time_from': '', 'time_until': ''},
             'webdriver_delay': None,
             'webdriver_js_execute_code': None, # Run before change-detection
         }

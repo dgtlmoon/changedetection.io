@@ -8,9 +8,11 @@ from wtforms import (
     PasswordField,
     RadioField,
     SelectField,
+    SelectMultipleField,
     StringField,
     SubmitField,
     TextAreaField,
+    TimeField,
     fields,
     validators,
     widgets,
@@ -96,6 +98,26 @@ class TimeBetweenCheckForm(Form):
     minutes = IntegerField('Minutes', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
     seconds = IntegerField('Seconds', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
     # @todo add total seconds minimum validatior = minimum_seconds_recheck_time
+
+class MultiCheckboxDayOfWeekField(SelectMultipleField):
+    widget = widgets.ListWidget(prefix_label=False)
+    option_widget = widgets.CheckboxInput()
+
+    def _choices_generator(self, choices):
+        _choices = []
+        i=0
+        for d in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']:
+            _choices.append((i, d))
+            i += 1
+
+        for value, label in _choices:
+            selected = self.data is not None and self.coerce(value) in self.data
+            yield (value, label, selected)
+
+class TimeScheduleCheckLimitForm(Form):
+    day_of_week = MultiCheckboxDayOfWeekField('',coerce=int)
+    from_time = TimeField('From')
+    until_time = TimeField('Until')
 
 # Separated by  key:value
 class StringDictKeyValue(StringField):
@@ -348,6 +370,7 @@ class watchForm(commonSettingsForm):
     tag = StringField('Group tag', [validators.Optional()], default='')
 
     time_between_check = FormField(TimeBetweenCheckForm)
+    time_schedule_check_limit = FormField(TimeScheduleCheckLimitForm)
 
     include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
 
@@ -393,6 +416,7 @@ class watchForm(commonSettingsForm):
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     time_between_check = FormField(TimeBetweenCheckForm)
+    time_schedule_check_limit = FormField(TimeScheduleCheckLimitForm)
     proxy = RadioField('Proxy')
     jitter_seconds = IntegerField('Random jitter seconds ± check',
                                   render_kw={"style": "width: 5em;"},

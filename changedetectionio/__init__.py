@@ -566,23 +566,12 @@ def changedetection_app(config=None, datastore_o=None):
             for p in datastore.proxy_list:
                 form.proxy.choices.append(tuple((p, datastore.proxy_list[p]['label'])))
 
-
         if request.method == 'POST' and form.validate():
             extra_update_obj = {}
 
             if request.args.get('unpause_on_save'):
                 extra_update_obj['paused'] = False
 
-            # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
-            # Assume we use the default value, unless something relevant is different, then use the form value
-            # values could be None, 0 etc.
-            # Set to None unless the next for: says that something is different
-            extra_update_obj['time_between_check'] = dict.fromkeys(form.time_between_check.data)
-            for k, v in form.time_between_check.data.items():
-                if v and v != datastore.data['settings']['requests']['time_between_check'][k]:
-                    extra_update_obj['time_between_check'] = form.time_between_check.data
-                    using_default_check_time = False
-                    break
 
             # Use the default if its the same as system wide
             if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
@@ -633,6 +622,8 @@ def changedetection_app(config=None, datastore_o=None):
                 flash("An error occurred, please see below.", "error")
 
             visualselector_data_is_ready = datastore.visualselector_data_is_ready(uuid)
+
+
 
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and default['fetch_backend'] == 'html_webdriver'

@@ -132,7 +132,7 @@ body:after, body:before {
 
 .fetch-error {
   padding-top: 1em;
-  font-size: 60%;
+  font-size: 80%;
   max-width: 400px;
   display: block; }
 
@@ -479,6 +479,20 @@ ul {
   display: inline; }
   .time-check-widget tr input[type="number"] {
     width: 5em; }
+
+.pure-control-group table label {
+  color: #333;
+  font-weight: normal; }
+
+.time-schedule-check-limit-widget tr {
+  display: inline-block; }
+
+.time-schedule-check-limit-widget li {
+  text-decoration: none; }
+
+.time-schedule-check-limit-widget ul li {
+  display: inline-block;
+  width: 3em; }
 
 #selector-wrapper {
   height: 600px;
