@@ -131,6 +131,10 @@ class TimeScheduleCheckLimitForm(Form):
                 self.from_time.errors.append('From time must be LESS than the until/end time')
                 result = False
 
+        if len(self.data.get('day_of_week', [])) == 0:
+            self.day_of_week.errors.append('No day selected')
+            result = False
+
         return result
 
 # Separated by  key:value
