@@ -490,9 +490,11 @@ ul {
 .time-schedule-check-limit-widget li {
   text-decoration: none; }
 
-.time-schedule-check-limit-widget ul li {
-  display: inline-block;
-  width: 3em; }
+.time-schedule-check-limit-widget ul {
+  padding-left: 0px; }
+  .time-schedule-check-limit-widget ul li {
+    display: inline-block;
+    width: 3em; }
 
 #selector-wrapper {
   height: 600px;
