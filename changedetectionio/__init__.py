@@ -1437,8 +1437,12 @@ def ticker_thread_check_time_launch_checks():
             seconds_since_last_recheck = now - watch['last_checked']
 
             if seconds_since_last_recheck >= (threshold + watch.jitter_seconds) and seconds_since_last_recheck >= recheck_time_minimum_seconds:
-                if not uuid in running_uuids and uuid not in [q_uuid for p,q_uuid in update_q.queue]:
 
+                if not watch.is_schedule_permitted:
+                    # Skip if the schedule (day of week and time) isnt permitted
+                    continue
+                
+                if not uuid in running_uuids and uuid not in [q_uuid for p,q_uuid in update_q.queue]:
                     # Proxies can be set to have a limit on seconds between which they can be called
                     watch_proxy = datastore.get_preferred_proxy_for_watch(uuid=uuid)
                     if watch_proxy and watch_proxy in list(datastore.proxy_list.keys()):

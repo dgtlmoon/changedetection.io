@@ -52,7 +52,7 @@ class model(dict):
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
-            'time_schedule_check_limit': {'day_of_week': [1,1,1,1,1,1,1], 'time_from': '', 'time_until': ''},
+            'time_schedule_check_limit': {'day_of_week': [0, 1, 2, 3, 4, 5, 6], 'time_from': '', 'time_until': ''},
             'webdriver_delay': None,
             'webdriver_js_execute_code': None, # Run before change-detection
         }
@@ -227,6 +227,11 @@ class model(dict):
             if x:
                 seconds += x * n
         return seconds
+
+    def is_schedule_permitted(self):
+        """According to the current day of week and time, is this watch queueable?"""
+
+        return True
 
     # Iterate over all history texts and see if something new exists
     def lines_contain_something_unique_compared_to_history(self, lines: list):

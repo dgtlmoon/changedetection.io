@@ -17,6 +17,7 @@ class model(dict):
                 'requests': {
                     'timeout': int(getenv("DEFAULT_SETTINGS_REQUESTS_TIMEOUT", "45")),  # Default 45 seconds
                     'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
+                    'time_schedule_check_limit': {'day_of_week': [0, 1, 2, 3, 4, 5, 6], 'time_from': '', 'time_until': ''},
                     'jitter_seconds': 0,
                     'workers': int(getenv("DEFAULT_SETTINGS_REQUESTS_WORKERS", "10")),  # Number of threads, lower is better for slow connections
                     'proxy': None # Preferred proxy connection
