@@ -102,8 +102,8 @@ def main():
                     has_password=datastore.data['settings']['application']['password'] != False
                     )
 
-    # Monitored websites will not receive a Referer header
-    # when a user clicks on an outgoing link.
+    # Monitored websites will not receive a Referer header when a user clicks on an outgoing link.
+    # @Note: Incompatible with password login (and maybe other features) for now, submit a PR!
     @app.after_request
     def hide_referrer(response):
         if os.getenv("HIDE_REFERER", False):
