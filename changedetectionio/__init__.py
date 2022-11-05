@@ -721,13 +721,19 @@ def changedetection_app(config=None, datastore_o=None):
             else:
                 flash("An error occurred, please see below.", "error")
 
+        import datetime
+        datetime = datetime.datetime.now(pytz.timezone(datastore.data['settings']['application'].get('timezone')))
+
         output = render_template("settings.html",
-                                 form=form,
-                                 current_base_url = datastore.data['settings']['application']['base_url'],
-                                 hide_remove_pass=os.getenv("SALTED_PASS", False),
                                  api_key=datastore.data['settings']['application'].get('api_access_token'),
+                                 current_base_url=datastore.data['settings']['application']['base_url'],
+                                 datetime=str(datetime),
                                  emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
-                                 settings_application=datastore.data['settings']['application'])
+                                 form=form,
+                                 hide_remove_pass=os.getenv("SALTED_PASS", False),
+                                 settings_application=datastore.data['settings']['application'],
+                                 timezone=datastore.data['settings']['application'].get('timezone')
+                                 )
 
         return output
 

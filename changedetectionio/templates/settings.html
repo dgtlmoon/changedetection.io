@@ -175,7 +175,12 @@ nav
                 <fieldset>
                     <div class="field-group">
                         {{ render_field(form.application.form.timezone) }}
-                        Current Date / Time and timezone is <br/>
+                    </div>
+                    <div class="field-group">
+                        <p>
+                        <label>Local time</label> {{ datetime }}<br/>
+                        <label>Configured timezone:</label> {{ timezone }}<br/>
+                        </p>
                     </div>
                 </fieldset>
             </div>

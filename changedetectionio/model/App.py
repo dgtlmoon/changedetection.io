@@ -40,7 +40,7 @@ class model(dict):
                     'password': False,
                     'render_anchor_tag_content': False,
                     'schema_version' : 0,
-                    'timezone': None,
+                    'timezone': 'UTC',
                     'webdriver_delay': None,  # Extra delay in seconds before extracting text
                 }
             }
