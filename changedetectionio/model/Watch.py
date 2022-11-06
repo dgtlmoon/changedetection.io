@@ -16,43 +16,44 @@ class model(dict):
     __newest_history_key = None
     __history_n=0
     __base_config = {
-            'url': None,
-            'tag': None,
-            'last_checked': 0,
-            'paused': False,
-            'last_viewed': 0,  # history key value of the last viewed via the [diff] link
-            #'newest_history_key': 0,
-            'title': None,
-            'previous_md5': False,
-            'uuid': str(uuid.uuid4()),
-            'headers': {},  # Extra headers to send
+            #'history': {},  # Dict of timestamp and output stripped filename (removed)
+            #'newest_history_key': 0, (removed, taken from history.txt index)
             'body': None,
-            'method': 'GET',
-            #'history': {},  # Dict of timestamp and output stripped filename
+            'check_unique_lines': False, # On change-detected, compare against all history if its something new
+            'check_count': 0,
+            'consecutive_filter_failures': 0, # Every time the CSS/xPath filter cannot be located, reset when all is fine.
+            'extract_text': [],  # Extract text by regex after filters
+            'extract_title_as_title': False,
+            'fetch_backend': None,
+            'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
+            'headers': {},  # Extra headers to send
             'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
-            # Custom notification content
-            'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
-            'notification_title': None,
+            'include_filters': [],
+            'last_checked': 0,
+            'last_error': False,
+            'last_viewed': 0,  # history key value of the last viewed via the [diff] link
+            'method': 'GET',
+             # Custom notification content
             'notification_body': None,
             'notification_format': default_notification_format_for_watch,
             'notification_muted': False,
-            'include_filters': [],
-            'last_error': False,
-            'extract_text': [],  # Extract text by regex after filters
-            'subtractive_selectors': [],
-            'trigger_text': [],  # List of text or regex to wait for until a change is detected
-            'text_should_not_be_present': [], # Text that should not present
-            'fetch_backend': None,
-            'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
-            'consecutive_filter_failures': 0, # Every time the CSS/xPath filter cannot be located, reset when all is fine.
-            'extract_title_as_title': False,
-            'check_unique_lines': False, # On change-detected, compare against all history if its something new
+            'notification_title': None,
+            'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
+            'paused': False,
+            'previous_md5': False,
             'proxy': None, # Preferred proxy connection
+            'subtractive_selectors': [],
+            'tag': None,
+            'text_should_not_be_present': [], # Text that should not present
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
             'time_schedule_check_limit': {'day_of_week': [0, 1, 2, 3, 4, 5, 6], 'time_from': '', 'time_until': ''},
+            'title': None,
+            'trigger_text': [],  # List of text or regex to wait for until a change is detected
+            'url': None,
+            'uuid': str(uuid.uuid4()),
             'webdriver_delay': None,
             'webdriver_js_execute_code': None, # Run before change-detection
         }
