@@ -134,7 +134,8 @@ class perform_site_check():
             is_html = False
             is_json = False
 
-        include_filters_rule = watch['include_filters']
+        include_filters_rule = watch.get('include_filters', [])
+        #include_filters_rule = watch['include_filters']
         subtractive_selectors = watch.get(
             "subtractive_selectors", []
         ) + self.datastore.data["settings"]["application"].get(
