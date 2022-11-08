@@ -43,7 +43,7 @@ class perform_site_check():
         changed_detected = False
         screenshot = False  # as bytes
         stripped_text_from_html = ""
-        
+
         # DeepCopy so we can be sure we don't accidently change anything by reference
         watch = deepcopy(self.datastore.data['watching'].get(uuid))
 
@@ -62,7 +62,7 @@ class perform_site_check():
         extra_headers = watch.get('headers', [])
 
         # Tweak the base config with the per-watch ones
-        request_headers = self.datastore.data['settings']['headers'].copy()
+        request_headers = deepcopy(self.datastore.data['settings']['headers'])
         request_headers.update(extra_headers)
 
         # https://github.com/psf/requests/issues/4525
@@ -71,7 +71,7 @@ class perform_site_check():
         if 'Accept-Encoding' in request_headers and "br" in request_headers['Accept-Encoding']:
             request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
 
-        timeout = self.datastore.data['settings']['requests'].get('timeout').copy()
+        timeout = self.datastore.data['settings']['requests'].get('timeout')
 
         url = watch.link
 
@@ -102,7 +102,7 @@ class perform_site_check():
         fetcher = klass(proxy_override=proxy_url)
 
         # Configurable per-watch or global extra delay before extracting text (for webDriver types)
-        system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None).copy()
+        system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
         if watch['webdriver_delay'] is not None:
             fetcher.render_extract_delay = watch.get('webdriver_delay')
         elif system_webdriver_delay is not None:
@@ -204,7 +204,7 @@ class perform_site_check():
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 
         # Treat pages with no renderable text content as a change? No by default
-        empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False).copy()
+        empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
         if not is_json and not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
             raise content_fetcher.ReplyWithContentButNoText(url=url, status_code=fetcher.get_last_status_code(), screenshot=screenshot)
 
@@ -247,7 +247,7 @@ class perform_site_check():
                 text_content_before_ignored_filter = stripped_text_from_html
 
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
-        if self.datastore.data['settings']['application'].get('ignore_whitespace', False).copy():
+        if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
             fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
         else:
             fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
