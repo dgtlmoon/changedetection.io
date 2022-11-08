@@ -76,7 +76,7 @@ def run_filter_test(client, content_filter):
         "title": "my title",
         "headers": "",
         "filter_failure_notification_send": 'y',
-        "css_filter": content_filter,
+        "include_filters": content_filter,
         "fetch_backend": "html_requests"})
 
     res = client.post(
@@ -95,7 +95,7 @@ def run_filter_test(client, content_filter):
         time.sleep(3)
 
     # We should see something in the frontend
-    assert b'Warning, filter' in res.data
+    assert b'Warning, no filters were found' in res.data
 
     # Now it should exist and contain our "filter not found" alert
     assert os.path.isfile("test-datastore/notification.txt")
@@ -131,7 +131,7 @@ def run_filter_test(client, content_filter):
 def test_setup(live_server):
     live_server_setup(live_server)
 
-def test_check_css_filter_failure_notification(client, live_server):
+def test_check_include_filters_failure_notification(client, live_server):
     set_original_response()
     time.sleep(1)
     run_filter_test(client, '#nope-doesnt-exist')

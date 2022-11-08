@@ -50,7 +50,7 @@ $(document).ready(function () {
         state_clicked = false;
         ctx.clearRect(0, 0, c.width, c.height);
         xctx.clearRect(0, 0, c.width, c.height);
-        $("#css_filter").val('');
+        $("#include_filters").val('');
     });
 
 
@@ -66,11 +66,11 @@ $(document).ready(function () {
                 // greyed out fill context
                 xctx = c.getContext("2d");
                 // redline highlight context
-                ctx = c.getContext("2d");
-                current_default_xpath = $("#css_filter").val();
-                fetch_data();
-                $('#selector-canvas').off("mousemove mousedown");
-                // screenshot_url defined in the edit.html template
+               ctx = c.getContext("2d");
+               current_default_xpath =$("#include_filters").val();
+               fetch_data();
+               $('#selector-canvas').off("mousemove mousedown");
+               // screenshot_url defined in the edit.html template
             }).attr("src", screenshot_url);
         }
     }
@@ -219,10 +219,26 @@ $(document).ready(function () {
 
         }
 
-
         $('#selector-canvas').bind('mousedown', function (e) {
             highlight_current_selected_i();
         });
+
+        var sel = selector_data['size_pos'][current_selected_i];
+        if (sel[0] == '/') {
+        // @todo - not sure just checking / is right
+            $("#include_filters").val('xpath:'+sel.xpath);
+        } else {
+            $("#include_filters").val(sel.xpath);
+        }
+        xctx.fillStyle = 'rgba(205,205,205,0.95)';
+        xctx.strokeStyle = 'rgba(225,0,0,0.9)';
+        xctx.lineWidth = 3;
+        xctx.fillRect(0,0,c.width, c.height);
+        // Clear out what only should be seen (make a clear/clean spot)
+        xctx.clearRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+        xctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+        state_clicked=true;
+        set_current_selected_text(sel.xpath);
     }
 
 });

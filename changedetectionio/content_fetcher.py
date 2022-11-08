@@ -8,7 +8,6 @@ import requests
 import time
 import sys
 
-
 xpath_element_js = """               
             // Include the getXpath script directly, easier than fetching
             !function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):(e=e||self).getXPath=n()}(this,function(){return function(e){var n=e;if(n&&n.id)return'//*[@id="'+n.id+'"]';for(var o=[];n&&Node.ELEMENT_NODE===n.nodeType;){for(var i=0,r=!1,d=n.previousSibling;d;)d.nodeType!==Node.DOCUMENT_TYPE_NODE&&d.nodeName===n.nodeName&&i++,d=d.previousSibling;for(d=n.nextSibling;d;){if(d.nodeName===n.nodeName){r=!0;break}d=d.nextSibling}o.push((n.prefix?n.prefix+":":"")+n.localName+(i||r?"["+(i+1)+"]":"")),n=n.parentNode}return o.length?"/"+o.reverse().join("/"):""}});
@@ -146,38 +145,63 @@ xpath_element_js = """
             return {'size_pos':size_pos, 'browser_width': window.innerWidth, 'browser_height': window.innerHeight};
 """
 
-class PageUnloadable(Exception):
-    def __init__(self, status_code, url):
+class Non200ErrorCodeReceived(Exception):
+    def __init__(self, status_code, url, screenshot=None, xpath_data=None, page_html=None):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
+        self.screenshot = screenshot
+        self.xpath_data = xpath_data
+        self.page_text = None
+
+        if page_html:
+            from changedetectionio import html_tools
+            self.page_text = html_tools.html_to_text(page_html)
         return
-    pass
+
+
+class JSActionExceptions(Exception):
+    def __init__(self, status_code, url, screenshot, message=''):
+        self.status_code = status_code
+        self.url = url
+        self.screenshot = screenshot
+        self.message = message
+        return
+
+class PageUnloadable(Exception):
+    def __init__(self, status_code, url, screenshot=False, message=False):
+        # Set this so we can use it in other parts of the app
+        self.status_code = status_code
+        self.url = url
+        self.screenshot = screenshot
+        self.message = message
+        return
 
 class EmptyReply(Exception):
-    def __init__(self, status_code, url):
+    def __init__(self, status_code, url, screenshot=None):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
+        self.screenshot = screenshot
         return
-    pass
 
 class ScreenshotUnavailable(Exception):
-    def __init__(self, status_code, url):
+    def __init__(self, status_code, url, page_html=None):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
+        if page_html:
+            from html_tools import html_to_text
+            self.page_text = html_to_text(page_html)
         return
-    pass
 
 class ReplyWithContentButNoText(Exception):
-    def __init__(self, status_code, url):
+    def __init__(self, status_code, url, screenshot=None):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
+        self.screenshot = screenshot
         return
-    pass
-
 
 class Fetcher():
     error = None
@@ -189,38 +213,6 @@ class Fetcher():
 
     fetcher_description = "No description"
     webdriver_js_execute_code = None
-    xpath_element_js = """               
-                // Include the getXpath script directly, easier than fetching
-                !function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):(e=e||self).getXPath=n()}(this,function(){return function(e){var n=e;if(n&&n.id)return'//*[@id="'+n.id+'"]';for(var o=[];n&&Node.ELEMENT_NODE===n.nodeType;){for(var i=0,r=!1,d=n.previousSibling;d;)d.nodeType!==Node.DOCUMENT_TYPE_NODE&&d.nodeName===n.nodeName&&i++,d=d.previousSibling;for(d=n.nextSibling;d;){if(d.nodeName===n.nodeName){r=!0;break}d=d.nextSibling}o.push((n.prefix?n.prefix+":":"")+n.localName+(i||r?"["+(i+1)+"]":"")),n=n.parentNode}return o.length?"/"+o.reverse().join("/"):""}});
-
-
-                const findUpTag = (el) => {
-                  let r = el
-                  chained_css = [];
-                  depth=0;
-            
-                // Strategy 1: Keep going up until we hit an ID tag, imagine it's like  #list-widget div h4
-                  while (r.parentNode) {
-                    if(depth==5) {
-                      break;
-                    }
-                    if('' !==r.id) {
-                      chained_css.unshift("#"+CSS.escape(r.id));
-                      final_selector= chained_css.join(' > ');
-                      // Be sure theres only one, some sites have multiples of the same ID tag :-(
-                      if (window.document.querySelectorAll(final_selector).length ==1 ) {
-                        return final_selector;
-                        }
-                      return null;
-                    } else {
-                      chained_css.unshift(r.tagName.toLowerCase());
-                    }
-                    r=r.parentNode;
-                    depth+=1;
-                  }
-                  return null;
-                }
-"""
 
     xpath_data = None
 
@@ -230,7 +222,7 @@ class Fetcher():
     system_https_proxy = os.getenv('HTTPS_PROXY')
 
     # Time ONTOP of the system defined env minimum time
-    render_extract_delay=0
+    render_extract_delay = 0
 
     @abstractmethod
     def get_error(self):
@@ -244,7 +236,7 @@ class Fetcher():
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_css_filter=None):
+            current_include_filters=None):
         # Should set self.error, self.status_code and self.content
         pass
 
@@ -505,6 +497,7 @@ class base_html_playwright(Fetcher):
             browser.close()
 
 
+
 class base_html_webdriver(Fetcher):
     if os.getenv("WEBDRIVER_URL"):
         fetcher_description = "WebDriver Chrome/Javascript via '{}'".format(os.getenv("WEBDRIVER_URL"))
@@ -553,7 +546,7 @@ class base_html_webdriver(Fetcher):
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_css_filter=None):
+            current_include_filters=None):
 
         from selenium import webdriver
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -584,8 +577,6 @@ class base_html_webdriver(Fetcher):
             # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
             self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
 
-        self.screenshot = self.driver.get_screenshot_as_png()
-
         # @todo - how to check this? is it possible?
         self.status_code = 200
         # @todo somehow we should try to get this working for WebDriver
@@ -595,6 +586,8 @@ class base_html_webdriver(Fetcher):
         time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay)
         self.content = self.driver.page_source
         self.headers = {}
+
+        self.screenshot = self.driver.get_screenshot_as_png()
 
     # Does the connection to the webdriver work? run a test connection.
     def is_ready(self):
@@ -632,9 +625,14 @@ class html_requests(Fetcher):
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_css_filter=None):
+            current_include_filters=None):
 
-        proxies={}
+        # Make requests use a more modern looking user-agent
+        if not 'User-Agent' in request_headers:
+            request_headers['User-Agent'] = os.getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT",
+                                                      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36')
+
+        proxies = {}
 
         # Allows override the proxy on a per-request basis
         if self.proxy_override:
@@ -662,10 +660,14 @@ class html_requests(Fetcher):
             if encoding:
                 r.encoding = encoding
 
+        if not r.content or not len(r.content):
+            raise EmptyReply(url=url, status_code=r.status_code)
+
         # @todo test this
         # @todo maybe you really want to test zero-byte return pages?
-        if (not ignore_status_codes and not r) or not r.content or not len(r.content):
-            raise EmptyReply(url=url, status_code=r.status_code)
+        if r.status_code != 200 and not ignore_status_codes:
+            # maybe check with content works?
+            raise Non200ErrorCodeReceived(url=url, status_code=r.status_code, page_html=r.text)
 
         self.status_code = r.status_code
         self.content = r.text

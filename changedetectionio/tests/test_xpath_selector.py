@@ -89,7 +89,7 @@ def test_check_xpath_filter_utf8(client, live_server):
     time.sleep(1)
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"include_filters": filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -143,7 +143,7 @@ def test_check_xpath_text_function_utf8(client, live_server):
     time.sleep(1)
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"include_filters": filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -182,9 +182,6 @@ def test_check_markup_xpath_filter_restriction(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
@@ -192,7 +189,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": xpath_filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"include_filters": xpath_filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -230,10 +227,11 @@ def test_xpath_validation(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
+    time.sleep(2)
 
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter": "/something horrible", "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"include_filters": "/something horrible", "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"is not a valid XPath expression" in res.data
@@ -242,7 +240,7 @@ def test_xpath_validation(client, live_server):
 
 
 # actually only really used by the distll.io importer, but could be handy too
-def test_check_with_prefix_css_filter(client, live_server):
+def test_check_with_prefix_include_filters(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
@@ -263,7 +261,7 @@ def test_check_with_prefix_css_filter(client, live_server):
 
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"css_filter":  "xpath://*[contains(@class, 'sametext')]", "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"include_filters":  "xpath://*[contains(@class, 'sametext')]", "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
 

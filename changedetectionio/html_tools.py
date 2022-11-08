@@ -1,32 +1,36 @@
-import json
-from typing import List
 
 from bs4 import BeautifulSoup
-from jsonpath_ng.ext import parse
-import re
 from inscriptis import get_text
 from inscriptis.model.config import ParserConfig
+from jsonpath_ng.ext import parse
+from typing import List
+import json
+import re
 
-class FilterNotFoundInResponse(ValueError):
-    def __init__(self, msg):
-        ValueError.__init__(self, msg)
+# HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
+TEXT_FILTER_LIST_LINE_SUFFIX = "<br/>"
 
 class JSONNotFound(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
-
-
+        
 # Given a CSS Rule, and a blob of HTML, return the blob of HTML that matches
-def css_filter(css_filter, html_content):
+def include_filters(include_filters, html_content, append_pretty_line_formatting=False):
     soup = BeautifulSoup(html_content, "html.parser")
     html_block = ""
-    r = soup.select(css_filter, separator="")
-    if len(html_content) > 0 and len(r) == 0:
-        raise FilterNotFoundInResponse(css_filter)
-    for item in r:
-        html_block += str(item)
+    r = soup.select(include_filters, separator="")
 
-    return html_block + "\n"
+    for element in r:
+        # When there's more than 1 match, then add the suffix to separate each line
+        # And where the matched result doesn't include something that will cause Inscriptis to add a newline
+        # (This way each 'match' reliably has a new-line in the diff)
+        # Divs are converted to 4 whitespaces by inscriptis
+        if append_pretty_line_formatting and len(html_block) and not element.name in (['br', 'hr', 'div', 'p']):
+            html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+
+        html_block += str(element)
+
+    return html_block
 
 def subtractive_css_selector(css_selector, html_content):
     soup = BeautifulSoup(html_content, "html.parser")
@@ -42,25 +46,29 @@ def element_removal(selectors: List[str], html_content):
 
 
 # Return str Utf-8 of matched rules
-def xpath_filter(xpath_filter, html_content):
+def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False):
     from lxml import etree, html
 
     tree = html.fromstring(bytes(html_content, encoding='utf-8'))
     html_block = ""
 
     r = tree.xpath(xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'})
-    if len(html_content) > 0 and len(r) == 0:
-        raise FilterNotFoundInResponse(xpath_filter)
-
     #@note: //title/text() wont work where <title>CDATA..
 
     for element in r:
+        # When there's more than 1 match, then add the suffix to separate each line
+        # And where the matched result doesn't include something that will cause Inscriptis to add a newline
+        # (This way each 'match' reliably has a new-line in the diff)
+        # Divs are converted to 4 whitespaces by inscriptis
+        if append_pretty_line_formatting and len(html_block) and (not hasattr( element, 'tag' ) or not element.tag in (['br', 'hr', 'div', 'p'])):
+            html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+
         if type(element) == etree._ElementStringResult:
-            html_block += str(element) + "<br/>"
+            html_block += str(element)
         elif type(element) == etree._ElementUnicodeResult:
-            html_block += str(element) + "<br/>"
+            html_block += str(element)
         else:
-            html_block += etree.tostring(element, pretty_print=True).decode('utf-8') + "<br/>"
+            html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
 
     return html_block
 
@@ -79,19 +87,35 @@ def extract_element(find='title', html_content=''):
     return element_text
 
 #
-def _parse_json(json_data, jsonpath_filter):
-    s=[]
-    jsonpath_expression = parse(jsonpath_filter.replace('json:', ''))
-    match = jsonpath_expression.find(json_data)
+def _parse_json(json_data, json_filter):
+    if 'json:' in json_filter:
+        jsonpath_expression = parse(json_filter.replace('json:', ''))
+        match = jsonpath_expression.find(json_data)
+        return _get_stripped_text_from_json_match(match)
 
+    if 'jq:' in json_filter:
+
+        try:
+            import jq
+        except ModuleNotFoundError:
+            # `jq` requires full compilation in windows and so isn't generally available
+            raise Exception("jq not support not found")
+
+        jq_expression = jq.compile(json_filter.replace('jq:', ''))
+        match = jq_expression.input(json_data).all()
+
+        return _get_stripped_text_from_json_match(match)
+
+def _get_stripped_text_from_json_match(match):
+    s = []
     # More than one result, we will return it as a JSON list.
     if len(match) > 1:
         for i in match:
-            s.append(i.value)
+            s.append(i.value if hasattr(i, 'value') else i)
 
     # Single value, use just the value, as it could be later used in a token in notifications.
     if len(match) == 1:
-        s = match[0].value
+        s = match[0].value if hasattr(match[0], 'value') else match[0]
 
     # Re #257 - Better handling where it does not exist, in the case the original 's' value was False..
     if not match:
@@ -103,16 +127,16 @@ def _parse_json(json_data, jsonpath_filter):
 
     return stripped_text_from_html
 
-def extract_json_as_string(content, jsonpath_filter):
+def extract_json_as_string(content, json_filter):
 
     stripped_text_from_html = False
 
     # Try to parse/filter out the JSON, if we get some parser error, then maybe it's embedded <script type=ldjson>
     try:
-        stripped_text_from_html = _parse_json(json.loads(content), jsonpath_filter)
+        stripped_text_from_html = _parse_json(json.loads(content), json_filter)
     except json.JSONDecodeError:
 
-        # Foreach <script json></script> blob.. just return the first that matches jsonpath_filter
+        # Foreach <script json></script> blob.. just return the first that matches json_filter
         s = []
         soup = BeautifulSoup(content, 'html.parser')
         bs_result = soup.findAll('script')
@@ -131,7 +155,7 @@ def extract_json_as_string(content, jsonpath_filter):
                 # Just skip it
                 continue
             else:
-                stripped_text_from_html = _parse_json(json_data, jsonpath_filter)
+                stripped_text_from_html = _parse_json(json_data, json_filter)
                 if stripped_text_from_html:
                     break
 

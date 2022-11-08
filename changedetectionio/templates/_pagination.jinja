@@ -1,0 +1,7 @@
+{% macro pagination(sorted_watches, total_per_page, current_page) %}
+  {{ sorted_watches|length }}
+
+  {% for row in sorted_watches|batch(total_per_page, '&nbsp;') %}
+    {{ loop.index}}
+  {% endfor %}
+{% endmacro %}

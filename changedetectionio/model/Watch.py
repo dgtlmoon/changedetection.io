@@ -1,14 +1,14 @@
-import os
-import uuid as uuid_builder
 from distutils.util import strtobool
+import logging
+import os
+import time
+import uuid
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
 
 from changedetectionio.notification import (
-    default_notification_body,
-    default_notification_format,
-    default_notification_title,
+    default_notification_format_for_watch
 )
 
 
@@ -16,49 +16,50 @@ class model(dict):
     __newest_history_key = None
     __history_n=0
     __base_config = {
-            'url': None,
-            'tag': None,
-            'last_checked': 0,
-            'last_changed': 0,
-            'paused': False,
-            'last_viewed': 0,  # history key value of the last viewed via the [diff] link
-            #'newest_history_key': 0,
-            'title': None,
-            'previous_md5': False,
-            'uuid': str(uuid_builder.uuid4()),
-            'headers': {},  # Extra headers to send
+            #'history': {},  # Dict of timestamp and output stripped filename (removed)
+            #'newest_history_key': 0, (removed, taken from history.txt index)
             'body': None,
-            'method': 'GET',
-            #'history': {},  # Dict of timestamp and output stripped filename
-            'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
-            # Custom notification content
-            'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
-            'notification_title': default_notification_title,
-            'notification_body': default_notification_body,
-            'notification_format': default_notification_format,
-            'notification_muted': False,
-            'css_filter': '',
+            'check_unique_lines': False, # On change-detected, compare against all history if its something new
+            'check_count': 0,
+            'consecutive_filter_failures': 0, # Every time the CSS/xPath filter cannot be located, reset when all is fine.
             'extract_text': [],  # Extract text by regex after filters
-            'subtractive_selectors': [],
-            'trigger_text': [],  # List of text or regex to wait for until a change is detected
-            'text_should_not_be_present': [], # Text that should not present
+            'extract_title_as_title': False,
             'fetch_backend': None,
             'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
-            'consecutive_filter_failures': 0, # Every time the CSS/xPath filter cannot be located, reset when all is fine.
-            'extract_title_as_title': False,
-            'check_unique_lines': False, # On change-detected, compare against all history if its something new
+            'headers': {},  # Extra headers to send
+            'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
+            'include_filters': [],
+            'last_checked': 0,
+            'last_error': False,
+            'last_viewed': 0,  # history key value of the last viewed via the [diff] link
+            'method': 'GET',
+             # Custom notification content
+            'notification_body': None,
+            'notification_format': default_notification_format_for_watch,
+            'notification_muted': False,
+            'notification_title': None,
+            'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
+            'paused': False,
+            'previous_md5': False,
             'proxy': None, # Preferred proxy connection
+            'subtractive_selectors': [],
+            'tag': None,
+            'text_should_not_be_present': [], # Text that should not present
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
+            'title': None,
+            'trigger_text': [],  # List of text or regex to wait for until a change is detected
+            'url': None,
+            'uuid': str(uuid.uuid4()),
             'webdriver_delay': None,
             'webdriver_js_execute_code': None, # Run before change-detection
         }
     jitter_seconds = 0
 
     def __init__(self, *arg, **kw):
-        import uuid
+
         self.update(self.__base_config)
         self.__datastore_path = kw['datastore_path']
 
@@ -70,7 +71,10 @@ class model(dict):
             self.update(kw['default'])
             del kw['default']
 
-        # goes at the end so we update the default object with the initialiser
+        # Be sure the cached timestamp is ready
+        bump = self.history
+
+        # Goes at the end so we update the default object with the initialiser
         super(model, self).__init__(*arg, **kw)
 
     @property
@@ -80,22 +84,77 @@ class model(dict):
 
         return False
 
+    def ensure_data_dir_exists(self):
+        if not os.path.isdir(self.watch_data_dir):
+            print ("> Creating data dir {}".format(self.watch_data_dir))
+            os.mkdir(self.watch_data_dir)
+
+    @property
+    def link(self):
+        url = self.get('url', '')
+        if '{%' in url or '{{' in url:
+            from jinja2 import Environment
+            # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
+            jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
+            return str(jinja2_env.from_string(url).render())
+        return url
+
+    @property
+    def label(self):
+        # Used for sorting
+        if self['title']:
+            return self['title']
+        return self['url']
+
+    @property
+    def last_changed(self):
+        # last_changed will be the newest snapshot, but when we have just one snapshot, it should be 0
+        if self.__history_n <= 1:
+            return 0
+        if self.__newest_history_key:
+            return int(self.__newest_history_key)
+        return 0
+
     @property
     def history_n(self):
         return self.__history_n
 
     @property
     def history(self):
+        """History index is just a text file as a list
+            {watch-uuid}/history.txt
+
+            contains a list like
+
+            {epoch-time},{filename}\n
+
+            We read in this list as the history information
+
+        """
         tmp_history = {}
-        import logging
-        import time
 
         # Read the history file as a dict
-        fname = os.path.join(self.__datastore_path, self.get('uuid'), "history.txt")
+        fname = os.path.join(self.watch_data_dir, "history.txt")
         if os.path.isfile(fname):
             logging.debug("Reading history index " + str(time.time()))
             with open(fname, "r") as f:
-                tmp_history = dict(i.strip().split(',', 2) for i in f.readlines())
+                for i in f.readlines():
+                    if ',' in i:
+                        k, v = i.strip().split(',', 2)
+
+                        # The index history could contain a relative path, so we need to make the fullpath
+                        # so that python can read it
+                        if not '/' in v and not '\'' in v:
+                            v = os.path.join(self.watch_data_dir, v)
+                        else:
+                            # It's possible that they moved the datadir on older versions
+                            # So the snapshot exists but is in a different path
+                            snapshot_fname = v.split('/')[-1]
+                            proposed_new_path = os.path.join(self.watch_data_dir, snapshot_fname)
+                            if not os.path.exists(v) and os.path.exists(proposed_new_path):
+                                v = proposed_new_path
+
+                        tmp_history[k] = v
 
         if len(tmp_history):
             self.__newest_history_key = list(tmp_history.keys())[-1]
@@ -106,7 +165,7 @@ class model(dict):
 
     @property
     def has_history(self):
-        fname = os.path.join(self.__datastore_path, self.get('uuid'), "history.txt")
+        fname = os.path.join(self.watch_data_dir, "history.txt")
         return os.path.isfile(fname)
 
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
@@ -122,38 +181,36 @@ class model(dict):
         bump = self.history
         return self.__newest_history_key
 
-
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
     def save_history_text(self, contents, timestamp):
-        import uuid
-        from os import mkdir, path, unlink
-        import logging
 
-        output_path = "{}/{}".format(self.__datastore_path, self['uuid'])
+        self.ensure_data_dir_exists()
 
-        # Incase the operator deleted it, check and create.
-        if not os.path.isdir(output_path):
-            mkdir(output_path)
+        # Small hack so that we sleep just enough to allow 1 second  between history snapshots
+        # this is because history.txt indexes/keys snapshots by epoch seconds and we dont want dupe keys
+        if self.__newest_history_key and int(timestamp) == int(self.__newest_history_key):
+            time.sleep(timestamp - self.__newest_history_key)
 
-        snapshot_fname = "{}/{}.stripped.txt".format(output_path, uuid.uuid4())
-        logging.debug("Saving history text {}".format(snapshot_fname))
+        snapshot_fname = "{}.txt".format(str(uuid.uuid4()))
 
-        with open(snapshot_fname, 'wb') as f:
+        # in /diff/ and /preview/ we are going to assume for now that it's UTF-8 when reading
+        # most sites are utf-8 and some are even broken utf-8
+        with open(os.path.join(self.watch_data_dir, snapshot_fname), 'wb') as f:
             f.write(contents)
             f.close()
 
         # Append to index
         # @todo check last char was \n
-        index_fname = "{}/history.txt".format(output_path)
+        index_fname = os.path.join(self.watch_data_dir, "history.txt")
         with open(index_fname, 'a') as f:
             f.write("{},{}\n".format(timestamp, snapshot_fname))
             f.close()
 
         self.__newest_history_key = timestamp
-        self.__history_n+=1
+        self.__history_n += 1
 
-        #@todo bump static cache of the last timestamp so we dont need to examine the file to set a proper ''viewed'' status
+        # @todo bump static cache of the last timestamp so we dont need to examine the file to set a proper ''viewed'' status
         return snapshot_fname
 
     @property
@@ -172,7 +229,7 @@ class model(dict):
         return seconds
 
     # Iterate over all history texts and see if something new exists
-    def lines_contain_something_unique_compared_to_history(self, lines=[]):
+    def lines_contain_something_unique_compared_to_history(self, lines: list):
         local_lines = set([l.decode('utf-8').strip().lower() for l in lines])
 
         # Compare each lines (set) against each history text file (set) looking for something new..
@@ -184,3 +241,56 @@ class model(dict):
         # Check that everything in local_lines(new stuff) already exists in existing_history - it should
         # if not, something new happened
         return not local_lines.issubset(existing_history)
+
+    def get_screenshot(self):
+        fname = os.path.join(self.watch_data_dir, "last-screenshot.png")
+        if os.path.isfile(fname):
+            return fname
+
+        return False
+
+    def __get_file_ctime(self, filename):
+        fname = os.path.join(self.watch_data_dir, filename)
+        if os.path.isfile(fname):
+            return int(os.path.getmtime(fname))
+        return False
+
+    @property
+    def error_text_ctime(self):
+        return self.__get_file_ctime('last-error.txt')
+
+    @property
+    def snapshot_text_ctime(self):
+        if self.history_n==0:
+            return False
+
+        timestamp = list(self.history.keys())[-1]
+        return int(timestamp)
+
+    @property
+    def snapshot_screenshot_ctime(self):
+        return self.__get_file_ctime('last-screenshot.png')
+
+    @property
+    def snapshot_error_screenshot_ctime(self):
+        return self.__get_file_ctime('last-error-screenshot.png')
+
+    @property
+    def watch_data_dir(self):
+        # The base dir of the watch data
+        return os.path.join(self.__datastore_path, self['uuid'])
+    
+    def get_error_text(self):
+        """Return the text saved from a previous request that resulted in a non-200 error"""
+        fname = os.path.join(self.watch_data_dir, "last-error.txt")
+        if os.path.isfile(fname):
+            with open(fname, 'r') as f:
+                return f.read()
+        return False
+
+    def get_error_snapshot(self):
+        """Return path to the screenshot that resulted in a non-200 error"""
+        fname = os.path.join(self.watch_data_dir, "last-error-screenshot.png")
+        if os.path.isfile(fname):
+            return fname
+        return False

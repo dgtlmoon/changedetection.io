@@ -50,11 +50,6 @@ def main():
     create_datastore_dir = False
 
     for opt, arg in opts:
-        #        if opt == '--clear-all-history':
-        # Remove history, the actual files you need to delete manually.
-        #            for uuid, watch in datastore.data['watching'].items():
-        #                watch.update({'history': {}, 'last_checked': 0, 'last_changed': 0, 'previous_md5': None})
-
         if opt == '-s':
             ssl_mode = True
 
@@ -106,6 +101,14 @@ def main():
                     new_version_available=app.config['NEW_VERSION_AVAILABLE'],
                     has_password=datastore.data['settings']['application']['password'] != False
                     )
+
+    # Monitored websites will not receive a Referer header when a user clicks on an outgoing link.
+    # @Note: Incompatible with password login (and maybe other features) for now, submit a PR!
+    @app.after_request
+    def hide_referrer(response):
+        if os.getenv("HIDE_REFERER", False):
+            response.headers["Referrer-Policy"] = "no-referrer"
+        return response
 
     # Proxy sub-directory support
     # Set environment var USE_X_SETTINGS=1 on this script

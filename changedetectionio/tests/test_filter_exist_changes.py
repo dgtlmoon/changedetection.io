@@ -92,7 +92,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
         "tag": "my tag",
         "title": "my title",
         "headers": "",
-        "css_filter": '.ticket-available',
+        "include_filters": '.ticket-available',
         "fetch_backend": "html_requests"})
 
     res = client.post(
