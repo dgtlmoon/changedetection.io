@@ -55,7 +55,7 @@ class steppable_browser_interface():
 
     def action_goto_url(self, url):
         with self.page.expect_navigation():
-            self.page.set_viewport_size({"width": 1280, "height": 5000})
+            #self.page.set_viewport_size({"width": 1280, "height": 5000})
             response = self.page.goto(url, wait_until='load')
         # Wait_until = commit
         # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
@@ -174,16 +174,15 @@ class browsersteps_live_ui(steppable_browser_interface):
 
         from . import content_fetcher
         self.page.wait_for_timeout(1 * 1000)
-        # Quality set to 1 because it's not used, just used as a work-around for a bug, no need to change this.
-        self.page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024}, quality=1)
 
         # The actual screenshot
-        screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=50)
+        screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=40)
 
         self.page.evaluate("var css_filter=''")
-        elements = 'input, select, textarea, p,i, div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
+        elements = 'button, input, select, textarea, p,i, div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
         xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%', elements) + "}")
 
         # except
         # playwright._impl._api_types.Error: Browser closed.
+        # @todo show some countdown timer?
         return (screenshot, xpath_data)

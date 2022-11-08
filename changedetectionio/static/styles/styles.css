@@ -90,7 +90,7 @@ nvm use v14.18.1 && npm install && npm run build
     #browsersteps-selector-wrapper > canvas:hover {
       cursor: pointer; }
   #browsersteps-selector-wrapper .loader {
-    position: fixed;
+    position: absolute;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);

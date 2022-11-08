@@ -36,6 +36,7 @@ $(document).ready(function () {
         $('#browsersteps-selector-canvas').attr('height', selector_image_rect.height).attr('width', selector_image_rect.width);
         //$('#browsersteps-selector-wrapper').attr('width', selector_image_rect.width);
         $('#browser-steps-ui').attr('width', selector_image_rect.width);
+
         x_scale = selector_image_rect.width / xpath_data['browser_width'];
         y_scale = selector_image_rect.height / selector_image.naturalHeight;
         ctx.strokeStyle = 'rgba(255,0,0, 0.9)';
