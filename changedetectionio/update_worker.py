@@ -282,18 +282,19 @@ class update_worker(threading.Thread):
                             self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
                             self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
 
-                    # Always record that we atleast tried
-                    count = self.datastore.data['watching'][uuid].get('check_count', 0) + 1
-                    self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
-                                                                       'last_checked': round(time.time()),
-                                                                       'check_count': count
-                                                                       })
+                    if self.datastore.data['watching'].get(uuid):
+                        # Always record that we atleast tried
+                        count = self.datastore.data['watching'][uuid].get('check_count', 0) + 1
+                        self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
+                                                                           'last_checked': round(time.time()),
+                                                                           'check_count': count
+                                                                           })
 
-                    # Always save the screenshot if it's available
-                    if update_handler.screenshot:
-                        self.datastore.save_screenshot(watch_uuid=uuid, screenshot=update_handler.screenshot)
-                    if update_handler.xpath_data:
-                        self.datastore.save_xpath_data(watch_uuid=uuid, data=update_handler.xpath_data)
+                        # Always save the screenshot if it's available
+                        if update_handler.screenshot:
+                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=update_handler.screenshot)
+                        if update_handler.xpath_data:
+                            self.datastore.save_xpath_data(watch_uuid=uuid, data=update_handler.xpath_data)
 
 
                 self.current_uuid = None  # Done
