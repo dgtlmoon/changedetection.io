@@ -116,12 +116,17 @@ $(document).ready(function () {
                         sel['tagName'] === 'textarea' ||
                         sel['tagtype'] === 'password' ||
                         sel['tagName'] === 'a' ||
+                        sel['tagName'] === 'li' ||
+                        sel['tagName'] === 'select' ||
                         sel['tagName'] === 'button' ||
                         sel['tagName'] === 'input') {
                         ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
                         ctx.fillRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
                         current_selected_i = i - 1;
                         break;
+
+                        // find the smallest one at this x,y
+                        // does it mean sort the xpath list by size (w*h) i think so!
                     } else {
 
                         if ( include_text_elements[0].checked === true) {
@@ -188,6 +193,8 @@ $(document).ready(function () {
                     }
                 }
             }
+        } else {
+
         }
     }
 
@@ -307,10 +314,11 @@ $(document).ready(function () {
             $('ul#browser_steps li .control .apply').css('opacity',1);
         }).fail(function (data) {
             console.log(data);
-            alert('There was an error communicating with the server.');
+            alert(data.responseText);
             apply_buttons_disabled=false;
             $('ul#browser_steps li .control .apply').css('opacity',1);
             $("#browsersteps-img").css('opacity',1);
+            $('#browsersteps-selector-wrapper .loader').fadeOut(2500);
         });
 
     });

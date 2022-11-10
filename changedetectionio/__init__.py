@@ -1208,7 +1208,9 @@ def changedetection_app(config=None, datastore_o=None):
         import base64
 
         # @todo key by UUID?
-
+        # if browsersteps_live_ui_o age >30, delete object and session (some shutdown?) throw error "hey reload"
+        # on fetch via chrome also call the mapping xpath here and generate the data+screenshot to be ready (0-step)
+        # https://www.sqlpac.com/en/documents/javascript-listing-active-event-listeners.html
         if request.method == 'POST':
             # @todo - should always be an existing session
             step_operation = request.form.get('operation')
@@ -1221,10 +1223,7 @@ def changedetection_app(config=None, datastore_o=None):
                                                    selector=step_selector,
                                                    optional_value=step_optional_value)
             except playwright._impl._api_types.TimeoutError as e:
-                x=1
-                return 0
-
-
+                return make_response('The element did not appear, was the selector/CSS/xPath correct? Does it exist?', 401)
 
         # Try the browser step
         if request.method == 'GET':
@@ -1234,7 +1233,7 @@ def changedetection_app(config=None, datastore_o=None):
             browsersteps_live_ui_o.action_goto_url(datastore.data['watching'][uuid]['url'])
 
         state = browsersteps_live_ui_o.get_current_state()
-        p = {'screenshot': "data:image/png;base64,{}".format(base64.b64encode(state[0]).decode('ascii')), 'xpath_data': state[1]}
+        p = {'screenshot': "data:image/png;base64,{}".format(base64.b64encode(state[0]).decode('ascii')), 'xpath_data': state[1], 'session_age_start': browsersteps_live_ui_o.age_start }
 
         # Update files for Visual Selector tool
         with open(os.path.join(datastore_o.datastore_path, uuid, "last-screenshot.png"), 'wb') as f:

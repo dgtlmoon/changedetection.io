@@ -67,18 +67,18 @@ class steppable_browser_interface():
     def action_enter_text_in_field(self, selector, value):
         if not len(selector.strip()):
             return
-        self.page.fill(selector, value, timeout=5 * 1000)
+        self.page.fill(selector, value, timeout=2 * 1000)
 
     def action_click_element(self, selector, value):
         if not len(selector.strip()):
             return
-        self.page.click(selector, timeout=5 * 1000)
+        self.page.click(selector, timeout=2 * 1000)
 
     def action_click_element_if_exists(self, selector, value):
         if not len(selector.strip()):
             return
         try:
-            self.page.click(selector, timeout=3 * 1000)
+            self.page.click(selector, timeout=2 * 1000)
         except TimeoutError as e:
             return
 
@@ -167,6 +167,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         self.page.set_default_navigation_timeout(keep_open)
         self.page.set_default_timeout(keep_open)
 
+        self.page.wait_for_timeout(2 * 1000)
 
 
     def get_current_state(self):
@@ -179,9 +180,15 @@ class browsersteps_live_ui(steppable_browser_interface):
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=40)
 
         self.page.evaluate("var css_filter=''")
-        elements = 'button, input, select, textarea, p,i, div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
+        elements = 'a, button, input, select, textarea, p,i, div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, details, main, nav'
         xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%', elements) + "}")
+        # So the JS will find the smallest one first
+        xpath_data['size_pos'] = sorted(xpath_data['size_pos'], key=lambda k: k['width']*k['height'], reverse=True)
 
+        # https://stackoverflow.com/questions/72899/how-do-i-sort-a-list-of-dictionaries-by-a-value-of-the-dictionary
+        import json
+        with open('/tmp/why-no-button.json','w') as f:
+            f.write(json.dumps(xpath_data))
         # except
         # playwright._impl._api_types.Error: Browser closed.
         # @todo show some countdown timer?
