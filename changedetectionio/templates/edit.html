@@ -30,7 +30,7 @@
         <ul>
             <li class="tab" id=""><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
-            <li class="tab"><a href="#browser-steps">Browser Steps</a></li>
+            <li class="tab"><a id="browsersteps-tab" href="#browser-steps">Browser Steps</a></li>
             <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
@@ -152,19 +152,20 @@ User-Agent: wonderbra 1.0") }}
                         <a id="play-steps" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Play steps  ▶</a>
                         -->
 
-                        <!---
-                        Do this later
-                        <div class="checkbox ">
+                        <!---  Do this later -->
+                        <div class="checkbox" style="display: none;">
                             <input type=checkbox id="include_text_elements" > <label for="include_text_elements">Turn on text finder</label>
                         </div>
 
-                        -->
+
                         <div class="flex-wrapper" >
 
                             <div id="browser-steps-ui" class="noselect"  style="width: 100%; background-color: #eee; border-radius: 5px;">
 
-                                <div  class="noselect"  id="browsersteps-selector-wrapper" style="width: 100%">
-                                    <span class="loader"></span>
+                                <div class="noselect"  id="browsersteps-selector-wrapper" style="width: 100%">
+                                    <span class="loader">
+                                        <div class="spinner"></div>
+                                    </span>
                                     <img  class="noselect" id="browsersteps-img" src="" style="max-width: 100%; width: 100%;" />
                                     <canvas  class="noselect" id="browsersteps-selector-canvas" style="max-width: 100%; width: 100%;"></canvas>
                                 </div>

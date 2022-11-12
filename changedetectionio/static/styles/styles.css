@@ -5,13 +5,13 @@ nvm use v14.18.1 && npm install && npm run build
  * or npm run watch
  */
 /* spinner */
-.loader,
-.loader:after {
+.spinner,
+.spinner:after {
   border-radius: 50%;
   width: 10px;
   height: 10px; }
 
-.loader {
+.spinner {
   margin: 0px auto;
   font-size: 3px;
   vertical-align: middle;
@@ -96,7 +96,7 @@ nvm use v14.18.1 && npm install && npm run build
     transform: translate(-50%, -50%);
     margin-left: -40px;
     z-index: 100; }
-  #browsersteps-selector-wrapper .loader, #browsersteps-selector-wrapper .loader:after {
+  #browsersteps-selector-wrapper .spinner, #browsersteps-selector-wrapper .spinner:after {
     width: 80px;
     height: 80px;
     font-size: 3px; }

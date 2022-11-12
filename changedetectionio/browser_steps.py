@@ -147,10 +147,11 @@ class browsersteps_live_ui(steppable_browser_interface):
         logging.debug("browser_steps.py connecting")
         from playwright.sync_api import sync_playwright
         self.playwright = sync_playwright().start()
-        keep_open = (60) * 60 * 1000
 
-        self.browser = self.playwright.chromium.connect_over_cdp(self.command_executor+"&keepalive={}&timeout=600000&blockAds=1".format(str(int(keep_open))))
+        keep_open = 1000 * 60 * 5
 
+        #self.browser = self.playwright.chromium.connect_over_cdp(self.command_executor+"&keepalive={}&timeout=600000&blockAds=1".format(str(int(keep_open))))
+        self.browser = self.playwright.chromium.launch()
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
         self.context = self.browser.new_context(
             # @todo
@@ -166,9 +167,25 @@ class browsersteps_live_ui(steppable_browser_interface):
 
         self.page.set_default_navigation_timeout(keep_open)
         self.page.set_default_timeout(keep_open)
+         # @todo probably this doesnt work
+        self.page.on(
+            "close",
+            self.mark_as_closed,
+        )
+        self.page.wait_for_timeout(1 * 1000)
 
-        self.page.wait_for_timeout(2 * 1000)
+        # @todo dont think this works
+    def mark_as_closed(self):
+        print("Page closed")
+        self.page=None
 
+    @property
+    def has_expired(self):
+        if not self.page:
+            return True
+
+        # 30 seconds enough? unsure
+        #return time.time() - self.age_start > 30
 
     def get_current_state(self):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""
@@ -179,16 +196,12 @@ class browsersteps_live_ui(steppable_browser_interface):
         # The actual screenshot
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=40)
 
-        self.page.evaluate("var css_filter=''")
+        self.page.evaluate("var include_filters=''")
         elements = 'a, button, input, select, textarea, p,i, div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, details, main, nav'
         xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%', elements) + "}")
         # So the JS will find the smallest one first
         xpath_data['size_pos'] = sorted(xpath_data['size_pos'], key=lambda k: k['width']*k['height'], reverse=True)
 
-        # https://stackoverflow.com/questions/72899/how-do-i-sort-a-list-of-dictionaries-by-a-value-of-the-dictionary
-        import json
-        with open('/tmp/why-no-button.json','w') as f:
-            f.write(json.dumps(xpath_data))
         # except
         # playwright._impl._api_types.Error: Browser closed.
         # @todo show some countdown timer?

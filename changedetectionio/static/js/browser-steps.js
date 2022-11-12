@@ -9,7 +9,7 @@ $(document).ready(function () {
             }
         }
     })
-
+    var browsersteps_session_id;
     var apply_buttons_disabled = false;
     var include_text_elements = $("#include_text_elements");
     var xpath_data;
@@ -23,6 +23,10 @@ $(document).ready(function () {
 
     $(window).resize(function () {
         set_scale();
+    });
+
+    $('a#browsersteps-tab').click(function () {
+        start();
     });
 
     function set_scale() {
@@ -146,9 +150,11 @@ $(document).ready(function () {
         }.debounce(10));
     });
 
-    $("#browser-steps-fieldlist").bind('mouseover', function(e) {
-        console.log(e.xpath_data_index);
-    });
+//    $("#browser-steps-fieldlist").bind('mouseover', function(e) {
+//        console.log(e.xpath_data_index);
+    // });
+
+
 
     // callback for clicking on an xpath on the canvas
     function process_selected(xpath_data_index) {
@@ -205,22 +211,27 @@ $(document).ready(function () {
         ctx.fill();
     }
 
-    $.ajax({
-        type: "GET",
-        url: browser_steps_sync_url,
-        statusCode: {
-            400: function () {
-                // More than likely the CSRF token was lost when the server restarted
-                alert("There was a problem processing the request, please reload the page.");
+    function start() {
+        console.log("Starting browser-steps UI");
+        browsersteps_session_id=Date.now();
+
+        $.ajax({
+            type: "GET",
+            url: browser_steps_sync_url+"&browsersteps_session_id="+browsersteps_session_id,
+            statusCode: {
+                400: function () {
+                    // More than likely the CSRF token was lost when the server restarted
+                    alert("There was a problem processing the request, please reload the page.");
+                }
             }
-        }
-    }).done(function (data) {
-        xpath_data = data.xpath_data;
-        $('#browsersteps-img').attr('src', data.screenshot);
-    }).fail(function (data) {
-        console.log(data);
-        alert('There was an error communicating with the server.');
-    });
+        }).done(function (data) {
+            xpath_data = data.xpath_data;
+            $('#browsersteps-img').attr('src', data.screenshot);
+        }).fail(function (data) {
+            console.log(data);
+            alert('There was an error communicating with the server.');
+        });
+    }
 
 
     ////////////////////////// STEPS UI ////////////////////
@@ -277,13 +288,13 @@ $(document).ready(function () {
     });
 
 
-    $('ul#browser_steps li .control .apply').click(function (element) {
+    $('ul#browser_steps li .control .apply').click(function (event) {
         // sequential requests @todo refactor
         if(apply_buttons_disabled) {
             return;
         }
 
-        var current_data = $(element.currentTarget).closest('li');
+        var current_data = $(event.currentTarget).closest('li');
         $('#browser-steps-ui .loader').fadeIn();
         apply_buttons_disabled=true;
         $('ul#browser_steps li .control .apply').css('opacity',0.5);
@@ -292,11 +303,12 @@ $(document).ready(function () {
         // POST the currently clicked step form widget back and await response, redraw
         $.ajax({
             method: "POST",
-            url: browser_steps_sync_url,
+            url: browser_steps_sync_url+"&browsersteps_session_id="+browsersteps_session_id,
             data: {
                 'operation': $("select[id$='operation']", current_data).first().val(),
                 'selector': $("input[id$='selector']", current_data).first().val(),
-                'optional_value': $("input[id$='optional_value']", current_data).first().val()
+                'optional_value': $("input[id$='optional_value']", current_data).first().val(),
+                'step_n': $(event.currentTarget).data('step-index')
             },
             statusCode: {
                 400: function () {

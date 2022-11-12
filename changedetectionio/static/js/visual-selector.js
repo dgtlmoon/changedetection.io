@@ -27,6 +27,7 @@ $(document).ready(function () {
         bootstrap_visualselector();
     });
 
+    // @todo unbind this
     $(document).on('keydown', function (event) {
         if ($("img#selector-background").is(":visible")) {
             if (event.key == "Escape") {
@@ -203,9 +204,9 @@ $(document).ready(function () {
             var sel = selector_data['size_pos'][current_selected_i];
             if (sel[0] == '/') {
                 // @todo - not sure just checking / is right
-                $("#css_filter").val('xpath:' + sel.xpath);
+                $("#include_filters").val('xpath:' + sel.xpath);
             } else {
-                $("#css_filter").val(sel.xpath);
+                $("#include_filters").val(sel.xpath);
             }
             xctx.fillStyle = 'rgba(205,205,205,0.95)';
             xctx.strokeStyle = 'rgba(225,0,0,0.9)';

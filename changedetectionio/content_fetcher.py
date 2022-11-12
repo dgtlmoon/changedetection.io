@@ -110,16 +110,16 @@ xpath_element_js = """
             }
 
 
-            // inject the current one set in the css_filter, which may be a CSS rule
+            // inject the current one set in the include_filters, which may be a CSS rule
             // used for displaying the current one in VisualSelector, where its not one we generated.
-            if (css_filter.length) {
+            if (include_filters.length) {
                q=false;                   
                try {
                    // is it xpath?
-                   if (css_filter.startsWith('/') || css_filter.startsWith('xpath:')) {
-                     q=document.evaluate(css_filter.replace('xpath:',''), document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                   if (include_filters.startsWith('/') || include_filters.startsWith('xpath:')) {
+                     q=document.evaluate(include_filters.replace('xpath:',''), document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                    } else {
-                     q=document.querySelector(css_filter);
+                     q=document.querySelector(include_filters);
                    }                       
                } catch (e) {
                 // Maybe catch DOMException and alert? 
@@ -132,7 +132,7 @@ xpath_element_js = """
 
                if (bbox && bbox['width'] >0 && bbox['height']>0) {                       
                    size_pos.push({
-                       xpath: css_filter,
+                       xpath: include_filters,
                        width: bbox['width'], 
                        height: bbox['height'],
                        left: bbox['left'],
@@ -370,7 +370,7 @@ class base_html_playwright(Fetcher):
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_css_filter=None):
+            current_include_filters=None):
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
@@ -469,10 +469,10 @@ class base_html_playwright(Fetcher):
             self.content = self.page.content()
             self.headers = response.all_headers()
 
-            if current_css_filter is not None:
-                self.page.evaluate("var css_filter={}".format(json.dumps(current_css_filter)))
+            if current_include_filters is not None:
+                self.page.evaluate("var include_filters={}".format(json.dumps(current_include_filters)))
             else:
-                self.page.evaluate("var css_filter=''")
+                self.page.evaluate("var include_filters=''")
 
             self.xpath_data = self.page.evaluate("async () => {" + xpath_element_js.replace('%ELEMENTS%', 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary') + "}")
 
@@ -495,8 +495,6 @@ class base_html_playwright(Fetcher):
 
             context.close()
             browser.close()
-
-
 
 class base_html_webdriver(Fetcher):
     if os.getenv("WEBDRIVER_URL"):

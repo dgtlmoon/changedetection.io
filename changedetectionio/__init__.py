@@ -36,8 +36,8 @@ from changedetectionio.api import api_v1
 __version__ = '0.39.21.1'
 
 datastore = None
-# global ?
-browsersteps_live_ui_o=None
+
+browsersteps_live_ui_o = {}
 
 # Local
 running_update_threads = []
@@ -1207,7 +1207,15 @@ def changedetection_app(config=None, datastore_o=None):
         global browsersteps_live_ui_o
         import base64
 
-        # @todo key by UUID?
+        browsersteps_session_id = request.args.get('browsersteps_session_id')
+        if not browsersteps_session_id:
+            return make_response('No browsersteps_session_id specified', 500)
+
+        this_session = browsersteps_live_ui_o.get(browsersteps_session_id)
+        if this_session and this_session.has_expired:
+            del browsersteps_live_ui_o[browsersteps_session_id]
+            return make_response('Browser session expired, please reload the Browser Steps interface', 500)
+
         # if browsersteps_live_ui_o age >30, delete object and session (some shutdown?) throw error "hey reload"
         # on fetch via chrome also call the mapping xpath here and generate the data+screenshot to be ready (0-step)
         # https://www.sqlpac.com/en/documents/javascript-listing-active-event-listeners.html
@@ -1216,24 +1224,38 @@ def changedetection_app(config=None, datastore_o=None):
             step_operation = request.form.get('operation')
             step_selector = request.form.get('selector')
             step_optional_value = request.form.get('optional_value')
+            step_n = int(request.form.get('step_n'))
 
             # @todo try.. accept.. nice errors not popups..
             try:
-                browsersteps_live_ui_o.call_action(action_name=step_operation,
-                                                   selector=step_selector,
-                                                   optional_value=step_optional_value)
+                if step_n == 0:
+                    # Always go back to the start when they click the first one
+                    url = datastore.data['watching'].get(uuid).get('url')
+                    this_session.action_goto_url(url)
+
+
+                this_session.call_action(action_name=step_operation,
+                                         selector=step_selector,
+                                         optional_value=step_optional_value)
             except playwright._impl._api_types.TimeoutError as e:
                 return make_response('The element did not appear, was the selector/CSS/xPath correct? Does it exist?', 401)
 
         # Try the browser step
         if request.method == 'GET':
-            if not browsersteps_live_ui_o:
-                browsersteps_live_ui_o = browser_steps.browsersteps_live_ui()
-            # On page load always goto the URL first
-            browsersteps_live_ui_o.action_goto_url(datastore.data['watching'][uuid]['url'])
+            if not browsersteps_live_ui_o.get(browsersteps_session_id):
+                # Boot up a new session
+                browsersteps_live_ui_o[browsersteps_session_id] = browser_steps.browsersteps_live_ui()
+                this_session = browsersteps_live_ui_o[browsersteps_session_id]
 
-        state = browsersteps_live_ui_o.get_current_state()
-        p = {'screenshot': "data:image/png;base64,{}".format(base64.b64encode(state[0]).decode('ascii')), 'xpath_data': state[1], 'session_age_start': browsersteps_live_ui_o.age_start }
+            # On page load always goto the URL first
+            this_session.action_goto_url(datastore.data['watching'][uuid]['url'])
+
+        state = this_session.get_current_state()
+        p = {'screenshot': "data:image/png;base64,{}".format(
+            base64.b64encode(state[0]).decode('ascii')),
+            'xpath_data': state[1],
+            'session_age_start': this_session.age_start
+        }
 
         # Update files for Visual Selector tool
         with open(os.path.join(datastore_o.datastore_path, uuid, "last-screenshot.png"), 'wb') as f:

@@ -289,7 +289,7 @@ class ChangeDetectionStore:
                 # List of permissible attributes we accept from the wild internet
                 for k in [
                     'body',
-                    'css_filter',
+                    'include_filters',
                     'extract_text',
                     'extract_title_as_title',
                     'headers',
@@ -307,11 +307,11 @@ class ChangeDetectionStore:
                     'url',
                 ]:
                     if res.get(k):
-                        if k != 'css_filter':
+                        if k != 'include_filters':
                             apply_extras[k] = res[k]
                         else:
                             # We renamed the field and made it a list
-                            apply_extras['include_filters'] = [res['css_filter']]
+                            apply_extras['include_filters'] = [res['include_filters']]
 
             except Exception as e:
                 logging.error("Error fetching metadata for shared watch link", url, str(e))
