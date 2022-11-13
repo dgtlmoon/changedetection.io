@@ -378,8 +378,6 @@ class watchForm(commonSettingsForm):
     check_unique_lines = BooleanField('Only trigger when new lines appear', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
 
-    # @todo First one should be Go-to URL |watch.url| and Disable
-    # Maybe via default=... ?
     browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)
     text_should_not_be_present = StringListField('Block change-detection if text matches', [validators.Optional(), ValidateListRegex()])
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
