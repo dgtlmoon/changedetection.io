@@ -79,13 +79,13 @@ $(document).ready(function () {
             process_selected(current_selected_i);
             current_selected_i = false;
 
-            // @todo
-// if process selected returned false..
-            //                    if (xpath_data_index === false && !found_something) {
-//            $('select', first_available).val('Click X,Y').change();
-//            $('input[type=text]', first_available).first().val(last_click_xy['x'] + ',' + last_click_xy['y']);
-//            draw_circle_on_canvas(e.offsetX, e.offsetY);
-  //      }
+            // if process selected returned false, then best we can do is offer a x,y click :(
+            if (!found_something) {
+                var first_available = $("ul#browser_steps li.empty").first();
+                $('select', first_available).val('Click X,Y').change();
+                $('input[type=text]', first_available).first().val(last_click_xy['x'] + ',' + last_click_xy['y']);
+                draw_circle_on_canvas(e.offsetX, e.offsetY);
+            }
         });
 
         $('#browsersteps-selector-canvas').bind('mousemove', function (e) {
