@@ -337,27 +337,19 @@ Unavailable") }}
                             <span class="pure-form-message-inline">
                                 The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection &dash; after the <i>Browser Steps</i> has completed.<br/><br/>
                             </span>
-                            {% if visualselector_data_is_ready %}
-                                <div id="selector-header">
-                                    <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Clear selection</a>
-                                    <i class="fetching-update-notice" style="font-size: 80%;">One moment, fetching screenshot and element information..</i>
-                                </div>
-                                <div id="selector-wrapper">
-                                    <!-- request the screenshot and get the element offset info ready -->
-                                    <!-- use img src ready load to know everything is ready to map out -->
-                                    <!-- @todo: maybe something interesting like a field to select 'elements that contain text... and their parents n' -->
-                                    <img id="selector-background" />
-                                    <canvas id="selector-canvas"></canvas>
-                                </div>
-                                <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
 
-                            <span class="pure-form-message-inline">
-                                <p><span style="font-weight: bold">Beta!</span> The Visual Selector is new and there may be minor bugs, please report pages that dont work, help us to improve this software!</p>
-                            </span>
-
-                            {% else %}
-                                <span class="pure-form-message-inline">Screenshot and element data is not available or not yet ready.</span>
-                            {% endif %}
+                            <div id="selector-header">
+                                <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Clear selection</a>
+                                <i class="fetching-update-notice" style="font-size: 80%;">One moment, fetching screenshot and element information..</i>
+                            </div>
+                            <div id="selector-wrapper" style="display: none">
+                                <!-- request the screenshot and get the element offset info ready -->
+                                <!-- use img src ready load to know everything is ready to map out -->
+                                <!-- @todo: maybe something interesting like a field to select 'elements that contain text... and their parents n' -->
+                                <img id="selector-background" />
+                                <canvas id="selector-canvas"></canvas>
+                            </div>
+                            <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
                         {% else %}
                             <span class="pure-form-message-inline">
                                 <p>Sorry, this functionality only works with Playwright/Chrome enabled watches.</p>

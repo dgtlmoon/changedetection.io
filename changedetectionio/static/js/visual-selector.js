@@ -71,8 +71,14 @@ $(document).ready(function () {
                current_default_xpath =$("#include_filters").val();
                fetch_data();
                $('#selector-canvas').off("mousemove mousedown");
+               $('#selector-wrapper').fadeIn();
                // screenshot_url defined in the edit.html template
             }).attr("src", screenshot_url);
+
+            $("img#selector-background").bind('error', function () {
+                $('.fetching-update-notice').html("<strong style='color: red;'>Visual Selector data missing or not yet ready, unable to render UI.</strong>");
+            });
+
         }
     }
 

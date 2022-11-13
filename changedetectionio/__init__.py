@@ -664,7 +664,6 @@ def changedetection_app(config=None, datastore_o=None):
                                      settings_application=datastore.data['settings']['application'],
                                      using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      uuid=uuid,
-                                     visualselector_data_is_ready=visualselector_data_is_ready,
                                      visualselector_enabled=visualselector_enabled,
                                      watch=datastore.data['watching'][uuid],
                                      )
