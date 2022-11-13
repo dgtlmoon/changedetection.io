@@ -50,7 +50,7 @@ update_q = queue.PriorityQueue()
 notification_q = queue.Queue()
 
 browsersteps_playwright_browser_interface = None
-browsersteps_playwright_browser_interface = None
+browsersteps_playwright_browser_interface_browser = None
 
 app = Flask(__name__,
             static_url_path="",
