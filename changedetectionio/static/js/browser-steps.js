@@ -300,6 +300,25 @@ $(document).ready(function () {
         $('ul#browser_steps li .control .apply').css('opacity',0.5);
         $("#browsersteps-img").css('opacity',0.65);
 
+        var is_last_step = 0;
+        var step_n = $(event.currentTarget).data('step-index');
+
+        // On the last step, we should also be getting data ready for the visual selector
+        $('ul#browser_steps li select').each(function (i) {
+            if ($(this).val() !== 'Choose one') {
+                is_last_step += 1;
+            }
+        });
+
+        if (is_last_step == (step_n+1)) {
+            is_last_step = true;
+        } else {
+            is_last_step = false;
+        }
+
+
+
+
         // POST the currently clicked step form widget back and await response, redraw
         $.ajax({
             method: "POST",
@@ -308,7 +327,8 @@ $(document).ready(function () {
                 'operation': $("select[id$='operation']", current_data).first().val(),
                 'selector': $("input[id$='selector']", current_data).first().val(),
                 'optional_value': $("input[id$='optional_value']", current_data).first().val(),
-                'step_n': $(event.currentTarget).data('step-index')
+                'step_n': step_n,
+                'is_last_step': is_last_step
             },
             statusCode: {
                 400: function () {

@@ -264,17 +264,11 @@ class Fetcher():
             interface = steppable_browser_interface()
             interface.page = self.page
 
-            for step in self.browser_steps:
+            valid_steps = filter(lambda s: (len(s['operation']) and s['operation'] != 'Choose one'), self.browser_steps)
+            for step in valid_steps:
                 step_n += 1
-                step_machine_name = re.sub(r'\W', '_', step['operation'].lower()).strip('_')
-
-                if not len(step['operation']) or step_machine_name == 'choose_one':
-                    print(">> skip step n {} - {}...".format(step_n, step_machine_name))
-                    continue
-
-                logging.debug("Running browser step '{}'".format(step_machine_name))
                 try:
-                    print(">> step n {} - {}...".format(step_n, step_machine_name))
+                    print(">> Browser Step n {} - {}...".format(step_n, step['operation']))
                     getattr(interface, "call_action")(action_name=step['operation'],
                                                       selector=step['selector'],
                                                       optional_value=step['optional_value'])
@@ -469,6 +463,7 @@ class base_html_playwright(Fetcher):
             self.content = self.page.content()
             self.headers = response.all_headers()
 
+            # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
             if current_include_filters is not None:
                 self.page.evaluate("var include_filters={}".format(json.dumps(current_include_filters)))
             else:

@@ -133,8 +133,9 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
-    def __init__(self):
+    def __init__(self, playwright_browser):
         self.age_start = time.time()
+        self.playwright_browser = playwright_browser
         #@ todo if content, and less than say 20 minutes in age_start to now remaining, create a new one
         if self.context is None:
             self.connect()
@@ -143,17 +144,10 @@ class browsersteps_live_ui(steppable_browser_interface):
     # Connect and setup a new context
     def connect(self):
         # Should only get called once - test that
-
-        logging.debug("browser_steps.py connecting")
-        from playwright.sync_api import sync_playwright
-        self.playwright = sync_playwright().start()
-
         keep_open = 1000 * 60 * 5
 
-        #self.browser = self.playwright.chromium.connect_over_cdp(self.command_executor+"&keepalive={}&timeout=600000&blockAds=1".format(str(int(keep_open))))
-        self.browser = self.playwright.chromium.launch()
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
-        self.context = self.browser.new_context(
+        self.context = self.playwright_browser.new_context(
             # @todo
             #                user_agent=request_headers['User-Agent'] if request_headers.get('User-Agent') else 'Mozilla/5.0',
             #               proxy=self.proxy,
@@ -174,7 +168,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         )
         self.page.wait_for_timeout(1 * 1000)
 
-        # @todo dont think this works
+    # @todo I dont think this works
     def mark_as_closed(self):
         print("Page closed")
         self.page=None
@@ -205,4 +199,23 @@ class browsersteps_live_ui(steppable_browser_interface):
         # except
         # playwright._impl._api_types.Error: Browser closed.
         # @todo show some countdown timer?
+        return (screenshot, xpath_data)
+
+    def request_visualselector_data(self):
+        """
+        Does the same that the playwright operation in content_fetcher does
+        @todo refactor and remove duplicate code, add include_filters
+        :param xpath_data:
+        :param screenshot:
+        :param current_include_filters:
+        :return:
+        """
+
+        from . import content_fetcher
+        self.page.evaluate("var include_filters=''")
+        xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%',
+                                                                                        'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary') + "}")
+
+        screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
+
         return (screenshot, xpath_data)

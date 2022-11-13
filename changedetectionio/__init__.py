@@ -1,18 +1,20 @@
 #!/usr/bin/python3
 
 import datetime
+import flask_login
+import logging
 import os
+import pytz
 import queue
 import threading
 import time
+import timeago
+
 from copy import deepcopy
+from distutils.util import strtobool
+from feedgen.feed import FeedGenerator
 from threading import Event
 
-import flask_login
-import logging
-import pytz
-import timeago
-from feedgen.feed import FeedGenerator
 from flask import (
     Flask,
     abort,
@@ -27,7 +29,6 @@ from flask import (
 )
 from flask_login import login_required
 from flask_restful import abort, Api
-
 from flask_wtf import CSRFProtect
 
 from changedetectionio import html_tools
@@ -46,8 +47,10 @@ ticker_thread = None
 extra_stylesheets = []
 
 update_q = queue.PriorityQueue()
-
 notification_q = queue.Queue()
+
+browsersteps_playwright_browser_interface = None
+browsersteps_playwright_browser_interface = None
 
 app = Flask(__name__,
             static_url_path="",
@@ -1199,15 +1202,20 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     @app.route("/api/browsersteps_update", methods=['GET', 'POST'])
     def browsersteps_ui_update():
+        import base64
         import json
         import playwright._impl._api_types
-        uuid = request.args.get('uuid')
 
         from . import browser_steps
         global browsersteps_live_ui_o
-        import base64
+        global browsersteps_playwright_browser_interface_browser
+        global browsersteps_playwright_browser_interface
+
+        uuid = request.args.get('uuid')
+        step_n = None
 
         browsersteps_session_id = request.args.get('browsersteps_session_id')
+
         if not browsersteps_session_id:
             return make_response('No browsersteps_session_id specified', 500)
 
@@ -1216,15 +1224,14 @@ def changedetection_app(config=None, datastore_o=None):
             del browsersteps_live_ui_o[browsersteps_session_id]
             return make_response('Browser session expired, please reload the Browser Steps interface', 500)
 
-        # if browsersteps_live_ui_o age >30, delete object and session (some shutdown?) throw error "hey reload"
-        # on fetch via chrome also call the mapping xpath here and generate the data+screenshot to be ready (0-step)
-        # https://www.sqlpac.com/en/documents/javascript-listing-active-event-listeners.html
+        # Actions - step/apply/etc, do the thing and return state
         if request.method == 'POST':
             # @todo - should always be an existing session
             step_operation = request.form.get('operation')
             step_selector = request.form.get('selector')
             step_optional_value = request.form.get('optional_value')
             step_n = int(request.form.get('step_n'))
+            is_last_step = strtobool(request.form.get('is_last_step'))
 
             # @todo try.. accept.. nice errors not popups..
             try:
@@ -1240,11 +1247,27 @@ def changedetection_app(config=None, datastore_o=None):
             except playwright._impl._api_types.TimeoutError as e:
                 return make_response('The element did not appear, was the selector/CSS/xPath correct? Does it exist?', 401)
 
-        # Try the browser step
+            # Get visual selector ready/update its data (also use the current filter info from the page?)
+            # When the last 'apply' button was pressed
+            if is_last_step:
+                (screenshot, xpath_data) = this_session.request_visualselector_data()
+                datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
+                datastore.save_xpath_data(watch_uuid=uuid, data=xpath_data)
+
+        # Setup interface
         if request.method == 'GET':
+            if not browsersteps_playwright_browser_interface:
+                logging.debug("browser_steps.py connecting")
+                from playwright.sync_api import sync_playwright
+                browsersteps_playwright_browser_interface = sync_playwright().start()
+
+                # self.browser = self.playwright.chromium.connect_over_cdp(self.command_executor+"&keepalive={}&timeout=600000&blockAds=1".format(str(int(keep_open))))
+                browsersteps_playwright_browser_interface_browser = browsersteps_playwright_browser_interface.chromium.launch()
+
+
             if not browsersteps_live_ui_o.get(browsersteps_session_id):
                 # Boot up a new session
-                browsersteps_live_ui_o[browsersteps_session_id] = browser_steps.browsersteps_live_ui()
+                browsersteps_live_ui_o[browsersteps_session_id] = browser_steps.browsersteps_live_ui(browsersteps_playwright_browser_interface_browser)
                 this_session = browsersteps_live_ui_o[browsersteps_session_id]
 
             # On page load always goto the URL first
