@@ -295,7 +295,6 @@ class ChangeDetectionStore:
                     'headers',
                     'ignore_text',
                     'include_filters',
-                    'include_filters',
                     'method',
                     'paused',
                     'previous_md5',
