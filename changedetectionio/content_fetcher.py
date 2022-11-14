@@ -3,7 +3,6 @@ import chardet
 import json
 import logging
 import os
-import re
 import requests
 import time
 import sys
@@ -168,6 +167,12 @@ class JSActionExceptions(Exception):
         self.message = message
         return
 
+class BrowserStepsStepTimout(Exception):
+    def __init__(self, step_n):
+        self.step_n = step_n
+        return
+
+
 class PageUnloadable(Exception):
     def __init__(self, status_code, url, screenshot=False, message=False):
         # Set this so we can use it in other parts of the app
@@ -258,8 +263,10 @@ class Fetcher():
         return True
 
     def iterate_browser_steps(self):
-        step_n = 0
         from .browser_steps import steppable_browser_interface
+        from playwright._impl._api_types import TimeoutError
+        step_n = 0
+
         if self.browser_steps is not None and len(self.browser_steps):
             interface = steppable_browser_interface()
             interface.page = self.page
@@ -267,18 +274,17 @@ class Fetcher():
             valid_steps = filter(lambda s: (len(s['operation']) and s['operation'] != 'Choose one'), self.browser_steps)
             for step in valid_steps:
                 step_n += 1
+                print(">> Browser Step n {} - {}...".format(step_n, step['operation']))
                 try:
-                    print(">> Browser Step n {} - {}...".format(step_n, step['operation']))
                     getattr(interface, "call_action")(action_name=step['operation'],
                                                       selector=step['selector'],
                                                       optional_value=step['optional_value'])
                     self.screenshot_step(step_n)
-
                 except TimeoutError:
-                    self.screenshot_step("TimeoutError_error")
-                    raise TimeoutError
-                except Exception as e:
-                    self.screenshot_step("error")
+                    # Stop processing here
+                    raise BrowserStepsStepTimout(step_n=step_n)
+
+
 
     # It's always good to reset these
     def delete_browser_steps_screenshots(self):
@@ -368,7 +374,7 @@ class base_html_playwright(Fetcher):
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
-        from playwright._impl._api_types import Error, TimeoutError
+
         self.delete_browser_steps_screenshots()
         response = None
         with sync_playwright() as p:
