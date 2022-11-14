@@ -107,7 +107,7 @@ def main():
     # @Note: Incompatible with password login (and maybe other features) for now, submit a PR!
     @app.after_request
     def hide_referrer(response):
-        if strtobool(os.getenv("HIDE_REFERER", False)):
+        if strtobool(os.getenv("HIDE_REFERER", 'false')):
             response.headers["Referrer-Policy"] = "no-referrer"
 
         return response
