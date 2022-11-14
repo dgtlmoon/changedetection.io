@@ -1201,17 +1201,19 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     @app.route("/api/browsersteps_update", methods=['GET', 'POST'])
     def browsersteps_ui_update():
+
+        from jinja2 import Environment
         import base64
         import json
         import playwright._impl._api_types
-
         from . import browser_steps
         global browsersteps_live_ui_o
         global browsersteps_playwright_browser_interface_browser
         global browsersteps_playwright_browser_interface
 
-        uuid = request.args.get('uuid')
+        jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
         step_n = None
+        uuid = request.args.get('uuid')
 
         browsersteps_session_id = request.args.get('browsersteps_session_id')
 
@@ -1239,7 +1241,12 @@ def changedetection_app(config=None, datastore_o=None):
                     url = datastore.data['watching'].get(uuid).get('url')
                     this_session.action_goto_url(url)
 
+                    if '{%' in step_optional_value or '{{' in step_optional_value:
+                        step_optional_value = str(jinja2_env.from_string(step_optional_value).render())
 
+                    if '{%' in step_selector or '{{' in step_selector:
+                        step_selector = str(jinja2_env.from_string(step_selector).render())
+                        
                 this_session.call_action(action_name=step_operation,
                                          selector=step_selector,
                                          optional_value=step_optional_value)
