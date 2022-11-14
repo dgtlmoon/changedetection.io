@@ -274,7 +274,8 @@ class Fetcher():
             interface = steppable_browser_interface()
             interface.page = self.page
 
-            valid_steps = filter(lambda s: (len(s['operation']) and s['operation'] != 'Choose one'), self.browser_steps)
+            valid_steps = filter(lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one'), self.browser_steps)
+
             for step in valid_steps:
                 step_n += 1
                 print(">> Browser Step n {} - {}...".format(step_n, step['operation']))
