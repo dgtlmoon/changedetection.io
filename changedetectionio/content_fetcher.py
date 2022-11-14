@@ -579,9 +579,6 @@ class base_html_webdriver(Fetcher):
         self.driver.set_window_size(1280, 1024)
         self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
 
-        # Run Browser Steps here
-        self.iterate_browser_steps()
-
         if self.webdriver_js_execute_code is not None:
             self.driver.execute_script(self.webdriver_js_execute_code)
             # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
