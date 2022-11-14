@@ -3,35 +3,38 @@
 from abc import abstractmethod
 import os
 import time
-import logging
+import playwright
 import re
+from random import randint
 
 # Two flags, tell the JS which of the "Selector" or "Value" field should be enabled in the front end
 # 0- off, 1- on
 browser_step_ui_config = {'Choose one': '0 0',
-                          'Enter text in field': '1 1',
-                          'Select by label': '1 1',
-                          'Wait for text': '0 1',
-                          'Wait for seconds': '0 1',
                           #                 'Check checkbox': '1 0',
-                          #                 'Uncheck checkbox': '1 0',
-                          'Click element': '1 0',
-                          'Click element if exists': '1 0',
                           #                 'Click button containing text': '0 1',
-                          'Click X,Y': '0 1',
-                          'Press Enter': '0 0',
-# weird bug, come back to it later
-#                          'Press Page Up': '0 0',
-#                          'Press Page Down': '0 0',
-                          'Check checkbox': '1 0',
-                          'Uncheck checkbox': '1 0',
-                          'Extract text and use as filter': '1 0',
-                          #                 'Scroll to top': '0 0',
                           #                 'Scroll to bottom': '0 0',
                           #                 'Scroll to element': '1 0',
-                          # @todo
+                          #                 'Scroll to top': '0 0',
                           #                 'Switch to iFrame by index number': '0 1'
+                          #                 'Uncheck checkbox': '1 0',
+                          # @todo
+                          'Check checkbox': '1 0',
+                          'Click X,Y': '0 1',
+                          'Click element if exists': '1 0',
+                          'Click element': '1 0',
+                          'Enter text in field': '1 1',
+                          'Extract text and use as filter': '1 0',
+                          'Goto site': '0 0',
+                          'Press Enter': '0 0',
+                          'Select by label': '1 1',
+                          'Uncheck checkbox': '1 0',
+                          'Wait for seconds': '0 1',
+                          'Wait for text': '0 1',
+                          #                          'Press Page Down': '0 0',
+                          #                          'Press Page Up': '0 0',
+                          # weird bug, come back to it later
                           }
+
 
 # Good reference - https://playwright.dev/python/docs/input
 #                  https://pythonmana.com/2021/12/202112162236307035.html
@@ -41,22 +44,25 @@ class steppable_browser_interface():
     page = None
 
     # Convert and perform "Click Button" for example
-    def call_action(self, action_name, selector, optional_value):
-
+    def call_action(self, action_name, selector=None, optional_value=None):
+        now = time.time()
         call_action_name = re.sub('[^0-9a-zA-Z]+', '_', action_name.lower())
-
+        print("> action calling", call_action_name)
         # https://playwright.dev/python/docs/selectors#xpath-selectors
         if selector.startswith('/') and not selector.startswith('//'):
             selector = "xpath=" + selector
 
         action_handler = getattr(self, "action_" + call_action_name)
         action_handler(selector, optional_value)
-        self.page.wait_for_timeout(1 * 1000)
+        self.page.wait_for_timeout(3 * 1000)
+        print("Call action done in", time.time() - now)
 
-    def action_goto_url(self, url):
-        with self.page.expect_navigation():
-            #self.page.set_viewport_size({"width": 1280, "height": 5000})
-            response = self.page.goto(url, wait_until='load')
+    def action_goto_url(self, url, optional_value):
+        # self.page.set_viewport_size({"width": 1280, "height": 5000})
+        now = time.time()
+        response = self.page.goto(url, timeout=0, wait_until='domcontentloaded')
+        print("Time to goto URL", time.time() - now)
+
         # Wait_until = commit
         # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
         # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
@@ -67,26 +73,42 @@ class steppable_browser_interface():
     def action_enter_text_in_field(self, selector, value):
         if not len(selector.strip()):
             return
-        self.page.fill(selector, value, timeout=2 * 1000)
+
+        # Support for Jinja2 variables in the value and selector
+        from jinja2 import Environment
+        jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
+
+        if '{%' in selector or '{{' in selector:
+            selector = str(jinja2_env.from_string(selector).render())
+
+        if '{%' in value or '{{' in value:
+            selector = str(jinja2_env.from_string(value).render())
+
+        self.page.fill(selector, value, timeout=10 * 1000)
 
     def action_click_element(self, selector, value):
+        print("Clicking element")
         if not len(selector.strip()):
             return
-        self.page.click(selector, timeout=2 * 1000)
+        self.page.click(selector, timeout=10 * 1000, delay=randint(200, 500))
 
     def action_click_element_if_exists(self, selector, value):
+        print("Clicking element if exists")
         if not len(selector.strip()):
             return
         try:
-            self.page.click(selector, timeout=2 * 1000)
-        except TimeoutError as e:
+            self.page.click(selector, timeout=10 * 1000, delay=randint(200, 500))
+        except playwright._impl._api_types.TimeoutError as e:
+            return
+        except playwright._impl._api_types.Error as e:
+            # Element was there, but page redrew and now its long long gone
             return
 
     def action_click_x_y(self, selector, value):
         x, y = value.strip().split(',')
         x = int(float(x.strip()))
         y = int(float(y.strip()))
-        self.page.mouse.click(x=x, y=y)
+        self.page.mouse.click(x=x, y=y, delay=randint(200, 500))
 
     def action_wait_for_seconds(self, selector, value):
         self.page.wait_for_timeout(int(value) * 1000)
@@ -94,13 +116,13 @@ class steppable_browser_interface():
     # @todo - in the future make some popout interface to capture what needs to be set
     # https://playwright.dev/python/docs/api/class-keyboard
     def action_press_enter(self, selector, value):
-        self.page.keyboard.press("Enter")
+        self.page.keyboard.press("Enter", delay=randint(200, 500))
 
     def action_press_page_up(self, selector, value):
-        self.page.keyboard.press("PageUp")
+        self.page.keyboard.press("PageUp", delay=randint(200, 500))
 
     def action_press_page_down(self, selector, value):
-        self.page.keyboard.press("PageDown")
+        self.page.keyboard.press("PageDown", delay=randint(200, 500))
 
     def action_check_checkbox(self, selector, value):
         self.page.locator(selector).check()
@@ -112,7 +134,6 @@ class steppable_browser_interface():
 # Responsible for maintaining a live 'context' with browserless
 # @todo - how long do contexts live for anyway?
 class browsersteps_live_ui(steppable_browser_interface):
-
     context = None
     page = None
     render_extra_delay = 1
@@ -130,21 +151,20 @@ class browsersteps_live_ui(steppable_browser_interface):
             'ws://playwright-chrome:3000'
         ).strip('"')
 
-
     browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
     def __init__(self, playwright_browser):
         self.age_start = time.time()
         self.playwright_browser = playwright_browser
-        #@ todo if content, and less than say 20 minutes in age_start to now remaining, create a new one
+        # @ todo if content, and less than say 20 minutes in age_start to now remaining, create a new one
         if self.context is None:
             self.connect()
-
 
     # Connect and setup a new context
     def connect(self):
         # Should only get called once - test that
         keep_open = 1000 * 60 * 5
+        now = time.time()
 
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
         self.context = self.playwright_browser.new_context(
@@ -159,19 +179,20 @@ class browsersteps_live_ui(steppable_browser_interface):
 
         self.page = self.context.new_page()
 
-        self.page.set_default_navigation_timeout(keep_open)
+        # self.page.set_default_navigation_timeout(keep_open)
         self.page.set_default_timeout(keep_open)
-         # @todo probably this doesnt work
+        # @todo probably this doesnt work
         self.page.on(
             "close",
             self.mark_as_closed,
         )
+        print("time to browser setup", time.time() - now)
         self.page.wait_for_timeout(1 * 1000)
 
     # @todo I dont think this works
     def mark_as_closed(self):
         print("Page closed")
-        self.page=None
+        self.page = None
 
     @property
     def has_expired(self):
@@ -179,11 +200,12 @@ class browsersteps_live_ui(steppable_browser_interface):
             return True
 
         # 30 seconds enough? unsure
-        #return time.time() - self.age_start > 30
+        # return time.time() - self.age_start > 30
 
     def get_current_state(self):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""
 
+        now = time.time()
         from . import content_fetcher
         self.page.wait_for_timeout(1 * 1000)
 
@@ -194,8 +216,8 @@ class browsersteps_live_ui(steppable_browser_interface):
         elements = 'a, button, input, select, textarea, p,i, div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, details, main, nav'
         xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%', elements) + "}")
         # So the JS will find the smallest one first
-        xpath_data['size_pos'] = sorted(xpath_data['size_pos'], key=lambda k: k['width']*k['height'], reverse=True)
-
+        xpath_data['size_pos'] = sorted(xpath_data['size_pos'], key=lambda k: k['width'] * k['height'], reverse=True)
+        print("Time to complete get_current_state of browser", time.time() - now)
         # except
         # playwright._impl._api_types.Error: Browser closed.
         # @todo show some countdown timer?
@@ -214,7 +236,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         from . import content_fetcher
         self.page.evaluate("var include_filters=''")
         xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%',
-                                                                                        'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary') + "}")
+                                                                                                   'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary') + "}")
 
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
 

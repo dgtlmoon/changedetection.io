@@ -214,6 +214,7 @@ $(document).ready(function () {
     function start() {
         console.log("Starting browser-steps UI");
         browsersteps_session_id=Date.now();
+        $('#browser_steps >li:first-child select').attr('disabled', 'disabled');
 
         $.ajax({
             type: "GET",
@@ -227,6 +228,8 @@ $(document).ready(function () {
         }).done(function (data) {
             xpath_data = data.xpath_data;
             $('#browsersteps-img').attr('src', data.screenshot);
+            // This should trigger 'Goto site'
+            $('#browser_steps >li:first-child .apply').click();
         }).fail(function (data) {
             console.log(data);
             alert('There was an error communicating with the server.');

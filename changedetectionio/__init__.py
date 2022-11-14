@@ -1201,8 +1201,6 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     @app.route("/api/browsersteps_update", methods=['GET', 'POST'])
     def browsersteps_ui_update():
-
-        from jinja2 import Environment
         import base64
         import json
         import playwright._impl._api_types
@@ -1211,7 +1209,6 @@ def changedetection_app(config=None, datastore_o=None):
         global browsersteps_playwright_browser_interface_browser
         global browsersteps_playwright_browser_interface
 
-        jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
         step_n = None
         uuid = request.args.get('uuid')
 
@@ -1234,27 +1231,26 @@ def changedetection_app(config=None, datastore_o=None):
             step_n = int(request.form.get('step_n'))
             is_last_step = strtobool(request.form.get('is_last_step'))
 
+            if step_operation == 'Goto site':
+                step_operation = 'goto_url'
+                step_optional_value = None
+                step_selector = datastore.data['watching'][uuid].get('url')
+
             # @todo try.. accept.. nice errors not popups..
             try:
-                if step_n == 0:
-                    # Always go back to the start when they click the first one
-                    url = datastore.data['watching'].get(uuid).get('url')
-                    this_session.action_goto_url(url)
-
-                    if '{%' in step_optional_value or '{{' in step_optional_value:
-                        step_optional_value = str(jinja2_env.from_string(step_optional_value).render())
-
-                    if '{%' in step_selector or '{{' in step_selector:
-                        step_selector = str(jinja2_env.from_string(step_selector).render())
-                        
                 this_session.call_action(action_name=step_operation,
                                          selector=step_selector,
                                          optional_value=step_optional_value)
             except playwright._impl._api_types.TimeoutError as e:
-                return make_response('The element did not appear, was the selector/CSS/xPath correct? Does it exist?', 401)
+                print ("Element wasnt found :-(", step_operation)
+                # but this isnt always true
+
+
+                #return make_response('The element did not appear, was the selector/CSS/xPath correct? Does it exist?', 401)
 
             # Get visual selector ready/update its data (also use the current filter info from the page?)
             # When the last 'apply' button was pressed
+            # @todo
             if is_last_step:
                 (screenshot, xpath_data) = this_session.request_visualselector_data()
                 datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
@@ -1275,9 +1271,6 @@ def changedetection_app(config=None, datastore_o=None):
                 # Boot up a new session
                 browsersteps_live_ui_o[browsersteps_session_id] = browser_steps.browsersteps_live_ui(browsersteps_playwright_browser_interface_browser)
                 this_session = browsersteps_live_ui_o[browsersteps_session_id]
-
-            # On page load always goto the URL first
-            this_session.action_goto_url(datastore.data['watching'][uuid]['url'])
 
         state = this_session.get_current_state()
         p = {'screenshot': "data:image/png;base64,{}".format(
