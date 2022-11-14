@@ -214,7 +214,9 @@ $(document).ready(function () {
     function start() {
         console.log("Starting browser-steps UI");
         browsersteps_session_id=Date.now();
-        $('#browser_steps >li:first-child select').attr('disabled', 'disabled');
+        // @todo This setting of the first one should be done at the datalayer but wtforms doesnt wanna play nice
+        $('#browser_steps >li:first-child').removeClass('empty');
+        $('#browser_steps >li:first-child select').val('Goto site').attr('disabled', 'disabled');
 
         $.ajax({
             type: "GET",

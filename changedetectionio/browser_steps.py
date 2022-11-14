@@ -48,6 +48,9 @@ class steppable_browser_interface():
     def call_action(self, action_name, selector=None, optional_value=None):
         now = time.time()
         call_action_name = re.sub('[^0-9a-zA-Z]+', '_', action_name.lower())
+        if call_action_name == 'choose_one':
+            return
+
         print("> action calling", call_action_name)
         # https://playwright.dev/python/docs/selectors#xpath-selectors
         if selector.startswith('/') and not selector.startswith('//'):
