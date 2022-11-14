@@ -22,8 +22,9 @@ browser_step_ui_config = {'Choose one': '0 0',
                           'Click X,Y': '0 1',
                           'Click element if exists': '1 0',
                           'Click element': '1 0',
+                          'Click element containing text': '0 1',
                           'Enter text in field': '1 1',
-                          'Extract text and use as filter': '1 0',
+#                          'Extract text and use as filter': '1 0',
                           'Goto site': '0 0',
                           'Press Enter': '0 0',
                           'Select by label': '1 1',
@@ -53,6 +54,19 @@ class steppable_browser_interface():
             selector = "xpath=" + selector
 
         action_handler = getattr(self, "action_" + call_action_name)
+
+        # Support for Jinja2 variables in the value and selector
+        from jinja2 import Environment
+        jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
+
+        if selector and ('{%' in selector or '{{' in selector):
+            selector = str(jinja2_env.from_string(selector).render())
+
+        if optional_value and ('{%' in optional_value or '{{' in optional_value):
+            optional_value = str(jinja2_env.from_string(optional_value).render())
+
+
+
         action_handler(selector, optional_value)
         self.page.wait_for_timeout(3 * 1000)
         print("Call action done in", time.time() - now)
@@ -70,19 +84,17 @@ class steppable_browser_interface():
         extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5))
         self.page.wait_for_timeout(extra_wait * 1000)
 
+    def action_click_element_containing_text(self, selector=None, value=''):
+        if not len(value.strip()):
+            return
+
+        elem = self.page.get_by_text(value)
+        if elem:
+            elem.first.click(delay=randint(200, 500))
+
     def action_enter_text_in_field(self, selector, value):
         if not len(selector.strip()):
             return
-
-        # Support for Jinja2 variables in the value and selector
-        from jinja2 import Environment
-        jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
-
-        if '{%' in selector or '{{' in selector:
-            selector = str(jinja2_env.from_string(selector).render())
-
-        if '{%' in value or '{{' in value:
-            selector = str(jinja2_env.from_string(value).render())
 
         self.page.fill(selector, value, timeout=10 * 1000)
 

@@ -55,4 +55,3 @@ jinja2-time
 jq~=1.3 ;python_version >= "3.8" and sys_platform == "linux"
 
 # playwright is installed at Dockerfile build time because it's not available on all platforms
-
