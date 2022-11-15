@@ -34,7 +34,7 @@ $(document).ready(function () {
     // (See comment at the top of changedetectionio/blueprint/browser_steps/__init__.py )
     setInterval(() => {
         if(browserless_seconds_remaining>0) {
-            document.getElementById('browserless-seconds-remaining').innerHTML = browserless_seconds_remaining + " seconds remaining in session</br>";
+            document.getElementById('browserless-seconds-remaining').innerText = browserless_seconds_remaining + " seconds remaining in session";
             browserless_seconds_remaining -= 1;
         }
     }, "1000")

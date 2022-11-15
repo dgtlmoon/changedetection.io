@@ -108,6 +108,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Setup interface
         if request.method == 'GET':
+            # Forcefully cleanup if the predicted time of browserless shutting down is up
+            if browsersteps_playwright_browser_interface_end_time and time.time() > browsersteps_playwright_browser_interface_end_time:
+                browsersteps_playwright_browser_interface = None
+                browsersteps_live_ui_o = {}
+
             if not browsersteps_playwright_browser_interface:
                 logging.debug("browser_steps.py connecting")
                 from playwright.sync_api import sync_playwright

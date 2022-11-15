@@ -26,6 +26,7 @@ browser_step_ui_config = {'Choose one': '0 0',
                           'Goto site': '0 0',
                           'Press Enter': '0 0',
                           'Select by label': '1 1',
+                          'Scroll down': '0 0',
                           'Uncheck checkbox': '1 0',
                           'Wait for seconds': '0 1',
                           'Wait for text': '0 1',
@@ -120,6 +121,11 @@ class steppable_browser_interface():
         x = int(float(x.strip()))
         y = int(float(y.strip()))
         self.page.mouse.click(x=x, y=y, delay=randint(200, 500))
+
+    def action_scroll_down(self, selector, value):
+        # Some sites this doesnt work on for some reason
+        self.page.mouse.wheel(0, 600)
+        self.page.wait_for_timeout(1000)
 
     def action_wait_for_seconds(self, selector, value):
         self.page.wait_for_timeout(int(value) * 1000)
