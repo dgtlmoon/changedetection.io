@@ -86,9 +86,8 @@ class steppable_browser_interface():
     def action_click_element_containing_text(self, selector=None, value=''):
         if not len(value.strip()):
             return
-
         elem = self.page.get_by_text(value)
-        if elem:
+        if elem.count():
             elem.first.click(delay=randint(200, 500))
 
     def action_enter_text_in_field(self, selector, value):
@@ -149,6 +148,7 @@ class browsersteps_live_ui(steppable_browser_interface):
     context = None
     page = None
     render_extra_delay = 1
+    stale = False
     # bump and kill this if idle after X sec
     age_start = 0
 
@@ -201,17 +201,18 @@ class browsersteps_live_ui(steppable_browser_interface):
         print("time to browser setup", time.time() - now)
         self.page.wait_for_timeout(1 * 1000)
 
-    # @todo I dont think this works
     def mark_as_closed(self):
-        print("Page closed")
+        print("Page closed, cleaning up..")
+        self.context.close()
+        self.page.close()
+        del self.context
+        del self.page
 
     @property
     def has_expired(self):
         if not self.page:
             return True
 
-        # 30 seconds enough? unsure
-        # return time.time() - self.age_start > 30
 
     def get_current_state(self):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""

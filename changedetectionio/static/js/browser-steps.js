@@ -10,6 +10,7 @@ $(document).ready(function () {
         }
     })
     var browsersteps_session_id;
+    var browserless_seconds_remaining=0;
     var apply_buttons_disabled = false;
     var include_text_elements = $("#include_text_elements");
     var xpath_data;
@@ -28,6 +29,16 @@ $(document).ready(function () {
     $('a#browsersteps-tab').click(function () {
         start();
     });
+
+    // Show seconds remaining until playwright/browserless needs to restart the session
+    // (See comment at the top of changedetectionio/blueprint/browser_steps/__init__.py )
+    setInterval(() => {
+        if(browserless_seconds_remaining>0) {
+            document.getElementById('browserless-seconds-remaining').innerHTML = browserless_seconds_remaining + " seconds remaining in session</br>";
+            browserless_seconds_remaining -= 1;
+        }
+    }, "1000")
+
 
     function set_scale() {
 
@@ -232,10 +243,12 @@ $(document).ready(function () {
             $('#browsersteps-img').attr('src', data.screenshot);
             // This should trigger 'Goto site'
             $('#browser_steps >li:first-child .apply').click();
+            browserless_seconds_remaining = data.browser_time_remaining;
         }).fail(function (data) {
             console.log(data);
             alert('There was an error communicating with the server.');
         });
+
     }
 
 
@@ -349,6 +362,7 @@ $(document).ready(function () {
             apply_buttons_disabled=false;
             $("#browsersteps-img").css('opacity',1);
             $('ul#browser_steps li .control .apply').css('opacity',1);
+            browserless_seconds_remaining = data.browser_time_remaining;
         }).fail(function (data) {
             console.log(data);
             alert(data.responseText);

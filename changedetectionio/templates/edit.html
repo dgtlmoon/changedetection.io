@@ -21,8 +21,9 @@
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='visual-selector.js')}}" defer></script>
+{% if playwright_enabled %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='browser-steps.js')}}" defer></script>
-
+{% endif %}
 
 <div class="edit-form monospaced-textarea">
 
@@ -173,6 +174,7 @@ User-Agent: wonderbra 1.0") }}
                                 </div>
                             </div>
                             <div id="browser-steps-fieldlist" style="padding-left: 1em;  width: 350px; font-size: 80%;" >
+                                <div id="browserless-seconds-remaining"></div><span><a href=""?</span>
                                 {{ render_field(form.browser_steps) }}
                             </div>
                         </div>

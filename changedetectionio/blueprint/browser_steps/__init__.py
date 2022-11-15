@@ -14,6 +14,13 @@
 # - It's horrible that we have this click+wait deal, some nice socket.io solution using something similar
 # to what the browserless debug UI already gives us would be smarter..
 #
+# OR
+# - Some API call that should be hacked into browserless or playwright that we can "/api/bump-keepalive/{session_id}/60"
+# So we can tell it that we need more time (run this on each action)
+#
+# OR
+# - use multiprocessing to bump this over to its own process and add some transport layer (queue/pipes)
+
 
 
 
@@ -27,7 +34,9 @@ from changedetectionio.store import ChangeDetectionStore
 
 browsersteps_live_ui_o = {}
 browsersteps_playwright_browser_interface = None
+browsersteps_playwright_browser_interface_start_time = None
 browsersteps_playwright_browser_interface_browser = None
+browsersteps_playwright_browser_interface_end_time = None
 
 def construct_blueprint(datastore: ChangeDetectionStore):
 
@@ -39,11 +48,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         import base64
         import json
         import playwright._impl._api_types
+        import time
+
         from changedetectionio.blueprint.browser_steps import browser_steps
 
-        global browsersteps_live_ui_o
+        global browsersteps_live_ui_o, browsersteps_playwright_browser_interface_end_time
         global browsersteps_playwright_browser_interface_browser
         global browsersteps_playwright_browser_interface
+        global browsersteps_playwright_browser_interface_start_time
 
         step_n = None
         uuid = request.args.get('uuid')
@@ -54,7 +66,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return make_response('No browsersteps_session_id specified', 500)
 
         this_session = browsersteps_live_ui_o.get(browsersteps_session_id)
-        if this_session and this_session.has_expired:
+        if this_session and not this_session.page:
+            print ("Session expired! I cant do anything :-(")
             del browsersteps_live_ui_o[browsersteps_session_id]
             return make_response('Browser session expired, please reload the Browser Steps interface', 500)
 
@@ -80,8 +93,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             except playwright._impl._api_types.TimeoutError as e:
                 print("Element wasnt found :-(", step_operation)
                 # but this isnt always true
-
-                # return make_response('The element did not appear, was the selector/CSS/xPath correct? Does it exist?', 401)
+            except playwright._impl._api_types.Error as e:
+                # Browser closed usually (timeout/keepalive reached and playwright cleanedup)
+                print ("Browser exited")
+                return make_response('Browser session ran out of time :( Please reload this page.', 401)
 
             # Get visual selector ready/update its data (also use the current filter info from the page?)
             # When the last 'apply' button was pressed
@@ -97,8 +112,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 logging.debug("browser_steps.py connecting")
                 from playwright.sync_api import sync_playwright
                 browsersteps_playwright_browser_interface = sync_playwright().start()
-
-                browsersteps_playwright_browser_interface_browser = browsersteps_playwright_browser_interface.chromium.connect_over_cdp(os.getenv('PLAYWRIGHT_DRIVER_URL', False))
+                seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
+                keepalive = "&timeout={}".format((seconds_keepalive * 1000) + 5000)
+                browsersteps_playwright_browser_interface_browser = browsersteps_playwright_browser_interface.chromium.connect_over_cdp(
+                    os.getenv('PLAYWRIGHT_DRIVER_URL', '') + keepalive)
+                browsersteps_playwright_browser_interface_end_time = time.time() + (seconds_keepalive)
 
             if not browsersteps_live_ui_o.get(browsersteps_session_id):
                 # Boot up a new session
@@ -106,11 +124,16 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     browsersteps_playwright_browser_interface_browser)
                 this_session = browsersteps_live_ui_o[browsersteps_session_id]
 
+        if not this_session.page:
+            return make_response('Browser session ran out of time :( Please reload this page.', 401)
+
         state = this_session.get_current_state()
+        remaining = browsersteps_playwright_browser_interface_end_time-time.time()
         p = {'screenshot': "data:image/png;base64,{}".format(
             base64.b64encode(state[0]).decode('ascii')),
             'xpath_data': state[1],
-            'session_age_start': this_session.age_start
+            'session_age_start': this_session.age_start,
+            'browser_time_remaining': round(remaining)
         }
 
         # Update files for Visual Selector tool
