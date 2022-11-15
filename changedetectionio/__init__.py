@@ -1263,7 +1263,7 @@ def changedetection_app(config=None, datastore_o=None):
                 from playwright.sync_api import sync_playwright
                 browsersteps_playwright_browser_interface = sync_playwright().start()
 
-                # self.browser = self.playwright.chromium.connect_over_cdp(self.command_executor+"&keepalive={}&timeout=600000&blockAds=1".format(str(int(keep_open))))
+                #browsersteps_playwright_browser_interface_browser = browsersteps_playwright_browser_interface.chromium.connect_over_cdp("ws://127.0.0.1:3000?keepalive={}&timeout=600000&blockAds=1".format(str(int(100000))))
                 browsersteps_playwright_browser_interface_browser = browsersteps_playwright_browser_interface.chromium.launch()
 
 
