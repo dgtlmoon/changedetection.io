@@ -1,9 +1,7 @@
 #!/usr/bin/python3
 
-from abc import abstractmethod
 import os
 import time
-import playwright
 import re
 from random import randint
 
@@ -68,8 +66,6 @@ class steppable_browser_interface():
         if optional_value and ('{%' in optional_value or '{{' in optional_value):
             optional_value = str(jinja2_env.from_string(optional_value).render())
 
-
-
         action_handler(selector, optional_value)
         self.page.wait_for_timeout(3 * 1000)
         print("Call action done in", time.time() - now)
@@ -108,14 +104,15 @@ class steppable_browser_interface():
         self.page.click(selector, timeout=10 * 1000, delay=randint(200, 500))
 
     def action_click_element_if_exists(self, selector, value):
+        import playwright._impl._api_types as _api_types
         print("Clicking element if exists")
         if not len(selector.strip()):
             return
         try:
             self.page.click(selector, timeout=10 * 1000, delay=randint(200, 500))
-        except playwright._impl._api_types.TimeoutError as e:
+        except _api_types.TimeoutError as e:
             return
-        except playwright._impl._api_types.Error as e:
+        except _api_types.Error as e:
             # Element was there, but page redrew and now its long long gone
             return
 
@@ -207,7 +204,6 @@ class browsersteps_live_ui(steppable_browser_interface):
     # @todo I dont think this works
     def mark_as_closed(self):
         print("Page closed")
-        self.page = None
 
     @property
     def has_expired(self):
