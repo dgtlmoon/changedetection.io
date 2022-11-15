@@ -1,4 +1,22 @@
 
+# HORRIBLE HACK BUT WORKS :-) PR anyone?
+#
+# Why?
+# `browsersteps_playwright_browser_interface.chromium.connect_over_cdp()` will only run once without async()
+# - this flask app is not async()
+# - browserless has a single timeout/keepalive which applies to the session made at .connect_over_cdp()
+#
+# So it means that we must unfortunately for now just keep a single timer since .connect_over_cdp() was run
+# and know when that reaches timeout/keepalive :( when that time is up, restart the connection and tell the user
+# that their time is up, insert another coin. (reload)
+#
+# Bigger picture
+# - It's horrible that we have this click+wait deal, some nice socket.io solution using something similar
+# to what the browserless debug UI already gives us would be smarter..
+#
+
+
+
 from distutils.util import strtobool
 from flask import Blueprint, request, make_response
 from flask_login import login_required
