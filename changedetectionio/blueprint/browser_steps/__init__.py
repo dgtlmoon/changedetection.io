@@ -80,8 +80,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 from playwright.sync_api import sync_playwright
                 browsersteps_playwright_browser_interface = sync_playwright().start()
 
-                # browsersteps_playwright_browser_interface_browser = browsersteps_playwright_browser_interface.chromium.connect_over_cdp("ws://127.0.0.1:3000?keepalive={}&timeout=600000&blockAds=1".format(str(int(100000))))
-                browsersteps_playwright_browser_interface_browser = browsersteps_playwright_browser_interface.chromium.launch()
+                browsersteps_playwright_browser_interface_browser = browsersteps_playwright_browser_interface.chromium.connect_over_cdp(os.getenv('PLAYWRIGHT_DRIVER_URL', False))
 
             if not browsersteps_live_ui_o.get(browsersteps_session_id):
                 # Boot up a new session
