@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 import chardet
 import json
 import logging
@@ -263,7 +263,7 @@ class Fetcher():
         return True
 
     def iterate_browser_steps(self):
-        from .browser_steps import steppable_browser_interface
+        from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
         from playwright._impl._api_types import TimeoutError
         from jinja2 import Environment
         jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
@@ -601,7 +601,6 @@ class base_html_webdriver(Fetcher):
     def is_ready(self):
         from selenium import webdriver
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-        from selenium.common.exceptions import WebDriverException
 
         self.driver = webdriver.Remote(
             command_executor=self.command_executor,

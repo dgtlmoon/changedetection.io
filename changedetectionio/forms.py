@@ -19,13 +19,10 @@ from wtforms.validators import ValidationError
 
 # default
 # each select <option data-enabled="enabled-0-0"
-from changedetectionio.browser_steps import browser_step_ui_config
+from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
 
 from changedetectionio import content_fetcher
 from changedetectionio.notification import (
-    default_notification_body,
-    default_notification_format,
-    default_notification_title,
     valid_notification_formats,
 )
 

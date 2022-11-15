@@ -215,9 +215,8 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     def get_current_state(self):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""
-
+        from changedetectionio.content_fetcher import xpath_element_js
         now = time.time()
-        from . import content_fetcher
         self.page.wait_for_timeout(1 * 1000)
 
         # The actual screenshot
@@ -225,7 +224,7 @@ class browsersteps_live_ui(steppable_browser_interface):
 
         self.page.evaluate("var include_filters=''")
         elements = 'a, button, input, select, textarea, p,i, div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, details, main, nav'
-        xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%', elements) + "}")
+        xpath_data = self.page.evaluate("async () => {" + xpath_element_js.replace('%ELEMENTS%', elements) + "}")
         # So the JS will find the smallest one first
         xpath_data['size_pos'] = sorted(xpath_data['size_pos'], key=lambda k: k['width'] * k['height'], reverse=True)
         print("Time to complete get_current_state of browser", time.time() - now)
@@ -244,9 +243,9 @@ class browsersteps_live_ui(steppable_browser_interface):
         :return:
         """
 
-        from . import content_fetcher
+        from changedetectionio.content_fetcher import xpath_element_js
         self.page.evaluate("var include_filters=''")
-        xpath_data = self.page.evaluate("async () => {" + content_fetcher.xpath_element_js.replace('%ELEMENTS%',
+        xpath_data = self.page.evaluate("async () => {" + xpath_element_js.replace('%ELEMENTS%',
                                                                                                    'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary') + "}")
 
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
