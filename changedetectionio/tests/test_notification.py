@@ -3,9 +3,9 @@ import time
 import re
 from flask import url_for
 from . util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup
+from . util import  extract_UUID_from_client
 import logging
 import base64
-from glob import glob
 
 from changedetectionio.notification import (
     default_notification_body,
@@ -72,11 +72,11 @@ def test_check_notification(client, live_server):
 
     testimage = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
     # Write the last screenshot png
-    datastore = '/tmp/changedetection.io/changedetectionio/test-datastore/'
 
-    for datastoreelement in glob(datastore + "*/"):
-        with open(datastoreelement + 'last-screenshot.png', 'wb+') as f:
-            f.write(base64.b64decode(testimage))
+    uuid = extract_UUID_from_client(client)
+    datastore = 'test-datastore/' + str(uuid) + '/'
+    with open(datastore + 'last-screenshot.png', 'wb+') as f:
+        f.write(base64.b64decode(testimage))
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
