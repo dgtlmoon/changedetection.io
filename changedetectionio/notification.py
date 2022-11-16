@@ -1,7 +1,4 @@
 import apprise
-import logging
-import sys
-import json
 from apprise import NotifyFormat
 
 valid_tokens = {
@@ -32,7 +29,6 @@ valid_notification_formats = {
 
 def process_notification(n_object, datastore):
 
-    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
     # Get the notification body from datastore
     n_body = n_object.get('notification_body', default_notification_body)
     n_title = n_object.get('notification_title', default_notification_title)
@@ -102,7 +98,6 @@ def process_notification(n_object, datastore):
 
                 apobj.add(url)
 
-                logging.info (">> n_object {}".format(json.dumps(n_object)))
                 apobj.notify(
                     title=n_title,
                     body=n_body,
