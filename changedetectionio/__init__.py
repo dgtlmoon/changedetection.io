@@ -1368,7 +1368,7 @@ def notification_runner():
                 # UUID wont be present when we submit a 'test' from the global settings
                 if 'uuid' in n_object:
                     datastore.update_watch(uuid=n_object['uuid'],
-                                           update_obj={'last_notification_error': "Notification error detected, please see logs."})
+                                           update_obj={'last_notification_error': "Notification error detected, goto notification log."})
 
                 log_lines = str(e).splitlines()
                 notification_debug_log += log_lines
