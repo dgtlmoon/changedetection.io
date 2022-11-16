@@ -72,7 +72,7 @@ def test_check_notification(client, live_server):
 
     testimage = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
     # Write the last screenshot png
-    datastore = '/tmp/changedetection.io/changedetectionio/test-datastore/'
+    datastore = 'test-datastore/'
 
     for datastoreelement in glob(datastore + "*/"):
         with open(datastoreelement + 'last-screenshot.png', 'wb+') as f:
