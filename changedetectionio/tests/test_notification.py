@@ -74,8 +74,8 @@ def test_check_notification(client, live_server):
     # Write the last screenshot png
 
     uuid = extract_UUID_from_client(client)
-    datastore = 'test-datastore/' + str(uuid) + '/'
-    with open(datastore + 'last-screenshot.png', 'wb+') as f:
+    datastore = 'test-datastore'
+    with open(os.path.join(datastore, str(uuid), 'last-screenshot.png'), 'wb') as f:
         f.write(base64.b64decode(testimage))
 
     # Goto the edit page, add our ignore text
