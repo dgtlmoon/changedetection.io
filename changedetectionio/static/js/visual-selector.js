@@ -68,7 +68,7 @@ $(document).ready(function() {
                xctx = c.getContext("2d");
                 // redline highlight context
                ctx = c.getContext("2d");
-               current_default_xpath =$("#include_filters").val();
+               current_default_xpath =$("#include_filters").val().split(/\r?\n/g);
                fetch_data();
                $('#selector-canvas').off("mousemove mousedown");
                // screenshot_url defined in the edit.html template
@@ -127,24 +127,30 @@ $(document).ready(function() {
 
       console.log(selector_data['size_pos'].length + " selectors found");
 
-      // highlight the default one if we can find it in the xPath list
-      // or the xpath matches the default one
-      found = false;
-      if(current_default_xpath.length) {
-          for (var i = selector_data['size_pos'].length; i!==0; i--) {
-            var sel = selector_data['size_pos'][i-1];
-            if(selector_data['size_pos'][i - 1].xpath == current_default_xpath) {
-            console.log("highlighting "+current_default_xpath);
-              current_selected_i = i-1;
-              highlight_current_selected_i();
-              found = true;
-              break;
+        // highlight the default one if we can find it in the xPath list
+        // or the xpath matches the default one
+        found = false;
+        if (current_default_xpath.length) {
+            // Find the first one that matches
+            // @todo In the future paint all that match
+            for (const c of current_default_xpath) {
+                for (var i = selector_data['size_pos'].length; i !== 0; i--) {
+                    if (selector_data['size_pos'][i - 1].xpath === c) {
+                        console.log("highlighting " + c);
+                        current_selected_i = i - 1;
+                        highlight_current_selected_i();
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    break;
+                }
             }
-          }
-        if(!found) {
-          alert("Unfortunately your existing CSS/xPath Filter was no longer found!");
+            if (!found) {
+                alert("Unfortunately your existing CSS/xPath Filter was no longer found!");
+            }
         }
-      }
 
 
       $('#selector-canvas').bind('mousemove', function (e) {

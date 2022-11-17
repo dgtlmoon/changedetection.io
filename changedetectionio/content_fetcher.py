@@ -1,11 +1,11 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from pkg_resources import resource_string
 import chardet
 import json
 import os
 import requests
-import time
 import sys
-
+import time
 
 class Non200ErrorCodeReceived(Exception):
     def __init__(self, status_code, url, screenshot=None, xpath_data=None, page_html=None):
@@ -73,131 +73,8 @@ class Fetcher():
 
     fetcher_description = "No description"
     webdriver_js_execute_code = None
-    xpath_element_js = """               
-                // Include the getXpath script directly, easier than fetching
-                !function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):(e=e||self).getXPath=n()}(this,function(){return function(e){var n=e;if(n&&n.id)return'//*[@id="'+n.id+'"]';for(var o=[];n&&Node.ELEMENT_NODE===n.nodeType;){for(var i=0,r=!1,d=n.previousSibling;d;)d.nodeType!==Node.DOCUMENT_TYPE_NODE&&d.nodeName===n.nodeName&&i++,d=d.previousSibling;for(d=n.nextSibling;d;){if(d.nodeName===n.nodeName){r=!0;break}d=d.nextSibling}o.push((n.prefix?n.prefix+":":"")+n.localName+(i||r?"["+(i+1)+"]":"")),n=n.parentNode}return o.length?"/"+o.reverse().join("/"):""}});
+    xpath_element_js = ""
 
-
-                const findUpTag = (el) => {
-                  let r = el
-                  chained_css = [];
-                  depth=0;
-            
-                // Strategy 1: Keep going up until we hit an ID tag, imagine it's like  #list-widget div h4
-                  while (r.parentNode) {
-                    if(depth==5) {
-                      break;
-                    }
-                    if('' !==r.id) {
-                      chained_css.unshift("#"+CSS.escape(r.id));
-                      final_selector= chained_css.join(' > ');
-                      // Be sure theres only one, some sites have multiples of the same ID tag :-(
-                      if (window.document.querySelectorAll(final_selector).length ==1 ) {
-                        return final_selector;
-                        }
-                      return null;
-                    } else {
-                      chained_css.unshift(r.tagName.toLowerCase());
-                    }
-                    r=r.parentNode;
-                    depth+=1;
-                  }
-                  return null;
-                }
-
-
-                // @todo - if it's SVG or IMG, go into image diff mode
-                var elements = window.document.querySelectorAll("div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary");
-                var size_pos=[];
-                // after page fetch, inject this JS
-                // build a map of all elements and their positions (maybe that only include text?)
-                var bbox;
-                for (var i = 0; i < elements.length; i++) {   
-                 bbox = elements[i].getBoundingClientRect();
-
-                 // forget really small ones
-                 if (bbox['width'] <20 && bbox['height'] < 20 ) {
-                   continue;
-                 }
-
-                 // @todo the getXpath kind of sucks, it doesnt know when there is for example just one ID sometimes
-                 // it should not traverse when we know we can anchor off just an ID one level up etc..
-                 // maybe, get current class or id, keep traversing up looking for only class or id until there is just one match 
-
-                 // 1st primitive - if it has class, try joining it all and select, if theres only one.. well thats us.
-                 xpath_result=false;
-                 
-                 try {
-                   var d= findUpTag(elements[i]);
-                   if (d) {
-                     xpath_result =d;
-                   }                
-                 } catch (e) {
-                   console.log(e);
-                 }
-                 
-                 // You could swap it and default to getXpath and then try the smarter one
-                 // default back to the less intelligent one
-                 if (!xpath_result) {
-                    try {
-                       // I've seen on FB and eBay that this doesnt work
-                       // ReferenceError: getXPath is not defined at eval (eval at evaluate (:152:29), <anonymous>:67:20) at UtilityScript.evaluate (<anonymous>:159:18) at UtilityScript.<anonymous> (<anonymous>:1:44)
-                       xpath_result = getXPath(elements[i]);
-                     } catch (e) {
-                       console.log(e);
-                       continue;
-                     }            
-                 }
-                 
-                 if(window.getComputedStyle(elements[i]).visibility === "hidden") {
-                   continue;
-                 }
-
-                 size_pos.push({
-                   xpath: xpath_result,
-                   width: Math.round(bbox['width']), 
-                   height: Math.round(bbox['height']), 
-                   left: Math.floor(bbox['left']), 
-                   top: Math.floor(bbox['top']), 
-                   childCount: elements[i].childElementCount
-                 });                 
-                }
-
-
-                // inject the current one set in the include_filters, which may be a CSS rule
-                // used for displaying the current one in VisualSelector, where its not one we generated.
-                if (include_filters.length) {
-                   q=false;                   
-                   try {
-                       // is it xpath?
-                       if (include_filters.startsWith('/') || include_filters.startsWith('xpath:')) {
-                         q=document.evaluate(include_filters.replace('xpath:',''), document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                       } else {
-                         q=document.querySelector(include_filters);
-                       }                       
-                   } catch (e) {
-                    // Maybe catch DOMException and alert? 
-                     console.log(e);                       
-                   }
-                   bbox=false;
-                   if(q) {
-                     bbox = q.getBoundingClientRect();
-                   }
-                                   
-                   if (bbox && bbox['width'] >0 && bbox['height']>0) {                       
-                       size_pos.push({
-                           xpath: include_filters,
-                           width: bbox['width'], 
-                           height: bbox['height'],
-                           left: bbox['left'],
-                           top: bbox['top'],
-                           childCount: q.childElementCount
-                         });
-                     }
-                }
-                // Window.width required for proper scaling in the frontend
-                return {'size_pos':size_pos, 'browser_width': window.innerWidth};
-    """
     xpath_data = None
 
     # Will be needed in the future by the VisualSelector, always get this where possible.
@@ -207,6 +84,10 @@ class Fetcher():
 
     # Time ONTOP of the system defined env minimum time
     render_extract_delay = 0
+
+    def __init__(self):
+        # The code that scrapes elements and makes a list of elements/size/position to click on in the VisualSelector
+        self.xpath_element_js = resource_string(__name__, "res/xpath_element_scraper.js").decode('utf-8')
 
     @abstractmethod
     def get_error(self):
@@ -273,7 +154,7 @@ class base_html_playwright(Fetcher):
     proxy = None
 
     def __init__(self, proxy_override=None):
-
+        super().__init__()
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
         self.command_executor = os.getenv(
@@ -465,6 +346,7 @@ class base_html_webdriver(Fetcher):
     proxy = None
 
     def __init__(self, proxy_override=None):
+        super().__init__()
         from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
 
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
