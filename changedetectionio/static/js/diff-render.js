@@ -55,7 +55,7 @@ window.onload = function () {
 
     /* Set current version date as local time in the browser also */
     var current_v = document.getElementById("current-v-date");
-    var dateObject = new Date(newest_version_timestamp);
+    var dateObject = new Date(newest_version_timestamp*1000);
     current_v.innerHTML = dateObject.toLocaleString();
     onDiffTypeChange(document.querySelector('#settings [name="diff_type"]:checked'));
     changed();
