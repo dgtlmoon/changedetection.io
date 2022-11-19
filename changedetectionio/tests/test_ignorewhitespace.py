@@ -12,15 +12,15 @@ def test_setup(live_server):
 def set_original_ignore_response_but_with_whitespace():
     test_return_data = """<html>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>
 
 
      Which is across multiple lines</p>
      <br>
-     </br>
+     <br>
 
-         So let's see what happens.  </br>
+         So let's see what happens.  <br>
 
 
      </body>
@@ -34,10 +34,10 @@ def set_original_ignore_response_but_with_whitespace():
 def set_original_ignore_response():
     test_return_data = """<html>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      </body>
      </html>
 

@@ -75,6 +75,7 @@ def process_notification(n_object, datastore):
                     # @todo re-use an existing library we have already imported to strip all non-allowed tags
                     n_body = n_body.replace('<br/>', '\n')
                     n_body = n_body.replace('</br>', '\n')
+                    n_body = n_body.replace('<br>', '\n')
                     # real limit is 4096, but minus some for extra metadata
                     payload_max_size = 3600
                     body_limit = max(0, payload_max_size - len(n_title))

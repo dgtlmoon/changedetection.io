@@ -6,11 +6,11 @@ from ..html_tools import html_to_text
 def test_html_to_text_func():
     test_html = """<html>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
      <a href="/first_link"> More Text </a>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      <a href="second_link.com"> Even More Text </a>
      </body>
      </html>

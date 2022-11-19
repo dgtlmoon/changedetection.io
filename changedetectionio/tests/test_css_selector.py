@@ -12,10 +12,10 @@ def test_setup(live_server):
 def set_original_response():
     test_return_data = """<html>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      <div id="sametext">Some text thats the same</div>
      <div id="changetext">Some text that will change</div>
      </body>
@@ -29,10 +29,10 @@ def set_original_response():
 def set_modified_response():
     test_return_data = """<html>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>which has this one new line</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      <div id="sametext">Some text thats the same</div>
      <div id="changetext">Some text that changes</div>
      </body>

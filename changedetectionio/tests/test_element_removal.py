@@ -25,10 +25,10 @@ def set_original_response():
     </ul>
     </nav>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
     <div id="changetext">Some text that will change</div>
      </body>
     <footer>
@@ -54,10 +54,10 @@ def set_modified_response():
     </ul>
     </nav>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
     <div id="changetext">Some text that changes</div>
      </body>
     <footer>
@@ -85,7 +85,7 @@ def test_element_removal_output():
     </ul>
     </nav>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>across multiple lines</p>
      <div id="changetext">Some text that changes</div>
      </body>
