@@ -5,7 +5,9 @@ var result = document.getElementById('result');
 function changed() {
     // https://github.com/kpdecker/jsdiff/issues/389
     // I would love to use `{ignoreWhitespace: true}` here but it breaks the formatting
-    var diff = Diff[window.diffType](a.textContent, b.textContent);
+    options = {ignoreWhitespace: document.getElementById('ignoreWhitespace').checked};
+
+    var diff = Diff[window.diffType](a.textContent, b.textContent, options);
     var fragment = document.createDocumentFragment();
     for (var i = 0; i < diff.length; i++) {
 
@@ -80,6 +82,10 @@ for (var i = 0; i < radio.length; i++) {
         onDiffTypeChange(e.target);
         changed();
     }
+}
+
+document.getElementById('ignoreWhitespace').onchange = function (e) {
+    changed();
 }
 
 
