@@ -21,6 +21,9 @@
 
             <label for="diffChars" class="pure-checkbox">
                 <input type="radio" name="diff_type" id="diffChars" value="diffChars"/> Chars</label>
+            <!-- @todo - when mimetype is JSON, select this by default? -->
+            <label for="diffJson" class="pure-checkbox">
+                <input type="radio" name="diff_type" id="diffJson" value="diffJson" /> JSON</label>
 
             {% if versions|length >= 1 %}
             <label for="diff-version">Compare newest (<span id="current-v-date"></span>) with</label>
