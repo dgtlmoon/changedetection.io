@@ -101,7 +101,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Get visual selector ready/update its data (also use the current filter info from the page?)
             # When the last 'apply' button was pressed
             # @todo this adds overhead because the xpath selection is happening twice
-            if is_last_step:
+            u = this_session.page.url
+            if is_last_step and u:
                 (screenshot, xpath_data) = this_session.request_visualselector_data()
                 datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
                 datastore.save_xpath_data(watch_uuid=uuid, data=xpath_data)
