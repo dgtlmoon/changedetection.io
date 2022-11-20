@@ -258,9 +258,11 @@ class browsersteps_live_ui(steppable_browser_interface):
         self.page.evaluate("var include_filters=''")
         from pkg_resources import resource_string
         # The code that scrapes elements and makes a list of elements/size/position to click on in the VisualSelector
-        xpath_data = resource_string(__name__, "../../res/xpath_element_scraper.js").decode('utf-8')
-        xpath_data = xpath_data.replace('%ELEMENTS%',
-                                        'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section,')
+        # @todo dont duplicate these selectors, or just let them both use the same data?
+        xpath_element_js = resource_string(__name__, "../../res/xpath_element_scraper.js").decode('utf-8')
+        xpath_element_js = xpath_element_js.replace('%ELEMENTS%',
+                                                    'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section')
+        xpath_data = self.page.evaluate("async () => {" + xpath_element_js + "}")
 
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
 

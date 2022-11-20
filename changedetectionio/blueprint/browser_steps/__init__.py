@@ -100,7 +100,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
             # Get visual selector ready/update its data (also use the current filter info from the page?)
             # When the last 'apply' button was pressed
-            # @todo
+            # @todo this adds overhead because the xpath selection is happening twice
             if is_last_step:
                 (screenshot, xpath_data) = this_session.request_visualselector_data()
                 datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
@@ -141,12 +141,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             'browser_time_remaining': round(remaining)
         }
 
-        # Update files for Visual Selector tool
-        with open(os.path.join(datastore.datastore_path, uuid, "last-screenshot.png"), 'wb') as f:
-            f.write(state[0])
-
-        with open(os.path.join(datastore.datastore_path, uuid, "elements.json"), 'w') as f:
-            f.write(json.dumps(state[1], indent=1, ensure_ascii=False))
 
         # @todo BSON/binary JSON, faster xfer, OR pick it off the disk
         return p

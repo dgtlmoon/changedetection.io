@@ -13,9 +13,9 @@ $(document).ready(function () {
     // redline highlight context
     var ctx;
 
-    var current_default_xpath=[];
-    var x_scale=1;
-    var y_scale=1;
+    var current_default_xpath = [];
+    var x_scale = 1;
+    var y_scale = 1;
     var selector_image;
     var selector_image_rect;
     var selector_data;
@@ -27,7 +27,11 @@ $(document).ready(function () {
         bootstrap_visualselector();
     });
 
-    // @todo unbind this
+    $(window).resize(function () {
+        set_scale();
+        highlight_current_selected_i();
+    });
+
     $(document).on('keydown', function (event) {
         if ($("img#selector-background").is(":visible")) {
             if (event.key == "Escape") {
@@ -36,12 +40,6 @@ $(document).ready(function () {
             }
         }
     });
-
-    // For when the page loads
-    if (!window.location.hash || window.location.hash != '#visualselector') {
-        $("img#selector-background").attr('src', '');
-        return;
-    }
 
     // Handle clearing button/link
     $('#clear-selector').on('click', function (event) {
@@ -59,6 +57,8 @@ $(document).ready(function () {
 
 
     function bootstrap_visualselector() {
+        console.log("Booting up VisualSelector");
+
         if (1) {
             // bootstrap it, this will trigger everything else
             $("img#selector-background").bind('load', function () {
@@ -77,12 +77,13 @@ $(document).ready(function () {
                 $('#selector-canvas').off("mousemove mousedown");
                 // screenshot_url defined in the edit.html template
             }).attr("src", screenshot_url);
-
-            $("img#selector-background").bind('error', function () {
-                $('.fetching-update-notice').html("<strong style='color: red;'>Visual Selector data missing or not yet ready, unable to render UI.</strong>");
-            });
-
         }
+        // Tell visualSelector that the image should update
+        var s = $("img#selector-background").attr('src')+"?"+ new Date().getTime();
+        $("img#selector-background").attr('src',s)
+        console.log(s)
+
+            //newImage.src = "http://localhost/image.jpg?" + new Date().getTime();
     }
 
     function fetch_data() {
@@ -108,6 +109,7 @@ $(document).ready(function () {
 
         // some things to check if the scaling doesnt work
         // - that the widths/sizes really are about the actual screen size cat elements.json |grep -o width......|sort|uniq
+        $("#selector-wrapper").show();
         selector_image = $("img#selector-background")[0];
         selector_image_rect = selector_image.getBoundingClientRect();
 
@@ -125,19 +127,17 @@ $(document).ready(function () {
     }
 
     function reflow_selector() {
-        $(window).resize(function () {
-            set_scale();
-            highlight_current_selected_i();
-        });
+
         var selector_currnt_xpath_text = $("#selector-current-xpath span");
+
         set_scale();
+
         console.log(selector_data['size_pos'].length + " selectors found");
 
         // highlight the default one if we can find it in the xPath list
         // or the xpath matches the default one
         found = false;
         if (current_default_xpath.length) {
-
             // Find the first one that matches
             // @todo In the future paint all that match
             for (const c of current_default_xpath) {
@@ -234,26 +234,10 @@ $(document).ready(function () {
 
         }
 
+
         $('#selector-canvas').bind('mousedown', function (e) {
             highlight_current_selected_i();
         });
-
-        var sel = selector_data['size_pos'][current_selected_i];
-        if (sel[0] == '/') {
-        // @todo - not sure just checking / is right
-            $("#include_filters").val('xpath:'+sel.xpath);
-        } else {
-            $("#include_filters").val(sel.xpath);
-        }
-        xctx.fillStyle = 'rgba(205,205,205,0.95)';
-        xctx.strokeStyle = 'rgba(225,0,0,0.9)';
-        xctx.lineWidth = 3;
-        xctx.fillRect(0,0,c.width, c.height);
-        // Clear out what only should be seen (make a clear/clean spot)
-        xctx.clearRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-        xctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-        state_clicked=true;
-        set_current_selected_text(sel.xpath);
     }
 
 });
