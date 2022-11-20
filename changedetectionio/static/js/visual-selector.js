@@ -77,6 +77,9 @@ $(document).ready(function () {
                 // screenshot_url defined in the edit.html template
             }).attr("src", screenshot_url);
         }
+        // Tell visualSelector that the image should update
+        var s = $("img#selector-background").attr('src')+"?"+ new Date().getTime();
+        $("img#selector-background").attr('src',s)
     }
 
     function fetch_data() {
@@ -102,6 +105,7 @@ $(document).ready(function () {
 
         // some things to check if the scaling doesnt work
         // - that the widths/sizes really are about the actual screen size cat elements.json |grep -o width......|sort|uniq
+        $("#selector-wrapper").show();
         selector_image = $("img#selector-background")[0];
         selector_image_rect = selector_image.getBoundingClientRect();
 
