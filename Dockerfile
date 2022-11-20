@@ -41,6 +41,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libc-dev \
     libffi-dev \
+    libjpeg8 \
     libjpeg-dev \
     libssl-dev \
     libxslt-dev \
