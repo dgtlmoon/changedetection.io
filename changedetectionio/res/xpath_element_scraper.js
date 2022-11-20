@@ -1,7 +1,7 @@
 // Include the getXpath script directly, easier than fetching
 function getxpath(e) {
         var n = e;
-        //if (n && n.id) return '//*[@id="' + n.id + '"]';
+        if (n && n.id) return '//*[@id="' + n.id + '"]';
         for (var o = []; n && Node.ELEMENT_NODE === n.nodeType;) {
             for (var i = 0, r = !1, d = n.previousSibling; d;) d.nodeType !== Node.DOCUMENT_TYPE_NODE && d.nodeName === n.nodeName && i++, d = d.previousSibling;
             for (d = n.nextSibling; d;) {
