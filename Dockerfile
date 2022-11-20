@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libc-dev \
     libffi-dev \
+    libjpeg-dev \
     libssl-dev \
     libxslt-dev \
     make \
@@ -36,13 +37,14 @@ ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 # Re #93, #73, excluding rustc (adds another 430Mb~)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libssl-dev \
-    libffi-dev \
+    g++ \
     gcc \
     libc-dev \
+    libffi-dev \
+    libjpeg-dev \
+    libssl-dev \
     libxslt-dev \
-    zlib1g-dev \
-    g++
+    zlib1g-dev
 
 # https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
 ENV PYTHONUNBUFFERED=1
