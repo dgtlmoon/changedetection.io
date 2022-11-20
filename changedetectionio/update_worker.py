@@ -74,6 +74,7 @@ class update_worker(threading.Thread):
             n_object.update({
                 'watch_url': watch['url'],
                 'uuid': watch_uuid,
+                'screenshot': watch.get_screenshot() if watch.get('notification_screenshot') else False,
                 'current_snapshot': snapshot_contents.decode('utf-8'),
                 'diff': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], line_feed_sep=line_feed_sep),
                 'diff_full': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], True, line_feed_sep=line_feed_sep)
@@ -106,7 +107,8 @@ class update_worker(threading.Thread):
         if 'notification_urls' in n_object:
             n_object.update({
                 'watch_url': watch['url'],
-                'uuid': watch_uuid
+                'uuid': watch_uuid,
+                'screenshot': False
             })
             self.notification_q.put(n_object)
             print("Sent filter not found notification for {}".format(watch_uuid))

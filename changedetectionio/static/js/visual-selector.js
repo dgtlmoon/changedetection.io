@@ -13,9 +13,10 @@ $(document).ready(function () {
     // redline highlight context
     var ctx;
 
-    var current_default_xpath;
-    var x_scale = 1;
-    var y_scale = 1;
+
+    var current_default_xpath=[];
+    var x_scale=1;
+    var y_scale=1;
     var selector_image;
     var selector_image_rect;
     var selector_data;
@@ -67,12 +68,15 @@ $(document).ready(function () {
                 // greyed out fill context
                 xctx = c.getContext("2d");
                 // redline highlight context
-               ctx = c.getContext("2d");
-               current_default_xpath =$("#include_filters").val();
-               fetch_data();
-               $('#selector-canvas').off("mousemove mousedown");
-               $('#selector-wrapper').fadeIn();
-               // screenshot_url defined in the edit.html template
+                ctx = c.getContext("2d");
+                if ($("#include_filters").val().trim().length) {
+                    current_default_xpath = $("#include_filters").val().split(/\r?\n/g);
+                } else {
+                    current_default_xpath = [];
+                }
+                fetch_data();
+                $('#selector-canvas').off("mousemove mousedown");
+                // screenshot_url defined in the edit.html template
             }).attr("src", screenshot_url);
 
             $("img#selector-background").bind('error', function () {

@@ -24,6 +24,12 @@ echo "RUNNING WITH BASE_URL SET"
 export BASE_URL="https://really-unique-domain.io"
 pytest tests/test_notification.py
 
+
+# Re-run with HIDE_REFERER set - could affect login
+export HIDE_REFERER=True
+pytest tests/test_access_control.py
+
+
 # Now for the selenium and playwright/browserless fetchers
 # Note - this is not UI functional tests - just checking that each one can fetch the content
 

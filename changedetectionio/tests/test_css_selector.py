@@ -89,9 +89,6 @@ def test_check_markup_include_filters_restriction(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
@@ -103,15 +100,12 @@ def test_check_markup_include_filters_restriction(client, live_server):
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-
+    time.sleep(1)
     # Check it saved
     res = client.get(
         url_for("edit_page", uuid="first"),
     )
     assert bytes(include_filters.encode('utf-8')) in res.data
-
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
