@@ -27,11 +27,6 @@ $(document).ready(function () {
         bootstrap_visualselector();
     });
 
-    $(window).resize(function () {
-        set_scale();
-        highlight_current_selected_i();
-    });
-
     $(document).on('keydown', function (event) {
         if ($("img#selector-background").is(":visible")) {
             if (event.key == "Escape") {
@@ -40,6 +35,12 @@ $(document).ready(function () {
             }
         }
     });
+
+    // For when the page loads
+    if (!window.location.hash || window.location.hash != '#visualselector') {
+        $("img#selector-background").attr('src', '');
+        return;
+    }
 
     // Handle clearing button/link
     $('#clear-selector').on('click', function (event) {
@@ -57,8 +58,6 @@ $(document).ready(function () {
 
 
     function bootstrap_visualselector() {
-        console.log("Booting up VisualSelector");
-
         if (1) {
             // bootstrap it, this will trigger everything else
             $("img#selector-background").bind('load', function () {
@@ -78,12 +77,6 @@ $(document).ready(function () {
                 // screenshot_url defined in the edit.html template
             }).attr("src", screenshot_url);
         }
-        // Tell visualSelector that the image should update
-        var s = $("img#selector-background").attr('src')+"?"+ new Date().getTime();
-        $("img#selector-background").attr('src',s)
-        console.log(s)
-
-            //newImage.src = "http://localhost/image.jpg?" + new Date().getTime();
     }
 
     function fetch_data() {
@@ -109,7 +102,6 @@ $(document).ready(function () {
 
         // some things to check if the scaling doesnt work
         // - that the widths/sizes really are about the actual screen size cat elements.json |grep -o width......|sort|uniq
-        $("#selector-wrapper").show();
         selector_image = $("img#selector-background")[0];
         selector_image_rect = selector_image.getBoundingClientRect();
 
@@ -127,7 +119,10 @@ $(document).ready(function () {
     }
 
     function reflow_selector() {
-
+        $(window).resize(function () {
+            set_scale();
+            highlight_current_selected_i();
+        });
         var selector_currnt_xpath_text = $("#selector-current-xpath span");
 
         set_scale();
