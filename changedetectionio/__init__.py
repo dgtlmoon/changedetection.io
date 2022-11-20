@@ -644,12 +644,18 @@ def changedetection_app(config=None, datastore_o=None):
             except ModuleNotFoundError:
                 jq_support = False
 
+            watch = datastore.data['watching'].get(uuid)
+            system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
+            is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
+                    watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
+
             output = render_template("edit.html",
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                      form=form,
                                      has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
                                      has_empty_checktime=using_default_check_time,
+                                     is_html_webdriver=is_html_webdriver,
                                      jq_support=jq_support,
                                      playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False),
                                      settings_application=datastore.data['settings']['application'],
@@ -657,7 +663,7 @@ def changedetection_app(config=None, datastore_o=None):
                                      uuid=uuid,
                                      visualselector_data_is_ready=visualselector_data_is_ready,
                                      visualselector_enabled=visualselector_enabled,
-                                     watch=datastore.data['watching'][uuid],
+                                     watch=watch
                                      )
 
         return output

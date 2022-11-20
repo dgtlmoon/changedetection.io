@@ -1,3 +1,4 @@
+import json
 import os
 import time
 import re
@@ -20,7 +21,6 @@ def test_setup(live_server):
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
 def test_check_notification(client, live_server):
-
     set_original_response()
 
     # Give the endpoint time to spin up
@@ -70,13 +70,14 @@ def test_check_notification(client, live_server):
     # Give the thread time to pick up the first version
     time.sleep(3)
 
-    testimage = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+    # We write the PNG to disk, but a JPEG should appear in the notification
+    testimage_png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
     # Write the last screenshot png
 
     uuid = extract_UUID_from_client(client)
     datastore = 'test-datastore'
     with open(os.path.join(datastore, str(uuid), 'last-screenshot.png'), 'wb') as f:
-        f.write(base64.b64decode(testimage))
+        f.write(base64.b64decode(testimage_png))
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -153,7 +154,19 @@ def test_check_notification(client, live_server):
     assert "preview/" in notification_submission
     assert ":-)" in notification_submission
     assert "New ChangeDetection.io Notification - {}".format(test_url) in notification_submission
-    assert testimage in notification_submission
+
+    # Check the attachment was added, and that it is a JPEG from the original PNG
+    notification_submission_object = json.loads(notification_submission)
+    assert notification_submission_object['attachments'][0]['filename'] == 'last-screenshot.jpg'
+    assert len(notification_submission_object['attachments'][0]['base64'])
+    assert notification_submission_object['attachments'][0]['mimetype'] == 'image/jpeg'
+    jpeg_in_attachment = base64.b64decode(notification_submission_object['attachments'][0]['base64'])
+    assert b'JFIF' in jpeg_in_attachment
+    assert testimage_png not in notification_submission
+    # Assert that the JPEG is readable (didn't get chewed up somewhere)
+    from PIL import Image
+    import io
+    assert Image.open(io.BytesIO(jpeg_in_attachment))
 
     if env_base_url:
         # Re #65 - did we see our BASE_URl ?
