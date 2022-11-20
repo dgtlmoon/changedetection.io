@@ -40,6 +40,7 @@ Easily see what changed, examine by word, line, or individual character.
 - Create RSS feeds based on changes in web content
 - Monitor HTML source code for unexpected changes, strengthen your PCI compliance
 - You have a very sensitive list of URLs to watch and you do _not_ want to use the paid alternatives. (Remember, _you_ are the product)
+- Get notified when certain keywords appear in Twitter search results
 
 _Need an actual Chrome runner with Javascript support? We support fetching via WebDriver and Playwright!</a>_
 
