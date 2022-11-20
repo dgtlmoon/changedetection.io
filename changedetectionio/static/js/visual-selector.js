@@ -13,9 +13,9 @@ $(document).ready(function () {
     // redline highlight context
     var ctx;
 
-    var current_default_xpath;
-    var x_scale = 1;
-    var y_scale = 1;
+    var current_default_xpath=[];
+    var x_scale=1;
+    var y_scale=1;
     var selector_image;
     var selector_image_rect;
     var selector_data;
@@ -67,12 +67,15 @@ $(document).ready(function () {
                 // greyed out fill context
                 xctx = c.getContext("2d");
                 // redline highlight context
-               ctx = c.getContext("2d");
-               current_default_xpath =$("#include_filters").val();
-               fetch_data();
-               $('#selector-canvas').off("mousemove mousedown");
-               $('#selector-wrapper').fadeIn();
-               // screenshot_url defined in the edit.html template
+                ctx = c.getContext("2d");
+                if ($("#include_filters").val().trim().length) {
+                    current_default_xpath = $("#include_filters").val().split(/\r?\n/g);
+                } else {
+                    current_default_xpath = [];
+                }
+                fetch_data();
+                $('#selector-canvas').off("mousemove mousedown");
+                // screenshot_url defined in the edit.html template
             }).attr("src", screenshot_url);
 
             $("img#selector-background").bind('error', function () {
@@ -127,22 +130,27 @@ $(document).ready(function () {
             highlight_current_selected_i();
         });
         var selector_currnt_xpath_text = $("#selector-current-xpath span");
-
         set_scale();
-
         console.log(selector_data['size_pos'].length + " selectors found");
 
         // highlight the default one if we can find it in the xPath list
         // or the xpath matches the default one
         found = false;
         if (current_default_xpath.length) {
-            for (var i = selector_data['size_pos'].length; i !== 0; i--) {
-                var sel = selector_data['size_pos'][i - 1];
-                if (selector_data['size_pos'][i - 1].xpath == current_default_xpath) {
-                    console.log("highlighting " + current_default_xpath);
-                    current_selected_i = i - 1;
-                    highlight_current_selected_i();
-                    found = true;
+
+            // Find the first one that matches
+            // @todo In the future paint all that match
+            for (const c of current_default_xpath) {
+                for (var i = selector_data['size_pos'].length; i !== 0; i--) {
+                    if (selector_data['size_pos'][i - 1].xpath === c) {
+                        console.log("highlighting " + c);
+                        current_selected_i = i - 1;
+                        highlight_current_selected_i();
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
                     break;
                 }
             }

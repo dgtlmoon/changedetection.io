@@ -101,7 +101,10 @@ def process_notification(n_object, datastore):
                 apobj.notify(
                     title=n_title,
                     body=n_body,
-                    body_format=n_format)
+                    body_format=n_format,
+                    # False is not an option for AppRise, must be type None
+                    attach=None if not n_object.get('screenshot') else n_object.get('screenshot')
+                )
 
                 apobj.clear()
 
