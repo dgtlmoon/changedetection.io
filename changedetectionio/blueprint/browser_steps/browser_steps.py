@@ -222,7 +222,8 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     def get_current_state(self):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""
-        from changedetectionio.content_fetcher import xpath_element_js
+        from pkg_resources import resource_string
+        xpath_element_js = resource_string(__name__, "../../res/xpath_element_scraper.js").decode('utf-8')
         now = time.time()
         self.page.wait_for_timeout(1 * 1000)
 
@@ -230,8 +231,11 @@ class browsersteps_live_ui(steppable_browser_interface):
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=40)
 
         self.page.evaluate("var include_filters=''")
-        elements = 'a, button, input, select, textarea, p,i, div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, details, main, nav'
-        xpath_data = self.page.evaluate("async () => {" + xpath_element_js.replace('%ELEMENTS%', elements) + "}")
+        # Go find the interactive elements
+        # @todo in the future, something smarter that can scan for elements with .click/focus etc event handlers?
+        elements = 'a, button, input, select, textarea, i, div,span,form,th,td,a,p,ul,li,h1,h2,h3,h4'
+        xpath_element_js = xpath_element_js.replace('%ELEMENTS%', elements)
+        xpath_data = self.page.evaluate("async () => {" + xpath_element_js + "}")
         # So the JS will find the smallest one first
         xpath_data['size_pos'] = sorted(xpath_data['size_pos'], key=lambda k: k['width'] * k['height'], reverse=True)
         print("Time to complete get_current_state of browser", time.time() - now)
@@ -243,6 +247,7 @@ class browsersteps_live_ui(steppable_browser_interface):
     def request_visualselector_data(self):
         """
         Does the same that the playwright operation in content_fetcher does
+        This is used to just bump the VisualSelector data so it' ready to go if they click on the tab
         @todo refactor and remove duplicate code, add include_filters
         :param xpath_data:
         :param screenshot:
@@ -250,10 +255,12 @@ class browsersteps_live_ui(steppable_browser_interface):
         :return:
         """
 
-        from changedetectionio.content_fetcher import xpath_element_js
         self.page.evaluate("var include_filters=''")
-        xpath_data = self.page.evaluate("async () => {" + xpath_element_js.replace('%ELEMENTS%',
-                                                                                                   'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary') + "}")
+        from pkg_resources import resource_string
+        # The code that scrapes elements and makes a list of elements/size/position to click on in the VisualSelector
+        xpath_data = resource_string(__name__, "../../res/xpath_element_scraper.js").decode('utf-8')
+        xpath_data = xpath_data.replace('%ELEMENTS%',
+                                        'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section,')
 
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
 

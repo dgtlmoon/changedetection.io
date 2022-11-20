@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from pkg_resources import resource_string
 import chardet
 import json
 import logging
@@ -95,8 +94,10 @@ class Fetcher():
     render_extract_delay = 0
 
     def __init__(self):
+        from pkg_resources import resource_string
         # The code that scrapes elements and makes a list of elements/size/position to click on in the VisualSelector
         self.xpath_element_js = resource_string(__name__, "res/xpath_element_scraper.js").decode('utf-8')
+        self.xpath_element_js = self.xpath_element_js.replace('%ELEMENTS%', 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section,')
 
     @abstractmethod
     def get_error(self):
