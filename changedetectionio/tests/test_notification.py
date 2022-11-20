@@ -163,7 +163,10 @@ def test_check_notification(client, live_server):
     jpeg_in_attachment = base64.b64decode(notification_submission_object['attachments'][0]['base64'])
     assert b'JFIF' in jpeg_in_attachment
     assert testimage_png not in notification_submission
-
+    # Assert that the JPEG is readable (didn't get chewed up somewhere)
+    from PIL import Image
+    import io
+    assert Image.open(io.BytesIO(jpeg_in_attachment))
     if env_base_url:
         # Re #65 - did we see our BASE_URl ?
         logging.debug (">>> BASE_URL checking in notification: %s", env_base_url)

@@ -1,0 +1,72 @@
+diff --git a/changedetectionio/tests/test_notification.py b/changedetectionio/tests/test_notification.py
+index 93b8e58e..752f2683 100644
+--- a/changedetectionio/tests/test_notification.py
++++ b/changedetectionio/tests/test_notification.py
+@@ -21,6 +21,8 @@ def test_setup(live_server):
+ # Hard to just add more live server URLs when one test is already running (I think)
+ # So we add our test here (was in a different file)
+ def test_check_notification(client, live_server):
++    import os
++    import io
+     set_original_response()
+ 
+     # Give the endpoint time to spin up
+@@ -68,16 +70,16 @@ def test_check_notification(client, live_server):
+     assert b"Watch added" in res.data
+ 
+     # Give the thread time to pick up the first version
+-    time.sleep(3)
+-
+-    # We write the PNG to disk, but a JPEG should appear in the notification
+-    testimage_png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+-    # Write the last screenshot png
++    time.sleep(1)
+ 
+     uuid = extract_UUID_from_client(client)
+-    datastore = 'test-datastore'
+-    with open(os.path.join(datastore, str(uuid), 'last-screenshot.png'), 'wb') as f:
+-        f.write(base64.b64decode(testimage_png))
++
++    # Prepare the mock PNG which will be used to pretend that we have a screenshot ready
++    package_dir = os.path.dirname(os.path.abspath(__file__))
++    with open(os.path.join(package_dir, 'test.png'), 'rb') as f_png:
++        with open(os.path.join(os.path.join('test-datastore', str(uuid), 'last-screenshot.png')), 'wb') as t_png:
++            t_png.write(f_png.read())
++
+ 
+     # Goto the edit page, add our ignore text
+     # Add our URL to the import page
+@@ -162,7 +164,12 @@ def test_check_notification(client, live_server):
+     assert notification_submission_object['attachments'][0]['mimetype'] == 'image/jpeg'
+     jpeg_in_attachment = base64.b64decode(notification_submission_object['attachments'][0]['base64'])
+     assert b'JFIF' in jpeg_in_attachment
+-    assert testimage_png not in notification_submission
++
++    # Assert that AppRise or something else didnt chew it up
++    from PIL import Image
++    with open('/tmp/image.bin', 'wb') as f:
++        f.write(jpeg_in_attachment)
++    assert Image.open(io.BytesIO(jpeg_in_attachment))
+ 
+     if env_base_url:
+         # Re #65 - did we see our BASE_URl ?
+@@ -234,6 +241,10 @@ def test_check_notification(client, live_server):
+ def test_notification_validation(client, live_server):
+     #live_server_setup(live_server)
+     time.sleep(3)
++    client.get(
++        url_for("form_delete", uuid="all"),
++        follow_redirects=True
++    )
+     # re #242 - when you edited an existing new entry, it would not correctly show the notification settings
+     # Add our URL to the import page
+     test_url = url_for('test_endpoint', _external=True)
+@@ -242,6 +253,8 @@ def test_notification_validation(client, live_server):
+         data={"url": test_url, "tag": 'nice one'},
+         follow_redirects=True
+     )
++    with open('/tmp/fuck.html', 'wb') as f:
++        f.write(res.data)
+ 
+     assert b"Watch added" in res.data
+ 
