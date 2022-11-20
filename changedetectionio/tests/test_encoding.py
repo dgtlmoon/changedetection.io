@@ -70,9 +70,6 @@ def test_check_encoding_detection_missing_content_type_header(client, live_serve
         follow_redirects=True
     )
 
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-
     # Give the thread time to pick it up
     time.sleep(2)
 
