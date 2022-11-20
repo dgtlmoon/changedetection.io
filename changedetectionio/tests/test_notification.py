@@ -167,6 +167,7 @@ def test_check_notification(client, live_server):
     from PIL import Image
     import io
     assert Image.open(io.BytesIO(jpeg_in_attachment))
+
     if env_base_url:
         # Re #65 - did we see our BASE_URl ?
         logging.debug (">>> BASE_URL checking in notification: %s", env_base_url)
