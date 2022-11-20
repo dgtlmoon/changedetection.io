@@ -263,7 +263,7 @@ class model(dict):
             # Doesnt exist, so create the JPEG from the PNG
             from PIL import Image
             im1 = Image.open(png_fname)
-            im1.convert('RGB').save(jpg_fname)
+            im1.convert('RGB').save(jpg_fname, quality=int(os.getenv("NOTIFICATION_SCREENSHOT_JPG_QUALITY", 75)))
             return jpg_fname
 
 
