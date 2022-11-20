@@ -53,6 +53,7 @@ _Need an actual Chrome runner with Javascript support? We support fetching via W
 - Override Request Headers, Specify `POST` or `GET` and other methods
 - Use the "Visual Selector" to help target specific elements
 - Configurable [proxy per watch](https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration)
+- Send a screenshot with the notification when a change is detected in the web page
 
 We [recommend and use Bright Data](https://brightdata.grsm.io/n0r16zf7eivq) global proxy services, Bright Data will match any first deposit up to $100 using our signup link.
 
