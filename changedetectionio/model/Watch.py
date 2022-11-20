@@ -248,7 +248,8 @@ class model(dict):
         if os.path.isfile(fname):
             return fname
 
-        return False
+        # False is not an option for AppRise, must be type None
+        return None
 
     def __get_file_ctime(self, filename):
         fname = os.path.join(self.watch_data_dir, filename)
