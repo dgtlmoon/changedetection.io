@@ -38,6 +38,7 @@ class model(dict):
             'notification_format': default_notification_format_for_watch,
             'notification_muted': False,
             'notification_title': None,
+            'notification_screenshot': False, # Include the latest screenshot if available and supported by the apprise URL
             'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
             'paused': False,
             'previous_md5': False,

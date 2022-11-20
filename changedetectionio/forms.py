@@ -375,6 +375,7 @@ class watchForm(commonSettingsForm):
         'Send a notification when the filter can no longer be found on the page', default=False)
 
     notification_muted = BooleanField('Notifications Muted / Off', default=False)
+    notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
 
     def validate(self, **kwargs):
         if not super().validate():

@@ -3,7 +3,9 @@ import time
 import re
 from flask import url_for
 from . util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup
+from . util import  extract_UUID_from_client
 import logging
+import base64
 
 from changedetectionio.notification import (
     default_notification_body,
@@ -68,6 +70,14 @@ def test_check_notification(client, live_server):
     # Give the thread time to pick up the first version
     time.sleep(3)
 
+    testimage = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+    # Write the last screenshot png
+
+    uuid = extract_UUID_from_client(client)
+    datastore = 'test-datastore'
+    with open(os.path.join(datastore, str(uuid), 'last-screenshot.png'), 'wb') as f:
+        f.write(base64.b64decode(testimage))
+
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
 
@@ -86,6 +96,7 @@ def test_check_notification(client, live_server):
                                                    "Diff: {diff}\n"
                                                    "Diff Full: {diff_full}\n"
                                                    ":-)",
+                              "notification_screenshot": True,
                               "notification_format": "Text"}
 
     notification_form_data.update({
@@ -142,6 +153,7 @@ def test_check_notification(client, live_server):
     assert "preview/" in notification_submission
     assert ":-)" in notification_submission
     assert "New ChangeDetection.io Notification - {}".format(test_url) in notification_submission
+    assert testimage in notification_submission
 
     if env_base_url:
         # Re #65 - did we see our BASE_URl ?
