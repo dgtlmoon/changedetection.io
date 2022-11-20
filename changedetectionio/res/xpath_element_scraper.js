@@ -102,8 +102,11 @@ for (var i = 0; i < elements.length; i++) {
         width: Math.round(bbox['width']),
         height: Math.round(bbox['height']),
         left: Math.floor(bbox['left']),
-        top: Math.floor(bbox['top'])
+        top: Math.floor(bbox['top']),
+        tagName: (elements[i].tagName) ? elements[i].tagName.toLowerCase() : '',
+        tagtype: (elements[i].type) ? elements[i].type.toLowerCase() : ''
     });
+
 }
 
 

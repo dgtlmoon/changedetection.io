@@ -86,6 +86,7 @@ $(document).ready(function () {
             // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
             e.preventDefault()
             console.log(e);
+            console.log("current xpath in index is "+current_selected_i);
             last_click_xy = {'x': parseInt((1 / x_scale) * e.offsetX), 'y': parseInt((1 / y_scale) * e.offsetY)}
             process_selected(current_selected_i);
             current_selected_i = false;
@@ -114,7 +115,7 @@ $(document).ready(function () {
             current_selected_i = false;
             // Reverse order - the most specific one should be deeper/"laster"
             // Basically, find the most 'deepest'
-            $('#browsersteps-selector-canvas').css('cursor', 'pointer');
+            //$('#browsersteps-selector-canvas').css('cursor', 'pointer');
             for (var i = xpath_data['size_pos'].length; i !== 0; i--) {
                 // draw all of them? let them choose somehow?
                 var sel = xpath_data['size_pos'][i - 1];
@@ -125,16 +126,7 @@ $(document).ready(function () {
 
                 ) {
                     // Only highlight these interesting types
-                    if (sel['tagtype'] === 'text' ||
-                        sel['tagtype'] === 'search' ||
-                        sel['tagName'] === 'checkbox' ||
-                        sel['tagName'] === 'textarea' ||
-                        sel['tagtype'] === 'password' ||
-                        sel['tagName'] === 'a' ||
-                        sel['tagName'] === 'li' ||
-                        sel['tagName'] === 'select' ||
-                        sel['tagName'] === 'button' ||
-                        sel['tagName'] === 'input') {
+                    if (1) {
                         ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
                         ctx.fillRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
                         current_selected_i = i - 1;
