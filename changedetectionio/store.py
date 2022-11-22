@@ -368,6 +368,12 @@ class ChangeDetectionStore:
             f.write(screenshot)
             f.close()
 
+        # Make a JPEG that's used in notifications (due to being a smaller size) available
+        from PIL import Image
+        im1 = Image.open(target_path)
+        im1.convert('RGB').save(target_path.replace('.png','.jpg'), quality=int(os.getenv("NOTIFICATION_SCREENSHOT_JPG_QUALITY", 75)))
+
+
     def save_error_text(self, watch_uuid, contents):
         if not self.data['watching'].get(watch_uuid):
             return
