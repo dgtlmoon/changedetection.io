@@ -56,8 +56,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         global browsersteps_playwright_browser_interface_browser
         global browsersteps_playwright_browser_interface
         global browsersteps_playwright_browser_interface_start_time
+        global t
 
         step_n = None
+        remaining =0
         uuid = request.args.get('uuid')
 
         browsersteps_session_id = request.args.get('browsersteps_session_id')
@@ -65,11 +67,22 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if not browsersteps_session_id:
             return make_response('No browsersteps_session_id specified', 500)
 
-        this_session = browsersteps_live_ui_o.get(browsersteps_session_id)
-        if this_session and not this_session.page:
-            print ("Session expired! I cant do anything :-(")
-            del browsersteps_live_ui_o[browsersteps_session_id]
-            return make_response('Browser session expired, please reload the Browser Steps interface', 500)
+        # Because we don't "really" run in a context manager ( we make the playwright interface global/long-living )
+        # We need to manage the shutdown when the time is up
+        if browsersteps_playwright_browser_interface_end_time:
+            remaining = browsersteps_playwright_browser_interface_end_time-time.time()
+            if remaining <= 0:
+                for id, c in  browsersteps_live_ui_o.items():
+                    c.context.close()
+                    c.page.close()
+                    c.playwright_browser.close()
+                t.stop()
+                browsersteps_live_ui_o = {}
+                browsersteps_playwright_browser_interface_start_time = None
+                browsersteps_playwright_browser_interface_end_time = None
+                browsersteps_playwright_browser_interface = None
+                return make_response('Browser session expired, please reload the Browser Steps interface', 500)
+
 
         # Actions - step/apply/etc, do the thing and return state
         if request.method == 'POST':
@@ -87,6 +100,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
             # @todo try.. accept.. nice errors not popups..
             try:
+
+                this_session = browsersteps_live_ui_o.get(browsersteps_session_id)
                 this_session.call_action(action_name=step_operation,
                                          selector=step_selector,
                                          optional_value=step_optional_value)
@@ -117,10 +132,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             if not browsersteps_playwright_browser_interface:
                 logging.debug("browser_steps.py connecting")
                 from playwright.sync_api import sync_playwright
-                browsersteps_playwright_browser_interface = sync_playwright().start()
+                browsersteps_playwright_browser_interface = sync_playwright()
+                t=browsersteps_playwright_browser_interface.start()
                 seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
-                keepalive = "&timeout={}".format((seconds_keepalive * 1000) + 5000)
-                browsersteps_playwright_browser_interface_browser = browsersteps_playwright_browser_interface.chromium.connect_over_cdp(
+                keepalive = "&timeout={}".format((seconds_keepalive * 1000))
+                browsersteps_playwright_browser_interface_browser = t.chromium.connect_over_cdp(
                     os.getenv('PLAYWRIGHT_DRIVER_URL', '') + keepalive)
                 browsersteps_playwright_browser_interface_end_time = time.time() + (seconds_keepalive)
 
@@ -134,7 +150,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return make_response('Browser session ran out of time :( Please reload this page.', 401)
 
         state = this_session.get_current_state()
-        remaining = browsersteps_playwright_browser_interface_end_time-time.time()
+
         p = {'screenshot': "data:image/png;base64,{}".format(
             base64.b64encode(state[0]).decode('ascii')),
             'xpath_data': state[1],

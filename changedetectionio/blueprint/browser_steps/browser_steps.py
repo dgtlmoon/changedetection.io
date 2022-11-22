@@ -174,7 +174,6 @@ class browsersteps_live_ui(steppable_browser_interface):
     def __init__(self, playwright_browser):
         self.age_start = time.time()
         self.playwright_browser = playwright_browser
-        # @ todo if content, and less than say 20 minutes in age_start to now remaining, create a new one
         if self.context is None:
             self.connect()
 
@@ -209,10 +208,6 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     def mark_as_closed(self):
         print("Page closed, cleaning up..")
-        self.context.close()
-        self.page.close()
-        del self.context
-        del self.page
 
     @property
     def has_expired(self):

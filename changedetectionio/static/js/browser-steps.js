@@ -33,7 +33,7 @@ $(document).ready(function () {
     // Show seconds remaining until playwright/browserless needs to restart the session
     // (See comment at the top of changedetectionio/blueprint/browser_steps/__init__.py )
     setInterval(() => {
-        if(browserless_seconds_remaining>0) {
+        if (browserless_seconds_remaining >= 1) {
             document.getElementById('browserless-seconds-remaining').innerText = browserless_seconds_remaining + " seconds remaining in session";
             browserless_seconds_remaining -= 1;
         }
