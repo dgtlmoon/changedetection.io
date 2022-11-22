@@ -170,6 +170,7 @@ $(document).ready(function () {
             // if inpt type button or <button>
             // from the top, find the next not used one and use it
             var x = xpath_data['size_pos'][xpath_data_index];
+            console.log(x);
             if (x && first_available.length) {
                 // @todo will it let you click shit that has a layer ontop? probably not.
                 if (x['tagtype'] === 'text' || x['tagtype'] === 'email' || x['tagName'] === 'textarea' || x['tagtype'] === 'password' || x['tagtype'] === 'search' ) {
@@ -180,7 +181,7 @@ $(document).ready(function () {
                 } else {
                     // Assume it's just for clicking on
                     // what are we clicking on?
-                    if (x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit'|| x['tagtype'] === 'checkbox') {
+                    if (x['tagName'].startsWith('h')|| x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit'|| x['tagtype'] === 'checkbox') {
                         $('select', first_available).val('Click element').change();
                         $('input[type=text]', first_available).first().val(x['xpath']);
                         found_something = true;

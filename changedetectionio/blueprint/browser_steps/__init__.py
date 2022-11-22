@@ -71,16 +71,26 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # We need to manage the shutdown when the time is up
         if browsersteps_playwright_browser_interface_end_time:
             remaining = browsersteps_playwright_browser_interface_end_time-time.time()
-            if remaining <= 0:
-                for id, c in  browsersteps_live_ui_o.items():
-                    c.context.close()
-                    c.page.close()
-                    c.playwright_browser.close()
-                t.stop()
+            if browsersteps_playwright_browser_interface_end_time and remaining <= 0:
+                print("Cleaning up old playwright session because time was up")
+                try:
+                    for id, c in  browsersteps_live_ui_o.items():
+#                        c.context.close()
+                        c.page.close()
+                        x=1
+#c.playwright_browser.close()
+                    print ("started stop")
+                    t.stop()
+                    print ("stop done")
+                except Exception as e:
+                    print ("Exception while cleaning up")
+                    print (str(e))
+
                 browsersteps_live_ui_o = {}
                 browsersteps_playwright_browser_interface_start_time = None
                 browsersteps_playwright_browser_interface_end_time = None
                 browsersteps_playwright_browser_interface = None
+                print ("Cleaning up old playwright session because time was up - done")
                 return make_response('Browser session expired, please reload the Browser Steps interface', 500)
 
 
@@ -134,7 +144,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 from playwright.sync_api import sync_playwright
                 browsersteps_playwright_browser_interface = sync_playwright()
                 t=browsersteps_playwright_browser_interface.start()
-                seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
+                seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 1)) * 60
                 keepalive = "&timeout={}".format((seconds_keepalive * 1000))
                 browsersteps_playwright_browser_interface_browser = t.chromium.connect_over_cdp(
                     os.getenv('PLAYWRIGHT_DRIVER_URL', '') + keepalive)
