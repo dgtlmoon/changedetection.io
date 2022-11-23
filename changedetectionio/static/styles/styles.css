@@ -56,7 +56,8 @@ nvm use v14.18.1 && npm install && npm run build
       #browser_steps li .control a {
         font-size: 70%; }
     #browser_steps li.empty {
-      padding: 0px; }
+      padding: 0px;
+      opacity: 0.35; }
       #browser_steps li.empty .control {
         display: none; }
     #browser_steps li:hover {
@@ -609,6 +610,9 @@ ul {
 
 .button-green {
   background-color: #42dd53; }
+
+.button-red {
+  background-color: #dd4242; }
 
 .noselect {
   -webkit-touch-callout: none;

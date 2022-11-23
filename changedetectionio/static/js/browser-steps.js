@@ -224,7 +224,7 @@ $(document).ready(function () {
         // @todo This setting of the first one should be done at the datalayer but wtforms doesnt wanna play nice
         $('#browser_steps >li:first-child').removeClass('empty');
         $('#browser_steps >li:first-child select').val('Goto site').attr('disabled', 'disabled');
-
+        $('.clear,.remove', $('#browser_steps >li:first-child')).hide();
         $.ajax({
             type: "GET",
             url: browser_steps_sync_url+"&browsersteps_session_id="+browsersteps_session_id,
@@ -289,15 +289,16 @@ $(document).ready(function () {
     }).change();
 
     function set_greyed_state() {
-        $('ul#browser_steps select').not('option:selected[value="Choose one"]').closest('li').css('opacity', 1).removeClass('empty');
-        $('ul#browser_steps select option:selected[value="Choose one"]').closest('li').css('opacity', 0.35).addClass('empty');
+        $('ul#browser_steps select').not('option:selected[value="Choose one"]').closest('li').removeClass('empty');
+        $('ul#browser_steps select option:selected[value="Choose one"]').closest('li').addClass('empty');
     }
 
     // Add the extra buttons to the steps
     $('ul#browser_steps li').each(function (i) {
             $(this).append('<div class="control">' +
-                '<a data-step-index=' + i + ' class="pure-button button-green button-xsmall apply" >Apply</a>&nbsp;' +
-                '<a data-step-index=' + i + ' class="pure-button button-secondary button-xsmall clear" >Clear</a>' +
+                '<a data-step-index=' + i + ' class="pure-button button-secondary button-green button-xsmall apply" >Apply</a>&nbsp;' +
+                '<a data-step-index=' + i + ' class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;' +
+                '<a data-step-index=' + i + ' class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>' +
                 '</div>')
         }
     );
@@ -307,6 +308,31 @@ $(document).ready(function () {
         $(":text", $(this).closest('li')).val('');
     });
 
+
+    $('ul#browser_steps li .control .remove').click(function (element) {
+        // so you wanna remove the 2nd (3rd spot 0,1,2,...)
+        var p = $("#browser_steps li").index($(this).closest('li'));
+
+        var elem_to_remove = $("#browser_steps li")[p];
+        $('.clear', elem_to_remove).click();
+        $("#browser_steps li").slice(p, 10).each(function (index) {
+            // get the next one's value from where we clicked
+            var next = $("#browser_steps li")[p + index + 1];
+            if (next) {
+                // and set THIS ones value from the next one
+                var n = $('input', next);
+                $("select", $(this)).val($('select', next).val());
+                $('input', this)[0].value = $(n)[0].value;
+                $('input', this)[1].value = $(n)[1].value;
+                // Triggers reconfiguring the field based on the system config
+                $("select", $(this)).change();
+            }
+
+        });
+
+        // Reset their hidden/empty states
+        set_greyed_state();
+    });
 
     $('ul#browser_steps li .control .apply').click(function (event) {
         // sequential requests @todo refactor

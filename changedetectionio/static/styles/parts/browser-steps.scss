@@ -17,6 +17,7 @@
     }
     &.empty {
       padding: 0px;
+      opacity: 0.35;
       .control {
         display: none;
       }
