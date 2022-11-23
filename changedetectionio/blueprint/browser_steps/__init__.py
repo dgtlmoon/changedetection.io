@@ -30,6 +30,8 @@ from flask_login import login_required
 import os
 import logging
 
+from playwright.sync_api import PlaywrightContextManager
+
 from changedetectionio.store import ChangeDetectionStore
 
 browsersteps_live_ui_o = {}
@@ -37,6 +39,23 @@ browsersteps_playwright_browser_interface = None
 browsersteps_playwright_browser_interface_start_time = None
 browsersteps_playwright_browser_interface_browser = None
 browsersteps_playwright_browser_interface_end_time = None
+
+
+def cleanup_playwright_session():
+    print("Cleaning up old playwright session because time was up")
+    global browsersteps_playwright_browser_interface
+    global browsersteps_live_ui_o
+    global browsersteps_playwright_browser_interface_browser
+    global browsersteps_playwright_browser_interface
+    global browsersteps_playwright_browser_interface_start_time
+    global browsersteps_playwright_browser_interface_end_time
+    browsersteps_playwright_browser_interface.stop()
+    browsersteps_live_ui_o = {}
+    browsersteps_playwright_browser_interface = None
+    browsersteps_playwright_browser_interface_start_time = None
+    browsersteps_playwright_browser_interface_browser = None
+    browsersteps_playwright_browser_interface_end_time = None
+    print ("Cleaning up old playwright session because time was up - done")
 
 def construct_blueprint(datastore: ChangeDetectionStore):
 
@@ -46,7 +65,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @browser_steps_blueprint.route("/browsersteps_update", methods=['GET', 'POST'])
     def browsersteps_ui_update():
         import base64
-        import json
         import playwright._impl._api_types
         import time
 
@@ -56,7 +74,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         global browsersteps_playwright_browser_interface_browser
         global browsersteps_playwright_browser_interface
         global browsersteps_playwright_browser_interface_start_time
-        global t
 
         step_n = None
         remaining =0
@@ -72,28 +89,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if browsersteps_playwright_browser_interface_end_time:
             remaining = browsersteps_playwright_browser_interface_end_time-time.time()
             if browsersteps_playwright_browser_interface_end_time and remaining <= 0:
-                print("Cleaning up old playwright session because time was up")
 
-                try:
-                    for id, c in browsersteps_live_ui_o.items():
-                        c.page.close()
-                        c.context.close()
-                        c.playwright_browser.close()
 
-                    browsersteps_live_ui_o = {}
-                    # Needs time or it can hang?
-                    time.sleep(3)
-                    print("started stop")
-                    t.stop()
-                    print("stop done")
-                except Exception as e:
-                    print("Exception while cleaning up")
-                    print(str(e))
+                cleanup_playwright_session()
 
-                browsersteps_playwright_browser_interface_start_time = None
-                browsersteps_playwright_browser_interface_end_time = None
-                browsersteps_playwright_browser_interface = None
-                print ("Cleaning up old playwright session because time was up - done")
                 return make_response('Browser session expired, please reload the Browser Steps interface', 500)
 
 
@@ -115,6 +114,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             try:
 
                 this_session = browsersteps_live_ui_o.get(browsersteps_session_id)
+                if not this_session:
+                    print("Browser exited")
+                    return make_response('Browser session ran out of time :( Please reload this page.', 401)
+                
                 this_session.call_action(action_name=step_operation,
                                          selector=step_selector,
                                          optional_value=step_optional_value)
@@ -142,14 +145,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 print("Starting connection with playwright")
                 logging.debug("browser_steps.py connecting")
                 from playwright.sync_api import sync_playwright
-                browsersteps_playwright_browser_interface = sync_playwright()
-                t=browsersteps_playwright_browser_interface.start()
+
+                browsersteps_playwright_browser_interface = sync_playwright().start()
+                time.sleep(1)
                 seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 1)) * 60
                 seconds_keepalive -=30
                 # keep it alive for 10 seconds more than we advertise, sometimes it helps to keep it shutting down cleanly
                 keepalive = "&timeout={}".format(((seconds_keepalive+3) * 1000))
 
-                browsersteps_playwright_browser_interface_browser = t.chromium.connect_over_cdp(
+                browsersteps_playwright_browser_interface_browser = browsersteps_playwright_browser_interface.chromium.connect_over_cdp(
                     os.getenv('PLAYWRIGHT_DRIVER_URL', '') + keepalive)
                 browsersteps_playwright_browser_interface_end_time = time.time() + (seconds_keepalive-3)
                 print("Starting connection with playwright - done")
@@ -161,6 +165,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 this_session = browsersteps_live_ui_o[browsersteps_session_id]
 
         if not this_session.page:
+            cleanup_playwright_session()
             return make_response('Browser session ran out of time :( Please reload this page.', 401)
 
         state = this_session.get_current_state()
@@ -177,3 +182,5 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return p
 
     return browser_steps_blueprint
+
+

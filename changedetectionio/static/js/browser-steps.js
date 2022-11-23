@@ -72,6 +72,9 @@ $(document).ready(function () {
         ctx = c.getContext("2d");
         // @todo is click better?
         $('#browsersteps-selector-canvas').off("mousemove mousedown click");
+        // Undo disable_browsersteps_ui
+        $("#browser_steps select,input").removeAttr('disabled').css('opacity', '1.0');
+        $("#browser-steps-ui").css('opacity', '1.0');
 
         // init
         set_scale();
@@ -244,6 +247,12 @@ $(document).ready(function () {
 
     }
 
+    function disable_browsersteps_ui() {
+        $("#browser_steps select,input").attr('disabled', 'disabled').css('opacity', '0.5');
+        $("#browser-steps-ui").css('opacity', '0.3');
+        $('#browsersteps-selector-canvas').off("mousemove mousedown click");
+    }
+
 
     ////////////////////////// STEPS UI ////////////////////
     $('ul#browser_steps [type="text"]').keydown(function (e) {
@@ -358,6 +367,10 @@ $(document).ready(function () {
             browserless_seconds_remaining = data.browser_time_remaining;
         }).fail(function (data) {
             console.log(data);
+            if (data.responseText.includes("Browser session expired")) {
+                disable_browsersteps_ui();
+            }
+
             alert(data.responseText);
             apply_buttons_disabled=false;
             $('ul#browser_steps li .control .apply').css('opacity',1);
