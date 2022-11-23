@@ -49,7 +49,20 @@ def cleanup_playwright_session():
     global browsersteps_playwright_browser_interface
     global browsersteps_playwright_browser_interface_start_time
     global browsersteps_playwright_browser_interface_end_time
-    browsersteps_playwright_browser_interface.stop()
+
+    import psutil
+
+    current_process = psutil.Process()
+    children = current_process.children(recursive=True)
+    for child in children:
+        print (child)
+        print('Child pid is {}'.format(child.pid))
+
+    # .stop() hangs sometimes if its called when there are no children to process
+    # but how do we know this is our child? dunno
+    if children:
+        browsersteps_playwright_browser_interface.stop()
+
     browsersteps_live_ui_o = {}
     browsersteps_playwright_browser_interface = None
     browsersteps_playwright_browser_interface_start_time = None
@@ -117,7 +130,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 if not this_session:
                     print("Browser exited")
                     return make_response('Browser session ran out of time :( Please reload this page.', 401)
-                
+
                 this_session.call_action(action_name=step_operation,
                                          selector=step_selector,
                                          optional_value=step_optional_value)
@@ -148,8 +161,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 browsersteps_playwright_browser_interface = sync_playwright().start()
                 time.sleep(1)
-                seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 1)) * 60
-                seconds_keepalive -=30
+                seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 20)) * 60
+
                 # keep it alive for 10 seconds more than we advertise, sometimes it helps to keep it shutting down cleanly
                 keepalive = "&timeout={}".format(((seconds_keepalive+3) * 1000))
 
