@@ -252,20 +252,11 @@ class model(dict):
         return None
 
     def get_screenshot_as_jpeg(self):
-        """Best used in notifications due to its smaller size"""
-        png_fname = os.path.join(self.watch_data_dir, "last-screenshot.png")
-        jpg_fname = os.path.join(self.watch_data_dir, "last-screenshot.jpg")
 
-        if os.path.isfile(jpg_fname):
-            return jpg_fname
-
-        if os.path.isfile(png_fname) and not os.path.isfile(jpg_fname):
-            # Doesnt exist, so create the JPEG from the PNG
-            from PIL import Image
-            im1 = Image.open(png_fname)
-            im1.convert('RGB').save(jpg_fname, quality=int(os.getenv("NOTIFICATION_SCREENSHOT_JPG_QUALITY", 75)))
-            return jpg_fname
-
+        # Created by save_screenshot()
+        fname = os.path.join(self.watch_data_dir, "last-screenshot.jpg")
+        if os.path.isfile(fname):
+            return fname
 
         # False is not an option for AppRise, must be type None
         return None

@@ -71,13 +71,18 @@ def test_check_notification(client, live_server):
     time.sleep(3)
 
     # We write the PNG to disk, but a JPEG should appear in the notification
-    testimage_png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
     # Write the last screenshot png
+    testimage_png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+    # This one is created when we save the screenshot from the webdriver/playwright session (converted from PNG)
+    testimage_jpg = '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q=='
+
 
     uuid = extract_UUID_from_client(client)
     datastore = 'test-datastore'
     with open(os.path.join(datastore, str(uuid), 'last-screenshot.png'), 'wb') as f:
         f.write(base64.b64decode(testimage_png))
+    with open(os.path.join(datastore, str(uuid), 'last-screenshot.jpg'), 'wb') as f:
+        f.write(base64.b64decode(testimage_jpg))
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -127,8 +132,6 @@ def test_check_notification(client, live_server):
     ## Now recheck, and it should have sent the notification
     time.sleep(3)
     set_modified_response()
-
-    notification_submission = None
 
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
