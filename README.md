@@ -108,8 +108,8 @@ _Now with per-site configurable support for using a fast built in HTTP fetcher o
 ### Docker
 ```
 docker pull dgtlmoon/changedetection.io
-docker kill $(docker ps -a|grep changedetection.io|awk '{print $1}')
-docker rm $(docker ps -a|grep changedetection.io|awk '{print $1}')
+docker kill $(docker ps -a -f name=changedetection.io -q)
+docker rm $(docker ps -a -f name=changedetection.io -q)
 docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
 ```
 
