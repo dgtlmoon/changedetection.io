@@ -73,20 +73,23 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             remaining = browsersteps_playwright_browser_interface_end_time-time.time()
             if browsersteps_playwright_browser_interface_end_time and remaining <= 0:
                 print("Cleaning up old playwright session because time was up")
-                try:
-                    for id, c in  browsersteps_live_ui_o.items():
-#                        c.context.close()
-                        c.page.close()
-                        x=1
-#c.playwright_browser.close()
-                    print ("started stop")
-                    t.stop()
-                    print ("stop done")
-                except Exception as e:
-                    print ("Exception while cleaning up")
-                    print (str(e))
 
-                browsersteps_live_ui_o = {}
+                try:
+                    for id, c in browsersteps_live_ui_o.items():
+                        c.page.close()
+                        c.context.close()
+                        c.playwright_browser.close()
+
+                    browsersteps_live_ui_o = {}
+                    # Needs time or it can hang?
+                    time.sleep(3)
+                    print("started stop")
+                    t.stop()
+                    print("stop done")
+                except Exception as e:
+                    print("Exception while cleaning up")
+                    print(str(e))
+
                 browsersteps_playwright_browser_interface_start_time = None
                 browsersteps_playwright_browser_interface_end_time = None
                 browsersteps_playwright_browser_interface = None
@@ -134,21 +137,22 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Setup interface
         if request.method == 'GET':
-            # Forcefully cleanup if the predicted time of browserless shutting down is up
-            if browsersteps_playwright_browser_interface_end_time and time.time() > browsersteps_playwright_browser_interface_end_time:
-                browsersteps_playwright_browser_interface = None
-                browsersteps_live_ui_o = {}
 
             if not browsersteps_playwright_browser_interface:
+                print("Starting connection with playwright")
                 logging.debug("browser_steps.py connecting")
                 from playwright.sync_api import sync_playwright
                 browsersteps_playwright_browser_interface = sync_playwright()
                 t=browsersteps_playwright_browser_interface.start()
                 seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 1)) * 60
-                keepalive = "&timeout={}".format((seconds_keepalive * 1000))
+                seconds_keepalive -=30
+                # keep it alive for 10 seconds more than we advertise, sometimes it helps to keep it shutting down cleanly
+                keepalive = "&timeout={}".format(((seconds_keepalive+3) * 1000))
+
                 browsersteps_playwright_browser_interface_browser = t.chromium.connect_over_cdp(
                     os.getenv('PLAYWRIGHT_DRIVER_URL', '') + keepalive)
-                browsersteps_playwright_browser_interface_end_time = time.time() + (seconds_keepalive)
+                browsersteps_playwright_browser_interface_end_time = time.time() + (seconds_keepalive-3)
+                print("Starting connection with playwright - done")
 
             if not browsersteps_live_ui_o.get(browsersteps_session_id):
                 # Boot up a new session

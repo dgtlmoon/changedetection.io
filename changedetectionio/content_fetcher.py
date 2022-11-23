@@ -148,7 +148,7 @@ class Fetcher():
 
             for step in valid_steps:
                 step_n += 1
-                print(">> Browser Step n {} - {}...".format(step_n, step['operation']))
+                print(">> Iterating check - browser Step n {} - {}...".format(step_n, step['operation']))
                 try:
                     optional_value = step['optional_value']
                     selector = step['selector']
