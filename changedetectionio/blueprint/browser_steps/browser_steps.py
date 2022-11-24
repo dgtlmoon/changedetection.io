@@ -171,14 +171,14 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
-    def __init__(self, playwright_browser):
+    def __init__(self, playwright_browser, proxy=None):
         self.age_start = time.time()
         self.playwright_browser = playwright_browser
         if self.context is None:
-            self.connect()
+            self.connect(proxy=proxy)
 
     # Connect and setup a new context
-    def connect(self):
+    def connect(self, proxy=None):
         # Should only get called once - test that
         keep_open = 1000 * 60 * 5
         now = time.time()
@@ -191,7 +191,8 @@ class browsersteps_live_ui(steppable_browser_interface):
             # This is needed to enable JavaScript execution on GitHub and others
             bypass_csp=True,
             # Should never be needed
-            accept_downloads=False
+            accept_downloads=False,
+            proxy=proxy
         )
 
         self.page = self.context.new_page()

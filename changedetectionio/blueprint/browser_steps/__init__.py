@@ -137,7 +137,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
             except playwright._impl._api_types.Error as e:
                 # Browser/playwright level error
-                print("Browser error - got playwright._impl._api_types.Error")
+                print("Browser error - got playwright._impl._api_types.Error, try reloading the session/browser")
+                print (str(e))
+
                 # Try to find something of value to give back to the user
                 for l in str(e).splitlines():
                     if 'DOMException' in l:
@@ -163,6 +165,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 from playwright.sync_api import sync_playwright
 
                 browsersteps_playwright_browser_interface = sync_playwright().start()
+
+
                 time.sleep(1)
                 # At 20 minutes, some other variable is closing it
                 # @todo find out what it is and set it
@@ -170,16 +174,30 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 # keep it alive for 10 seconds more than we advertise, sometimes it helps to keep it shutting down cleanly
                 keepalive = "&timeout={}".format(((seconds_keepalive+3) * 1000))
+                try:
+                    browsersteps_playwright_browser_interface_browser = browsersteps_playwright_browser_interface.chromium.connect_over_cdp(
+                        os.getenv('PLAYWRIGHT_DRIVER_URL', '') + keepalive)
+                except Exception as e:
+                    if 'ECONNREFUSED' in str(e):
+                        return make_response('Unable to start the Playwright session properly, is it running?', 401)
 
-                browsersteps_playwright_browser_interface_browser = browsersteps_playwright_browser_interface.chromium.connect_over_cdp(
-                    os.getenv('PLAYWRIGHT_DRIVER_URL', '') + keepalive)
                 browsersteps_playwright_browser_interface_end_time = time.time() + (seconds_keepalive-3)
                 print("Starting connection with playwright - done")
 
             if not browsersteps_live_ui_o.get(browsersteps_session_id):
                 # Boot up a new session
+                proxy_id = datastore.get_preferred_proxy_for_watch(uuid=uuid)
+                proxy = None
+                if proxy_id:
+                    proxy_url = datastore.proxy_list.get(proxy_id).get('url')
+                    proxy = {'server': proxy_url}
+                    print("Browser Steps: UUID {} Using proxy {}".format(uuid, proxy_url))
+
+                # Begin the new "Playwright Context" that re-uses the playwright interface
+                # Each session is a "Playwright Context" as a list, that uses the playwright interface
                 browsersteps_live_ui_o[browsersteps_session_id] = browser_steps.browsersteps_live_ui(
-                    browsersteps_playwright_browser_interface_browser)
+                    playwright_browser=browsersteps_playwright_browser_interface_browser,
+                    proxy=proxy)
                 this_session = browsersteps_live_ui_o[browsersteps_session_id]
 
         if not this_session.page:
