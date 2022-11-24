@@ -1,18 +1,20 @@
 #!/usr/bin/python3
 
 import datetime
+import flask_login
+import logging
 import os
+import pytz
 import queue
 import threading
 import time
+import timeago
+
 from copy import deepcopy
+from distutils.util import strtobool
+from feedgen.feed import FeedGenerator
 from threading import Event
 
-import flask_login
-import logging
-import pytz
-import timeago
-from feedgen.feed import FeedGenerator
 from flask import (
     Flask,
     abort,
@@ -27,7 +29,6 @@ from flask import (
 )
 from flask_login import login_required
 from flask_restful import abort, Api
-
 from flask_wtf import CSRFProtect
 
 from changedetectionio import html_tools
@@ -44,7 +45,6 @@ ticker_thread = None
 extra_stylesheets = []
 
 update_q = queue.PriorityQueue()
-
 notification_q = queue.Queue()
 
 app = Flask(__name__,
@@ -97,7 +97,7 @@ def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
     # Worker thread tells us which UUID it is currently processing.
     for t in running_update_threads:
         if t.current_uuid == watch_obj['uuid']:
-            return '<span class="loader"></span><span> Checking now</span>'
+            return '<span class="spinner"></span><span> Checking now</span>'
 
     if watch_obj['last_checked'] == 0:
         return 'Not yet'
@@ -525,6 +525,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     def edit_page(uuid):
         from changedetectionio import forms
+        from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
 
         using_default_check_time = True
         # More for testing, possible to return the first/only
@@ -557,6 +558,8 @@ def changedetection_app(config=None, datastore_o=None):
         form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
                                data=default,
                                )
+
+        # form.browser_steps[0] can be assumed that we 'goto url' first
 
         if datastore.proxy_list is None:
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
@@ -650,6 +653,7 @@ def changedetection_app(config=None, datastore_o=None):
                     watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
 
             output = render_template("edit.html",
+                                     browser_steps_config=browser_step_ui_config,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                      form=form,
@@ -661,7 +665,6 @@ def changedetection_app(config=None, datastore_o=None):
                                      settings_application=datastore.data['settings']['application'],
                                      using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      uuid=uuid,
-                                     visualselector_data_is_ready=visualselector_data_is_ready,
                                      visualselector_enabled=visualselector_enabled,
                                      watch=watch
                                      )
@@ -1190,7 +1193,6 @@ def changedetection_app(config=None, datastore_o=None):
         else:
             # No tag, no uuid, add everything.
             for watch_uuid, watch in datastore.data['watching'].items():
-
                 if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                     update_q.put((1, watch_uuid))
                     i += 1
@@ -1308,9 +1310,11 @@ def changedetection_app(config=None, datastore_o=None):
         # paste in etc
         return redirect(url_for('index'))
 
+    import changedetectionio.blueprint.browser_steps as browser_steps
+    app.register_blueprint(browser_steps.construct_blueprint(datastore), url_prefix='/browser-steps')
+
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
-
     threading.Thread(target=notification_runner).start()
 
     # Check for new release version, but not when running in test/build or pytest

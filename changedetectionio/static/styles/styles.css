@@ -1,9 +1,107 @@
 /*
  * -- BASE STYLES --
  * Most of these are inherited from Base, but I want to change a few.
- * nvm use v14.18.1 && npm install && npm run build
+nvm use v14.18.1 && npm install && npm run build
  * or npm run watch
  */
+/* spinner */
+.spinner,
+.spinner:after {
+  border-radius: 50%;
+  width: 10px;
+  height: 10px; }
+
+.spinner {
+  margin: 0px auto;
+  font-size: 3px;
+  vertical-align: middle;
+  display: inline-block;
+  text-indent: -9999em;
+  border-top: 1.1em solid rgba(38, 104, 237, 0.2);
+  border-right: 1.1em solid rgba(38, 104, 237, 0.2);
+  border-bottom: 1.1em solid rgba(38, 104, 237, 0.2);
+  border-left: 1.1em solid #2668ed;
+  -webkit-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-animation: load8 1.1s infinite linear;
+  animation: load8 1.1s infinite linear; }
+
+@-webkit-keyframes load8 {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg); }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg); } }
+
+@keyframes load8 {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg); }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg); } }
+
+#browser_steps {
+  /* convert rows to horizontal cells */ }
+  #browser_steps th {
+    display: none; }
+  #browser_steps li {
+    list-style: decimal;
+    padding: 5px; }
+    #browser_steps li .control {
+      padding-left: 5px;
+      padding-right: 5px; }
+      #browser_steps li .control a {
+        font-size: 70%; }
+    #browser_steps li.empty {
+      padding: 0px;
+      opacity: 0.35; }
+      #browser_steps li.empty .control {
+        display: none; }
+    #browser_steps li:hover {
+      background: #eee; }
+    #browser_steps li > label {
+      display: none; }
+
+#browser-steps-fieldlist {
+  height: 100%;
+  overflow-y: scroll; }
+
+#browser-steps .flex-wrapper {
+  display: flex;
+  flex-flow: row;
+  height: 600px;
+  /*@todo make this dynamic */ }
+
+/*  this is duplicate :( */
+#browsersteps-selector-wrapper {
+  height: 100%;
+  width: 100%;
+  overflow-y: scroll;
+  position: relative;
+  /* nice tall skinny one */ }
+  #browsersteps-selector-wrapper > img {
+    position: absolute;
+    max-width: 100%; }
+  #browsersteps-selector-wrapper > canvas {
+    position: relative;
+    max-width: 100%; }
+    #browsersteps-selector-wrapper > canvas:hover {
+      cursor: pointer; }
+  #browsersteps-selector-wrapper .loader {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin-left: -40px;
+    z-index: 100; }
+  #browsersteps-selector-wrapper .spinner, #browsersteps-selector-wrapper .spinner:after {
+    width: 80px;
+    height: 80px;
+    font-size: 3px; }
+
 .arrow {
   border: solid #1b98f8;
   border-width: 0 2px 2px 0;
@@ -132,7 +230,7 @@ body:after, body:before {
 
 .fetch-error {
   padding-top: 1em;
-  font-size: 60%;
+  font-size: 80%;
   max-width: 400px;
   display: block; }
 
@@ -252,12 +350,12 @@ footer {
 
 #top-right-menu {
   /*
-    position: absolute;
-    right: 0px;
-    background: linear-gradient(to right, #fff0, #fff 10%);
-    padding-left: 20px;
-    padding-right: 10px;
-    */ }
+      position: absolute;
+      right: 0px;
+      background: linear-gradient(to right, #fff0, #fff 10%);
+      padding-left: 20px;
+      padding-right: 10px;
+      */ }
 
 .sticky-tab {
   position: absolute;
@@ -356,10 +454,10 @@ footer {
   input[type='text'] {
     width: 100%; }
   /*
-Max width before this PARTICULAR table gets nasty
-This query will take effect for any screen smaller than 760px
-and also iPads specifically.
-*/
+  Max width before this PARTICULAR table gets nasty
+  This query will take effect for any screen smaller than 760px
+  and also iPads specifically.
+  */
   .watch-table {
     /* Force table to not be like tables anymore */
     /* Force table to not be like tables anymore */
@@ -446,7 +544,7 @@ and also iPads specifically.
   .tab-pane-inner:target {
     display: block; }
 
-#beta-logo {
+.beta-logo {
   height: 50px;
   right: -3px;
   top: -3px;
@@ -454,6 +552,9 @@ and also iPads specifically.
 
 #selector-header {
   padding-bottom: 1em; }
+
+body.full-width .edit-form {
+  width: 95%; }
 
 .edit-form {
   min-width: 70%;
@@ -481,7 +582,7 @@ ul {
     width: 5em; }
 
 #selector-wrapper {
-  height: 600px;
+  height: 100%;
   overflow-y: scroll;
   position: relative; }
   #selector-wrapper > img {
@@ -507,44 +608,24 @@ ul {
 #api-key-copy {
   color: #0078e7; }
 
-/* spinner */
-.loader,
-.loader:after {
-  border-radius: 50%;
-  width: 10px;
-  height: 10px; }
+.button-green {
+  background-color: #42dd53; }
 
-.loader {
-  margin: 0px auto;
-  font-size: 3px;
-  vertical-align: middle;
-  display: inline-block;
-  text-indent: -9999em;
-  border-top: 1.1em solid rgba(38, 104, 237, 0.2);
-  border-right: 1.1em solid rgba(38, 104, 237, 0.2);
-  border-bottom: 1.1em solid rgba(38, 104, 237, 0.2);
-  border-left: 1.1em solid #2668ed;
-  -webkit-transform: translateZ(0);
-  -ms-transform: translateZ(0);
-  transform: translateZ(0);
-  -webkit-animation: load8 1.1s infinite linear;
-  animation: load8 1.1s infinite linear; }
+.button-red {
+  background-color: #dd4242; }
 
-@-webkit-keyframes load8 {
-  0% {
-    -webkit-transform: rotate(0deg);
-    transform: rotate(0deg); }
-  100% {
-    -webkit-transform: rotate(360deg);
-    transform: rotate(360deg); } }
-
-@keyframes load8 {
-  0% {
-    -webkit-transform: rotate(0deg);
-    transform: rotate(0deg); }
-  100% {
-    -webkit-transform: rotate(360deg);
-    transform: rotate(360deg); } }
+.noselect {
+  -webkit-touch-callout: none;
+  /* iOS Safari */
+  -webkit-user-select: none;
+  /* Safari */
+  -moz-user-select: none;
+  /* Old versions of Firefox */
+  -ms-user-select: none;
+  /* Internet Explorer/Edge */
+  user-select: none;
+  /* Non-prefixed version, currently
+                                   supported by Chrome, Edge, Opera and Firefox */ }
 
 .snapshot-age {
   padding: 4px;

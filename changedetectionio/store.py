@@ -303,8 +303,8 @@ class ChangeDetectionStore:
                     'text_should_not_be_present',
                     'title',
                     'trigger_text',
-                    'webdriver_js_execute_code',
                     'url',
+                    'webdriver_js_execute_code',
                 ]:
                     if res.get(k):
                         if k != 'css_filter':

@@ -10,8 +10,9 @@ def test_visual_selector_content_ready(client, live_server):
     import json
 
     assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
-    live_server_setup(live_server)
     time.sleep(1)
+    live_server_setup(live_server)
+
 
     # Add our URL to the import page, because the docker container (playwright/selenium) wont be able to connect to our usual test url
     test_url = "https://changedetection.io/ci-test/test-runjs.html"
@@ -35,7 +36,6 @@ def test_visual_selector_content_ready(client, live_server):
         follow_redirects=True
     )
     assert b"unpaused" in res.data
-    time.sleep(1)
     wait_for_all_checks(client)
     uuid = extract_UUID_from_client(client)
 

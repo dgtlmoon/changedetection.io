@@ -108,6 +108,11 @@ class perform_site_check():
         elif system_webdriver_delay is not None:
             fetcher.render_extract_delay = system_webdriver_delay
 
+        # Possible conflict
+        if prefer_backend == 'html_webdriver':
+            fetcher.browser_steps = watch.get('browser_steps', None)
+            fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, uuid)
+
         if watch.get('webdriver_js_execute_code') is not None and watch.get('webdriver_js_execute_code').strip():
             fetcher.webdriver_js_execute_code = watch.get('webdriver_js_execute_code')
 

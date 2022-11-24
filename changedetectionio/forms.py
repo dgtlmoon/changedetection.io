@@ -1,11 +1,10 @@
+import os
 import re
 
 from wtforms import (
     BooleanField,
-    Field,
     Form,
     IntegerField,
-    PasswordField,
     RadioField,
     SelectField,
     StringField,
@@ -13,15 +12,17 @@ from wtforms import (
     TextAreaField,
     fields,
     validators,
-    widgets,
+    widgets
 )
+from wtforms.fields import FieldList
 from wtforms.validators import ValidationError
+
+# default
+# each select <option data-enabled="enabled-0-0"
+from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
 
 from changedetectionio import content_fetcher
 from changedetectionio.notification import (
-    default_notification_body,
-    default_notification_format,
-    default_notification_title,
     valid_notification_formats,
 )
 
@@ -323,7 +324,6 @@ class ValidateCSSJSONXPATHInput(object):
                 except:
                     raise ValidationError("A system-error occurred when validating your jq expression")
 
-
 class quickWatchForm(Form):
     url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional()])
@@ -341,6 +341,17 @@ class commonSettingsForm(Form):
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1,
                                                                                                                                     message="Should contain one or more seconds")])
+
+class SingleBrowserStep(Form):
+
+    operation = SelectField('Operation', [validators.Optional()], choices=browser_step_ui_config.keys())
+
+    # maybe better to set some <script>var..
+    selector = StringField('Selector', [validators.Optional()], render_kw={"placeholder": "CSS or xPath selector"})
+    optional_value = StringField('value', [validators.Optional()], render_kw={"placeholder": "Value"})
+#   @todo move to JS? ajax fetch new field?
+#    remove_button = SubmitField('-', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
+#    add_button = SubmitField('+', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
 
 class watchForm(commonSettingsForm):
 
@@ -364,8 +375,9 @@ class watchForm(commonSettingsForm):
     ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
     check_unique_lines = BooleanField('Only trigger when new lines appear', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
+    if os.getenv("PLAYWRIGHT_DRIVER_URL"):
+        browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)
     text_should_not_be_present = StringListField('Block change-detection if text matches', [validators.Optional(), ValidateListRegex()])
-
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})

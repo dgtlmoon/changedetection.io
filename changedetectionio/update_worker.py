@@ -113,6 +113,34 @@ class update_worker(threading.Thread):
             self.notification_q.put(n_object)
             print("Sent filter not found notification for {}".format(watch_uuid))
 
+    def send_step_failure_notification(self, watch_uuid, step_n):
+        watch = self.datastore.data['watching'].get(watch_uuid, False)
+        if not watch:
+            return
+        threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
+        n_object = {'notification_title': "Changedetection.io - Alert - Browser step at position {} could not be run".format(step_n+1),
+                    'notification_body': "Your configured browser step at position {} for {{watch['url']}} "
+                                         "did not appear on the page after {} attempts, did the page change layout? "
+                                         "Does it need a delay added?\n\nLink: {{base_url}}/edit/{{watch_uuid}}\n\n"
+                                         "Thanks - Your omniscient changedetection.io installation :)\n".format(step_n+1, threshold),
+                    'notification_format': 'text'}
+
+        if len(watch['notification_urls']):
+            n_object['notification_urls'] = watch['notification_urls']
+
+        elif len(self.datastore.data['settings']['application']['notification_urls']):
+            n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
+
+        # Only prepare to notify if the rules above matched
+        if 'notification_urls' in n_object:
+            n_object.update({
+                'watch_url': watch['url'],
+                'uuid': watch_uuid
+            })
+            self.notification_q.put(n_object)
+            print("Sent step not found notification for {}".format(watch_uuid))
+
+
     def cleanup_error_artifacts(self, uuid):
         # All went fine, remove error artifacts
         cleanup_files = ["last-error-screenshot.png", "last-error.txt"]
@@ -212,6 +240,32 @@ class update_worker(threading.Thread):
                             self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
 
                         process_changedetection_results = True
+
+                    except content_fetcher.BrowserStepsStepTimout as e:
+
+                        if not self.datastore.data['watching'].get(uuid):
+                            continue
+
+                        err_text = "Warning, browser step at position {} could not run, target not found, check the watch, add a delay if necessary.".format(e.step_n+1)
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                           # So that we get a trigger when the content is added again
+                                                                           'previous_md5': ''})
+
+
+                        if self.datastore.data['watching'][uuid].get('filter_failure_notification_send', False):
+                            c = self.datastore.data['watching'][uuid].get('consecutive_filter_failures', 5)
+                            c += 1
+                            # Send notification if we reached the threshold?
+                            threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts',
+                                                                                           0)
+                            print("Step for {} not found, consecutive_filter_failures: {}".format(uuid, c))
+                            if threshold > 0 and c >= threshold:
+                                if not self.datastore.data['watching'][uuid].get('notification_muted'):
+                                    self.send_step_failure_notification(watch_uuid=uuid, step_n=e.step_n)
+                                c = 0
+
+                            self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
+                        process_changedetection_results = False
 
                     except content_fetcher.EmptyReply as e:
                         # Some kind of custom to-str handler in the exception handler that does this?

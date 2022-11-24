@@ -3,7 +3,8 @@
 window.addEventListener('hashchange', function () {
     var tabs = document.getElementsByClassName('active');
     while (tabs[0]) {
-        tabs[0].classList.remove('active')
+        tabs[0].classList.remove('active');
+        document.body.classList.remove('full-width');
     }
     set_active_tab();
 }, false);
@@ -20,6 +21,7 @@ if (!has_errors.length) {
 }
 
 function set_active_tab() {
+    document.body.classList.remove('full-width');
     var tab = document.querySelectorAll("a[href='" + location.hash + "']");
     if (tab.length) {
         tab[0].parentElement.className = "active";
@@ -42,7 +44,6 @@ function focus_error_tab() {
     }
     return false;
 }
-
 
 
 
