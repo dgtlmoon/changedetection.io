@@ -40,6 +40,21 @@ $(document).ready(function () {
     }, "1000")
 
 
+    if (window.location.hash == '#browser-steps') {
+        start();
+    }
+
+    window.addEventListener('hashchange', function () {
+        if (window.location.hash == '#browser-steps') {
+            start();
+        }
+        // For when the page loads
+        if (!window.location.hash || window.location.hash != '#browser-steps') {
+            $("img#browsersteps-img").attr('src', '');
+            return;
+        }
+    });
+
     function set_scale() {
 
         // some things to check if the scaling doesnt work
@@ -64,7 +79,6 @@ $(document).ready(function () {
     $('#browsersteps-img').bind('load', function () {
         $('body').addClass('full-width');
         console.log("Loaded background...");
-        $('#browsersteps-selector-wrapper .loader').fadeOut(2500);
 
         document.getElementById("browsersteps-selector-canvas");
         c = document.getElementById("browsersteps-selector-canvas");
@@ -224,6 +238,7 @@ $(document).ready(function () {
         // @todo This setting of the first one should be done at the datalayer but wtforms doesnt wanna play nice
         $('#browser_steps >li:first-child').removeClass('empty');
         $('#browser_steps >li:first-child select').val('Goto site').attr('disabled', 'disabled');
+        $('#browser-steps-ui .loader').show();
         $('.clear,.remove', $('#browser_steps >li:first-child')).hide();
         $.ajax({
             type: "GET",
@@ -363,8 +378,6 @@ $(document).ready(function () {
         }
 
 
-
-
         // POST the currently clicked step form widget back and await response, redraw
         $.ajax({
             method: "POST",
@@ -396,12 +409,10 @@ $(document).ready(function () {
             if (data.responseText.includes("Browser session expired")) {
                 disable_browsersteps_ui();
             }
-
-            alert(data.responseText);
             apply_buttons_disabled=false;
             $('ul#browser_steps li .control .apply').css('opacity',1);
             $("#browsersteps-img").css('opacity',1);
-            $('#browsersteps-selector-wrapper .loader').fadeOut(2500);
+            //$('#browsersteps-selector-wrapper .loader').fadeOut(2500);
         });
 
     });
