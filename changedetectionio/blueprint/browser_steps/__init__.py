@@ -29,9 +29,6 @@ from flask import Blueprint, request, make_response
 from flask_login import login_required
 import os
 import logging
-
-from playwright.sync_api import PlaywrightContextManager
-
 from changedetectionio.store import ChangeDetectionStore
 
 browsersteps_live_ui_o = {}
