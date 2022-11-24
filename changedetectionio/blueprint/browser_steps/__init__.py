@@ -190,8 +190,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 proxy = None
                 if proxy_id:
                     proxy_url = datastore.proxy_list.get(proxy_id).get('url')
-                    proxy = {'server': proxy_url}
-                    print("Browser Steps: UUID {} Using proxy {}".format(uuid, proxy_url))
+                    if proxy_url:
+                        proxy = {'server': proxy_url}
+                        print("Browser Steps: UUID {} Using proxy {}".format(uuid, proxy_url))
 
                 # Begin the new "Playwright Context" that re-uses the playwright interface
                 # Each session is a "Playwright Context" as a list, that uses the playwright interface
