@@ -184,7 +184,7 @@ $(document).ready(function () {
                 } else {
                     // Assume it's just for clicking on
                     // what are we clicking on?
-                    if (x['tagName'].startsWith('h')|| x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit'|| x['tagtype'] === 'checkbox') {
+                    if (x['tagName'].startsWith('h')|| x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit'|| x['tagtype'] === 'checkbox'|| x['tagtype'] === 'radio') {
                         $('select', first_available).val('Click element').change();
                         $('input[type=text]', first_available).first().val(x['xpath']);
                         found_something = true;
