@@ -21,7 +21,24 @@ const findUpTag = (el) => {
     chained_css = [];
     depth = 0;
 
-// Strategy 1: Keep going up until we hit an ID tag, imagine it's like  #list-widget div h4
+    //  Strategy 1: If it's an input, with name, and there's only one, prefer that
+    if (el.name !== undefined && el.name.length) {
+        var proposed = el.tagName + "[name=" + el.name + "]";
+        var proposed_element = window.document.querySelectorAll(proposed);
+        if(proposed_element.length) {
+            if (proposed_element.length === 1) {
+                return proposed;
+            } else {
+                // Some sites change ID but name= stays the same, we can hit it if we know the index
+                // Find all the elements that match and work out the input[n]
+                var n=Array.from(proposed_element).indexOf(el);
+                // Return a Playwright selector for nthinput[name=zipcode]
+                return proposed+" >> nth="+n;
+            }
+        }
+    }
+
+    // Strategy 2: Keep going up until we hit an ID tag, imagine it's like  #list-widget div h4
     while (r.parentNode) {
         if (depth == 5) {
             break;

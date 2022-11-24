@@ -149,6 +149,8 @@ class Fetcher():
             for step in valid_steps:
                 step_n += 1
                 print(">> Iterating check - browser Step n {} - {}...".format(step_n, step['operation']))
+                self.screenshot_step("before-"+str(step_n))
+                self.save_step_html("before-"+str(step_n))
                 try:
                     optional_value = step['optional_value']
                     selector = step['selector']
@@ -162,6 +164,7 @@ class Fetcher():
                                                       selector=selector,
                                                       optional_value=optional_value)
                     self.screenshot_step(step_n)
+                    self.save_step_html(step_n)
                 except TimeoutError:
                     # Stop processing here
                     raise BrowserStepsStepTimout(step_n=step_n)
@@ -244,6 +247,13 @@ class base_html_playwright(Fetcher):
             logging.debug("Saving step screenshot to {}".format(destination))
             with open(destination, 'wb') as f:
                 f.write(screenshot)
+
+    def save_step_html(self, step_n):
+        content = self.page.content()
+        destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.html'.format(step_n))
+        logging.debug("Saving step HTML to {}".format(destination))
+        with open(destination, 'w') as f:
+            f.write(content)
 
     def run(self,
             url,

@@ -136,10 +136,16 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                          optional_value=step_optional_value)
             except playwright._impl._api_types.TimeoutError as e:
                 print("Element wasnt found :-(", step_operation)
-                # but this isnt always true
+                return make_response("Element was not found on page", 401)
+
             except playwright._impl._api_types.Error as e:
-                # Browser closed usually (timeout/keepalive reached and playwright cleanedup)
-                print ("Browser exited")
+                # Browser/playwright level error
+                print("Browser error - got playwright._impl._api_types.Error")
+                # Try to find something of value to give back to the user
+                for l in str(e).splitlines():
+                    if 'DOMException' in l:
+                        return make_response(l, 401)
+
                 return make_response('Browser session ran out of time :( Please reload this page.', 401)
 
             # Get visual selector ready/update its data (also use the current filter info from the page?)
@@ -161,7 +167,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 browsersteps_playwright_browser_interface = sync_playwright().start()
                 time.sleep(1)
-                seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 20)) * 60
+                # At 20 minutes, some other variable is closing it
+                # @todo find out what it is and set it
+                seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
 
                 # keep it alive for 10 seconds more than we advertise, sometimes it helps to keep it shutting down cleanly
                 keepalive = "&timeout={}".format(((seconds_keepalive+3) * 1000))
@@ -181,7 +189,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             cleanup_playwright_session()
             return make_response('Browser session ran out of time :( Please reload this page.', 401)
 
-        state = this_session.get_current_state()
+        try:
+            state = this_session.get_current_state()
+        except playwright._impl._api_types.Error as e:
+            return make_response("Browser session ran out of time :( Please reload this page."+str(e), 401)
 
         p = {'screenshot': "data:image/png;base64,{}".format(
             base64.b64encode(state[0]).decode('ascii')),
