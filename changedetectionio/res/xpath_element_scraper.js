@@ -116,7 +116,7 @@ for (var i = 0; i < elements.length; i++) {
         left: Math.floor(bbox['left']),
         top: Math.floor(bbox['top']),
         tagName: (elements[i].tagName) ? elements[i].tagName.toLowerCase() : '',
-        tagtype: (elements[i].type) ? elements[i].type.toLowerCase() : ''
+        tagtype: (elements[i].tagName == 'INPUT' && elements[i].type) ? elements[i].type.toLowerCase() : ''
     });
 
 }
