@@ -63,7 +63,7 @@ We [recommend and use Bright Data](https://brightdata.grsm.io/n0r16zf7eivq) glob
 
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
 
-### Filter by elements using the Visual Selector tool.
+### Target specific parts of the webpage using the Visual Selector tool.
 
 Available when connected to a <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher">playwright content fetcher</a> (included as part of our subscription service)
 
