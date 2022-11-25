@@ -146,7 +146,7 @@ User-Agent: wonderbra 1.0") }}
             </div>
             {% if playwright_enabled %}
             <div class="tab-pane-inner" id="browser-steps">
-                <img class="beta-logo" src="/static/images/beta-logo.png">
+                <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
                 <fieldset>
                     <div class="pure-control-group">
                         <!--
