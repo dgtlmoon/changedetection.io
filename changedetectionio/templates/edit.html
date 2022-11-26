@@ -23,6 +23,7 @@
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='visual-selector.js')}}" defer></script>
 {% if playwright_enabled %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='browser-steps.js')}}" defer></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='extract.js')}}" defer></script>
 {% endif %}
 
 <div class="edit-form monospaced-textarea">
@@ -37,6 +38,7 @@
             <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
+            <li class="tab"><a href="#export">Export</a></li>
         </ul>
     </div>
 
@@ -374,6 +376,30 @@ Unavailable") }}
                 </fieldset>
             </div>
 
+            <div class="tab-pane-inner" id="export">
+                    <div class="pure-control-group">
+                    </div>
+
+                <fieldset>
+                    <div class="pure-control-group">
+                        <div>
+                            Enter a regular-expression, all history snapshots will be scanned and where the regex
+                            matches, it will exported along with the times-stamp.<br>
+                            For a complete backup, use the <strong>Backup</strong> button<br>
+                        </div>
+                        <p>
+                            <label>Scan and Extract</label>
+                            <input name=regex type="text" placeholder="Example: Temperature (\d+)">
+                        </p>
+                        <span class="pure-form-message-inline">
+                                The regex you enter will be stored for next time
+                            </span>
+                        <div class="pure-control-group">
+                            <input class="pure-button pure-button-primary" id="extract" name="extract" type="button" value="Scan and Extract">
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
             <div id="actions">
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
