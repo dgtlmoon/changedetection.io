@@ -252,6 +252,7 @@ $(document).ready(function () {
         }).done(function (data) {
             xpath_data = data.xpath_data;
             $('#browsersteps-img').attr('src', data.screenshot);
+            $("#loading-status-text").fadeIn();
             // This should trigger 'Goto site'
             $('#browser_steps >li:first-child .apply').click();
             browserless_seconds_remaining = data.browser_time_remaining;
@@ -393,6 +394,7 @@ $(document).ready(function () {
                 400: function () {
                     // More than likely the CSRF token was lost when the server restarted
                     alert("There was a problem processing the request, please reload the page.");
+                    $("#loading-status-text").hide();
                 }
             }
         }).done(function (data) {
@@ -404,12 +406,14 @@ $(document).ready(function () {
             $("#browsersteps-img").css('opacity',1);
             $('ul#browser_steps li .control .apply').css('opacity',1);
             browserless_seconds_remaining = data.browser_time_remaining;
+            $("#loading-status-text").hide();
         }).fail(function (data) {
             console.log(data);
             if (data.responseText.includes("Browser session expired")) {
                 disable_browsersteps_ui();
             }
             apply_buttons_disabled=false;
+            $("#loading-status-text").hide();
             $('ul#browser_steps li .control .apply').css('opacity',1);
             $("#browsersteps-img").css('opacity',1);
             //$('#browsersteps-selector-wrapper .loader').fadeOut(2500);
