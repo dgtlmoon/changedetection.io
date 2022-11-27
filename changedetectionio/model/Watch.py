@@ -93,7 +93,7 @@ class model(dict):
     @property
     def link(self):
         url = self.get('url', '')
-        ready_url = ''
+        ready_url = url
         if '{%' in url or '{{' in url:
             from jinja2 import Environment
             # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
