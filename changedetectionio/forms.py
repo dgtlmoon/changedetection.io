@@ -400,6 +400,15 @@ class watchForm(commonSettingsForm):
             self.body.errors.append('Body must be empty when Request Method is set to GET')
             result = False
 
+        # Attempt to validate jinja2 templates in the URL
+        from jinja2 import Environment
+        # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
+        jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
+        try:
+            ready_url = str(jinja2_env.from_string(self.url.data).render())
+        except Exception as e:
+            self.url.errors.append('Invalid template syntax')
+            result = False
         return result
 
 

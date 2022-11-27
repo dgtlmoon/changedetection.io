@@ -93,12 +93,23 @@ class model(dict):
     @property
     def link(self):
         url = self.get('url', '')
+        ready_url = url
         if '{%' in url or '{{' in url:
             from jinja2 import Environment
             # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
             jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
-            return str(jinja2_env.from_string(url).render())
-        return url
+            try:
+                ready_url = str(jinja2_env.from_string(url).render())
+            except Exception as e:
+                from flask import (
+                    flash, Markup, url_for
+                )
+                message = Markup('<a href="{}#general">The URL {} is invalid and cannot be used, click to edit</a>'.format(
+                    url_for('edit_page', uuid=self.get('uuid')), self.get('url', '')))
+                flash(message, 'error')
+                return ''
+
+        return ready_url
 
     @property
     def label(self):
