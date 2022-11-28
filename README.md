@@ -24,7 +24,7 @@ Available when connected to a <a href="https://github.com/dgtlmoon/changedetecti
 
 ### Easily see what changed, examine by word, line, or individual character.
 
-[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />]
+[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />](https://lemonade.changedetection.io/start?src=github)
 
 
 ### Perform interactive browser steps
@@ -33,7 +33,7 @@ Fill in text boxes, click buttons and more, setup your changedetection scenario.
 
 Using the **Browser Steps** configuration, add basic steps before performing change detection, such as logging into websites, adding a product to a cart, accept cookie logins, entering dates and refining searches.
 
-<img src="docs/browsersteps-anim.gif" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Website change detection with interactive browser steps, login, cookies etc" />
+[<img src="docs/browsersteps-anim.gif" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Website change detection with interactive browser steps, login, cookies etc" />](https://lemonade.changedetection.io/start?src=github)
 
 After **Browser Steps** have been run, then visit the **Visual Selector** tab to refine the content you're interested in.
 Requires Playwright to be enabled.
