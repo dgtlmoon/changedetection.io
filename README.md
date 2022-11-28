@@ -13,15 +13,33 @@ _Live your data-life pro-actively, Detect website changes and perform meaningful
 
 - Chrome browser included.
 - Super fast, no registration needed setup.
-- Start watching and receiving change notifications instantly.
+- Get started watching and receiving website change notifications straight away.
 
 
-Easily see what changed, examine by word, line, or individual character.
+### Target specific parts of the webpage using the Visual Selector tool.
 
-<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
+Available when connected to a <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher">playwright content fetcher</a> (included as part of our subscription service)
+
+[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/visualselector-anim.gif" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />](https://lemonade.changedetection.io/start?src=github)
+
+### Easily see what changed, examine by word, line, or individual character.
+
+[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />]
 
 
-#### Example use cases
+### Perform interactive browser steps
+
+Fill in text boxes, click buttons and more, setup your changedetection scenario. 
+
+Using the **Browser Steps** configuration, add basic steps before performing change detection, such as logging into websites, adding a product to a cart, accept cookie logins, entering dates and refining searches.
+
+<img src="docs/browsersteps-anim.gif" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Website change detection with interactive browser steps, login, cookies etc" />
+
+After **Browser Steps** have been run, then visit the **Visual Selector** tab to refine the content you're interested in.
+Requires Playwright to be enabled.
+
+
+### Example use cases
 
 - Products and services have a change in pricing
 - _Out of stock notification_ and _Back In stock notification_
@@ -59,26 +77,7 @@ _Need an actual Chrome runner with Javascript support? We support fetching via W
 
 We [recommend and use Bright Data](https://brightdata.grsm.io/n0r16zf7eivq) global proxy services, Bright Data will match any first deposit up to $100 using our signup link.
 
-## Screenshots
-
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
-
-### Target specific parts of the webpage using the Visual Selector tool.
-
-Available when connected to a <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher">playwright content fetcher</a> (included as part of our subscription service)
-
-<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/visualselector-anim.gif" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
-
-### Perform interactive browser steps
-
-Fill in text boxes, click buttons and more, setup your changedetection scenario. 
-
-Using the **Browser Steps** configuration, add basic steps before performing change detection, such as logging into websites, adding a product to a cart, accept cookie logins, entering dates and refining searches.
-
-<img src="docs/browsersteps-anim.gif" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Website change detection with interactive browser steps, login, cookies etc" />
-
-After **Browser Steps** have been run, then visit the **Visual Selector** tab to refine the content you're interested in.
-Requires Playwright to be enabled.
 
 ## Installation
 
