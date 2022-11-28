@@ -87,7 +87,7 @@ for (var i = 0; i < elements.length; i++) {
     }
 
     // Don't include elements that are offset from canvas
-    if (bbox['top'] < 0 || bbox['left'] < 0) {
+    if (bbox['top']+scroll_y < 0 || bbox['left'] < 0) {
         continue;
     }
 
