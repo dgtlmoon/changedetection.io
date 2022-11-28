@@ -1,3 +1,13 @@
+// @file Scrape the page looking for elements of concern (%ELEMENTS%)
+// http://matatk.agrip.org.uk/tests/position-and-width/
+// https://stackoverflow.com/questions/26813480/when-is-element-getboundingclientrect-guaranteed-to-be-updated-accurate
+//
+// Some pages like https://www.londonstockexchange.com/stock/NCCL/ncondezi-energy-limited/analysis
+// will automatically force a scroll somewhere, so include the position offset
+// Lets hope the position doesnt change while we iterate the bbox's, but this is better than nothing
+
+var scroll_y=+document.documentElement.scrollTop || document.body.scrollTop
+
 // Include the getXpath script directly, easier than fetching
 function getxpath(e) {
         var n = e;
@@ -71,8 +81,13 @@ var bbox;
 for (var i = 0; i < elements.length; i++) {
     bbox = elements[i].getBoundingClientRect();
 
-    // forget really small ones
-    if (bbox['width'] < 15 && bbox['height'] < 15) {
+    // Forget really small ones
+    if (bbox['width'] < 10 && bbox['height'] < 10) {
+        continue;
+    }
+
+    // Don't include elements that are offset from canvas
+    if (bbox['top'] < 0 || bbox['left'] < 0) {
         continue;
     }
 
@@ -114,7 +129,7 @@ for (var i = 0; i < elements.length; i++) {
         width: Math.round(bbox['width']),
         height: Math.round(bbox['height']),
         left: Math.floor(bbox['left']),
-        top: Math.floor(bbox['top']),
+        top: Math.floor(bbox['top'])+scroll_y,
         tagName: (elements[i].tagName) ? elements[i].tagName.toLowerCase() : '',
         tagtype: (elements[i].tagName == 'INPUT' && elements[i].type) ? elements[i].type.toLowerCase() : ''
     });
@@ -150,6 +165,7 @@ if (include_filters.length) {
 
         if (q) {
             bbox = q.getBoundingClientRect();
+            console.log("xpath_element_scraper: Got filter element, scroll from top was "+scroll_y)
         } else {
             console.log("xpath_element_scraper: filter element "+f+" was not found");
         }
@@ -157,10 +173,10 @@ if (include_filters.length) {
         if (bbox && bbox['width'] > 0 && bbox['height'] > 0) {
             size_pos.push({
                 xpath: f,
-                width: Math.round(bbox['width']),
-                height: Math.round(bbox['height']),
-                left: Math.floor(bbox['left']),
-                top: Math.floor(bbox['top'])
+                width: parseInt(bbox['width']),
+                height: parseInt(bbox['height']),
+                left: parseInt(bbox['left']),
+                top: parseInt(bbox['top'])+scroll_y
             });
         }
     }
