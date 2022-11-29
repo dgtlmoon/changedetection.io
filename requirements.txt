@@ -1,5 +1,6 @@
 flask~=2.0
 flask_wtf
+flask-compress
 eventlet>=0.31.0
 validators
 timeago~=1.0
