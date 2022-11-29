@@ -232,7 +232,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         self.page.evaluate("var include_filters=''")
         # Go find the interactive elements
         # @todo in the future, something smarter that can scan for elements with .click/focus etc event handlers?
-        elements = 'a,button,input,select,textarea,i,th,td,p,li,h1,h2,h3,h4'
+        elements = 'a,button,input,select,textarea,i,th,td,p,li,h1,h2,h3,h4,div,span'
         xpath_element_js = xpath_element_js.replace('%ELEMENTS%', elements)
         xpath_data = self.page.evaluate("async () => {" + xpath_element_js + "}")
         # So the JS will find the smallest one first

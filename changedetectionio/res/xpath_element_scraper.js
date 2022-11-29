@@ -124,6 +124,7 @@ for (var i = 0; i < elements.length; i++) {
         continue;
     }
 
+    // @todo Possible to ONLY list where it's clickable to save JSON xfer size
     size_pos.push({
         xpath: xpath_result,
         width: Math.round(bbox['width']),
@@ -131,7 +132,8 @@ for (var i = 0; i < elements.length; i++) {
         left: Math.floor(bbox['left']),
         top: Math.floor(bbox['top'])+scroll_y,
         tagName: (elements[i].tagName) ? elements[i].tagName.toLowerCase() : '',
-        tagtype: (elements[i].tagName == 'INPUT' && elements[i].type) ? elements[i].type.toLowerCase() : ''
+        tagtype: (elements[i].tagName == 'INPUT' && elements[i].type) ? elements[i].type.toLowerCase() : '',
+        isClickable: (elements[i].onclick) || window.getComputedStyle(elements[i]).cursor == "pointer"
     });
 
 }

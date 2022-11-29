@@ -196,9 +196,7 @@ $(document).ready(function () {
                     $('input[placeholder="Value"]', first_available).addClass('ok').click().focus();
                     found_something = true;
                 } else {
-                    // Assume it's just for clicking on
-                    // what are we clicking on?
-                    if (x['tagName'].startsWith('h')|| x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit'|| x['tagtype'] === 'checkbox'|| x['tagtype'] === 'radio'|| x['tagtype'] === 'li') {
+                    if (x['isClickable'] || x['tagName'].startsWith('h')|| x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit'|| x['tagtype'] === 'checkbox'|| x['tagtype'] === 'radio'|| x['tagtype'] === 'li') {
                         $('select', first_available).val('Click element').change();
                         $('input[type=text]', first_available).first().val(x['xpath']);
                         found_something = true;
@@ -220,8 +218,6 @@ $(document).ready(function () {
                     }
                 }
             }
-        } else {
-
         }
     }
 
