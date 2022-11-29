@@ -27,6 +27,7 @@ from flask import (
     session,
     url_for,
 )
+from flask_compress import Compress as FlaskCompress
 from flask_login import login_required
 from flask_restful import abort, Api
 from flask_wtf import CSRFProtect
@@ -51,6 +52,10 @@ app = Flask(__name__,
             static_url_path="",
             static_folder="static",
             template_folder="templates")
+from flask_compress import Compress
+
+# Super handy for compressing large BrowserSteps responses and others
+FlaskCompress(app)
 
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0

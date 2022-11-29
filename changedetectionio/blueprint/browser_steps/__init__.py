@@ -210,16 +210,29 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         except playwright._impl._api_types.Error as e:
             return make_response("Browser session ran out of time :( Please reload this page."+str(e), 401)
 
-        p = {'screenshot': "data:image/png;base64,{}".format(
+        # Use send_file() which is way faster than read/write loop on bytes
+        import json
+        from tempfile import mkstemp
+        from flask import send_file
+        tmp_fd, tmp_file = mkstemp(text=True, suffix=".json", prefix="changedetectionio-")
+
+        output = json.dumps({'screenshot': "data:image/png;base64,{}".format(
             base64.b64encode(state[0]).decode('ascii')),
             'xpath_data': state[1],
             'session_age_start': this_session.age_start,
             'browser_time_remaining': round(remaining)
-        }
+        })
 
+        with os.fdopen(tmp_fd, 'w') as f:
+            f.write(output)
 
-        # @todo BSON/binary JSON, faster xfer, OR pick it off the disk
-        return p
+        response = make_response(send_file(path_or_file=tmp_file,
+                                           mimetype='application/json; charset=UTF-8',
+                                           etag=True))
+        # No longer needed
+        os.unlink(tmp_file)
+
+        return response
 
     return browser_steps_blueprint
 
