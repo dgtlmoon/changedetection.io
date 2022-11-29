@@ -216,7 +216,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from flask import send_file
         tmp_fd, tmp_file = mkstemp(text=True, suffix=".json", prefix="changedetectionio-")
 
-        output = json.dumps({'screenshot': "data:image/png;base64,{}".format(
+        output = json.dumps({'screenshot': "data:image/jpeg;base64,{}".format(
             base64.b64encode(state[0]).decode('ascii')),
             'xpath_data': state[1],
             'session_age_start': this_session.age_start,
