@@ -22,6 +22,7 @@ browser_step_ui_config = {'Choose one': '0 0',
                           'Click element': '1 0',
                           'Click element containing text': '0 1',
                           'Enter text in field': '1 1',
+                          'Execute JS': '0 1',
 #                          'Extract text and use as filter': '1 0',
                           'Goto site': '0 0',
                           'Press Enter': '0 0',
@@ -96,6 +97,9 @@ class steppable_browser_interface():
             return
 
         self.page.fill(selector, value, timeout=10 * 1000)
+
+    def action_execute_js(self, selector, value):
+        self.page.evaluate(value)
 
     def action_click_element(self, selector, value):
         print("Clicking element")
