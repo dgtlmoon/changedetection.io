@@ -43,11 +43,13 @@ $(document).ready(function () {
     });
 
     function reset() {
-        xpath_data=[];
+        xpath_data = [];
         $('#browsersteps-img').attr('src', "");
         $("#browsersteps-click-start").show();
         $("#browsersteps-selector-wrapper .spinner").hide();
-        browserless_seconds_remaining=0;
+        browserless_seconds_remaining = 0;
+        browsersteps_session_id = false;
+        apply_buttons_disabled = true;
     }
 
     // Show seconds remaining until playwright/browserless needs to restart the session
