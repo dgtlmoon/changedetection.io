@@ -6,6 +6,11 @@
   }
 
   li {
+    &:not(:first-child) {
+      &:hover {
+        opacity: 1.0;
+      }
+    }
     list-style: decimal;
     padding: 5px;
     .control {

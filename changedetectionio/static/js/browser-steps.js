@@ -53,6 +53,12 @@ $(document).ready(function () {
         browsersteps_session_id = false;
         apply_buttons_disabled = false;
         ctx.clearRect(0, 0, c.width, c.height);
+        set_first_gotosite_disabled();
+    }
+
+    function set_first_gotosite_disabled() {
+        $('#browser_steps >li:first-child select').val('Goto site').attr('disabled', 'disabled');
+        $('#browser_steps >li:first-child').css('opacity', '0.5');
     }
 
     // Show seconds remaining until playwright/browserless needs to restart the session
@@ -97,7 +103,6 @@ $(document).ready(function () {
         // @todo is click better?
         $('#browsersteps-selector-canvas').off("mousemove mousedown click");
         // Undo disable_browsersteps_ui
-        $("#browser_steps select,input").removeAttr('disabled').css('opacity', '1.0');
         $("#browser-steps-ui").css('opacity', '1.0');
 
         // init
@@ -247,7 +252,7 @@ $(document).ready(function () {
         browsersteps_session_id=Date.now();
         // @todo This setting of the first one should be done at the datalayer but wtforms doesnt wanna play nice
         $('#browser_steps >li:first-child').removeClass('empty');
-        $('#browser_steps >li:first-child select').val('Goto site').attr('disabled', 'disabled');
+        set_first_gotosite_disabled();
         $('#browser-steps-ui .loader .spinner').show();
         $('.clear,.remove', $('#browser_steps >li:first-child')).hide();
         $.ajax({
@@ -266,6 +271,7 @@ $(document).ready(function () {
             console.log("Got startup response, requesting Goto-Site (first) step fake click");
             $('#browser_steps >li:first-child .apply').click();
             browserless_seconds_remaining = data.browser_time_remaining;
+            set_first_gotosite_disabled();
         }).fail(function (data) {
             console.log(data);
             alert('There was an error communicating with the server.');
@@ -274,7 +280,7 @@ $(document).ready(function () {
     }
 
     function disable_browsersteps_ui() {
-        $("#browser_steps select,input").attr('disabled', 'disabled').css('opacity', '0.5');
+        set_first_gotosite_disabled();
         $("#browser-steps-ui").css('opacity', '0.3');
         $('#browsersteps-selector-canvas').off("mousemove mousedown click");
     }
@@ -420,6 +426,7 @@ $(document).ready(function () {
             $('ul#browser_steps li .control .apply').css('opacity',1);
             browserless_seconds_remaining = data.browser_time_remaining;
             $("#loading-status-text").hide();
+            set_first_gotosite_disabled();
         }).fail(function (data) {
             console.log(data);
             if (data.responseText.includes("Browser session expired")) {
