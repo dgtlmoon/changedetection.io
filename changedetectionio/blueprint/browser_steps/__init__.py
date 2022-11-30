@@ -131,21 +131,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 this_session.call_action(action_name=step_operation,
                                          selector=step_selector,
                                          optional_value=step_optional_value)
-            except playwright._impl._api_types.TimeoutError as e:
-                print("Element wasnt found :-(", step_operation)
-                return make_response("Element was not found on page", 401)
 
-            except playwright._impl._api_types.Error as e:
-                # Browser/playwright level error
-                print("Browser error - got playwright._impl._api_types.Error, try reloading the session/browser")
-                print (str(e))
-
+            except Exception as e:
+                print("Exception when calling step operation", step_operation, str(e))
                 # Try to find something of value to give back to the user
-                for l in str(e).splitlines():
-                    if 'DOMException' in l:
-                        return make_response(l, 401)
-
-                return make_response('Browser session ran out of time :( Please reload this page.', 401)
+                return make_response(str(e).splitlines()[0], 401)
 
             # Get visual selector ready/update its data (also use the current filter info from the page?)
             # When the last 'apply' button was pressed
