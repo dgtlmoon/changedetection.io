@@ -205,33 +205,44 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             cleanup_playwright_session()
             return make_response('Browser session ran out of time :( Please reload this page.', 401)
 
-        try:
-            state = this_session.get_current_state()
-        except playwright._impl._api_types.Error as e:
-            return make_response("Browser session ran out of time :( Please reload this page."+str(e), 401)
+        response = None
 
-        # Use send_file() which is way faster than read/write loop on bytes
-        import json
-        from tempfile import mkstemp
-        from flask import send_file
-        tmp_fd, tmp_file = mkstemp(text=True, suffix=".json", prefix="changedetectionio-")
+        if request.method == 'POST':
+            # Screenshots and other info only needed on requesting a step (POST)
+            try:
+                state = this_session.get_current_state()
+            except playwright._impl._api_types.Error as e:
+                return make_response("Browser session ran out of time :( Please reload this page."+str(e), 401)
 
-        output = json.dumps({'screenshot': "data:image/jpeg;base64,{}".format(
-            base64.b64encode(state[0]).decode('ascii')),
-            'xpath_data': state[1],
-            'session_age_start': this_session.age_start,
-            'browser_time_remaining': round(remaining)
-        })
+            # Use send_file() which is way faster than read/write loop on bytes
+            import json
+            from tempfile import mkstemp
+            from flask import send_file
+            tmp_fd, tmp_file = mkstemp(text=True, suffix=".json", prefix="changedetectionio-")
 
-        with os.fdopen(tmp_fd, 'w') as f:
-            f.write(output)
+            output = json.dumps({'screenshot': "data:image/jpeg;base64,{}".format(
+                base64.b64encode(state[0]).decode('ascii')),
+                'xpath_data': state[1],
+                'session_age_start': this_session.age_start,
+                'browser_time_remaining': round(remaining)
+            })
 
-        response = make_response(send_file(path_or_file=tmp_file,
-                                           mimetype='application/json; charset=UTF-8',
-                                           etag=True))
-        # No longer needed
-        os.unlink(tmp_file)
+            with os.fdopen(tmp_fd, 'w') as f:
+                f.write(output)
 
+            response = make_response(send_file(path_or_file=tmp_file,
+                                               mimetype='application/json; charset=UTF-8',
+                                               etag=True))
+            # No longer needed
+            os.unlink(tmp_file)
+
+        elif request.method == 'GET':
+            # Just enough to get the session rolling, it will call for goto-site via POST next
+            response = make_response({
+                'session_age_start': this_session.age_start,
+                'browser_time_remaining': round(remaining)
+            })
+            
         return response
 
     return browser_steps_blueprint

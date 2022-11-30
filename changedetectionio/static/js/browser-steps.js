@@ -13,7 +13,7 @@ $(document).ready(function () {
     var browserless_seconds_remaining=0;
     var apply_buttons_disabled = false;
     var include_text_elements = $("#include_text_elements");
-    var xpath_data;
+    var xpath_data = false;
     var current_selected_i;
     var state_clicked = false;
     var c;
@@ -43,13 +43,13 @@ $(document).ready(function () {
     });
 
     function reset() {
-        xpath_data = [];
-        $('#browsersteps-img').attr('src', "");
+        xpath_data = false;
+        $('#browsersteps-img').removeAttr('src');
         $("#browsersteps-click-start").show();
         $("#browsersteps-selector-wrapper .spinner").hide();
         browserless_seconds_remaining = 0;
         browsersteps_session_id = false;
-        apply_buttons_disabled = true;
+        apply_buttons_disabled = false;
     }
 
     // Show seconds remaining until playwright/browserless needs to restart the session
@@ -125,6 +125,10 @@ $(document).ready(function () {
         });
 
         $('#browsersteps-selector-canvas').bind('mousemove', function (e) {
+            if (!xpath_data.length) {
+                return;
+            }
+
             // checkbox if find elements is enabled
             ctx.clearRect(0, 0, c.width, c.height);
             ctx.fillStyle = 'rgba(255,0,0, 0.1)';
@@ -254,9 +258,9 @@ $(document).ready(function () {
             }
         }).done(function (data) {
             xpath_data = data.xpath_data;
-            $('#browsersteps-img').attr('src', data.screenshot);
             $("#loading-status-text").fadeIn();
             // This should trigger 'Goto site'
+            console.log("Got startup response, requesting Goto-Site (first) step fake click");
             $('#browser_steps >li:first-child .apply').click();
             browserless_seconds_remaining = data.browser_time_remaining;
         }).fail(function (data) {
@@ -381,7 +385,7 @@ $(document).ready(function () {
             is_last_step = false;
         }
 
-
+        console.log("Requesting step via POST "+$("select[id$='operation']", current_data).first().val());
         // POST the currently clicked step form widget back and await response, redraw
         $.ajax({
             method: "POST",
