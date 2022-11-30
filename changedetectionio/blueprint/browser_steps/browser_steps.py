@@ -90,7 +90,7 @@ class steppable_browser_interface():
             return
         elem = self.page.get_by_text(value)
         if elem.count():
-            elem.first.click(delay=randint(200, 500))
+            elem.first.click(delay=randint(200, 500), timeout=3000)
 
     def action_enter_text_in_field(self, selector, value):
         if not len(selector.strip()):
@@ -146,10 +146,10 @@ class steppable_browser_interface():
         self.page.keyboard.press("PageDown", delay=randint(200, 500))
 
     def action_check_checkbox(self, selector, value):
-        self.page.locator(selector).check()
+        self.page.locator(selector).check(timeout=1000)
 
     def action_uncheck_checkbox(self, selector, value):
-        self.page.locator(selector).uncheck()
+        self.page.locator(selector, timeout=1000).uncheck(timeout=1000)
 
 
 # Responsible for maintaining a live 'context' with browserless
@@ -211,7 +211,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         # Listen for all console events and handle errors
         self.page.on("console", lambda msg: print(f"Browser steps console - {msg.type}: {msg.text} {msg.args}"))
 
-        print("time to browser setup", time.time() - now)
+        print("Time to browser setup", time.time() - now)
         self.page.wait_for_timeout(1 * 1000)
 
     def mark_as_closed(self):

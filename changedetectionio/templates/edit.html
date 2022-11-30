@@ -166,8 +166,12 @@ User-Agent: wonderbra 1.0") }}
                             <div id="browser-steps-ui" class="noselect"  style="width: 100%; background-color: #eee; border-radius: 5px;">
 
                                 <div class="noselect"  id="browsersteps-selector-wrapper" style="width: 100%">
-                                    <span class="loader">
-                                        <div class="spinner"></div>
+                                    <span class="loader" >
+                                        <span id="browsersteps-click-start">
+                                            <h2 >Click here to Start</h2>
+                                            Please allow 10-15 seconds for the browser to connect.
+                                        </span>
+                                        <div class="spinner"  style="display: none;"></div>
                                     </span>
                                     <img  class="noselect" id="browsersteps-img" src="" style="max-width: 100%; width: 100%;" />
                                     <canvas  class="noselect" id="browsersteps-selector-canvas" style="max-width: 100%; width: 100%;"></canvas>

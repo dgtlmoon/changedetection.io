@@ -50,6 +50,8 @@ nvm use v14.18.1 && npm install && npm run build
   #browser_steps li {
     list-style: decimal;
     padding: 5px; }
+    #browser_steps li:not(:first-child):hover {
+      opacity: 1.0; }
     #browser_steps li .control {
       padding-left: 5px;
       padding-right: 5px; }
@@ -96,11 +98,15 @@ nvm use v14.18.1 && npm install && npm run build
     top: 50%;
     transform: translate(-50%, -50%);
     margin-left: -40px;
-    z-index: 100; }
+    z-index: 100;
+    max-width: 350px;
+    text-align: center; }
   #browsersteps-selector-wrapper .spinner, #browsersteps-selector-wrapper .spinner:after {
     width: 80px;
     height: 80px;
     font-size: 3px; }
+  #browsersteps-selector-wrapper #browsersteps-click-start:hover {
+    cursor: pointer; }
 
 .arrow {
   border: solid #1b98f8;

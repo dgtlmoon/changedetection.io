@@ -10,10 +10,10 @@ $(document).ready(function () {
         }
     })
     var browsersteps_session_id;
-    var browserless_seconds_remaining=0;
+    var browserless_seconds_remaining = 0;
     var apply_buttons_disabled = false;
     var include_text_elements = $("#include_text_elements");
-    var xpath_data;
+    var xpath_data = false;
     var current_selected_i;
     var state_clicked = false;
     var c;
@@ -25,10 +25,41 @@ $(document).ready(function () {
     $(window).resize(function () {
         set_scale();
     });
+    // Should always be disabled
+    $('#browser_steps >li:first-child select').val('Goto site').attr('disabled', 'disabled');
 
-    $('a#browsersteps-tab').click(function () {
+    $('#browsersteps-click-start').click(function () {
+        $("#browsersteps-click-start").fadeOut();
+        $("#browsersteps-selector-wrapper .spinner").fadeIn();
         start();
     });
+
+    $('a#browsersteps-tab').click(function () {
+        reset();
+    });
+
+    window.addEventListener('hashchange', function () {
+        if (window.location.hash == '#browser-steps') {
+            reset();
+        }
+    });
+
+    function reset() {
+        xpath_data = false;
+        $('#browsersteps-img').removeAttr('src');
+        $("#browsersteps-click-start").show();
+        $("#browsersteps-selector-wrapper .spinner").hide();
+        browserless_seconds_remaining = 0;
+        browsersteps_session_id = false;
+        apply_buttons_disabled = false;
+        ctx.clearRect(0, 0, c.width, c.height);
+        set_first_gotosite_disabled();
+    }
+
+    function set_first_gotosite_disabled() {
+        $('#browser_steps >li:first-child select').val('Goto site').attr('disabled', 'disabled');
+        $('#browser_steps >li:first-child').css('opacity', '0.5');
+    }
 
     // Show seconds remaining until playwright/browserless needs to restart the session
     // (See comment at the top of changedetectionio/blueprint/browser_steps/__init__.py )
@@ -39,21 +70,6 @@ $(document).ready(function () {
         }
     }, "1000")
 
-
-    if (window.location.hash == '#browser-steps') {
-        start();
-    }
-
-    window.addEventListener('hashchange', function () {
-        if (window.location.hash == '#browser-steps') {
-            start();
-        }
-        // For when the page loads
-        if (!window.location.hash || window.location.hash != '#browser-steps') {
-            $("img#browsersteps-img").attr('src', '');
-            return;
-        }
-    });
 
     function set_scale() {
 
@@ -87,7 +103,6 @@ $(document).ready(function () {
         // @todo is click better?
         $('#browsersteps-selector-canvas').off("mousemove mousedown click");
         // Undo disable_browsersteps_ui
-        $("#browser_steps select,input").removeAttr('disabled').css('opacity', '1.0');
         $("#browser-steps-ui").css('opacity', '1.0');
 
         // init
@@ -103,7 +118,7 @@ $(document).ready(function () {
             // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
             e.preventDefault()
             console.log(e);
-            console.log("current xpath in index is "+current_selected_i);
+            console.log("current xpath in index is " + current_selected_i);
             last_click_xy = {'x': parseInt((1 / x_scale) * e.offsetX), 'y': parseInt((1 / y_scale) * e.offsetY)}
             process_selected(current_selected_i);
             current_selected_i = false;
@@ -118,6 +133,10 @@ $(document).ready(function () {
         });
 
         $('#browsersteps-selector-canvas').bind('mousemove', function (e) {
+            if (!xpath_data) {
+                return;
+            }
+
             // checkbox if find elements is enabled
             ctx.clearRect(0, 0, c.width, c.height);
             ctx.fillStyle = 'rgba(255,0,0, 0.1)';
@@ -153,8 +172,8 @@ $(document).ready(function () {
                         // does it mean sort the xpath list by size (w*h) i think so!
                     } else {
 
-                        if ( include_text_elements[0].checked === true) {
-                        // blue one with background instead?
+                        if (include_text_elements[0].checked === true) {
+                            // blue one with background instead?
                             ctx.fillStyle = 'rgba(0,0,255, 0.1)';
                             ctx.strokeStyle = 'rgba(0,0,200, 0.7)';
                             $('#browsersteps-selector-canvas').css('cursor', 'grab');
@@ -175,7 +194,6 @@ $(document).ready(function () {
     // });
 
 
-
     // callback for clicking on an xpath on the canvas
     function process_selected(xpath_data_index) {
         found_something = false;
@@ -190,23 +208,23 @@ $(document).ready(function () {
             console.log(x);
             if (x && first_available.length) {
                 // @todo will it let you click shit that has a layer ontop? probably not.
-                if (x['tagtype'] === 'text' || x['tagtype'] === 'email' || x['tagName'] === 'textarea' || x['tagtype'] === 'password' || x['tagtype'] === 'search' ) {
+                if (x['tagtype'] === 'text' || x['tagtype'] === 'email' || x['tagName'] === 'textarea' || x['tagtype'] === 'password' || x['tagtype'] === 'search') {
                     $('select', first_available).val('Enter text in field').change();
                     $('input[type=text]', first_available).first().val(x['xpath']);
                     $('input[placeholder="Value"]', first_available).addClass('ok').click().focus();
                     found_something = true;
                 } else {
-                    if (x['isClickable'] || x['tagName'].startsWith('h')|| x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit'|| x['tagtype'] === 'checkbox'|| x['tagtype'] === 'radio'|| x['tagtype'] === 'li') {
+                    if (x['isClickable'] || x['tagName'].startsWith('h') || x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit' || x['tagtype'] === 'checkbox' || x['tagtype'] === 'radio' || x['tagtype'] === 'li') {
                         $('select', first_available).val('Click element').change();
                         $('input[type=text]', first_available).first().val(x['xpath']);
                         found_something = true;
                     }
                 }
 
-                first_available.xpath_data_index=xpath_data_index;
+                first_available.xpath_data_index = xpath_data_index;
 
                 if (!found_something) {
-                    if ( include_text_elements[0].checked === true) {
+                    if (include_text_elements[0].checked === true) {
                         // Suggest that we use as filter?
                         // @todo filters should always be in the last steps, nothing non-filter after it
                         found_something = true;
@@ -230,15 +248,15 @@ $(document).ready(function () {
 
     function start() {
         console.log("Starting browser-steps UI");
-        browsersteps_session_id=Date.now();
+        browsersteps_session_id = Date.now();
         // @todo This setting of the first one should be done at the datalayer but wtforms doesnt wanna play nice
         $('#browser_steps >li:first-child').removeClass('empty');
-        $('#browser_steps >li:first-child select').val('Goto site').attr('disabled', 'disabled');
-        $('#browser-steps-ui .loader').show();
+        set_first_gotosite_disabled();
+        $('#browser-steps-ui .loader .spinner').show();
         $('.clear,.remove', $('#browser_steps >li:first-child')).hide();
         $.ajax({
             type: "GET",
-            url: browser_steps_sync_url+"&browsersteps_session_id="+browsersteps_session_id,
+            url: browser_steps_sync_url + "&browsersteps_session_id=" + browsersteps_session_id,
             statusCode: {
                 400: function () {
                     // More than likely the CSRF token was lost when the server restarted
@@ -247,11 +265,12 @@ $(document).ready(function () {
             }
         }).done(function (data) {
             xpath_data = data.xpath_data;
-            $('#browsersteps-img').attr('src', data.screenshot);
             $("#loading-status-text").fadeIn();
             // This should trigger 'Goto site'
+            console.log("Got startup response, requesting Goto-Site (first) step fake click");
             $('#browser_steps >li:first-child .apply').click();
             browserless_seconds_remaining = data.browser_time_remaining;
+            set_first_gotosite_disabled();
         }).fail(function (data) {
             console.log(data);
             alert('There was an error communicating with the server.');
@@ -260,7 +279,7 @@ $(document).ready(function () {
     }
 
     function disable_browsersteps_ui() {
-        $("#browser_steps select,input").attr('disabled', 'disabled').css('opacity', '0.5');
+        set_first_gotosite_disabled();
         $("#browser-steps-ui").css('opacity', '0.3');
         $('#browsersteps-selector-canvas').off("mousemove mousedown click");
     }
@@ -307,11 +326,14 @@ $(document).ready(function () {
 
     // Add the extra buttons to the steps
     $('ul#browser_steps li').each(function (i) {
-            $(this).append('<div class="control">' +
-                '<a data-step-index=' + i + ' class="pure-button button-secondary button-green button-xsmall apply" >Apply</a>&nbsp;' +
-                '<a data-step-index=' + i + ' class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;' +
-                '<a data-step-index=' + i + ' class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>' +
-                '</div>')
+            var s = '<div class="control">' + '<a data-step-index=' + i + ' class="pure-button button-secondary button-green button-xsmall apply" >Apply</a>&nbsp;';
+            if (i > 0) {
+                // The first step never gets these (Goto-site)
+                s += '<a data-step-index=' + i + ' class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;' +
+                    '<a data-step-index=' + i + ' class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>';
+            }
+            s += '</div>';
+            $(this).append(s)
         }
     );
 
@@ -348,15 +370,15 @@ $(document).ready(function () {
 
     $('ul#browser_steps li .control .apply').click(function (event) {
         // sequential requests @todo refactor
-        if(apply_buttons_disabled) {
+        if (apply_buttons_disabled) {
             return;
         }
 
         var current_data = $(event.currentTarget).closest('li');
-        $('#browser-steps-ui .loader').fadeIn();
-        apply_buttons_disabled=true;
-        $('ul#browser_steps li .control .apply').css('opacity',0.5);
-        $("#browsersteps-img").css('opacity',0.65);
+        $('#browser-steps-ui .loader .spinner').fadeIn();
+        apply_buttons_disabled = true;
+        $('ul#browser_steps li .control .apply').css('opacity', 0.5);
+        $("#browsersteps-img").css('opacity', 0.65);
 
         var is_last_step = 0;
         var step_n = $(event.currentTarget).data('step-index');
@@ -368,17 +390,17 @@ $(document).ready(function () {
             }
         });
 
-        if (is_last_step == (step_n+1)) {
+        if (is_last_step == (step_n + 1)) {
             is_last_step = true;
         } else {
             is_last_step = false;
         }
 
-
+        console.log("Requesting step via POST " + $("select[id$='operation']", current_data).first().val());
         // POST the currently clicked step form widget back and await response, redraw
         $.ajax({
             method: "POST",
-            url: browser_steps_sync_url+"&browsersteps_session_id="+browsersteps_session_id,
+            url: browser_steps_sync_url + "&browsersteps_session_id=" + browsersteps_session_id,
             data: {
                 'operation': $("select[id$='operation']", current_data).first().val(),
                 'selector': $("input[id$='selector']", current_data).first().val(),
@@ -391,28 +413,35 @@ $(document).ready(function () {
                     // More than likely the CSRF token was lost when the server restarted
                     alert("There was a problem processing the request, please reload the page.");
                     $("#loading-status-text").hide();
+                    $('#browser-steps-ui .loader .spinner').fadeOut();
+                },
+                401: function (data) {
+                    // More than likely the CSRF token was lost when the server restarted
+                    alert(data.responseText);
+                    $("#loading-status-text").hide();
+                    $('#browser-steps-ui .loader .spinner').fadeOut();
                 }
             }
         }).done(function (data) {
             // it should return the new state (selectors available and screenshot)
             xpath_data = data.xpath_data;
             $('#browsersteps-img').attr('src', data.screenshot);
-            $('#browser-steps-ui .loader').fadeOut();
-            apply_buttons_disabled=false;
-            $("#browsersteps-img").css('opacity',1);
-            $('ul#browser_steps li .control .apply').css('opacity',1);
+            $('#browser-steps-ui .loader .spinner').fadeOut();
+            apply_buttons_disabled = false;
+            $("#browsersteps-img").css('opacity', 1);
+            $('ul#browser_steps li .control .apply').css('opacity', 1);
             browserless_seconds_remaining = data.browser_time_remaining;
             $("#loading-status-text").hide();
+            set_first_gotosite_disabled();
         }).fail(function (data) {
             console.log(data);
             if (data.responseText.includes("Browser session expired")) {
                 disable_browsersteps_ui();
             }
-            apply_buttons_disabled=false;
+            apply_buttons_disabled = false;
             $("#loading-status-text").hide();
-            $('ul#browser_steps li .control .apply').css('opacity',1);
-            $("#browsersteps-img").css('opacity',1);
-            //$('#browsersteps-selector-wrapper .loader').fadeOut(2500);
+            $('ul#browser_steps li .control .apply').css('opacity', 1);
+            $("#browsersteps-img").css('opacity', 1);
         });
 
     });
