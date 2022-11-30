@@ -211,7 +211,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         # Listen for all console events and handle errors
         self.page.on("console", lambda msg: print(f"Browser steps console - {msg.type}: {msg.text} {msg.args}"))
 
-        print("time to browser setup", time.time() - now)
+        print("Time to browser setup", time.time() - now)
         self.page.wait_for_timeout(1 * 1000)
 
     def mark_as_closed(self):

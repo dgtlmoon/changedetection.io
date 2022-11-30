@@ -70,6 +70,8 @@
     transform: translate(-50%, -50%);
     margin-left: -40px;
     z-index: 100;
+    max-width: 350px;
+    text-align: center;
   }
 
   /* nice tall skinny one */
@@ -77,5 +79,11 @@
     width: 80px;
     height: 80px;
     font-size: 3px;
+  }
+
+  #browsersteps-click-start {
+    &:hover {
+      cursor: pointer;
+    }
   }
 }

@@ -96,11 +96,15 @@ nvm use v14.18.1 && npm install && npm run build
     top: 50%;
     transform: translate(-50%, -50%);
     margin-left: -40px;
-    z-index: 100; }
+    z-index: 100;
+    max-width: 350px;
+    text-align: center; }
   #browsersteps-selector-wrapper .spinner, #browsersteps-selector-wrapper .spinner:after {
     width: 80px;
     height: 80px;
     font-size: 3px; }
+  #browsersteps-selector-wrapper #browsersteps-click-start:hover {
+    cursor: pointer; }
 
 .arrow {
   border: solid #1b98f8;

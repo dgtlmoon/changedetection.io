@@ -26,9 +26,29 @@ $(document).ready(function () {
         set_scale();
     });
 
-    $('a#browsersteps-tab').click(function () {
+    $('#browsersteps-click-start').click(function () {
+        $("#browsersteps-click-start").fadeOut();
+        $("#browsersteps-selector-wrapper .spinner").fadeIn();
         start();
     });
+
+    $('a#browsersteps-tab').click(function () {
+       reset();
+    });
+
+    window.addEventListener('hashchange', function () {
+        if (window.location.hash == '#browser-steps') {
+            reset();
+        }
+    });
+
+    function reset() {
+        xpath_data=[];
+        $('#browsersteps-img').attr('src', "");
+        $("#browsersteps-click-start").show();
+        $("#browsersteps-selector-wrapper .spinner").hide();
+        browserless_seconds_remaining=0;
+    }
 
     // Show seconds remaining until playwright/browserless needs to restart the session
     // (See comment at the top of changedetectionio/blueprint/browser_steps/__init__.py )
@@ -39,21 +59,6 @@ $(document).ready(function () {
         }
     }, "1000")
 
-
-    if (window.location.hash == '#browser-steps') {
-        start();
-    }
-
-    window.addEventListener('hashchange', function () {
-        if (window.location.hash == '#browser-steps') {
-            start();
-        }
-        // For when the page loads
-        if (!window.location.hash || window.location.hash != '#browser-steps') {
-            $("img#browsersteps-img").attr('src', '');
-            return;
-        }
-    });
 
     function set_scale() {
 
@@ -234,7 +239,7 @@ $(document).ready(function () {
         // @todo This setting of the first one should be done at the datalayer but wtforms doesnt wanna play nice
         $('#browser_steps >li:first-child').removeClass('empty');
         $('#browser_steps >li:first-child select').val('Goto site').attr('disabled', 'disabled');
-        $('#browser-steps-ui .loader').show();
+        $('#browser-steps-ui .loader .spinner').show();
         $('.clear,.remove', $('#browser_steps >li:first-child')).hide();
         $.ajax({
             type: "GET",
@@ -353,7 +358,7 @@ $(document).ready(function () {
         }
 
         var current_data = $(event.currentTarget).closest('li');
-        $('#browser-steps-ui .loader').fadeIn();
+        $('#browser-steps-ui .loader .spinner').fadeIn();
         apply_buttons_disabled=true;
         $('ul#browser_steps li .control .apply').css('opacity',0.5);
         $("#browsersteps-img").css('opacity',0.65);
@@ -397,7 +402,7 @@ $(document).ready(function () {
             // it should return the new state (selectors available and screenshot)
             xpath_data = data.xpath_data;
             $('#browsersteps-img').attr('src', data.screenshot);
-            $('#browser-steps-ui .loader').fadeOut();
+            $('#browser-steps-ui .loader .spinner').fadeOut();
             apply_buttons_disabled=false;
             $("#browsersteps-img").css('opacity',1);
             $('ul#browser_steps li .control .apply').css('opacity',1);
