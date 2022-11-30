@@ -25,6 +25,8 @@ $(document).ready(function () {
     $(window).resize(function () {
         set_scale();
     });
+    // Should always be disabled
+    $('#browser_steps >li:first-child select').val('Goto site').attr('disabled', 'disabled');
 
     $('#browsersteps-click-start').click(function () {
         $("#browsersteps-click-start").fadeOut();
@@ -50,6 +52,7 @@ $(document).ready(function () {
         browserless_seconds_remaining = 0;
         browsersteps_session_id = false;
         apply_buttons_disabled = false;
+        ctx.clearRect(0, 0, c.width, c.height);
     }
 
     // Show seconds remaining until playwright/browserless needs to restart the session
@@ -125,7 +128,7 @@ $(document).ready(function () {
         });
 
         $('#browsersteps-selector-canvas').bind('mousemove', function (e) {
-            if (!xpath_data.length) {
+            if (!xpath_data) {
                 return;
             }
 
@@ -318,11 +321,14 @@ $(document).ready(function () {
 
     // Add the extra buttons to the steps
     $('ul#browser_steps li').each(function (i) {
-            $(this).append('<div class="control">' +
-                '<a data-step-index=' + i + ' class="pure-button button-secondary button-green button-xsmall apply" >Apply</a>&nbsp;' +
-                '<a data-step-index=' + i + ' class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;' +
-                '<a data-step-index=' + i + ' class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>' +
-                '</div>')
+            var s = '<div class="control">' + '<a data-step-index=' + i + ' class="pure-button button-secondary button-green button-xsmall apply" >Apply</a>&nbsp;';
+            if (i > 0) {
+                // The first step never gets these (Goto-site)
+                s += '<a data-step-index=' + i + ' class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;' +
+                    '<a data-step-index=' + i + ' class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>';
+            }
+            s += '</div>';
+            $(this).append(s)
         }
     );
 

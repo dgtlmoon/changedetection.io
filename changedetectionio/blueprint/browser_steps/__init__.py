@@ -242,7 +242,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 'session_age_start': this_session.age_start,
                 'browser_time_remaining': round(remaining)
             })
-            
+
         return response
 
     return browser_steps_blueprint
