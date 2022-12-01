@@ -525,6 +525,8 @@ footer {
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
     background-color: rgba(255, 255, 255, 0.2); }
+    .tabs ul li:not(.active):hover {
+      background-color: rgba(255, 255, 255, 0.5); }
     .tabs ul li.active, .tabs ul li :target {
       background-color: #fff; }
       .tabs ul li.active a, .tabs ul li :target a {

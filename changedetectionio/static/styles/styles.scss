@@ -609,7 +609,11 @@ footer {
       border-top-left-radius: 5px;
       border-top-right-radius: 5px;
       background-color: rgba(255, 255, 255, 0.2);
-
+      &:not(.active) {
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.5);
+        }
+      }
       &.active, :target {
         background-color: #fff;
 
