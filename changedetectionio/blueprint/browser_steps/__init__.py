@@ -45,18 +45,18 @@ def cleanup_playwright_session():
     global browsersteps_playwright_browser_interface_start_time
 
     browsersteps_live_ui_o = {}
+    browsersteps_playwright_browser_interface = None
     browsersteps_playwright_browser_interface_browser = None
     browsersteps_playwright_browser_interface_end_time = None
     browsersteps_playwright_browser_interface_start_time = None
-    print("Cleaning up old playwright session because time was up, calling .goodbye()")
 
+    print("Cleaning up old playwright session because time was up, calling .goodbye()")
     try:
         browsersteps_playwright_browser_interface_context.goodbye()
     except Exception as e:
         print ("Got exception in shutdown, probably OK")
         print (str(e))
 
-    browsersteps_playwright_browser_interface = None
     browsersteps_playwright_browser_interface_context = None
 
     print ("Cleaning up old playwright session because time was up - done")
