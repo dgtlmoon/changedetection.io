@@ -49,16 +49,20 @@ def cleanup_playwright_session():
 
     import psutil
 
+    # playwright's .stop() seems to hang, so lets kill the processes before calling .stop
+    # a bit hard, but more reliable :/
     current_process = psutil.Process()
     children = current_process.children(recursive=True)
     for child in children:
-        print (child)
-        print('Child pid is {}'.format(child.pid))
+        # @todo a bug here is that we could be accidently shutting down the playwright from the content checker
+        if "playwright" in child.name()  or child.name() == "node":
+            print(child)
+            print('Child pid is {}, killing'.format(child.pid))
+            child.terminate()
 
-    # .stop() hangs sometimes if its called when there are no children to process
-    # but how do we know this is our child? dunno
-    if children:
-        browsersteps_playwright_browser_interface.stop()
+    print ("Shutting down playwright interface .stop()")
+    browsersteps_playwright_browser_interface.stop()
+    print ("Shutdown of playwright complete")
 
     browsersteps_live_ui_o = {}
     browsersteps_playwright_browser_interface = None
