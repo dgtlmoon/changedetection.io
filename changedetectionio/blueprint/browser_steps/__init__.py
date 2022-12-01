@@ -21,9 +21,6 @@
 # OR
 # - use multiprocessing to bump this over to its own process and add some transport layer (queue/pipes)
 
-
-
-
 from distutils.util import strtobool
 from flask import Blueprint, request, make_response
 from flask_login import login_required
@@ -33,42 +30,35 @@ from changedetectionio.store import ChangeDetectionStore
 
 browsersteps_live_ui_o = {}
 browsersteps_playwright_browser_interface = None
-browsersteps_playwright_browser_interface_start_time = None
 browsersteps_playwright_browser_interface_browser = None
+browsersteps_playwright_browser_interface_context = None
 browsersteps_playwright_browser_interface_end_time = None
-
+browsersteps_playwright_browser_interface_start_time = None
 
 def cleanup_playwright_session():
-    print("Cleaning up old playwright session because time was up")
-    global browsersteps_playwright_browser_interface
+
     global browsersteps_live_ui_o
-    global browsersteps_playwright_browser_interface_browser
     global browsersteps_playwright_browser_interface
-    global browsersteps_playwright_browser_interface_start_time
+    global browsersteps_playwright_browser_interface_browser
+    global browsersteps_playwright_browser_interface_context
     global browsersteps_playwright_browser_interface_end_time
-
-    import psutil
-
-    # playwright's .stop() seems to hang, so lets kill the processes before calling .stop
-    # a bit hard, but more reliable :/
-    current_process = psutil.Process()
-    children = current_process.children(recursive=True)
-    for child in children:
-        # @todo a bug here is that we could be accidently shutting down the playwright from the content checker
-        if "playwright" in child.name()  or child.name() == "node":
-            print(child)
-            print('Child pid is {}, killing'.format(child.pid))
-            child.terminate()
-
-    print ("Shutting down playwright interface .stop()")
-    browsersteps_playwright_browser_interface.stop()
-    print ("Shutdown of playwright complete")
+    global browsersteps_playwright_browser_interface_start_time
 
     browsersteps_live_ui_o = {}
-    browsersteps_playwright_browser_interface = None
-    browsersteps_playwright_browser_interface_start_time = None
     browsersteps_playwright_browser_interface_browser = None
     browsersteps_playwright_browser_interface_end_time = None
+    browsersteps_playwright_browser_interface_start_time = None
+    print("Cleaning up old playwright session because time was up, calling .goodbye()")
+
+    try:
+        browsersteps_playwright_browser_interface_context.goodbye()
+    except Exception as e:
+        print ("Got exception in shutdown, probably OK")
+        print (str(e))
+
+    browsersteps_playwright_browser_interface = None
+    browsersteps_playwright_browser_interface_context = None
+
     print ("Cleaning up old playwright session because time was up - done")
 
 def construct_blueprint(datastore: ChangeDetectionStore):
@@ -103,12 +93,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if browsersteps_playwright_browser_interface_end_time:
             remaining = browsersteps_playwright_browser_interface_end_time-time.time()
             if browsersteps_playwright_browser_interface_end_time and remaining <= 0:
-
-
                 cleanup_playwright_session()
-
-                return make_response('Browser session expired, please reload the Browser Steps interface', 500)
-
+                return make_response('Browser session expired, please reload the Browser Steps interface', 401)
 
         # Actions - step/apply/etc, do the thing and return state
         if request.method == 'POST':
@@ -156,10 +142,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             if not browsersteps_playwright_browser_interface:
                 print("Starting connection with playwright")
                 logging.debug("browser_steps.py connecting")
-                from playwright.sync_api import sync_playwright
 
-                browsersteps_playwright_browser_interface = sync_playwright().start()
-
+                global browsersteps_playwright_browser_interface_context
+                from . import nonContext
+                browsersteps_playwright_browser_interface_context = nonContext.c_sync_playwright()
+                browsersteps_playwright_browser_interface = browsersteps_playwright_browser_interface_context.start()
 
                 time.sleep(1)
                 # At 20 minutes, some other variable is closing it
