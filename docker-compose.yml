@@ -57,6 +57,12 @@ services:
      # Used for fetching pages via WebDriver+Chrome where you need Javascript support.
      # Now working on arm64 (needs testing on rPi - tested on Oracle ARM instance)
      # replace image with seleniarm/standalone-chromium:4.0.0-20211213
+     
+     # If WEBDRIVER or PLAYWRIGHT are enabled, changedetection container depends on that
+     # and must wait before starting (substitute "browser-chrome" with "playwright-chrome" if last one is used)
+#    depends_on:
+#        browser-chrome:
+#            condition: service_started
 
 #    browser-chrome:
 #        hostname: browser-chrome
