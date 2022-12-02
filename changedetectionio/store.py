@@ -289,6 +289,7 @@ class ChangeDetectionStore:
                 # List of permissible attributes we accept from the wild internet
                 for k in [
                     'body',
+                    'browser_steps',
                     'css_filter',
                     'extract_text',
                     'extract_title_as_title',
