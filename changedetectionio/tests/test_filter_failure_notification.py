@@ -57,7 +57,7 @@ def run_filter_test(client, content_filter):
     # Just a regular notification setting, this will be used by the special 'filter not found' notification
     notification_form_data = {"notification_urls": notification_url,
                               "notification_title": "New ChangeDetection.io Notification - {{watch_url}}",
-                              "notification_body": "BASE URL: {{base_url}}"
+                              "notification_body": "BASE URL: {{base_url}}\n"
                                                    "Watch URL: {{watch_url}}\n"
                                                    "Watch UUID: {{watch_uuid}}\n"
                                                    "Watch title: {{watch_title}}\n"
