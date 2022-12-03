@@ -1,78 +1,183 @@
 {% extends 'base.html' %}
 
 {% block content %}
-{% from '_helpers.jinja' import render_field %}
-{% from '_common_fields.jinja' import render_notifications_field %}
-
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='settings.js')}}" defer></script>
+{% from '_helpers.jinja' import render_field, render_checkbox_field, render_button %}
+{% from '_common_fields.jinja' import render_common_settings_form %}
+<script>
+    const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
+{% if emailprefix %}
+    const email_notification_prefix=JSON.parse('{{emailprefix|tojson}}');
+{% endif %}
+</script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <div class="edit-form">
-    <div class="tabs">
+    <div class="tabs collapsable">
         <ul>
-            <li class="tab" id="default-tab"><a href="#general">General</a></li>
+            <li class="tab" id=""><a href="#general">General</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
             <li class="tab"><a href="#fetching">Fetching</a></li>
+            <li class="tab"><a href="#filters">Global Filters</a></li>
+            <li class="tab"><a href="#api">API</a></li>
         </ul>
     </div>
     <div class="box-wrap inner">
         <form class="pure-form pure-form-stacked settings" action="{{url_for('settings_page')}}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="tab-pane-inner" id="general">
                 <fieldset>
                     <div class="pure-control-group">
-                        {{ render_field(form.minutes_between_check) }}
+                        {{ render_field(form.requests.form.time_between_check, class="time-check-widget") }}
                         <span class="pure-form-message-inline">Default time for all watches, when the watch does not have a specific time setting.</span>
                     </div>
                     <div class="pure-control-group">
-                        {% if current_user.is_authenticated %}
-                        <a href="{{url_for('settings_page', removepassword='yes')}}"
-                           class="pure-button pure-button-primary">Remove password</a>
-                        {% else %}
-                        {{ render_field(form.password) }}
-                        <span class="pure-form-message-inline">Password protection for your changedetection.io application.</span>
-                        {% endif %}
+                        {{ render_field(form.requests.form.jitter_seconds, class="jitter_seconds") }}
+                        <span class="pure-form-message-inline">Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later</span>
                     </div>
                     <div class="pure-control-group">
-                        {{ render_field(form.base_url, placeholder="http://yoursite.com:5000/",
+                        {{ render_field(form.application.form.filter_failure_notification_threshold_attempts, class="filter_failure_notification_threshold_attempts") }}
+                        <span class="pure-form-message-inline">After this many consecutive times that the CSS/xPath filter is missing, send a notification
+                            <br/>
+                        Set to <strong>0</strong> to disable
+                        </span>
+                    </div>
+                    <div class="pure-control-group">
+                        {% if not hide_remove_pass %}
+                            {% if current_user.is_authenticated %}
+                                {{ render_button(form.application.form.removepassword_button) }}
+                            {% else %}
+                            {{ render_field(form.application.form.password) }}
+                            <span class="pure-form-message-inline">Password protection for your changedetection.io application.</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="pure-form-message-inline">Password is locked.</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.base_url, placeholder="http://yoursite.com:5000/",
                         class="m-d") }}
                         <span class="pure-form-message-inline">
-                            Base URL used for the {{ '{{ base_url }}' }} token in notifications, default value is the ENV var 'base_url',
+                            Base URL used for the <code>{{ '{{ base_url }}' }}</code> token in notifications and RSS links.<br/>Default value is the ENV var 'BASE_URL' (Currently "{{settings_application['current_base_url']}}"),
                             <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Configurable-BASE_URL-setting">read more here</a>.
                         </span>
                     </div>
 
                     <div class="pure-control-group">
-                        {{ render_field(form.extract_title_as_title) }}
+                        {{ render_checkbox_field(form.application.form.extract_title_as_title) }}
                         <span class="pure-form-message-inline">Note: This will automatically apply to all existing watches.</span>
                     </div>
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.application.form.empty_pages_are_a_change) }}
+                        <span class="pure-form-message-inline">When a page contains HTML, but no renderable text appears (empty page), is this considered a change?</span>
+                    </div>
+                {% if form.requests.proxy %}
+                    <div class="pure-control-group inline-radio">
+                        {{ render_field(form.requests.form.proxy, class="fetch-backend-proxy") }}
+                        <span class="pure-form-message-inline">
+                        Choose a default proxy for all watches
+                        </span>
+                    </div>
+                {% endif %}
                 </fieldset>
             </div>
 
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div class="field-group">
-                        {{ render_notifications_field(form) }}
+                        {{ render_common_settings_form(form.application.form, emailprefix, settings_application) }}
                     </div>
                 </fieldset>
             </div>
 
             <div class="tab-pane-inner" id="fetching">
-                <div class="pure-control-group">
-                    {{ render_field(form.fetch_backend) }}
+                <div class="pure-control-group inline-radio">
+                    {{ render_field(form.application.form.fetch_backend, class="fetch-backend") }}
                     <span class="pure-form-message-inline">
                         <p>Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render.</p>
                         <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
                     </span>
+                    <br/>
+                    Tip: <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">Connect using BrightData Proxies, find out more here.</a>
+                </div>
+                <fieldset class="pure-group" id="webdriver-override-options">
+                    <div class="pure-form-message-inline">
+                        <strong>If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here.</strong>
+                        <br/>
+                        This will wait <i>n</i> seconds before extracting the text.
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.webdriver_delay) }}
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="tab-pane-inner" id="filters">
+
+                    <fieldset class="pure-group">
+                    {{ render_checkbox_field(form.application.form.ignore_whitespace) }}
+                    <span class="pure-form-message-inline">Ignore whitespace, tabs and new-lines/line-feeds when considering if a change was detected.<br/>
+                    <i>Note:</i> Changing this will change the status of your existing watches, possibly trigger alerts etc.
+                    </span>
+                    </fieldset>
+                <fieldset class="pure-group">
+                    {{ render_checkbox_field(form.application.form.render_anchor_tag_content) }}
+                    <span class="pure-form-message-inline">Render anchor tag content, default disabled, when enabled renders links as <code>(link text)[https://somesite.com]</code>
+                        <br/>
+                    <i>Note:</i> Changing this could affect the content of your existing watches, possibly trigger alerts etc.
+                    </span>
+                    </fieldset>
+                    <fieldset class="pure-group">
+                      {{ render_field(form.application.form.global_subtractive_selectors, rows=5, placeholder="header
+footer
+nav
+.stockticker") }}
+                      <span class="pure-form-message-inline">
+                        <ul>
+                          <li> Remove HTML element(s) by CSS selector before text conversion. </li>
+                          <li> Add multiple elements or CSS selectors per line to ignore multiple parts of the HTML. </li>
+                        </ul>
+                      </span>
+                    </fieldset>
+                    <fieldset class="pure-group">
+                    {{ render_field(form.application.form.global_ignore_text, rows=5, placeholder="Some text to ignore in a line
+/some.regex\d{2}/ for case-INsensitive regex
+                    ") }}
+                    <span class="pure-form-message-inline">Note: This is applied globally in addition to the per-watch rules.</span><br/>
+                    <span class="pure-form-message-inline">
+                        <ul>
+                            <li>Note: This is applied globally in addition to the per-watch rules.</li>
+                            <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
+                            <li>Regular Expression support, wrap the entire line in forward slash <code>/regex/</code></li>
+                            <li>Changing this will affect the comparison checksum which may trigger an alert</li>
+                            <li>Use the preview/show current tab to see ignores</li>
+                        </ul>
+                     </span>
+                    </fieldset>
+           </div>
+
+            <div class="tab-pane-inner" id="api">
+
+                <p>Drive your changedetection.io via API, More about <a href="https://github.com/dgtlmoon/changedetection.io/wiki/API-Reference">API access here</a></p>
+
+                <div class="pure-control-group">
+                    {{ render_checkbox_field(form.application.form.api_access_token_enabled) }}
+                    <div class="pure-form-message-inline">Restrict API access limit by using <code>x-api-key</code> header</div><br/>
+                    <div class="pure-form-message-inline"><br/>API Key <span id="api-key">{{api_key}}</span>
+                        <span style="display:none;" id="api-key-copy" >copy</span>
+                    </div>
                 </div>
             </div>
+
             <div id="actions">
                 <div class="pure-control-group">
-                    <button type="submit" class="pure-button pure-button-primary">Save</button>
-                                           <a href="{{url_for('index')}}" class="pure-button button-small button-cancel">Back</a>
-                        <a href="{{url_for('scrub_page')}}" class="pure-button button-small button-cancel">Delete
-                            History
-                            Snapshot Data</a>
+                    {{ render_button(form.save_button) }}
+                    <a href="{{url_for('index')}}" class="pure-button button-small button-cancel">Back</a>
+                    <a href="{{url_for('clear_all_history')}}" class="pure-button button-small button-cancel">Clear Snapshot History</a>
                 </div>
+
             </div>
         </form>
     </div>

@@ -1,12 +1,19 @@
 /*
  * -- BASE STYLES --
  * Most of these are inherited from Base, but I want to change a few.
- * npm run scss
+nvm use v14.18.1 && npm install && npm run build
+ * or npm run watch
  */
+
+@import "parts/spinners";
+@import "parts/browser-steps";
+@import "parts/_arrows.scss";
+
 body {
   color: #333;
   background: #262626;
 }
+
 .pure-table-even {
   background: #fff;
 }
@@ -32,16 +39,21 @@ a.github-link {
 
 section.content {
   padding-top: 5em;
-  padding-bottom: 5em;
+  padding-bottom: 1em;
   flex-direction: column;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+code {
+  background: #eee;
+}
+
 /* table related */
 .watch-table {
   width: 100%;
+  font-size: 80%;
 
   tr.unviewed {
     font-weight: bold;
@@ -52,7 +64,6 @@ section.content {
   }
 
   td {
-    font-size: 80%;
     white-space: nowrap;
   }
 
@@ -63,6 +74,17 @@ section.content {
 
   th {
     white-space: nowrap;
+    a {
+      font-weight: normal;
+      &.active {
+        font-weight: bolder;
+      }
+      &.inactive {
+        .arrow {
+          display: none;
+        }
+      }
+    }
   }
 
   .title-col a[target="_blank"]::after, .current-diff-url::after {
@@ -104,12 +126,12 @@ section.content {
 
 body:after {
   content: "";
-  background: linear-gradient(130deg, #ff7a18, #af002d 41.07%, #319197 76.05%)
+  background: linear-gradient(130deg, #5ad8f7, #2f50af 41.07%, #9150bf 84.05%);
 }
 
 body:after, body:before {
   display: block;
-  height: 600px;
+  height: 650px;
   position: absolute;
   top: 0;
   left: 0;
@@ -122,11 +144,8 @@ body::after {
 }
 
 body::before {
+  // background-image set in base.html so it works with reverse proxies etc
   content: "";
-  background-image: url(/static/images/gradient-border.png);
-}
-
-body:before {
   background-size: cover
 }
 
@@ -135,36 +154,13 @@ body:after, body:before {
   clip-path: polygon(100% 0, 0 0, 0 77.5%, 1% 77.4%, 2% 77.1%, 3% 76.6%, 4% 75.9%, 5% 75.05%, 6% 74.05%, 7% 72.95%, 8% 71.75%, 9% 70.55%, 10% 69.3%, 11% 68.05%, 12% 66.9%, 13% 65.8%, 14% 64.8%, 15% 64%, 16% 63.35%, 17% 62.85%, 18% 62.6%, 19% 62.5%, 20% 62.65%, 21% 63%, 22% 63.5%, 23% 64.2%, 24% 65.1%, 25% 66.1%, 26% 67.2%, 27% 68.4%, 28% 69.65%, 29% 70.9%, 30% 72.15%, 31% 73.3%, 32% 74.35%, 33% 75.3%, 34% 76.1%, 35% 76.75%, 36% 77.2%, 37% 77.45%, 38% 77.5%, 39% 77.3%, 40% 76.95%, 41% 76.4%, 42% 75.65%, 43% 74.75%, 44% 73.75%, 45% 72.6%, 46% 71.4%, 47% 70.15%, 48% 68.9%, 49% 67.7%, 50% 66.55%, 51% 65.5%, 52% 64.55%, 53% 63.75%, 54% 63.15%, 55% 62.75%, 56% 62.55%, 57% 62.5%, 58% 62.7%, 59% 63.1%, 60% 63.7%, 61% 64.45%, 62% 65.4%, 63% 66.45%, 64% 67.6%, 65% 68.8%, 66% 70.05%, 67% 71.3%, 68% 72.5%, 69% 73.6%, 70% 74.65%, 71% 75.55%, 72% 76.35%, 73% 76.9%, 74% 77.3%, 75% 77.5%, 76% 77.45%, 77% 77.25%, 78% 76.8%, 79% 76.2%, 80% 75.4%, 81% 74.45%, 82% 73.4%, 83% 72.25%, 84% 71.05%, 85% 69.8%, 86% 68.55%, 87% 67.35%, 88% 66.2%, 89% 65.2%, 90% 64.3%, 91% 63.55%, 92% 63%, 93% 62.65%, 94% 62.5%, 95% 62.55%, 96% 62.8%, 97% 63.3%, 98% 63.9%, 99% 64.75%, 100% 65.7%)
 }
 
-.arrow {
-  border: solid black;
-  border-width: 0 3px 3px 0;
-  display: inline-block;
-  padding: 3px;
-    &.right {
-      transform: rotate(-45deg);
-      -webkit-transform: rotate(-45deg);
-    }
-    &.left {
-      transform: rotate(135deg);
-      -webkit-transform: rotate(135deg);
-    }
-    &.up {
-      transform: rotate(-135deg);
-      -webkit-transform: rotate(-135deg);
-    }
-    &.down {
-      transform: rotate(45deg);
-      -webkit-transform: rotate(45deg);
-    }
-}
-
 .button-small {
   font-size: 85%;
 }
 
 .fetch-error {
   padding-top: 1em;
-  font-size: 60%;
+  font-size: 80%;
   max-width: 400px;
   display: block;
 }
@@ -217,35 +213,50 @@ body:after, body:before {
 }
 
 .messages {
-    li {
-        list-style: none;
-        padding: 1em;
-        border-radius: 10px;
-        color: #fff;
-        font-weight: bold;
-        &.message {
-            background: rgba(255, 255, 255, .2);
-        }
-        &.error {
-            background: rgba(255, 1, 1, .5);
-        }
-        &.notice {
-            background: rgba(255, 255, 255, .5);
-        }
+  li {
+    list-style: none;
+    padding: 1em;
+    border-radius: 10px;
+    color: #fff;
+    font-weight: bold;
+
+    &.message {
+      background: rgba(255, 255, 255, .2);
     }
+
+    &.error {
+      background: rgba(255, 1, 1, .5);
+    }
+
+    &.notice {
+      background: rgba(255, 255, 255, .5);
+    }
+  }
+
+  &.with-share-link {
+    > *:hover {
+      cursor: pointer;
+    }
+  }
 }
 
 #notification-customisation {
-    border: 1px solid #ccc;
-    padding: 1rem;
-    border-radius: 5px;
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  border-radius: 5px;
 }
 
+#notification-error-log {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 5px;
+  overflow-wrap: break-word;
+}
 
 #token-table {
-    &.pure-table td, &.pure-table th {
-        font-size: 80%;
-    }
+  &.pure-table td, &.pure-table th {
+    font-size: 80%;
+  }
 }
 
 #new-watch-form {
@@ -253,19 +264,32 @@ body:after, body:before {
   padding: 1em;
   border-radius: 10px;
   margin-bottom: 1em;
+
   input {
-    width: auto !important;
     display: inline-block;
+    margin-bottom: 5px;
   }
+
   .label {
     display: none;
   }
+
   legend {
     color: #fff;
+    font-weight: bold;
+  }
+
+  #watch-add-wrapper-zone {
+    > div {
+      display: inline-block;
+    }
+    @media only screen and (max-width: 760px) {
+      #url {
+        width: 100%;
+      }
+    }
   }
 }
-
-
 
 
 #diff-col {
@@ -281,15 +305,16 @@ body:after, body:before {
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
   box-shadow: 5px 0 5px -2px #888;
-     a {
-      color: #1b98f8;
-      cursor: grabbing;
-      -moz-user-select: none;
-      -webkit-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-      -o-user-select: none;
-    }
+
+  a {
+    color: #1b98f8;
+    cursor: grabbing;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -o-user-select: none;
+  }
 }
 
 footer {
@@ -304,29 +329,35 @@ footer {
 }
 
 #top-right-menu {
-// Just let flex overflow the x axis for now
-/*
-    position: absolute;
-    right: 0px;
-    background: linear-gradient(to right, #fff0, #fff 10%);
-    padding-left: 20px;
-    padding-right: 10px;
-    */
+  // Just let flex overflow the x axis for now
+  /*
+      position: absolute;
+      right: 0px;
+      background: linear-gradient(to right, #fff0, #fff 10%);
+      padding-left: 20px;
+      padding-right: 10px;
+      */
 }
-
-
 
 .sticky-tab {
   position: absolute;
-  top: 80px;
-  font-size: 8px;
+  top: 60px;
+  font-size: 65%;
   background: #fff;
   padding: 10px;
+
   &#left-sticky {
     left: 0px;
   }
+
   &#right-sticky {
     right: 0px;
+  }
+
+  &#hosted-sticky {
+    right: 0px;
+    top: 100px;
+    font-weight: bold;
   }
 }
 
@@ -334,38 +365,71 @@ footer {
   color: #e07171;
 }
 
-.paused-state {
-  &.state-False img {
+.watch-controls {
+  .state-on {
+    img {
+      opacity: 0.8;
+    }
+  }
+
+  /* default */
+  img {
     opacity: 0.2;
   }
 
-  &.state-False:hover img {
-    opacity: 0.8;
+  img {
+    &:hover {
+      transition: opacity 0.3s;
+      opacity: 0.8;
+    }
   }
+
 }
 
 .monospaced-textarea {
-    textarea {
-        width: 100%;
-        font-family: monospace;
-        white-space: pre;
-        overflow-wrap: normal;
-        overflow-x: scroll;
-    }
+  textarea {
+    width: 100%;
+    font-family: monospace;
+    white-space: pre;
+    overflow-wrap: normal;
+    overflow-x: scroll;
+  }
 }
 
 
 .pure-form {
-    .pure-control-group, .pure-group, .pure-controls {
-        padding-bottom: 1em;
-        div {
-            margin: 0px;
-        }
+  fieldset {
+    padding-top: 0px;
+
+    ul {
+      padding-bottom: 0px;
+      margin-bottom: 0px;
     }
+  }
+
+  .pure-control-group, .pure-group, .pure-controls {
+    padding-bottom: 1em;
+
+    div {
+      margin: 0px;
+    }
+
+    .checkbox {
+      > * {
+        display: inline;
+        vertical-align: middle;
+      }
+
+      > label {
+        padding-left: 5px;
+      }
+    }
+  }
+
   /* The input fields with errors */
   .error {
     input {
-        background-color: #ffebeb;
+      background-color: #ffebeb;
     }
   }
 
@@ -377,9 +441,10 @@ footer {
     vertical-align: middle;
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
+
     li {
-        margin-left: 1em;
-        color: #dd0000;
+      margin-left: 1em;
+      color: #dd0000;
     }
   }
 
@@ -390,16 +455,21 @@ footer {
   textarea {
     width: 100%;
   }
-  ul#fetch_backend {
-    margin: 0px;
-    list-style: none;
-    > li {
+
+  .inline-radio {
+    ul {
+      margin: 0px;
+      list-style: none;
+
+      li {
         > * {
-            display: inline-block;
+          display: inline-block;
         }
+      }
     }
   }
 }
+
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
   .box {
@@ -414,22 +484,45 @@ footer {
   }
 }
 
-/*
-Max width before this PARTICULAR table gets nasty
-This query will take effect for any screen smaller than 760px
-and also iPads specifically.
-*/
 
-@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 800px) {
+
+  div.sticky-tab#hosted-sticky {
+    top: 60px;
+    left: 0px;
+    right: auto;
+  }
+
+  section.content {
+    padding-top: 110px;
+  }
+
+  // Make the tabs easier to hit, they will be all nice and horizontal
+  div.tabs.collapsable ul li {
+    display: block;
+    border-radius: 0px;
+    margin-right: 0px;
+  }
 
   input[type='text'] {
     width: 100%;
   }
-    
+
+  /*
+  Max width before this PARTICULAR table gets nasty
+  This query will take effect for any screen smaller than 760px
+  and also iPads specifically.
+  */
   .watch-table {
     /* Force table to not be like tables anymore */
     thead, tbody, th, td, tr {
       display: block;
+    }
+
+    .last-checked {
+      > span {
+        vertical-align: middle;
+      }
     }
 
     .last-checked::before {
@@ -462,7 +555,7 @@ and also iPads specifically.
       /* Behave  like a "row" */
       border: none;
       border-bottom: 1px solid #eee;
-
+      vertical-align: middle;
       &:before {
         /* Top/left values mimic padding */
         top: 6px;
@@ -496,19 +589,19 @@ and also iPads specifically.
 - Rely always on width in CSS
 */
 @media only screen and (min-width: 761px) {
-/* m-d is medium-desktop */
-    .m-d {
-        min-width: 80%;
-    }
+  /* m-d is medium-desktop */
+  .m-d {
+    min-width: 80%;
+  }
 }
-
 
 
 .tabs {
   ul {
     margin: 0px;
     padding: 0px;
-    display:block;
+    display: block;
+
     li {
       margin-right: 3px;
       display: inline-block;
@@ -516,14 +609,20 @@ and also iPads specifically.
       border-top-left-radius: 5px;
       border-top-right-radius: 5px;
       background-color: rgba(255, 255, 255, 0.2);
-
-      &.active,:target {
+      &:not(.active) {
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.5);
+        }
+      }
+      &.active, :target {
         background-color: #fff;
+
         a {
           color: #222;
           font-weight: bold;
         }
       }
+
       a {
         display: block;
         padding: 0.8em;
@@ -535,32 +634,187 @@ and also iPads specifically.
 
 $form-edge-padding: 20px;
 .pure-form-stacked {
-  >div:first-child {
+  > div:first-child {
     display: block;
+  }
+}
+
+.login-form {
+  .inner {
+    background: #fff;;
+    padding: $form-edge-padding;
+    border-radius: 5px;
+  }
+}
+
+.tab-pane-inner {
+  &:not(:target) {
+    display: none;
+  }
+
+  &:target {
+    display: block;
+  }
+
+  // doesnt need padding because theres another row of buttons/activity
+  padding: 0px;
+}
+
+.beta-logo {
+  height: 50px;
+  // looks better when it's hanging off a little
+  right: -3px;
+  top: -3px;
+  position: absolute;
+}
+
+#selector-header {
+  padding-bottom: 1em;
+}
+body.full-width {
+  .edit-form {
+    width: 95%;
   }
 }
 .edit-form {
   min-width: 70%;
-  .tab-pane-inner {
-    &:not(:target) {
-        display: none;
-    }
-    &:target {
-      display: block;
-    }
-    // doesnt need padding because theres another row of buttons/activity
-    padding: 0px;
-  }
+  /* so it cant overflow */
+  max-width: 95%;
+
   .box-wrap {
     position: relative;
   }
+
   .inner {
     background: #fff;;
     padding: $form-edge-padding;
   }
+
   #actions {
     display: block;
     background: #fff;
   }
+
+  .pure-form-message-inline {
+    padding-left: 0;
+  }
 }
 
+ul {
+  padding-left: 1em;
+  padding-top: 0px;
+  margin-top: 4px;
+}
+
+.time-check-widget {
+  tr {
+    display: inline;
+
+    input[type="number"] {
+      width: 5em;
+    }
+  }
+}
+
+#selector-wrapper {
+  height: 100%;
+  overflow-y: scroll;
+  position: relative;
+  //width: 100%;
+  > img {
+    position: absolute;
+    z-index: 4;
+    max-width: 100%;
+  }
+
+  > canvas {
+    position: relative;
+    z-index: 5;
+    max-width: 100%;
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
+}
+
+#selector-current-xpath {
+  font-size: 80%;
+}
+
+#webdriver-override-options {
+  input[type="number"] {
+    width: 5em;
+  }
+}
+
+#api-key {
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+#api-key-copy {
+  color: #0078e7;
+}
+
+.button-green {
+  background-color: #42dd53;
+}
+
+.button-red {
+  background-color: #dd4242;
+}
+
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Old versions of Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none;
+  /* Non-prefixed version, currently
+                                   supported by Chrome, Edge, Opera and Firefox */
+}
+
+.snapshot-age {
+  padding: 4px;
+  background-color: #dfdfdf;
+  border-radius: 3px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  &.error {
+    background-color: #ff0000;
+    color: #fff;
+  }
+}
+
+#checkbox-operations {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1em;
+  border-radius: 10px;
+  margin-bottom: 1em;
+  display: none;
+}
+.checkbox-uuid {
+  > * {
+    vertical-align: middle;
+  }
+}
+
+.inline-warning {
+  > span {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  img.inline-warning-icon {
+    display: inline;
+    height: 26px;
+    vertical-align: middle;
+  }
+
+  border: 1px solid #ff3300;
+  padding: 0.5rem;
+  border-radius: 5px;
+  color: #ff3300;
+}

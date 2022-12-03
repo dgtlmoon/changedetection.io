@@ -1,6 +1,13 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<script>
+    const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
+    {% if last_error_screenshot %}
+    const error_screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid, error_screenshot=1) }}";
+    {% endif %}
+</script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
 <div id="settings">
     <h1>Differences</h1>
@@ -14,11 +21,14 @@
 
             <label for="diffChars" class="pure-checkbox">
                 <input type="radio" name="diff_type" id="diffChars" value="diffChars"/> Chars</label>
+            <!-- @todo - when mimetype is JSON, select this by default? -->
+            <label for="diffJson" class="pure-checkbox">
+                <input type="radio" name="diff_type" id="diffJson" value="diffJson" /> JSON</label>
 
             {% if versions|length >= 1 %}
             <label for="diff-version">Compare newest (<span id="current-v-date"></span>) with</label>
             <select id="diff-version" name="previous_version">
-                {% for version in versions %}
+                {% for version in versions|reverse %}
                 <option value="{{version}}" {% if version== current_previous_version %} selected="" {% endif %}>
                     {{version}}
                 </option>
@@ -30,145 +40,82 @@
     </form>
     <del>Removed text</del>
     <ins>Inserted Text</ins>
+    <span>
+        <!-- https://github.com/kpdecker/jsdiff/issues/389 ? -->
+        <label for="ignoreWhitespace" class="pure-checkbox" id="label-diff-ignorewhitespace">
+            <input type="checkbox" id="ignoreWhitespace" name="ignoreWhitespace"/> Ignore Whitespace</label>
+    </span>
 </div>
 
 <div id="diff-jump">
     <a onclick="next_diff();">Jump</a>
 </div>
-<div id="diff-ui">
-    <table>
-        <tbody>
-        <tr>
-            <!-- just proof of concept copied straight from github.com/kpdecker/jsdiff -->
-            <td id="a" style="display: none;">{{previous}}</td>
-            <td id="b" style="display: none;">{{newest}}</td>
-            <td id="diff-col">
-                <span id="result"></span>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-    Diff algorithm from the amazing <a href="https://github.com/kpdecker/jsdiff">github.com/kpdecker/jsdiff</a>
 
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<div class="tabs">
+    <ul>
+        {% if last_error_text %}<li class="tab" id="error-text-tab"><a href="#error-text">Error Text</a></li> {% endif %}
+        {% if last_error_screenshot %}<li class="tab" id="error-screenshot-tab"><a href="#error-screenshot">Error Screenshot</a></li> {% endif %}
+        <li class="tab" id=""><a href="#text">Text</a></li>
+        <li class="tab" id="screenshot-tab"><a href="#screenshot">Screenshot</a></li>
+    </ul>
 </div>
 
+<div id="diff-ui">
+    <div class="tab-pane-inner" id="error-text">
+        <div class="snapshot-age error">{{watch_a.error_text_ctime|format_seconds_ago}} seconds ago</div>
+        <pre>
+            {{ last_error_text }}
+        </pre>
+    </div>
 
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff.js')}}"></script>
+    <div class="tab-pane-inner" id="error-screenshot">
+        <div class="snapshot-age error">{{watch_a.snapshot_error_screenshot_ctime|format_seconds_ago}} seconds ago</div>
+        <img id="error-screenshot-img"  style="max-width: 80%" alt="Current error-ing screenshot from most recent request"/>
+    </div>
 
-<script defer="">
+     <div class="tab-pane-inner" id="text">
+         <div class="tip">Pro-tip: Use <strong>show current snapshot</strong> tab to visualise what will be ignored.
+         </div>
+         <div class="snapshot-age">{{watch_a.snapshot_text_ctime|format_timestamp_timeago}}</div>
 
+         <table>
+             <tbody>
+             <tr>
+                 <!-- just proof of concept copied straight from github.com/kpdecker/jsdiff -->
+                 <td id="a" style="display: none;">{{previous}}</td>
+                 <td id="b" style="display: none;">{{newest}}</td>
+                 <td id="diff-col">
+                     <span id="result"></span>
+                 </td>
+             </tr>
+             </tbody>
+         </table>
+         Diff algorithm from the amazing <a href="https://github.com/kpdecker/jsdiff">github.com/kpdecker/jsdiff</a>
+     </div>
+     <div class="tab-pane-inner" id="screenshot">
+         <div class="tip">
+             For now, Differences are performed on text, not graphically, only the latest screenshot is available.
+         </div>
+         {% if is_html_webdriver %}
+           {% if screenshot %}
+            <div class="snapshot-age">{{watch_a.snapshot_screenshot_ctime|format_timestamp_timeago}}</div>
+            <img style="max-width: 80%" id="screenshot-img" alt="Current screenshot from most recent request"/>
+           {% else %}
+              No screenshot available just yet! Try rechecking the page.
+           {% endif %}
+         {% else %}
+           <strong>Screenshot requires Playwright/WebDriver enabled</strong>
+         {% endif %}
+     </div>
+</div>
 
-var a = document.getElementById('a');
-var b = document.getElementById('b');
-var result = document.getElementById('result');
-
-function changed() {
-	var diff = JsDiff[window.diffType](a.textContent, b.textContent);
-	var fragment = document.createDocumentFragment();
-	for (var i=0; i < diff.length; i++) {
-
-		if (diff[i].added && diff[i + 1] && diff[i + 1].removed) {
-			var swap = diff[i];
-			diff[i] = diff[i + 1];
-			diff[i + 1] = swap;
-		}
-
-		var node;
-		if (diff[i].removed) {
-			node = document.createElement('del');
-			node.classList.add("change");
-			node.appendChild(document.createTextNode(diff[i].value));
-
-		} else if (diff[i].added) {
-			node = document.createElement('ins');
-			node.classList.add("change");
-			node.appendChild(document.createTextNode(diff[i].value));
-		} else {
-			node = document.createTextNode(diff[i].value);
-		}
-		fragment.appendChild(node);
-	}
-
-	result.textContent = '';
-	result.appendChild(fragment);
-
-	// Jump at start
-	inputs.current=0;
-    next_diff();
-}
-
-window.onload = function() {
-
-
-    /* Convert what is options from UTC time.time() to local browser time */
-    var diffList=document.getElementById("diff-version");
-    if (typeof(diffList) != 'undefined' && diffList != null) {
-        for (var option of diffList.options) {
-          var dateObject = new Date(option.value*1000);
-          option.label=dateObject.toLocaleString();
-        }
-    }
-
-    /* Set current version date as local time in the browser also */
-    var current_v = document.getElementById("current-v-date");
-    var dateObject = new Date({{ newest_version_timestamp }}*1000);
-    current_v.innerHTML=dateObject.toLocaleString();
-
-
-	onDiffTypeChange(document.querySelector('#settings [name="diff_type"]:checked'));
-	changed();
-
-};
-
-a.onpaste = a.onchange =
-b.onpaste = b.onchange = changed;
-
-if ('oninput' in a) {
-	a.oninput = b.oninput = changed;
-} else {
-	a.onkeyup = b.onkeyup = changed;
-}
-
-function onDiffTypeChange(radio) {
-	window.diffType = radio.value;
-// Not necessary 
-//	document.title = "Diff " + radio.value.slice(4);
-}
-
-var radio = document.getElementsByName('diff_type');
-for (var i = 0; i < radio.length; i++) {
-	radio[i].onchange = function(e) {
-		onDiffTypeChange(e.target);
-		changed();
-	}
-}
-
-
-var inputs = document.getElementsByClassName('change');
-inputs.current=0;
-
-
-function next_diff() {
-
-    var element = inputs[inputs.current];
-    var headerOffset = 80;
-    var elementPosition = element.getBoundingClientRect().top;
-    var offsetPosition = elementPosition - headerOffset +  window.scrollY;
-
-    window.scrollTo({
-         top: offsetPosition,
-         behavior: "smooth"
-    });
-
-    inputs.current++;
-    if(inputs.current >= inputs.length) {
-      inputs.current=0;
-    }
-}
-
-
-
+<script>
+    const newest_version_timestamp = {{newest_version_timestamp}};
 </script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff.min.js')}}"></script>
+
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff-render.js')}}"></script>
 
 
 {% endblock %}

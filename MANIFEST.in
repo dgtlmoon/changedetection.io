@@ -1,6 +1,13 @@
+recursive-include changedetectionio/api *
 recursive-include changedetectionio/templates *
 recursive-include changedetectionio/static *
+recursive-include changedetectionio/model *
+recursive-include changedetectionio/tests *
+recursive-include changedetectionio/res *
+prune changedetectionio/static/package-lock.json
+prune changedetectionio/static/styles/node_modules
+prune changedetectionio/static/styles/package-lock.json
 include changedetection.py
 global-exclude *.pyc
-global-exclude *node_modules*
+global-exclude node_modules
 global-exclude venv

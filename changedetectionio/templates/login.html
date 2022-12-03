@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="edit-form">
-
+<div class="login-form">
  <div class="inner">
     <form class="pure-form pure-form-stacked" action="{{url_for('login')}}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <fieldset>
             <div class="pure-control-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" required="" name="password" value=""
-                       size="15"/>
+                       size="15" autofocus />
                 <input type="hidden" id="email" name="email" value="defaultuser@changedetection.io" />
             </div>
             <div class="pure-control-group">

@@ -1,72 +1,68 @@
-import time
-from changedetectionio import content_fetcher
 import hashlib
-from inscriptis import get_text
-import urllib3
-from . import html_tools
+import logging
+import os
 import re
+import time
+import urllib3
+
+from changedetectionio import content_fetcher, html_tools
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+class FilterNotFoundInResponse(ValueError):
+    def __init__(self, msg):
+        ValueError.__init__(self, msg)
+
+
 # Some common stuff here that can be moved to a base class
+# (set_proxy_from_list)
 class perform_site_check():
+    screenshot = None
+    xpath_data = None
 
     def __init__(self, *args, datastore, **kwargs):
         super().__init__(*args, **kwargs)
         self.datastore = datastore
 
-    def strip_ignore_text(self, content, list_ignore_text):
-        import re
-        ignore = []
-        ignore_regex = []
-        for k in list_ignore_text:
+    # Doesn't look like python supports forward slash auto enclosure in re.findall
+    # So convert it to inline flag "foobar(?i)" type configuration
+    def forward_slash_enclosed_regex_to_options(self, regex):
+        res = re.search(r'^/(.*?)/(\w+)$', regex, re.IGNORECASE)
 
-            # Is it a regex?
-            if k[0] == '/':
-                ignore_regex.append(k.strip(" /"))
-            else:
-                ignore.append(k)
+        if res:
+            regex = res.group(1)
+            regex += '(?{})'.format(res.group(2))
+        else:
+            regex += '(?{})'.format('i')
 
-        output = []
-        for line in content.splitlines():
-
-            # Always ignore blank lines in this mode. (when this function gets called)
-            if len(line.strip()):
-                regex_matches = False
-
-                # if any of these match, skip
-                for regex in ignore_regex:
-                    try:
-                        if re.search(regex, line, re.IGNORECASE):
-                            regex_matches = True
-                    except Exception as e:
-                        continue
-
-                if not regex_matches and not any(skip_text in line for skip_text in ignore):
-                    output.append(line.encode('utf8'))
-
-        return "\n".encode('utf8').join(output)
-
-
+        return regex
 
     def run(self, uuid):
-        timestamp = int(time.time())  # used for storage etc too
-
+        from copy import deepcopy
         changed_detected = False
+        screenshot = False  # as bytes
         stripped_text_from_html = ""
 
-        watch = self.datastore.data['watching'][uuid]
+        # DeepCopy so we can be sure we don't accidently change anything by reference
+        watch = deepcopy(self.datastore.data['watching'].get(uuid))
 
-        update_obj = {'previous_md5': self.datastore.data['watching'][uuid]['previous_md5'],
-                      'history': {},
-                      "last_checked": timestamp
-                      }
+        if not watch:
+            return
 
-        extra_headers = self.datastore.get_val(uuid, 'headers')
+        # Protect against file:// access
+        if re.search(r'^file', watch.get('url', ''), re.IGNORECASE) and not os.getenv('ALLOW_FILE_URI', False):
+            raise Exception(
+                "file:// type access is denied for security reasons."
+            )
+
+        # Unset any existing notification error
+        update_obj = {'last_notification_error': False, 'last_error': False}
+
+        extra_headers = watch.get('headers', [])
 
         # Tweak the base config with the per-watch ones
-        request_headers = self.datastore.data['settings']['headers'].copy()
+        request_headers = deepcopy(self.datastore.data['settings']['headers'])
         request_headers.update(extra_headers)
 
         # https://github.com/psf/requests/issues/4525
@@ -75,105 +71,246 @@ class perform_site_check():
         if 'Accept-Encoding' in request_headers and "br" in request_headers['Accept-Encoding']:
             request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
 
-        # @todo check the failures are really handled how we expect
+        timeout = self.datastore.data['settings']['requests'].get('timeout')
 
+        url = watch.link
+
+        request_body = self.datastore.data['watching'][uuid].get('body')
+        request_method = self.datastore.data['watching'][uuid].get('method')
+        ignore_status_codes = self.datastore.data['watching'][uuid].get('ignore_status_codes', False)
+
+        # source: support
+        is_source = False
+        if url.startswith('source:'):
+            url = url.replace('source:', '')
+            is_source = True
+
+        # Pluggable content fetcher
+        prefer_backend = watch.get('fetch_backend')
+        if hasattr(content_fetcher, prefer_backend):
+            klass = getattr(content_fetcher, prefer_backend)
         else:
-            timeout = self.datastore.data['settings']['requests']['timeout']
-            url = self.datastore.get_val(uuid, 'url')
+            # If the klass doesnt exist, just use a default
+            klass = getattr(content_fetcher, "html_requests")
 
-            # Pluggable content fetcher
-            prefer_backend = watch['fetch_backend']
-            if hasattr(content_fetcher, prefer_backend):
-                klass = getattr(content_fetcher, prefer_backend)
-            else:
-                # If the klass doesnt exist, just use a default
-                klass = getattr(content_fetcher, "html_requests")
+        proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=uuid)
+        proxy_url = None
+        if proxy_id:
+            proxy_url = self.datastore.proxy_list.get(proxy_id).get('url')
+            print("UUID {} Using proxy {}".format(uuid, proxy_url))
 
+        fetcher = klass(proxy_override=proxy_url)
 
-            fetcher = klass()
-            fetcher.run(url, timeout, request_headers)
-            # Fetching complete, now filters
-            # @todo move to class / maybe inside of fetcher abstract base?
+        # Configurable per-watch or global extra delay before extracting text (for webDriver types)
+        system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
+        if watch['webdriver_delay'] is not None:
+            fetcher.render_extract_delay = watch.get('webdriver_delay')
+        elif system_webdriver_delay is not None:
+            fetcher.render_extract_delay = system_webdriver_delay
 
-            # @note: I feel like the following should be in a more obvious chain system
-            #  - Check filter text
-            #  - Is the checksum different?
-            #  - Do we convert to JSON?
-            # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
-            # return content().textfilter().jsonextract().checksumcompare() ?
+        # Possible conflict
+        if prefer_backend == 'html_webdriver':
+            fetcher.browser_steps = watch.get('browser_steps', None)
+            fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, uuid)
 
-            is_html = True
-            css_filter_rule = watch['css_filter']
-            if css_filter_rule and len(css_filter_rule.strip()):
-                if 'json:' in css_filter_rule:
-                    stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, jsonpath_filter=css_filter_rule)
+        if watch.get('webdriver_js_execute_code') is not None and watch.get('webdriver_js_execute_code').strip():
+            fetcher.webdriver_js_execute_code = watch.get('webdriver_js_execute_code')
+
+        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch.get('include_filters'))
+        fetcher.quit()
+
+        self.screenshot = fetcher.screenshot
+        self.xpath_data = fetcher.xpath_data
+
+        # Fetching complete, now filters
+        # @todo move to class / maybe inside of fetcher abstract base?
+
+        # @note: I feel like the following should be in a more obvious chain system
+        #  - Check filter text
+        #  - Is the checksum different?
+        #  - Do we convert to JSON?
+        # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
+        # return content().textfilter().jsonextract().checksumcompare() ?
+
+        is_json = 'application/json' in fetcher.headers.get('Content-Type', '')
+        is_html = not is_json
+
+        # source: support, basically treat it as plaintext
+        if is_source:
+            is_html = False
+            is_json = False
+
+        include_filters_rule = watch.get('include_filters', [])
+        # include_filters_rule = watch['include_filters']
+        subtractive_selectors = watch.get(
+            "subtractive_selectors", []
+        ) + self.datastore.data["settings"]["application"].get(
+            "global_subtractive_selectors", []
+        )
+
+        has_filter_rule = include_filters_rule and len("".join(include_filters_rule).strip())
+        has_subtractive_selectors = subtractive_selectors and len(subtractive_selectors[0].strip())
+
+        if is_json and not has_filter_rule:
+            include_filters_rule.append("json:$")
+            has_filter_rule = True
+
+        if has_filter_rule:
+            json_filter_prefixes = ['json:', 'jq:']
+            for filter in include_filters_rule:
+                if any(prefix in filter for prefix in json_filter_prefixes):
+                    stripped_text_from_html += html_tools.extract_json_as_string(content=fetcher.content, json_filter=filter)
                     is_html = False
-                else:
-                    # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-                    stripped_text_from_html = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
 
-            if is_html:
-                # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-                html_content = fetcher.content
-                if css_filter_rule and len(css_filter_rule.strip()):
-                    html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
+        if is_html or is_source:
 
-                # get_text() via inscriptis
-                stripped_text_from_html = get_text(html_content)
+            # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+            fetcher.content = html_tools.workarounds_for_obfuscations(fetcher.content)
+            html_content = fetcher.content
 
-            # We rely on the actual text in the html output.. many sites have random script vars etc,
-            # in the future we'll implement other mechanisms.
-
-            update_obj["last_check_status"] = fetcher.get_last_status_code()
-            update_obj["last_error"] = False
-
-
-            # If there's text to skip
-            # @todo we could abstract out the get_text() to handle this cleaner
-            if len(watch['ignore_text']):
-                stripped_text_from_html = self.strip_ignore_text(stripped_text_from_html, watch['ignore_text'])
+            # If not JSON,  and if it's not text/plain..
+            if 'text/plain' in fetcher.headers.get('Content-Type', '').lower():
+                # Don't run get_text or xpath/css filters on plaintext
+                stripped_text_from_html = html_content
             else:
-                stripped_text_from_html = stripped_text_from_html.encode('utf8')
+                # Then we assume HTML
+                if has_filter_rule:
+                    html_content = ""
+                    for filter_rule in include_filters_rule:
+                        # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
+                        if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
+                            html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
+                                                                    html_content=fetcher.content,
+                                                                    append_pretty_line_formatting=not is_source)
+                        else:
+                            # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+                            html_content += html_tools.include_filters(include_filters=filter_rule,
+                                                                       html_content=fetcher.content,
+                                                                       append_pretty_line_formatting=not is_source)
 
+                    if not html_content.strip():
+                        raise FilterNotFoundInResponse(include_filters_rule)
 
+                if has_subtractive_selectors:
+                    html_content = html_tools.element_removal(subtractive_selectors, html_content)
+
+                if is_source:
+                    stripped_text_from_html = html_content
+                else:
+                    # extract text
+                    do_anchor = self.datastore.data["settings"]["application"].get("render_anchor_tag_content", False)
+                    stripped_text_from_html = \
+                        html_tools.html_to_text(
+                            html_content,
+                            render_anchor_tag_content=do_anchor
+                        )
+
+        # Re #340 - return the content before the 'ignore text' was applied
+        text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
+
+        # Treat pages with no renderable text content as a change? No by default
+        empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
+        if not is_json and not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
+            raise content_fetcher.ReplyWithContentButNoText(url=url, status_code=fetcher.get_last_status_code(), screenshot=screenshot)
+
+        # We rely on the actual text in the html output.. many sites have random script vars etc,
+        # in the future we'll implement other mechanisms.
+
+        update_obj["last_check_status"] = fetcher.get_last_status_code()
+
+        # If there's text to skip
+        # @todo we could abstract out the get_text() to handle this cleaner
+        text_to_ignore = watch.get('ignore_text', []) + self.datastore.data['settings']['application'].get('global_ignore_text', [])
+        if len(text_to_ignore):
+            stripped_text_from_html = html_tools.strip_ignore_text(stripped_text_from_html, text_to_ignore)
+        else:
+            stripped_text_from_html = stripped_text_from_html.encode('utf8')
+
+        # 615 Extract text by regex
+        extract_text = watch.get('extract_text', [])
+        if len(extract_text) > 0:
+            regex_matched_output = []
+            for s_re in extract_text:
+                # incase they specified something in '/.../x'
+                regex = self.forward_slash_enclosed_regex_to_options(s_re)
+                result = re.findall(regex.encode('utf-8'), stripped_text_from_html)
+
+                for l in result:
+                    if type(l) is tuple:
+                        # @todo - some formatter option default (between groups)
+                        regex_matched_output += list(l) + [b'\n']
+                    else:
+                        # @todo - some formatter option default (between each ungrouped result)
+                        regex_matched_output += [l] + [b'\n']
+
+            # Now we will only show what the regex matched
+            stripped_text_from_html = b''
+            text_content_before_ignored_filter = b''
+            if regex_matched_output:
+                # @todo some formatter for presentation?
+                stripped_text_from_html = b''.join(regex_matched_output)
+                text_content_before_ignored_filter = stripped_text_from_html
+
+        # Re #133 - if we should strip whitespaces from triggering the change detected comparison
+        if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
+            fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
+        else:
             fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
 
-            blocked_by_not_found_trigger_text = False
+        ############ Blocking rules, after checksum #################
+        blocked = False
 
-            if len(watch['trigger_text']):
-                blocked_by_not_found_trigger_text = True
-                for line in watch['trigger_text']:
-                    # Because JSON wont serialize a re.compile object
-                    if line[0] == '/' and line[-1] == '/':
-                        regex = re.compile(line.strip('/'), re.IGNORECASE)
-                        # Found it? so we don't wait for it anymore
-                        r = re.search(regex, str(stripped_text_from_html))
-                        if r:
-                            blocked_by_not_found_trigger_text = False
-                            break
+        trigger_text = watch.get('trigger_text', [])
+        if len(trigger_text):
+            # Assume blocked
+            blocked = True
+            # Filter and trigger works the same, so reuse it
+            # It should return the line numbers that match
+            result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
+                                                  wordlist=trigger_text,
+                                                  mode="line numbers")
+            # Unblock if the trigger was found
+            if result:
+                blocked = False
 
-                    elif line.lower() in str(stripped_text_from_html).lower():
-                        # We found it don't wait for it.
-                        blocked_by_not_found_trigger_text = False
-                        break
+        text_should_not_be_present = watch.get('text_should_not_be_present', [])
+        if len(text_should_not_be_present):
+            # If anything matched, then we should block a change from happening
+            result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
+                                                  wordlist=text_should_not_be_present,
+                                                  mode="line numbers")
+            if result:
+                blocked = True
 
+        # The main thing that all this at the moment comes down to :)
+        if watch.get('previous_md5') != fetched_md5:
+            changed_detected = True
 
-            # could be None or False depending on JSON type
-            # On the first run of a site, watch['previous_md5'] will be an empty string
-            if not blocked_by_not_found_trigger_text and watch['previous_md5'] != fetched_md5:
-                changed_detected = True
+        # Looks like something changed, but did it match all the rules?
+        if blocked:
+            changed_detected = False
 
-                # Don't confuse people by updating as last-changed, when it actually just changed from None..
-                if self.datastore.get_val(uuid, 'previous_md5'):
-                    update_obj["last_changed"] = timestamp
+        # Extract title as title
+        if is_html:
+            if self.datastore.data['settings']['application'].get('extract_title_as_title') or watch['extract_title_as_title']:
+                if not watch['title'] or not len(watch['title']):
+                    update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
 
-                update_obj["previous_md5"] = fetched_md5
+        if changed_detected:
+            if watch.get('check_unique_lines', False):
+                has_unique_lines = watch.lines_contain_something_unique_compared_to_history(lines=stripped_text_from_html.splitlines())
+                # One or more lines? unsure?
+                if not has_unique_lines:
+                    logging.debug("check_unique_lines: UUID {} didnt have anything new setting change_detected=False".format(uuid))
+                    changed_detected = False
+                else:
+                    logging.debug("check_unique_lines: UUID {} had unique content".format(uuid))
 
-            # Extract title as title
-            if is_html:
-                if self.datastore.data['settings']['application']['extract_title_as_title'] or watch['extract_title_as_title']:
-                    if not watch['title'] or not len(watch['title']):
-                        update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
+        # Always record the new checksum
+        update_obj["previous_md5"] = fetched_md5
 
+        # On the first run of a site, watch['previous_md5'] will be None, set it the current one.
+        if not watch.get('previous_md5'):
+            watch['previous_md5'] = fetched_md5
 
-        return changed_detected, update_obj, stripped_text_from_html
+        return changed_detected, update_obj, text_content_before_ignored_filter

@@ -7,4 +7,8 @@ __pycache__
 .pytest_cache
 build
 dist
+venv
+test-datastore/*
+test-datastore
+*.egg-info*
 .vscode/settings.json

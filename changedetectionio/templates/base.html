@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Self hosted website change detection.">
     <title>Change Detection{{extra_title}}</title>
+    <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag %}- {{active_tag}}{% endif %}" href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}" />
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}">
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}">
     {% if extra_stylesheets %}
@@ -12,7 +13,26 @@
         <link rel="stylesheet" href="{{ m }}?ver=1000">
         {% endfor %}
     {% endif %}
+
+    <link rel="apple-touch-icon" sizes="180x180" href="{{url_for('static_content', group='favicons', filename='apple-touch-icon.png')}}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{url_for('static_content', group='favicons', filename='favicon-32x32.png')}}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{url_for('static_content', group='favicons', filename='favicon-16x16.png')}}">
+    <link rel="manifest" href="{{url_for('static_content', group='favicons', filename='site.webmanifest')}}">
+    <link rel="mask-icon" href="{{url_for('static_content', group='favicons', filename='safari-pinned-tab.svg')}}" color="#5bbad5">
+    <link rel="shortcut icon" href="{{url_for('static_content', group='favicons', filename='favicon.ico')}}">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="msapplication-config" content="favicons/browserconfig.xml">
+    <meta name="theme-color" content="#ffffff">
+
+    <style>
+    body::before {
+        background-image: url({{url_for('static_content', group='images', filename='gradient-border.png')}});
+    }
+    </style>
+    <script type="text/javascript" src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
+
 </head>
+
 <body>
 
 <div class="header">
@@ -35,13 +55,13 @@
         {% if current_user.is_authenticated or not has_password %}
             {% if not current_diff_url %}
             <li class="pure-menu-item">
-                <a href="{{ url_for('get_backup')}}" class="pure-menu-link">BACKUP</a>
+                <a href="{{ url_for('settings_page')}}" class="pure-menu-link">SETTINGS</a>
             </li>
             <li class="pure-menu-item">
                 <a href="{{ url_for('import_page')}}" class="pure-menu-link">IMPORT</a>
             </li>
             <li class="pure-menu-item">
-                <a href="{{ url_for('settings_page')}}" class="pure-menu-link">SETTINGS</a>
+                <a href="{{ url_for('get_backup')}}" class="pure-menu-link">BACKUP</a>
             </li>
             {% else %}
             <li class="pure-menu-item">
@@ -68,7 +88,7 @@
         </ul>
     </div>
 </div>
-
+{% if hosted_sticky %}<div class="sticky-tab" id="hosted-sticky"><a href="https://lemonade.changedetection.io/start?ref={{guid}}">Let us host your instance!</a></div>{% endif %}
 {% if left_sticky %}<div class="sticky-tab" id="left-sticky"><a href="{{url_for('preview_page', uuid=uuid)}}">Show current snapshot</a></div> {% endif %}
 {% if right_sticky %}<div class="sticky-tab" id="right-sticky">{{ right_sticky }}</div> {% endif %}
 <section class="content">
@@ -85,6 +105,13 @@
         </ul>
       {% endif %}
     {% endwith %}
+
+    {% if session['share-link'] %}
+        <ul class="messages with-share-link">
+          <li class="message">Share this link: <span id="share-link">{{ session['share-link'] }}</span> <img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='copy.svg')}}" /></li>
+        </ul>
+    {% endif %}
+
     {% block content %}
 
     {% endblock %}

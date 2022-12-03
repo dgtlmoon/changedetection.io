@@ -1,13 +1,12 @@
-name: ChangeDetection.io Test
+name: ChangeDetection.io App Test
 
 # Triggers the workflow on push or pull request events
 on: [push, pull_request]
 
 jobs:
-  test-build:
+  test-application:
     runs-on: ubuntu-latest
     steps:
-
       - uses: actions/checkout@v2
       - name: Set up Python 3.9
         uses: actions/setup-python@v2
@@ -20,6 +19,7 @@ jobs:
           pip install flake8 pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
@@ -27,13 +27,13 @@ jobs:
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
+      - name: Unit tests
+        run: |
+          python3 -m unittest changedetectionio.tests.unit.test_notification_diff
+
       - name: Test with pytest
         run: |
           # Each test is totally isolated and performs its own cleanup/reset
           cd changedetectionio; ./run_all_tests.sh
 
 
-      # https://github.com/docker/build-push-action/blob/master/docs/advanced/test-before-push.md ?
-      # https://github.com/docker/buildx/issues/59 ? Needs to be one platform?
-
-      # https://github.com/docker/buildx/issues/495#issuecomment-918925854

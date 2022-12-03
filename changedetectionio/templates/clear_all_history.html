@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="edit-form">
+    <div class="box-wrap inner">
+    <form class="pure-form pure-form-stacked" action="{{url_for('clear_all_history')}}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <fieldset>
+            <div class="pure-control-group">
+                This will remove version history (snapshots) for ALL watches, but keep your list of URLs! <br/>
+                You may like to use the <strong>BACKUP</strong> link first.<br/>
+            </div>
+            <br/>
+            <div class="pure-control-group">
+                <label for="confirmtext">Confirmation text</label>
+                <input type="text" id="confirmtext" required="" name="confirmtext" value="" size="10"/>
+                <span class="pure-form-message-inline">Type in the word <strong>clear</strong> to confirm that you understand.</span>
+            </div>
+            <br/>
+            <div class="pure-control-group">
+                <button type="submit" class="pure-button pure-button-primary">Clear History!</button>
+            </div>
+            <br/>
+            <div class="pure-control-group">
+                <a href="{{url_for('index')}}" class="pure-button button-small button-cancel">Cancel</a>
+            </div>
+        </fieldset>
+    </form>
+    </div>
+</div>
+
+{% endblock %}

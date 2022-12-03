@@ -16,13 +16,14 @@ def cleanup(datastore_path):
     # Unlink test output files
     files = ['output.txt',
              'url-watches.json',
+             'secret.txt',
              'notification.txt',
              'count.txt',
-             'endpoint-content.txt']
+             'endpoint-content.txt'
+                 ]
     for file in files:
         try:
             os.unlink("{}/{}".format(datastore_path, file))
-            x = 1
         except FileNotFoundError:
             pass
 
@@ -31,6 +32,8 @@ def app(request):
     """Create application for the tests."""
     datastore_path = "./test-datastore"
 
+    # So they don't delay in fetching
+    os.environ["MINIMUM_SECONDS_RECHECK_TIME"] = "0"
     try:
         os.mkdir(datastore_path)
     except FileExistsError:
@@ -38,10 +41,13 @@ def app(request):
 
     cleanup(datastore_path)
 
-    app_config = {'datastore_path': datastore_path}
+    app_config = {'datastore_path': datastore_path, 'disable_checkver' : True}
     cleanup(app_config['datastore_path'])
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], include_default_watches=False)
     app = changedetection_app(app_config, datastore)
+
+    # Disable CSRF while running tests
+    app.config['WTF_CSRF_ENABLED'] = False
     app.config['STOP_THREADS'] = True
 
     def teardown():

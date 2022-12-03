@@ -22,10 +22,9 @@ def set_original_ignore_response():
 
 
 
-def test_trigger_regex_functionality(client, live_server):
+def test_trigger_regex_functionality_with_filter(client, live_server):
 
     live_server_setup(live_server)
-
     sleep_time_for_fetch_thread = 3
 
     set_original_ignore_response()
@@ -42,43 +41,44 @@ def test_trigger_regex_functionality(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
-
-    # Give the thread time to pick it up
+    # it needs time to save the original version
     time.sleep(sleep_time_for_fetch_thread)
-
-    # It should report nothing found (just a new one shouldnt have anything)
-    res = client.get(url_for("index"))
-    assert b'unviewed' not in res.data
 
     ### test regex with filter
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"trigger_text": "/cool.stuff\d/",
+        data={"trigger_text": "/cool.stuff/",
               "url": test_url,
-              "css_filter": '#in-here',
+              "include_filters": '#in-here',
               "fetch_backend": "html_requests"},
         follow_redirects=True
     )
+
+    # Give the thread time to pick it up
+    time.sleep(sleep_time_for_fetch_thread)
+
+    client.get(url_for("diff_history_page", uuid="first"))
 
     # Check that we have the expected text.. but it's not in the css filter we want
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("<html>some new noise with cool stuff2 ok</html>")
 
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(sleep_time_for_fetch_thread)
 
     # It should report nothing found (nothing should match the regex and filter)
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
 
+    # now this should trigger something
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("<html>some new noise with <span id=in-here>cool stuff6</span> ok</html>")
 
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(sleep_time_for_fetch_thread)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
-
+# Cleanup everything
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data

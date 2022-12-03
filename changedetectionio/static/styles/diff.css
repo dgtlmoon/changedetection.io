@@ -1,9 +1,10 @@
 #diff-ui {
   background: #fff;
   padding: 2em;
-  margin: 1em;
+  margin-left: 1em;
+  margin-right: 1em;
   border-radius: 5px;
-  font-size: 9px; }
+  font-size: 11px; }
   #diff-ui table {
     table-layout: fixed;
     width: 100%; }
@@ -54,3 +55,24 @@ ins {
   body {
     height: 99%;
     /* Hide scroll bar in Firefox */ } }
+
+td#diff-col div {
+  text-align: justify;
+  white-space: pre-wrap; }
+
+.ignored {
+  background-color: #ccc;
+  /*  border: #0d91fa 1px solid; */
+  opacity: 0.7; }
+
+.triggered {
+  background-color: #1b98f8; }
+
+/* ignored and triggered? make it obvious error */
+.ignored.triggered {
+  background-color: #ff0000; }
+
+.tab-pane-inner#screenshot {
+  text-align: center; }
+  .tab-pane-inner#screenshot img {
+    max-width: 99%; }

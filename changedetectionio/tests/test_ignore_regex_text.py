@@ -3,6 +3,7 @@
 import time
 from flask import url_for
 from . util import live_server_setup
+from changedetectionio import html_tools
 
 def test_setup(live_server):
     live_server_setup(live_server)
@@ -23,7 +24,7 @@ def test_strip_regex_text_func():
     ignore_lines = ["sometimes", "/\s\d{2,3}\s/", "/ignore-case text/"]
 
     fetcher = fetch_site_status.perform_site_check(datastore=False)
-    stripped_content = fetcher.strip_ignore_text(test_content, ignore_lines)
+    stripped_content = html_tools.strip_ignore_text(test_content, ignore_lines)
 
     assert b"but 1 lines" in stripped_content
     assert b"igNORe-cAse text" not in stripped_content

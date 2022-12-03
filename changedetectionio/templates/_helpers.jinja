@@ -1,4 +1,31 @@
 {% macro render_field(field) %}
+  <div {% if field.errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
+  <div {% if field.errors %} class="error" {% endif %}>{{ field.label }}</div>
+
+  {% if field.errors %}
+    <ul class=errors>
+    {% for error in field.errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+  </div>
+{% endmacro %}
+
+{% macro render_checkbox_field(field) %}
+  <div class="checkbox {% if field.errors %} error {% endif %}">
+  {{ field(**kwargs)|safe }} {{ field.label }}
+  {% if field.errors %}
+    <ul class=errors>
+    {% for error in field.errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+  </div>
+{% endmacro %}
+
+{% macro render_field(field) %}
   <div {% if field.errors %} class="error" {% endif %}>{{ field.label }}</div>
   <div {% if field.errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
   {% if field.errors %}
@@ -25,3 +52,6 @@
 {% endmacro %}
 
 
+{% macro render_button(field) %}
+  {{ field(**kwargs)|safe }}
+{% endmacro %}
