@@ -90,7 +90,7 @@ def test_check_notification(client, live_server):
     print (">>>> Notification URL: "+notification_url)
 
     notification_form_data = {"notification_urls": notification_url,
-                              "notification_title": "New ChangeDetection.io Notification - {watch_url}",
+                              "notification_title": "New ChangeDetection.io Notification - {{watch_url}}",
                               "notification_body": "BASE URL: {{base_url}}\n"
                                                    "Watch URL: {{watch_url}}\n"
                                                    "Watch UUID: {{watch_uuid}}\n"
