@@ -185,10 +185,10 @@ def test_check_notification(client, live_server):
 
     res = client.post(
         url_for("settings_page"),
-        data={"notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
-              "notification_urls": "json://foobar.com", #Re #143 should not see that it sent without [test checkbox]
-              "minutes_between_check": 180,
-              "fetch_backend": "html_requests",
+        data={"application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
+              "application-notification_urls": "json://foobar.com", #Re #143 should not see that it sent without [test checkbox]
+              "application-minutes_between_check": 180,
+              "application-fetch_backend": "html_requests",
               },
         follow_redirects=True
     )
@@ -254,10 +254,14 @@ def test_check_notification(client, live_server):
         follow_redirects=True
     )
 
-
 def test_notification_validation(client, live_server):
     #live_server_setup(live_server)
-    time.sleep(3)
+    time.sleep(1)
+    # cleanup for the next
+    client.get(
+        url_for("form_delete", uuid="all"),
+        follow_redirects=True
+    )
     # re #242 - when you edited an existing new entry, it would not correctly show the notification settings
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -297,24 +301,21 @@ def test_notification_validation(client, live_server):
               },
         follow_redirects=True
     )
-    assert bytes("The following tokens used in the notification are not valid".encode('utf-8')) in res.data
-
+    assert bytes("Token 'rubbish' is not a valid token or is unknown".encode('utf-8')) in res.data
 
     # And trying to define an invalid Jinja2 template should also throw an error
     res = client.post(
         url_for("settings_page"),
-        data={"notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
-              "notification_body": "Rubbish: {{ rubbish }\n",
-              "notification_urls": "json://foobar.com",
-              "minutes_between_check": 180,
-              "fetch_backend": "html_requests"
+        data={"application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
+              "application-notification_body": "Rubbish: {{ rubbish }\n",
+              "application-notification_urls": "json://foobar.com",
+              "application-minutes_between_check": 180,
+              "application-fetch_backend": "html_requests"
               },
         follow_redirects=True
     )
     assert bytes("This is not a valid Jinja2 template".encode('utf-8')) in res.data
 
-
-    assert bytes("is not a valid token".encode('utf-8')) in res.data
 
     # cleanup for the next
     client.get(
@@ -322,3 +323,4 @@ def test_notification_validation(client, live_server):
         follow_redirects=True
     )
 
+    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)

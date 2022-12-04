@@ -206,6 +206,13 @@ class ValidateJinja2Template(object):
         from jinja2 import Environment, BaseLoader, TemplateSyntaxError
         from jinja2.meta import find_undeclared_variables
 
+        regex = re.compile('{{(.*?)}}')
+        valid_tokens = list(notification.valid_tokens.keys())
+        for p in re.findall(regex, field.data):
+            if not p.strip() in valid_tokens:
+                message = field.gettext('Token \'%s\' is not a valid token or is unknown')
+                raise ValidationError(message % (p))
+
         try:
             jinja2_env = Environment(loader=BaseLoader)
             jinja2_env.globals.update(notification.valid_tokens)
@@ -220,12 +227,6 @@ class ValidateJinja2Template(object):
                 f"The following tokens used in the notification are not valid: {undefined}"
             )
 
-        regex = re.compile('{{(.*?)}}')
-        valid_tokens = list(notification.valid_tokens.keys())
-        for p in re.findall(regex, field.data):
-            if not p.strip() in valid_tokens:
-                message = field.gettext('Token \'%s\' is not a valid token.')
-                raise ValidationError(message % (p))
             
 class validateURL(object):
     
