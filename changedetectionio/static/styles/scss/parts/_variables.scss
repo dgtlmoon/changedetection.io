@@ -82,7 +82,7 @@
   --color-shadow-input: var(--color-grey-400);
   --color-background-input: var(--color-white);
   --color-text-input: var(--color-text);
-  --color-text-input-description: var(--color-grey-700);
+  --color-text-input-description: var(--color-grey-500);
   --color-text-input-placeholder: var(--color-grey-600);
 
   --color-background-table-thead: var(--color-grey-800);
@@ -120,9 +120,8 @@ html[data-darkmode="true"] {
   --color-border-input: var(--color-grey-400);
   --color-shadow-input: var(--color-grey-50);
   --color-background-input: var(--color-grey-350);
-  --color-text-input-description: var(--color-grey-700);
+  --color-text-input-description: var(--color-grey-600);
   --color-text-input-placeholder: var(--color-grey-600);
-
   --color-text-watch-tag-list: #fa3e92;
 
   --color-background-code: var(--color-grey-200);
