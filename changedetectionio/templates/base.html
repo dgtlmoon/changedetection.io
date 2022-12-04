@@ -1,121 +1,151 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Self hosted website change detection.">
+<!DOCTYPE html>
+<html lang="en" data-darkmode="{{ dark_mode|lower }}">
+
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Self hosted website change detection."/>
     <title>Change Detection{{extra_title}}</title>
-    <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag %}- {{active_tag}}{% endif %}" href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}" />
-    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}">
-    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}">
+    <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag %}- {{active_tag}}{% endif %}" href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"/>
+    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}"/>
+    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}"/>
     {% if extra_stylesheets %}
-        {% for m in extra_stylesheets %}
-        <link rel="stylesheet" href="{{ m }}?ver=1000">
-        {% endfor %}
+      {% for m in extra_stylesheets %}
+        <link rel="stylesheet" href="{{ m }}?ver=1000"/>
+      {% endfor %}
     {% endif %}
 
-    <link rel="apple-touch-icon" sizes="180x180" href="{{url_for('static_content', group='favicons', filename='apple-touch-icon.png')}}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{url_for('static_content', group='favicons', filename='favicon-32x32.png')}}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{url_for('static_content', group='favicons', filename='favicon-16x16.png')}}">
-    <link rel="manifest" href="{{url_for('static_content', group='favicons', filename='site.webmanifest')}}">
-    <link rel="mask-icon" href="{{url_for('static_content', group='favicons', filename='safari-pinned-tab.svg')}}" color="#5bbad5">
-    <link rel="shortcut icon" href="{{url_for('static_content', group='favicons', filename='favicon.ico')}}">
-    <meta name="msapplication-TileColor" content="#da532c">
-    <meta name="msapplication-config" content="favicons/browserconfig.xml">
-    <meta name="theme-color" content="#ffffff">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{url_for('static_content', group='favicons', filename='apple-touch-icon.png')}}"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{url_for('static_content', group='favicons', filename='favicon-32x32.png')}}"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="{{url_for('static_content', group='favicons', filename='favicon-16x16.png')}}"/>
+    <link rel="manifest" href="{{url_for('static_content', group='favicons', filename='site.webmanifest')}}"/>
+    <link rel="mask-icon" href="{{url_for('static_content', group='favicons', filename='safari-pinned-tab.svg')}}" color="#5bbad5"/>
+    <link rel="shortcut icon" href="{{url_for('static_content', group='favicons', filename='favicon.ico')}}"/>
+    <meta name="msapplication-TileColor" content="#da532c"/>
+    <meta name="msapplication-config" content="favicons/browserconfig.xml"/>
+    <meta name="theme-color" content="#ffffff"/>
 
     <style>
-    body::before {
-        background-image: url({{url_for('static_content', group='images', filename='gradient-border.png')}});
-    }
+      body::before {
+        background-image: url({{url_for('static_content', group='images', filename='gradient-border.png') }});
+      }
     </style>
     <script type="text/javascript" src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
+  </head>
 
-</head>
-
-<body>
-
-<div class="header">
-
-    <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed" id="nav-menu">
+  <body>
+    <div class="header">
+      <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed" id="nav-menu">
         {% if has_password and not current_user.is_authenticated %}
-            <a class="pure-menu-heading" href="https://github.com/dgtlmoon/changedetection.io" rel="noopener"><strong>Change</strong>Detection.io</a>
+          <a class="pure-menu-heading" href="https://github.com/dgtlmoon/changedetection.io" rel="noopener">
+            <strong>Change</strong>Detection.io</a>
         {% else %}
-            <a class="pure-menu-heading" href="{{url_for('index')}}"><strong>Change</strong>Detection.io</a>
+          <a class="pure-menu-heading" href="{{url_for('index')}}">
+            <strong>Change</strong>Detection.io</a>
         {% endif %}
         {% if current_diff_url %}
-        <a class=current-diff-url href="{{ current_diff_url }}"><span style="max-width: 30%; overflow: hidden;">{{ current_diff_url }}</span></a>
+          <a class="current-diff-url" href="{{ current_diff_url }}">
+            <span style="max-width: 30%; overflow: hidden">{{ current_diff_url }}</span></a>
         {% else %}
-        {% if new_version_available and not (has_password and not current_user.is_authenticated) %}
-        <span id="new-version-text" class="pure-menu-heading"><a href="https://github.com/dgtlmoon/changedetection.io">A new version is available</a></span>
-        {% endif %}
+          {% if new_version_available and not(has_password and not current_user.is_authenticated) %}
+            <span id="new-version-text" class="pure-menu-heading">
+              <a href="https://github.com/dgtlmoon/changedetection.io">A new version is available</a>
+            </span>
+          {% endif %}
         {% endif %}
 
-        <ul class="pure-menu-list"  id="top-right-menu">
-        {% if current_user.is_authenticated or not has_password %}
-            {% if not current_diff_url %}
-            <li class="pure-menu-item">
+        <ul class="pure-menu-list" id="top-right-menu">
+          {% if current_user.is_authenticated or not has_password %}
+            {% if not
+            current_diff_url %}
+              <li class="pure-menu-item">
                 <a href="{{ url_for('settings_page')}}" class="pure-menu-link">SETTINGS</a>
-            </li>
-            <li class="pure-menu-item">
+              </li>
+              <li class="pure-menu-item">
                 <a href="{{ url_for('import_page')}}" class="pure-menu-link">IMPORT</a>
-            </li>
-            <li class="pure-menu-item">
+              </li>
+              <li class="pure-menu-item">
                 <a href="{{ url_for('get_backup')}}" class="pure-menu-link">BACKUP</a>
-            </li>
+              </li>
             {% else %}
-            <li class="pure-menu-item">
+              <li class="pure-menu-item">
                 <a href="{{ url_for('edit_page', uuid=uuid, next='diff') }}" class="pure-menu-link">EDIT</a>
-            </li>
+              </li>
             {% endif %}
-        {% else %}
+          {% else %}
             <li class="pure-menu-item">
-                <a class="pure-menu-link" href="https://github.com/dgtlmoon/changedetection.io">Website Change Detection and Notification.</a>
+              <a class="pure-menu-link" href="https://github.com/dgtlmoon/changedetection.io">Website Change Detection and Notification.</a>
             </li>
-        {% endif %}
+          {% endif %}
+          {% if current_user.is_authenticated %}
+            <li class="pure-menu-item">
+              <a href="{{url_for('logout')}}" class="pure-menu-link">LOG OUT</a>
+            </li>
+          {% endif %}
+          <li class="pure-menu-item">
+            {% if dark_mode %}
+            {% set darkClass = 'dark' %}
+            {% endif %}
+            <button class="toggle-theme {{darkClass}}" type="button">
+              <span class="visually-hidden">Toggle light/dark mode</span>
+              <span class="icon-light">
+                {% include "svgs/light-mode-toggle-icon.svg" %}
+              </span>
+              <span class="icon-dark">
+                {% include "svgs/dark-mode-toggle-icon.svg" %}
+              </span>
+            </button>
 
-        {% if current_user.is_authenticated %}
-            <li class="pure-menu-item"><a href="{{url_for('logout')}}" class="pure-menu-link">LOG OUT</a></li>
-        {% endif %}
-            <li class="pure-menu-item"><a class="github-link" href="https://github.com/dgtlmoon/changedetection.io">
-                <svg class="octicon octicon-mark-github v-align-middle" height="32" viewBox="0 0 16 16"
-                     version="1.1"
-                     width="32" aria-hidden="true">
-                    <path fill-rule="evenodd"
-                          d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
-                </svg>
-            </a></li>
+            <a class="github-link" href="https://github.com/dgtlmoon/changedetection.io">
+              {% include "svgs/github.svg" %}
+            </a>
+          </li>
         </ul>
+      </div>
     </div>
-</div>
-{% if hosted_sticky %}<div class="sticky-tab" id="hosted-sticky"><a href="https://lemonade.changedetection.io/start?ref={{guid}}">Let us host your instance!</a></div>{% endif %}
-{% if left_sticky %}<div class="sticky-tab" id="left-sticky"><a href="{{url_for('preview_page', uuid=uuid)}}">Show current snapshot</a></div> {% endif %}
-{% if right_sticky %}<div class="sticky-tab" id="right-sticky">{{ right_sticky }}</div> {% endif %}
-<section class="content">
-    <header>
+    {% if hosted_sticky %}
+      <div class="sticky-tab" id="hosted-sticky">
+        <a href="https://lemonade.changedetection.io/start?ref={{guid}}">Let us host your instance!</a>
+      </div>
+    {% endif %}
+    {% if left_sticky %}
+      <div class="sticky-tab" id="left-sticky">
+        <a href="{{url_for('preview_page', uuid=uuid)}}">Show current snapshot</a>
+      </div>
+    {% endif %}
+    {% if right_sticky %}
+      <div class="sticky-tab" id="right-sticky">{{ right_sticky }}</div>
+    {% endif %}
+    <section class="content">
+      <header>
         {% block header %}{% endblock %}
-    </header>
+      </header>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <ul class=messages>
-        {% for category, message in messages %}
-          <li class="{{ category }}">{{ message }}</li>
-        {% endfor %}
+      {% with messages = get_flashed_messages(with_categories = true) %}
+      {% if
+      messages %}
+        <ul class="messages">
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
         </ul>
       {% endif %}
-    {% endwith %}
-
-    {% if session['share-link'] %}
+      {% endwith %}
+      {% if session['share-link'] %}
         <ul class="messages with-share-link">
-          <li class="message">Share this link: <span id="share-link">{{ session['share-link'] }}</span> <img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='copy.svg')}}" /></li>
+          <li class="message">
+            Share this link:
+            <span id="share-link">{{ session['share-link'] }}</span>
+            <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='copy.svg')}}"/>
+          </li>
         </ul>
-    {% endif %}
+      {% endif %}
+      {% block content %}{% endblock %}
+    </section>
+    <script
+      type="text/javascript"
+      src="{{url_for('static_content', group='js', filename='toggle-theme.js')}}"
+      defer></script>
+  </body>
 
-    {% block content %}
-
-    {% endblock %}
-</section>
-
-</body>
 </html>

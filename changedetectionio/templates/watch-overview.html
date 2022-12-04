@@ -80,15 +80,15 @@
                 <td class="inline checkbox-uuid" ><input name="uuids"  type="checkbox" value="{{ watch.uuid}} "/> <span>{{ loop.index }}</span></td>
                 <td class="inline watch-controls">
                     {% if not watch.paused %}
-                    <a class="state-off" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause checks" title="Pause checks"/></a>
+                    <a class="state-off" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause checks" title="Pause checks" class="icon icon-pause"/></a>
                     {% else %}
-                    <a class="state-on" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="UnPause checks" title="UnPause checks"/></a>
+                    <a class="state-on" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="UnPause checks" title="UnPause checks" class="icon icon-unpause"/></a>
                     {% endif %}
-                    <a class="state-{{'on' if watch.notification_muted}}" href="{{url_for('index', op='mute', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="Mute notifications" title="Mute notifications"/></a>
+                    <a class="link-mute state-{{'on' if watch.notification_muted else 'off'}}" href="{{url_for('index', op='mute', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="Mute notifications" title="Mute notifications" class="icon icon-mute"/></a>
                 </td>
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
                     <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}"></a>
-                    <a href="{{url_for('form_share_put_watch', uuid=watch.uuid)}}"><img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread.svg')}}" /></a>
+                    <a class="link-spread" href="{{url_for('form_share_put_watch', uuid=watch.uuid)}}"><img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="icon icon-spread" /></a>
 
                     {%if watch.fetch_backend == "html_webdriver" %}<img style="height: 1em; display:inline-block;" src="{{url_for('static_content', group='images', filename='Google-Chrome-icon.png')}}" />{% endif %}
 
@@ -111,13 +111,13 @@
                 </td>
                 <td>
                     <a {% if watch.uuid in queued_uuids %}disabled="true"{% endif %} href="{{ url_for('form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
-                       class="recheck pure-button button-small pure-button-primary">{% if watch.uuid in queued_uuids %}Queued{% else %}Recheck{% endif %}</a>
-                    <a href="{{ url_for('edit_page', uuid=watch.uuid)}}" class="pure-button button-small pure-button-primary">Edit</a>
+                       class="recheck pure-button pure-button-primary">{% if watch.uuid in queued_uuids %}Queued{% else %}Recheck{% endif %}</a>
+                    <a href="{{ url_for('edit_page', uuid=watch.uuid)}}" class="pure-button pure-button-primary">Edit</a>
                     {% if watch.history_n >= 2 %}
-                    <a href="{{ url_for('diff_history_page', uuid=watch.uuid) }}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary diff-link">Diff</a>
+                    <a href="{{ url_for('diff_history_page', uuid=watch.uuid) }}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">Diff</a>
                     {% else %}
                         {% if watch.history_n == 1 or (watch.history_n ==0 and watch.error_text_ctime )%}
-                            <a href="{{ url_for('preview_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button button-small pure-button-primary">Preview</a>
+                            <a href="{{ url_for('preview_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary">Preview</a>
                         {% endif %}
                     {% endif %}
                 </td>
