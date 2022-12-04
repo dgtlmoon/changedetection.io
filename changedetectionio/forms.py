@@ -220,9 +220,10 @@ class ValidateJinja2Template(object):
                 f"The following tokens used in the notification are not valid: {undefined}"
             )
 
-        regex = re.compile('{.*?}')
+        regex = re.compile('{{(.*?)}}')
+        valid_tokens = list(notification.valid_tokens.keys())
         for p in re.findall(regex, field.data):
-            if not p.strip('{}') in notification.valid_tokens:
+            if not p.strip() in valid_tokens:
                 message = field.gettext('Token \'%s\' is not a valid token.')
                 raise ValidationError(message % (p))
             
