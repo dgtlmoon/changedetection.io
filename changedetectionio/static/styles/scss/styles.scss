@@ -53,6 +53,10 @@ button.toggle-theme {
 
   color: var(--color-icon-github);
 
+  &:hover {
+    color: var(--color-icon-github-hover);
+  }
+
   svg {
     fill: currentColor;
   }
