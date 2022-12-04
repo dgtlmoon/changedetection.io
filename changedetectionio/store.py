@@ -624,23 +624,25 @@ class ChangeDetectionStore:
         return
 
     # Convert old static notification tokens to jinja2 tokens
-    def update_11(self):
+    def update_10(self):
         # Each watch
         import re
+        # only { } not {{ or }}
+        r = r'(?<!{){(?!{)(\w+)(?<!})}(?!})'
         for uuid, watch in self.data['watching'].items():
             try:
                 n_body = watch.get('notification_body', '')
                 if n_body:
-                    watch['notification_body'] = re.sub(r'{(\w+)}{1}', '{{\g<1>}}', n_body)
+                    watch['notification_body'] = re.sub(r, '{{\g<1>}}', n_body)
 
                 n_title = watch.get('notification_title')
                 if n_title:
-                    self.data['settings']['application']['notification_title'] = re.sub(r'{(\w+)}{1}', '{{\g<1>}}', n_title)
+                    self.data['settings']['application']['notification_title'] = re.sub(r, '{{\g<1>}}', n_title)
 
                 n_urls = watch.get('notification_urls')
                 if n_urls:
                     for i, url in enumerate(n_urls):
-                        watch['notification_urls'][i] = re.sub(r'{(\w+)}{1}', '{{\g<1>}}', url)
+                        watch['notification_urls'][i] = re.sub(r, '{{\g<1>}}', url)
 
             except:
                 continue
@@ -648,15 +650,15 @@ class ChangeDetectionStore:
         # System wide
         n_body = self.data['settings']['application'].get('notification_body')
         if n_body:
-            self.data['settings']['application']['notification_body'] = re.sub(r'{(\w+)}{1}', '{{\g<1>}}', n_body)
+            self.data['settings']['application']['notification_body'] = re.sub(r, '{{\g<1>}}', n_body)
 
         n_title = self.data['settings']['application'].get('notification_title')
         if n_body:
-            self.data['settings']['application']['notification_title'] = re.sub(r'{(\w+)}{1}', '{{\g<1>}}', n_title)
+            self.data['settings']['application']['notification_title'] = re.sub(r, '{{\g<1>}}', n_title)
 
         n_urls =  self.data['settings']['application'].get('notification_urls')
         if n_urls:
             for i, url in enumerate(n_urls):
-                self.data['settings']['application']['notification_urls'][i] = re.sub(r'{(\w+)}{1}', '{{\g<1>}}', url)
+                self.data['settings']['application']['notification_urls'][i] = re.sub(r, '{{\g<1>}}', url)
 
         return
