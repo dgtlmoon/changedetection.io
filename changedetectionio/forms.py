@@ -207,9 +207,9 @@ class ValidateTokensList(object):
             if not p.strip('{}') in notification.valid_tokens:
                 message = field.gettext('Token \'%s\' is not a valid token.')
                 raise ValidationError(message % (p))
-            
+
 class validateURL(object):
-    
+
     """
        Flask wtform validators wont work with basic auth
     """
