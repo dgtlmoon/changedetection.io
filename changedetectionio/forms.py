@@ -221,9 +221,8 @@ class ValidateJinja2Template(object):
                 f"The following tokens used in the notification are not valid: {undefined}"
             )
 
-            
 class validateURL(object):
-    
+
     """
        Flask wtform validators wont work with basic auth
     """

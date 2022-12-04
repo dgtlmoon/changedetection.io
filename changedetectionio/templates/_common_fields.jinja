@@ -18,12 +18,13 @@
                                 <li><code>tgram://</code> only supports very limited HTML and can fail when extra tags are sent, <a href="https://core.telegram.org/bots/api#html-style">read more here</a> (or use plaintext/markdown format)</li>
                               </ul>
                             </div>
-                            <br/>
-                            <a id="send-test-notification" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Send test notification</a>
-{% if emailprefix %}
-                            <a id="add-email-helper" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Add email</a>
-{% endif %}
-                            <a href="{{url_for('notification_logs')}}" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Notification debug logs</a>
+                            <div class="notifications-wrapper">
+                              <a id="send-test-notification" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Send test notification</a>
+                            {% if emailprefix %}
+                              <a id="add-email-helper" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Add email</a>
+                            {% endif %}
+                              <a href="{{url_for('notification_logs')}}" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Notification debug logs</a>
+                            </div>
                         </div>
                         <div id="notification-customisation" class="pure-control-group">
                             <div class="pure-control-group">

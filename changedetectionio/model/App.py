@@ -27,6 +27,7 @@ class model(dict):
                     'base_url' : None,
                     'extract_title_as_title': False,
                     'empty_pages_are_a_change': False,
+                    'css_dark_mode': False,
                     'fetch_backend': getenv("DEFAULT_FETCH_BACKEND", "html_requests"),
                     'filter_failure_notification_threshold_attempts': _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT,
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum

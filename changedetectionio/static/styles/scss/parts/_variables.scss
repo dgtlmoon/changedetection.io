@@ -1,6 +1,7 @@
 /**
  * CSS custom properties (aka variables).
  */
+
 :root {
   --color-white: #fff;
   --color-grey-50: #111;
@@ -18,6 +19,7 @@
   --color-grey-850: #eee;
   --color-grey-900: #f2f2f2;
   --color-black: #000;
+
   --color-background-page: var(--color-grey-100);
   --color-background-gradient-first: #5ad8f7;
   --color-background-gradient-second: #2f50af;
@@ -37,6 +39,7 @@
   --color-background-tab-hover: rgba(255, 255, 255, 0.5);
   --color-text-tab-active: #222;
   --color-api-key: #0078e7;
+
   --color-background-button-primary: #0078e7;
   --color-background-button-green: #42dd53;
   --color-background-button-red: #dd4242;
@@ -53,45 +56,56 @@
   --color-error-text-snapshot-age: var(--color-white);
   --color-error-background-snapshot-age: #ff0000;
   --color-background-button-tag-active: #9c9c9c;
+
   --color-text-messages: var(--color-white);
   --color-background-messages-message: rgba(255, 255, 255, .2);
   --color-background-messages-error: rgba(255, 1, 1, .5);
   --color-background-messages-notice: rgba(255, 255, 255, .5);
   --color-border-notification: #ccc;
+
   --color-background-checkbox-operations: rgba(0, 0, 0, 0.05);
   --color-warning: #ff3300;
   --color-border-warning: var(--color-warning);
   --color-text-legend: var(--color-white);
+
   --color-link-new-version: #e07171;
   --color-last-checked: #bbb;
   --color-text-footer: #444;
   --color-border-watch-table-cell: #eee;
+
   --color-text-watch-tag-list: #e70069;
   --color-background-new-watch-form: rgba(0, 0, 0, 0.05);
   --color-background-new-watch-input: var(--color-white);
   --color-text-new-watch-input: var(--color-text);
+
   --color-border-input: var(--color-grey-500);
   --color-shadow-input: var(--color-grey-400);
   --color-background-input: var(--color-white);
   --color-text-input: var(--color-text);
   --color-text-input-description: var(--color-grey-500);
   --color-text-input-placeholder: var(--color-grey-600);
+
   --color-background-table-thead: var(--color-grey-800);
   --color-border-table-cell: var(--color-grey-700);
+
   --color-text-menu-heading: var(--color-grey-350);
   --color-text-menu-link: var(--color-grey-500);
   --color-background-menu-link-hover: var(--color-grey-850);
   --color-text-menu-link-hover: var(--color-grey-300);
+
   --color-shadow-jump: var(--color-grey-500);
   --color-icon-github: var(--color-black);
-  --color-icon-github-hover: var(--color-grey-300); }
+  --color-icon-github-hover: var(--color-grey-300);
+}
 
 html[data-darkmode="true"] {
   --color-link: #59bdfb;
   --color-text: var(--color-white);
+
   --color-background-gradient-first: #3f90a5;
   --color-background-gradient-second: #1e316c;
   --color-background-gradient-third: #4d2c64;
+
   --color-background-new-watch-input: var(--color-grey-100);
   --color-text-new-watch-input: var(--color-text);
   --color-background-table-thead: var(--color-grey-200);
@@ -102,106 +116,40 @@ html[data-darkmode="true"] {
   --color-text-menu-link: var(--color-grey-800);
   --color-border-table-cell: var(--color-grey-400);
   --color-text-tab-active: var(--color-text);
+
   --color-border-input: var(--color-grey-400);
   --color-shadow-input: var(--color-grey-50);
   --color-background-input: var(--color-grey-350);
   --color-text-input-description: var(--color-grey-600);
   --color-text-input-placeholder: var(--color-grey-600);
   --color-text-watch-tag-list: #fa3e92;
+
   --color-background-code: var(--color-grey-200);
+
   --color-background-tab: rgba(0, 0, 0, 0.2);
   --color-background-tab-hover: rgba(0, 0, 0, 0.5);
+
   --color-background-snapshot-age: var(--color-grey-200);
   --color-shadow-jump: var(--color-grey-200);
   --color-icon-github: var(--color-white);
-  --color-icon-github-hover: var(--color-grey-700); }
-  html[data-darkmode="true"] .watch-controls img {
-    opacity: 0.4; }
-  html[data-darkmode="true"] .icon-spread {
-    filter: hue-rotate(-10deg) brightness(1.5); }
-  html[data-darkmode="true"] .watch-table .title-col a[target="_blank"]::after,
-  html[data-darkmode="true"] .watch-table .current-diff-url::after {
-    filter: invert(0.5) hue-rotate(10deg) brightness(2); }
+  --color-icon-github-hover: var(--color-grey-700);
 
-#diff-ui {
-  background: var(--color-background);
-  padding: 2em;
-  margin-left: 1em;
-  margin-right: 1em;
-  border-radius: 5px;
-  font-size: 11px; }
-  #diff-ui table {
-    table-layout: fixed;
-    width: 100%; }
-  #diff-ui td {
-    padding: 3px 4px;
-    border: 1px solid transparent;
-    vertical-align: top;
-    font: 1em monospace;
-    text-align: left; }
-  #diff-ui pre {
-    white-space: pre-wrap; }
+  // Anything that can't be manipulated through variables follows.
+  .watch-controls {
+    img {
+      opacity: 0.4;
+    }
+  }
 
-h1 {
-  display: inline;
-  font-size: 100%; }
+  .icon-spread {
+    filter: hue-rotate(-10deg) brightness(1.5);
+  }
 
-del {
-  text-decoration: none;
-  color: #b30000;
-  background: #fadad7; }
+  .watch-table {
 
-ins {
-  background: #eaf2c2;
-  color: #406619;
-  text-decoration: none; }
-
-#result {
-  white-space: pre-wrap; }
-
-#settings {
-  background: rgba(0, 0, 0, 0.05);
-  padding: 1em;
-  border-radius: 10px;
-  margin-bottom: 1em;
-  color: #fff;
-  font-size: 80%; }
-  #settings label {
-    margin-left: 1em;
-    display: inline-block;
-    font-weight: normal; }
-  #settings del {
-    padding: 0.5em; }
-  #settings ins {
-    padding: 0.5em; }
-
-.source {
-  position: absolute;
-  right: 1%;
-  top: .2em; }
-
-@-moz-document url-prefix() {
-  body {
-    height: 99%;
-    /* Hide scroll bar in Firefox */ } }
-
-td#diff-col div {
-  text-align: justify;
-  white-space: pre-wrap; }
-
-.ignored {
-  background-color: #ccc;
-  /*  border: #0d91fa 1px solid; */
-  opacity: 0.7; }
-
-.triggered {
-  background-color: #1b98f8; }
-
-/* ignored and triggered? make it obvious error */
-.ignored.triggered {
-  background-color: #ff0000; }
-
-.tab-pane-inner#screenshot {
-  text-align: center; }
-  .tab-pane-inner#screenshot img {
-    max-width: 99%; }
+    .title-col a[target="_blank"]::after,
+    .current-diff-url::after {
+      filter: invert(.5) hue-rotate(10deg) brightness(2);
+    }
+  }
+}
