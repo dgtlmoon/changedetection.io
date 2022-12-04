@@ -239,11 +239,7 @@ def test_check_notification(client, live_server):
 def test_notification_validation(client, live_server):
     #live_server_setup(live_server)
     time.sleep(1)
-    # cleanup for the next
-    client.get(
-        url_for("form_delete", uuid="all"),
-        follow_redirects=True
-    )
+
     # re #242 - when you edited an existing new entry, it would not correctly show the notification settings
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
