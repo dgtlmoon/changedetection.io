@@ -214,12 +214,12 @@ render_field, render_checkbox_field, render_button %} {% from
             {{ render_field(form.method) }}
           </div>
           <div class="pure-control-group" id="request-headers">
-            {{ render_field(form.headers, rows=5, placeholder="Example Cookie:
-            foobar User-Agent: wonderbra 1.0") }}
+            {{ render_field(form.headers, rows=5, placeholder="Example
+Cookie: foobar User-Agent: wonderbra 1.0") }}
           </div>
           <div class="pure-control-group" id="request-body">
-            {{ render_field(form.body, rows=5, placeholder="Example {
-            \"name\":\"John\", \"age\":30, \"car\":null }") }}
+            {{ render_field(form.body, rows=5, placeholder="Example
+            {\"name\":\"John\", \"age\":30, \"car\":null }") }}
           </div>
         </fieldset>
       </div>
@@ -380,8 +380,8 @@ render_field, render_checkbox_field, render_button %} {% from
         </fieldset>
         <div class="pure-control-group">
           {% set field = render_field(form.include_filters, rows=5,
-          placeholder="#example xpath://body/div/span[contains(@class,
-          'example-class')]", class="m-d") %} {{ field }} {% if '/text()' in
+          placeholder="#example
+xpath://body/div/span[contains(@class, 'example-class')]", class="m-d") %} {{ field }} {% if '/text()' in
           field %}
           <span class="pure-form-message-inline"
             ><strong
@@ -475,8 +475,7 @@ render_field, render_checkbox_field, render_button %} {% from
           </span>
         </div>
         <fieldset class="pure-group">
-          {{ render_field(form.ignore_text, rows=5, placeholder="Some text to
-          ignore in a line /some.regex\d{2}/ for case-INsensitive regex ") }}
+          {{ render_field(form.ignore_text, rows=5, placeholder="Some text to ignore in a line /some.regex\d{2}/ for case-INsensitive regex ") }}
           <span class="pure-form-message-inline">
             <ul>
               <li>
@@ -497,8 +496,7 @@ render_field, render_checkbox_field, render_button %} {% from
         </fieldset>
         <fieldset>
           <div class="pure-control-group">
-            {{ render_field(form.trigger_text, rows=5, placeholder="Some text to
-            wait for in a line /some.regex\d{2}/ for case-INsensitive regex ")
+            {{ render_field(form.trigger_text, rows=5, placeholder="Some text to wait for in a line /some.regex\d{2}/ for case-INsensitive regex ")
             }}
             <span class="pure-form-message-inline">
               <ul>
@@ -524,8 +522,12 @@ render_field, render_checkbox_field, render_button %} {% from
         <fieldset>
           <div class="pure-control-group">
             {{ render_field(form.text_should_not_be_present, rows=5,
-            placeholder="For example: Out of stock Sold out Not in stock
-            Unavailable") }}
+            placeholder="For example:
+            
+Out of stock
+Sold out
+Not in stock
+Unavailable") }}
             <span class="pure-form-message-inline">
               <ul>
                 <li>
