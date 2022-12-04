@@ -203,7 +203,8 @@ def changedetection_app(config=None, datastore_o=None):
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
     def getDarkModeSetting():
-      return datastore.data['settings']['application'].get('css_dark_mode')
+      css_dark_mode = request.cookies.get('css_dark_mode')
+      return True if (css_dark_mode == 'true' or css_dark_mode == True) else False
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
@@ -1212,15 +1213,6 @@ def changedetection_app(config=None, datastore_o=None):
                     i += 1
         flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
-
-    @app.route("/toggle-darkmode-state", methods=['GET'])
-    @login_required
-    def toggle_darkmode_state():
-      current_mode = datastore.data['settings']['application'].get('css_dark_mode')
-      new_mode = not current_mode
-      datastore.data['settings']['application']['css_dark_mode'] = new_mode
-      datastore.needs_write = True
-      return ''
 
     @app.route("/form/checkbox-operations", methods=['POST'])
     @login_required
