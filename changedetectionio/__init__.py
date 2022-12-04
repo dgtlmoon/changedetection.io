@@ -203,7 +203,7 @@ def changedetection_app(config=None, datastore_o=None):
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
     def getDarkModeSetting():
-      return datastore.data['settings']['application']['css_dark_mode']
+      return datastore.data['settings']['application'].get('css_dark_mode')
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
