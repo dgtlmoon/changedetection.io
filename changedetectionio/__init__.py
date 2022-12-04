@@ -1216,7 +1216,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/toggle-theme", methods=['GET'])
     @login_required
     def toggle_theme():
-      current_mode = datastore.data['settings']['application']['css_dark_mode']
+      current_mode = datastore.data['settings']['application'].get('css_dark_mode')
       new_mode = not current_mode
       datastore.data['settings']['application']['css_dark_mode'] = new_mode
       return ''
