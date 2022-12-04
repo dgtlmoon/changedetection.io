@@ -227,8 +227,10 @@ html[data-darkmode="true"] {
     width: 80px;
     height: 80px;
     font-size: 3px; }
-  #browsersteps-selector-wrapper #browsersteps-click-start:hover {
-    cursor: pointer; }
+  #browsersteps-selector-wrapper #browsersteps-click-start {
+    color: var(--color-grey-400); }
+    #browsersteps-selector-wrapper #browsersteps-click-start:hover {
+      cursor: pointer; }
 
 .arrow {
   border: solid #1b98f8;
