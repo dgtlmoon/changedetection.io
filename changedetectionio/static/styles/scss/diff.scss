@@ -1,0 +1,117 @@
+@import "parts/variables.scss";
+
+#diff-ui {
+
+  background: var(--color-background);
+  padding: 2em;
+  margin-left: 1em;
+  margin-right: 1em;
+  border-radius: 5px;
+  font-size: 11px;
+
+  table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  td {
+    padding: 3px 4px;
+    border: 1px solid transparent;
+    vertical-align: top;
+    font: 1em monospace;
+    text-align: left;
+  }
+
+  pre {
+    white-space: pre-wrap;
+  }
+}
+
+h1 {
+  display: inline;
+  font-size: 100%;
+}
+
+del {
+  text-decoration: none;
+  color: #b30000;
+  background: #fadad7;
+}
+
+ins {
+  background: #eaf2c2;
+  color: #406619;
+  text-decoration: none;
+}
+
+#result {
+  white-space: pre-wrap;
+
+  .change {
+    span {}
+  }
+}
+
+#settings {
+  background: rgba(0, 0, 0, .05);
+  padding: 1em;
+  border-radius: 10px;
+  margin-bottom: 1em;
+  color: #fff;
+  font-size: 80%;
+
+  label {
+    margin-left: 1em;
+    display: inline-block;
+    font-weight: normal;
+  }
+
+  del {
+    padding: 0.5em;
+  }
+
+  ins {
+    padding: 0.5em;
+  }
+}
+
+.source {
+  position: absolute;
+  right: 1%;
+  top: .2em;
+}
+
+@-moz-document url-prefix() {
+  body {
+    height: 99%;
+    /* Hide scroll bar in Firefox */
+  }
+}
+
+td#diff-col div {
+  text-align: justify;
+  white-space: pre-wrap;
+}
+
+.ignored {
+  background-color: #ccc;
+  /*  border: #0d91fa 1px solid; */
+  opacity: 0.7;
+}
+
+.triggered {
+  background-color: #1b98f8;
+}
+
+/* ignored and triggered? make it obvious error */
+.ignored.triggered {
+  background-color: #ff0000;
+}
+
+.tab-pane-inner#screenshot {
+  text-align: center;
+
+  img {
+    max-width: 99%;
+  }
+}
