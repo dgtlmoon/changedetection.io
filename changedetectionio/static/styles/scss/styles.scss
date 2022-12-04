@@ -1,40 +1,105 @@
 /*
  * -- BASE STYLES --
- * Most of these are inherited from Base, but I want to change a few.
-nvm use v14.18.1 && npm install && npm run build
- * or npm run watch
  */
 
-@import "parts/spinners";
-@import "parts/browser-steps";
-@import "parts/_arrows.scss";
+@import "parts/_variables";
+@import "parts/_spinners";
+@import "parts/_browser-steps";
+@import "parts/_arrows";
 
 body {
-  color: #333;
-  background: #262626;
+  color: var(--color-text);
+  background: var(--color-background-page);
+}
+
+.visually-hidden {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 
 .pure-table-even {
-  background: #fff;
+  background: var(--color-background);
 }
 
 /* Some styles from https://css-tricks.com/ */
 a {
   text-decoration: none;
-  color: #1b98f8;
+  color: var(--color-link);
 }
 
 a.github-link {
-  color: #fff;
+  color: var(--color-icon-github);
+  margin: 0 1rem 0 0.5rem;
+
+  svg {
+    fill: currentColor;
+  }
+
+  &:hover {
+    color: var(--color-icon-github-hover);
+  }
+}
+
+button.toggle-theme {
+  width: 4rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+
+  color: var(--color-icon-github);
+
+  &:hover {
+    color: var(--color-icon-github-hover);
+  }
+
+  svg {
+    fill: currentColor;
+  }
+
+  .icon-light {
+    display: block;
+  }
+
+  .icon-dark {
+    display: none;
+  }
+
+  &.dark {
+    .icon-light {
+      display: none;
+    }
+
+    .icon-dark {
+      display: block;
+    }
+  }
 }
 
 .pure-menu-horizontal {
-  background: #fff;
+  background: var(--color-background);
   padding: 5px;
   display: flex;
   justify-content: space-between;
-  border-bottom: 2px solid #ed5900;
+  border-bottom: 2px solid var(--color-menu-accent);
   align-items: center;
+}
+
+.pure-menu-heading {
+  color: var(--color-text-menu-heading);
+}
+
+.pure-menu-link {
+  color: var(--color-text-menu-link);
+
+  &:hover {
+    background-color: var(--color-background-menu-link-hover);
+    color: var(--color-text-menu-link-hover);
+  }
 }
 
 section.content {
@@ -47,7 +112,8 @@ section.content {
 }
 
 code {
-  background: #eee;
+  background: var(--color-background-code);
+  color: var(--color-text);
 }
 
 /* table related */
@@ -60,7 +126,7 @@ code {
   }
 
   .error {
-    color: #a00;
+    color: var(--color-error);
   }
 
   td {
@@ -74,11 +140,14 @@ code {
 
   th {
     white-space: nowrap;
+
     a {
       font-weight: normal;
+
       &.active {
         font-weight: bolder;
       }
+
       &.inactive {
         .arrow {
           display: none;
@@ -87,14 +156,15 @@ code {
     }
   }
 
-  .title-col a[target="_blank"]::after, .current-diff-url::after {
+  .title-col a[target="_blank"]::after,
+  .current-diff-url::after {
     content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
     margin: 0 3px 0 5px;
   }
 }
 
 .watch-tag-list {
-  color: #e70069;
+  color: var(--color-text-watch-tag-list);
   white-space: nowrap;
 }
 
@@ -126,10 +196,11 @@ code {
 
 body:after {
   content: "";
-  background: linear-gradient(130deg, #5ad8f7, #2f50af 41.07%, #9150bf 84.05%);
+  background: linear-gradient(130deg, var(--color-background-gradient-first), var(--color-background-gradient-second) 41.07%, var(--color-background-gradient-third) 84.05%);
 }
 
-body:after, body:before {
+body:after,
+body:before {
   display: block;
   height: 650px;
   position: absolute;
@@ -149,7 +220,8 @@ body::before {
   background-size: cover
 }
 
-body:after, body:before {
+body:after,
+body:before {
   -webkit-clip-path: polygon(100% 0, 0 0, 0 77.5%, 1% 77.4%, 2% 77.1%, 3% 76.6%, 4% 75.9%, 5% 75.05%, 6% 74.05%, 7% 72.95%, 8% 71.75%, 9% 70.55%, 10% 69.3%, 11% 68.05%, 12% 66.9%, 13% 65.8%, 14% 64.8%, 15% 64%, 16% 63.35%, 17% 62.85%, 18% 62.6%, 19% 62.5%, 20% 62.65%, 21% 63%, 22% 63.5%, 23% 64.2%, 24% 65.1%, 25% 66.1%, 26% 67.2%, 27% 68.4%, 28% 69.65%, 29% 70.9%, 30% 72.15%, 31% 73.3%, 32% 74.35%, 33% 75.3%, 34% 76.1%, 35% 76.75%, 36% 77.2%, 37% 77.45%, 38% 77.5%, 39% 77.3%, 40% 76.95%, 41% 76.4%, 42% 75.65%, 43% 74.75%, 44% 73.75%, 45% 72.6%, 46% 71.4%, 47% 70.15%, 48% 68.9%, 49% 67.7%, 50% 66.55%, 51% 65.5%, 52% 64.55%, 53% 63.75%, 54% 63.15%, 55% 62.75%, 56% 62.55%, 57% 62.5%, 58% 62.7%, 59% 63.1%, 60% 63.7%, 61% 64.45%, 62% 65.4%, 63% 66.45%, 64% 67.6%, 65% 68.8%, 66% 70.05%, 67% 71.3%, 68% 72.5%, 69% 73.6%, 70% 74.65%, 71% 75.55%, 72% 76.35%, 73% 76.9%, 74% 77.3%, 75% 77.5%, 76% 77.45%, 77% 77.25%, 78% 76.8%, 79% 76.2%, 80% 75.4%, 81% 74.45%, 82% 73.4%, 83% 72.25%, 84% 71.05%, 85% 69.8%, 86% 68.55%, 87% 67.35%, 88% 66.2%, 89% 65.2%, 90% 64.3%, 91% 63.55%, 92% 63%, 93% 62.65%, 94% 62.5%, 95% 62.55%, 96% 62.8%, 97% 63.3%, 98% 63.9%, 99% 64.75%, 100% 65.7%);
   clip-path: polygon(100% 0, 0 0, 0 77.5%, 1% 77.4%, 2% 77.1%, 3% 76.6%, 4% 75.9%, 5% 75.05%, 6% 74.05%, 7% 72.95%, 8% 71.75%, 9% 70.55%, 10% 69.3%, 11% 68.05%, 12% 66.9%, 13% 65.8%, 14% 64.8%, 15% 64%, 16% 63.35%, 17% 62.85%, 18% 62.6%, 19% 62.5%, 20% 62.65%, 21% 63%, 22% 63.5%, 23% 64.2%, 24% 65.1%, 25% 66.1%, 26% 67.2%, 27% 68.4%, 28% 69.65%, 29% 70.9%, 30% 72.15%, 31% 73.3%, 32% 74.35%, 33% 75.3%, 34% 76.1%, 35% 76.75%, 36% 77.2%, 37% 77.45%, 38% 77.5%, 39% 77.3%, 40% 76.95%, 41% 76.4%, 42% 75.65%, 43% 74.75%, 44% 73.75%, 45% 72.6%, 46% 71.4%, 47% 70.15%, 48% 68.9%, 49% 67.7%, 50% 66.55%, 51% 65.5%, 52% 64.55%, 53% 63.75%, 54% 63.15%, 55% 62.75%, 56% 62.55%, 57% 62.5%, 58% 62.7%, 59% 63.1%, 60% 63.7%, 61% 64.45%, 62% 65.4%, 63% 66.45%, 64% 67.6%, 65% 68.8%, 66% 70.05%, 67% 71.3%, 68% 72.5%, 69% 73.6%, 70% 74.65%, 71% 75.55%, 72% 76.35%, 73% 76.9%, 74% 77.3%, 75% 77.5%, 76% 77.45%, 77% 77.25%, 78% 76.8%, 79% 76.2%, 80% 75.4%, 81% 74.45%, 82% 73.4%, 83% 72.25%, 84% 71.05%, 85% 69.8%, 86% 68.55%, 87% 67.35%, 88% 66.2%, 89% 65.2%, 90% 64.3%, 91% 63.55%, 92% 63%, 93% 62.65%, 94% 62.5%, 95% 62.55%, 96% 62.8%, 97% 63.3%, 98% 63.9%, 99% 64.75%, 100% 65.7%)
 }
@@ -165,51 +237,57 @@ body:after, body:before {
   display: block;
 }
 
+.pure-button-primary,
+a.pure-button-primary,
+.pure-button-selected,
+a.pure-button-selected {
+  background-color: var(--color-background-button-primary);
+}
 
 .button-secondary {
-  color: white;
+  color: var(--color-text-button);
   border-radius: 4px;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
 .button-success {
-  background: rgb(28, 184, 65);
-  /* this is a green */
+  background: var(--color-background-button-success);
 }
 
 .button-tag {
-  background: rgb(99, 99, 99);
-  color: #fff;
+  background: var(--color-background-button-tag);
+  color: var(--color-text-button);
   font-size: 65%;
   border-bottom-left-radius: initial;
   border-bottom-right-radius: initial;
 
   &.active {
-    background: #9c9c9c;
+    background: var(--color-background-button-tag-active);
     font-weight: bold;
   }
 
 }
 
 .button-error {
-  background: rgb(202, 60, 60);
-  /* this is a maroon */
+  background: var(--color-background-button-error);
+  color: var(--color-text-button-error);
 }
 
 .button-warning {
-  background: rgb(223, 117, 20);
-  /* this is an orange */
+  background: var(--color-background-button-warning);
+  color: var(--color-text-button-warning);
 }
 
 .button-secondary {
-  background: rgb(66, 184, 221);
-  /* this is a light blue */
+  background: var(--color-background-button-secondary);
 }
 
-
 .button-cancel {
-  background: rgb(200, 200, 200);
-  /* this is a green */
+  background: var(--color-background-button-cancel);
+}
+
+#save_button {
+  margin-right: 1rem;
 }
 
 .messages {
@@ -217,50 +295,56 @@ body:after, body:before {
     list-style: none;
     padding: 1em;
     border-radius: 10px;
-    color: #fff;
+    color: var(--color-text-messages);
     font-weight: bold;
 
     &.message {
-      background: rgba(255, 255, 255, .2);
+      background: var(--color-background-messages-message);
     }
 
     &.error {
-      background: rgba(255, 1, 1, .5);
+      background: var(--color-background-messages-error);
     }
 
     &.notice {
-      background: rgba(255, 255, 255, .5);
+      background: var(--color-background-messages-notice);
     }
   }
 
   &.with-share-link {
-    > *:hover {
+    >*:hover {
       cursor: pointer;
     }
   }
 }
 
+.notifications-wrapper {
+  padding: 0.5rem 0 1rem 0;
+}
+
 #notification-customisation {
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-border-notification);
   padding: 0.5rem;
   border-radius: 5px;
 }
 
 #notification-error-log {
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-border-notification);
   padding: 1rem;
   border-radius: 5px;
   overflow-wrap: break-word;
 }
 
 #token-table {
-  &.pure-table td, &.pure-table th {
+
+  &.pure-table td,
+  &.pure-table th {
     font-size: 80%;
   }
 }
 
 #new-watch-form {
-  background: rgba(0, 0, 0, .05);
+  background: var(--color-background-new-watch-form);
   padding: 1em;
   border-radius: 10px;
   margin-bottom: 1em;
@@ -270,19 +354,25 @@ body:after, body:before {
     margin-bottom: 5px;
   }
 
+  input:not(.pure-button) {
+    background-color: var(--color-background-new-watch-input);
+    color: var(--color-text-new-watch-input);
+  }
+
   .label {
     display: none;
   }
 
   legend {
-    color: #fff;
+    color: var(--color-text-legend);
     font-weight: bold;
   }
 
   #watch-add-wrapper-zone {
-    > div {
+    >div {
       display: inline-block;
     }
+
     @media only screen and (max-width: 760px) {
       #url {
         width: 100%;
@@ -300,15 +390,15 @@ body:after, body:before {
   position: fixed;
   left: 0px;
   top: 120px;
-  background: #fff;
+  background: var(--color-background);
   padding: 10px;
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
-  box-shadow: 5px 0 5px -2px #888;
+  box-shadow: 1px 1px 4px var(--color-shadow-jump);
 
   a {
-    color: #1b98f8;
-    cursor: grabbing;
+    color: var(--color-link);
+    cursor: pointer;
     -moz-user-select: none;
     -webkit-user-select: none;
     -ms-user-select: none;
@@ -319,8 +409,8 @@ body:after, body:before {
 
 footer {
   padding: 10px;
-  background: #fff;
-  color: #444;
+  background: var(--color-background);
+  color: var(--color-text-footer);
   text-align: center;
 }
 
@@ -343,7 +433,7 @@ footer {
   position: absolute;
   top: 60px;
   font-size: 65%;
-  background: #fff;
+  background: var(--color-background);
   padding: 10px;
 
   &#left-sticky {
@@ -362,10 +452,12 @@ footer {
 }
 
 #new-version-text a {
-  color: #e07171;
+  color: var(--color-link-new-version);
 }
 
 .watch-controls {
+  color: #f8321b;
+
   .state-on {
     img {
       opacity: 0.8;
@@ -383,7 +475,6 @@ footer {
       opacity: 0.8;
     }
   }
-
 }
 
 .monospaced-textarea {
@@ -392,7 +483,8 @@ footer {
     font-family: monospace;
     white-space: pre;
     overflow-wrap: normal;
-    overflow-x: scroll;
+    // No scrollbars until needed.
+    overflow-x: auto;
   }
 }
 
@@ -407,7 +499,9 @@ footer {
     }
   }
 
-  .pure-control-group, .pure-group, .pure-controls {
+  .pure-control-group,
+  .pure-group,
+  .pure-controls {
     padding-bottom: 1em;
 
     div {
@@ -415,28 +509,32 @@ footer {
     }
 
     .checkbox {
-      > * {
+      >* {
         display: inline;
         vertical-align: middle;
       }
 
-      > label {
+      >label {
         padding-left: 5px;
       }
+    }
+
+    legend {
+      color: var(--color-text-legend);
     }
   }
 
   /* The input fields with errors */
   .error {
     input {
-      background-color: #ffebeb;
+      background-color: var(--color-error-input);
     }
   }
 
   /* The list of errors */
   ul.errors {
     padding: .5em .6em;
-    border: 1px solid #dd0000;
+    border: 1px solid var(--color-error-list);
     border-radius: 4px;
     vertical-align: middle;
     -webkit-box-sizing: border-box;
@@ -444,7 +542,7 @@ footer {
 
     li {
       margin-left: 1em;
-      color: #dd0000;
+      color: var(--color-error-list);
     }
   }
 
@@ -462,7 +560,7 @@ footer {
       list-style: none;
 
       li {
-        > * {
+        >* {
           display: inline-block;
         }
       }
@@ -471,21 +569,25 @@ footer {
 }
 
 
-@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
+@media only screen and (max-width: 760px),
+(min-device-width: 768px) and (max-device-width: 1024px) {
   .box {
     max-width: 95%
   }
+
   .edit-form {
     padding: 0.5em;
     margin: 0;
   }
+
   #nav-menu {
     overflow-x: scroll;
   }
 }
 
 
-@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 800px) {
+@media only screen and (max-width: 760px),
+(min-device-width: 768px) and (max-device-width: 800px) {
 
   div.sticky-tab#hosted-sticky {
     top: 60px;
@@ -514,24 +616,29 @@ footer {
   and also iPads specifically.
   */
   .watch-table {
+
     /* Force table to not be like tables anymore */
-    thead, tbody, th, td, tr {
+    thead,
+    tbody,
+    th,
+    td,
+    tr {
       display: block;
     }
 
     .last-checked {
-      > span {
+      >span {
         vertical-align: middle;
       }
     }
 
     .last-checked::before {
-      color: #555;
+      color: var(--color-last-checked);
       content: "Last Checked ";
     }
 
     .last-changed::before {
-      color: #555;
+      color: var(--color-last-checked);
       content: "Last Changed ";
     }
 
@@ -547,15 +654,17 @@ footer {
       left: -9999px;
     }
 
-    .pure-table td, .pure-table th {
+    .pure-table td,
+    .pure-table th {
       border: none;
     }
 
     td {
       /* Behave  like a "row" */
       border: none;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid var(--color-border-watch-table-cell);
       vertical-align: middle;
+
       &:before {
         /* Top/left values mimic padding */
         top: 6px;
@@ -568,11 +677,11 @@ footer {
 
     &.pure-table-striped {
       tr {
-        background-color: #fff;
+        background-color: var(--color-table-background);
       }
 
       tr:nth-child(2n-1) {
-        background-color: #eee;
+        background-color: var(--color-table-stripe);
       }
 
       tr:nth-child(2n-1) td {
@@ -583,12 +692,66 @@ footer {
   }
 }
 
+.pure-table {
+  border-color: var(--color-border-table-cell);
+
+  thead {
+    background-color: var(--color-background-table-thead);
+    color: var(--color-text);
+  }
+
+  td,
+  th {
+    border-left-color: var(--color-border-table-cell);
+  }
+}
+
+.pure-table-striped {
+  tr:nth-child(2n-1) {
+    td {
+      background-color: var(--color-table-stripe);
+    }
+  }
+}
+
+.pure-form input[type=color],
+.pure-form input[type=date],
+.pure-form input[type=datetime-local],
+.pure-form input[type=datetime],
+.pure-form input[type=email],
+.pure-form input[type=month],
+.pure-form input[type=number],
+.pure-form input[type=password],
+.pure-form input[type=search],
+.pure-form input[type=tel],
+.pure-form input[type=text],
+.pure-form input[type=time],
+.pure-form input[type=url],
+.pure-form input[type=week],
+.pure-form select,
+.pure-form textarea {
+  border: var(--color-border-input);
+  box-shadow: inset 0 1px 3px var(--color-shadow-input);
+  background-color: var(--color-background-input);
+  color: var(--color-text-input);
+
+  &:active {
+    background-color: var(--color-background-input);
+  }
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-input-placeholder);
+}
+
 
 /** Desktop vs mobile input field strategy
 - We dont use 'size' with <input> because `size` is too unreliable to override, and will often push-out
 - Rely always on width in CSS
 */
 @media only screen and (min-width: 761px) {
+
   /* m-d is medium-desktop */
   .m-d {
     min-width: 80%;
@@ -605,20 +768,23 @@ footer {
     li {
       margin-right: 3px;
       display: inline-block;
-      color: #fff;
+      color: var(--color-text-tab);
       border-top-left-radius: 5px;
       border-top-right-radius: 5px;
-      background-color: rgba(255, 255, 255, 0.2);
+      background-color: var(--color-background-tab);
+
       &:not(.active) {
         &:hover {
-          background-color: rgba(255, 255, 255, 0.5);
+          background-color: var(--color-background-tab-hover);
         }
       }
-      &.active, :target {
-        background-color: #fff;
+
+      &.active,
+      :target {
+        background-color: var(--color-background);
 
         a {
-          color: #222;
+          color: var(--color-text-tab-active);
           font-weight: bold;
         }
       }
@@ -626,22 +792,24 @@ footer {
       a {
         display: block;
         padding: 0.8em;
-        color: #fff;
+        color: var(--color-text-tab);
       }
     }
   }
 }
 
 $form-edge-padding: 20px;
+
 .pure-form-stacked {
-  > div:first-child {
+  >div:first-child {
     display: block;
   }
 }
 
 .login-form {
   .inner {
-    background: #fff;;
+    background: var(--color-background);
+    ;
     padding: $form-edge-padding;
     border-radius: 5px;
   }
@@ -671,11 +839,13 @@ $form-edge-padding: 20px;
 #selector-header {
   padding-bottom: 1em;
 }
+
 body.full-width {
   .edit-form {
     width: 95%;
   }
 }
+
 .edit-form {
   min-width: 70%;
   /* so it cant overflow */
@@ -686,17 +856,18 @@ body.full-width {
   }
 
   .inner {
-    background: #fff;;
+    background: var(--color-background);
     padding: $form-edge-padding;
   }
 
   #actions {
     display: block;
-    background: #fff;
+    background: var(--color-background);
   }
 
   .pure-form-message-inline {
     padding-left: 0;
+    color: var(--color-text-input-description);
   }
 }
 
@@ -720,14 +891,15 @@ ul {
   height: 100%;
   overflow-y: scroll;
   position: relative;
+
   //width: 100%;
-  > img {
+  >img {
     position: absolute;
     z-index: 4;
     max-width: 100%;
   }
 
-  > canvas {
+  >canvas {
     position: relative;
     z-index: 5;
     max-width: 100%;
@@ -755,54 +927,61 @@ ul {
 }
 
 #api-key-copy {
-  color: #0078e7;
+  color: var(--color-api-key);
 }
 
 .button-green {
-  background-color: #42dd53;
+  background-color: var(--color-background-button-green);
 }
 
 .button-red {
-  background-color: #dd4242;
+  background-color: var(--color-background-button-red);
 }
 
 .noselect {
-  -webkit-touch-callout: none; /* iOS Safari */
-  -webkit-user-select: none; /* Safari */
-  -moz-user-select: none; /* Old versions of Firefox */
-  -ms-user-select: none; /* Internet Explorer/Edge */
+  -webkit-touch-callout: none;
+  /* iOS Safari */
+  -webkit-user-select: none;
+  /* Safari */
+  -moz-user-select: none;
+  /* Old versions of Firefox */
+  -ms-user-select: none;
+  /* Internet Explorer/Edge */
   user-select: none;
   /* Non-prefixed version, currently
-                                   supported by Chrome, Edge, Opera and Firefox */
+    supported by Chrome, Edge, Opera and Firefox */
 }
 
 .snapshot-age {
   padding: 4px;
-  background-color: #dfdfdf;
+  margin: 0.5rem 0;
+  background-color: var(--color-background-snapshot-age);
   border-radius: 3px;
   font-weight: bold;
   margin-bottom: 4px;
+
   &.error {
-    background-color: #ff0000;
-    color: #fff;
+    background-color: var(--color-error-background-snapshot-age);
+    color: var(--color-error-text-snapshot-age);
   }
 }
 
 #checkbox-operations {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--color-background-checkbox-operations);
   padding: 1em;
   border-radius: 10px;
   margin-bottom: 1em;
   display: none;
 }
+
 .checkbox-uuid {
-  > * {
+  >* {
     vertical-align: middle;
   }
 }
 
 .inline-warning {
-  > span {
+  >span {
     display: inline-block;
     vertical-align: middle;
   }
@@ -813,8 +992,8 @@ ul {
     vertical-align: middle;
   }
 
-  border: 1px solid #ff3300;
+  border: 1px solid var(--color-border-warning);
   padding: 0.5rem;
   border-radius: 5px;
-  color: #ff3300;
+  color: var(--color-warning);
 }
