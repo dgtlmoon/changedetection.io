@@ -624,7 +624,7 @@ class ChangeDetectionStore:
         return
 
     # Convert old static notification tokens to jinja2 tokens
-    def update_10(self):
+    def update_11(self):
         # Each watch
         import re
         # only { } not {{ or }}
