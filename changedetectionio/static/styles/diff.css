@@ -84,7 +84,7 @@
   --color-text-menu-link-hover: var(--color-grey-300);
   --color-shadow-jump: var(--color-grey-500);
   --color-icon-github: var(--color-black);
-  --color-icon-github-hover: var(--color-white); }
+  --color-icon-github-hover: var(--color-grey-300); }
 
 html[data-darkmode="true"] {
   --color-link: #59bdfb;
@@ -114,7 +114,7 @@ html[data-darkmode="true"] {
   --color-background-snapshot-age: var(--color-grey-200);
   --color-shadow-jump: var(--color-grey-200);
   --color-icon-github: var(--color-white);
-  --color-icon-github-hover: var(--color-black); }
+  --color-icon-github-hover: var(--color-grey-700); }
   html[data-darkmode="true"] .watch-controls img {
     opacity: 0.4; }
   html[data-darkmode="true"] .icon-spread {
