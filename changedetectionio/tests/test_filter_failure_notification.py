@@ -66,7 +66,7 @@ def run_filter_test(client, content_filter):
                                                    "Diff URL: {{diff_url}}\n"
                                                    "Snapshot: {{current_snapshot}}\n"
                                                    "Diff: {{diff}}\n"
-                                                   "Diff Full: {{diff_full}\n"
+                                                   "Diff Full: {{diff_full}}\n"
                                                    ":-)",
                               "notification_format": "Text"}
 
@@ -84,6 +84,7 @@ def run_filter_test(client, content_filter):
         data=notification_form_data,
         follow_redirects=True
     )
+
     assert b"Updated watch." in res.data
     time.sleep(3)
 
