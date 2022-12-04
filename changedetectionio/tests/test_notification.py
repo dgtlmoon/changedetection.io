@@ -304,5 +304,3 @@ def test_notification_validation(client, live_server):
         url_for("form_delete", uuid="all"),
         follow_redirects=True
     )
-
-    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
