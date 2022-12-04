@@ -179,24 +179,6 @@ def test_check_notification(client, live_server):
         logging.debug(">>> Skipping BASE_URL check")
 
 
-    ##  Now configure something clever, we go into custom config (non-default) mode, this is returned by the endpoint
-    with open("test-datastore/endpoint-content.txt", "w") as f:
-        f.write(";jasdhflkjadshf kjhsdfkjl ahslkjf haslkjd hfaklsj hf\njl;asdhfkasj stuff we will detect\n")
-
-    res = client.post(
-        url_for("settings_page"),
-        data={"application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
-              "application-notification_urls": "json://foobar.com", #Re #143 should not see that it sent without [test checkbox]
-              "application-minutes_between_check": 180,
-              "application-fetch_backend": "html_requests",
-              },
-        follow_redirects=True
-    )
-    assert b"Settings updated." in res.data
-    # Re #143 - should not see this if we didnt hit the test box
-    assert b"Notifications queued" not in res.data
-
-
     # This should insert the {current_snapshot}
     set_more_modified_response()
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
