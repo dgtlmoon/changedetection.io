@@ -77,7 +77,8 @@ def test_DNS_errors(client, live_server):
     time.sleep(3)
 
     res = client.get(url_for("index"))
-    assert b'Name or service not known' in res.data
+    found_name_resolution_error = b"Temporary failure in name resolution" in res.data or b"Name or service not known" in res.data
+    assert found_name_resolution_error
     # Should always record that we tried
     assert bytes("just now".encode('utf-8')) in res.data
 
