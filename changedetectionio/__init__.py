@@ -814,10 +814,11 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def diff_history_page(uuid):
 
+        from changedetectionio import forms
+
         # More for testing, possible to return the first/only
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
-
 
         extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
         try:
@@ -827,21 +828,26 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         # For submission of requesting an extract
+        extract_form = forms.extractDataForm(request.form)
         if request.method == 'POST':
-            extract_regex = request.form.get('extract_regex').strip()
-            output = watch.extract_regex_from_all_history(extract_regex)
-            if output:
-                watch_dir = os.path.join(datastore_o.datastore_path, uuid)
-                response = make_response(send_from_directory(directory=watch_dir, path=output, as_attachment=True))
-                response.headers['Content-type'] = 'text/csv'
-                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-                response.headers['Pragma'] = 'no-cache'
-                response.headers['Expires'] = 0
-                return response
+            if not extract_form.validate():
+                flash("An error occurred, please see below.", "error")
+
+            else:
+                extract_regex = request.form.get('extract_regex').strip()
+                output = watch.extract_regex_from_all_history(extract_regex)
+                if output:
+                    watch_dir = os.path.join(datastore_o.datastore_path, uuid)
+                    response = make_response(send_from_directory(directory=watch_dir, path=output, as_attachment=True))
+                    response.headers['Content-type'] = 'text/csv'
+                    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                    response.headers['Pragma'] = 'no-cache'
+                    response.headers['Expires'] = 0
+                    return response
 
 
-            flash('Nothing matches that RegEx', 'error')
-            redirect(url_for('diff_history_page', uuid=uuid)+'#extract')
+                flash('Nothing matches that RegEx', 'error')
+                redirect(url_for('diff_history_page', uuid=uuid)+'#extract')
 
         history = watch.history
         dates = list(history.keys())
@@ -883,9 +889,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
                     watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
-
-        from changedetectionio import forms
-        extract_form = forms.extractDataForm(request.form)
 
         output = render_template("diff.html",
                                  current_diff_url=watch['url'],
