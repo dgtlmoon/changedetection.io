@@ -240,7 +240,8 @@ def test_check_notification(client, live_server):
 
 def test_notification_validation(client, live_server):
     #live_server_setup(live_server)
-    time.sleep(3)
+    time.sleep(1)
+
     # re #242 - when you edited an existing new entry, it would not correctly show the notification settings
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -290,3 +291,55 @@ def test_notification_validation(client, live_server):
     )
 
 
+def test_notification_jinja2(client, live_server):
+    #live_server_setup(live_server)
+    time.sleep(1)
+
+    # test_endpoint - that sends the contents of a file
+    # test_notification_endpoint - that takes a POST and writes it to file (test-datastore/notification.txt)
+
+    # CUSTOM JSON BODY CHECK for POST://
+    set_original_response()
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}"
+
+    res = client.post(
+        url_for("settings_page"),
+        data={"application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
+              "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444 }',
+              # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
+              "application-notification_urls": test_notification_url,
+              "application-minutes_between_check": 180,
+              "application-fetch_backend": "html_requests"
+              },
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+    # Add a watch and trigger a HTTP POST
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url, "tag": 'nice one'},
+        follow_redirects=True
+    )
+
+    assert b"Watch added" in res.data
+
+    time.sleep(2)
+    set_modified_response()
+
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    time.sleep(2)
+
+    with open("test-datastore/notification.txt", 'r') as f:
+        x=f.read()
+        j = json.loads(x)
+        assert j['url'].startswith('http://localhost')
+        assert j['secret'] == 444
+
+    # URL check, this will always be converted to lowercase
+    assert os.path.isfile("test-datastore/notification-url.txt")
+    with open("test-datastore/notification-url.txt", 'r') as f:
+        notification_url = f.read()
+        assert 'xxx=http' in notification_url
+    os.unlink("test-datastore/notification-url.txt")
