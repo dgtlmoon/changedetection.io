@@ -451,6 +451,5 @@ class globalSettingsForm(Form):
 
 
 class extractDataForm(Form):
-    extract_regex = StringField('RegEx to extract')
+    extract_regex = StringField('RegEx to extract', validators=[validators.Length(min=1, message="Needs a RegEx")])
     extract_submit_button = SubmitField('Extract as CSV', render_kw={"class": "pure-button pure-button-primary"})
-
