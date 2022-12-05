@@ -24,22 +24,23 @@ def test_check_extract_text_from_diff(client, live_server):
     )
 
     assert b"1 Imported" in res.data
-    time.sleep(2)
+    time.sleep(1)
 
     # Load in 5 different numbers/changes
+    last_date=""
     for n in range(5):
         # Give the thread time to pick it up
-        wait_for_all_checks(client)
-
+        print("Bumping snapshot and checking.. ", n)
+        last_date = str(time.time())
         with open("test-datastore/endpoint-content.txt", "w") as f:
-            f.write("Now it's {} seconds since epoch, time flies!".format(str(time.time())))
+            f.write("Now it's {} seconds since epoch, time flies!".format(last_date))
 
         client.get(url_for("form_watch_checknow"), follow_redirects=True)
-
+        wait_for_all_checks(client)
 
     res = client.post(
         url_for("diff_history_page", uuid="first"),
-        data={"extract_regex": "Now it's ([0-9]+)",
+        data={"extract_regex": "Now it's ([0-9\.]+)",
               "extract_submit_button": "Extract as CSV"},
         follow_redirects=False
     )
@@ -59,5 +60,11 @@ def test_check_extract_text_from_diff(client, live_server):
         output.append(row)
 
     assert output[0][0] == 'Epoch seconds'
-    # Header line + 5 outputs
-    assert(len(output) == 6)
+
+    # Header line + 1 origin/first + 5 changes
+    assert(len(output) == 7)
+
+    # We expect to find the last bumped date in the changes in the last field of the spreadsheet
+    assert(output[6][2] == last_date)
+    # And nothing else, only that group () of the decimal and .
+    assert "time flies" not in output[6][2]
