@@ -327,8 +327,8 @@ class model(dict):
         csv_writer = False
         f = None
 
-        for k, v in self.history.items():
-            fname = os.path.join(self.watch_data_dir, v)
+        # self.history will be keyed with the full path
+        for k, fname in self.history.items():
             if os.path.isfile(fname):
                 with open(fname, "r") as f:
                     contents = f.read()
