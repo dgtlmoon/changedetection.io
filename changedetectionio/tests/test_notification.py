@@ -302,8 +302,8 @@ def test_notification_validation(client, live_server):
         follow_redirects=True
     )
 
-def test_notification_jinaj2(client, live_server):
-    live_server_setup(live_server)
+def test_notification_jinja2(client, live_server):
+    #live_server_setup(live_server)
     time.sleep(1)
 
     # test_endpoint - that sends the contents of a file
