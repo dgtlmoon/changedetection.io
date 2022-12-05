@@ -125,6 +125,8 @@ html[data-darkmode="true"] {
     opacity: 0.4; }
   html[data-darkmode="true"] .watch-table .unviewed {
     color: #fff; }
+    html[data-darkmode="true"] .watch-table .unviewed.error {
+      color: var(--color-watch-table-error); }
   html[data-darkmode="true"] .icon-spread {
     filter: hue-rotate(-10deg) brightness(1.5); }
   html[data-darkmode="true"] .watch-table .title-col a[target="_blank"]::after,
