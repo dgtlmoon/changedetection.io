@@ -13,6 +13,7 @@ def test_check_notification_error_handling(client, live_server):
     # Give the endpoint time to spin up
     time.sleep(2)
 
+    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
 
     # Set a URL and fetch it, then set a notification URL which is going to give errors
     test_url = url_for('test_endpoint', _external=True)
@@ -25,7 +26,7 @@ def test_check_notification_error_handling(client, live_server):
 
     time.sleep(2)
     set_modified_response()
-    # Check we capture the failure, we can just use trigger_check = y here
+
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"notification_urls": "jsons://broken-url-xxxxxxxx123/test",
@@ -37,15 +38,14 @@ def test_check_notification_error_handling(client, live_server):
               "title": "",
               "headers": "",
               "time_between_check-minutes": "180",
-              "fetch_backend": "html_requests",
-              "trigger_check": "y"},
+              "fetch_backend": "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
 
     found=False
     for i in range(1, 10):
-        time.sleep(1)
+
         logging.debug("Fetching watch overview....")
         res = client.get(
             url_for("index"))
@@ -54,6 +54,7 @@ def test_check_notification_error_handling(client, live_server):
             found=True
             break
 
+        time.sleep(1)
 
     assert found
 
@@ -61,7 +62,6 @@ def test_check_notification_error_handling(client, live_server):
     # The error should show in the notification logs
     res = client.get(
         url_for("notification_logs"))
-    assert bytes("Name or service not known".encode('utf-8')) in res.data
+    assert b"Name or service not known" in res.data
 
     client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
-    
