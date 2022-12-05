@@ -13,8 +13,6 @@ def test_check_notification_error_handling(client, live_server):
     # Give the endpoint time to spin up
     time.sleep(2)
 
-    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
-
     # Set a URL and fetch it, then set a notification URL which is going to give errors
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -62,6 +60,7 @@ def test_check_notification_error_handling(client, live_server):
     # The error should show in the notification logs
     res = client.get(
         url_for("notification_logs"))
-    assert b"Name or service not known" in res.data
+    found_name_resolution_error = b"Temporary failure in name resolution" or b"Name or service not known" in res.data
+    assert found_name_resolution_error
 
     client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
