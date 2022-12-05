@@ -237,6 +237,7 @@ def test_check_notification(client, live_server):
     )
 
 def test_notification_validation(client, live_server):
+
     time.sleep(1)
 
     # re #242 - when you edited an existing new entry, it would not correctly show the notification settings
@@ -266,43 +267,15 @@ def test_notification_validation(client, live_server):
 #    )
 #    assert b"Notification Body and Title is required when a Notification URL is used" in res.data
 
-    # Now adding a wrong token should give us an error
-# Disabled for now
-#    res = client.post(
-#        url_for("settings_page"),
-#        data={"application-notification_title": "New ChangeDetection.io Notification - {{watch_url}}",
-#              "application-notification_body": "Rubbish: {{rubbish}}\n",
-#              "application-notification_format": "Text",
-#              "application-notification_urls": "json://localhost/foobar",
-#              "requests-time_between_check-minutes": 180,
-#              "fetch_backend": "html_requests"
-#              },
-#        follow_redirects=True
-#    )
-#    assert bytes("Token 'rubbish' is not a valid token or is unknown".encode('utf-8')) in res.data
-
-    # And trying to define an invalid Jinja2 template should also throw an error
-    res = client.post(
-        url_for("settings_page"),
-        data={"application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
-              "application-notification_body": "Rubbish: {{ rubbish }\n",
-              "application-notification_urls": "json://foobar.com",
-              "application-minutes_between_check": 180,
-              "application-fetch_backend": "html_requests"
-              },
-        follow_redirects=True
-    )
-    assert bytes("This is not a valid Jinja2 template".encode('utf-8')) in res.data
-
-
     # cleanup for the next
     client.get(
         url_for("form_delete", uuid="all"),
         follow_redirects=True
     )
 
-def test_notification_jinja2(client, live_server):
-    #live_server_setup(live_server)
+
+
+def test_notification_custom_endpoint_and_jinja2(client, live_server):
     time.sleep(1)
 
     # test_endpoint - that sends the contents of a file
@@ -341,6 +314,7 @@ def test_notification_jinja2(client, live_server):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(2)
 
+
     with open("test-datastore/notification.txt", 'r') as f:
         x=f.read()
         j = json.loads(x)
@@ -352,4 +326,6 @@ def test_notification_jinja2(client, live_server):
     with open("test-datastore/notification-url.txt", 'r') as f:
         notification_url = f.read()
         assert 'xxx=http' in notification_url
+
     os.unlink("test-datastore/notification-url.txt")
+

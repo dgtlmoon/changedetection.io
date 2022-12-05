@@ -101,9 +101,6 @@ def test_check_ignore_text_functionality(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
@@ -198,9 +195,6 @@ def test_check_global_ignore_text_functionality(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)

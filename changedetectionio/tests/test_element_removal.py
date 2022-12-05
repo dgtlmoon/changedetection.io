@@ -121,7 +121,7 @@ def test_element_removal_full(client, live_server):
         url_for("import_page"), data={"urls": test_url}, follow_redirects=True
     )
     assert b"1 Imported" in res.data
-
+    time.sleep(1)
     # Goto the edit page, add the filter data
     # Not sure why \r needs to be added - absent of the #changetext this is not necessary
     subtractive_selectors_data = "header\r\nfooter\r\nnav\r\n#changetext"
