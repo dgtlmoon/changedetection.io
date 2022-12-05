@@ -301,3 +301,45 @@ def test_notification_validation(client, live_server):
         url_for("form_delete", uuid="all"),
         follow_redirects=True
     )
+
+def test_notification_jinaj2(client, live_server):
+    live_server_setup(live_server)
+    time.sleep(1)
+
+    # test_endpoint - that sends the contents of a file
+    # test_notification_endpoint - that takes a POST and writes it to file (test-datastore/notification.txt)
+
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'json://')
+    res = client.post(
+        url_for("settings_page"),
+        data={"application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
+              "application-notification_body": "Got {{ watch_url }}\n",
+              # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
+              "application-notification_urls": test_notification_url+"?-XXX={{ watch_url }}",
+              "application-minutes_between_check": 180,
+              "application-fetch_backend": "html_requests"
+              },
+        follow_redirects=True
+    )
+
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url, "tag": 'nice one'},
+        follow_redirects=True
+    )
+
+    assert b"Watch added" in res.data
+    time.sleep(2)
+    set_more_modified_response()
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    time.sleep(3)
+
+
+    assert os.path.isfile("test-datastore/notification-url.txt")
+
+    with open("test-datastore/notification-url.txt", 'r') as f:
+        notification = f.read()
+
+    assert 'XXX=http' in notification
+    os.unlink("test-datastore/notification-url.txt")

@@ -30,7 +30,6 @@ valid_notification_formats = {
 
 def process_notification(n_object, datastore):
 
-
     # Insert variables into the notification content
     notification_parameters = create_notification_parameters(n_object, datastore)
 
@@ -50,6 +49,7 @@ def process_notification(n_object, datastore):
     sent_objs=[]
     from .apprise_asset import asset
     for url in n_object['notification_urls']:
+        url = jinja2_env.from_string(url).render(**notification_parameters)
         apobj = apprise.Apprise(debug=True, asset=asset)
         url = url.strip()
         if len(url):
