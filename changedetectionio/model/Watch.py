@@ -332,7 +332,7 @@ class model(dict):
             if os.path.isfile(fname):
                 with open(fname, "r") as f:
                     contents = f.read()
-                    res = re.findall(regex, contents)
+                    res = re.findall(regex, contents, re.MULTILINE)
                     if res:
                         if not csv_writer:
                             # A file on the disk can be transferred much faster via flask than a string reply
