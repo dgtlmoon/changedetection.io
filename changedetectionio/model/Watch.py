@@ -318,3 +318,47 @@ class model(dict):
         if os.path.isfile(fname):
             return fname
         return False
+
+    def extract_regex_from_all_history(self, regex):
+        import csv
+        import re
+        import datetime
+        csv_output_filename = False
+        csv_writer = False
+        f = None
+
+        # self.history will be keyed with the full path
+        for k, fname in self.history.items():
+            if os.path.isfile(fname):
+                with open(fname, "r") as f:
+                    contents = f.read()
+                    res = re.findall(regex, contents, re.MULTILINE)
+                    if res:
+                        if not csv_writer:
+                            # A file on the disk can be transferred much faster via flask than a string reply
+                            csv_output_filename = 'report.csv'
+                            f = open(os.path.join(self.watch_data_dir, csv_output_filename), 'w')
+                            # @todo some headers in the future
+                            #fieldnames = ['Epoch seconds', 'Date']
+                            csv_writer = csv.writer(f,
+                                                    delimiter=',',
+                                                    quotechar='"',
+                                                    quoting=csv.QUOTE_MINIMAL,
+                                                    #fieldnames=fieldnames
+                                                    )
+                            csv_writer.writerow(['Epoch seconds', 'Date'])
+                            # csv_writer.writeheader()
+
+                        date_str = datetime.datetime.fromtimestamp(int(k)).strftime('%Y-%m-%d %H:%M:%S')
+                        for r in res:
+                            row = [k, date_str]
+                            if isinstance(r, str):
+                                row.append(r)
+                            else:
+                                row+=r
+                            csv_writer.writerow(row)
+
+        if f:
+            f.close()
+
+        return csv_output_filename

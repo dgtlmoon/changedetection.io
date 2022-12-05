@@ -121,12 +121,16 @@ code {
   width: 100%;
   font-size: 80%;
 
-  tr.unviewed {
-    font-weight: bold;
+  tr {
+    &.unviewed {
+      font-weight: bold;
+    }
+    color: var(--color-watch-table-row-text);
   }
 
+
   .error {
-    color: var(--color-error);
+    color: var(--color-watch-table-error);
   }
 
   td {
@@ -320,6 +324,12 @@ a.pure-button-selected {
 
 .notifications-wrapper {
   padding: 0.5rem 0 1rem 0;
+}
+
+label {
+ &:hover {
+   cursor: pointer;
+ }  
 }
 
 #notification-customisation {

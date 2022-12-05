@@ -13,6 +13,8 @@ $(document).ready(function () {
         } else if (hash_name === '#error-screenshot') {
             $("img#error-screenshot-img").attr('src', error_screenshot_url);
             $("#settings").hide();
+        } else if (hash_name === '#extract') {
+            $("#settings").hide();
         }
 
 

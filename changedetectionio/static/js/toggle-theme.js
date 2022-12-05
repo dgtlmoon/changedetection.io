@@ -19,6 +19,6 @@ $(document).ready(function () {
   };
 
   const setCookieValue = (value) => {
-    document.cookie = `css_dark_mode=${value};max-age=31536000`
+    document.cookie = `css_dark_mode=${value};max-age=31536000;path=/`
   }
 });

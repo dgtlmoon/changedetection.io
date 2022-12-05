@@ -21,6 +21,8 @@
   --color-grey-850: #eee;
   --color-grey-900: #f2f2f2;
   --color-black: #000;
+  --color-dark-red: #a00;
+  --color-light-red: #dd0000;
   --color-background-page: var(--color-grey-100);
   --color-background-gradient-first: #5ad8f7;
   --color-background-gradient-second: #2f50af;
@@ -30,9 +32,9 @@
   --color-link: #1b98f8;
   --color-menu-accent: #ed5900;
   --color-background-code: var(--color-grey-850);
-  --color-error: #a00;
+  --color-error: var(--color-dark-red);
   --color-error-input: #ffebeb;
-  --color-error-list: #dd0000;
+  --color-error-list: var(--color-light-red);
   --color-table-background: var(--color-background);
   --color-table-stripe: var(--color-grey-900);
   --color-text-tab: var(--color-white);
@@ -87,7 +89,9 @@
   --color-text-menu-link-hover: var(--color-grey-300);
   --color-shadow-jump: var(--color-grey-500);
   --color-icon-github: var(--color-black);
-  --color-icon-github-hover: var(--color-grey-300); }
+  --color-icon-github-hover: var(--color-grey-300);
+  --color-watch-table-error: var(--color-dark-red);
+  --color-watch-table-row-text: var(--color-grey-100); }
 
 html[data-darkmode="true"] {
   --color-link: #59bdfb;
@@ -117,9 +121,13 @@ html[data-darkmode="true"] {
   --color-background-snapshot-age: var(--color-grey-200);
   --color-shadow-jump: var(--color-grey-200);
   --color-icon-github: var(--color-white);
-  --color-icon-github-hover: var(--color-grey-700); }
+  --color-icon-github-hover: var(--color-grey-700);
+  --color-watch-table-error: var(--color-light-red);
+  --color-watch-table-row-text: var(--color-grey-800); }
   html[data-darkmode="true"] .watch-controls img {
     opacity: 0.4; }
+  html[data-darkmode="true"] .watch-table .unviewed {
+    color: #fff; }
   html[data-darkmode="true"] .icon-spread {
     filter: hue-rotate(-10deg) brightness(1.5); }
   html[data-darkmode="true"] .watch-table .title-col a[target="_blank"]::after,
@@ -331,10 +339,12 @@ code {
 .watch-table {
   width: 100%;
   font-size: 80%; }
-  .watch-table tr.unviewed {
-    font-weight: bold; }
+  .watch-table tr {
+    color: var(--color-watch-table-row-text); }
+    .watch-table tr.unviewed {
+      font-weight: bold; }
   .watch-table .error {
-    color: var(--color-error); }
+    color: var(--color-watch-table-error); }
   .watch-table td {
     white-space: nowrap; }
   .watch-table td.title-col {
@@ -469,6 +479,9 @@ a.pure-button-selected {
 
 .notifications-wrapper {
   padding: 0.5rem 0 1rem 0; }
+
+label:hover {
+  cursor: pointer; }
 
 #notification-customisation {
   border: 1px solid var(--color-border-notification);

@@ -810,9 +810,11 @@ def changedetection_app(config=None, datastore_o=None):
 
         return redirect(url_for('index'))
 
-    @app.route("/diff/<string:uuid>", methods=['GET'])
+    @app.route("/diff/<string:uuid>", methods=['GET', 'POST'])
     @login_required
     def diff_history_page(uuid):
+
+        from changedetectionio import forms
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
@@ -824,6 +826,28 @@ def changedetection_app(config=None, datastore_o=None):
         except KeyError:
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('index'))
+
+        # For submission of requesting an extract
+        extract_form = forms.extractDataForm(request.form)
+        if request.method == 'POST':
+            if not extract_form.validate():
+                flash("An error occurred, please see below.", "error")
+
+            else:
+                extract_regex = request.form.get('extract_regex').strip()
+                output = watch.extract_regex_from_all_history(extract_regex)
+                if output:
+                    watch_dir = os.path.join(datastore_o.datastore_path, uuid)
+                    response = make_response(send_from_directory(directory=watch_dir, path=output, as_attachment=True))
+                    response.headers['Content-type'] = 'text/csv'
+                    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                    response.headers['Pragma'] = 'no-cache'
+                    response.headers['Expires'] = 0
+                    return response
+
+
+                flash('Nothing matches that RegEx', 'error')
+                redirect(url_for('diff_history_page', uuid=uuid)+'#extract')
 
         history = watch.history
         dates = list(history.keys())
@@ -867,23 +891,24 @@ def changedetection_app(config=None, datastore_o=None):
                     watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
 
         output = render_template("diff.html",
-                                 watch_a=watch,
-                                 newest=newest_version_file_contents,
-                                 previous=previous_version_file_contents,
-                                 extra_stylesheets=extra_stylesheets,
-                                 dark_mode=getDarkModeSetting(),
-                                 versions=dates[:-1], # All except current/last
-                                 uuid=uuid,
-                                 newest_version_timestamp=dates[-1],
-                                 current_previous_version=str(previous_version),
                                  current_diff_url=watch['url'],
+                                 current_previous_version=str(previous_version),
+                                 dark_mode=getDarkModeSetting(),
+                                 extra_stylesheets=extra_stylesheets,
                                  extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
-                                 left_sticky=True,
-                                 screenshot=screenshot_url,
+                                 extract_form=extract_form,
                                  is_html_webdriver=is_html_webdriver,
                                  last_error=watch['last_error'],
+                                 last_error_screenshot=watch.get_error_snapshot(),
                                  last_error_text=watch.get_error_text(),
-                                 last_error_screenshot=watch.get_error_snapshot()
+                                 left_sticky=True,
+                                 newest=newest_version_file_contents,
+                                 newest_version_timestamp=dates[-1],
+                                 previous=previous_version_file_contents,
+                                 screenshot=screenshot_url,
+                                 uuid=uuid,
+                                 versions=dates[:-1], # All except current/last
+                                 watch_a=watch
                                  )
 
         return output
