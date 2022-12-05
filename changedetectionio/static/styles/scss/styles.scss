@@ -121,9 +121,13 @@ code {
   width: 100%;
   font-size: 80%;
 
-  tr.unviewed {
-    font-weight: bold;
+  tr {
+    &.unviewed {
+      font-weight: bold;
+    }
+    color: var(--color-watch-table-row-text);
   }
+
 
   .error {
     color: var(--color-watch-table-error);

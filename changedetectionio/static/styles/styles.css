@@ -90,7 +90,8 @@
   --color-shadow-jump: var(--color-grey-500);
   --color-icon-github: var(--color-black);
   --color-icon-github-hover: var(--color-grey-300);
-  --color-watch-table-error: var(--color-dark-red); }
+  --color-watch-table-error: var(--color-dark-red);
+  --color-watch-table-row-text: var(--color-grey-100); }
 
 html[data-darkmode="true"] {
   --color-link: #59bdfb;
@@ -121,9 +122,12 @@ html[data-darkmode="true"] {
   --color-shadow-jump: var(--color-grey-200);
   --color-icon-github: var(--color-white);
   --color-icon-github-hover: var(--color-grey-700);
-  --color-watch-table-error: var(--color-light-red); }
+  --color-watch-table-error: var(--color-light-red);
+  --color-watch-table-row-text: var(--color-grey-800); }
   html[data-darkmode="true"] .watch-controls img {
     opacity: 0.4; }
+  html[data-darkmode="true"] .watch-table .unviewed {
+    color: #fff; }
   html[data-darkmode="true"] .icon-spread {
     filter: hue-rotate(-10deg) brightness(1.5); }
   html[data-darkmode="true"] .watch-table .title-col a[target="_blank"]::after,
@@ -335,8 +339,10 @@ code {
 .watch-table {
   width: 100%;
   font-size: 80%; }
-  .watch-table tr.unviewed {
-    font-weight: bold; }
+  .watch-table tr {
+    color: var(--color-watch-table-row-text); }
+    .watch-table tr.unviewed {
+      font-weight: bold; }
   .watch-table .error {
     color: var(--color-watch-table-error); }
   .watch-table td {

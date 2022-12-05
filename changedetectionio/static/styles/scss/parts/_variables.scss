@@ -100,6 +100,7 @@
   --color-icon-github-hover: var(--color-grey-300);
 
   --color-watch-table-error: var(--color-dark-red);
+  --color-watch-table-row-text: var(--color-grey-100);
 }
 
 html[data-darkmode="true"] {
@@ -127,7 +128,6 @@ html[data-darkmode="true"] {
   --color-text-input-description: var(--color-grey-600);
   --color-text-input-placeholder: var(--color-grey-600);
   --color-text-watch-tag-list: #fa3e92;
-
   --color-background-code: var(--color-grey-200);
 
   --color-background-tab: rgba(0, 0, 0, 0.2);
@@ -138,6 +138,7 @@ html[data-darkmode="true"] {
   --color-icon-github: var(--color-white);
   --color-icon-github-hover: var(--color-grey-700);
   --color-watch-table-error: var(--color-light-red);
+  --color-watch-table-row-text: var(--color-grey-800);
 
   // Anything that can't be manipulated through variables follows.
   .watch-controls {
@@ -145,7 +146,9 @@ html[data-darkmode="true"] {
       opacity: 0.4;
     }
   }
-
+  .watch-table .unviewed {
+    color: #fff;
+  }
   .icon-spread {
     filter: hue-rotate(-10deg) brightness(1.5);
   }
