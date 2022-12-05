@@ -19,6 +19,8 @@
   --color-grey-850: #eee;
   --color-grey-900: #f2f2f2;
   --color-black: #000;
+  --color-dark-red: #a00;
+  --color-light-red: #dd0000;
 
   --color-background-page: var(--color-grey-100);
   --color-background-gradient-first: #5ad8f7;
@@ -29,9 +31,9 @@
   --color-link: #1b98f8;
   --color-menu-accent: #ed5900;
   --color-background-code: var(--color-grey-850);
-  --color-error: #a00;
+  --color-error: var(--color-dark-red);
   --color-error-input: #ffebeb;
-  --color-error-list: #dd0000;
+  --color-error-list: var(--color-light-red);
   --color-table-background: var(--color-background);
   --color-table-stripe: var(--color-grey-900);
   --color-text-tab: var(--color-white);
@@ -96,6 +98,8 @@
   --color-shadow-jump: var(--color-grey-500);
   --color-icon-github: var(--color-black);
   --color-icon-github-hover: var(--color-grey-300);
+
+  --color-watch-table-error: var(--color-dark-red);
 }
 
 html[data-darkmode="true"] {
@@ -133,6 +137,7 @@ html[data-darkmode="true"] {
   --color-shadow-jump: var(--color-grey-200);
   --color-icon-github: var(--color-white);
   --color-icon-github-hover: var(--color-grey-700);
+  --color-watch-table-error: var(--color-light-red);
 
   // Anything that can't be manipulated through variables follows.
   .watch-controls {
