@@ -123,8 +123,12 @@
                     A <strong>RegEx</strong> is a pattern that identifies exactly which part inside of the text that you want to extract.<br/>
 
                     <p>
-                        For example, you are watching the temperature on a page, and you want just the numbers</br>
-                        <code>Temperature 5.5°C in Sydney</code>, so then regex would be <code>Temperature (\d+[.\d]+)</code>
+                        For example, to extract only the numbers from text &dash;</br>
+                        <strong>Raw Text</strong>: <code>Temperature 5.5°C in Sydney</code></br>
+                        <strong>RegEx:</strong> <code>Temperature ([0-9\.]+)</code><br/>
+                    </p>
+                    <p>
+                        <a href="https://RegExr.com/">Be sure to test your RegEx here</a>
                     </p>
                     <p>
                         Each group <code>()</code> will be in its own column, the first column value is always the date
