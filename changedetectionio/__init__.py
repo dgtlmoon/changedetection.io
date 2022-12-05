@@ -840,7 +840,7 @@ def changedetection_app(config=None, datastore_o=None):
                 return response
 
 
-            flash('Nothing matches that regex', 'error')
+            flash('Nothing matches that RegEx', 'error')
             redirect(url_for('diff_history_page', uuid=uuid)+'#extract')
 
         history = watch.history

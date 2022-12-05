@@ -346,11 +346,16 @@ class model(dict):
                                                     quoting=csv.QUOTE_MINIMAL,
                                                     #fieldnames=fieldnames
                                                     )
+                            csv_writer.writerow(['Epoch seconds', 'Date'])
                             # csv_writer.writeheader()
 
                         date_str = datetime.datetime.fromtimestamp(int(k)).strftime('%Y-%m-%d %H:%M:%S')
                         for r in res:
-                            row = [k, date_str] + list(r)
+                            row = [k, date_str]
+                            if isinstance(r, str):
+                                row.append(r)
+                            else:
+                                row+=r
                             csv_writer.writerow(row)
 
         if f:
