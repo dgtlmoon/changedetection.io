@@ -125,22 +125,21 @@ code {
     &.unviewed {
       font-weight: bold;
     }
+    &.error {
+      color: var(--color-watch-table-error);
+    }
     color: var(--color-watch-table-row-text);
   }
 
 
-  .error {
-    color: var(--color-watch-table-error);
-  }
-
   td {
     white-space: nowrap;
+    &.title-col {
+      word-break: break-all;
+      white-space: normal;
+    }
   }
 
-  td.title-col {
-    word-break: break-all;
-    white-space: normal;
-  }
 
   th {
     white-space: nowrap;

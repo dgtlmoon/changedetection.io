@@ -148,7 +148,11 @@ html[data-darkmode="true"] {
   }
   .watch-table .unviewed {
     color: #fff;
+    &.error {
+      color: var(--color-watch-table-error);
+    }
   }
+
   .icon-spread {
     filter: hue-rotate(-10deg) brightness(1.5);
   }
