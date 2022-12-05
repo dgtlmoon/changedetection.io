@@ -269,21 +269,6 @@ def test_notification_validation(client, live_server):
 #    )
 #    assert b"Notification Body and Title is required when a Notification URL is used" in res.data
 
-    # Now adding a wrong token should give us an error
-    res = client.post(
-        url_for("settings_page"),
-        data={"application-notification_title": "New ChangeDetection.io Notification - {watch_url}",
-              "application-notification_body": "Rubbish: {rubbish}\n",
-              "application-notification_format": "Text",
-              "application-notification_urls": "json://localhost/foobar",
-              "requests-time_between_check-minutes": 180,
-              "fetch_backend": "html_requests"
-              },
-        follow_redirects=True
-    )
-
-    assert bytes("is not a valid token".encode('utf-8')) in res.data
-
     # cleanup for the next
     client.get(
         url_for("form_delete", uuid="all"),
@@ -292,7 +277,6 @@ def test_notification_validation(client, live_server):
 
 
 def test_notification_jinja2(client, live_server):
-    #live_server_setup(live_server)
     time.sleep(1)
 
     # test_endpoint - that sends the contents of a file
