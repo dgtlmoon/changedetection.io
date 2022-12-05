@@ -1,6 +1,7 @@
 import apprise
 from jinja2 import Environment, BaseLoader
 from apprise import NotifyFormat
+import json
 
 valid_tokens = {
     'base_url': '',
@@ -27,6 +28,53 @@ valid_notification_formats = {
     # Used only for editing a watch (not for global)
     default_notification_format_for_watch: default_notification_format_for_watch
 }
+
+# include the decorator
+from apprise.decorators import notify
+
+@notify(on="delete")
+@notify(on="deletes")
+@notify(on="get")
+@notify(on="gets")
+@notify(on="post")
+@notify(on="posts")
+@notify(on="put")
+@notify(on="puts")
+def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
+    import requests
+    url = kwargs['meta'].get('url')
+
+    if url.startswith('post'):
+        r = requests.post
+    elif url.startswith('get'):
+        r = requests.get
+    elif url.startswith('put'):
+        r = requests.put
+    elif url.startswith('delete'):
+        r = requests.delete
+
+    url = url.replace('post://', 'http://')
+    url = url.replace('posts://', 'https://')
+    url = url.replace('put://', 'http://')
+    url = url.replace('puts://', 'https://')
+    url = url.replace('get://', 'http://')
+    url = url.replace('gets://', 'https://')
+    url = url.replace('put://', 'http://')
+    url = url.replace('puts://', 'https://')
+    url = url.replace('delete://', 'http://')
+    url = url.replace('deletes://', 'https://')
+
+    # Try to auto-guess if it's JSON
+    headers = {}
+    try:
+        json.loads(body)
+        headers = {'Content-Type': 'application/json; charset=utf-8'}
+    except ValueError as e:
+        pass
+
+
+    r(url, headers=headers, data=body)
+
 
 def process_notification(n_object, datastore):
 
@@ -63,7 +111,12 @@ def process_notification(n_object, datastore):
 
                 # So if no avatar_url is specified, add one so it can be correctly calculated into the total payload
                 k = '?' if not '?' in url else '&'
-                if not 'avatar_url' in url and not url.startswith('mail'):
+                if not 'avatar_url' in url \
+                        and not url.startswith('mail') \
+                        and not url.startswith('post') \
+                        and not url.startswith('get') \
+                        and not url.startswith('delete') \
+                        and not url.startswith('put'):
                     url += k + 'avatar_url=https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/changedetectionio/static/images/avatar-256x256.png'
 
                 if url.startswith('tgram://'):

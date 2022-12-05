@@ -16,7 +16,7 @@
                                 <li><code>discord://</code> only supports a maximum <strong>2,000 characters</strong> of notification text, including the title.</li>
                                 <li><code>tgram://</code> bots cant send messages to other bots, so you should specify chat ID of non-bot user.</li>
                                 <li><code>tgram://</code> only supports very limited HTML and can fail when extra tags are sent, <a href="https://core.telegram.org/bots/api#html-style">read more here</a> (or use plaintext/markdown format)</li>
-                                <li><code>GET</code> &amp; <code>POST</code> requests use <code>json://</code> or <code>jsons://</code>, use <code>-</code> before each arg, for example <code>jsons://foobar.com?-id={% raw -%}{{watch_uuid}}{%- endraw %}</code> <a href="https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation">read more here</a> </li>
+                                <li><code>gets://</code>, <code>posts://</code>, <code>puts://</code>, <code>deletes://</code> for direct API calls (or omit the "<code>s</code>" for non-SSL ie <code>get://</code>)</li>
                               </ul>
                             </div>
                             <div class="notifications-wrapper">
