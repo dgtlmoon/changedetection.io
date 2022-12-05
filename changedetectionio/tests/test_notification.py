@@ -335,11 +335,20 @@ def test_notification_jinaj2(client, live_server):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(3)
 
-
+    # URL check
     assert os.path.isfile("test-datastore/notification-url.txt")
-
     with open("test-datastore/notification-url.txt", 'r') as f:
         notification = f.read()
 
     assert 'XXX=http' in notification
     os.unlink("test-datastore/notification-url.txt")
+
+    # BODY and TITLE check
+    assert os.path.isfile("test-datastore/notification.txt")
+    with open("test-datastore/notification.txt", 'r') as f:
+        notification = json.loads(f.read())
+        assert notification
+
+        assert 'New ChangeDetection.io Notification - http://localhost' in notification['title']
+        assert 'Got http://localhost' in notification['message']
+
