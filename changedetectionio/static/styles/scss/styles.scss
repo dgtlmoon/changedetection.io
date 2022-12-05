@@ -878,6 +878,9 @@ body.full-width {
   .pure-form-message-inline {
     padding-left: 0;
     color: var(--color-text-input-description);
+    code {
+      font-size: .875em;
+    }
   }
 }
 

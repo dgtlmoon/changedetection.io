@@ -849,6 +849,8 @@ body.full-width .edit-form {
   .edit-form .pure-form-message-inline {
     padding-left: 0;
     color: var(--color-text-input-description); }
+    .edit-form .pure-form-message-inline code {
+      font-size: .875em; }
 
 ul {
   padding-left: 1em;
