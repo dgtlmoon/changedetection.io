@@ -60,7 +60,7 @@
                         {{ render_field(form.application.form.base_url, placeholder="http://yoursite.com:5000/",
                         class="m-d") }}
                         <span class="pure-form-message-inline">
-                            Base URL used for the <code>{base_url}</code> token in notifications and RSS links.<br/>Default value is the ENV var 'BASE_URL' (Currently "{{settings_application['current_base_url']}}"),
+                            Base URL used for the <code>{{ '{{ base_url }}' }}</code> token in notifications and RSS links.<br/>Default value is the ENV var 'BASE_URL' (Currently "{{settings_application['current_base_url']}}"),
                             <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Configurable-BASE_URL-setting">read more here</a>.
                         </span>
                     </div>

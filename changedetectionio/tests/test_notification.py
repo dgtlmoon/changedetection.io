@@ -90,17 +90,17 @@ def test_check_notification(client, live_server):
     print (">>>> Notification URL: "+notification_url)
 
     notification_form_data = {"notification_urls": notification_url,
-                              "notification_title": "New ChangeDetection.io Notification - {watch_url}",
-                              "notification_body": "BASE URL: {base_url}\n"
-                                                   "Watch URL: {watch_url}\n"
-                                                   "Watch UUID: {watch_uuid}\n"
-                                                   "Watch title: {watch_title}\n"
-                                                   "Watch tag: {watch_tag}\n"
-                                                   "Preview: {preview_url}\n"
-                                                   "Diff URL: {diff_url}\n"
-                                                   "Snapshot: {current_snapshot}\n"
-                                                   "Diff: {diff}\n"
-                                                   "Diff Full: {diff_full}\n"
+                              "notification_title": "New ChangeDetection.io Notification - {{watch_url}}",
+                              "notification_body": "BASE URL: {{base_url}}\n"
+                                                   "Watch URL: {{watch_url}}\n"
+                                                   "Watch UUID: {{watch_uuid}}\n"
+                                                   "Watch title: {{watch_title}}\n"
+                                                   "Watch tag: {{watch_tag}}\n"
+                                                   "Preview: {{preview_url}}\n"
+                                                   "Diff URL: {{diff_url}}\n"
+                                                   "Snapshot: {{current_snapshot}}\n"
+                                                   "Diff: {{diff}}\n"
+                                                   "Diff Full: {{diff_full}}\n"
                                                    ":-)",
                               "notification_screenshot": True,
                               "notification_format": "Text"}
@@ -179,7 +179,6 @@ def test_check_notification(client, live_server):
         logging.debug(">>> Skipping BASE_URL check")
 
 
-
     # This should insert the {current_snapshot}
     set_more_modified_response()
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
@@ -237,9 +236,8 @@ def test_check_notification(client, live_server):
         follow_redirects=True
     )
 
-
 def test_notification_validation(client, live_server):
-    #live_server_setup(live_server)
+
     time.sleep(1)
 
     # re #242 - when you edited an existing new entry, it would not correctly show the notification settings
@@ -276,7 +274,8 @@ def test_notification_validation(client, live_server):
     )
 
 
-def test_notification_jinja2(client, live_server):
+
+def test_notification_custom_endpoint_and_jinja2(client, live_server):
     time.sleep(1)
 
     # test_endpoint - that sends the contents of a file
@@ -315,6 +314,7 @@ def test_notification_jinja2(client, live_server):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(2)
 
+
     with open("test-datastore/notification.txt", 'r') as f:
         x=f.read()
         j = json.loads(x)
@@ -326,4 +326,6 @@ def test_notification_jinja2(client, live_server):
     with open("test-datastore/notification-url.txt", 'r') as f:
         notification_url = f.read()
         assert 'xxx=http' in notification_url
+
     os.unlink("test-datastore/notification-url.txt")
+
