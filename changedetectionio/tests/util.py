@@ -149,6 +149,9 @@ def live_server_setup(live_server):
             if data != None:
                 f.write(data)
 
+        with open("test-datastore/notification-url.txt", "w") as f:
+            f.write(request.url)
+
         print("\n>> Test notification endpoint was hit.\n", data)
         return "Text was set"
 

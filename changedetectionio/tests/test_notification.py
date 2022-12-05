@@ -90,17 +90,17 @@ def test_check_notification(client, live_server):
     print (">>>> Notification URL: "+notification_url)
 
     notification_form_data = {"notification_urls": notification_url,
-                              "notification_title": "New ChangeDetection.io Notification - {watch_url}",
-                              "notification_body": "BASE URL: {base_url}\n"
-                                                   "Watch URL: {watch_url}\n"
-                                                   "Watch UUID: {watch_uuid}\n"
-                                                   "Watch title: {watch_title}\n"
-                                                   "Watch tag: {watch_tag}\n"
-                                                   "Preview: {preview_url}\n"
-                                                   "Diff URL: {diff_url}\n"
-                                                   "Snapshot: {current_snapshot}\n"
-                                                   "Diff: {diff}\n"
-                                                   "Diff Full: {diff_full}\n"
+                              "notification_title": "New ChangeDetection.io Notification - {{watch_url}}",
+                              "notification_body": "BASE URL: {{base_url}}\n"
+                                                   "Watch URL: {{watch_url}}\n"
+                                                   "Watch UUID: {{watch_uuid}}\n"
+                                                   "Watch title: {{watch_title}}\n"
+                                                   "Watch tag: {{watch_tag}}\n"
+                                                   "Preview: {{preview_url}}\n"
+                                                   "Diff URL: {{diff_url}}\n"
+                                                   "Snapshot: {{current_snapshot}}\n"
+                                                   "Diff: {{diff}}\n"
+                                                   "Diff Full: {{diff_full}}\n"
                                                    ":-)",
                               "notification_screenshot": True,
                               "notification_format": "Text"}
@@ -179,7 +179,6 @@ def test_check_notification(client, live_server):
         logging.debug(">>> Skipping BASE_URL check")
 
 
-
     # This should insert the {current_snapshot}
     set_more_modified_response()
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
@@ -237,10 +236,9 @@ def test_check_notification(client, live_server):
         follow_redirects=True
     )
 
-
 def test_notification_validation(client, live_server):
-    #live_server_setup(live_server)
-    time.sleep(3)
+    time.sleep(1)
+
     # re #242 - when you edited an existing new entry, it would not correctly show the notification settings
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -269,19 +267,33 @@ def test_notification_validation(client, live_server):
 #    assert b"Notification Body and Title is required when a Notification URL is used" in res.data
 
     # Now adding a wrong token should give us an error
+# Disabled for now
+#    res = client.post(
+#        url_for("settings_page"),
+#        data={"application-notification_title": "New ChangeDetection.io Notification - {{watch_url}}",
+#              "application-notification_body": "Rubbish: {{rubbish}}\n",
+#              "application-notification_format": "Text",
+#              "application-notification_urls": "json://localhost/foobar",
+#              "requests-time_between_check-minutes": 180,
+#              "fetch_backend": "html_requests"
+#              },
+#        follow_redirects=True
+#    )
+#    assert bytes("Token 'rubbish' is not a valid token or is unknown".encode('utf-8')) in res.data
+
+    # And trying to define an invalid Jinja2 template should also throw an error
     res = client.post(
         url_for("settings_page"),
-        data={"application-notification_title": "New ChangeDetection.io Notification - {watch_url}",
-              "application-notification_body": "Rubbish: {rubbish}\n",
-              "application-notification_format": "Text",
-              "application-notification_urls": "json://localhost/foobar",
-              "requests-time_between_check-minutes": 180,
-              "fetch_backend": "html_requests"
+        data={"application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
+              "application-notification_body": "Rubbish: {{ rubbish }\n",
+              "application-notification_urls": "json://foobar.com",
+              "application-minutes_between_check": 180,
+              "application-fetch_backend": "html_requests"
               },
         follow_redirects=True
     )
+    assert bytes("This is not a valid Jinja2 template".encode('utf-8')) in res.data
 
-    assert bytes("is not a valid token".encode('utf-8')) in res.data
 
     # cleanup for the next
     client.get(
@@ -289,4 +301,55 @@ def test_notification_validation(client, live_server):
         follow_redirects=True
     )
 
+def test_notification_jinja2(client, live_server):
+    #live_server_setup(live_server)
+    time.sleep(1)
 
+    # test_endpoint - that sends the contents of a file
+    # test_notification_endpoint - that takes a POST and writes it to file (test-datastore/notification.txt)
+
+    # CUSTOM JSON BODY CHECK for POST://
+    set_original_response()
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}"
+
+    res = client.post(
+        url_for("settings_page"),
+        data={"application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
+              "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444 }',
+              # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
+              "application-notification_urls": test_notification_url,
+              "application-minutes_between_check": 180,
+              "application-fetch_backend": "html_requests"
+              },
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+    # Add a watch and trigger a HTTP POST
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url, "tag": 'nice one'},
+        follow_redirects=True
+    )
+
+    assert b"Watch added" in res.data
+
+    time.sleep(2)
+    set_modified_response()
+
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    time.sleep(2)
+
+    with open("test-datastore/notification.txt", 'r') as f:
+        x=f.read()
+        j = json.loads(x)
+        assert j['url'].startswith('http://localhost')
+        assert j['secret'] == 444
+
+    # URL check, this will always be converted to lowercase
+    assert os.path.isfile("test-datastore/notification-url.txt")
+    with open("test-datastore/notification-url.txt", 'r') as f:
+        notification_url = f.read()
+        assert 'xxx=http' in notification_url
+    os.unlink("test-datastore/notification-url.txt")

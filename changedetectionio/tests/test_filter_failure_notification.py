@@ -56,17 +56,17 @@ def run_filter_test(client, content_filter):
 
     # Just a regular notification setting, this will be used by the special 'filter not found' notification
     notification_form_data = {"notification_urls": notification_url,
-                              "notification_title": "New ChangeDetection.io Notification - {watch_url}",
-                              "notification_body": "BASE URL: {base_url}\n"
-                                                   "Watch URL: {watch_url}\n"
-                                                   "Watch UUID: {watch_uuid}\n"
-                                                   "Watch title: {watch_title}\n"
-                                                   "Watch tag: {watch_tag}\n"
-                                                   "Preview: {preview_url}\n"
-                                                   "Diff URL: {diff_url}\n"
-                                                   "Snapshot: {current_snapshot}\n"
-                                                   "Diff: {diff}\n"
-                                                   "Diff Full: {diff_full}\n"
+                              "notification_title": "New ChangeDetection.io Notification - {{watch_url}}",
+                              "notification_body": "BASE URL: {{base_url}}\n"
+                                                   "Watch URL: {{watch_url}}\n"
+                                                   "Watch UUID: {{watch_uuid}}\n"
+                                                   "Watch title: {{watch_title}}\n"
+                                                   "Watch tag: {{watch_tag}}\n"
+                                                   "Preview: {{preview_url}}\n"
+                                                   "Diff URL: {{diff_url}}\n"
+                                                   "Snapshot: {{current_snapshot}}\n"
+                                                   "Diff: {{diff}}\n"
+                                                   "Diff Full: {{diff_full}}\n"
                                                    ":-)",
                               "notification_format": "Text"}
 
@@ -84,6 +84,7 @@ def run_filter_test(client, content_filter):
         data=notification_form_data,
         follow_redirects=True
     )
+
     assert b"Updated watch." in res.data
     time.sleep(3)
 
