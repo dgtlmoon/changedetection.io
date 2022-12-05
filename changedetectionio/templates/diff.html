@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% from '_helpers.jinja' import render_field, render_checkbox_field, render_button %}
 {% block content %}
 <script>
     const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
@@ -58,6 +58,7 @@
         {% if last_error_screenshot %}<li class="tab" id="error-screenshot-tab"><a href="#error-screenshot">Error Screenshot</a></li> {% endif %}
         <li class="tab" id=""><a href="#text">Text</a></li>
         <li class="tab" id="screenshot-tab"><a href="#screenshot">Screenshot</a></li>
+        <li class="tab" id="extract-tab"><a href="#extract">Extract Data</a></li>
     </ul>
 </div>
 
@@ -108,6 +109,37 @@
            <strong>Screenshot requires Playwright/WebDriver enabled</strong>
          {% endif %}
      </div>
+    <div class="tab-pane-inner" id="extract">
+        <form id="extract-data-form" class="pure-form pure-form-stacked edit-form"
+              action="{{ url_for('diff_history_page', uuid=uuid) }}#extract"
+              method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+            <p>This tool will extract text data from all of the watch history.</p>
+
+            <div class="pure-control-group">
+                {{ render_field(extract_form.extract_regex) }}
+                <span class="pure-form-message-inline">
+                    A <strong>RegEx</strong> is a pattern that identifies exactly which part inside of the text that you want to extract.<br/>
+
+                    <p>
+                        For example, to extract only the numbers from text &dash;</br>
+                        <strong>Raw text</strong>: <code>Temperature <span style="color: red">5.5</span>°C in Sydney</code></br>
+                        <strong>RegEx to extract:</strong> <code>Temperature ([0-9\.]+)</code><br/>
+                    </p>
+                    <p>
+                        <a href="https://RegExr.com/">Be sure to test your RegEx here.</a>
+                    </p>
+                    <p>
+                        Each RegEx group bracket <code>()</code> will be in its own column, the first column value is always the date.
+                    </p>
+                </span>
+            </div>
+            <div class="pure-control-group">
+                {{ render_button(extract_form.extract_submit_button) }}
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>

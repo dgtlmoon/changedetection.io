@@ -132,8 +132,9 @@ html[data-darkmode="true"] {
   padding: 2em;
   margin-left: 1em;
   margin-right: 1em;
-  border-radius: 5px;
-  font-size: 11px; }
+  border-radius: 5px; }
+  #diff-ui #text {
+    font-size: 11px; }
   #diff-ui table {
     table-layout: fixed;
     width: 100%; }
