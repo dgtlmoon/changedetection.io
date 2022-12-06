@@ -637,7 +637,7 @@ class ChangeDetectionStore:
 
                 n_title = watch.get('notification_title')
                 if n_title:
-                    self.data['settings']['application']['notification_title'] = re.sub(r, r'{{\1}}', n_title)
+                    watch['notification_title'] = re.sub(r, r'{{\1}}', n_title)
 
                 n_urls = watch.get('notification_urls')
                 if n_urls:
