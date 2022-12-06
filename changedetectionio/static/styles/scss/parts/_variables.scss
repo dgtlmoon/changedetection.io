@@ -140,18 +140,6 @@ html[data-darkmode="true"] {
   --color-watch-table-error: var(--color-light-red);
   --color-watch-table-row-text: var(--color-grey-800);
 
-  // Anything that can't be manipulated through variables follows.
-  .watch-controls {
-    img {
-      opacity: 0.4;
-    }
-  }
-  .watch-table .unviewed {
-    color: #fff;
-    &.error {
-      color: var(--color-watch-table-error);
-    }
-  }
 
   .icon-spread {
     filter: hue-rotate(-10deg) brightness(1.5);
@@ -162,6 +150,26 @@ html[data-darkmode="true"] {
     .title-col a[target="_blank"]::after,
     .current-diff-url::after {
       filter: invert(.5) hue-rotate(10deg) brightness(2);
+    }
+
+    .watch-controls {
+      .state-off {
+        img {
+          opacity: 0.3;
+        }
+      }
+      .state-on {
+        img {
+          opacity: 1.0;
+        }
+      }
+    }
+
+    .unviewed {
+      color: #fff;
+      &.error {
+        color: var(--color-watch-table-error);
+      }
     }
   }
 }
