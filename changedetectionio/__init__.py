@@ -98,8 +98,8 @@ def init_app_secret(datastore_path):
 
 @app.template_global()
 def get_darkmode_state():
-    css_dark_mode = request.cookies.get('css_dark_mode')
-    return 'true' if strtobool(css_dark_mode) else 'false'
+    css_dark_mode = request.cookies.get('css_dark_mode', 'false')
+    return 'true' if css_dark_mode and strtobool(css_dark_mode) else 'false'
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
 # running or something similar.
