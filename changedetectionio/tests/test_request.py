@@ -20,6 +20,8 @@ def test_headers_in_request(client, live_server):
     )
     assert b"1 Imported" in res.data
 
+    time.sleep(1)
+
     res = client.post(
         url_for("import_page"),
         data={"urls": test_url},
@@ -174,12 +176,15 @@ def test_method_in_request(client, live_server):
     )
     assert b"1 Imported" in res.data
 
+    time.sleep(2)
     res = client.post(
         url_for("import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
+
+    time.sleep(2)
 
     # Attempt to add a method which is not valid
     res = client.post(
@@ -206,7 +211,7 @@ def test_method_in_request(client, live_server):
     assert b"Updated watch." in res.data
 
     # Give the thread time to pick up the first version
-    time.sleep(5)
+    time.sleep(2)
 
     # The service should echo back the request verb
     res = client.get(
@@ -217,7 +222,7 @@ def test_method_in_request(client, live_server):
     # The test call service will return the verb as the body
     assert b"PATCH" in res.data
 
-    time.sleep(5)
+    time.sleep(2)
 
     watches_with_method = 0
     with open('test-datastore/url-watches.json') as f:

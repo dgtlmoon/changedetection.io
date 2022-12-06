@@ -104,9 +104,6 @@ def test_403_page_check_works_with_ignore_status_code(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
