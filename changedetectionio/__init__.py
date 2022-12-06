@@ -95,6 +95,12 @@ def init_app_secret(datastore_path):
 
     return secret
 
+
+@app.template_global()
+def get_darkmode_state():
+    css_dark_mode = request.cookies.get('css_dark_mode', 'false')
+    return 'true' if css_dark_mode and strtobool(css_dark_mode) else 'false'
+
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
 # running or something similar.
 @app.template_filter('format_last_checked_time')
@@ -201,10 +207,6 @@ def changedetection_app(config=None, datastore_o=None):
 
     watch_api.add_resource(api_v1.SystemInfo, '/api/v1/systeminfo',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
-
-    def getDarkModeSetting():
-      css_dark_mode = request.cookies.get('css_dark_mode')
-      return True if (css_dark_mode == 'true' or css_dark_mode == True) else False
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
@@ -405,7 +407,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         form = forms.quickWatchForm(request.form)
         output = render_template("watch-overview.html",
-                                 dark_mode=getDarkModeSetting(),
                                  form=form,
                                  watches=sorted_watches,
                                  tags=existing_tags,
@@ -664,7 +665,6 @@ def changedetection_app(config=None, datastore_o=None):
                                      browser_steps_config=browser_step_ui_config,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
-                                     dark_mode=getDarkModeSetting(),
                                      form=form,
                                      has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
                                      has_empty_checktime=using_default_check_time,
@@ -752,7 +752,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         output = render_template("settings.html",
                                  form=form,
-                                 dark_mode=getDarkModeSetting(),
                                  current_base_url = datastore.data['settings']['application']['base_url'],
                                  hide_remove_pass=os.getenv("SALTED_PASS", False),
                                  api_key=datastore.data['settings']['application'].get('api_access_token'),
@@ -793,7 +792,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Could be some remaining, or we could be on GET
         output = render_template("import.html",
-                                 dark_mode=getDarkModeSetting(),
                                  import_url_list_remaining="\n".join(remaining_urls),
                                  original_distill_json=''
                                  )
@@ -893,7 +891,6 @@ def changedetection_app(config=None, datastore_o=None):
         output = render_template("diff.html",
                                  current_diff_url=watch['url'],
                                  current_previous_version=str(previous_version),
-                                 dark_mode=getDarkModeSetting(),
                                  extra_stylesheets=extra_stylesheets,
                                  extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
                                  extract_form=extract_form,
@@ -944,7 +941,6 @@ def changedetection_app(config=None, datastore_o=None):
                                      content=content,
                                      history_n=watch.history_n,
                                      extra_stylesheets=extra_stylesheets,
-                                     dark_mode=getDarkModeSetting(),
 #                                     current_diff_url=watch['url'],
                                      watch=watch,
                                      uuid=uuid,
@@ -991,7 +987,6 @@ def changedetection_app(config=None, datastore_o=None):
                                  content=content,
                                  history_n=watch.history_n,
                                  extra_stylesheets=extra_stylesheets,
-                                 dark_mode=getDarkModeSetting(),
                                  ignored_line_numbers=ignored_line_numbers,
                                  triggered_line_numbers=trigger_line_numbers,
                                  current_diff_url=watch['url'],
@@ -1010,7 +1005,6 @@ def changedetection_app(config=None, datastore_o=None):
     def notification_logs():
         global notification_debug_log
         output = render_template("notification-log.html",
-                                 dark_mode=getDarkModeSetting(),
                                  logs=notification_debug_log if len(notification_debug_log) else ["Notification logs are empty - no notifications sent yet."])
 
         return output
