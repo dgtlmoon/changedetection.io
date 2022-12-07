@@ -1009,10 +1009,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         return output
 
-    @app.route("/favicon.ico", methods=['GET'])
-    def favicon():
-        return send_from_directory("static/images", path="favicon.ico")
-
     # We're good but backups are even better!
     @app.route("/backup", methods=['GET'])
     @login_required
