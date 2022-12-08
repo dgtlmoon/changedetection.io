@@ -98,6 +98,12 @@
                     {% if watch.last_notification_error is defined and watch.last_notification_error != False %}
                     <div class="fetch-error notification-error"><a href="{{url_for('notification_logs')}}">{{ watch.last_notification_error }}</a></div>
                     {% endif %}
+                    {% if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  %}
+                    <div class="ldjson-price-track-offer">Embedded price data detected, follow only price data? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
+                    {% endif %}
+                    {% if watch['track_ldjson_price_data'] == 'accepted' %}
+                    <span class="tracking-ldjson-price-data" title="Automatically following embedded price information">Price</span>
+                    {% endif %}
                     {% if not active_tag %}
                     <span class="watch-tag-list">{{ watch.tag}}</span>
                     {% endif %}

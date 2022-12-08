@@ -945,3 +945,16 @@ ul {
     display: inline;
     height: 26px;
     vertical-align: middle; }
+
+/* automatic price following helpers */
+.tracking-ldjson-price-data {
+  background-color: var(--color-background-button-green);
+  color: #000;
+  padding: 3px;
+  border-radius: 3px;
+  white-space: nowrap; }
+
+.ldjson-price-track-offer a.pure-button {
+  border-radius: 3px;
+  padding: 3px;
+  background-color: var(--color-background-button-green); }
