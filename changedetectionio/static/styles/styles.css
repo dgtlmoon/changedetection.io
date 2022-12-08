@@ -951,7 +951,8 @@ ul {
   background-color: var(--color-background-button-green);
   color: #000;
   padding: 3px;
-  border-radius: 3px; }
+  border-radius: 3px;
+  white-space: nowrap; }
 
 .ldjson-price-track-offer a.pure-button {
   border-radius: 3px;
