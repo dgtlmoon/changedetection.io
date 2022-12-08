@@ -149,7 +149,7 @@ class perform_site_check():
 
         # Inject a virtual LD+JSON price tracker rule
         if watch.get('track_ldjson_price_data'):
-            include_filters_rule.append('json:$..price')
+            include_filters_rule.append(html_tools.LD_JSON_PRODUCT_OFFER_SELECTOR)
 
         has_filter_rule = include_filters_rule and len("".join(include_filters_rule).strip())
         has_subtractive_selectors = subtractive_selectors and len(subtractive_selectors[0].strip())

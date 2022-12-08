@@ -10,6 +10,10 @@ import re
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
 TEXT_FILTER_LIST_LINE_SUFFIX = "<br/>"
 
+# 'price' , 'lowPrice', 'highPrice' are usually under here
+# all of those may or may not appear on different websites
+LD_JSON_PRODUCT_OFFER_SELECTOR = "json:$..offers"
+
 class JSONNotFound(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
@@ -261,7 +265,7 @@ def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?
 def has_ldjson_product_info(content):
     try:
-        pricing_data = extract_json_as_string(content=content, json_filter='json:$..price', ensure_is_ldjson_info_type="product")
+        pricing_data = extract_json_as_string(content=content, json_filter=LD_JSON_PRODUCT_OFFER_SELECTOR, ensure_is_ldjson_info_type="product")
     except JSONNotFound as e:
         # Totally fine
         return False
