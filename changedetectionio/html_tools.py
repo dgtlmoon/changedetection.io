@@ -251,7 +251,12 @@ def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
 
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?
 def has_ldjson_product_info(content):
-    pricing_data = extract_json_as_string(content=content, json_filter='json:$..price', ensure_is_type="product")
+    try:
+        pricing_data = extract_json_as_string(content=content, json_filter='json:$..price', ensure_is_type="product")
+    except JSONNotFound as e:
+        # Totally fine
+        return False
+
     return bool(pricing_data)
 
 
