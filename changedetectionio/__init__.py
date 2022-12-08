@@ -1343,6 +1343,10 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.browser_steps as browser_steps
     app.register_blueprint(browser_steps.construct_blueprint(datastore), url_prefix='/browser-steps')
 
+    import changedetectionio.blueprint.price_data_follower as price_data_follower
+    app.register_blueprint(price_data_follower.construct_blueprint(datastore), url_prefix='/price_data_follower')
+
+
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
     threading.Thread(target=notification_runner).start()

@@ -26,6 +26,8 @@ class model(dict):
             'extract_title_as_title': False,
             'fetch_backend': None,
             'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
+            'has_ldjson_price_data': None,
+            'track_ldjson_price_data': None,
             'headers': {},  # Extra headers to send
             'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
             'include_filters': [],

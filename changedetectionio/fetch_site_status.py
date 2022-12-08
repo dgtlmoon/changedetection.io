@@ -2,7 +2,6 @@ import hashlib
 import logging
 import os
 import re
-import time
 import urllib3
 
 from changedetectionio import content_fetcher, html_tools
@@ -140,13 +139,17 @@ class perform_site_check():
             is_html = False
             is_json = False
 
-        include_filters_rule = watch.get('include_filters', [])
+        include_filters_rule = deepcopy(watch.get('include_filters', []))
         # include_filters_rule = watch['include_filters']
         subtractive_selectors = watch.get(
             "subtractive_selectors", []
         ) + self.datastore.data["settings"]["application"].get(
             "global_subtractive_selectors", []
         )
+
+        # Inject a virtual LD+JSON price tracker rule
+        if watch.get('track_ldjson_price_data'):
+            include_filters_rule.append('json:$..price')
 
         has_filter_rule = include_filters_rule and len("".join(include_filters_rule).strip())
         has_subtractive_selectors = subtractive_selectors and len(subtractive_selectors[0].strip())
@@ -173,9 +176,13 @@ class perform_site_check():
                 # Don't run get_text or xpath/css filters on plaintext
                 stripped_text_from_html = html_content
             else:
+                # Does it have some ld+json price data? used for easier monitoring
+                update_obj['has_ldjson_price_data'] = html_tools.has_ldjson_product_info(fetcher.content)
+
                 # Then we assume HTML
                 if has_filter_rule:
                     html_content = ""
+
                     for filter_rule in include_filters_rule:
                         # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
                         if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):

@@ -127,8 +127,10 @@ def _get_stripped_text_from_json_match(match):
 
     return stripped_text_from_html
 
-def extract_json_as_string(content, json_filter):
-
+# content - json
+# json_filter - ie json:$..price
+# ensure_is_type - str "product", optional, "@type == product" (I dont know how to do that as a json selector)
+def extract_json_as_string(content, json_filter, ensure_is_type=None):
     stripped_text_from_html = False
 
     # Try to parse/filter out the JSON, if we get some parser error, then maybe it's embedded <script type=ldjson>
@@ -156,7 +158,10 @@ def extract_json_as_string(content, json_filter):
                 continue
             else:
                 stripped_text_from_html = _parse_json(json_data, json_filter)
-                if stripped_text_from_html:
+                if ensure_is_type:
+                    if json_data.get('@type') and json_data.get('@type','').lower() == ensure_is_type.lower():
+                        break
+                elif stripped_text_from_html:
                     break
 
     if not stripped_text_from_html:
@@ -242,6 +247,13 @@ def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
     text_content = get_text(html_content, config=parser_config)
 
     return text_content
+
+
+# Does LD+JSON exist with a @type=='product' and a .price set anywhere?
+def has_ldjson_product_info(content):
+    pricing_data = extract_json_as_string(content=content, json_filter='json:$..price', ensure_is_type="product")
+    return bool(pricing_data)
+
 
 def workarounds_for_obfuscations(content):
     """
