@@ -4,6 +4,9 @@ from flask import Blueprint, flash, redirect, url_for
 from flask_login import login_required
 from changedetectionio.store import ChangeDetectionStore
 
+PRICE_DATA_TRACK_ACCEPT = 'accepted'
+PRICE_DATA_TRACK_REJECT = 'rejected'
+
 def construct_blueprint(datastore: ChangeDetectionStore):
 
     price_data_follower_blueprint = Blueprint('price_data_follower', __name__)
@@ -11,14 +14,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @login_required
     @price_data_follower_blueprint.route("/<string:uuid>/accept", methods=['GET'])
     def accept(uuid):
-        datastore.data['watching'][uuid]['track_ldjson_price_data'] = 'accepted'
+        datastore.data['watching'][uuid]['track_ldjson_price_data'] = PRICE_DATA_TRACK_ACCEPT
         return redirect(url_for("form_watch_checknow", uuid=uuid))
 
 
     @login_required
     @price_data_follower_blueprint.route("/<string:uuid>/reject", methods=['GET'])
     def reject(uuid):
-        datastore.data['watching'][uuid]['track_ldjson_price_data'] = 'rejected'
+        datastore.data['watching'][uuid]['track_ldjson_price_data'] = PRICE_DATA_TRACK_REJECT
         return redirect(url_for("index"))
 
 

@@ -5,6 +5,7 @@ import re
 import urllib3
 
 from changedetectionio import content_fetcher, html_tools
+from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -148,7 +149,7 @@ class perform_site_check():
         )
 
         # Inject a virtual LD+JSON price tracker rule
-        if watch.get('track_ldjson_price_data'):
+        if watch.get('track_ldjson_price_data', '') == PRICE_DATA_TRACK_ACCEPT:
             include_filters_rule.append(html_tools.LD_JSON_PRODUCT_OFFER_SELECTOR)
 
         has_filter_rule = include_filters_rule and len("".join(include_filters_rule).strip())
