@@ -250,12 +250,15 @@ class ChangeDetectionStore:
     def clear_watch_history(self, uuid):
         import pathlib
 
-        self.__data['watching'][uuid].update(
-            {'last_checked': 0,
-             'last_viewed': 0,
-             'previous_md5': False,
-             'last_notification_error': False,
-             'last_error': False})
+        self.__data['watching'][uuid].update({
+                'last_checked': 0,
+                'has_ldjson_price_data': None,
+                'last_error': False,
+                'last_notification_error': False,
+                'last_viewed': 0,
+                'previous_md5': False,
+                'track_ldjson_price_data': None,
+            })
 
         # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
         for item in pathlib.Path(os.path.join(self.datastore_path, uuid)).rglob("*.*"):

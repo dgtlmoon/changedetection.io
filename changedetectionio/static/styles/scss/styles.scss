@@ -1009,3 +1009,30 @@ ul {
   border-radius: 5px;
   color: var(--color-warning);
 }
+
+/* automatic price following helpers */
+.tracking-ldjson-price-data {
+  background-color: var(--color-background-button-green);
+  color: #000;
+  padding: 3px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.ldjson-price-track-offer {
+  a.pure-button {
+    border-radius: 3px;
+    padding: 3px;
+    background-color: var(--color-background-button-green);
+  }
+
+  font-weight: bold;
+  font-style: italic;
+}
+
+.price-follow-tag-icon {
+  display: inline-block;
+  height: 0.8rem;
+  vertical-align: middle;
+}
+

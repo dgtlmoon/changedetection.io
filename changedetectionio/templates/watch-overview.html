@@ -88,15 +88,21 @@
                 </td>
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
                     <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}"></a>
-                    <a class="link-spread" href="{{url_for('form_share_put_watch', uuid=watch.uuid)}}"><img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="icon icon-spread" /></a>
+                    <a class="link-spread" href="{{url_for('form_share_put_watch', uuid=watch.uuid)}}"><img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="icon icon-spread" title="Create a link to share watch config with others" /></a>
 
-                    {%if watch.fetch_backend == "html_webdriver" %}<img style="height: 1em; display:inline-block;" src="{{url_for('static_content', group='images', filename='Google-Chrome-icon.png')}}" />{% endif %}
+                    {%if watch.fetch_backend == "html_webdriver" %}<img style="height: 1em; display:inline-block;" src="{{url_for('static_content', group='images', filename='Google-Chrome-icon.png')}}" title="Using a chrome browser" />{% endif %}
 
                     {% if watch.last_error is defined and watch.last_error != False %}
                     <div class="fetch-error">{{ watch.last_error }}</div>
                     {% endif %}
                     {% if watch.last_notification_error is defined and watch.last_notification_error != False %}
                     <div class="fetch-error notification-error"><a href="{{url_for('notification_logs')}}">{{ watch.last_notification_error }}</a></div>
+                    {% endif %}
+                    {% if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  %}
+                    <div class="ldjson-price-track-offer">Embedded price data detected, follow only price data? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
+                    {% endif %}
+                    {% if watch['track_ldjson_price_data'] == 'accepted' %}
+                    <span class="tracking-ldjson-price-data" title="Automatically following embedded price information"><img src="{{url_for('static_content', group='images', filename='price-tag-icon.svg')}}"  class="price-follow-tag-icon"/> Price</span>
                     {% endif %}
                     {% if not active_tag %}
                     <span class="watch-tag-list">{{ watch.tag}}</span>
