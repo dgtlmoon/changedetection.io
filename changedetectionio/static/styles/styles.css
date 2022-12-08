@@ -954,10 +954,13 @@ ul {
   border-radius: 3px;
   white-space: nowrap; }
 
-.ldjson-price-track-offer a.pure-button {
-  border-radius: 3px;
-  padding: 3px;
-  background-color: var(--color-background-button-green); }
+.ldjson-price-track-offer {
+  font-weight: bold;
+  font-style: italic; }
+  .ldjson-price-track-offer a.pure-button {
+    border-radius: 3px;
+    padding: 3px;
+    background-color: var(--color-background-button-green); }
 
 .price-follow-tag-icon {
   display: inline-block;
