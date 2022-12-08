@@ -129,8 +129,8 @@ def _get_stripped_text_from_json_match(match):
 
 # content - json
 # json_filter - ie json:$..price
-# ensure_is_type - str "product", optional, "@type == product" (I dont know how to do that as a json selector)
-def extract_json_as_string(content, json_filter, ensure_is_type=None):
+# ensure_is_ldjson_info_type - str "product", optional, "@type == product" (I dont know how to do that as a json selector)
+def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None):
     stripped_text_from_html = False
 
     # Try to parse/filter out the JSON, if we get some parser error, then maybe it's embedded <script type=ldjson>
@@ -141,7 +141,12 @@ def extract_json_as_string(content, json_filter, ensure_is_type=None):
         # Foreach <script json></script> blob.. just return the first that matches json_filter
         s = []
         soup = BeautifulSoup(content, 'html.parser')
-        bs_result = soup.findAll('script')
+
+        if ensure_is_ldjson_info_type:
+            bs_result = soup.findAll('script', {"type": "application/ld+json"})
+        else:
+            bs_result = soup.findAll('script')
+
 
         if not bs_result:
             raise JSONNotFound("No parsable JSON found in this document")
@@ -158,9 +163,11 @@ def extract_json_as_string(content, json_filter, ensure_is_type=None):
                 continue
             else:
                 stripped_text_from_html = _parse_json(json_data, json_filter)
-                if ensure_is_type:
-                    if json_data.get('@type') and json_data.get('@type','').lower() == ensure_is_type.lower():
-                        break
+                if ensure_is_ldjson_info_type:
+                    # Could sometimes be list, string or something else random
+                    if isinstance(json_data, dict):
+                        if json_data.get('@type', False) and json_data.get('@type','').lower() == ensure_is_ldjson_info_type.lower():
+                            break
                 elif stripped_text_from_html:
                     break
 
@@ -252,12 +259,12 @@ def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?
 def has_ldjson_product_info(content):
     try:
-        pricing_data = extract_json_as_string(content=content, json_filter='json:$..price', ensure_is_type="product")
+        pricing_data = extract_json_as_string(content=content, json_filter='json:$..price', ensure_is_ldjson_info_type="product")
     except JSONNotFound as e:
         # Totally fine
         return False
-
-    return bool(pricing_data)
+    x=bool(pricing_data)
+    return x
 
 
 def workarounds_for_obfuscations(content):
