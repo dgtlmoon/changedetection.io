@@ -4,9 +4,6 @@ import time
 from flask import url_for
 from .util import live_server_setup, extract_UUID_from_client, extract_api_key_from_UI
 
-from ..html_tools import *
-
-
 def set_response_with_ldjson():
     test_return_data = """<html>
        <body>
@@ -61,6 +58,22 @@ def set_response_with_ldjson():
         f.write(test_return_data)
     return None
 
+def set_response_without_ldjson():
+    test_return_data = """<html>
+       <body>
+     Some initial text</br>
+     <p>Which is across multiple lines</p>
+     </br>
+     So let's see what happens.  </br>
+     <div class="sametext">Some text thats the same</div>
+     <div class="changetext">Some text that will change</div>     
+     </body>
+     </html>
+"""
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+    return None
 
 # actually only really used by the distll.io importer, but could be handy too
 def test_check_ldjson_price_autodetect(client, live_server):
@@ -106,7 +119,28 @@ def test_check_ldjson_price_autodetect(client, live_server):
         headers={'x-api-key': api_key},
     )
 
-    # Should just see the price in the API reply
-    assert res.data == b'8097000'
+    # Should see this (dont know where the whitespace came from)
+    assert b'"highPrice": 8099900' in res.data
+    # And not this cause its not the ld-json
+    assert b"So let's see what happens" not in res.data
 
+    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+
+    ##########################################################################################
+    # And we shouldnt see the offer
+    set_response_without_ldjson()
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    time.sleep(3)
+    res = client.get(url_for("index"))
+    assert b'ldjson-price-track-offer' not in res.data
+    
+    ##########################################################################################
     client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
