@@ -166,7 +166,9 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
                 if ensure_is_ldjson_info_type:
                     # Could sometimes be list, string or something else random
                     if isinstance(json_data, dict):
-                        if json_data.get('@type', False) and json_data.get('@type','').lower() == ensure_is_ldjson_info_type.lower():
+                        # If it has LD JSON 'key' @type, and @type is 'product', and something was found for the search
+                        # (Some sites have multiple of the same ld+json @type='product', but some have the review part, some have the 'price' part)
+                        if json_data.get('@type', False) and json_data.get('@type','').lower() == ensure_is_ldjson_info_type.lower() and stripped_text_from_html:
                             break
                 elif stripped_text_from_html:
                     break
