@@ -102,7 +102,7 @@
                     <div class="ldjson-price-track-offer">Embedded price data detected, follow only price data? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
                     {% endif %}
                     {% if watch['track_ldjson_price_data'] == 'accepted' %}
-                    <span class="tracking-ldjson-price-data" title="Automatically following embedded price information">Price</span>
+                    <span class="tracking-ldjson-price-data" title="Automatically following embedded price information"><img src="{{url_for('static_content', group='images', filename='price-tag-icon.svg')}}"  class="price-follow-tag-icon"/> Price</span>
                     {% endif %}
                     {% if not active_tag %}
                     <span class="watch-tag-list">{{ watch.tag}}</span>

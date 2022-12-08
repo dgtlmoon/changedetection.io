@@ -958,3 +958,8 @@ ul {
   border-radius: 3px;
   padding: 3px;
   background-color: var(--color-background-button-green); }
+
+.price-follow-tag-icon {
+  display: inline-block;
+  height: 0.8rem;
+  vertical-align: middle; }
