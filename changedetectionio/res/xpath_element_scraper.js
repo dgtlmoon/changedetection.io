@@ -81,6 +81,14 @@ var bbox;
 for (var i = 0; i < elements.length; i++) {
     bbox = elements[i].getBoundingClientRect();
 
+    // Exclude items that are not interactable or visible
+    if(elements[i].style.opacity === "0") {
+        continue
+    }
+    if(elements[i].style.display === "none" || elements[i].style.pointerEvents === "none" ) {
+        continue
+    }
+
     // Forget really small ones
     if (bbox['width'] < 10 && bbox['height'] < 10) {
         continue;
