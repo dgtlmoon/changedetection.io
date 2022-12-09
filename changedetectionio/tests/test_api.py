@@ -283,3 +283,5 @@ def test_api_watch_PUT_update(client, live_server):
     info = json.loads(res.data)
     assert info.get('title') == 'new title'
     ######################################################
+
+    # @todo fetch the full watch via API and resubmit it
