@@ -321,6 +321,24 @@ class model(dict):
             return fname
         return False
 
+    def pause(self):
+        self['paused'] = True
+
+    def unpause(self):
+        self['paused'] = False
+
+    def toggle_pause(self):
+        self['paused'] ^= True
+
+    def mute(self):
+        self['notification_muted'] = True
+
+    def unmute(self):
+        self['notification_muted'] = False
+
+    def toggle_mute(self):
+        self['notification_muted'] ^= True
+
     def extract_regex_from_all_history(self, regex):
         import csv
         import re

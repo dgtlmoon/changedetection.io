@@ -15,6 +15,7 @@ class Watch(Resource):
 
     # Get information about a single watch, excluding the history list (can be large)
     # curl http://localhost:4000/api/v1/watch/<string:uuid>
+    # @todo - version2 - ?muted and ?paused should be able to be called together, return the watch struct not "OK"
     # ?recheck=true
     @auth.check_token
     def get(self, uuid):
@@ -25,6 +26,18 @@ class Watch(Resource):
 
         if request.args.get('recheck'):
             self.update_q.put((1, uuid))
+            return "OK", 200
+        if request.args.get('paused', '') == 'paused':
+            self.datastore.data['watching'].get(uuid).pause()
+            return "OK", 200
+        elif request.args.get('paused', '') == 'unpaused':
+            self.datastore.data['watching'].get(uuid).unpause()
+            return "OK", 200
+        if request.args.get('muted', '') == 'muted':
+            self.datastore.data['watching'].get(uuid).mute()
+            return "OK", 200
+        elif request.args.get('muted', '') == 'unmuted':
+            self.datastore.data['watching'].get(uuid).unmute()
             return "OK", 200
 
         # Return without history, get that via another API call

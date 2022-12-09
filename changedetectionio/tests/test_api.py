@@ -98,6 +98,7 @@ def test_api_simple(client, live_server):
     #705 `last_changed` should be zero on the first check
     assert before_recheck_info['last_changed'] == 0
     assert before_recheck_info['title'] == 'My test URL'
+    time.sleep(2)
 
     set_modified_response()
     # Trigger recheck of all ?recheck_all=1
@@ -156,6 +157,44 @@ def test_api_simple(client, live_server):
     assert info.get('watch_count') == 1
     assert info.get('uptime') > 0.5
 
+    ######################################################
+    # Mute and Pause, check it worked
+    res = client.get(
+        url_for("watch", uuid=watch_uuid, paused='paused'),
+        headers={'x-api-key': api_key}
+    )
+    assert b'OK' in res.data
+    res = client.get(
+        url_for("watch", uuid=watch_uuid,  muted='muted'),
+        headers={'x-api-key': api_key}
+    )
+    assert b'OK' in res.data
+    res = client.get(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key}
+    )
+    info = json.loads(res.data)
+    assert info.get('paused') == True
+    assert info.get('notification_muted') == True
+    # Now unpause, unmute
+    res = client.get(
+        url_for("watch", uuid=watch_uuid,  muted='unmuted'),
+        headers={'x-api-key': api_key}
+    )
+    assert b'OK' in res.data
+    res = client.get(
+        url_for("watch", uuid=watch_uuid, paused='unpaused'),
+        headers={'x-api-key': api_key}
+    )
+    assert b'OK' in res.data
+    res = client.get(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key}
+    )
+    info = json.loads(res.data)
+    assert info.get('paused') == 0
+    assert info.get('notification_muted') == 0
+    ######################################################
 
     # Finally delete the watch
     res = client.delete(
