@@ -53,14 +53,15 @@ def is_valid_uuid(val):
         return False
 
 
-def test_api_simple(client, live_server):
+def test_api_setup(client, live_server):
     live_server_setup(live_server)
+
+def test_api_simple(client, live_server):
 
     api_key = extract_api_key_from_UI(client)
 
     # Create a watch
     set_original_response()
-    watch_uuid = None
 
     # Validate bad URL
     test_url = url_for('test_endpoint', _external=True,
@@ -242,3 +243,43 @@ def test_access_denied(client, live_server):
         url_for("createwatch")
     )
     assert res.status_code == 200
+
+def test_api_watch_PUT_update(client, live_server):
+    api_key = extract_api_key_from_UI(client)
+
+    # Create a watch
+    set_original_response()
+    test_url = url_for('test_endpoint', _external=True,
+                       headers={'x-api-key': api_key}, )
+
+    # Create new
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({"url": test_url, 'tag': "One, Two", "title": "My test URL"}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 201
+
+    # Get the UUID, get a list of all then it's the first one
+    res = client.get(
+        url_for("createwatch"),
+        headers={'x-api-key': api_key}
+    )
+
+    data = json.loads(res.data)
+    watch_uuid = list(data.keys())[0]
+    res = client.put(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key, 'content-type': 'application/json'},
+        data='{"title": "new title"}'
+    )
+    assert res.status_code == 201
+    res = client.get(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key}
+    )
+    info = json.loads(res.data)
+    assert info.get('title') == 'new title'
+    ######################################################

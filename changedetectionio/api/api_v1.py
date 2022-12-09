@@ -3,8 +3,8 @@ from flask import request, make_response
 import validators
 from . import auth
 
-
-
+# Experimenting with `apidoc` for building docs
+# node_modules/apidoc/bin/apidoc -i ../../changedetectionio/api/ -o apidoc
 # https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
 
 class Watch(Resource):
@@ -19,6 +19,18 @@ class Watch(Resource):
     # ?recheck=true
     @auth.check_token
     def get(self, uuid):
+        """
+        @api {get} /api/v1/watch/:uuid Single watch information
+        @apiName Watch
+        @apiGroup Watch
+        @apiVersion 1.0.0
+        @apiParam {uuid} uuid Watch unique ID.
+        @apiQuery {Boolean} [recheck] Recheck this watch `recheck=1`
+        @apiQuery {String} [paused] `paused` or `unpaused`
+        @apiQuery {String} [muted] `muted` or `unmuted`
+        @apiSuccess (200) {String} OK When paused/muted/recheck operation OR full JSON object of the watch
+        @apiSuccess (200) {JSON} WatchJSON JSON Full JSON object of the watch
+        """
         from copy import deepcopy
         watch = deepcopy(self.datastore.data['watching'].get(uuid))
         if not watch:
@@ -46,11 +58,46 @@ class Watch(Resource):
 
     @auth.check_token
     def delete(self, uuid):
+        """
+        @api {delete} /api/v1/watch/:uuid Delete watch information
+        @apiParam {uuid} uuid Watch unique ID.
+        @apiName Delete
+        @apiGroup Watch
+        @apiVersion 1.0.0
+        @apiSuccess (200) {String} OK Was deleted
+        """
         if not self.datastore.data['watching'].get(uuid):
             abort(400, message='No watch exists with the UUID of {}'.format(uuid))
 
         self.datastore.delete(uuid)
         return 'OK', 204
+
+    # Update an existing
+    @auth.check_token
+    def put(self, uuid):
+        """
+        @api {put} /api/v1/watch/:uuid Update watch information The request must have the application/json content type
+        @apiParam {uuid} uuid Watch unique ID.
+        @apiName Update
+        @apiGroup Watch
+        @apiVersion 1.0.0
+        @apiSuccess (200) {String} OK Was updated
+        @apiSuccess (500) {String} ERR Some other error
+        """
+        watch = self.datastore.data['watching'].get(uuid)
+        if not watch:
+            abort(404, message='No watch exists with the UUID of {}'.format(uuid))
+
+        # Take a JSON struct and update
+        from ..model import Watch
+
+        #@todo - Limit to only fields in Watch.base_config
+        #@todo - control which fields cant be updated
+
+        watch.update(request.json)
+
+        return "OK", 201
+
 
 
 class WatchHistory(Resource):
