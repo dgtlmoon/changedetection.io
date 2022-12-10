@@ -283,7 +283,7 @@ def test_api_watch_PUT_update(client, live_server):
         headers={'x-api-key': api_key, 'content-type': 'application/json'},
         data='{"title": "new title"}'
     )
-    assert res.status_code == 201
+    assert res.status_code == 200
 
     # HTTP GET single watch, title should be updated
     res = client.get(

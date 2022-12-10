@@ -96,7 +96,7 @@ class Watch(Resource):
 
         watch.update(request.json)
 
-        return "OK", 201
+        return "OK", 200
 
 
 
