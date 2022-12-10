@@ -169,16 +169,22 @@ class CreateWatch(Resource):
 
     # Return concise list of available watches and some very basic info
     # curl http://localhost:4000/api/v1/watch|python -mjson.tool
-    # ?recheck_all=1 to recheck all
+    # ?recheck_all=1 to recheck all, tag=sometag
     @auth.check_token
     def get(self):
         list = {}
-        for k, v in self.datastore.data['watching'].items():
-            list[k] = {'url': v['url'],
-                       'title': v['title'],
-                       'last_checked': v['last_checked'],
-                       'last_changed': v.last_changed,
-                       'last_error': v['last_error']}
+
+        tag_limit = request.args.get('tag', None)
+        for k, watch in self.datastore.data['watching'].items():
+            if tag_limit:
+                if not tag_limit in watch.all_tags:
+                    continue
+
+            list[k] = {'url': watch['url'],
+                       'title': watch['title'],
+                       'last_checked': watch['last_checked'],
+                       'last_changed': watch.last_changed,
+                       'last_error': watch['last_error']}
 
         if request.args.get('recheck_all'):
             for uuid in self.datastore.data['watching'].keys():

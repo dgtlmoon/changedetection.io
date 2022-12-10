@@ -381,3 +381,7 @@ class model(dict):
             f.close()
 
         return csv_output_filename
+
+    @property
+    def all_tags(self):
+        return [s.strip() for s in self.get('tag','').split(',')]

@@ -90,7 +90,7 @@ def test_api_simple(client, live_server):
 
     # Verify its in the list and that recheck worked
     res = client.get(
-        url_for("createwatch"),
+        url_for("createwatch", tag="One"),
         headers={'x-api-key': api_key}
     )
     assert watch_uuid in res.json.keys()
@@ -99,6 +99,14 @@ def test_api_simple(client, live_server):
     #705 `last_changed` should be zero on the first check
     assert before_recheck_info['last_changed'] == 0
     assert before_recheck_info['title'] == 'My test URL'
+
+    # Check the limit by tag doesnt return anything when nothing found
+    res = client.get(
+        url_for("createwatch", tag="Something else entirely"),
+        headers={'x-api-key': api_key}
+    )
+    assert len(res.json) == 0
+
     time.sleep(2)
 
     set_modified_response()
