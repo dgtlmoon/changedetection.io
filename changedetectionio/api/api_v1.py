@@ -91,8 +91,12 @@ class Watch(Resource):
         # Take a JSON struct and update
         from ..model import Watch
 
-        #@todo - Limit to only fields in Watch.base_config
-        #@todo - control which fields cant be updated
+        # Check the key exists as something that can be updated
+        for k in request.json.keys():
+            if not k in Watch.base_config.keys():
+                abort(500, message='Watch field "{}" does not exist'.format(k))
+            # @todo - Check types are correct
+
 
         watch.update(request.json)
 

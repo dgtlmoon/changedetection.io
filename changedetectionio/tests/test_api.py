@@ -292,7 +292,7 @@ def test_api_watch_PUT_update(client, live_server):
     res = client.put(
         url_for("watch", uuid=watch_uuid),
         headers={'x-api-key': api_key, 'content-type': 'application/json'},
-        data='{"title": "new title"}'
+        data=json.dumps({"title": "new title"}),
     )
     assert res.status_code == 200
 
@@ -305,6 +305,18 @@ def test_api_watch_PUT_update(client, live_server):
     assert info.get('title') == 'new title'
     ######################################################
 
+    # HTTP PUT try a field that doenst exist
+
+    # HTTP PUT an update
+    res = client.put(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key, 'content-type': 'application/json'},
+        data=json.dumps({"title": "new title", "some other field": "uh oh"}),
+    )
+    assert res.status_code == 500
+    assert 'Watch field "some other field" does not exist' in res.json['message']
+
+    ######################################################
     # @todo fetch the full watch via API and resubmit it
 
     # Cleanup everything
