@@ -53,7 +53,7 @@ def is_valid_uuid(val):
         return False
 
 
-def test_api_setup(client, live_server):
+def test_setup(client, live_server):
     live_server_setup(live_server)
 
 def test_api_simple(client, live_server):
@@ -211,8 +211,6 @@ def test_api_simple(client, live_server):
     )
     watch_list = json.loads(res.data)
     assert len(watch_list) == 0, "Watch list should be empty"
-
-
 def test_access_denied(client, live_server):
     # `config_api_token_enabled` Should be On by default
     res = client.get(
@@ -248,10 +246,22 @@ def test_access_denied(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
+    res = client.post(
+        url_for("settings_page"),
+        data={
+            "requests-time_between_check-minutes": 180,
+            "application-fetch_backend": "html_requests",
+            "application-api_access_token_enabled": "y"
+        },
+        follow_redirects=True
+    )
+    assert b"Settings updated." in res.data
+
 def test_api_watch_PUT_update(client, live_server):
 
     #live_server_setup(live_server)
     api_key = extract_api_key_from_UI(client)
+    time.sleep(1)
     # Create a watch
     set_original_response()
     test_url = url_for('test_endpoint', _external=True,
@@ -264,6 +274,7 @@ def test_api_watch_PUT_update(client, live_server):
         headers={'content-type': 'application/json', 'x-api-key': api_key},
         follow_redirects=True
     )
+
     assert res.status_code == 201
 
     time.sleep(1)
