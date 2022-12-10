@@ -383,5 +383,6 @@ class model(dict):
         return csv_output_filename
 
     @property
+    # Return list of tags, stripped and lowercase, used for searching
     def all_tags(self):
-        return [s.strip() for s in self.get('tag','').split(',')]
+        return [s.strip().lower() for s in self.get('tag','').split(',')]

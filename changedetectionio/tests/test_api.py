@@ -90,7 +90,7 @@ def test_api_simple(client, live_server):
 
     # Verify its in the list and that recheck worked
     res = client.get(
-        url_for("createwatch", tag="One"),
+        url_for("createwatch", tag="OnE"),
         headers={'x-api-key': api_key}
     )
     assert watch_uuid in res.json.keys()
