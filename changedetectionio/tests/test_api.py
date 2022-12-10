@@ -81,9 +81,9 @@ def test_api_simple(client, live_server):
         headers={'content-type': 'application/json', 'x-api-key': api_key},
         follow_redirects=True
     )
-    s = json.loads(res.data)
-    assert is_valid_uuid(s['uuid'])
-    watch_uuid = s['uuid']
+
+    assert is_valid_uuid(res.json.get('uuid'))
+    watch_uuid = res.json.get('uuid')
     assert res.status_code == 201
 
     time.sleep(3)
@@ -93,8 +93,8 @@ def test_api_simple(client, live_server):
         url_for("createwatch"),
         headers={'x-api-key': api_key}
     )
-    assert watch_uuid in json.loads(res.data).keys()
-    before_recheck_info = json.loads(res.data)[watch_uuid]
+    assert watch_uuid in res.json.keys()
+    before_recheck_info = res.json[watch_uuid]
     assert before_recheck_info['last_checked'] != 0
     #705 `last_changed` should be zero on the first check
     assert before_recheck_info['last_changed'] == 0
@@ -114,7 +114,7 @@ def test_api_simple(client, live_server):
         url_for("createwatch"),
         headers={'x-api-key': api_key},
     )
-    after_recheck_info = json.loads(res.data)[watch_uuid]
+    after_recheck_info = res.json[watch_uuid]
     assert after_recheck_info['last_checked'] != before_recheck_info['last_checked']
     assert after_recheck_info['last_changed'] != 0
 
@@ -123,12 +123,11 @@ def test_api_simple(client, live_server):
         url_for("watchhistory", uuid=watch_uuid),
         headers={'x-api-key': api_key},
     )
-    history = json.loads(res.data)
-    assert len(history) == 2, "Should have two history entries (the original and the changed)"
+    assert len(res.json) == 2, "Should have two history entries (the original and the changed)"
 
     # Fetch a snapshot by timestamp, check the right one was found
     res = client.get(
-        url_for("watchsinglehistory", uuid=watch_uuid, timestamp=list(history.keys())[-1]),
+        url_for("watchsinglehistory", uuid=watch_uuid, timestamp=list(res.json.keys())[-1]),
         headers={'x-api-key': api_key},
     )
     assert b'which has this one new line' in res.data
@@ -145,7 +144,7 @@ def test_api_simple(client, live_server):
         url_for("watch", uuid=watch_uuid),
         headers={'x-api-key': api_key}
     )
-    watch = json.loads(res.data)
+    watch = res.json
     # @todo how to handle None/default global values?
     assert watch['history_n'] == 2, "Found replacement history section, which is in its own API"
 
@@ -154,9 +153,8 @@ def test_api_simple(client, live_server):
         url_for("systeminfo"),
         headers={'x-api-key': api_key},
     )
-    info = json.loads(res.data)
-    assert info.get('watch_count') == 1
-    assert info.get('uptime') > 0.5
+    assert res.json.get('watch_count') == 1
+    assert res.json.get('uptime') > 0.5
 
     ######################################################
     # Mute and Pause, check it worked
@@ -174,9 +172,9 @@ def test_api_simple(client, live_server):
         url_for("watch", uuid=watch_uuid),
         headers={'x-api-key': api_key}
     )
-    info = json.loads(res.data)
-    assert info.get('paused') == True
-    assert info.get('notification_muted') == True
+    assert res.json.get('paused') == True
+    assert res.json.get('notification_muted') == True
+
     # Now unpause, unmute
     res = client.get(
         url_for("watch", uuid=watch_uuid,  muted='unmuted'),
@@ -192,9 +190,8 @@ def test_api_simple(client, live_server):
         url_for("watch", uuid=watch_uuid),
         headers={'x-api-key': api_key}
     )
-    info = json.loads(res.data)
-    assert info.get('paused') == 0
-    assert info.get('notification_muted') == 0
+    assert res.json.get('paused') == 0
+    assert res.json.get('notification_muted') == 0
     ######################################################
 
     # Finally delete the watch
@@ -209,8 +206,8 @@ def test_api_simple(client, live_server):
         url_for("createwatch"),
         headers={'x-api-key': api_key}
     )
-    watch_list = json.loads(res.data)
-    assert len(watch_list) == 0, "Watch list should be empty"
+    assert len(res.json) == 0, "Watch list should be empty"
+
 def test_access_denied(client, live_server):
     # `config_api_token_enabled` Should be On by default
     res = client.get(
@@ -285,8 +282,7 @@ def test_api_watch_PUT_update(client, live_server):
         headers={'x-api-key': api_key}
     )
 
-    data = json.loads(res.data)
-    watch_uuid = list(data.keys())[0]
+    watch_uuid = list(res.json.keys())[0]
 
     # HTTP PUT an update
     res = client.put(
@@ -301,8 +297,7 @@ def test_api_watch_PUT_update(client, live_server):
         url_for("watch", uuid=watch_uuid),
         headers={'x-api-key': api_key}
     )
-    info = json.loads(res.data)
-    assert info.get('title') == 'new title'
+    assert res.json.get('title') == 'new title'
     ######################################################
 
     # HTTP PUT try a field that doenst exist
