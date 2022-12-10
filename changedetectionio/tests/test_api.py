@@ -244,9 +244,14 @@ def test_access_denied(client, live_server):
     )
     assert res.status_code == 200
 
-def test_api_watch_PUT_update(client, live_server):
-    api_key = extract_api_key_from_UI(client)
+    # Cleanup everything
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
+def test_api_watch_PUT_update(client, live_server):
+
+    #live_server_setup(live_server)
+    api_key = extract_api_key_from_UI(client)
     # Create a watch
     set_original_response()
     test_url = url_for('test_endpoint', _external=True,
@@ -259,10 +264,11 @@ def test_api_watch_PUT_update(client, live_server):
         headers={'content-type': 'application/json', 'x-api-key': api_key},
         follow_redirects=True
     )
-
     assert res.status_code == 201
 
-    # Get the UUID, get a list of all then it's the first one
+    time.sleep(1)
+
+    # Get a listing, it will be the first one
     res = client.get(
         url_for("createwatch"),
         headers={'x-api-key': api_key}
@@ -270,12 +276,16 @@ def test_api_watch_PUT_update(client, live_server):
 
     data = json.loads(res.data)
     watch_uuid = list(data.keys())[0]
+
+    # HTTP PUT an update
     res = client.put(
         url_for("watch", uuid=watch_uuid),
         headers={'x-api-key': api_key, 'content-type': 'application/json'},
         data='{"title": "new title"}'
     )
     assert res.status_code == 201
+
+    # HTTP GET single watch, title should be updated
     res = client.get(
         url_for("watch", uuid=watch_uuid),
         headers={'x-api-key': api_key}
@@ -285,3 +295,7 @@ def test_api_watch_PUT_update(client, live_server):
     ######################################################
 
     # @todo fetch the full watch via API and resubmit it
+
+    # Cleanup everything
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
