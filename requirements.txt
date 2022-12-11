@@ -31,7 +31,7 @@ paho-mqtt
 
 # Pinned version of cryptography otherwise
 # ERROR: Could not build wheels for cryptography which use PEP 517 and cannot be installed directly
-cryptography~=3.4
+# cryptography~=3.4
 
 # Used for CSS filtering
 bs4
