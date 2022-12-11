@@ -187,11 +187,29 @@ When you enable a `json:` or `jq:` filter, you can even automatically extract an
 <html>
 ...
 <script type="application/ld+json">
-  {"@context":"http://schema.org","@type":"Product","name":"Nan Optipro Stage 1 Baby Formula  800g","price": 23.50 }
+
+{
+   "@context":"http://schema.org/",
+   "@type":"Product",
+   "offers":{
+      "@type":"Offer",
+      "availability":"http://schema.org/InStock",
+      "price":"3949.99",
+      "priceCurrency":"USD",
+      "url":"https://www.newegg.com/p/3D5-000D-001T1"
+   },
+   "description":"Cobratype King Cobra Hero Desktop Gaming PC",
+   "name":"Cobratype King Cobra Hero Desktop Gaming PC",
+   "sku":"3D5-000D-001T1",
+   "itemCondition":"NewCondition"
+}
 </script>
 ```  
 
-`json:$.price` or `jq:.price` would give `23.50`, or you can extract the whole structure
+`json:$..price` or `jq:..price` would give `3949.99`, or you can extract the whole structure (use a JSONpath test website to validate with)
+
+The application also supports notifying you that it can follow this information automatically
+
 
 ## Proxy Configuration
 
