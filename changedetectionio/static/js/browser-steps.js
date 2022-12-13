@@ -214,7 +214,12 @@ $(document).ready(function () {
                     $('input[placeholder="Value"]', first_available).addClass('ok').click().focus();
                     found_something = true;
                 } else {
-                    if (x['isClickable'] || x['tagName'].startsWith('h') || x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit' || x['tagtype'] === 'checkbox' || x['tagtype'] === 'radio' || x['tagtype'] === 'li') {
+                    if (x['tagName'] === 'select') {
+                       $('select', first_available).val('Select option').change();
+                       $('input[type=text]', first_available).first().val(x['xpath']);
+                        $('#myModal').show();
+                       found_something = true;
+                    } else if (x['isClickable'] || x['tagName'].startsWith('h') || x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit' || x['tagtype'] === 'checkbox' || x['tagtype'] === 'radio' || x['tagtype'] === 'li') {
                         $('select', first_available).val('Click element').change();
                         $('input[type=text]', first_available).first().val(x['xpath']);
                         found_something = true;

@@ -6,6 +6,10 @@
 // will automatically force a scroll somewhere, so include the position offset
 // Lets hope the position doesnt change while we iterate the bbox's, but this is better than nothing
 
+function setModalChoiceFromList(items, element) {
+
+}
+
 var scroll_y=+document.documentElement.scrollTop || document.body.scrollTop
 
 // Include the getXpath script directly, easier than fetching
@@ -133,7 +137,7 @@ for (var i = 0; i < elements.length; i++) {
     }
 
     // @todo Possible to ONLY list where it's clickable to save JSON xfer size
-    size_pos.push({
+    var n = {
         xpath: xpath_result,
         width: Math.round(bbox['width']),
         height: Math.round(bbox['height']),
@@ -142,7 +146,16 @@ for (var i = 0; i < elements.length; i++) {
         tagName: (elements[i].tagName) ? elements[i].tagName.toLowerCase() : '',
         tagtype: (elements[i].tagName == 'INPUT' && elements[i].type) ? elements[i].type.toLowerCase() : '',
         isClickable: (elements[i].onclick) || window.getComputedStyle(elements[i]).cursor == "pointer"
-    });
+    }
+
+    if (n['tagName'] == 'select') {
+        n['options']=[]
+        for (const v of elements[i].options) {
+            n['options'].push(v.text)
+        }
+    }
+
+    size_pos.push(n);
 
 }
 

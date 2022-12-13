@@ -2,10 +2,11 @@
  * -- BASE STYLES --
  */
 
-@import "parts/_variables";
-@import "parts/_spinners";
-@import "parts/_browser-steps";
 @import "parts/_arrows";
+@import "parts/_browser-steps";
+@import "parts/_modal";
+@import "parts/_spinners";
+@import "parts/_variables";
 
 body {
   color: var(--color-text);

@@ -34,6 +34,17 @@
   </head>
 
   <body>
+
+  <div id="myModal" class="modal" style="display: none;">
+    <!-- Modal content -->
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div class="inner">
+        xxx
+      </div>
+    </div>
+  </div>
+
     <div class="header">
       <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed" id="nav-menu">
         {% if has_password and not current_user.is_authenticated %}

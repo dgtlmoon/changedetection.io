@@ -26,7 +26,7 @@ browser_step_ui_config = {'Choose one': '0 0',
 #                          'Extract text and use as filter': '1 0',
                           'Goto site': '0 0',
                           'Press Enter': '0 0',
-                          'Select by label': '1 1',
+                          'Select option': '1 1',
                           'Scroll down': '0 0',
                           'Uncheck checkbox': '1 0',
                           'Wait for seconds': '0 1',
@@ -236,7 +236,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         self.page.evaluate("var include_filters=''")
         # Go find the interactive elements
         # @todo in the future, something smarter that can scan for elements with .click/focus etc event handlers?
-        elements = 'a,button,input,select,textarea,i,th,td,p,li,h1,h2,h3,h4,div,span'
+        elements = 'a,button,input,select,textarea,i,th,td,p,li,h1,h2,h3,h4,div,span,select'
         xpath_element_js = xpath_element_js.replace('%ELEMENTS%', elements)
         xpath_data = self.page.evaluate("async () => {" + xpath_element_js + "}")
         # So the JS will find the smallest one first
