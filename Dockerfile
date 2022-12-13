@@ -1,7 +1,7 @@
 # pip dependencies install stage
 FROM python:3.8-slim as builder
 
-# rustc compiler would be needed on ARM type devices but theres an issue with some deps not building..
+# See `cryptography` pin comment in requirements.txt
 ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -31,8 +31,7 @@ RUN pip install --target=/dependencies playwright~=1.27.1 \
 # Final image stage
 FROM python:3.8-slim
 
-# Actual packages needed at runtime, usually due to the notification (apprise) backend
-# rustc compiler would be needed on ARM type devices but theres an issue with some deps not building..
+# See `cryptography` pin comment in requirements.txt
 ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 # Re #93, #73, excluding rustc (adds another 430Mb~)
