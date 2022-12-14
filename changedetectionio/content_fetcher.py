@@ -286,6 +286,8 @@ class base_html_playwright(Fetcher):
                 proxy=self.proxy,
                 # This is needed to enable JavaScript execution on GitHub and others
                 bypass_csp=True,
+                # Can't think why we need the service workers for our use case?
+                service_workers='block',
                 # Should never be needed
                 accept_downloads=False
             )
@@ -306,8 +308,7 @@ class base_html_playwright(Fetcher):
 
                 # Waits for the next navigation. Using Python context manager
                 # prevents a race condition between clicking and waiting for a navigation.
-                with self.page.expect_navigation():
-                    response = self.page.goto(url, wait_until='load')
+                response = self.page.goto(url, wait_until='commit')
                 # Wait_until = commit
                 # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
                 # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
