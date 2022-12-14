@@ -174,10 +174,23 @@ if (include_filters.length) {
         }
 
         if (q) {
-            bbox = q.getBoundingClientRect();
-            console.log("xpath_element_scraper: Got filter element, scroll from top was "+scroll_y)
-        } else {
-            console.log("xpath_element_scraper: filter element "+f+" was not found");
+            // #1231 - IN the case XPath attribute filter is applied, we will have to traverse up and find the element.
+            if (q.hasOwnProperty('getBoundingClientRect')) {
+                bbox = q.getBoundingClientRect();
+                console.log("xpath_element_scraper: Got filter element, scroll from top was " + scroll_y)
+            } else {
+                try {
+                    // Try and see we can find its ownerElement
+                    bbox = q.ownerElement.getBoundingClientRect();
+                    console.log("xpath_element_scraper: Got filter by ownerElement element, scroll from top was " + scroll_y)
+                } catch (e) {
+                    console.log("xpath_element_scraper: error looking up ownerElement")
+                }
+            }
+        }
+        
+        if(!q) {
+            console.log("xpath_element_scraper: filter element " + f + " was not found");
         }
 
         if (bbox && bbox['width'] > 0 && bbox['height'] > 0) {
