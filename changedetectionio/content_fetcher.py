@@ -308,7 +308,7 @@ class base_html_playwright(Fetcher):
 
                 # Waits for the next navigation. Using Python context manager
                 # prevents a race condition between clicking and waiting for a navigation.
-                response = self.page.goto(url, wait_until='commit', timeout=90000)
+                response = self.page.goto(url, wait_until='commit')
                 # Wait_until = commit
                 # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
                 # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
