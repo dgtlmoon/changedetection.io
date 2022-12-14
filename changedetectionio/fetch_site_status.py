@@ -122,8 +122,10 @@ class perform_site_check():
         self.screenshot = fetcher.screenshot
         self.xpath_data = fetcher.xpath_data
 
+        # Watches added automatically in the queue manager will skip if its the same checksum as the previous run
+        # Saves a lot of CPU
+        update_obj['previous_md5_before_filters'] = hashlib.md5(fetcher.content.encode('utf-8')).hexdigest()
         if skip_when_checksum_same:
-            update_obj['previous_md5_before_filters'] = hashlib.md5(fetcher.content.encode('utf-8')).hexdigest()
             if update_obj['previous_md5_before_filters'] == watch.get('previous_md5_before_filters'):
                 raise content_fetcher.checksumFromPreviousCheckWasTheSame()
 
