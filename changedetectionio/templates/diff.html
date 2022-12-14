@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% from '_helpers.jinja' import render_field, render_checkbox_field, render_button %}
 {% block content %}
 <script>
     const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
@@ -21,6 +21,9 @@
 
             <label for="diffChars" class="pure-checkbox">
                 <input type="radio" name="diff_type" id="diffChars" value="diffChars"/> Chars</label>
+            <!-- @todo - when mimetype is JSON, select this by default? -->
+            <label for="diffJson" class="pure-checkbox">
+                <input type="radio" name="diff_type" id="diffJson" value="diffJson" /> JSON</label>
 
             {% if versions|length >= 1 %}
             <label for="diff-version">Compare newest (<span id="current-v-date"></span>) with</label>
@@ -37,6 +40,11 @@
     </form>
     <del>Removed text</del>
     <ins>Inserted Text</ins>
+    <span>
+        <!-- https://github.com/kpdecker/jsdiff/issues/389 ? -->
+        <label for="ignoreWhitespace" class="pure-checkbox" id="label-diff-ignorewhitespace">
+            <input type="checkbox" id="ignoreWhitespace" name="ignoreWhitespace"/> Ignore Whitespace</label>
+    </span>
 </div>
 
 <div id="diff-jump">
@@ -50,6 +58,7 @@
         {% if last_error_screenshot %}<li class="tab" id="error-screenshot-tab"><a href="#error-screenshot">Error Screenshot</a></li> {% endif %}
         <li class="tab" id=""><a href="#text">Text</a></li>
         <li class="tab" id="screenshot-tab"><a href="#screenshot">Screenshot</a></li>
+        <li class="tab" id="extract-tab"><a href="#extract">Extract Data</a></li>
     </ul>
 </div>
 
@@ -100,124 +109,45 @@
            <strong>Screenshot requires Playwright/WebDriver enabled</strong>
          {% endif %}
      </div>
+    <div class="tab-pane-inner" id="extract">
+        <form id="extract-data-form" class="pure-form pure-form-stacked edit-form"
+              action="{{ url_for('diff_history_page', uuid=uuid) }}#extract"
+              method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+            <p>This tool will extract text data from all of the watch history.</p>
+
+            <div class="pure-control-group">
+                {{ render_field(extract_form.extract_regex) }}
+                <span class="pure-form-message-inline">
+                    A <strong>RegEx</strong> is a pattern that identifies exactly which part inside of the text that you want to extract.<br/>
+
+                    <p>
+                        For example, to extract only the numbers from text &dash;</br>
+                        <strong>Raw text</strong>: <code>Temperature <span style="color: red">5.5</span>°C in Sydney</code></br>
+                        <strong>RegEx to extract:</strong> <code>Temperature <span style="color: red">([0-9\.]+)</span></code><br/>
+                    </p>
+                    <p>
+                        <a href="https://RegExr.com/">Be sure to test your RegEx here.</a>
+                    </p>
+                    <p>
+                        Each RegEx group bracket <code>()</code> will be in its own column, the first column value is always the date.
+                    </p>
+                </span>
+            </div>
+            <div class="pure-control-group">
+                {{ render_button(extract_form.extract_submit_button) }}
+            </div>
+        </form>
+    </div>
 </div>
 
-
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff.js')}}"></script>
-
-<script defer="">
-
-var a = document.getElementById('a');
-var b = document.getElementById('b');
-var result = document.getElementById('result');
-
-function changed() {
-	var diff = JsDiff[window.diffType](a.textContent, b.textContent);
-	var fragment = document.createDocumentFragment();
-	for (var i=0; i < diff.length; i++) {
-
-		if (diff[i].added && diff[i + 1] && diff[i + 1].removed) {
-			var swap = diff[i];
-			diff[i] = diff[i + 1];
-			diff[i + 1] = swap;
-		}
-
-		var node;
-		if (diff[i].removed) {
-			node = document.createElement('del');
-			node.classList.add("change");
-			node.appendChild(document.createTextNode(diff[i].value));
-
-		} else if (diff[i].added) {
-			node = document.createElement('ins');
-			node.classList.add("change");
-			node.appendChild(document.createTextNode(diff[i].value));
-		} else {
-			node = document.createTextNode(diff[i].value);
-		}
-		fragment.appendChild(node);
-	}
-
-	result.textContent = '';
-	result.appendChild(fragment);
-
-	// Jump at start
-	inputs.current=0;
-    next_diff();
-}
-
-window.onload = function() {
-
-
-    /* Convert what is options from UTC time.time() to local browser time */
-    var diffList=document.getElementById("diff-version");
-    if (typeof(diffList) != 'undefined' && diffList != null) {
-        for (var option of diffList.options) {
-          var dateObject = new Date(option.value*1000);
-          option.label=dateObject.toLocaleString();
-        }
-    }
-
-    /* Set current version date as local time in the browser also */
-    var current_v = document.getElementById("current-v-date");
-    var dateObject = new Date({{ newest_version_timestamp }}*1000);
-    current_v.innerHTML=dateObject.toLocaleString();
-
-
-	onDiffTypeChange(document.querySelector('#settings [name="diff_type"]:checked'));
-	changed();
-
-};
-
-a.onpaste = a.onchange =
-b.onpaste = b.onchange = changed;
-
-if ('oninput' in a) {
-	a.oninput = b.oninput = changed;
-} else {
-	a.onkeyup = b.onkeyup = changed;
-}
-
-function onDiffTypeChange(radio) {
-	window.diffType = radio.value;
-// Not necessary 
-//	document.title = "Diff " + radio.value.slice(4);
-}
-
-var radio = document.getElementsByName('diff_type');
-for (var i = 0; i < radio.length; i++) {
-	radio[i].onchange = function(e) {
-		onDiffTypeChange(e.target);
-		changed();
-	}
-}
-
-
-var inputs = document.getElementsByClassName('change');
-inputs.current=0;
-
-
-function next_diff() {
-
-    var element = inputs[inputs.current];
-    var headerOffset = 80;
-    var elementPosition = element.getBoundingClientRect().top;
-    var offsetPosition = elementPosition - headerOffset +  window.scrollY;
-
-    window.scrollTo({
-         top: offsetPosition,
-         behavior: "smooth"
-    });
-
-    inputs.current++;
-    if(inputs.current >= inputs.length) {
-      inputs.current=0;
-    }
-}
-
-
-
+<script>
+    const newest_version_timestamp = {{newest_version_timestamp}};
 </script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff.min.js')}}"></script>
+
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff-render.js')}}"></script>
 
 
 {% endblock %}

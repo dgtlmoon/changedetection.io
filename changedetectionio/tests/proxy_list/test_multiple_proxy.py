@@ -24,7 +24,7 @@ def test_preferred_proxy(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={
-                "css_filter": "",
+                "include_filters": "",
                 "fetch_backend": "html_requests",
                 "headers": "",
                 "proxy": "proxy-two",

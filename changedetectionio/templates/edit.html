@@ -13,11 +13,17 @@
     const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
 {% endif %}
 
+    const browser_steps_config=JSON.parse('{{ browser_steps_config|tojson }}');
+    const browser_steps_sync_url="{{url_for('browser_steps.browsersteps_ui_update', uuid=uuid)}}";
 </script>
+
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='visual-selector.js')}}" defer></script>
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>
+{% if playwright_enabled %}
+<script type="text/javascript" src="{{url_for('static_content', group='js', filename='browser-steps.js')}}" defer></script>
+{% endif %}
 
 <div class="edit-form monospaced-textarea">
 
@@ -25,6 +31,9 @@
         <ul>
             <li class="tab" id=""><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
+            {% if playwright_enabled %}
+            <li class="tab"><a id="browsersteps-tab" href="#browser-steps">Browser Steps</a></li>
+            {% endif %}
             <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
@@ -135,12 +144,62 @@ User-Agent: wonderbra 1.0") }}
                     </div>
                 </fieldset>
             </div>
+            {% if playwright_enabled %}
+            <div class="tab-pane-inner" id="browser-steps">
+                <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
+                <fieldset>
+                    <div class="pure-control-group">
+                        <!--
+                        Too hard right now, better to just send the events to the fetcher for now and leave it in the final screenshot
+                        and/or report an error
+                        <a id="play-steps" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Play steps  ▶</a>
+                        -->
+
+                        <!---  Do this later -->
+                        <div class="checkbox" style="display: none;">
+                            <input type=checkbox id="include_text_elements" > <label for="include_text_elements">Turn on text finder</label>
+                        </div>
+
+                        <div id="loading-status-text" style="display: none;">Please wait, first browser step can take a little time to load..<div class="spinner"></div></div>
+                        <div class="flex-wrapper" >
+
+                            <div id="browser-steps-ui" class="noselect"  style="width: 100%; background-color: #eee; border-radius: 5px;">
+
+                                <div class="noselect"  id="browsersteps-selector-wrapper" style="width: 100%">
+                                    <span class="loader" >
+                                        <span id="browsersteps-click-start">
+                                            <h2 >Click here to Start</h2>
+                                            Please allow 10-15 seconds for the browser to connect.
+                                        </span>
+                                        <div class="spinner"  style="display: none;"></div>
+                                    </span>
+                                    <img  class="noselect" id="browsersteps-img" src="" style="max-width: 100%; width: 100%;" />
+                                    <canvas  class="noselect" id="browsersteps-selector-canvas" style="max-width: 100%; width: 100%;"></canvas>
+                                </div>
+                            </div>
+                            <div id="browser-steps-fieldlist" style="padding-left: 1em;  width: 350px; font-size: 80%;" >
+                                <span id="browserless-seconds-remaining">Loading</span> <span style="font-size: 80%;"> (<a target=_new href="https://github.com/dgtlmoon/changedetection.io/pull/478/files#diff-1a79d924d1840c485238e66772391268a89c95b781d69091384cf1ea1ac146c9R4">?</a>) </span>
+                                {{ render_field(form.browser_steps) }}
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+            {% endif %}
 
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div  class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_muted) }}
                     </div>
+                    {% if is_html_webdriver %}
+                    <div class="pure-control-group inline-radio">
+                      {{ render_checkbox_field(form.notification_screenshot) }}
+                        <span class="pure-form-message-inline">
+                            <strong>Use with caution!</strong> This will easily fill up your email storage quota or flood other storages.
+                        </span>
+                    </div>
+                    {% endif %}
                     <div class="field-group" id="notification-field-group">
                         {% if has_default_notification_urls %}
                         <div class="inline-warning">
@@ -174,15 +233,18 @@ User-Agent: wonderbra 1.0") }}
                         </div>
                     </fieldset>
                     <div class="pure-control-group">
-                        {% set field = render_field(form.css_filter,
-                            placeholder=".class-name or #some-id, or other CSS selector rule.",
+                        {% set field = render_field(form.include_filters,
+                            rows=5,
+                            placeholder="#example
+xpath://body/div/span[contains(@class, 'example-class')]",
                             class="m-d")
                         %}
                         {{ field }}
                         {% if '/text()' in  field %}
                           <span class="pure-form-message-inline"><strong>Note!: //text() function does not work where the &lt;element&gt; contains &lt;![CDATA[]]&gt;</strong></span><br/>
                         {% endif %}
-                        <span class="pure-form-message-inline">
+                        <span class="pure-form-message-inline">One rule per line, <i>any</i> rules that matches will be used.<br/>
+
                     <ul>
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
                         <li>JSON - Limit text to this JSON rule, using either <a href="https://pypi.org/project/jsonpath-ng/" target="new">JSONPath</a> or <a href="https://stedolan.github.io/jq/" target="new">jq</a> (if installed).
@@ -285,39 +347,32 @@ Unavailable") }}
             </div>
 
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
-                <img id="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
-                <strong>Pro-tip:</strong> This tool is only for limiting which elements will be included on a change-detection, not for interacting with browser directly.
+                <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
+
                 <fieldset>
                     <div class="pure-control-group">
                         {% if visualselector_enabled %}
-                            {% if visualselector_data_is_ready %}
-                                <div id="selector-header">
-                                    <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Clear selection</a>
-                                    <i class="fetching-update-notice" style="font-size: 80%;">One moment, fetching screenshot and element information..</i>
-                                </div>
-                                <div id="selector-wrapper">
-                                    <!-- request the screenshot and get the element offset info ready -->
-                                    <!-- use img src ready load to know everything is ready to map out -->
-                                    <!-- @todo: maybe something interesting like a field to select 'elements that contain text... and their parents n' -->
-                                    <img id="selector-background" />
-                                    <canvas id="selector-canvas"></canvas>
-
-                                </div>
-                                <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
-
                             <span class="pure-form-message-inline">
-                                <p><span style="font-weight: bold">Beta!</span> The Visual Selector is new and there may be minor bugs, please report pages that dont work, help us to improve this software!</p>
+                                The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection &dash; after the <i>Browser Steps</i> has completed.<br/><br/>
                             </span>
 
-                            {% else %}
-                                <span class="pure-form-message-inline">Screenshot and element data is not available or not yet ready.</span>
-                            {% endif %}
+                            <div id="selector-header">
+                                <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Clear selection</a>
+                                <i class="fetching-update-notice" style="font-size: 80%;">One moment, fetching screenshot and element information..</i>
+                            </div>
+                            <div id="selector-wrapper" style="display: none">
+                                <!-- request the screenshot and get the element offset info ready -->
+                                <!-- use img src ready load to know everything is ready to map out -->
+                                <!-- @todo: maybe something interesting like a field to select 'elements that contain text... and their parents n' -->
+                                <img id="selector-background" />
+                                <canvas id="selector-canvas"></canvas>
+                            </div>
+                            <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
                         {% else %}
                             <span class="pure-form-message-inline">
                                 <p>Sorry, this functionality only works with Playwright/Chrome enabled watches.</p>
                                 <p>Enable the Playwright Chrome fetcher, or alternatively try our <a href="https://lemonade.changedetection.io/start">very affordable subscription based service</a>.</p>
                                 <p>This is because Selenium/WebDriver can not extract full page screenshots reliably.</p>
-
                             </span>
                         {% endif %}
                     </div>

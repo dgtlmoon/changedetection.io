@@ -2,19 +2,20 @@
 
 # Launch as a eventlet.wsgi server instance.
 
+from distutils.util import strtobool
+import eventlet
+import eventlet.wsgi
 import getopt
 import os
 import signal
 import sys
 
-import eventlet
-import eventlet.wsgi
 from . import store, changedetection_app, content_fetcher
 from . import __version__
 
 # Only global so we can access it in the signal handler
-datastore = None
 app = None
+datastore = None
 
 def sigterm_handler(_signo, _stack_frame):
     global app
@@ -102,12 +103,13 @@ def main():
                     has_password=datastore.data['settings']['application']['password'] != False
                     )
 
-    # Monitored websites will not receive a Referer header
-    # when a user clicks on an outgoing link.
+    # Monitored websites will not receive a Referer header when a user clicks on an outgoing link.
+    # @Note: Incompatible with password login (and maybe other features) for now, submit a PR!
     @app.after_request
     def hide_referrer(response):
-        if os.getenv("HIDE_REFERER", False):
+        if strtobool(os.getenv("HIDE_REFERER", 'false')):
             response.headers["Referrer-Policy"] = "no-referrer"
+
         return response
 
     # Proxy sub-directory support

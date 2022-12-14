@@ -2,12 +2,17 @@ import hashlib
 import logging
 import os
 import re
-import time
 import urllib3
 
 from changedetectionio import content_fetcher, html_tools
+from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+class FilterNotFoundInResponse(ValueError):
+    def __init__(self, msg):
+        ValueError.__init__(self, msg)
 
 
 # Some common stuff here that can be moved to a base class
@@ -33,18 +38,20 @@ class perform_site_check():
 
         return regex
 
-
     def run(self, uuid):
+        from copy import deepcopy
         changed_detected = False
         screenshot = False  # as bytes
         stripped_text_from_html = ""
 
-        watch = self.datastore.data['watching'].get(uuid)
+        # DeepCopy so we can be sure we don't accidently change anything by reference
+        watch = deepcopy(self.datastore.data['watching'].get(uuid))
+
         if not watch:
             return
 
         # Protect against file:// access
-        if re.search(r'^file', watch['url'], re.IGNORECASE) and not os.getenv('ALLOW_FILE_URI', False):
+        if re.search(r'^file', watch.get('url', ''), re.IGNORECASE) and not os.getenv('ALLOW_FILE_URI', False):
             raise Exception(
                 "file:// type access is denied for security reasons."
             )
@@ -52,10 +59,10 @@ class perform_site_check():
         # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False}
 
-        extra_headers =self.datastore.data['watching'][uuid].get('headers')
+        extra_headers = watch.get('headers', [])
 
         # Tweak the base config with the per-watch ones
-        request_headers = self.datastore.data['settings']['headers'].copy()
+        request_headers = deepcopy(self.datastore.data['settings']['headers'])
         request_headers.update(extra_headers)
 
         # https://github.com/psf/requests/issues/4525
@@ -79,7 +86,7 @@ class perform_site_check():
             is_source = True
 
         # Pluggable content fetcher
-        prefer_backend = watch['fetch_backend']
+        prefer_backend = watch.get('fetch_backend')
         if hasattr(content_fetcher, prefer_backend):
             klass = getattr(content_fetcher, prefer_backend)
         else:
@@ -90,21 +97,26 @@ class perform_site_check():
         proxy_url = None
         if proxy_id:
             proxy_url = self.datastore.proxy_list.get(proxy_id).get('url')
-            print ("UUID {} Using proxy {}".format(uuid, proxy_url))
+            print("UUID {} Using proxy {}".format(uuid, proxy_url))
 
         fetcher = klass(proxy_override=proxy_url)
 
         # Configurable per-watch or global extra delay before extracting text (for webDriver types)
         system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
         if watch['webdriver_delay'] is not None:
-            fetcher.render_extract_delay = watch['webdriver_delay']
+            fetcher.render_extract_delay = watch.get('webdriver_delay')
         elif system_webdriver_delay is not None:
             fetcher.render_extract_delay = system_webdriver_delay
 
-        if watch['webdriver_js_execute_code'] is not None and watch['webdriver_js_execute_code'].strip():
-            fetcher.webdriver_js_execute_code = watch['webdriver_js_execute_code']
+        # Possible conflict
+        if prefer_backend == 'html_webdriver':
+            fetcher.browser_steps = watch.get('browser_steps', None)
+            fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, uuid)
 
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch['css_filter'])
+        if watch.get('webdriver_js_execute_code') is not None and watch.get('webdriver_js_execute_code').strip():
+            fetcher.webdriver_js_execute_code = watch.get('webdriver_js_execute_code')
+
+        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch.get('include_filters'))
         fetcher.quit()
 
         self.screenshot = fetcher.screenshot
@@ -134,28 +146,34 @@ class perform_site_check():
             is_html = False
             is_json = False
 
-        css_filter_rule = watch['css_filter']
+        include_filters_rule = deepcopy(watch.get('include_filters', []))
+        # include_filters_rule = watch['include_filters']
         subtractive_selectors = watch.get(
             "subtractive_selectors", []
         ) + self.datastore.data["settings"]["application"].get(
             "global_subtractive_selectors", []
         )
 
-        has_filter_rule = css_filter_rule and len(css_filter_rule.strip())
+        # Inject a virtual LD+JSON price tracker rule
+        if watch.get('track_ldjson_price_data', '') == PRICE_DATA_TRACK_ACCEPT:
+            include_filters_rule.append(html_tools.LD_JSON_PRODUCT_OFFER_SELECTOR)
+
+        has_filter_rule = include_filters_rule and len("".join(include_filters_rule).strip())
         has_subtractive_selectors = subtractive_selectors and len(subtractive_selectors[0].strip())
 
         if is_json and not has_filter_rule:
-            css_filter_rule = "json:$"
+            include_filters_rule.append("json:$")
             has_filter_rule = True
 
         if has_filter_rule:
             json_filter_prefixes = ['json:', 'jq:']
-            if any(prefix in css_filter_rule for prefix in json_filter_prefixes):
-                stripped_text_from_html = html_tools.extract_json_as_string(content=fetcher.content, json_filter=css_filter_rule)
-                is_html = False
+            for filter in include_filters_rule:
+                if any(prefix in filter for prefix in json_filter_prefixes):
+                    stripped_text_from_html += html_tools.extract_json_as_string(content=fetcher.content, json_filter=filter)
+                    is_html = False
 
         if is_html or is_source:
-            
+
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
             fetcher.content = html_tools.workarounds_for_obfuscations(fetcher.content)
             html_content = fetcher.content
@@ -165,34 +183,41 @@ class perform_site_check():
                 # Don't run get_text or xpath/css filters on plaintext
                 stripped_text_from_html = html_content
             else:
+                # Does it have some ld+json price data? used for easier monitoring
+                update_obj['has_ldjson_price_data'] = html_tools.has_ldjson_product_info(fetcher.content)
+
                 # Then we assume HTML
                 if has_filter_rule:
-                    # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
-                    if css_filter_rule[0] == '/' or css_filter_rule.startswith('xpath:'):
-                        html_content = html_tools.xpath_filter(xpath_filter=css_filter_rule.replace('xpath:', ''),
-                                                               html_content=fetcher.content)
-                    else:
-                        # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-                        html_content = html_tools.css_filter(css_filter=css_filter_rule, html_content=fetcher.content)
+                    html_content = ""
+
+                    for filter_rule in include_filters_rule:
+                        # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
+                        if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
+                            html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
+                                                                    html_content=fetcher.content,
+                                                                    append_pretty_line_formatting=not is_source)
+                        else:
+                            # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+                            html_content += html_tools.include_filters(include_filters=filter_rule,
+                                                                       html_content=fetcher.content,
+                                                                       append_pretty_line_formatting=not is_source)
+
+                    if not html_content.strip():
+                        raise FilterNotFoundInResponse(include_filters_rule)
 
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)
 
-                if not is_source:
+                if is_source:
+                    stripped_text_from_html = html_content
+                else:
                     # extract text
+                    do_anchor = self.datastore.data["settings"]["application"].get("render_anchor_tag_content", False)
                     stripped_text_from_html = \
                         html_tools.html_to_text(
                             html_content,
-                            render_anchor_tag_content=self.datastore.data["settings"][
-                                "application"].get(
-                                "render_anchor_tag_content", False)
+                            render_anchor_tag_content=do_anchor
                         )
-
-                elif is_source:
-                    stripped_text_from_html = html_content
-
-            # Re #340 - return the content before the 'ignore text' was applied
-            text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
@@ -226,7 +251,7 @@ class perform_site_check():
 
                 for l in result:
                     if type(l) is tuple:
-                        #@todo - some formatter option default (between groups)
+                        # @todo - some formatter option default (between groups)
                         regex_matched_output += list(l) + [b'\n']
                     else:
                         # @todo - some formatter option default (between each ungrouped result)
@@ -240,7 +265,6 @@ class perform_site_check():
                 stripped_text_from_html = b''.join(regex_matched_output)
                 text_content_before_ignored_filter = stripped_text_from_html
 
-
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
         if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
             fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
@@ -250,29 +274,30 @@ class perform_site_check():
         ############ Blocking rules, after checksum #################
         blocked = False
 
-        if len(watch['trigger_text']):
+        trigger_text = watch.get('trigger_text', [])
+        if len(trigger_text):
             # Assume blocked
             blocked = True
             # Filter and trigger works the same, so reuse it
             # It should return the line numbers that match
             result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
-                                                  wordlist=watch['trigger_text'],
+                                                  wordlist=trigger_text,
                                                   mode="line numbers")
             # Unblock if the trigger was found
             if result:
                 blocked = False
 
-
-        if len(watch['text_should_not_be_present']):
+        text_should_not_be_present = watch.get('text_should_not_be_present', [])
+        if len(text_should_not_be_present):
             # If anything matched, then we should block a change from happening
             result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
-                                                  wordlist=watch['text_should_not_be_present'],
+                                                  wordlist=text_should_not_be_present,
                                                   mode="line numbers")
             if result:
                 blocked = True
 
         # The main thing that all this at the moment comes down to :)
-        if watch['previous_md5'] != fetched_md5:
+        if watch.get('previous_md5') != fetched_md5:
             changed_detected = True
 
         # Looks like something changed, but did it match all the rules?
@@ -281,7 +306,7 @@ class perform_site_check():
 
         # Extract title as title
         if is_html:
-            if self.datastore.data['settings']['application']['extract_title_as_title'] or watch['extract_title_as_title']:
+            if self.datastore.data['settings']['application'].get('extract_title_as_title') or watch['extract_title_as_title']:
                 if not watch['title'] or not len(watch['title']):
                     update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
 

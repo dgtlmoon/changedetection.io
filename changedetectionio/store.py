@@ -27,6 +27,8 @@ class ChangeDetectionStore:
     # For when we edit, we should write to disk
     needs_write_urgent = False
 
+    __version_check = True
+
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         # Should only be active for docker
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
@@ -37,7 +39,6 @@ class ChangeDetectionStore:
         self.proxy_list = None
         self.start_time = time.time()
         self.stop_thread = False
-
         # Base definition for all watchers
         # deepcopy part of #569 - not sure why its needed exactly
         self.generic_definition = deepcopy(Watch.model(datastore_path = datastore_path, default={}))
@@ -81,8 +82,13 @@ class ChangeDetectionStore:
         except (FileNotFoundError, json.decoder.JSONDecodeError):
             if include_default_watches:
                 print("Creating JSON store at", self.datastore_path)
-                self.add_watch(url='https://news.ycombinator.com/', tag='Tech news')
-                self.add_watch(url='https://changedetection.io/CHANGELOG.txt', tag='changedetection.io')
+                self.add_watch(url='https://news.ycombinator.com/',
+                               tag='Tech news',
+                               extras={'fetch_backend': 'html_requests'})
+
+                self.add_watch(url='https://changedetection.io/CHANGELOG.txt',
+                               tag='changedetection.io',
+                               extras={'fetch_backend': 'html_requests'})
 
         self.__data['version_tag'] = version_tag
 
@@ -244,12 +250,15 @@ class ChangeDetectionStore:
     def clear_watch_history(self, uuid):
         import pathlib
 
-        self.__data['watching'][uuid].update(
-            {'last_checked': 0,
-             'last_viewed': 0,
-             'previous_md5': False,
-             'last_notification_error': False,
-             'last_error': False})
+        self.__data['watching'][uuid].update({
+                'last_checked': 0,
+                'has_ldjson_price_data': None,
+                'last_error': False,
+                'last_notification_error': False,
+                'last_viewed': 0,
+                'previous_md5': False,
+                'track_ldjson_price_data': None,
+            })
 
         # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
         for item in pathlib.Path(os.path.join(self.datastore_path, uuid)).rglob("*.*"):
@@ -266,7 +275,7 @@ class ChangeDetectionStore:
             extras = {}
         # should always be str
         if tag is None or not tag:
-            tag=''
+            tag = ''
 
         # Incase these are copied across, assume it's a reference and deepcopy()
         apply_extras = deepcopy(extras)
@@ -281,17 +290,32 @@ class ChangeDetectionStore:
                 res = r.json()
 
                 # List of permissible attributes we accept from the wild internet
-                for k in ['url', 'tag',
-                          'paused', 'title',
-                          'previous_md5', 'headers',
-                          'body', 'method',
-                          'ignore_text', 'css_filter',
-                          'subtractive_selectors', 'trigger_text',
-                          'extract_title_as_title', 'extract_text',
-                          'text_should_not_be_present',
-                          'webdriver_js_execute_code']:
+                for k in [
+                    'body',
+                    'browser_steps',
+                    'css_filter',
+                    'extract_text',
+                    'extract_title_as_title',
+                    'headers',
+                    'ignore_text',
+                    'include_filters',
+                    'method',
+                    'paused',
+                    'previous_md5',
+                    'subtractive_selectors',
+                    'tag',
+                    'text_should_not_be_present',
+                    'title',
+                    'trigger_text',
+                    'url',
+                    'webdriver_js_execute_code',
+                ]:
                     if res.get(k):
-                        apply_extras[k] = res[k]
+                        if k != 'css_filter':
+                            apply_extras[k] = res[k]
+                        else:
+                            # We renamed the field and made it a list
+                            apply_extras['include_filters'] = [res['css_filter']]
 
             except Exception as e:
                 logging.error("Error fetching metadata for shared watch link", url, str(e))
@@ -314,12 +338,13 @@ class ChangeDetectionStore:
                     del apply_extras[k]
 
             new_watch.update(apply_extras)
-            self.__data['watching'][new_uuid]=new_watch
+            self.__data['watching'][new_uuid] = new_watch
 
         self.__data['watching'][new_uuid].ensure_data_dir_exists()
 
         if write_to_disk_now:
             self.sync_to_json()
+
         return new_uuid
 
     def visualselector_data_is_ready(self, watch_uuid):
@@ -346,6 +371,12 @@ class ChangeDetectionStore:
         with open(target_path, 'wb') as f:
             f.write(screenshot)
             f.close()
+
+        # Make a JPEG that's used in notifications (due to being a smaller size) available
+        from PIL import Image
+        im1 = Image.open(target_path)
+        im1.convert('RGB').save(target_path.replace('.png','.jpg'), quality=int(os.getenv("NOTIFICATION_SCREENSHOT_JPG_QUALITY", 75)))
+
 
     def save_error_text(self, watch_uuid, contents):
         if not self.data['watching'].get(watch_uuid):
@@ -583,3 +614,54 @@ class ChangeDetectionStore:
         for v in ['User-Agent', 'Accept', 'Accept-Encoding', 'Accept-Language']:
             if self.data['settings']['headers'].get(v):
                 del self.data['settings']['headers'][v]
+
+    # Convert filters to a list of filters css_filter -> include_filters
+    def update_8(self):
+        for uuid, watch in self.data['watching'].items():
+            try:
+                existing_filter = watch.get('css_filter', '')
+                if existing_filter:
+                    watch['include_filters'] = [existing_filter]
+            except:
+                continue
+        return
+
+    # Convert old static notification tokens to jinja2 tokens
+    def update_9(self):
+        # Each watch
+        import re
+        # only { } not {{ or }}
+        r = r'(?<!{){(?!{)(\w+)(?<!})}(?!})'
+        for uuid, watch in self.data['watching'].items():
+            try:
+                n_body = watch.get('notification_body', '')
+                if n_body:
+                    watch['notification_body'] = re.sub(r, r'{{\1}}', n_body)
+
+                n_title = watch.get('notification_title')
+                if n_title:
+                    watch['notification_title'] = re.sub(r, r'{{\1}}', n_title)
+
+                n_urls = watch.get('notification_urls')
+                if n_urls:
+                    for i, url in enumerate(n_urls):
+                        watch['notification_urls'][i] = re.sub(r, r'{{\1}}', url)
+
+            except:
+                continue
+
+        # System wide
+        n_body = self.data['settings']['application'].get('notification_body')
+        if n_body:
+            self.data['settings']['application']['notification_body'] = re.sub(r, r'{{\1}}', n_body)
+
+        n_title = self.data['settings']['application'].get('notification_title')
+        if n_body:
+            self.data['settings']['application']['notification_title'] = re.sub(r, r'{{\1}}', n_title)
+
+        n_urls =  self.data['settings']['application'].get('notification_urls')
+        if n_urls:
+            for i, url in enumerate(n_urls):
+                self.data['settings']['application']['notification_urls'][i] = re.sub(r, r'{{\1}}', url)
+
+        return

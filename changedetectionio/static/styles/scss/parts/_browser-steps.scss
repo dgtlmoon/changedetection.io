@@ -1,0 +1,95 @@
+
+#browser_steps {
+  /* convert rows to horizontal cells */
+  th {
+    display: none;
+  }
+
+  li {
+    &:not(:first-child) {
+      &:hover {
+        opacity: 1.0;
+      }
+    }
+    list-style: decimal;
+    padding: 5px;
+    .control {
+      padding-left: 5px;
+      padding-right: 5px;
+      a {
+        font-size: 70%;
+      }
+    }
+    &.empty {
+      padding: 0px;
+      opacity: 0.35;
+      .control {
+        display: none;
+      }
+    }
+    &:hover {
+      background: #eee;
+    }
+    > label {
+      display: none;
+    }
+  }
+}
+
+#browser-steps-fieldlist {
+  height: 100%;
+  overflow-y: scroll;
+}
+
+#browser-steps .flex-wrapper {
+  display: flex;
+  flex-flow: row;
+  height: 600px; /*@todo make this dynamic */
+}
+
+/*  this is duplicate :( */
+#browsersteps-selector-wrapper {
+  height: 100%;
+  width: 100%;
+  overflow-y: scroll;
+  position: relative;
+  //width: 100%;
+  > img {
+    position: absolute;
+    max-width: 100%;
+  }
+
+  > canvas {
+    position: relative;
+    max-width: 100%;
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
+
+  .loader {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin-left: -40px;
+    z-index: 100;
+    max-width: 350px;
+    text-align: center;
+  }
+
+  /* nice tall skinny one */
+  .spinner, .spinner:after {
+    width: 80px;
+    height: 80px;
+    font-size: 3px;
+  }
+
+  #browsersteps-click-start {
+    &:hover {
+      cursor: pointer;
+    }
+    color: var(--color-grey-400);
+  }
+}

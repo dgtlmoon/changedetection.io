@@ -1,11 +1,10 @@
+import os
 import re
 
 from wtforms import (
     BooleanField,
-    Field,
     Form,
     IntegerField,
-    PasswordField,
     RadioField,
     SelectField,
     StringField,
@@ -13,15 +12,17 @@ from wtforms import (
     TextAreaField,
     fields,
     validators,
-    widgets,
+    widgets
 )
+from wtforms.fields import FieldList
 from wtforms.validators import ValidationError
+
+# default
+# each select <option data-enabled="enabled-0-0"
+from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
 
 from changedetectionio import content_fetcher
 from changedetectionio.notification import (
-    default_notification_body,
-    default_notification_format,
-    default_notification_title,
     valid_notification_formats,
 )
 
@@ -192,7 +193,7 @@ class ValidateAppRiseServers(object):
                 message = field.gettext('\'%s\' is not a valid AppRise URL.' % (server_url))
                 raise ValidationError(message)
 
-class ValidateTokensList(object):
+class ValidateJinja2Template(object):
     """
     Validates that a {token} is from a valid set
     """
@@ -201,14 +202,27 @@ class ValidateTokensList(object):
 
     def __call__(self, form, field):
         from changedetectionio import notification
-        regex = re.compile('{.*?}')
-        for p in re.findall(regex, field.data):
-            if not p.strip('{}') in notification.valid_tokens:
-                message = field.gettext('Token \'%s\' is not a valid token.')
-                raise ValidationError(message % (p))
-            
+
+        from jinja2 import Environment, BaseLoader, TemplateSyntaxError
+        from jinja2.meta import find_undeclared_variables
+
+
+        try:
+            jinja2_env = Environment(loader=BaseLoader)
+            jinja2_env.globals.update(notification.valid_tokens)
+            rendered = jinja2_env.from_string(field.data).render()
+        except TemplateSyntaxError as e:
+            raise ValidationError(f"This is not a valid Jinja2 template: {e}") from e
+
+        ast = jinja2_env.parse(field.data)
+        undefined = ", ".join(find_undeclared_variables(ast))
+        if undefined:
+            raise ValidationError(
+                f"The following tokens used in the notification are not valid: {undefined}"
+            )
+
 class validateURL(object):
-    
+
     """
        Flask wtform validators wont work with basic auth
     """
@@ -223,6 +237,7 @@ class validateURL(object):
         except validators.ValidationFailure:
             message = field.gettext('\'%s\' is not a valid URL.' % (field.data.strip()))
             raise ValidationError(message)
+
 
 class ValidateListRegex(object):
     """
@@ -323,7 +338,6 @@ class ValidateCSSJSONXPATHInput(object):
                 except:
                     raise ValidationError("A system-error occurred when validating your jq expression")
 
-
 class quickWatchForm(Form):
     url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional()])
@@ -333,14 +347,25 @@ class quickWatchForm(Form):
 
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
-    notification_urls = StringListField('Notification URL list', validators=[validators.Optional(), ValidateAppRiseServers()])
-    notification_title = StringField('Notification title', validators=[validators.Optional(), ValidateTokensList()])
-    notification_body = TextAreaField('Notification body', validators=[validators.Optional(), ValidateTokensList()])
+    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers()])
+    notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
+    notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
-    fetch_backend = RadioField(u'Fetch method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1,
                                                                                                                                     message="Should contain one or more seconds")])
+
+class SingleBrowserStep(Form):
+
+    operation = SelectField('Operation', [validators.Optional()], choices=browser_step_ui_config.keys())
+
+    # maybe better to set some <script>var..
+    selector = StringField('Selector', [validators.Optional()], render_kw={"placeholder": "CSS or xPath selector"})
+    optional_value = StringField('value', [validators.Optional()], render_kw={"placeholder": "Value"})
+#   @todo move to JS? ajax fetch new field?
+#    remove_button = SubmitField('-', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
+#    add_button = SubmitField('+', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
 
 class watchForm(commonSettingsForm):
 
@@ -349,7 +374,7 @@ class watchForm(commonSettingsForm):
 
     time_between_check = FormField(TimeBetweenCheckForm)
 
-    css_filter = StringField('CSS/JSON/XPATH Filter', [ValidateCSSJSONXPATHInput()], default='')
+    include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
 
     subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
 
@@ -364,8 +389,9 @@ class watchForm(commonSettingsForm):
     ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
     check_unique_lines = BooleanField('Only trigger when new lines appear', default=False)
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
+    if os.getenv("PLAYWRIGHT_DRIVER_URL"):
+        browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)
     text_should_not_be_present = StringListField('Block change-detection if text matches', [validators.Optional(), ValidateListRegex()])
-
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
@@ -375,6 +401,7 @@ class watchForm(commonSettingsForm):
         'Send a notification when the filter can no longer be found on the page', default=False)
 
     notification_muted = BooleanField('Notifications Muted / Off', default=False)
+    notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
 
     def validate(self, **kwargs):
         if not super().validate():
@@ -387,6 +414,15 @@ class watchForm(commonSettingsForm):
             self.body.errors.append('Body must be empty when Request Method is set to GET')
             result = False
 
+        # Attempt to validate jinja2 templates in the URL
+        from jinja2 import Environment
+        # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
+        jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
+        try:
+            ready_url = str(jinja2_env.from_string(self.url.data).render())
+        except Exception as e:
+            self.url.errors.append('Invalid template syntax')
+            result = False
         return result
 
 
@@ -426,3 +462,8 @@ class globalSettingsForm(Form):
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+
+
+class extractDataForm(Form):
+    extract_regex = StringField('RegEx to extract', validators=[validators.Length(min=1, message="Needs a RegEx")])
+    extract_submit_button = SubmitField('Extract as CSV', render_kw={"class": "pure-button pure-button-primary"})

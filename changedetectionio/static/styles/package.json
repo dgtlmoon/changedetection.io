@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "node-sass styles.scss -o .;node-sass diff.scss -o ."
+    "watch": "node-sass -w scss -o .",
+    "build": "node-sass scss -o ."
   },
   "author": "",
   "license": "ISC",

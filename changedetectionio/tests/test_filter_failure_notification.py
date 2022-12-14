@@ -56,17 +56,17 @@ def run_filter_test(client, content_filter):
 
     # Just a regular notification setting, this will be used by the special 'filter not found' notification
     notification_form_data = {"notification_urls": notification_url,
-                              "notification_title": "New ChangeDetection.io Notification - {watch_url}",
-                              "notification_body": "BASE URL: {base_url}\n"
-                                                   "Watch URL: {watch_url}\n"
-                                                   "Watch UUID: {watch_uuid}\n"
-                                                   "Watch title: {watch_title}\n"
-                                                   "Watch tag: {watch_tag}\n"
-                                                   "Preview: {preview_url}\n"
-                                                   "Diff URL: {diff_url}\n"
-                                                   "Snapshot: {current_snapshot}\n"
-                                                   "Diff: {diff}\n"
-                                                   "Diff Full: {diff_full}\n"
+                              "notification_title": "New ChangeDetection.io Notification - {{watch_url}}",
+                              "notification_body": "BASE URL: {{base_url}}\n"
+                                                   "Watch URL: {{watch_url}}\n"
+                                                   "Watch UUID: {{watch_uuid}}\n"
+                                                   "Watch title: {{watch_title}}\n"
+                                                   "Watch tag: {{watch_tag}}\n"
+                                                   "Preview: {{preview_url}}\n"
+                                                   "Diff URL: {{diff_url}}\n"
+                                                   "Snapshot: {{current_snapshot}}\n"
+                                                   "Diff: {{diff}}\n"
+                                                   "Diff Full: {{diff_full}}\n"
                                                    ":-)",
                               "notification_format": "Text"}
 
@@ -76,7 +76,7 @@ def run_filter_test(client, content_filter):
         "title": "my title",
         "headers": "",
         "filter_failure_notification_send": 'y',
-        "css_filter": content_filter,
+        "include_filters": content_filter,
         "fetch_backend": "html_requests"})
 
     res = client.post(
@@ -84,6 +84,7 @@ def run_filter_test(client, content_filter):
         data=notification_form_data,
         follow_redirects=True
     )
+
     assert b"Updated watch." in res.data
     time.sleep(3)
 
@@ -95,7 +96,7 @@ def run_filter_test(client, content_filter):
         time.sleep(3)
 
     # We should see something in the frontend
-    assert b'Warning, filter' in res.data
+    assert b'Warning, no filters were found' in res.data
 
     # Now it should exist and contain our "filter not found" alert
     assert os.path.isfile("test-datastore/notification.txt")
@@ -131,7 +132,7 @@ def run_filter_test(client, content_filter):
 def test_setup(live_server):
     live_server_setup(live_server)
 
-def test_check_css_filter_failure_notification(client, live_server):
+def test_check_include_filters_failure_notification(client, live_server):
     set_original_response()
     time.sleep(1)
     run_filter_test(client, '#nope-doesnt-exist')

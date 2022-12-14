@@ -1,6 +1,7 @@
 ## Web Site Change Detection, Monitoring and Notification.
 
-Live your data-life pro-actively, track website content changes and receive notifications via Discord, Email, Slack, Telegram and 70+ more
+_Live your data-life pro-actively, Detect website changes and perform meaningful actions, trigger notifications via Discord, Email, Slack, Telegram, API calls and many more._
+
 
 [<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />](https://lemonade.changedetection.io/start?src=github)
 
@@ -8,21 +9,37 @@ Live your data-life pro-actively, track website content changes and receive noti
 
 ![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master)
 
-Know when important content changes, we support notifications via Discord, Telegram, Home-Assistant, Slack, Email and 70+ more
-
 [**Don't have time? Let us host it for you! try our $6.99/month subscription - use our proxies and support!**](https://lemonade.changedetection.io/start) , _half the price of other website change monitoring services and comes with unlimited watches & checks!_
 
 - Chrome browser included.
 - Super fast, no registration needed setup.
-- Start watching and receiving change notifications instantly.
+- Get started watching and receiving website change notifications straight away.
 
 
-Easily see what changed, examine by word, line, or individual character.
+### Target specific parts of the webpage using the Visual Selector tool.
 
-<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
+Available when connected to a <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher">playwright content fetcher</a> (included as part of our subscription service)
+
+[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/visualselector-anim.gif" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />](https://lemonade.changedetection.io/start?src=github)
+
+### Easily see what changed, examine by word, line, or individual character.
+
+[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot-diff.png" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />](https://lemonade.changedetection.io/start?src=github)
 
 
-#### Example use cases
+### Perform interactive browser steps
+
+Fill in text boxes, click buttons and more, setup your changedetection scenario. 
+
+Using the **Browser Steps** configuration, add basic steps before performing change detection, such as logging into websites, adding a product to a cart, accept cookie logins, entering dates and refining searches.
+
+[<img src="docs/browsersteps-anim.gif" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Website change detection with interactive browser steps, login, cookies etc" />](https://lemonade.changedetection.io/start?src=github)
+
+After **Browser Steps** have been run, then visit the **Visual Selector** tab to refine the content you're interested in.
+Requires Playwright to be enabled.
+
+
+### Example use cases
 
 - Products and services have a change in pricing
 - _Out of stock notification_ and _Back In stock notification_
@@ -41,6 +58,8 @@ Easily see what changed, examine by word, line, or individual character.
 - Create RSS feeds based on changes in web content
 - Monitor HTML source code for unexpected changes, strengthen your PCI compliance
 - You have a very sensitive list of URLs to watch and you do _not_ want to use the paid alternatives. (Remember, _you_ are the product)
+- Get notified when certain keywords appear in Twitter search results
+- Proactively search for jobs, get notified when companies update their careers page, search job portals for keywords.
 
 _Need an actual Chrome runner with Javascript support? We support fetching via WebDriver and Playwright!</a>_
 
@@ -54,18 +73,11 @@ _Need an actual Chrome runner with Javascript support? We support fetching via W
 - Override Request Headers, Specify `POST` or `GET` and other methods
 - Use the "Visual Selector" to help target specific elements
 - Configurable [proxy per watch](https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration)
+- Send a screenshot with the notification when a change is detected in the web page
 
 We [recommend and use Bright Data](https://brightdata.grsm.io/n0r16zf7eivq) global proxy services, Bright Data will match any first deposit up to $100 using our signup link.
 
-## Screenshots
-
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
-
-### Filter by elements using the Visual Selector tool.
-
-Available when connected to a <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher">playwright content fetcher</a> (included as part of our subscription service)
-
-<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/visualselector-anim.gif" style="max-width:100%;" alt="Self-hosted web page change monitoring context difference "  title="Self-hosted web page change monitoring context difference " />
 
 ## Installation
 
@@ -106,8 +118,8 @@ _Now with per-site configurable support for using a fast built in HTTP fetcher o
 ### Docker
 ```
 docker pull dgtlmoon/changedetection.io
-docker kill $(docker ps -a|grep changedetection.io|awk '{print $1}')
-docker rm $(docker ps -a|grep changedetection.io|awk '{print $1}')
+docker kill $(docker ps -a -f name=changedetection.io -q)
+docker rm $(docker ps -a -f name=changedetection.io -q)
 docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
 ```
 
@@ -147,7 +159,7 @@ Just some examples
 
 <img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot-notifications.png" style="max-width:100%;" alt="Self-hosted web page change monitoring notifications"  title="Self-hosted web page change monitoring notifications"  />
 
-Now you can also customise your notification content!
+Now you can also customise your notification content and use <a target="_new" href="https://jinja.palletsprojects.com/en/3.0.x/templates/">Jinja2 templating</a> for their title and body!
 
 ## JSON API Monitoring
 
@@ -167,9 +179,6 @@ One big advantage of `jq` is that you can use logic in your JSON filter, such as
 
 See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/JSON-Selector-Filter-help for more information and examples
 
-Note: `jq` library must be added separately (`pip3 install jq`)
-
-
 ### Parse JSON embedded in HTML!
 
 When you enable a `json:` or `jq:` filter, you can even automatically extract and parse embedded JSON inside a HTML page! Amazingly handy for sites that build content based on JSON, such as many e-commerce websites. 
@@ -178,11 +187,29 @@ When you enable a `json:` or `jq:` filter, you can even automatically extract an
 <html>
 ...
 <script type="application/ld+json">
-  {"@context":"http://schema.org","@type":"Product","name":"Nan Optipro Stage 1 Baby Formula  800g","price": 23.50 }
+
+{
+   "@context":"http://schema.org/",
+   "@type":"Product",
+   "offers":{
+      "@type":"Offer",
+      "availability":"http://schema.org/InStock",
+      "price":"3949.99",
+      "priceCurrency":"USD",
+      "url":"https://www.newegg.com/p/3D5-000D-001T1"
+   },
+   "description":"Cobratype King Cobra Hero Desktop Gaming PC",
+   "name":"Cobratype King Cobra Hero Desktop Gaming PC",
+   "sku":"3D5-000D-001T1",
+   "itemCondition":"NewCondition"
+}
 </script>
 ```  
 
-`json:$.price` or `jq:.price` would give `23.50`, or you can extract the whole structure
+`json:$..price` or `jq:..price` would give `3949.99`, or you can extract the whole structure (use a JSONpath test website to validate with)
+
+The application also supports notifying you that it can follow this information automatically
+
 
 ## Proxy Configuration
 
