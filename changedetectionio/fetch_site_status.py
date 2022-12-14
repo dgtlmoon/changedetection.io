@@ -39,7 +39,7 @@ class perform_site_check():
 
         return regex
 
-    def run(self, uuid, reprocess_existing_data=False):
+    def run(self, uuid, skip_when_checksum_same=True):
         changed_detected = False
         screenshot = False  # as bytes
         stripped_text_from_html = ""
@@ -122,8 +122,7 @@ class perform_site_check():
         self.screenshot = fetcher.screenshot
         self.xpath_data = fetcher.xpath_data
 
-        # Do we even need to run at all?
-        if not reprocess_existing_data:
+        if skip_when_checksum_same:
             update_obj['previous_md5_before_filters'] = hashlib.md5(fetcher.content.encode('utf-8')).hexdigest()
             if update_obj['previous_md5_before_filters'] == watch.get('previous_md5_before_filters'):
                 raise content_fetcher.checksumFromPreviousCheckWasTheSame()

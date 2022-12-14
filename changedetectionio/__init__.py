@@ -623,7 +623,7 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.needs_write_urgent = True
 
             # Queue the watch for immediate recheck, with a higher priority
-            update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'reprocess_existing_data': True}))
+            update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff':
@@ -764,7 +764,7 @@ def changedetection_app(config=None, datastore_o=None):
                 importer = import_url_list()
                 importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore)
                 for uuid in importer.new_uuids:
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
                 if len(importer.remaining_data) == 0:
                     return redirect(url_for('index'))
@@ -777,7 +777,7 @@ def changedetection_app(config=None, datastore_o=None):
                 d_importer = import_distill_io_json()
                 d_importer.run(data=request.values.get('distill-io'), flash=flash, datastore=datastore)
                 for uuid in d_importer.new_uuids:
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
 
 
@@ -1179,7 +1179,7 @@ def changedetection_app(config=None, datastore_o=None):
             uuid = list(datastore.data['watching'].keys()).pop()
 
         new_uuid = datastore.clone(uuid)
-        update_q.put(queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid}))
+        update_q.put(queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid, 'skip_when_checksum_same': True}))
         flash('Cloned.')
 
         return redirect(url_for('index'))
@@ -1198,7 +1198,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         if uuid:
             if uuid not in running_uuids:
-                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'reprocess_existing_data': True}))
+                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
             i = 1
 
         elif tag != None:
@@ -1206,14 +1206,14 @@ def changedetection_app(config=None, datastore_o=None):
             for watch_uuid, watch in datastore.data['watching'].items():
                 if (tag != None and tag in watch['tag']):
                     if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
-                        update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'reprocess_existing_data': True}))
+                        update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False}))
                         i += 1
 
         else:
             # No tag, no uuid, add everything.
             for watch_uuid, watch in datastore.data['watching'].items():
                 if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'reprocess_existing_data': True}))
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False}))
                     i += 1
         flash("{} watches are queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
@@ -1514,7 +1514,7 @@ def ticker_thread_check_time_launch_checks():
                             now - watch['last_checked']))
 
                     # Into the queue with you
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid, 'reprocess_existing_data': True}))
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid, 'skip_when_checksum_same': False}))
 
                     # Reset for next time
                     watch.jitter_seconds = 0

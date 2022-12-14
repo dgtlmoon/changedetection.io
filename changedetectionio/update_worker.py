@@ -177,7 +177,7 @@ class update_worker(threading.Thread):
                     now = time.time()
 
                     try:
-                        changed_detected, update_obj, contents = update_handler.run(uuid, reprocess_existing_data=queued_item_data.item.get('reprocess_existing_data'))
+                        changed_detected, update_obj, contents = update_handler.run(uuid, skip_when_checksum_same=queued_item_data.item.get('skip_when_checksum_same'))
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
                         # We then convert/.decode('utf-8') for the notification etc
