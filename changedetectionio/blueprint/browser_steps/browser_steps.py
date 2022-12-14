@@ -81,9 +81,7 @@ class steppable_browser_interface():
         # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
         # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
         # This seemed to solve nearly all 'TimeoutErrors'
-        extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 3))
-        self.page.wait_for_timeout(extra_wait * 1000)
-        print("Time to goto URL including delay of ", extra_wait, time.time() - now)
+        print("Time to goto URL ", time.time() - now)
 
     def action_click_element_containing_text(self, selector=None, value=''):
         if not len(value.strip()):
