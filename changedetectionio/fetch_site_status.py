@@ -6,6 +6,7 @@ import urllib3
 
 from changedetectionio import content_fetcher, html_tools
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
+from copy import deepcopy
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -38,8 +39,7 @@ class perform_site_check():
 
         return regex
 
-    def run(self, uuid):
-        from copy import deepcopy
+    def run(self, uuid, reprocess_existing_data=False):
         changed_detected = False
         screenshot = False  # as bytes
         stripped_text_from_html = ""
@@ -123,9 +123,10 @@ class perform_site_check():
         self.xpath_data = fetcher.xpath_data
 
         # Do we even need to run at all?
-        update_obj['previous_md5_before_filters'] = hashlib.md5(fetcher.content.encode('utf-8')).hexdigest()
-        if update_obj['previous_md5_before_filters'] == watch.get('previous_md5_before_filters'):
-            raise content_fetcher.checksumFromPreviousCheckWasTheSame()
+        if not reprocess_existing_data:
+            update_obj['previous_md5_before_filters'] = hashlib.md5(fetcher.content.encode('utf-8')).hexdigest()
+            if update_obj['previous_md5_before_filters'] == watch.get('previous_md5_before_filters'):
+                raise content_fetcher.checksumFromPreviousCheckWasTheSame()
 
 
         # Fetching complete, now filters

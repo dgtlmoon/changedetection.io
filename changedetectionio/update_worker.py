@@ -4,6 +4,7 @@ import queue
 import time
 
 from changedetectionio import content_fetcher
+from changedetectionio import queuedWatchMetaData
 from changedetectionio.fetch_site_status import FilterNotFoundInResponse
 
 # A single update worker
@@ -157,11 +158,12 @@ class update_worker(threading.Thread):
         while not self.app.config.exit.is_set():
 
             try:
-                priority, uuid = self.q.get(block=False)
+                queued_item_data = self.q.get(block=False)
             except queue.Empty:
                 pass
 
             else:
+                uuid = queued_item_data.item.get('uuid')
                 self.current_uuid = uuid
 
                 if uuid in list(self.datastore.data['watching'].keys()):
@@ -171,11 +173,11 @@ class update_worker(threading.Thread):
                     update_obj= {}
                     xpath_data = False
                     process_changedetection_results = True
-                    print("> Processing UUID {} Priority {} URL {}".format(uuid, priority, self.datastore.data['watching'][uuid]['url']))
+                    print("> Processing UUID {} Priority {} URL {}".format(uuid, queued_item_data.priority, self.datastore.data['watching'][uuid]['url']))
                     now = time.time()
 
                     try:
-                        changed_detected, update_obj, contents = update_handler.run(uuid)
+                        changed_detected, update_obj, contents = update_handler.run(uuid, reprocess_existing_data=queued_item_data.item.get('reprocess_existing_data'))
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
                         # We then convert/.decode('utf-8') for the notification etc

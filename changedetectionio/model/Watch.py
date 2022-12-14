@@ -14,7 +14,7 @@ from changedetectionio.notification import (
 
 class model(dict):
     __newest_history_key = None
-    __history_n=0
+    __history_n = 0
     __base_config = {
         # 'history': {},  # Dict of timestamp and output stripped filename (removed)
         # 'newest_history_key': 0, (removed, taken from history.txt index)
