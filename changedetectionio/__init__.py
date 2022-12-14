@@ -561,7 +561,7 @@ def changedetection_app(config=None, datastore_o=None):
             # @todo
             # Radio needs '' not None, or incase that the chosen one no longer exists
             if default['proxy'] is None or not any(default['proxy'] in tup for tup in datastore.proxy_list):
-                default['prox4y'] = ''
+                default['proxy'] = ''
 
         # proxy_override set to the json/text list of the items
         form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
