@@ -1514,7 +1514,7 @@ def ticker_thread_check_time_launch_checks():
                             now - watch['last_checked']))
 
                     # Into the queue with you
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid, 'skip_when_checksum_same': False}))
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
                     # Reset for next time
                     watch.jitter_seconds = 0
