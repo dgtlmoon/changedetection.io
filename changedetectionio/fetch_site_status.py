@@ -6,6 +6,7 @@ import urllib3
 
 from changedetectionio import content_fetcher, html_tools
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
+from copy import deepcopy
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -38,8 +39,7 @@ class perform_site_check():
 
         return regex
 
-    def run(self, uuid):
-        from copy import deepcopy
+    def run(self, uuid, skip_when_checksum_same=True):
         changed_detected = False
         screenshot = False  # as bytes
         stripped_text_from_html = ""
@@ -121,6 +121,14 @@ class perform_site_check():
 
         self.screenshot = fetcher.screenshot
         self.xpath_data = fetcher.xpath_data
+
+        # Watches added automatically in the queue manager will skip if its the same checksum as the previous run
+        # Saves a lot of CPU
+        update_obj['previous_md5_before_filters'] = hashlib.md5(fetcher.content.encode('utf-8')).hexdigest()
+        if skip_when_checksum_same:
+            if update_obj['previous_md5_before_filters'] == watch.get('previous_md5_before_filters'):
+                raise content_fetcher.checksumFromPreviousCheckWasTheSame()
+
 
         # Fetching complete, now filters
         # @todo move to class / maybe inside of fetcher abstract base?

@@ -1,3 +1,4 @@
+from changedetectionio import queuedWatchMetaData
 from flask_restful import abort, Resource
 from flask import request, make_response
 import validators
@@ -24,7 +25,7 @@ class Watch(Resource):
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
 
         if request.args.get('recheck'):
-            self.update_q.put((1, uuid))
+            self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
             return "OK", 200
 
         # Return without history, get that via another API call
@@ -100,7 +101,7 @@ class CreateWatch(Resource):
         extras = {'title': json_data['title'].strip()} if json_data.get('title') else {}
 
         new_uuid = self.datastore.add_watch(url=json_data['url'].strip(), tag=tag, extras=extras)
-        self.update_q.put((1, new_uuid))
+        self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid, 'skip_when_checksum_same': True}))
         return {'uuid': new_uuid}, 201
 
     # Return concise list of available watches and some very basic info
@@ -118,7 +119,7 @@ class CreateWatch(Resource):
 
         if request.args.get('recheck_all'):
             for uuid in self.datastore.data['watching'].keys():
-                self.update_q.put((1, uuid))
+                self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
             return {'status': "OK"}, 200
 
         return list, 200
