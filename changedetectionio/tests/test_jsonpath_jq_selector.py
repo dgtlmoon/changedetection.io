@@ -422,10 +422,20 @@ def test_ignore_json_order(client, live_server):
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
 
+    # Just to be sure it still works
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write('{"world" : 123, "hello": 124}')
+
+    # Trigger a check
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    time.sleep(2)
+
+    res = client.get(url_for("index"))
+    assert b'unviewed' in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
-    
+
 def test_check_jsonpath_ext_filter(client, live_server):
     check_json_ext_filter('json:$[?(@.status==Sold)]', client, live_server)
 
