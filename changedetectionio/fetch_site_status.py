@@ -1,4 +1,5 @@
 import hashlib
+import json
 import logging
 import os
 import re
@@ -167,12 +168,22 @@ class perform_site_check():
             include_filters_rule.append("json:$")
             has_filter_rule = True
 
+        if is_json:
+            # Sort the JSON so we dont get false alerts when the content is just re-ordered
+            try:
+                fetcher.content = json.dumps(json.loads(fetcher.content), sort_keys=True)
+            except Exception as e:
+                # Might have just been a snippet, or otherwise bad JSON, continue
+                pass
+
         if has_filter_rule:
             json_filter_prefixes = ['json:', 'jq:']
             for filter in include_filters_rule:
                 if any(prefix in filter for prefix in json_filter_prefixes):
                     stripped_text_from_html += html_tools.extract_json_as_string(content=fetcher.content, json_filter=filter)
                     is_html = False
+
+
 
         if is_html or is_source:
 
