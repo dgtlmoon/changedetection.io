@@ -394,6 +394,48 @@ def check_json_ext_filter(json_filter, client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
+def test_ignore_json_order(client, live_server):
+    # A change in order shouldn't trigger a notification
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write('{"hello" : 123, "world": 123}')
+
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', content_type="application/json", _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+
+    time.sleep(2)
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write('{"world" : 123, "hello": 123}')
+
+    # Trigger a check
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    time.sleep(2)
+
+    res = client.get(url_for("index"))
+    assert b'unviewed' not in res.data
+
+    # Just to be sure it still works
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write('{"world" : 123, "hello": 124}')
+
+    # Trigger a check
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    time.sleep(2)
+
+    res = client.get(url_for("index"))
+    assert b'unviewed' in res.data
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
 def test_check_jsonpath_ext_filter(client, live_server):
     check_json_ext_filter('json:$[?(@.status==Sold)]', client, live_server)
 
