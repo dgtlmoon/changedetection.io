@@ -426,6 +426,13 @@ class watchForm(commonSettingsForm):
         return result
 
 
+class SingleExtraProxy(Form):
+
+    # maybe better to set some <script>var..
+    proxy_name = StringField('Name', [validators.Optional()], render_kw={"placeholder": "Name"})
+    proxy_url = StringField('URL', [validators.Optional(), validators.url()], render_kw={"placeholder": "http://user:pass@...:3128"})
+
+
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     time_between_check = FormField(TimeBetweenCheckForm)
@@ -433,6 +440,9 @@ class globalSettingsRequestForm(Form):
     jitter_seconds = IntegerField('Random jitter seconds ± check',
                                   render_kw={"style": "width: 5em;"},
                                   validators=[validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
+
+
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):

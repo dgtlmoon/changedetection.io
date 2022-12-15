@@ -36,7 +36,6 @@ class ChangeDetectionStore:
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
         self.needs_write = False
-        self.proxy_list = None
         self.start_time = time.time()
         self.stop_thread = False
         # Base definition for all watchers
@@ -115,11 +114,6 @@ class ChangeDetectionStore:
         if not 'api_access_token' in self.__data['settings']['application']:
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['api_access_token'] = secret
-
-        # Proxy list support - available as a selection in settings when text file is imported
-        proxy_list_file = "{}/proxies.json".format(self.datastore_path)
-        if path.isfile(proxy_list_file):
-            self.import_proxy_list(proxy_list_file)
 
         # Bump the update version by running updates
         self.run_updates()
@@ -463,10 +457,30 @@ class ChangeDetectionStore:
                     print ("Removing",item)
                     unlink(item)
 
-    def import_proxy_list(self, filename):
-        with open(filename) as f:
-            self.proxy_list = json.load(f)
-            print ("Registered proxy list", list(self.proxy_list.keys()))
+    @property
+    def proxy_list(self):
+        proxy_list = {}
+        proxy_list_file = os.path.join(self.datastore_path, 'proxies.json')
+
+        # Load from external config file
+        if path.isfile(proxy_list_file):
+            with open("{}/proxies.json".format(self.datastore_path)) as f:
+                proxy_list = json.load(f)
+
+        # Mapping from UI config if available
+        extras = self.data['settings']['requests'].get('extra_proxies')
+        if extras:
+            i=0
+            for proxy in extras:
+                i += 0
+                if proxy.get('proxy_name') and proxy.get('proxy_url'):
+                    k = "ui-" + str(i) + proxy.get('proxy_name')
+                    proxy_list[k] = {'label': proxy.get('proxy_name'), 'url': proxy.get('url')}
+
+
+        return proxy_list if len(proxy_list) else None
+
+
 
 
     def get_preferred_proxy_for_watch(self, uuid):
@@ -476,11 +490,10 @@ class ChangeDetectionStore:
         :return: proxy "key" id
         """
 
-        proxy_id = None
         if self.proxy_list is None:
             return None
 
-        # If its a valid one
+        # If it's a valid one
         watch = self.data['watching'].get(uuid)
 
         if watch.get('proxy') and watch.get('proxy') in list(self.proxy_list.keys()):

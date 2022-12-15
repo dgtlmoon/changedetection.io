@@ -21,6 +21,7 @@
             <li class="tab"><a href="#fetching">Fetching</a></li>
             <li class="tab"><a href="#filters">Global Filters</a></li>
             <li class="tab"><a href="#api">API</a></li>
+            <li class="tab"><a href="#proxies">CAPTCHA &amp; Proxies</a></li>
         </ul>
     </div>
     <div class="box-wrap inner">
@@ -170,7 +171,18 @@ nav
                     </div>
                 </div>
             </div>
+            <div class="tab-pane-inner" id="proxies">
 
+                <p>Use <a href="https://brightdata.grsm.io/n0r16zf7eivq">BrightData</a> (Click on "Proxy" &gt; "Web Unlocker") or other proxy providers that offer CAPTCHA solving and other proxy services.</p>
+                <p>You can add custom proxies via <code>proxies.json</code> configuration file, or directly here.</p>
+                <p>Please use our referrer link for BrightData <a href="https://brightdata.grsm.io/n0r16zf7eivq">https://brightdata.grsm.io/n0r16zf7eivq</a></p>
+
+
+                <div class="pure-control-group">
+                    {{ render_field(form.requests.form.extra_proxies) }}
+
+                </div>
+            </div>
             <div id="actions">
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
