@@ -1260,6 +1260,14 @@ def changedetection_app(config=None, datastore_o=None):
                     datastore.data['watching'][uuid.strip()]['notification_muted'] = False
             flash("{} watches un-muted".format(len(uuids)))
 
+        elif (op == 'recheck'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    # Recheck and require a full reprocessing
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
+
+            flash("{} watches un-muted".format(len(uuids)))
         elif (op == 'notification-default'):
             from changedetectionio.notification import (
                 default_notification_format_for_watch
