@@ -42,7 +42,7 @@ class BrowserStepsStepTimout(Exception):
 
 
 class PageUnloadable(Exception):
-    def __init__(self, status_code, url, screenshot=False, message=False):
+    def __init__(self, status_code, url, message, screenshot=False):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
@@ -332,7 +332,7 @@ class base_html_playwright(Fetcher):
                 print (str(e))
                 context.close()
                 browser.close()
-                raise PageUnloadable(url=url, status_code=None)
+                raise PageUnloadable(url=url, status_code=None, message=str(e))
 
 
             if response is None:
