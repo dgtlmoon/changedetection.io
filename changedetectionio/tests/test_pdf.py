@@ -28,4 +28,5 @@ def test_fetch_pdf(client, live_server):
         follow_redirects=True
     )
 
+    assert b'PDF-1.5' not in res.data
     assert b'hello world' in res.data
