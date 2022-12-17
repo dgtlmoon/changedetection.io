@@ -16,6 +16,10 @@ class FilterNotFoundInResponse(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
 
+class PDFToHTMLToolNotFound(ValueError):
+    def __init__(self, msg):
+        ValueError.__init__(self, msg)
+
 
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
@@ -151,9 +155,14 @@ class perform_site_check():
             is_json = False
 
         if is_pdf:
+            from shutil import which
+            tool = "pdftohtml"
+            if not which(tool):
+                raise PDFToHTMLToolNotFound("Command-line `pdftohtml` tool was not found in system PATH, was it installed?")
+
             import subprocess
             proc = subprocess.Popen(
-                ['pdftohtml', '-stdout', '-', '-s', 'out.pdf', '-i'],
+                [tool, '-stdout', '-', '-s', 'out.pdf', '-i'],
                 stdout=subprocess.PIPE,
                 stdin=subprocess.PIPE)
             proc.stdin.write(fetcher.raw_content)
