@@ -158,7 +158,7 @@ class perform_site_check():
             from shutil import which
             tool = "pdftohtml"
             if not which(tool):
-                raise PDFToHTMLToolNotFound("Command-line `pdftohtml` tool was not found in system PATH, was it installed?")
+                raise PDFToHTMLToolNotFound("Command-line `{}` tool was not found in system PATH, was it installed?".format(tool))
 
             import subprocess
             proc = subprocess.Popen(
