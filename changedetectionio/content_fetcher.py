@@ -1,3 +1,4 @@
+import hashlib
 from abc import abstractmethod
 import chardet
 import json
@@ -558,10 +559,11 @@ class html_requests(Fetcher):
         # For example - some sites don't tell us it's utf-8, but return utf-8 content
         # This seems to not occur when using webdriver/selenium, it seems to detect the text encoding more reliably.
         # https://github.com/psf/requests/issues/1604 good info about requests encoding detection
-        if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):
-            encoding = chardet.detect(r.content)['encoding']
-            if encoding:
-                r.encoding = encoding
+        if not r.headers.get('content-type','') == 'application/pdf':
+            if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):
+                encoding = chardet.detect(r.content)['encoding']
+                if encoding:
+                    r.encoding = encoding
 
         if not r.content or not len(r.content):
             raise EmptyReply(url=url, status_code=r.status_code)
@@ -573,8 +575,14 @@ class html_requests(Fetcher):
             raise Non200ErrorCodeReceived(url=url, status_code=r.status_code, page_html=r.text)
 
         self.status_code = r.status_code
-        self.content = r.text
+        if r.headers.get('content-type', '') == 'application/pdf':
+            # So that `pdftotext` CLI can be called only if the content changes
+            self.content = hashlib.md5(r.content).hexdigest()
+        else:
+            self.content = r.text
+
         self.headers = r.headers
+        self.raw_content = r.content
 
 
 # Decide which is the 'real' HTML webdriver, this is more a system wide config

@@ -141,6 +141,7 @@ class perform_site_check():
         # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
         # return content().textfilter().jsonextract().checksumcompare() ?
 
+        is_pdf = 'application/pdf' in fetcher.headers.get('Content-Type', '') or url.lower().endswith('.pdf')
         is_json = 'application/json' in fetcher.headers.get('Content-Type', '')
         is_html = not is_json
 
@@ -148,6 +149,18 @@ class perform_site_check():
         if is_source:
             is_html = False
             is_json = False
+
+        if is_pdf:
+            import subprocess
+            proc = subprocess.Popen(
+                ['pdftohtml', '-stdout', '-', '-s', 'out.pdf', '-i'],
+                stdout=subprocess.PIPE,
+                stdin=subprocess.PIPE)
+            proc.stdin.write(fetcher.raw_content)
+            proc.stdin.close()
+            fetcher.content = proc.stdout.read().decode('utf-8')
+            proc.wait(timeout=60)
+
 
         include_filters_rule = deepcopy(watch.get('include_filters', []))
         # include_filters_rule = watch['include_filters']
