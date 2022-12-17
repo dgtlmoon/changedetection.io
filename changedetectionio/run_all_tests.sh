@@ -5,6 +5,11 @@
 # and I like to restart the server for each test (and have the test cleanup after each test)
 # merge request welcome :)
 
+if ! command -v pdftohtml &> /dev/null
+then
+    echo "pdftohtml could not be found, so the test_pdf.py will fail, so i will abort now."
+    exit 1
+fi
 
 # exit when any command fails
 set -e

@@ -156,7 +156,7 @@ class perform_site_check():
 
         if is_pdf:
             from shutil import which
-            tool = "pdftohtml"
+            tool = os.getenv("PDF_TO_HTML_TOOL", "pdftohtml")
             if not which(tool):
                 raise PDFToHTMLToolNotFound("Command-line `{}` tool was not found in system PATH, was it installed?".format(tool))
 
