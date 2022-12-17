@@ -19,6 +19,7 @@ RUN mkdir /install
 WORKDIR /install
 
 COPY requirements.txt /requirements.txt
+COPY requirements-dev.txt /requirements-dev.txt
 
 RUN pip install --target=/dependencies -r /requirements.txt
 
@@ -64,6 +65,10 @@ COPY changedetectionio /app/changedetectionio
 
 # The eventlet server wrapper
 COPY changedetection.py /app/changedetection.py
+
+COPY requirements.txt /requirements.txt
+# Could be optionally used for running tests
+COPY requirements-dev.txt /requirements-dev.txt
 
 WORKDIR /app
 

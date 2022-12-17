@@ -31,9 +31,10 @@ jobs:
         run: |
           python3 -m unittest changedetectionio.tests.unit.test_notification_diff
 
-      - name: Test with pytest
+      - name: Test built container with pytest
         run: |
-          # Each test is totally isolated and performs its own cleanup/reset
-          cd changedetectionio; ./run_all_tests.sh
+          docker build . -t test-changedetectionio
+          docker run test-changedetectionio  bash -c 'pip3 install -r /requirements-dev.txt; cd changedetectionio;./run_all_tests.sh'
+
 
 
