@@ -33,8 +33,16 @@ jobs:
 
       - name: Test built container with pytest
         run: |
+          
+          # Test proxy list handling, starting two squids on different ports
+          # Each squid adds a different header to the response, which is the main thing we test for.
+          docker network create changedet-network
+          docker run --network changedet-network -d --name squid-one --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf -p 3128:3128 ubuntu/squid:4.13-21.10_edge
+          docker run --network changedet-network -d --name squid-two --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf -p 3129:3128 ubuntu/squid:4.13-21.10_edge
+
           docker build . -t test-changedetectionio
-          docker run test-changedetectionio  bash -c 'pip3 install -r /requirements-dev.txt; cd changedetectionio;./run_all_tests.sh'
+          docker run --network changedet-network  test-changedetectionio  bash -c 'pip3 install -r /requirements-dev.txt; cd changedetectionio;./run_all_tests.sh'
+
 
 
 
