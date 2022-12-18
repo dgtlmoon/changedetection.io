@@ -27,12 +27,7 @@ jobs:
         run: |
           
           docker network create changedet-network
-          
-          # Test proxy list handling, starting two squids on different ports
-          # Each squid adds a different header to the response, which is the main thing we test for.
-          docker run --network changedet-network -d --hostname squid-one --rm -v `pwd`/changedetectionio/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf -p 3128:3128 ubuntu/squid:4.13-21.10_edge
-          docker run --network changedet-network -d --hostname squid-two --rm -v `pwd`/changedetectionio/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf -p 3129:3128 ubuntu/squid:4.13-21.10_edge
-          
+
           # Selenium+browserless
           docker run --network changedet-network -d --hostname selenium  -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome-debug:3.141.59
           docker run --network changedet-network -d --hostname browserless -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  browserless/chrome:1.53-chrome-stable
@@ -49,7 +44,7 @@ jobs:
           docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_notification_diff'
           
           # All tests
-          docker run --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio;./run_all_tests.sh'
+          docker run --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
       - name: Test built container selenium+browserless/playwright
         run: |
@@ -60,13 +55,20 @@ jobs:
           # Playwright/Browserless fetch
           docker run -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
 
+      - name: Test proxy interaction
+        run: |
+          cd changedetection.io
+          ./run_proxy_tests.sh
+          cd ..
+          
+
       - name: Test changedetection.io container starts+runs basically without error
         run: |
           docker run -p 5556:5000 -d test-changedetectionio
           sleep 3
           # Should return 0 (no error) when grep finds it
           curl -s http://localhost:5556 |grep -q checkbox-uuid
-          curl -s http://localhost:5556/rss|grep -q docs
+          curl -s http://localhost:5556/rss|grep -q rss-specification
 
 #export WEBDRIVER_URL=http://localhost:4444/wd/hub
 #pytest tests/fetchers/test_content.py
