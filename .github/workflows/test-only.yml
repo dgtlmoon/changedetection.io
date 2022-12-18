@@ -60,6 +60,13 @@ jobs:
           # Playwright/Browserless fetch
           docker run -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
 
+      - name: Test changedetection.io runs basically without error
+        run: |
+          docker run -p 5556:5000 -d test-changedetectionio
+          sleep 3
+          # Should return 0 (no error) when grep finds it
+          curl -s http://localhost:5556 |grep -q checkbox-uuid
+
 #export WEBDRIVER_URL=http://localhost:4444/wd/hub
 #pytest tests/fetchers/test_content.py
 #pytest tests/test_errorhandling.py
