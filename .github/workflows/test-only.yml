@@ -57,7 +57,7 @@ jobs:
 
       - name: Test proxy interaction
         run: |
-          cd changedetection.io
+          cd changedetectionio
           ./run_proxy_tests.sh
           cd ..
           
