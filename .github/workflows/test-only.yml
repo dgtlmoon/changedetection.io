@@ -9,9 +9,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      # Mainly just for link/flake8
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10
 
       - name: Lint with flake8
         run: |
+          pip3 install flake8
           # stop the build if there are Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
