@@ -13,7 +13,7 @@ jobs:
       - name: Set up Python 3.10
         uses: actions/setup-python@v2
         with:
-          python-version: 3.10
+          python-version: '3.10'
 
       - name: Lint with flake8
         run: |
@@ -30,15 +30,21 @@ jobs:
       - name: Test built container with pytest
         run: |
           
+          
+          docker network create changedet-network
+          
           # Test proxy list handling, starting two squids on different ports
           # Each squid adds a different header to the response, which is the main thing we test for.
-          docker network create changedet-network
           docker run --network changedet-network -d --name squid-one --rm -v `pwd`/changedetectionio/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf -p 3128:3128 ubuntu/squid:4.13-21.10_edge
           docker run --network changedet-network -d --name squid-two --rm -v `pwd`/changedetectionio/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf -p 3129:3128 ubuntu/squid:4.13-21.10_edge
-
+          
+          # Selenium+browserless
+          docker run --network changedet-network -d --name selenium  -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome-debug:3.141.59
+          docker run --network changedet-network -d --name browserless -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  browserless/chrome:1.53-chrome-stable
+          
           docker build . -t test-changedetectionio
           docker run --network changedet-network  test-changedetectionio  bash -c 'pip3 install -r /requirements-dev.txt; cd changedetectionio;./run_all_tests.sh'
 
-
+          
 
 
