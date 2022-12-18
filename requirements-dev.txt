@@ -1,2 +1,0 @@
-pytest ~=6.2
-pytest-flask ~=1.2

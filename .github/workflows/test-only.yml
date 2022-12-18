@@ -49,14 +49,17 @@ jobs:
           docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_notification_diff'
           
           # All tests
-          docker run --network changedet-network  test-changedetectionio  bash -c 'pip3 install -r /requirements-dev.txt; cd changedetectionio;./run_all_tests.sh'
+          docker run --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio;./run_all_tests.sh'
 
       - name: Test built container with pytest (selenium+browserless/playwright)
         run: |
           
           # Selenium fetch
-          docker run -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network  test-changedetectionio  bash -c 'pip3 install -r /requirements-dev.txt && cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py'
+          docker run -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py'
           
           # Playwright/Browserless fetch
-          docker run -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network  test-changedetectionio  bash -c 'pip3 install -r /requirements-dev.txt && cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
+          docker run -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
 
+#export WEBDRIVER_URL=http://localhost:4444/wd/hub
+#pytest tests/fetchers/test_content.py
+#pytest tests/test_errorhandling.py
