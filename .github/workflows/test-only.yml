@@ -51,7 +51,7 @@ jobs:
           # All tests
           docker run --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio;./run_all_tests.sh'
 
-      - name: Test built container with pytest (selenium+browserless/playwright)
+      - name: Test built container selenium+browserless/playwright
         run: |
           
           # Selenium fetch
