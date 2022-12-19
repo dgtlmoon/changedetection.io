@@ -105,7 +105,7 @@ class perform_site_check():
             print("UUID {} Using proxy {}".format(uuid, proxy_url))
 
         # requests for PDF's, images etc should be passwd the is_binary flag
-        is_binary = 'application/pdf' in watch.get('content_type', '') or url.lower().contains('.pdf')
+        is_binary = 'application/pdf' in watch.get('content_type', '') or ".pdf" in url.lower()
 
         fetcher = klass(proxy_override=proxy_url, is_binary=is_binary)
 
@@ -159,7 +159,7 @@ class perform_site_check():
             is_html = False
             is_json = False
 
-        if watch.is_pdf or fetcher.headers.get('Content-Type', '').lower().contains('application/pdf'):
+        if watch.is_pdf or 'application/pdf' in fetcher.headers.get('Content-Type', '').lower():
             from shutil import which
             tool = os.getenv("PDF_TO_HTML_TOOL", "pdftohtml")
             if not which(tool):
