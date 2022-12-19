@@ -559,8 +559,8 @@ class html_requests(Fetcher):
         # For example - some sites don't tell us it's utf-8, but return utf-8 content
         # This seems to not occur when using webdriver/selenium, it seems to detect the text encoding more reliably.
         # https://github.com/psf/requests/issues/1604 good info about requests encoding detection
-        is_pdf = 'application/pdf' in r.headers.get('content-type','') or url.lower().endswith('.pdf')
         # is_pdf could be made into some call-argument like "is_binary"
+        is_pdf = 'application/pdf' in r.headers.get('content-type', '') or url.lower().endswith('.pdf')
         if not is_pdf:
             # Don't run this for PDF (maybe other big binaries?) takes a _long_ time
             if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):

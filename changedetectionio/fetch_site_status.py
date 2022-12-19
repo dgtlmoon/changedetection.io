@@ -91,7 +91,7 @@ class perform_site_check():
             is_source = True
 
         # Pluggable content fetcher
-        prefer_backend = watch.get('fetch_backend')
+        prefer_backend = watch.get_fetch_backend
         if hasattr(content_fetcher, prefer_backend):
             klass = getattr(content_fetcher, prefer_backend)
         else:

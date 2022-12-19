@@ -115,6 +115,18 @@ class model(dict):
         return ready_url
 
     @property
+    def get_fetch_backend(self):
+        """
+        Like just using the `fetch_backend` key but there could be some logic
+        :return:
+        """
+        # content_type field is set in the future
+        if '.pdf' in self.get('url','').lower() or 'pdf' in self.get('content_type','').lower():
+            return 'html_requests'
+
+        return self.get('fetch_backend')
+
+    @property
     def label(self):
         # Used for sorting
         if self['title']:
