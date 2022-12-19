@@ -168,5 +168,15 @@ def live_server_setup(live_server):
     def test_return_query():
         return request.query_string
 
+
+    @live_server.app.route('/endpoint-test.pdf')
+    def test_pdf_endpoint():
+
+        # Tried using a global var here but didn't seem to work, so reading from a file instead.
+        with open("test-datastore/endpoint-test.pdf", "rb") as f:
+            resp = make_response(f.read(), 200)
+            resp.headers['Content-Type'] = 'application/pdf'
+            return resp
+
     live_server.start()
 

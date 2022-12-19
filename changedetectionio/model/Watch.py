@@ -115,6 +115,24 @@ class model(dict):
         return ready_url
 
     @property
+    def get_fetch_backend(self):
+        """
+        Like just using the `fetch_backend` key but there could be some logic
+        :return:
+        """
+        # Maybe also if is_image etc?
+        # This is because chrome/playwright wont render the PDF in the browser and we will just fetch it and use pdf2html to see the text.
+        if self.is_pdf:
+            return 'html_requests'
+
+        return self.get('fetch_backend')
+
+    @property
+    def is_pdf(self):
+        # content_type field is set in the future
+        return '.pdf' in self.get('url', '').lower() or 'pdf' in self.get('content_type', '').lower()
+
+    @property
     def label(self):
         # Used for sorting
         if self['title']:
