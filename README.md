@@ -43,6 +43,7 @@ Requires Playwright to be enabled.
 
 - Products and services have a change in pricing
 - _Out of stock notification_ and _Back In stock notification_
+- Monitor and track PDF file changes, know when a PDF file has text changes.
 - Governmental department updates (changes are often only on their websites)
 - New software releases, security advisories when you're not on their mailing list.
 - Festivals with changes
