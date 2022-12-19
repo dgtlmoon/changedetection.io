@@ -16,7 +16,8 @@ def test_select_custom(client, live_server):
             "application-ignore_whitespace": "y",
             "application-fetch_backend": "html_requests",
             "requests-extra_proxies-0-proxy_name": "custom-test-proxy",
-            "requests-extra_proxies-0-proxy_url": "http://squid-custom:3128",
+            # test:awesome is set in tests/proxy_list/squid-passwords.txt
+            "requests-extra_proxies-0-proxy_url": "http://test:awesome@squid-custom:3128",
         },
         follow_redirects=True
     )
@@ -34,5 +35,9 @@ def test_select_custom(client, live_server):
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
 
+    res = client.get(url_for("index"))
+    assert b'Proxy Authentication Required' not in res.data
+
+    #
     # Now we should see the request in the container logs for "squid-squid-custom" because it will be the only default
 

@@ -9,8 +9,13 @@ docker run --network changedet-network -d --name squid-one --hostname squid-one 
 docker run --network changedet-network -d --name squid-two --hostname squid-two --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf ubuntu/squid:4.13-21.10_edge
 
 # Used for configuring a custom proxy URL via the UI
-# @todo maybe test with auth config too?
-docker run --network changedet-network -d --name squid-custom --hostname squid-squid-custom --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf ubuntu/squid:4.13-21.10_edge
+docker run --network changedet-network -d \
+  --name squid-custom \
+  --hostname squid-squid-custom \
+  --rm \
+  -v `pwd`/tests/proxy_list/squid-auth.conf:/etc/squid/conf.d/debian.conf \
+  -v `pwd`/tests/proxy_list/squid-passwords.txt:/etc/squid3/passwords \
+  ubuntu/squid:4.13-21.10_edge
 
 
 ## 2nd test actually choose the preferred proxy from proxies.json
@@ -49,6 +54,6 @@ docker run --network changedet-network \
 docker logs squid-custom 2>/dev/null|grep "TCP_TUNNEL.200.*changedetection.io"
 if [ $? -ne 0 ]
 then
-  echo "Did not see a request to chosen.changedetection.io in the squid logs (while checking preferred proxy - squid two)"
+  echo "Did not see a valid request to changedetection.io in the squid logs (while checking preferred proxy - squid two)"
   exit 1
 fi
