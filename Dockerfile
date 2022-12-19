@@ -19,7 +19,6 @@ RUN mkdir /install
 WORKDIR /install
 
 COPY requirements.txt /requirements.txt
-COPY requirements-dev.txt /requirements-dev.txt
 
 RUN pip install --target=/dependencies -r /requirements.txt
 
