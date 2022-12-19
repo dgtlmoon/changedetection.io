@@ -104,10 +104,7 @@ class perform_site_check():
             proxy_url = self.datastore.proxy_list.get(proxy_id).get('url')
             print("UUID {} Using proxy {}".format(uuid, proxy_url))
 
-        # requests for PDF's, images etc should be passwd the is_binary flag
-        is_binary = 'application/pdf' in watch.get('content_type', '') or ".pdf" in url.lower()
-
-        fetcher = klass(proxy_override=proxy_url, is_binary=is_binary)
+        fetcher = klass(proxy_override=proxy_url)
 
         # Configurable per-watch or global extra delay before extracting text (for webDriver types)
         system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
@@ -124,7 +121,10 @@ class perform_site_check():
         if watch.get('webdriver_js_execute_code') is not None and watch.get('webdriver_js_execute_code').strip():
             fetcher.webdriver_js_execute_code = watch.get('webdriver_js_execute_code')
 
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch.get('include_filters'))
+        # requests for PDF's, images etc should be passwd the is_binary flag
+        is_binary = watch.is_pdf
+
+        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch.get('include_filters'), is_binary=is_binary)
         fetcher.quit()
 
         self.screenshot = fetcher.screenshot
