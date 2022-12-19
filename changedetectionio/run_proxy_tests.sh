@@ -46,7 +46,7 @@ docker run --network changedet-network \
 
 
 # Should see a request for one.changedetection.io in there
-docker logs squid-custom 2>/dev/null|grep one.changedetection.io
+docker logs squid-custom 2>/dev/null|grep "TCP_TUNNEL.200.*changedetection.io"
 if [ $? -ne 0 ]
 then
   echo "Did not see a request to chosen.changedetection.io in the squid logs (while checking preferred proxy - squid two)"

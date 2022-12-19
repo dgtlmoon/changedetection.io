@@ -27,7 +27,7 @@ def test_select_custom(client, live_server):
         url_for("import_page"),
         # Because a URL wont show in squid/proxy logs due it being SSLed
         # Use plain HTTP or a specific domain-name here
-        data={"urls": "http://one.changedetection.io"},
+        data={"urls": "https://changedetection.io/CHANGELOG.txt"},
         follow_redirects=True
     )
 
