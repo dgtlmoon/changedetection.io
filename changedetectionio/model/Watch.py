@@ -121,6 +121,7 @@ class model(dict):
         :return:
         """
         # Maybe also if is_image etc?
+        # This is because chrome/playwright wont render the PDF in the browser and we will just fetch it and use pdf2html to see the text.
         if self.is_pdf:
             return 'html_requests'
 
