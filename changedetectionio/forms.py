@@ -3,6 +3,7 @@ import re
 
 from wtforms import (
     BooleanField,
+    FileField,
     Form,
     IntegerField,
     RadioField,
@@ -425,6 +426,14 @@ class watchForm(commonSettingsForm):
             result = False
         return result
 
+# datastore.data['settings']['requests']..
+class importForm(Form):
+    #backup_zip_file = FileField("File", validators=[validators.regexp('\.zip$', flags=re.IGNORECASE)])
+    backup_zip_file = FileField("File")
+
+    def validate_backup_zip_file(form, field):
+        if field.data:
+            x=1
 
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):

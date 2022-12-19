@@ -755,8 +755,11 @@ def changedetection_app(config=None, datastore_o=None):
     @login_required
     def import_page():
         remaining_urls = []
+        from changedetectionio import forms
+        form = forms.importForm(request.form)
+
         if request.method == 'POST':
-            from .importer import import_url_list, import_distill_io_json
+            from .importer import import_url_list, import_distill_io_json, import_changedetection_io_zip
 
             # URL List import
             if request.values.get('urls') and len(request.values.get('urls').strip()):
@@ -779,10 +782,20 @@ def changedetection_app(config=None, datastore_o=None):
                 for uuid in d_importer.new_uuids:
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
+            if request.files.get("backup_zip_file"):
 
+                if not form.validate():
+                    flash("An error occurred, please see below.", "error")
+                else:
+                    d_importer = import_changedetection_io_zip()
+                    d_importer.run(data=None, flash=flash, datastore=datastore)
+                    for uuid in d_importer.new_uuids:
+                        # Queue without priority, we will examine their own rule to find out if it should be checked
+                        update_q.put(queuedWatchMetaData.PrioritizedItem(item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
         # Could be some remaining, or we could be on GET
         output = render_template("import.html",
+                                 form=form,
                                  import_url_list_remaining="\n".join(remaining_urls),
                                  original_distill_json=''
                                  )

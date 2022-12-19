@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
+{% from '_helpers.jinja' import render_field %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <div class="edit-form monospaced-textarea">
 
@@ -7,11 +8,12 @@
         <ul>
             <li class="tab" id=""><a href="#url-list">URL List</a></li>
             <li class="tab"><a href="#distill-io">Distill.io</a></li>
+            <li class="tab"><a href="#changedetection-io">Changedetection.io</a></li>
         </ul>
     </div>
 
     <div class="box-wrap inner">
-        <form class="pure-form pure-form-aligned" action="{{url_for('import_page')}}" method="POST">
+        <form class="pure-form pure-form-aligned" action="{{url_for('import_page')}}" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="tab-pane-inner" id="url-list">
                 <fieldset class="pure-group">
@@ -75,6 +77,12 @@
     ]
 }
 " rows="25">{{ original_distill_json }}</textarea>
+                </fieldset>
+            </div>
+            <div class="tab-pane-inner" id="changedetection-io">
+                Upload your changedetection.io backup ZIP here</br>
+                <fieldset class="pure-group">
+                    {{ render_field(form.backup_zip_file) }}
                 </fieldset>
             </div>
             <button type="submit" class="pure-button pure-input-1-2 pure-button-primary">Import</button>

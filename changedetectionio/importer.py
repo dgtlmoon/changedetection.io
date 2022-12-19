@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from flask import request, url_for, current_app
 import time
 import validators
 
@@ -19,6 +20,26 @@ class Importer():
             flash,
             datastore):
         pass
+
+class import_changedetection_io_zip(Importer):
+
+    def run(self,
+            data,
+            flash,
+            datastore,
+            ):
+        # `data` should be none, we will hit up request directly
+
+
+        import zipfile
+        import io
+
+
+        with zipfile.ZipFile(io.BytesIO(request.files["backup_zip_file"].read()), 'r') as zf:
+            p =zf.namelist()
+            for file in zf.namelist():
+                x=1
+
 
 
 class import_url_list(Importer):
