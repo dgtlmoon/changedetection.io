@@ -43,6 +43,7 @@ Requires Playwright to be enabled.
 
 - Products and services have a change in pricing
 - _Out of stock notification_ and _Back In stock notification_
+- Monitor and track PDF file changes, know when a PDF file has text changes.
 - Governmental department updates (changes are often only on their websites)
 - New software releases, security advisories when you're not on their mailing list.
 - Festivals with changes
@@ -68,6 +69,7 @@ _Need an actual Chrome runner with Javascript support? We support fetching via W
 - Lots of trigger filters, such as "Trigger on text", "Remove text by selector", "Ignore text", "Extract text", also using regular-expressions!
 - Target elements with xPath and CSS Selectors, Easily monitor complex JSON with JSONPath or jq
 - Switch between fast non-JS and Chrome JS based "fetchers"
+- Track changes in PDF files (Monitor text changed in the PDF, Also monitor PDF filesize and checksums)
 - Easily specify how often a site should be checked
 - Execute JS before extracting text (Good for logging in, see examples in the UI!)
 - Override Request Headers, Specify `POST` or `GET` and other methods

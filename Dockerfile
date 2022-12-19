@@ -34,8 +34,11 @@ FROM python:3.10-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl1.1 \
     libxslt1.1 \
+    # For pdftohtml
+    poppler-utils \
     zlib1g \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 
 # https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
 ENV PYTHONUNBUFFERED=1
@@ -56,7 +59,6 @@ COPY changedetectionio /app/changedetectionio
 
 # The eventlet server wrapper
 COPY changedetection.py /app/changedetection.py
-
 
 WORKDIR /app
 

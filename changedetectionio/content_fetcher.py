@@ -1,3 +1,4 @@
+import hashlib
 from abc import abstractmethod
 import chardet
 import json
@@ -116,7 +117,8 @@ class Fetcher():
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_include_filters=None):
+            current_include_filters=None,
+            is_binary=False):
         # Should set self.error, self.status_code and self.content
         pass
 
@@ -267,7 +269,8 @@ class base_html_playwright(Fetcher):
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_include_filters=None):
+            current_include_filters=None,
+            is_binary=False):
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
@@ -453,7 +456,8 @@ class base_html_webdriver(Fetcher):
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_include_filters=None):
+            current_include_filters=None,
+            is_binary=False):
 
         from selenium import webdriver
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -528,7 +532,8 @@ class html_requests(Fetcher):
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_include_filters=None):
+            current_include_filters=None,
+            is_binary=False):
 
         # Make requests use a more modern looking user-agent
         if not 'User-Agent' in request_headers:
@@ -558,10 +563,12 @@ class html_requests(Fetcher):
         # For example - some sites don't tell us it's utf-8, but return utf-8 content
         # This seems to not occur when using webdriver/selenium, it seems to detect the text encoding more reliably.
         # https://github.com/psf/requests/issues/1604 good info about requests encoding detection
-        if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):
-            encoding = chardet.detect(r.content)['encoding']
-            if encoding:
-                r.encoding = encoding
+        if not is_binary:
+            # Don't run this for PDF (and requests identified as binary) takes a _long_ time
+            if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):
+                encoding = chardet.detect(r.content)['encoding']
+                if encoding:
+                    r.encoding = encoding
 
         if not r.content or not len(r.content):
             raise EmptyReply(url=url, status_code=r.status_code)
@@ -573,8 +580,14 @@ class html_requests(Fetcher):
             raise Non200ErrorCodeReceived(url=url, status_code=r.status_code, page_html=r.text)
 
         self.status_code = r.status_code
-        self.content = r.text
+        if is_binary:
+            # Binary files just return their checksum until we add something smarter
+            self.content = hashlib.md5(r.content).hexdigest()
+        else:
+            self.content = r.text
+
         self.headers = r.headers
+        self.raw_content = r.content
 
 
 # Decide which is the 'real' HTML webdriver, this is more a system wide config

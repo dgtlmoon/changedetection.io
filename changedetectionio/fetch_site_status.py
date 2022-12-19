@@ -16,6 +16,10 @@ class FilterNotFoundInResponse(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
 
+class PDFToHTMLToolNotFound(ValueError):
+    def __init__(self, msg):
+        ValueError.__init__(self, msg)
+
 
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
@@ -87,7 +91,7 @@ class perform_site_check():
             is_source = True
 
         # Pluggable content fetcher
-        prefer_backend = watch.get('fetch_backend')
+        prefer_backend = watch.get_fetch_backend
         if hasattr(content_fetcher, prefer_backend):
             klass = getattr(content_fetcher, prefer_backend)
         else:
@@ -117,11 +121,17 @@ class perform_site_check():
         if watch.get('webdriver_js_execute_code') is not None and watch.get('webdriver_js_execute_code').strip():
             fetcher.webdriver_js_execute_code = watch.get('webdriver_js_execute_code')
 
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch.get('include_filters'))
+        # requests for PDF's, images etc should be passwd the is_binary flag
+        is_binary = watch.is_pdf
+
+        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch.get('include_filters'), is_binary=is_binary)
         fetcher.quit()
 
         self.screenshot = fetcher.screenshot
         self.xpath_data = fetcher.xpath_data
+
+        # Track the content type
+        update_obj['content_type'] = fetcher.headers.get('Content-Type', '')
 
         # Watches added automatically in the queue manager will skip if its the same checksum as the previous run
         # Saves a lot of CPU
@@ -148,6 +158,31 @@ class perform_site_check():
         if is_source:
             is_html = False
             is_json = False
+
+        if watch.is_pdf or 'application/pdf' in fetcher.headers.get('Content-Type', '').lower():
+            from shutil import which
+            tool = os.getenv("PDF_TO_HTML_TOOL", "pdftohtml")
+            if not which(tool):
+                raise PDFToHTMLToolNotFound("Command-line `{}` tool was not found in system PATH, was it installed?".format(tool))
+
+            import subprocess
+            proc = subprocess.Popen(
+                [tool, '-stdout', '-', '-s', 'out.pdf', '-i'],
+                stdout=subprocess.PIPE,
+                stdin=subprocess.PIPE)
+            proc.stdin.write(fetcher.raw_content)
+            proc.stdin.close()
+            fetcher.content = proc.stdout.read().decode('utf-8')
+            proc.wait(timeout=60)
+
+            # Add a little metadata so we know if the file changes (like if an image changes, but the text is the same
+            # @todo may cause problems with non-UTF8?
+            metadata = "<p>Added by changedetection.io: Document checksum - {} Filesize - {} bytes</p>".format(
+                hashlib.md5(fetcher.raw_content).hexdigest().upper(),
+                len(fetcher.content))
+
+            fetcher.content = fetcher.content.replace('</body>', metadata + '</body>')
+
 
         include_filters_rule = deepcopy(watch.get('include_filters', []))
         # include_filters_rule = watch['include_filters']
