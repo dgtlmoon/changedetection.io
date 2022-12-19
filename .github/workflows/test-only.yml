@@ -8,32 +8,68 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python 3.9
+
+      # Mainly just for link/flake8
+      - name: Set up Python 3.10
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install flake8 pytest
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          python-version: '3.10'
 
       - name: Lint with flake8
         run: |
+          pip3 install flake8
           # stop the build if there are Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-      - name: Unit tests
+      - name: Spin up ancillary testable services
         run: |
-          python3 -m unittest changedetectionio.tests.unit.test_notification_diff
+          
+          docker network create changedet-network
 
-      - name: Test with pytest
+          # Selenium+browserless
+          docker run --network changedet-network -d --hostname selenium  -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome-debug:3.141.59
+          docker run --network changedet-network -d --hostname browserless -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  browserless/chrome:1.53-chrome-stable
+
+      - name: Build changedetection.io container for testing
+        run: |         
+          # Build a changedetection.io container and start testing inside
+          docker build . -t test-changedetectionio
+
+      - name: Test built container with pytest
         run: |
-          # Each test is totally isolated and performs its own cleanup/reset
-          cd changedetectionio; ./run_all_tests.sh
+          
+          # Unit tests
+          docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_notification_diff'
+          
+          # All tests
+          docker run --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
+      - name: Test built container selenium+browserless/playwright
+        run: |
+          
+          # Selenium fetch
+          docker run -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py'
+          
+          # Playwright/Browserless fetch
+          docker run -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
 
+      - name: Test proxy interaction
+        run: |
+          cd changedetectionio
+          ./run_proxy_tests.sh
+          cd ..
+          
+
+      - name: Test changedetection.io container starts+runs basically without error
+        run: |
+          docker run -p 5556:5000 -d test-changedetectionio
+          sleep 3
+          # Should return 0 (no error) when grep finds it
+          curl -s http://localhost:5556 |grep -q checkbox-uuid
+          curl -s http://localhost:5556/rss|grep -q rss-specification
+
+#export WEBDRIVER_URL=http://localhost:4444/wd/hub
+#pytest tests/fetchers/test_content.py
+#pytest tests/test_errorhandling.py

@@ -65,6 +65,7 @@ COPY changedetectionio /app/changedetectionio
 # The eventlet server wrapper
 COPY changedetection.py /app/changedetection.py
 
+
 WORKDIR /app
 
 CMD [ "python", "./changedetection.py" , "-d", "/datastore"]
