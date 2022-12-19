@@ -284,6 +284,11 @@ body {
   white-space: nowrap;
   width: 1px; }
 
+.status-icon {
+  display: inline-block;
+  height: 1rem;
+  vertical-align: middle; }
+
 .pure-table-even {
   background: var(--color-background); }
 
