@@ -36,7 +36,7 @@ from flask_wtf import CSRFProtect
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.40.0.2'
+__version__ = '0.40.0.3'
 
 datastore = None
 
@@ -1449,7 +1449,11 @@ def ticker_thread_check_time_launch_checks():
         watch_uuid_list = []
         while True:
             try:
-                watch_uuid_list = datastore.data['watching'].keys()
+                # Get a list of watches sorted by last_checked, [1] because it gets passed a tuple
+                # This is so we examine the most over-due first
+                for k in sorted(datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked',0)):
+                    watch_uuid_list.append(k[0])
+
             except RuntimeError as e:
                 # RuntimeError: dictionary changed size during iteration
                 time.sleep(0.1)
