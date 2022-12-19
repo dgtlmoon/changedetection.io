@@ -37,6 +37,12 @@ def test_select_custom(client, live_server):
 
     res = client.get(url_for("index"))
     assert b'Proxy Authentication Required' not in res.data
+
+
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
     # We should see something via proxy
     assert b'HEAD' in res.data
 
