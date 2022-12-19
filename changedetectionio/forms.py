@@ -431,8 +431,8 @@ class SingleExtraProxy(Form):
     # maybe better to set some <script>var..
     proxy_name = StringField('Name', [validators.Optional()], render_kw={"placeholder": "Name"})
     proxy_url = StringField('URL', [validators.Optional()], render_kw={"placeholder": "http://user:pass@...:3128"})
-
-
+    # @todo do the validation here instead
+    
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     time_between_check = FormField(TimeBetweenCheckForm)
@@ -442,6 +442,12 @@ class globalSettingsRequestForm(Form):
                                   validators=[validators.NumberRange(min=0, message="Should contain zero or more seconds")])
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
 
+    def validate_extra_proxies(self, extra_validators=None):
+        for e in self.data['extra_proxies']:
+            if e.get('proxy_name') or e.get('proxy_url'):
+                if not e.get('proxy_name','').strip() or not e.get('proxy_url','').strip():
+                    self.extra_proxies.errors.append('Both a name, and a Proxy URL is required.')
+                    return False
 
 
 # datastore.data['settings']['application']..
