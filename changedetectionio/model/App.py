@@ -15,11 +15,12 @@ class model(dict):
                 'headers': {
                 },
                 'requests': {
-                    'timeout': int(getenv("DEFAULT_SETTINGS_REQUESTS_TIMEOUT", "45")),  # Default 45 seconds
-                    'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
+                    'extra_proxies': [], # Configurable extra proxies via the UI
                     'jitter_seconds': 0,
+                    'proxy': None, # Preferred proxy connection
+                    'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
+                    'timeout': int(getenv("DEFAULT_SETTINGS_REQUESTS_TIMEOUT", "45")),  # Default 45 seconds
                     'workers': int(getenv("DEFAULT_SETTINGS_REQUESTS_WORKERS", "10")),  # Number of threads, lower is better for slow connections
-                    'proxy': None # Preferred proxy connection
                 },
                 'application': {
                     'api_access_token_enabled': True,
