@@ -30,3 +30,11 @@ def test_fetch_pdf(client, live_server):
 
     assert b'PDF-1.5' not in res.data
     assert b'hello world' in res.data
+
+    # So we know if the file changes in other ways
+    import hashlib
+    md5 = hashlib.md5(open("test-datastore/endpoint-test.pdf", 'rb').read()).hexdigest().upper()
+    # We should have one
+    assert len(md5) >0
+    # And it's going to be in the document
+    assert b'Document checksum - '+bytes(str(md5).encode('utf-8')) in res.data

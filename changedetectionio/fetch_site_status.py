@@ -170,6 +170,14 @@ class perform_site_check():
             fetcher.content = proc.stdout.read().decode('utf-8')
             proc.wait(timeout=60)
 
+            # Add a little metadata so we know if the file changes (like if an image changes, but the text is the same
+            # @todo may cause problems with non-UTF8?
+            metadata = "<p>Added by changedetection.io: Document checksum - {} Filesize - {} bytes</p>".format(
+                hashlib.md5(fetcher.raw_content).hexdigest().upper(),
+                len(fetcher.content))
+
+            fetcher.content = fetcher.content.replace('</body>', metadata + '</body>')
+
 
         include_filters_rule = deepcopy(watch.get('include_filters', []))
         # include_filters_rule = watch['include_filters']
