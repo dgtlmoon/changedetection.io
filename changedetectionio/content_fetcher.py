@@ -243,6 +243,14 @@ class base_html_playwright(Fetcher):
         if proxy_override:
             self.proxy = {'server': proxy_override}
 
+        if self.proxy:
+            # Playwright needs separate username and password values
+            from urllib.parse import urlparse
+            parsed = urlparse(self.proxy.get('server'))
+            if parsed.username:
+                self.proxy['username'] = parsed.username
+                self.proxy['password'] = parsed.password
+
     def screenshot_step(self, step_n=''):
 
         # There's a bug where we need to do it twice or it doesnt take the whole page, dont know why.
@@ -370,7 +378,7 @@ class base_html_playwright(Fetcher):
                 context.close()
                 browser.close()
                 print ("Content Fetcher > Content was empty")
-                raise EmptyReply(url=url, status_code=None)
+                raise EmptyReply(url=url, status_code=response.status)
 
             # Bug 2(?) Set the viewport size AFTER loading the page
             self.page.set_viewport_size({"width": 1280, "height": 1024})
