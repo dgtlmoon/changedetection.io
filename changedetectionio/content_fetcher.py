@@ -117,7 +117,8 @@ class Fetcher():
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_include_filters=None):
+            current_include_filters=None,
+            is_binary=False):
         # Should set self.error, self.status_code and self.content
         pass
 
@@ -268,7 +269,8 @@ class base_html_playwright(Fetcher):
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_include_filters=None):
+            current_include_filters=None,
+            is_binary=False):
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
@@ -454,7 +456,8 @@ class base_html_webdriver(Fetcher):
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_include_filters=None):
+            current_include_filters=None,
+            is_binary=False):
 
         from selenium import webdriver
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -529,7 +532,8 @@ class html_requests(Fetcher):
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_include_filters=None):
+            current_include_filters=None,
+            is_binary=False):
 
         # Make requests use a more modern looking user-agent
         if not 'User-Agent' in request_headers:
@@ -560,8 +564,7 @@ class html_requests(Fetcher):
         # This seems to not occur when using webdriver/selenium, it seems to detect the text encoding more reliably.
         # https://github.com/psf/requests/issues/1604 good info about requests encoding detection
         # is_pdf could be made into some call-argument like "is_binary"
-        is_pdf = 'application/pdf' in r.headers.get('content-type', '') or url.lower().endswith('.pdf')
-        if not is_pdf:
+        if not is_binary:
             # Don't run this for PDF (maybe other big binaries?) takes a _long_ time
             if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):
                 encoding = chardet.detect(r.content)['encoding']
@@ -578,8 +581,8 @@ class html_requests(Fetcher):
             raise Non200ErrorCodeReceived(url=url, status_code=r.status_code, page_html=r.text)
 
         self.status_code = r.status_code
-        if is_pdf:
-            # So that `pdftotext` CLI can be called only if the content changes
+        if is_binary:
+            # Binary files just return their checksum until we add something smarter
             self.content = hashlib.md5(r.content).hexdigest()
         else:
             self.content = r.text

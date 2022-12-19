@@ -120,11 +120,16 @@ class model(dict):
         Like just using the `fetch_backend` key but there could be some logic
         :return:
         """
-        # content_type field is set in the future
-        if '.pdf' in self.get('url','').lower() or 'pdf' in self.get('content_type','').lower():
+        # Maybe also if is_image etc?
+        if self.is_pdf:
             return 'html_requests'
 
         return self.get('fetch_backend')
+
+    @property
+    def is_pdf(self):
+        # content_type field is set in the future
+        return '.pdf' in self.get('url', '').lower() or 'pdf' in self.get('content_type', '').lower()
 
     @property
     def label(self):

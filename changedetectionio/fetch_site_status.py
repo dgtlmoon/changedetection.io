@@ -104,7 +104,10 @@ class perform_site_check():
             proxy_url = self.datastore.proxy_list.get(proxy_id).get('url')
             print("UUID {} Using proxy {}".format(uuid, proxy_url))
 
-        fetcher = klass(proxy_override=proxy_url)
+        # requests for PDF's, images etc should be passwd the is_binary flag
+        is_binary = 'application/pdf' in watch.get('content_type', '') or url.lower().contains('.pdf')
+
+        fetcher = klass(proxy_override=proxy_url, is_binary=is_binary)
 
         # Configurable per-watch or global extra delay before extracting text (for webDriver types)
         system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
@@ -127,6 +130,9 @@ class perform_site_check():
         self.screenshot = fetcher.screenshot
         self.xpath_data = fetcher.xpath_data
 
+        # Track the content type
+        update_obj['content_type'] = fetcher.headers.get('Content-Type', '')
+
         # Watches added automatically in the queue manager will skip if its the same checksum as the previous run
         # Saves a lot of CPU
         update_obj['previous_md5_before_filters'] = hashlib.md5(fetcher.content.encode('utf-8')).hexdigest()
@@ -145,7 +151,6 @@ class perform_site_check():
         # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
         # return content().textfilter().jsonextract().checksumcompare() ?
 
-        is_pdf = 'application/pdf' in fetcher.headers.get('Content-Type', '') or url.lower().endswith('.pdf')
         is_json = 'application/json' in fetcher.headers.get('Content-Type', '')
         is_html = not is_json
 
@@ -154,7 +159,7 @@ class perform_site_check():
             is_html = False
             is_json = False
 
-        if is_pdf:
+        if watch.is_pdf or fetcher.headers.get('Content-Type', '').lower().contains('application/pdf'):
             from shutil import which
             tool = os.getenv("PDF_TO_HTML_TOOL", "pdftohtml")
             if not which(tool):
