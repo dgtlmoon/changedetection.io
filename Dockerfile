@@ -69,8 +69,6 @@ COPY changedetectionio /app/changedetectionio
 COPY changedetection.py /app/changedetection.py
 
 COPY requirements.txt /requirements.txt
-# Could be optionally used for running tests
-COPY requirements-dev.txt /requirements-dev.txt
 
 WORKDIR /app
 
