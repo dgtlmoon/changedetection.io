@@ -37,6 +37,8 @@ def test_select_custom(client, live_server):
 
     res = client.get(url_for("index"))
     assert b'Proxy Authentication Required' not in res.data
+    # We should see something via proxy
+    assert b'HEAD' in res.data
 
     #
     # Now we should see the request in the container logs for "squid-squid-custom" because it will be the only default
