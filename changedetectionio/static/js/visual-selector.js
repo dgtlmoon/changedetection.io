@@ -1,4 +1,5 @@
-// Horrible proof of concept code :)
+// Copyright (C) 2021 Leigh Morresi (dgtlmoon@gmail.com)
+// All rights reserved.
 // yes - this is really a hack, if you are a front-ender and want to help, please get in touch!
 
 $(document).ready(function () {
@@ -177,9 +178,10 @@ $(document).ready(function () {
             // Basically, find the most 'deepest'
             var found = 0;
             ctx.fillStyle = 'rgba(205,0,0,0.35)';
-            for (var i = selector_data['size_pos'].length; i !== 0; i--) {
+            // Will be sorted by smallest width*height first
+            for (var i = 0; i <= selector_data['size_pos'].length; i++) {
                 // draw all of them? let them choose somehow?
-                var sel = selector_data['size_pos'][i - 1];
+                var sel = selector_data['size_pos'][i];
                 // If we are in a bounding-box
                 if (e.offsetY > sel.top * y_scale && e.offsetY < sel.top * y_scale + sel.height * y_scale
                     &&
@@ -195,7 +197,7 @@ $(document).ready(function () {
                     // no need to keep digging
                     // @todo or, O to go out/up, I to go in
                     // or double click to go up/out the selector?
-                    current_selected_i = i - 1;
+                    current_selected_i = i;
                     found += 1;
                     break;
                 }

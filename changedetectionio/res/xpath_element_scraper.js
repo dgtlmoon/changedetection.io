@@ -1,3 +1,6 @@
+// Copyright (C) 2021 Leigh Morresi (dgtlmoon@gmail.com)
+// All rights reserved.
+
 // @file Scrape the page looking for elements of concern (%ELEMENTS%)
 // http://matatk.agrip.org.uk/tests/position-and-width/
 // https://stackoverflow.com/questions/26813480/when-is-element-getboundingclientrect-guaranteed-to-be-updated-accurate
@@ -89,8 +92,8 @@ for (var i = 0; i < elements.length; i++) {
         continue
     }
 
-    // Forget really small ones
-    if (bbox['width'] < 10 && bbox['height'] < 10) {
+    // Skip really small ones, and where width or height ==0
+    if (bbox['width'] * bbox['height'] < 100) {
         continue;
     }
 
@@ -145,7 +148,6 @@ for (var i = 0; i < elements.length; i++) {
     });
 
 }
-
 
 // Inject the current one set in the include_filters, which may be a CSS rule
 // used for displaying the current one in VisualSelector, where its not one we generated.
@@ -204,6 +206,10 @@ if (include_filters.length) {
         }
     }
 }
+
+// Sort the elements so we find the smallest one first, in other words, we find the smallest one matching in that area
+// so that we dont select the wrapping element by mistake and be unable to select what we want
+size_pos.sort((a, b) => (a.width*a.height > b.width*b.height) ? 1 : -1)
 
 // Window.width required for proper scaling in the frontend
 return {'size_pos': size_pos, 'browser_width': window.innerWidth};
