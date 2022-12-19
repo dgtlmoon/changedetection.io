@@ -475,7 +475,7 @@ class ChangeDetectionStore:
                 i += 0
                 if proxy.get('proxy_name') and proxy.get('proxy_url'):
                     k = "ui-" + str(i) + proxy.get('proxy_name')
-                    proxy_list[k] = {'label': proxy.get('proxy_name'), 'url': proxy.get('url')}
+                    proxy_list[k] = {'label': proxy.get('proxy_name'), 'url': proxy.get('proxy_url')}
 
 
         return proxy_list if len(proxy_list) else None
@@ -506,8 +506,9 @@ class ChangeDetectionStore:
             if self.proxy_list.get(system_proxy_id):
                 return system_proxy_id
 
-        # Fallback - Did not resolve anything, use the first available
-        if system_proxy_id is None:
+
+        # Fallback - Did not resolve anything, or doesnt exist, use the first available
+        if system_proxy_id is None or not self.proxy_list.get(system_proxy_id):
             first_default = list(self.proxy_list)[0]
             return first_default
 
