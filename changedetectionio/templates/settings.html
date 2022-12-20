@@ -185,7 +185,7 @@ nav
 
                 <div class="pure-control-group">
                     {{ render_field(form.requests.form.extra_proxies) }}
-                    <div class="pure-form-message-inline">"Name" will be used for selecting the proxy in the Watch Edit settings</span>
+                    <span class="pure-form-message-inline">"Name" will be used for selecting the proxy in the Watch Edit settings</span>
                 </div>
             </div>
             <div id="actions">
@@ -194,7 +194,6 @@ nav
                     <a href="{{url_for('index')}}" class="pure-button button-small button-cancel">Back</a>
                     <a href="{{url_for('clear_all_history')}}" class="pure-button button-small button-cancel">Clear Snapshot History</a>
                 </div>
-
             </div>
         </form>
     </div>
