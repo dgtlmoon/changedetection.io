@@ -173,17 +173,19 @@ nav
             </div>
             <div class="tab-pane-inner" id="proxies">
 
-                <p><strong>Tip</strong>: You can connect <a href="https://brightdata.grsm.io/n0r16zf7eivq">BrightData <strong>WebUnlocker</strong></a> proxies to work around CAPTCHA.<br/>
-                    Simply <a href="https://brightdata.grsm.io/n0r16zf7eivq">register</a> and paste in the Proxy URL below.<br/>
-                    You can also add extra location/country proxies.</br>
+                <p><strong>Tip</strong>: You can connect to websites using <a href="https://brightdata.grsm.io/n0r16zf7eivq">BrightData</a> proxies, their service <strong>WebUnlocker</strong> will solve most CAPTCHAs, whilst their <strong>Residential Proxies</strong> may help to avoid CAPTCHA altogether. </p>
+                <p>It may be easier to try <strong>WebUnlocker</strong> first, WebUnlocker also supports country selection.</p>
+                <p>
+                    When you have <a href="https://brightdata.grsm.io/n0r16zf7eivq">registered</a>, enabled the required services, visit the <A href="https://brightdata.com/cp/api_example?">API example page</A>, then select <strong>Python</strong>, set the country you wish to use, then copy+paste the example URL below<br/>
+                    The Proxy URL with BrightData should start with <code>http://brd-customer...</code>
                 </p>
 
-                <p>Please use our referrer link for BrightData <a href="https://brightdata.grsm.io/n0r16zf7eivq">https://brightdata.grsm.io/n0r16zf7eivq</a></p>
+                <p>When you sign up using <a href="https://brightdata.grsm.io/n0r16zf7eivq">https://brightdata.grsm.io/n0r16zf7eivq</a> BrightData will match any first deposit up to $150</p>
 
 
                 <div class="pure-control-group">
                     {{ render_field(form.requests.form.extra_proxies) }}
-
+                    <div class="pure-form-message-inline">"Name" will be used for selecting the proxy in the Watch Edit settings</span>
                 </div>
             </div>
             <div id="actions">

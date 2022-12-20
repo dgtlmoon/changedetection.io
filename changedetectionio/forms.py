@@ -430,7 +430,7 @@ class SingleExtraProxy(Form):
 
     # maybe better to set some <script>var..
     proxy_name = StringField('Name', [validators.Optional()], render_kw={"placeholder": "Name"})
-    proxy_url = StringField('URL', [validators.Optional()], render_kw={"placeholder": "http://user:pass@...:3128"})
+    proxy_url = StringField('Proxy URL', [validators.Optional()], render_kw={"placeholder": "http://user:pass@...:3128", "size":50})
     # @todo do the validation here instead
 
 # datastore.data['settings']['requests']..
