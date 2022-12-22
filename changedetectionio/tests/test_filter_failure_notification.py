@@ -1,8 +1,7 @@
 import os
 import time
-import re
 from flask import url_for
-from .util import set_original_response, live_server_setup
+from .util import set_original_response, live_server_setup, extract_UUID_from_client
 from changedetectionio.model import App
 
 
@@ -120,6 +119,10 @@ def run_filter_test(client, content_filter):
     with open("test-datastore/notification.txt", 'r') as f:
         notification = f.read()
     assert not 'CSS/xPath filter was not present in the page' in notification
+
+    # Re #1247 - All tokens got replaced
+    uuid = extract_UUID_from_client(client)
+    assert uuid in notification
 
     # cleanup for the next
     client.get(
