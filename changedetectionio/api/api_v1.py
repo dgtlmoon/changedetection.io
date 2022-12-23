@@ -98,7 +98,7 @@ class CreateWatch(Resource):
         if not validators.url(json_data['url'].strip()):
             return "Invalid or unsupported URL", 400
 
-        extras = {'title': json_data['title'].strip()} if json_data.get('title') else {}
+        extras = {**json_data['extras'],**{'title': json_data['title'].strip()}} if json_data.get('extras') and json_data.get('title') else {'title': json_data['title'].strip()} if json_data.get('title') else {}
 
         new_uuid = self.datastore.add_watch(url=json_data['url'].strip(), tag=tag, extras=extras)
         self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid, 'skip_when_checksum_same': True}))
