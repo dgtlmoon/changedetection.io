@@ -50,7 +50,7 @@ RUN set -ex; \
         zlib1g && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*; \
-    useradd -u 911 -U -d /datastore -s /bin/false changedetection && \
+    useradd -u 911 -U -M -s /bin/false changedetection && \
     usermod -G users changedetection; \
     mkdir -p /datastore
 
@@ -65,7 +65,7 @@ ENV PYTHONPATH=/usr/local \
     # https://stackoverflow.com/questions/64808915/should-pycache-folders-be-included-in-production-containers
     # This avoids permission denied errors because the app directory is root-owned.
     PYTHONDONTWRITEBYTECODE=1 \
-    DATASTORE_DIR="/datastore"
+    DATASTORE_PATH="/datastore"
 
 EXPOSE 5000
 

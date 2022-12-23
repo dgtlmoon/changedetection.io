@@ -2,11 +2,11 @@
 
 set -eu
 
-DATASTORE_DIR="${DATASTORE_DIR:-/datastore}"
+DATASTORE_PATH="${DATASTORE_PATH:-/datastore}"
 
 # If the first argument looks like a flag, assume we want to run changedetection
 if [ "${1:0:1}" = '-' ]; then
-    set -- python ./changedetection.py -d "$DATASTORE_DIR" "$@"
+    set -- python /app/changedetection.py "$@"
 fi
 
 # If we're running as root, by default make sure process uid/gid
@@ -20,7 +20,7 @@ if [ "$(id -u)" = '0' -a -z "${KEEP_PRIVILEGES:-}" ]; then
     usermod -o -u "$PUID" changedetection
 
     # Look for files in datadir not owned by the correct user and chown them
-    find "$DATASTORE_DIR" \! -user changedetection -exec chown changedetection '{}' +
+    find "$DATASTORE_PATH" \! -user changedetection -exec chown changedetection '{}' +
 
     # Restart this script as an unprivileged user
     exec gosu changedetection:changedetection "$BASH_SOURCE" "$@"
