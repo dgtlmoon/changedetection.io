@@ -75,7 +75,7 @@ COPY changedetectionio /app/changedetectionio
 # Starting wrapper
 COPY changedetection.py /app/changedetection.py
 
-RUN chmod 777 /app/docker-entrypoint.sh && \
+RUN chmod 755 /app/docker-entrypoint.sh && \
     # create test directory for pytest to run in
     mkdir -p /app/changedetectionio/test-datastore && \
     chown changedetection:changedetection /app/changedetectionio/test-datastore
