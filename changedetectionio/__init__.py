@@ -406,17 +406,20 @@ def changedetection_app(config=None, datastore_o=None):
 
         existing_tags = datastore.get_all_tags()
         form = forms.quickWatchForm(request.form)
-        output = render_template("watch-overview.html",
-                                 form=form,
-                                 watches=sorted_watches,
-                                 tags=existing_tags,
+        output = render_template(
+            "watch-overview.html",
+                                 # Don't link to hosting when we're on the hosting environment
                                  active_tag=limit_tag,
                                  app_rss_token=datastore.data['settings']['application']['rss_access_token'],
-                                 has_unviewed=datastore.has_unviewed,
-                                 # Don't link to hosting when we're on the hosting environment
-                                 hosted_sticky=os.getenv("SALTED_PASS", False) == False,
+                                 form=form,
                                  guid=datastore.data['app_guid'],
-                                 queued_uuids=[q_uuid.item['uuid'] for q_uuid in update_q.queue])
+                                 has_proxies=datastore.proxy_list,
+                                 has_unviewed=datastore.has_unviewed,
+                                 hosted_sticky=os.getenv("SALTED_PASS", False) == False,
+                                 queued_uuids=[q_uuid.item['uuid'] for q_uuid in update_q.queue],
+                                 tags=existing_tags,
+                                 watches=sorted_watches
+                                 )
 
 
         if session.get('share-link'):
