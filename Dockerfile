@@ -54,15 +54,17 @@ RUN set -ex; \
     usermod -G users changedetection; \
     mkdir -p /datastore
 
-# https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
-ENV PYTHONUNBUFFERED=1
-
 # Re #80, sets SECLEVEL=1 in openssl.conf to allow monitoring sites with weak/old cipher suites
 RUN sed -i 's/^CipherString = .*/CipherString = DEFAULT@SECLEVEL=1/' /etc/ssl/openssl.cnf
 
 # Copy modules over to the final image and add their dir to PYTHONPATH
 COPY --from=builder /dependencies /usr/local
 ENV PYTHONPATH=/usr/local \
+    # https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
+    PYTHONUNBUFFERED=1 \
+    # https://stackoverflow.com/questions/64808915/should-pycache-folders-be-included-in-production-containers
+    # This avoids permission denied errors because the app directory is root-owned.
+    PYTHONDONTWRITEBYTECODE=1 \
     DATASTORE_DIR="/datastore"
 
 EXPOSE 5000
