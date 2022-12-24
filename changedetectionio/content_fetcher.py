@@ -118,7 +118,8 @@ class Fetcher():
             request_method,
             ignore_status_codes=False,
             current_include_filters=None,
-            is_binary=False):
+            is_binary=False,
+            follow_redirects=True):
         # Should set self.error, self.status_code and self.content
         pass
 
@@ -541,7 +542,8 @@ class html_requests(Fetcher):
             request_method,
             ignore_status_codes=False,
             current_include_filters=None,
-            is_binary=False):
+            is_binary=False,
+            follow_redirects=True):
 
         # Make requests use a more modern looking user-agent
         if not 'User-Agent' in request_headers:
@@ -563,6 +565,7 @@ class html_requests(Fetcher):
                              data=request_body,
                              url=url,
                              headers=request_headers,
+                             allow_redirects=follow_redirects,
                              timeout=timeout,
                              proxies=proxies,
                              verify=False)

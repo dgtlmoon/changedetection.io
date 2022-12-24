@@ -101,6 +101,9 @@
                     <div  class="pure-control-group inline-radio">
                         {{ render_checkbox_field(form.ignore_status_codes) }}
                     </div>
+                    <div  class="pure-control-group inline-radio">
+                        {{ render_checkbox_field(form.follow_redirects) }}
+                    </div>
                 <fieldset id="webdriver-override-options">
                     <div class="pure-control-group">
                         {{ render_field(form.webdriver_delay) }}
