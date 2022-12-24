@@ -83,6 +83,7 @@ class perform_site_check():
         request_body = self.datastore.data['watching'][uuid].get('body')
         request_method = self.datastore.data['watching'][uuid].get('method')
         ignore_status_codes = self.datastore.data['watching'][uuid].get('ignore_status_codes', False)
+        follow_redirects = self.datastore.data['watching'][uuid].get('follow_redirects', True)
 
         # source: support
         is_source = False
@@ -124,7 +125,7 @@ class perform_site_check():
         # requests for PDF's, images etc should be passwd the is_binary flag
         is_binary = watch.is_pdf
 
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch.get('include_filters'), is_binary=is_binary)
+        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch.get('include_filters'), is_binary=is_binary, follow_redirects=follow_redirects)
         fetcher.quit()
 
         self.screenshot = fetcher.screenshot

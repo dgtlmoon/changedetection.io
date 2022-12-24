@@ -129,6 +129,9 @@
                     <div class="pure-control-group" id="request-method">
                         {{ render_field(form.method) }}
                     </div>
+                    <div  class="pure-control-group inline-radio">
+                        {{ render_checkbox_field(form.follow_redirects) }}
+                    </div>
                     <div class="pure-control-group" id="request-headers">
 {{ render_field(form.headers, rows=5, placeholder="Example
 Cookie: foobar
