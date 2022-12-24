@@ -202,9 +202,11 @@ $(document).ready(function () {
                 }
             }
             
-            set_current_selected_text(found.xpath);
-            ctx.strokeRect(found.left * x_scale, found.top * y_scale, found.width * x_scale, found.height * y_scale);
-            ctx.fillRect(found.left * x_scale, found.top * y_scale, found.width * x_scale, found.height * y_scale);
+            if(found != null) {
+                set_current_selected_text(found.xpath);
+                ctx.strokeRect(found.left * x_scale, found.top * y_scale, found.width * x_scale, found.height * y_scale);
+                ctx.fillRect(found.left * x_scale, found.top * y_scale, found.width * x_scale, found.height * y_scale);
+            }
 
         }.debounce(5));
 
