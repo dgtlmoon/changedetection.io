@@ -175,8 +175,9 @@ $(document).ready(function () {
             }
 
             // Reverse order - the most specific one should be deeper/"laster"
-            // Basically, find the most 'deepest'
-            var found = 0;
+            // Basically, find the most 'deepest' and smallest square
+            var found = null;
+            var minSquare = Infinity;
             ctx.fillStyle = 'rgba(205,0,0,0.35)';
             // Will be sorted by smallest width*height first
             for (var i = 0; i <= selector_data['size_pos'].length; i++) {
@@ -186,22 +187,24 @@ $(document).ready(function () {
                 if (e.offsetY > sel.top * y_scale && e.offsetY < sel.top * y_scale + sel.height * y_scale
                     &&
                     e.offsetX > sel.left * y_scale && e.offsetX < sel.left * y_scale + sel.width * y_scale
-
+                    &&
+                    sel.width * sel.height < minSquare
                 ) {
 
                     // FOUND ONE
-                    set_current_selected_text(sel.xpath);
-                    ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-                    ctx.fillRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+                    found = sel;
 
                     // no need to keep digging
                     // @todo or, O to go out/up, I to go in
                     // or double click to go up/out the selector?
                     current_selected_i = i;
-                    found += 1;
-                    break;
+                    minSquare = sel.width * sel.height;
                 }
             }
+            
+            set_current_selected_text(found.xpath);
+            ctx.strokeRect(found.left * x_scale, found.top * y_scale, found.width * x_scale, found.height * y_scale);
+            ctx.fillRect(found.left * x_scale, found.top * y_scale, found.width * x_scale, found.height * y_scale);
 
         }.debounce(5));
 
