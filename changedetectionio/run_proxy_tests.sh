@@ -57,3 +57,5 @@ then
   echo "Did not see a valid request to changedetection.io in the squid logs (while checking preferred proxy - squid two)"
   exit 1
 fi
+
+docker kill squid-one squid-two squid-custom
