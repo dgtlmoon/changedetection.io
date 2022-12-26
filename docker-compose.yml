@@ -1,4 +1,3 @@
-version: '3'
 services:
     changedetection:
       image: ghcr.io/dgtlmoon/changedetection.io
