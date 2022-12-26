@@ -60,7 +60,6 @@ jobs:
           cd changedetectionio
           ./run_proxy_tests.sh
           cd ..
-          
 
       - name: Test changedetection.io container starts+runs basically without error
         run: |

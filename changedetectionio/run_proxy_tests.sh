@@ -11,7 +11,7 @@ docker run --network changedet-network -d --name squid-two --hostname squid-two 
 # Used for configuring a custom proxy URL via the UI
 docker run --network changedet-network -d \
   --name squid-custom \
-  --hostname squid-squid-custom \
+  --hostname squid-custom \
   --rm \
   -v `pwd`/tests/proxy_list/squid-auth.conf:/etc/squid/conf.d/debian.conf \
   -v `pwd`/tests/proxy_list/squid-passwords.txt:/etc/squid3/passwords \
@@ -57,3 +57,5 @@ then
   echo "Did not see a valid request to changedetection.io in the squid logs (while checking preferred proxy - squid two)"
   exit 1
 fi
+
+docker kill squid-one squid-two squid-custom
