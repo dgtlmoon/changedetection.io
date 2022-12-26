@@ -60,7 +60,6 @@ jobs:
           cd changedetectionio
           ./run_proxy_tests.sh
           cd ..
-          
 
       - name: Test changedetection.io container starts+runs basically without error
         run: |
@@ -69,6 +68,16 @@ jobs:
           # Should return 0 (no error) when grep finds it
           curl -s http://localhost:5556 |grep -q checkbox-uuid
           curl -s http://localhost:5556/rss|grep -q rss-specification
+
+      - name: Archive test artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: debug-output
+          retention-days: 3
+          path: |
+            /tmp/*html
+
 
 #export WEBDRIVER_URL=http://localhost:4444/wd/hub
 #pytest tests/fetchers/test_content.py

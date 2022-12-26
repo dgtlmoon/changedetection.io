@@ -44,6 +44,8 @@ def test_select_custom(client, live_server):
         follow_redirects=True
     )
     # We should see something via proxy
+    with open('/tmp/info.html', 'wb') as f:
+        f.write(res.data)
     assert b'HEAD' in res.data
 
     #
