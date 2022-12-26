@@ -43,7 +43,7 @@ def test_select_custom(client, live_server):
         follow_redirects=True
     )
     # We should see something via proxy
-    assert b'HEAD' in res.data
+    assert b'<div class=""> - 0.' in res.data
 
     #
     # Now we should see the request in the container logs for "squid-squid-custom" because it will be the only default
