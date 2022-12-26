@@ -33,7 +33,7 @@ def test_select_custom(client, live_server):
     )
 
     assert b"1 Imported" in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     res = client.get(url_for("index"))
     assert b'Proxy Authentication Required' not in res.data
