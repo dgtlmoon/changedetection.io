@@ -76,7 +76,8 @@ jobs:
           name: debug-output
           retention-days: 3
           path: |
-            /tmp/*html
+            /tmp/info.html
+            /tmp/info2.html
 
 
 #export WEBDRIVER_URL=http://localhost:4444/wd/hub

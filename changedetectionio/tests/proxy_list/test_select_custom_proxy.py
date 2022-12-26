@@ -38,6 +38,8 @@ def test_select_custom(client, live_server):
     res = client.get(url_for("index"))
     assert b'Proxy Authentication Required' not in res.data
 
+    with open('/tmp/info2.html', 'wb') as f:
+        f.write(res.data)
 
     res = client.get(
         url_for("preview_page", uuid="first"),
