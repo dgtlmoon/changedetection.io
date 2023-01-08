@@ -3,13 +3,15 @@
 # Launch as a eventlet.wsgi server instance.
 
 from distutils.util import strtobool
+from json.decoder import JSONDecodeError
+
 import eventlet
 import eventlet.wsgi
 import getopt
 import os
 import signal
-import sys
 import socket
+import sys
 
 from . import store, changedetection_app, content_fetcher
 from . import __version__
@@ -84,8 +86,14 @@ def main():
                 "Or use the -C parameter to create the directory.".format(app_config['datastore_path']), file=sys.stderr)
             sys.exit(2)
 
+    try:
+        datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=__version__)
+    except JSONDecodeError as e:
+        # Dont' start if the JSON DB looks corrupt
+        print ("ERROR: JSON DB at '{}' appears to be corrupt, aborting".format(app_config['datastore_path']))
+        print(str(e))
+        return
 
-    datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=__version__)
     app = changedetection_app(app_config, datastore)
 
     signal.signal(signal.SIGTERM, sigterm_handler)
