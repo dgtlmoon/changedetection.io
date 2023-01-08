@@ -90,6 +90,9 @@ class ChangeDetectionStore:
                                extras={'fetch_backend': 'html_requests'})
         self.__data['version_tag'] = version_tag
 
+        # Just to test that proxies.json if it exists, doesnt throw a parsing error on startup
+        self.proxy_list()
+
         # Helper to remove password protection
         password_reset_lockfile = "{}/removepassword.lock".format(self.datastore_path)
         if path.isfile(password_reset_lockfile):
