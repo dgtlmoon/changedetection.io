@@ -91,7 +91,7 @@ class ChangeDetectionStore:
         self.__data['version_tag'] = version_tag
 
         # Just to test that proxies.json if it exists, doesnt throw a parsing error on startup
-        self.proxy_list()
+        test_list = self.proxy_list
 
         # Helper to remove password protection
         password_reset_lockfile = "{}/removepassword.lock".format(self.datastore_path)
