@@ -77,10 +77,10 @@ class ChangeDetectionStore:
                     self.__data['watching'][uuid] = Watch.model(datastore_path=self.datastore_path, default=watch)
                     print("Watching:", uuid, self.__data['watching'][uuid]['url'])
 
-        # First time ran, doesnt exist.
-        except (FileNotFoundError, json.decoder.JSONDecodeError):
+        # First time ran, Create the datastore.
+        except (FileNotFoundError):
             if include_default_watches:
-                print("Creating JSON store at", self.datastore_path)
+                print("No JSON DB found at {}, creating JSON store at {}".format(self.json_store_path, self.datastore_path))
                 self.add_watch(url='https://news.ycombinator.com/',
                                tag='Tech news',
                                extras={'fetch_backend': 'html_requests'})
@@ -88,8 +88,10 @@ class ChangeDetectionStore:
                 self.add_watch(url='https://changedetection.io/CHANGELOG.txt',
                                tag='changedetection.io',
                                extras={'fetch_backend': 'html_requests'})
-
         self.__data['version_tag'] = version_tag
+
+        # Just to test that proxies.json if it exists, doesnt throw a parsing error on startup
+        test_list = self.proxy_list
 
         # Helper to remove password protection
         password_reset_lockfile = "{}/removepassword.lock".format(self.datastore_path)
