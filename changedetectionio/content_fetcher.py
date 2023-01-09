@@ -118,7 +118,8 @@ class Fetcher():
             request_method,
             ignore_status_codes=False,
             current_include_filters=None,
-            is_binary=False):
+            is_binary=False, 
+            follow_redirects=True):
         # Should set self.error, self.status_code and self.content
         pass
 
@@ -278,7 +279,8 @@ class base_html_playwright(Fetcher):
             request_method,
             ignore_status_codes=False,
             current_include_filters=None,
-            is_binary=False):
+            is_binary=False,
+            follow_redirects=True):
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
@@ -465,7 +467,8 @@ class base_html_webdriver(Fetcher):
             request_method,
             ignore_status_codes=False,
             current_include_filters=None,
-            is_binary=False):
+            is_binary=False,
+            follow_redirects=True):
 
         from selenium import webdriver
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -541,7 +544,8 @@ class html_requests(Fetcher):
             request_method,
             ignore_status_codes=False,
             current_include_filters=None,
-            is_binary=False):
+            is_binary=False,
+            follow_redirects=True):
 
         # Make requests use a more modern looking user-agent
         if not 'User-Agent' in request_headers:
@@ -563,6 +567,7 @@ class html_requests(Fetcher):
                              data=request_body,
                              url=url,
                              headers=request_headers,
+                             allow_redirects=follow_redirects,
                              timeout=timeout,
                              proxies=proxies,
                              verify=False)
