@@ -49,7 +49,7 @@ base_config = {
     'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
     'title': None,
     'trigger_text': [],  # List of text or regex to wait for until a change is detected
-    'url': None,
+    'url': '',
     'uuid': str(uuid.uuid4()),
     'webdriver_delay': None,
     'webdriver_js_execute_code': None,  # Run before change-detection

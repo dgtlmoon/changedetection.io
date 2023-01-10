@@ -1,14 +1,15 @@
-flask~=2.0
-flask_wtf
-flask-compress
 eventlet>=0.31.0
-validators
-timeago~=1.0
-inscriptis~=2.2
 feedgen~=0.9
+flask-compress
 flask-login~=0.5
+flask_expects_json~=1.7
 flask_restful
+flask_wtf
+flask~=2.0
+inscriptis~=2.2
 pytz
+timeago~=1.0
+validators
 
 # Set these versions together to avoid a RequestsDependencyWarning
 # >= 2.26 also adds Brotli support if brotli is installed

@@ -292,13 +292,13 @@ def test_api_watch_PUT_update(client, live_server):
 
     watch_uuid = list(res.json.keys())[0]
 
-    # HTTP PUT an update
+    # HTTP PUT ( UPDATE an existing watch )
     res = client.put(
         url_for("watch", uuid=watch_uuid),
         headers={'x-api-key': api_key, 'content-type': 'application/json'},
         data=json.dumps({"title": "new title"}),
     )
-    assert res.status_code == 200
+    assert res.status_code == 200, "HTTP PUT update was sent OK"
 
     # HTTP GET single watch, title should be updated
     res = client.get(
@@ -316,8 +316,10 @@ def test_api_watch_PUT_update(client, live_server):
         headers={'x-api-key': api_key, 'content-type': 'application/json'},
         data=json.dumps({"title": "new title", "some other field": "uh oh"}),
     )
-    assert res.status_code == 500
-    assert 'Watch field "some other field" does not exist' in res.json['message']
+
+    assert res.status_code == 400, "Should get error 400 when we give a field that doesnt exist"
+    # Message will come from `flask_expects_json`
+    assert b'Additional properties are not allowed' in res.data
 
     ######################################################
     # @todo fetch the full watch via API and resubmit it

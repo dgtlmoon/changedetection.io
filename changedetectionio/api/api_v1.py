@@ -1,12 +1,27 @@
+from flask_expects_json import expects_json
 from changedetectionio import queuedWatchMetaData
 from flask_restful import abort, Resource
 from flask import request, make_response
 import validators
 from . import auth
+import copy
 
 # Experimenting with `apidoc` for building docs
 # node_modules/apidoc/bin/apidoc -i ../../changedetectionio/api/ -o apidoc
 # https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
+
+
+from . import api_schema
+
+# Build a JSON Schema atleast partially based on our Watch model
+from changedetectionio.model.Watch import base_config as watch_base_config
+schema = api_schema.build_watch_schema(watch_base_config)
+
+schema_create_watch = copy.deepcopy(schema)
+schema_create_watch['required'] = ['url']
+
+schema_update_watch = copy.deepcopy(schema)
+schema_update_watch['additionalProperties'] = False
 
 class Watch(Resource):
     def __init__(self, **kwargs):
@@ -75,6 +90,7 @@ class Watch(Resource):
 
     # Update an existing
     @auth.check_token
+    @expects_json(schema_update_watch)
     def put(self, uuid):
         """
         @api {put} /api/v1/watch/:uuid Update watch information The request must have the application/json content type
@@ -89,20 +105,10 @@ class Watch(Resource):
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
 
-        # Take a JSON struct and update
-        from ..model import Watch
-
-        # Check the key exists as something that can be updated
-        for k in request.json.keys():
-            if not k in Watch.base_config.keys():
-                abort(500, message='Watch field "{}" does not exist'.format(k))
-            # @todo - Check types are correct
-
 
         watch.update(request.json)
 
         return "OK", 200
-
 
 
 class WatchHistory(Resource):
@@ -154,6 +160,7 @@ class CreateWatch(Resource):
         self.update_q = kwargs['update_q']
 
     @auth.check_token
+    @expects_json(schema_create_watch)
     def post(self):
         # curl http://localhost:4000/api/v1/watch -H "Content-Type: application/json" -d '{"url": "https://my-nice.com", "tag": "one, two" }'
         json_data = request.get_json()
