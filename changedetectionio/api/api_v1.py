@@ -42,8 +42,8 @@ class Watch(Resource):
         @apiVersion 0.1.0
         @apiParam {uuid} uuid Watch unique ID.
         @apiQuery {Boolean} [recheck] Recheck this watch `recheck=1`
-        @apiQuery {String} [paused] `paused` or `unpaused`
-        @apiQuery {String} [muted] `muted` or `unmuted`
+        @apiQuery {String} [paused] =`paused` or =`unpaused` , Sets the PAUSED state
+        @apiQuery {String} [muted] =`muted` or =`unmuted` , Sets the MUTE NOTIFICATIONS state
         @apiSuccess (200) {String} OK When paused/muted/recheck operation OR full JSON object of the watch
         @apiSuccess (200) {JSON} WatchJSON JSON Full JSON object of the watch
         """
