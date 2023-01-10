@@ -1,15 +1,39 @@
-def build_watch_schema(d):
+# Responsilbe for building the storage dict into a set of rules ("JSON Schema") acceptable via the API
+# Probably other ways to solve this when the backend switches to some ORM
+
+def build_time_between_check_json_schema():
+    # Setup time between check schema
+    schema_properties_time_between_check = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {}
+    }
+    for p in ['weeks', 'days', 'hours', 'minutes', 'seconds']:
+        schema_properties_time_between_check['properties'][p] = {
+            "anyOf": [
+                {
+                    "type": "integer"
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        }
+
+    return schema_properties_time_between_check
+
+def build_watch_json_schema(d):
     # Base JSON schema
     schema = {
         'type': 'object',
         'properties': {},
-       # 'additionalProperties': False
     }
 
     for k, v in d.items():
-        if isinstance(v, type(None)):
+        # @todo 'integer' is not covered here because its almost always for internal usage
 
-            schema['properties'][k] = t = {
+        if isinstance(v, type(None)):
+            schema['properties'][k] = {
                 "anyOf": [
                     {"type": "null"},
                 ]
@@ -20,7 +44,8 @@ def build_watch_schema(d):
                     {"type": "array",
                      # Always is an array of strings, like text or regex or something
                      "items": {
-                         "type": "string"
+                         "type": "string",
+                         "maxLength": 5000
                      }
                      },
                 ]
@@ -39,14 +64,20 @@ def build_watch_schema(d):
                 ]
             }
 
-    # Now expand on the default values
-    # pattern
-
     # Can also be a string (or None by default above)
-    for v in ['body', 'fetch_backend', 'notification_body', 'notification_format', 'notification_title', 'proxy', 'tag', 'title', 'url',
-              'webdriver_js_execute_code']:
-        schema['properties'][v]['anyOf'].append({'type': 'string'})
+    for v in ['body',
+              'fetch_backend',
+              'notification_body',
+              'notification_format',
+              'notification_title',
+              'proxy',
+              'tag',
+              'title',
+              'webdriver_js_execute_code'
+              ]:
+        schema['properties'][v]['anyOf'].append({'type': 'string', "maxLength": 5000})
 
+    # None or Boolean
     schema['properties']['track_ldjson_price_data']['anyOf'].append({'type': 'boolean'})
 
     schema['properties']['method'] = {"type": "string",
@@ -59,12 +90,14 @@ def build_watch_schema(d):
                                                    'enum': list(valid_notification_formats.keys())
                                                    }
 
-    # Stuff that shouldnt be available but is just state-storage
+    # Stuff that shouldn't be available but is just state-storage
     for v in ['previous_md5', 'last_error', 'has_ldjson_price_data', 'previous_md5_before_filters', 'uuid']:
         del schema['properties'][v]
 
     schema['properties']['webdriver_delay']['anyOf'].append({'type': 'integer'})
 
-    # headers ? and time ? (make time reusable)
+    schema['properties']['time_between_check'] = build_time_between_check_json_schema()
+
+    # headers ?
     return schema
-# "enum": ["one", "two", "three"]
+

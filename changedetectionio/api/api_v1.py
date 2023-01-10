@@ -15,7 +15,7 @@ from . import api_schema
 
 # Build a JSON Schema atleast partially based on our Watch model
 from changedetectionio.model.Watch import base_config as watch_base_config
-schema = api_schema.build_watch_schema(watch_base_config)
+schema = api_schema.build_watch_json_schema(watch_base_config)
 
 schema_create_watch = copy.deepcopy(schema)
 schema_create_watch['required'] = ['url']
@@ -105,6 +105,10 @@ class Watch(Resource):
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
 
+        if request.json.get('proxy'):
+            plist = self.datastore.proxy_list
+            if not request.json.get('proxy') in plist:
+                return "Invalid proxy choice, currently supported proxies are '{}'".format(', '.join(plist)), 400
 
         watch.update(request.json)
 
@@ -159,19 +163,26 @@ class CreateWatch(Resource):
         self.datastore = kwargs['datastore']
         self.update_q = kwargs['update_q']
 
-    @auth.check_token
+    #@auth.check_token
     @expects_json(schema_create_watch)
     def post(self):
         # curl http://localhost:4000/api/v1/watch -H "Content-Type: application/json" -d '{"url": "https://my-nice.com", "tag": "one, two" }'
         json_data = request.get_json()
-        tag = json_data['tag'].strip() if json_data.get('tag') else ''
+        url = json_data['url'].strip()
+
 
         if not validators.url(json_data['url'].strip()):
             return "Invalid or unsupported URL", 400
 
-        extras = {'title': json_data['title'].strip()} if json_data.get('title') else {}
+        if json_data.get('proxy'):
+            plist = self.datastore.proxy_list
+            if not json_data.get('proxy') in plist:
+                return "Invalid proxy choice, currently supported proxies are '{}'".format(', '.join(plist)), 400
 
-        new_uuid = self.datastore.add_watch(url=json_data['url'].strip(), tag=tag, extras=extras)
+        extras = copy.deepcopy(json_data)
+        del extras['url']
+
+        new_uuid = self.datastore.add_watch(url=url, extras=extras)
         self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid, 'skip_when_checksum_same': True}))
         return {'uuid': new_uuid}, 201
 

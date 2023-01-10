@@ -296,7 +296,7 @@ def test_api_watch_PUT_update(client, live_server):
     res = client.put(
         url_for("watch", uuid=watch_uuid),
         headers={'x-api-key': api_key, 'content-type': 'application/json'},
-        data=json.dumps({"title": "new title"}),
+        data=json.dumps({"title": "new title", 'time_between_check': {'minutes': 552}}),
     )
     assert res.status_code == 200, "HTTP PUT update was sent OK"
 
@@ -306,6 +306,16 @@ def test_api_watch_PUT_update(client, live_server):
         headers={'x-api-key': api_key}
     )
     assert res.json.get('title') == 'new title'
+
+    # Check in the edit page just to be sure
+    res = client.get(
+        url_for("edit_page", uuid=watch_uuid),
+    )
+    assert b"new title" in res.data, "new title found in edit page"
+    assert b"552" in res.data, "552 minutes found in edit page"
+    assert b"One, Two" in res.data, "Tag 'One, Two' was found"
+
+
     ######################################################
 
     # HTTP PUT try a field that doenst exist
@@ -321,9 +331,7 @@ def test_api_watch_PUT_update(client, live_server):
     # Message will come from `flask_expects_json`
     assert b'Additional properties are not allowed' in res.data
 
-    ######################################################
-    # @todo fetch the full watch via API and resubmit it
-
     # Cleanup everything
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
+    
