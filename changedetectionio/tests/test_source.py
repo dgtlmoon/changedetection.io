@@ -40,7 +40,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server):
 
     # Force recheck
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches are queued for rechecking.' in res.data
+    assert b'1 watches queued for rechecking.' in res.data
 
     time.sleep(5)
 

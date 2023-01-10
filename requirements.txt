@@ -24,13 +24,14 @@ jsonpath-ng~=1.5.3
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise~=1.2.0
+apprise~=1.2.1
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 paho-mqtt
 
-# Pinned version of cryptography otherwise
-# ERROR: Could not build wheels for cryptography which use PEP 517 and cannot be installed directly
+# This mainly affects some ARM builds, which unlike the other builds ignores "ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1"
+# so without this pinning, the newer versions on ARM will forcefully try to build rust, which results in "rust compiler not found"
+# (introduced once apprise became a dep)
 cryptography~=3.4
 
 # Used for CSS filtering
@@ -58,3 +59,7 @@ jq~=1.3 ;python_version >= "3.8" and sys_platform == "linux"
 # Any current modern version, required so far for screenshot PNG->JPEG conversion but will be used more in the future
 pillow
 # playwright is installed at Dockerfile build time because it's not available on all platforms
+
+# Include pytest, so if theres a support issue we can ask them to run these tests on their setup
+pytest ~=6.2
+pytest-flask ~=1.2

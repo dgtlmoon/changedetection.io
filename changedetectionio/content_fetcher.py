@@ -1,3 +1,4 @@
+import hashlib
 from abc import abstractmethod
 import chardet
 import json
@@ -23,6 +24,9 @@ class Non200ErrorCodeReceived(Exception):
             self.page_text = html_tools.html_to_text(page_html)
         return
 
+class checksumFromPreviousCheckWasTheSame(Exception):
+    def __init__(self):
+        return
 
 class JSActionExceptions(Exception):
     def __init__(self, status_code, url, screenshot, message=''):
@@ -39,7 +43,7 @@ class BrowserStepsStepTimout(Exception):
 
 
 class PageUnloadable(Exception):
-    def __init__(self, status_code, url, screenshot=False, message=False):
+    def __init__(self, status_code, url, message, screenshot=False):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
@@ -113,7 +117,8 @@ class Fetcher():
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_include_filters=None):
+            current_include_filters=None,
+            is_binary=False):
         # Should set self.error, self.status_code and self.content
         pass
 
@@ -238,6 +243,14 @@ class base_html_playwright(Fetcher):
         if proxy_override:
             self.proxy = {'server': proxy_override}
 
+        if self.proxy:
+            # Playwright needs separate username and password values
+            from urllib.parse import urlparse
+            parsed = urlparse(self.proxy.get('server'))
+            if parsed.username:
+                self.proxy['username'] = parsed.username
+                self.proxy['password'] = parsed.password
+
     def screenshot_step(self, step_n=''):
 
         # There's a bug where we need to do it twice or it doesnt take the whole page, dont know why.
@@ -264,7 +277,8 @@ class base_html_playwright(Fetcher):
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_include_filters=None):
+            current_include_filters=None,
+            is_binary=False):
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
@@ -286,6 +300,8 @@ class base_html_playwright(Fetcher):
                 proxy=self.proxy,
                 # This is needed to enable JavaScript execution on GitHub and others
                 bypass_csp=True,
+                # Can't think why we need the service workers for our use case?
+                service_workers='block',
                 # Should never be needed
                 accept_downloads=False
             )
@@ -294,24 +310,34 @@ class base_html_playwright(Fetcher):
             if len(request_headers):
                 context.set_extra_http_headers(request_headers)
 
-            try:
                 self.page.set_default_navigation_timeout(90000)
                 self.page.set_default_timeout(90000)
 
                 # Listen for all console events and handle errors
                 self.page.on("console", lambda msg: print(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
 
-                # Bug - never set viewport size BEFORE page.goto
-
-
-                # Waits for the next navigation. Using Python context manager
-                # prevents a race condition between clicking and waiting for a navigation.
-                with self.page.expect_navigation():
-                    response = self.page.goto(url, wait_until='load')
+            # Goto page
+            try:
                 # Wait_until = commit
                 # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
                 # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
                 # This seemed to solve nearly all 'TimeoutErrors'
+                response = self.page.goto(url, wait_until='commit')
+            except playwright._impl._api_types.Error as e:
+                # Retry once - https://github.com/browserless/chrome/issues/2485
+                # Sometimes errors related to invalid cert's and other can be random
+                print ("Content Fetcher > retrying request got error - ", str(e))
+                time.sleep(1)
+                response = self.page.goto(url, wait_until='commit')
+
+            except Exception as e:
+                print ("Content Fetcher > Other exception when page.goto", str(e))
+                context.close()
+                browser.close()
+                raise PageUnloadable(url=url, status_code=None, message=str(e))
+
+            # Execute any browser steps
+            try:
                 extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
                 self.page.wait_for_timeout(extra_wait * 1000)
 
@@ -324,17 +350,15 @@ class base_html_playwright(Fetcher):
                 # This can be ok, we will try to grab what we could retrieve
                 pass
             except Exception as e:
-                print ("other exception when page.goto")
-                print (str(e))
+                print ("Content Fetcher > Other exception when executing custom JS code", str(e))
                 context.close()
                 browser.close()
-                raise PageUnloadable(url=url, status_code=None)
-
+                raise PageUnloadable(url=url, status_code=None, message=str(e))
 
             if response is None:
                 context.close()
                 browser.close()
-                print ("response object was none")
+                print ("Content Fetcher > Response object was none")
                 raise EmptyReply(url=url, status_code=None)
 
             # Bug 2(?) Set the viewport size AFTER loading the page
@@ -353,8 +377,8 @@ class base_html_playwright(Fetcher):
             if len(self.page.content().strip()) == 0:
                 context.close()
                 browser.close()
-                print ("Content was empty")
-                raise EmptyReply(url=url, status_code=None)
+                print ("Content Fetcher > Content was empty")
+                raise EmptyReply(url=url, status_code=response.status)
 
             # Bug 2(?) Set the viewport size AFTER loading the page
             self.page.set_viewport_size({"width": 1280, "height": 1024})
@@ -440,7 +464,8 @@ class base_html_webdriver(Fetcher):
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_include_filters=None):
+            current_include_filters=None,
+            is_binary=False):
 
         from selenium import webdriver
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -498,7 +523,7 @@ class base_html_webdriver(Fetcher):
             try:
                 self.driver.quit()
             except Exception as e:
-                print("Exception in chrome shutdown/quit" + str(e))
+                print("Content Fetcher > Exception in chrome shutdown/quit" + str(e))
 
 
 # "html_requests" is listed as the default fetcher in store.py!
@@ -515,7 +540,8 @@ class html_requests(Fetcher):
             request_body,
             request_method,
             ignore_status_codes=False,
-            current_include_filters=None):
+            current_include_filters=None,
+            is_binary=False):
 
         # Make requests use a more modern looking user-agent
         if not 'User-Agent' in request_headers:
@@ -545,10 +571,12 @@ class html_requests(Fetcher):
         # For example - some sites don't tell us it's utf-8, but return utf-8 content
         # This seems to not occur when using webdriver/selenium, it seems to detect the text encoding more reliably.
         # https://github.com/psf/requests/issues/1604 good info about requests encoding detection
-        if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):
-            encoding = chardet.detect(r.content)['encoding']
-            if encoding:
-                r.encoding = encoding
+        if not is_binary:
+            # Don't run this for PDF (and requests identified as binary) takes a _long_ time
+            if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):
+                encoding = chardet.detect(r.content)['encoding']
+                if encoding:
+                    r.encoding = encoding
 
         if not r.content or not len(r.content):
             raise EmptyReply(url=url, status_code=r.status_code)
@@ -560,8 +588,14 @@ class html_requests(Fetcher):
             raise Non200ErrorCodeReceived(url=url, status_code=r.status_code, page_html=r.text)
 
         self.status_code = r.status_code
-        self.content = r.text
+        if is_binary:
+            # Binary files just return their checksum until we add something smarter
+            self.content = hashlib.md5(r.content).hexdigest()
+        else:
+            self.content = r.text
+
         self.headers = r.headers
+        self.raw_content = r.content
 
 
 # Decide which is the 'real' HTML webdriver, this is more a system wide config

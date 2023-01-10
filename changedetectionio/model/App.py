@@ -15,11 +15,12 @@ class model(dict):
                 'headers': {
                 },
                 'requests': {
-                    'timeout': int(getenv("DEFAULT_SETTINGS_REQUESTS_TIMEOUT", "45")),  # Default 45 seconds
-                    'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
+                    'extra_proxies': [], # Configurable extra proxies via the UI
                     'jitter_seconds': 0,
+                    'proxy': None, # Preferred proxy connection
+                    'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
+                    'timeout': int(getenv("DEFAULT_SETTINGS_REQUESTS_TIMEOUT", "45")),  # Default 45 seconds
                     'workers': int(getenv("DEFAULT_SETTINGS_REQUESTS_WORKERS", "10")),  # Number of threads, lower is better for slow connections
-                    'proxy': None # Preferred proxy connection
                 },
                 'application': {
                     'api_access_token_enabled': True,
@@ -27,7 +28,6 @@ class model(dict):
                     'base_url' : None,
                     'extract_title_as_title': False,
                     'empty_pages_are_a_change': False,
-                    'css_dark_mode': False,
                     'fetch_backend': getenv("DEFAULT_FETCH_BACKEND", "html_requests"),
                     'filter_failure_notification_threshold_attempts': _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT,
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum

@@ -1,0 +1,17 @@
+ul#requests-extra_proxies {
+  list-style: none;
+  /* tidy up the table to look more "inline" */
+  li {
+    > label {
+      display: none;
+    }
+
+  }
+  /* each proxy entry is a `table` */
+  table {
+    tr {
+      display: inline;
+    }
+  }
+}
+

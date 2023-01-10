@@ -21,6 +21,7 @@
             <li class="tab"><a href="#fetching">Fetching</a></li>
             <li class="tab"><a href="#filters">Global Filters</a></li>
             <li class="tab"><a href="#api">API</a></li>
+            <li class="tab"><a href="#proxies">CAPTCHA &amp; Proxies</a></li>
         </ul>
     </div>
     <div class="box-wrap inner">
@@ -170,14 +171,29 @@ nav
                     </div>
                 </div>
             </div>
+            <div class="tab-pane-inner" id="proxies">
 
+                <p><strong>Tip</strong>: You can connect to websites using <a href="https://brightdata.grsm.io/n0r16zf7eivq">BrightData</a> proxies, their service <strong>WebUnlocker</strong> will solve most CAPTCHAs, whilst their <strong>Residential Proxies</strong> may help to avoid CAPTCHA altogether. </p>
+                <p>It may be easier to try <strong>WebUnlocker</strong> first, WebUnlocker also supports country selection.</p>
+                <p>
+                    When you have <a href="https://brightdata.grsm.io/n0r16zf7eivq">registered</a>, enabled the required services, visit the <A href="https://brightdata.com/cp/api_example?">API example page</A>, then select <strong>Python</strong>, set the country you wish to use, then copy+paste the example URL below<br/>
+                    The Proxy URL with BrightData should start with <code>http://brd-customer...</code>
+                </p>
+
+                <p>When you sign up using <a href="https://brightdata.grsm.io/n0r16zf7eivq">https://brightdata.grsm.io/n0r16zf7eivq</a> BrightData will match any first deposit up to $150</p>
+
+
+                <div class="pure-control-group">
+                    {{ render_field(form.requests.form.extra_proxies) }}
+                    <span class="pure-form-message-inline">"Name" will be used for selecting the proxy in the Watch Edit settings</span>
+                </div>
+            </div>
             <div id="actions">
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
                     <a href="{{url_for('index')}}" class="pure-button button-small button-cancel">Back</a>
                     <a href="{{url_for('clear_all_history')}}" class="pure-button button-small button-cancel">Clear Snapshot History</a>
                 </div>
-
             </div>
         </form>
     </div>

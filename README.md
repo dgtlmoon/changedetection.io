@@ -43,6 +43,7 @@ Requires Playwright to be enabled.
 
 - Products and services have a change in pricing
 - _Out of stock notification_ and _Back In stock notification_
+- Monitor and track PDF file changes, know when a PDF file has text changes.
 - Governmental department updates (changes are often only on their websites)
 - New software releases, security advisories when you're not on their mailing list.
 - Festivals with changes
@@ -68,6 +69,7 @@ _Need an actual Chrome runner with Javascript support? We support fetching via W
 - Lots of trigger filters, such as "Trigger on text", "Remove text by selector", "Ignore text", "Extract text", also using regular-expressions!
 - Target elements with xPath and CSS Selectors, Easily monitor complex JSON with JSONPath or jq
 - Switch between fast non-JS and Chrome JS based "fetchers"
+- Track changes in PDF files (Monitor text changed in the PDF, Also monitor PDF filesize and checksums)
 - Easily specify how often a site should be checked
 - Execute JS before extracting text (Good for logging in, see examples in the UI!)
 - Override Request Headers, Specify `POST` or `GET` and other methods
@@ -187,11 +189,29 @@ When you enable a `json:` or `jq:` filter, you can even automatically extract an
 <html>
 ...
 <script type="application/ld+json">
-  {"@context":"http://schema.org","@type":"Product","name":"Nan Optipro Stage 1 Baby Formula  800g","price": 23.50 }
+
+{
+   "@context":"http://schema.org/",
+   "@type":"Product",
+   "offers":{
+      "@type":"Offer",
+      "availability":"http://schema.org/InStock",
+      "price":"3949.99",
+      "priceCurrency":"USD",
+      "url":"https://www.newegg.com/p/3D5-000D-001T1"
+   },
+   "description":"Cobratype King Cobra Hero Desktop Gaming PC",
+   "name":"Cobratype King Cobra Hero Desktop Gaming PC",
+   "sku":"3D5-000D-001T1",
+   "itemCondition":"NewCondition"
+}
 </script>
 ```  
 
-`json:$.price` or `jq:.price` would give `23.50`, or you can extract the whole structure
+`json:$..price` or `jq:..price` would give `3949.99`, or you can extract the whole structure (use a JSONpath test website to validate with)
+
+The application also supports notifying you that it can follow this information automatically
+
 
 ## Proxy Configuration
 
@@ -225,5 +245,5 @@ I offer commercial support, this software is depended on by network security, ae
 [test-shield]: https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master
 
 [license-shield]: https://img.shields.io/github/license/dgtlmoon/changedetection.io.svg?style=for-the-badge
-[release-link]: https://github.com/dgtlmoon.com/changedetection.io/releases
+[release-link]: https://github.com/dgtlmoon/changedetection.io/releases
 [docker-link]: https://hub.docker.com/r/dgtlmoon/changedetection.io

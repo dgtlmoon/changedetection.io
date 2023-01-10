@@ -1,3 +1,6 @@
+// Copyright (C) 2021 Leigh Morresi (dgtlmoon@gmail.com)
+// All rights reserved.
+
 // @file Scrape the page looking for elements of concern (%ELEMENTS%)
 // http://matatk.agrip.org.uk/tests/position-and-width/
 // https://stackoverflow.com/questions/26813480/when-is-element-getboundingclientrect-guaranteed-to-be-updated-accurate
@@ -89,8 +92,8 @@ for (var i = 0; i < elements.length; i++) {
         continue
     }
 
-    // Forget really small ones
-    if (bbox['width'] < 10 && bbox['height'] < 10) {
+    // Skip really small ones, and where width or height ==0
+    if (bbox['width'] * bbox['height'] < 100) {
         continue;
     }
 
@@ -146,7 +149,6 @@ for (var i = 0; i < elements.length; i++) {
 
 }
 
-
 // Inject the current one set in the include_filters, which may be a CSS rule
 // used for displaying the current one in VisualSelector, where its not one we generated.
 if (include_filters.length) {
@@ -174,10 +176,23 @@ if (include_filters.length) {
         }
 
         if (q) {
-            bbox = q.getBoundingClientRect();
-            console.log("xpath_element_scraper: Got filter element, scroll from top was "+scroll_y)
-        } else {
-            console.log("xpath_element_scraper: filter element "+f+" was not found");
+            // #1231 - IN the case XPath attribute filter is applied, we will have to traverse up and find the element.
+            if (q.hasOwnProperty('getBoundingClientRect')) {
+                bbox = q.getBoundingClientRect();
+                console.log("xpath_element_scraper: Got filter element, scroll from top was " + scroll_y)
+            } else {
+                try {
+                    // Try and see we can find its ownerElement
+                    bbox = q.ownerElement.getBoundingClientRect();
+                    console.log("xpath_element_scraper: Got filter by ownerElement element, scroll from top was " + scroll_y)
+                } catch (e) {
+                    console.log("xpath_element_scraper: error looking up ownerElement")
+                }
+            }
+        }
+        
+        if(!q) {
+            console.log("xpath_element_scraper: filter element " + f + " was not found");
         }
 
         if (bbox && bbox['width'] > 0 && bbox['height'] > 0) {
@@ -191,6 +206,10 @@ if (include_filters.length) {
         }
     }
 }
+
+// Sort the elements so we find the smallest one first, in other words, we find the smallest one matching in that area
+// so that we dont select the wrapping element by mistake and be unable to select what we want
+size_pos.sort((a, b) => (a.width*a.height > b.width*b.height) ? 1 : -1)
 
 // Window.width required for proper scaling in the frontend
 return {'size_pos': size_pos, 'browser_width': window.innerWidth};
