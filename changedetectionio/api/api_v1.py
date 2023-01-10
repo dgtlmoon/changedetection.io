@@ -6,10 +6,7 @@ import validators
 from . import auth
 import copy
 
-# Experimenting with `apidoc` for building docs
-# node_modules/apidoc/bin/apidoc -i ../../changedetectionio/api/ -o apidoc
-# https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
-
+# See docs/README.md for rebuilding the docs/apidoc information
 
 from . import api_schema
 
@@ -39,7 +36,6 @@ class Watch(Resource):
         @api {get} /api/v1/watch/:uuid Single watch information
         @apiName Watch
         @apiGroup Watch
-        @apiVersion 0.1.0
         @apiParam {uuid} uuid Watch unique ID.
         @apiQuery {Boolean} [recheck] Recheck this watch `recheck=1`
         @apiQuery {String} [paused] =`paused` or =`unpaused` , Sets the PAUSED state
@@ -79,7 +75,6 @@ class Watch(Resource):
         @apiParam {uuid} uuid Watch unique ID.
         @apiName Delete
         @apiGroup Watch
-        @apiVersion 0.1.0
         @apiSuccess (200) {String} OK Was deleted
         """
         if not self.datastore.data['watching'].get(uuid):
@@ -93,7 +88,7 @@ class Watch(Resource):
     @expects_json(schema_update_watch)
     def put(self, uuid):
         """
-        @api {put} /api/v1/watch/:uuid Update watch information The request must have the application/json content type
+        @api {put} /api/v1/watch/:uuid Update watch information
         @apiExample {curl} Example usage:
             Create a watch (POST)
             curl http://localhost:4000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "nice list"}'
@@ -104,7 +99,6 @@ class Watch(Resource):
         @apiParam {uuid} uuid Watch unique ID.
         @apiName Update
         @apiGroup Watch
-        @apiVersion 0.1.0
         @apiSuccess (200) {String} OK Was updated
         @apiSuccess (500) {String} ERR Some other error
         """
@@ -180,7 +174,6 @@ class CreateWatch(Resource):
             curl http://localhost:4000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "nice list"}'
         @apiName Create
         @apiGroup CreateWatch
-        @apiVersion 0.1.0
         @apiSuccess (200) {String} OK Was created
         @apiSuccess (500) {String} ERR Some other error
         """
