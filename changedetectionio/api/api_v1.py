@@ -39,7 +39,7 @@ class Watch(Resource):
         @api {get} /api/v1/watch/:uuid Single watch information
         @apiName Watch
         @apiGroup Watch
-        @apiVersion 1.0.0
+        @apiVersion 0.1.0
         @apiParam {uuid} uuid Watch unique ID.
         @apiQuery {Boolean} [recheck] Recheck this watch `recheck=1`
         @apiQuery {String} [paused] `paused` or `unpaused`
@@ -79,7 +79,7 @@ class Watch(Resource):
         @apiParam {uuid} uuid Watch unique ID.
         @apiName Delete
         @apiGroup Watch
-        @apiVersion 1.0.0
+        @apiVersion 0.1.0
         @apiSuccess (200) {String} OK Was deleted
         """
         if not self.datastore.data['watching'].get(uuid):
@@ -94,10 +94,11 @@ class Watch(Resource):
     def put(self, uuid):
         """
         @api {put} /api/v1/watch/:uuid Update watch information The request must have the application/json content type
+        @apiDescription Updates an existing watch using JSON, accepts the same structure as at https://github.com/dgtlmoon/changedetection.io/blob/fab7d325f764d6912bef671f1d78bf217689c537/changedetectionio/model/Watch.py#L15
         @apiParam {uuid} uuid Watch unique ID.
         @apiName Update
         @apiGroup Watch
-        @apiVersion 1.0.0
+        @apiVersion 0.1.0
         @apiSuccess (200) {String} OK Was updated
         @apiSuccess (500) {String} ERR Some other error
         """
@@ -163,9 +164,19 @@ class CreateWatch(Resource):
         self.datastore = kwargs['datastore']
         self.update_q = kwargs['update_q']
 
-    #@auth.check_token
+    @auth.check_token
     @expects_json(schema_create_watch)
     def post(self):
+        """
+        @api {post} /api/v1/watch Create a watch
+        @apiDescription requires `url`, Creates a watch, also accepts accepts the same structure as at https://github.com/dgtlmoon/changedetection.io/blob/fab7d325f764d6912bef671f1d78bf217689c537/changedetectionio/model/Watch.py#L15
+        @apiName Create
+        @apiGroup CreateWatch
+        @apiVersion 0.1.0
+        @apiSuccess (200) {String} OK Was created
+        @apiSuccess (500) {String} ERR Some other error
+        """
+
         # curl http://localhost:4000/api/v1/watch -H "Content-Type: application/json" -d '{"url": "https://my-nice.com", "tag": "one, two" }'
         json_data = request.get_json()
         url = json_data['url'].strip()
