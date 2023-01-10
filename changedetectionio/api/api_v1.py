@@ -34,6 +34,11 @@ class Watch(Resource):
     def get(self, uuid):
         """
         @api {get} /api/v1/watch/:uuid Single watch information
+        @apiDescription Retrieve watch information and set muted/paused status
+        @apiExample {curl} Example usage:
+            curl http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091  -H"x-api-key:813031b16330fe25e3780cf0325daa45"
+            curl "http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?muted=unmuted"  -H"x-api-key:813031b16330fe25e3780cf0325daa45"
+            curl "http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?paused=unpaused"  -H"x-api-key:813031b16330fe25e3780cf0325daa45"
         @apiName Watch
         @apiGroup Watch
         @apiParam {uuid} uuid Watch unique ID.
@@ -72,6 +77,8 @@ class Watch(Resource):
     def delete(self, uuid):
         """
         @api {delete} /api/v1/watch/:uuid Delete watch information
+        @apiExample {curl} Example usage:
+            curl http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X DELETE -H"x-api-key:813031b16330fe25e3780cf0325daa45"
         @apiParam {uuid} uuid Watch unique ID.
         @apiName Delete
         @apiGroup Watch
