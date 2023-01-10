@@ -221,6 +221,9 @@ See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configura
 
 Raspberry Pi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! See the wiki for [details](https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver)
 
+## API Support
+
+Supports managing the website watch list [via our API](https://changedetection.io/docs/api_v1/index.html)
 
 ## Support us
 

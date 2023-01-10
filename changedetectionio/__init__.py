@@ -379,9 +379,9 @@ def changedetection_app(config=None, datastore_o=None):
         if op:
             uuid = request.args.get('uuid')
             if op == 'pause':
-                datastore.data['watching'][uuid]['paused'] ^= True
+                datastore.data['watching'][uuid].toggle_pause()
             elif op == 'mute':
-                datastore.data['watching'][uuid]['notification_muted'] ^= True
+                datastore.data['watching'][uuid].toggle_mute()
 
             datastore.needs_write = True
             return redirect(url_for('index', tag = limit_tag))
