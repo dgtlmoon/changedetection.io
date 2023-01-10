@@ -94,6 +94,12 @@ class Watch(Resource):
     def put(self, uuid):
         """
         @api {put} /api/v1/watch/:uuid Update watch information The request must have the application/json content type
+        @apiExample {curl} Example usage:
+            Create a watch (POST)
+            curl http://localhost:4000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "nice list"}'
+            Update (PUT)
+            curl http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X PUT -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "new list"}'
+
         @apiDescription Updates an existing watch using JSON, accepts the same structure as at https://github.com/dgtlmoon/changedetection.io/blob/fab7d325f764d6912bef671f1d78bf217689c537/changedetectionio/model/Watch.py#L15
         @apiParam {uuid} uuid Watch unique ID.
         @apiName Update
@@ -170,6 +176,8 @@ class CreateWatch(Resource):
         """
         @api {post} /api/v1/watch Create a watch
         @apiDescription requires `url`, Creates a watch, also accepts accepts the same structure as at https://github.com/dgtlmoon/changedetection.io/blob/fab7d325f764d6912bef671f1d78bf217689c537/changedetectionio/model/Watch.py#L15
+        @apiExample {curl} Example usage:
+            curl http://localhost:4000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "nice list"}'
         @apiName Create
         @apiGroup CreateWatch
         @apiVersion 0.1.0
@@ -177,7 +185,7 @@ class CreateWatch(Resource):
         @apiSuccess (500) {String} ERR Some other error
         """
 
-        # curl http://localhost:4000/api/v1/watch -H "Content-Type: application/json" -d '{"url": "https://my-nice.com", "tag": "one, two" }'
+        #
         json_data = request.get_json()
         url = json_data['url'].strip()
 
@@ -197,11 +205,21 @@ class CreateWatch(Resource):
         self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid, 'skip_when_checksum_same': True}))
         return {'uuid': new_uuid}, 201
 
-    # Return concise list of available watches and some very basic info
-    # curl http://localhost:4000/api/v1/watch|python -mjson.tool
-    # ?recheck_all=1 to recheck all, tag=sometag
     @auth.check_token
     def get(self):
+        """
+        @api {get} /api/v1/watch
+        @apiDescription Return concise list of available watches and some very basic info
+        @apiExample {curl} Example usage:
+            curl http://localhost:4000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45"
+            recheck_all=1 to recheck all
+        @apiParam {String} [recheck_all]       Optional Set to =1 to force recheck of all watches
+        @apiParam {String} [tag]               Optional name of tag to limit results
+        @apiName ListWatches
+        @apiGroup CreateWatch
+
+        :return:
+        """
         list = {}
 
         tag_limit = request.args.get('tag', None)

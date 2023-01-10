@@ -66,7 +66,6 @@ def build_watch_json_schema(d):
 
     # Can also be a string (or None by default above)
     for v in ['body',
-              'fetch_backend',
               'notification_body',
               'notification_format',
               'notification_title',
@@ -84,10 +83,17 @@ def build_watch_json_schema(d):
                                       "enum": ["GET", "POST", "DELETE", "PUT"]
                                       }
 
+    schema['properties']['fetch_backend']['anyOf'].append({"type": "string",
+                                                           "enum": ["html_requests", "html_webdriver"]
+                                                           })
+
+
+
     # All headers must be key/value type dict
     schema['properties']['headers'] = {
         "type": "object",
         "patternProperties": {
+            # Should always be a string:string type value
             ".*": {"type": "string"},
         }
     }
