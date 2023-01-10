@@ -1,4 +1,4 @@
-# Responsilbe for building the storage dict into a set of rules ("JSON Schema") acceptable via the API
+# Responsible for building the storage dict into a set of rules ("JSON Schema") acceptable via the API
 # Probably other ways to solve this when the backend switches to some ORM
 
 def build_time_between_check_json_schema():
@@ -83,6 +83,14 @@ def build_watch_json_schema(d):
     schema['properties']['method'] = {"type": "string",
                                       "enum": ["GET", "POST", "DELETE", "PUT"]
                                       }
+
+    # All headers must be key/value type dict
+    schema['properties']['headers'] = {
+        "type": "object",
+        "patternProperties": {
+            ".*": {"type": "string"},
+        }
+    }
 
     from changedetectionio.notification import valid_notification_formats
 

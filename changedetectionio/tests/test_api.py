@@ -275,7 +275,7 @@ def test_api_watch_PUT_update(client, live_server):
     # Create new
     res = client.post(
         url_for("createwatch"),
-        data=json.dumps({"url": test_url, 'tag': "One, Two", "title": "My test URL"}),
+        data=json.dumps({"url": test_url, 'tag': "One, Two", "title": "My test URL", 'headers': {'cookie': 'yum'} }),
         headers={'content-type': 'application/json', 'x-api-key': api_key},
         follow_redirects=True
     )
@@ -292,11 +292,17 @@ def test_api_watch_PUT_update(client, live_server):
 
     watch_uuid = list(res.json.keys())[0]
 
+    # Check in the edit page just to be sure
+    res = client.get(
+        url_for("edit_page", uuid=watch_uuid),
+    )
+    assert b"cookie: yum" in res.data, "'cookie: yum' found in 'headers' section"
+
     # HTTP PUT ( UPDATE an existing watch )
     res = client.put(
         url_for("watch", uuid=watch_uuid),
         headers={'x-api-key': api_key, 'content-type': 'application/json'},
-        data=json.dumps({"title": "new title", 'time_between_check': {'minutes': 552}}),
+        data=json.dumps({"title": "new title", 'time_between_check': {'minutes': 552}, 'headers': {'cookie': 'all eaten'}}),
     )
     assert res.status_code == 200, "HTTP PUT update was sent OK"
 
@@ -314,7 +320,7 @@ def test_api_watch_PUT_update(client, live_server):
     assert b"new title" in res.data, "new title found in edit page"
     assert b"552" in res.data, "552 minutes found in edit page"
     assert b"One, Two" in res.data, "Tag 'One, Two' was found"
-
+    assert b"cookie: all eaten" in res.data, "'cookie: all eaten' found in 'headers' section"
 
     ######################################################
 
@@ -334,4 +340,3 @@ def test_api_watch_PUT_update(client, live_server):
     # Cleanup everything
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
-    
