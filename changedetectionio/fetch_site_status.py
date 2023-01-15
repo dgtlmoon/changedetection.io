@@ -94,7 +94,8 @@ class perform_site_check():
         prefer_backend = watch.get_fetch_backend
         # @todo move this to Watch model get_fetch_backend
         if not prefer_backend:
-            prefer_backend = self.__data['settings']['application']['fetch_backend']
+            prefer_backend =  self.datastore.data['settings']['application']['fetch_backend']
+
         if hasattr(content_fetcher, prefer_backend):
             klass = getattr(content_fetcher, prefer_backend)
         else:
