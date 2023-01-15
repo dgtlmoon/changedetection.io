@@ -171,14 +171,6 @@ class ChangeDetectionStore:
 
     @property
     def data(self):
-        has_unviewed = False
-        for uuid, watch in self.__data['watching'].items():
-            # #106 - Be sure this is None on empty string, False, None, etc
-            # Default var for fetch_backend
-            # @todo this may not be needed anymore, or could be easily removed
-            if not self.__data['watching'][uuid]['fetch_backend']:
-                self.__data['watching'][uuid]['fetch_backend'] = self.__data['settings']['application']['fetch_backend']
-
         # Re #152, Return env base_url if not overriden, @todo also prefer the proxy pass url
         env_base_url = os.getenv('BASE_URL','')
         if not self.__data['settings']['application']['base_url']:
