@@ -9,7 +9,7 @@ _Live your data-life pro-actively, Detect website changes and perform meaningful
 
 ![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master)
 
-[**Don't have time? Let us host it for you! try our $6.99/month subscription - use our proxies and support!**](https://lemonade.changedetection.io/start) , _half the price of other website change monitoring services and comes with unlimited watches & checks!_
+[**Don't have time? Let us host it for you! try our $8.99/month subscription - use our proxies and support!**](https://lemonade.changedetection.io/start) , _half the price of other website change monitoring services and comes with unlimited watches & checks!_
 
 - Chrome browser included.
 - Super fast, no registration needed setup.
