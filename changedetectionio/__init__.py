@@ -652,7 +652,7 @@ def changedetection_app(config=None, datastore_o=None):
             system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
 
             is_html_webdriver = False
-            if (watch.get('fetch_backend') == 'default' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_requests':
+            if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_requests':
                 is_html_webdriver = True
 
             output = render_template("edit.html",

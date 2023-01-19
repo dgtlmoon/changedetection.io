@@ -92,7 +92,7 @@ class perform_site_check():
 
         # Pluggable content fetcher
         prefer_backend = watch.get_fetch_backend
-        if not prefer_backend or prefer_backend == 'default':
+        if not prefer_backend or prefer_backend == 'system':
             prefer_backend = self.datastore.data['settings']['application']['fetch_backend']
 
         if hasattr(content_fetcher, prefer_backend):
