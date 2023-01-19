@@ -138,7 +138,7 @@ class ValidateContentFetcherIsReady(object):
         from changedetectionio import content_fetcher
 
         # Better would be a radiohandler that keeps a reference to each class
-        if field.data is not None and field.data != 'None':
+        if field.data is not None and field.data != 'system':
             klass = getattr(content_fetcher, field.data)
             some_object = klass()
             try:

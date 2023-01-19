@@ -571,7 +571,7 @@ def changedetection_app(config=None, datastore_o=None):
                                data=default,
                                )
 
-        form.fetch_backend.choices.append(("default", 'System settings default'))
+        form.fetch_backend.choices.append(("system", 'System settings default'))
 
         # form.browser_steps[0] can be assumed that we 'goto url' first
 
