@@ -1,7 +1,7 @@
-$(document).ready(function() {
+$(document).ready(function () {
     function toggle() {
         if ($('input[name="fetch_backend"]:checked').val() == 'html_webdriver') {
-            if(playwright_enabled) {
+            if (playwright_enabled) {
                 // playwright supports headers, so hide everything else
                 // See #664
                 $('#requests-override-options #request-method').hide();
@@ -14,9 +14,14 @@ $(document).ready(function() {
                 $('#requests-override-options').hide();
             }
 
-
             $('#webdriver-override-options').show();
 
+        } else if ($('input[name="fetch_backend"]:checked').val() == 'system') {
+            $('#requests-override-options #request-method').hide();
+            $('#requests-override-options #request-body').hide();
+            $('#ignore-status-codes-option').hide();
+            $('#requests-override-options').hide();
+            $('#webdriver-override-options').hide();
         } else {
 
             $('#requests-override-options').show();

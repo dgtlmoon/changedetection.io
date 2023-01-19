@@ -571,6 +571,8 @@ def changedetection_app(config=None, datastore_o=None):
                                data=default,
                                )
 
+        form.fetch_backend.choices.append(("system", 'System settings default'))
+
         # form.browser_steps[0] can be assumed that we 'goto url' first
 
         if datastore.proxy_list is None:
@@ -598,10 +600,6 @@ def changedetection_app(config=None, datastore_o=None):
                     extra_update_obj['time_between_check'] = form.time_between_check.data
                     using_default_check_time = False
                     break
-
-            # Use the default if it's the same as system-wide.
-            if form.fetch_backend.data == datastore.data['settings']['application']['fetch_backend']:
-                extra_update_obj['fetch_backend'] = None
 
 
 
@@ -652,8 +650,10 @@ def changedetection_app(config=None, datastore_o=None):
 
             watch = datastore.data['watching'].get(uuid)
             system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
-            is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
-                    watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
+
+            is_html_webdriver = False
+            if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_requests':
+                is_html_webdriver = True
 
             output = render_template("edit.html",
                                      browser_steps_config=browser_step_ui_config,
