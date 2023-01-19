@@ -138,7 +138,7 @@ class ValidateContentFetcherIsReady(object):
         from changedetectionio import content_fetcher
 
         # Better would be a radiohandler that keeps a reference to each class
-        if field.data is not None:
+        if field.data is not None and field.data != 'None':
             klass = getattr(content_fetcher, field.data)
             some_object = klass()
             try:
@@ -343,6 +343,7 @@ class quickWatchForm(Form):
     tag = StringField('Group tag', [validators.Optional()])
     watch_submit_button = SubmitField('Watch', render_kw={"class": "pure-button pure-button-primary"})
     edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
+
 
 
 # Common to a single watch and the global settings
