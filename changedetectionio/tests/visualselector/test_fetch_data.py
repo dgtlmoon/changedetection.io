@@ -52,3 +52,12 @@ def test_visual_selector_content_ready(client, live_server):
     # Open it and see if it roughly looks correct
     with open(os.path.join('test-datastore', uuid, 'elements.json'), 'r') as f:
         json.load(f)
+
+    # Some options should be enabled
+    # @todo - in the future, the visibility should be toggled by JS from the request type setting
+    res = client.get(
+        url_for("edit_page", uuid="first"),
+        follow_redirects=True
+    )
+    assert b'notification_screenshot' in res.data
+
