@@ -1,3 +1,4 @@
+version: '3.2'
 services:
     changedetection:
       image: ghcr.io/dgtlmoon/changedetection.io
