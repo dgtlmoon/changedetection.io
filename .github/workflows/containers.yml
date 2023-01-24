@@ -98,6 +98,7 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
+          provenance: false
 
       # A new tagged release is required, which builds :tag and :latest
       - name: Build and push :tag
@@ -116,6 +117,7 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
+          provenance: false
 
       - name: Image digest
         run: echo step SHA ${{ steps.vars.outputs.sha_short }} tag ${{steps.vars.outputs.tag}} branch ${{steps.vars.outputs.branch}} digest ${{ steps.docker_build.outputs.digest }}
