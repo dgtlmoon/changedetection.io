@@ -673,3 +673,13 @@ class ChangeDetectionStore:
                 self.data['settings']['application']['notification_urls'][i] = re.sub(r, r'{{\1}}', url)
 
         return
+
+    # Some setups may have missed the correct default, so it shows the wrong config in the UI, although it will default to system-wide
+    def update_10(self):
+        for uuid, watch in self.data['watching'].items():
+            try:
+                if not watch.get('fetch_backend', ''):
+                    watch['fetch_backend'] = 'system'
+            except:
+                continue
+        return

@@ -417,6 +417,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  has_unviewed=datastore.has_unviewed,
                                  hosted_sticky=os.getenv("SALTED_PASS", False) == False,
                                  queued_uuids=[q_uuid.item['uuid'] for q_uuid in update_q.queue],
+                                 system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),
                                  tags=existing_tags,
                                  watches=sorted_watches
                                  )
