@@ -91,7 +91,12 @@
                     <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}"></a>
                     <a class="link-spread" href="{{url_for('form_share_put_watch', uuid=watch.uuid)}}"><img class="status-icon"  src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="Create a link to share watch config with others" /></a>
 
-                    {%if watch.get_fetch_backend == "html_webdriver" %}<img class="status-icon" src="{{url_for('static_content', group='images', filename='Google-Chrome-icon.png')}}" title="Using a chrome browser" />{% endif %}
+                    {% if watch.get_fetch_backend == "html_webdriver"
+                         or (  watch.get_fetch_backend == "system" and system_default_fetcher == 'html_webdriver'  )
+                    %}
+                    <img class="status-icon" src="{{url_for('static_content', group='images', filename='Google-Chrome-icon.png')}}" title="Using a chrome browser" />
+                    {% endif %}
+
                     {%if watch.is_pdf  %}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" title="Converting PDF to text" />{% endif %}
                     {% if watch.last_error is defined and watch.last_error != False %}
                     <div class="fetch-error">{{ watch.last_error }}
