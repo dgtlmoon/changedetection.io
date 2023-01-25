@@ -639,8 +639,6 @@ def changedetection_app(config=None, datastore_o=None):
 
             visualselector_data_is_ready = datastore.visualselector_data_is_ready(uuid)
 
-            # Only works reliably with Playwright
-            visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and default['fetch_backend'] == 'html_webdriver'
 
             # JQ is difficult to install on windows and must be manually added (outside requirements.txt)
             jq_support = True
@@ -655,6 +653,9 @@ def changedetection_app(config=None, datastore_o=None):
             is_html_webdriver = False
             if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver':
                 is_html_webdriver = True
+
+            # Only works reliably with Playwright
+            visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and is_html_webdriver
 
             output = render_template("edit.html",
                                      browser_steps_config=browser_step_ui_config,
