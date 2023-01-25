@@ -18,7 +18,7 @@ base_config = {
     'consecutive_filter_failures': 0,  # Every time the CSS/xPath filter cannot be located, reset when all is fine.
     'extract_text': [],  # Extract text by regex after filters
     'extract_title_as_title': False,
-    'fetch_backend': None,
+    'fetch_backend': 'system',
     'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
     'has_ldjson_price_data': None,
     'track_ldjson_price_data': None,
