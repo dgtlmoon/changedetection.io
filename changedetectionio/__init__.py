@@ -1134,7 +1134,8 @@ def changedetection_app(config=None, datastore_o=None):
         form = forms.quickWatchForm(request.form)
 
         if not form.validate():
-            flash("Error")
+            for widget, l in form.errors.items():
+                flash(','.join(l), 'error')
             return redirect(url_for('index'))
 
         url = request.form.get('url').strip()
