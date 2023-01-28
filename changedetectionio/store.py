@@ -14,6 +14,7 @@ import re
 import requests
 import secrets
 
+import changedetectionio
 from . model import App, Watch
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
@@ -310,8 +311,12 @@ class ChangeDetectionStore:
                 flash("Error fetching metadata for {}".format(url), 'error')
                 return False
 
-        with self.lock:
+        pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', changedetectionio.SAFE_PROTOCOL_REGEX), re.IGNORECASE)
+        if not pattern.match(url.strip()):
+            flash('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX', 'error')
+            return None
 
+        with self.lock:
             # #Re 569
             new_watch = Watch.model(datastore_path=self.datastore_path, default={
                 'url': url,

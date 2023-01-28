@@ -232,11 +232,16 @@ class validateURL(object):
 
     def __call__(self, form, field):
         import validators
+        from changedetectionio import SAFE_PROTOCOL_REGEX
         try:
             validators.url(field.data.strip())
         except validators.ValidationFailure:
             message = field.gettext('\'%s\' is not a valid URL.' % (field.data.strip()))
             raise ValidationError(message)
+
+        pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', SAFE_PROTOCOL_REGEX), re.IGNORECASE)
+        if not pattern.match(field.data.strip()):
+            raise ValidationError('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX')
 
 
 class ValidateListRegex(object):
