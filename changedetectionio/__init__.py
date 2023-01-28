@@ -290,6 +290,9 @@ def changedetection_app(config=None, datastore_o=None):
             if app_rss_token == rss_url_token:
                 app.config['LOGIN_DISABLED'] = True
 
+        if request.path.startswith('/diff/') and datastore.data['settings']['application'].get('shared_diff_access'):
+            app.config['LOGIN_DISABLED'] = True
+
     @app.route("/rss", methods=['GET'])
     @login_required
     def rss():
