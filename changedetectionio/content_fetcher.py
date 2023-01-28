@@ -252,9 +252,6 @@ class base_html_playwright(Fetcher):
                 self.proxy['password'] = parsed.password
 
     def screenshot_step(self, step_n=''):
-
-        # There's a bug where we need to do it twice or it doesnt take the whole page, dont know why.
-        self.page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024})
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=85)
 
         if self.browser_steps_screenshot_path is not None:
@@ -361,27 +358,19 @@ class base_html_playwright(Fetcher):
                 print ("Content Fetcher > Response object was none")
                 raise EmptyReply(url=url, status_code=None)
 
-            # Bug 2(?) Set the viewport size AFTER loading the page
-            self.page.set_viewport_size({"width": 1280, "height": 1024})
-
             # Run Browser Steps here
             self.iterate_browser_steps()
 
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
             time.sleep(extra_wait)
 
-
             self.content = self.page.content()
             self.status_code = response.status
-
             if len(self.page.content().strip()) == 0:
                 context.close()
                 browser.close()
                 print ("Content Fetcher > Content was empty")
                 raise EmptyReply(url=url, status_code=response.status)
-
-            # Bug 2(?) Set the viewport size AFTER loading the page
-            self.page.set_viewport_size({"width": 1280, "height": 1024})
 
             self.status_code = response.status
             self.content = self.page.content()
@@ -403,8 +392,6 @@ class base_html_playwright(Fetcher):
             # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
             # acceptable screenshot quality here
             try:
-                # Quality set to 1 because it's not used, just used as a work-around for a bug, no need to change this.
-                self.page.screenshot(type='jpeg', clip={'x': 1.0, 'y': 1.0, 'width': 1280, 'height': 1024}, quality=1)
                 # The actual screenshot
                 self.screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
             except Exception as e:
