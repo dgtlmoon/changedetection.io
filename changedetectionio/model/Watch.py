@@ -4,7 +4,10 @@ import os
 import re
 import time
 import uuid
-SAFE_PROTOCOL_REGEX='^(http|https|ftp):'
+
+# Allowable protocols, protects against javascript: etc
+# file:// is further checked by ALLOW_FILE_URI
+SAFE_PROTOCOL_REGEX='^(http|https|ftp|file):'
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
@@ -59,6 +62,8 @@ base_config = {
 
 
 def is_safe_url(test_url):
+    # See https://github.com/dgtlmoon/changedetection.io/issues/1358
+
     # Remove 'source:' prefix so we dont get 'source:javascript:' etc
     # 'source:' is a valid way to tell us to return the source
 
