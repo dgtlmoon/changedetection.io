@@ -96,12 +96,12 @@ class model(dict):
     @property
     def link(self):
 
+        url = self.get('url', '')
         # Incase a non-safe URL got into the list
         pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', SAFE_PROTOCOL_REGEX), re.IGNORECASE)
-        if not pattern.match(self.get('url', '').strip()):
+        if not pattern.match(url.strip()):
             return 'DISABLED'
 
-        url = self.get('url', '')
         ready_url = url
         if '{%' in url or '{{' in url:
             from jinja2 import Environment
