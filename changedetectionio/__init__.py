@@ -74,8 +74,8 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.add_extension('jinja2.ext.loopcontrols')
 csrf = CSRFProtect()
 csrf.init_app(app)
-SAFE_PROTOCOL_REGEX='^(http|https|ftp):'
 notification_debug_log=[]
+from changedetectionio.model.Watch import SAFE_PROTOCOL_REGEX
 
 watch_api = Api(app, decorators=[csrf.exempt])
 

@@ -1,8 +1,10 @@
 from distutils.util import strtobool
 import logging
 import os
+import re
 import time
 import uuid
+SAFE_PROTOCOL_REGEX='^(http|https|ftp):'
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
@@ -93,6 +95,12 @@ class model(dict):
 
     @property
     def link(self):
+
+        # Incase a non-safe URL got into the list
+        pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', SAFE_PROTOCOL_REGEX), re.IGNORECASE)
+        if not pattern.match(self.get('url', '').strip()):
+            return 'DISABLED'
+
         url = self.get('url', '')
         ready_url = url
         if '{%' in url or '{{' in url:

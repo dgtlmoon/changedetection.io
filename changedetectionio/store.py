@@ -3,7 +3,7 @@ from flask import (
 )
 
 from . model import App, Watch
-from changedetectionio import SAFE_PROTOCOL_REGEX
+from changedetectionio.model.Watch import SAFE_PROTOCOL_REGEX
 from copy import deepcopy
 from os import path, unlink
 from threading import Lock

@@ -1,5 +1,6 @@
 import os
 import re
+from changedetectionio.model.Watch import SAFE_PROTOCOL_REGEX
 
 from wtforms import (
     BooleanField,
@@ -232,7 +233,7 @@ class validateURL(object):
 
     def __call__(self, form, field):
         import validators
-        from changedetectionio import SAFE_PROTOCOL_REGEX
+
         try:
             validators.url(field.data.strip())
         except validators.ValidationFailure:
