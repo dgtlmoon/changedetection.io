@@ -1,6 +1,5 @@
 import os
 import re
-from changedetectionio.model.Watch import SAFE_PROTOCOL_REGEX
 
 from wtforms import (
     BooleanField,
