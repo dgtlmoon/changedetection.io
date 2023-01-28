@@ -67,7 +67,7 @@ def is_safe_url(test_url):
     # Remove 'source:' prefix so we dont get 'source:javascript:' etc
     # 'source:' is a valid way to tell us to return the source
 
-    r = re.compile(re.escape('(source:)'), re.IGNORECASE)
+    r = re.compile(re.escape('source:'), re.IGNORECASE)
     test_url = r.sub('', test_url)
 
     pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', SAFE_PROTOCOL_REGEX), re.IGNORECASE)
