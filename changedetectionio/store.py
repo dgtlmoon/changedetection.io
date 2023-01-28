@@ -1,21 +1,21 @@
 from flask import (
     flash
 )
-import json
-import logging
-import os
-import threading
-import time
-import uuid as uuid_builder
+
+from . model import App, Watch
+from changedetectionio import SAFE_PROTOCOL_REGEX
 from copy import deepcopy
 from os import path, unlink
 from threading import Lock
+import json
+import logging
+import os
 import re
 import requests
 import secrets
-
-import changedetectionio
-from . model import App, Watch
+import threading
+import time
+import uuid as uuid_builder
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
@@ -311,7 +311,7 @@ class ChangeDetectionStore:
                 flash("Error fetching metadata for {}".format(url), 'error')
                 return False
 
-        pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', changedetectionio.SAFE_PROTOCOL_REGEX), re.IGNORECASE)
+        pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', SAFE_PROTOCOL_REGEX), re.IGNORECASE)
         if not pattern.match(url.strip()):
             flash('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX', 'error')
             return None
