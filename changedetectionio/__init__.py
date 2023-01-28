@@ -75,7 +75,6 @@ app.jinja_env.add_extension('jinja2.ext.loopcontrols')
 csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log=[]
-from changedetectionio.model.Watch import SAFE_PROTOCOL_REGEX
 
 watch_api = Api(app, decorators=[csrf.exempt])
 

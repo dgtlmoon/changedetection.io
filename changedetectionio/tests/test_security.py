@@ -65,3 +65,12 @@ def test_bad_access(client, live_server):
     )
 
     assert b'Watch protocol is not permitted by SAFE_PROTOCOL_REGEX' in res.data
+
+
+    res = client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": ' source:javascript:alert(document.domain)', "tag": ''},
+        follow_redirects=True
+    )
+
+    assert b'Watch protocol is not permitted by SAFE_PROTOCOL_REGEX' in res.data

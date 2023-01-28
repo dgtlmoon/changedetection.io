@@ -3,7 +3,6 @@ from flask import (
 )
 
 from . model import App, Watch
-from changedetectionio.model.Watch import SAFE_PROTOCOL_REGEX
 from copy import deepcopy
 from os import path, unlink
 from threading import Lock
@@ -310,9 +309,8 @@ class ChangeDetectionStore:
                 logging.error("Error fetching metadata for shared watch link", url, str(e))
                 flash("Error fetching metadata for {}".format(url), 'error')
                 return False
-
-        pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', SAFE_PROTOCOL_REGEX), re.IGNORECASE)
-        if not pattern.match(url.strip()):
+        from .model.Watch import is_safe_url
+        if not is_safe_url(url):
             flash('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX', 'error')
             return None
 

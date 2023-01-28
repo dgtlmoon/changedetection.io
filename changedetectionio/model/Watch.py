@@ -57,6 +57,20 @@ base_config = {
     'webdriver_js_execute_code': None,  # Run before change-detection
 }
 
+
+def is_safe_url(test_url):
+    # Remove 'source:' prefix so we dont get 'source:javascript:' etc
+    # 'source:' is a valid way to tell us to return the source
+
+    r = re.compile(re.escape('(source:)'), re.IGNORECASE)
+    test_url = r.sub('', test_url)
+
+    pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', SAFE_PROTOCOL_REGEX), re.IGNORECASE)
+    if not pattern.match(test_url.strip()):
+        return False
+
+    return True
+
 class model(dict):
     __newest_history_key = None
     __history_n = 0
@@ -97,9 +111,7 @@ class model(dict):
     def link(self):
 
         url = self.get('url', '')
-        # Incase a non-safe URL got into the list
-        pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', SAFE_PROTOCOL_REGEX), re.IGNORECASE)
-        if not pattern.match(url.strip()):
+        if not is_safe_url(url):
             return 'DISABLED'
 
         ready_url = url

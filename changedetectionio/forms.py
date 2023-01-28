@@ -240,8 +240,8 @@ class validateURL(object):
             message = field.gettext('\'%s\' is not a valid URL.' % (field.data.strip()))
             raise ValidationError(message)
 
-        pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', SAFE_PROTOCOL_REGEX), re.IGNORECASE)
-        if not pattern.match(field.data.strip()):
+        from .model.Watch import is_safe_url
+        if not is_safe_url(field.data):
             raise ValidationError('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX')
 
 
