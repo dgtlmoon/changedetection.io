@@ -884,6 +884,10 @@ def changedetection_app(config=None, datastore_o=None):
         is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
                     watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
 
+        password_enabled_and_share_is_off = False
+        if datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False):
+            password_enabled_and_share_is_off = not datastore.data['settings']['application'].get('shared_diff_access')
+
         output = render_template("diff.html",
                                  current_diff_url=watch['url'],
                                  current_previous_version=str(previous_version),
@@ -897,6 +901,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  left_sticky=True,
                                  newest=newest_version_file_contents,
                                  newest_version_timestamp=dates[-1],
+                                 password_enabled_and_share_is_off=password_enabled_and_share_is_off,
                                  previous=previous_version_file_contents,
                                  screenshot=screenshot_url,
                                  uuid=uuid,

@@ -76,8 +76,12 @@
     </div>
 
      <div class="tab-pane-inner" id="text">
-         <div class="tip">Pro-tip: Use <strong>show current snapshot</strong> tab to visualise what will be ignored.
-         </div>
+         <div class="tip">Pro-tip: Use <strong>show current snapshot</strong> tab to visualise what will be ignored.</div>
+
+         {% if password_enabled_and_share_is_off %}
+           <div class="tip">Pro-tip: You can enable <strong>"share access when password is enabled"</strong> from settings</div>
+         {% endif %}
+
          <div class="snapshot-age">{{watch_a.snapshot_text_ctime|format_timestamp_timeago}}</div>
 
          <table>

@@ -40,6 +40,7 @@ class model(dict):
                     'notification_body': default_notification_body,
                     'notification_format': default_notification_format,
                     'schema_version' : 0,
+                    'shared_diff_access': False,
                     'webdriver_delay': None  # Extra delay in seconds before extracting text
                 }
             }
