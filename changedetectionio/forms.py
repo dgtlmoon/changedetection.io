@@ -232,11 +232,16 @@ class validateURL(object):
 
     def __call__(self, form, field):
         import validators
+
         try:
             validators.url(field.data.strip())
         except validators.ValidationFailure:
             message = field.gettext('\'%s\' is not a valid URL.' % (field.data.strip()))
             raise ValidationError(message)
+
+        from .model.Watch import is_safe_url
+        if not is_safe_url(field.data):
+            raise ValidationError('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX')
 
 
 class ValidateListRegex(object):

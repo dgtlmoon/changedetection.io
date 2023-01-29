@@ -1,8 +1,13 @@
 from distutils.util import strtobool
 import logging
 import os
+import re
 import time
 import uuid
+
+# Allowable protocols, protects against javascript: etc
+# file:// is further checked by ALLOW_FILE_URI
+SAFE_PROTOCOL_REGEX='^(http|https|ftp|file):'
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
@@ -55,6 +60,22 @@ base_config = {
     'webdriver_js_execute_code': None,  # Run before change-detection
 }
 
+
+def is_safe_url(test_url):
+    # See https://github.com/dgtlmoon/changedetection.io/issues/1358
+
+    # Remove 'source:' prefix so we dont get 'source:javascript:' etc
+    # 'source:' is a valid way to tell us to return the source
+
+    r = re.compile(re.escape('source:'), re.IGNORECASE)
+    test_url = r.sub('', test_url)
+
+    pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', SAFE_PROTOCOL_REGEX), re.IGNORECASE)
+    if not pattern.match(test_url.strip()):
+        return False
+
+    return True
+
 class model(dict):
     __newest_history_key = None
     __history_n = 0
@@ -93,7 +114,11 @@ class model(dict):
 
     @property
     def link(self):
+
         url = self.get('url', '')
+        if not is_safe_url(url):
+            return 'DISABLED'
+
         ready_url = url
         if '{%' in url or '{{' in url:
             from jinja2 import Environment
