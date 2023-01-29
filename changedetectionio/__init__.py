@@ -184,12 +184,6 @@ def login_optionally_required(func):
         # Permitted
         elif request.endpoint == 'diff_history_page' and datastore.data['settings']['application'].get('shared_diff_access'):
             return func(*args, **kwargs)
-        # Permitted
-        elif request.endpoint == 'rss':
-            app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
-            rss_url_token = request.args.get('token')
-            if rss_url_token != app_rss_token:
-                return "Access denied, bad token", 403
 
         elif request.method in flask_login.config.EXEMPT_METHODS:
             return func(*args, **kwargs)
@@ -304,8 +298,13 @@ def changedetection_app(config=None, datastore_o=None):
         return None
 
     @app.route("/rss", methods=['GET'])
-    @login_optionally_required
     def rss():
+        # Always requires token set
+        app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
+        rss_url_token = request.args.get('token')
+        if rss_url_token != app_rss_token:
+            return "Access denied, bad token", 403
+
         from . import diff
         limit_tag = request.args.get('tag')
 
