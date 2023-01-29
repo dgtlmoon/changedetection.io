@@ -70,6 +70,15 @@ def extract_api_key_from_UI(client):
     api_key = m.group(1)
     return api_key.strip()
 
+# kinda funky, but works for now
+def extract_rss_token_from_UI(client):
+    import re
+    res = client.get(
+        url_for("index"),
+    )
+    m = re.search('token=(.+?)"', str(res.data))
+    token_key = m.group(1)
+    return token_key.strip()
 
 # kinda funky, but works for now
 def extract_UUID_from_client(client):
@@ -97,6 +106,12 @@ def wait_for_all_checks(client):
         attempt += 1
 
 def live_server_setup(live_server):
+
+    @live_server.app.route('/test-random-content-endpoint')
+    def test_random_content_endpoint():
+        import secrets
+        return "Random content - {}\n".format(secrets.token_hex(64))
+
 
     @live_server.app.route('/test-endpoint')
     def test_endpoint():

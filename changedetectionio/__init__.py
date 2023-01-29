@@ -1,5 +1,15 @@
 #!/usr/bin/python3
 
+from changedetectionio import queuedWatchMetaData
+from copy import deepcopy
+from distutils.util import strtobool
+from feedgen.feed import FeedGenerator
+from flask_compress import Compress as FlaskCompress
+from flask_login import current_user
+from flask_restful import abort, Api
+from flask_wtf import CSRFProtect
+from functools import wraps
+from threading import Event
 import datetime
 import flask_login
 import logging
@@ -9,12 +19,6 @@ import queue
 import threading
 import time
 import timeago
-
-from changedetectionio import queuedWatchMetaData
-from copy import deepcopy
-from distutils.util import strtobool
-from feedgen.feed import FeedGenerator
-from threading import Event
 
 from flask import (
     Flask,
@@ -28,10 +32,6 @@ from flask import (
     session,
     url_for,
 )
-from flask_compress import Compress as FlaskCompress
-from flask_login import login_required
-from flask_restful import abort, Api
-from flask_wtf import CSRFProtect
 
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
@@ -64,8 +64,6 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 app.config.exit = Event()
 
 app.config['NEW_VERSION_AVAILABLE'] = False
-
-app.config['LOGIN_DISABLED'] = False
 
 #app.config["EXPLAIN_TEMPLATE_LOADING"] = True
 
@@ -148,7 +146,6 @@ class User(flask_login.UserMixin):
 
     # Compare given password against JSON store or Env var
     def check_password(self, password):
-
         import base64
         import hashlib
 
@@ -156,11 +153,9 @@ class User(flask_login.UserMixin):
         raw_salt_pass = os.getenv("SALTED_PASS", False)
 
         if not raw_salt_pass:
-            raw_salt_pass = datastore.data['settings']['application']['password']
+            raw_salt_pass = datastore.data['settings']['application'].get('password')
 
         raw_salt_pass = base64.b64decode(raw_salt_pass)
-
-
         salt_from_storage = raw_salt_pass[:32]  # 32 is the length of the salt
 
         # Use the exact same setup you used to generate the key, but this time put in the password to check
@@ -170,11 +165,36 @@ class User(flask_login.UserMixin):
             salt_from_storage,
             100000
         )
-        new_key =  salt_from_storage + new_key
+        new_key = salt_from_storage + new_key
 
         return new_key == raw_salt_pass
 
     pass
+
+
+def login_optionally_required(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+
+        has_password_enabled = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
+
+        # Permitted
+        if request.endpoint == 'static_content' and request.view_args['group'] == 'styles':
+            return func(*args, **kwargs)
+        # Permitted
+        elif request.endpoint == 'diff_history_page' and datastore.data['settings']['application'].get('shared_diff_access'):
+            return func(*args, **kwargs)
+
+        elif request.method in flask_login.config.EXEMPT_METHODS:
+            return func(*args, **kwargs)
+        elif app.config.get('LOGIN_DISABLED'):
+            return func(*args, **kwargs)
+        elif has_password_enabled and not current_user.is_authenticated:
+            return app.login_manager.unauthorized()
+
+        return func(*args, **kwargs)
+
+    return decorated_view
 
 def changedetection_app(config=None, datastore_o=None):
     global datastore
@@ -182,9 +202,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # so far just for read-only via tests, but this will be moved eventually to be the main source
     # (instead of the global var)
-    app.config['DATASTORE']=datastore_o
-
-    #app.config.update(config or {})
+    app.config['DATASTORE'] = datastore_o
 
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
@@ -212,6 +230,8 @@ def changedetection_app(config=None, datastore_o=None):
     # https://flask-cors.readthedocs.io/en/latest/
     #    CORS(app)
 
+
+
     @login_manager.user_loader
     def user_loader(email):
         user = User()
@@ -220,7 +240,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     @login_manager.unauthorized_handler
     def unauthorized_handler():
-        # @todo validate its a URL of this host and use that
+        flash("You must be logged in, please log in.", 'error')
         return redirect(url_for('login', next=url_for('index')))
 
     @app.route('/logout')
@@ -232,10 +252,6 @@ def changedetection_app(config=None, datastore_o=None):
     # You can divide up the stuff like this
     @app.route('/login', methods=['GET', 'POST'])
     def login():
-
-        if not datastore.data['settings']['application']['password'] and not os.getenv("SALTED_PASS", False):
-            flash("Login not required, no password enabled.", "notice")
-            return redirect(url_for('index'))
 
         if request.method == 'GET':
             if flask_login.current_user.is_authenticated:
@@ -271,27 +287,22 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('login'))
 
     @app.before_request
-    def do_something_whenever_a_request_comes_in():
-
-        # Disable password login if there is not one set
-        # (No password in settings or env var)
-        app.config['LOGIN_DISABLED'] = datastore.data['settings']['application']['password'] == False and os.getenv("SALTED_PASS", False) == False
-
+    def before_request_handle_cookie_x_settings():
         # Set the auth cookie path if we're running as X-settings/X-Forwarded-Prefix
         if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Prefix' in request.headers:
             app.config['REMEMBER_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
             app.config['SESSION_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
 
-        # For the RSS path, allow access via a token
-        if request.path == '/rss' and request.args.get('token'):
-            app_rss_token = datastore.data['settings']['application']['rss_access_token']
-            rss_url_token = request.args.get('token')
-            if app_rss_token == rss_url_token:
-                app.config['LOGIN_DISABLED'] = True
+        return None
 
     @app.route("/rss", methods=['GET'])
-    @login_required
     def rss():
+        # Always requires token set
+        app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
+        rss_url_token = request.args.get('token')
+        if rss_url_token != app_rss_token:
+            return "Access denied, bad token", 403
+
         from . import diff
         limit_tag = request.args.get('tag')
 
@@ -365,7 +376,7 @@ def changedetection_app(config=None, datastore_o=None):
         return response
 
     @app.route("/", methods=['GET'])
-    @login_required
+    @login_optionally_required
     def index():
         from changedetectionio import forms
 
@@ -429,7 +440,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # AJAX endpoint for sending a test
     @app.route("/notification/send-test", methods=['POST'])
-    @login_required
+    @login_optionally_required
     def ajax_callback_send_notification_test():
 
         import apprise
@@ -462,7 +473,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
     @app.route("/clear_history/<string:uuid>", methods=['GET'])
-    @login_required
+    @login_optionally_required
     def clear_watch_history(uuid):
         try:
             datastore.clear_watch_history(uuid)
@@ -474,7 +485,7 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('index'))
 
     @app.route("/clear_history", methods=['GET', 'POST'])
-    @login_required
+    @login_optionally_required
     def clear_all_history():
 
         if request.method == 'POST':
@@ -531,7 +542,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
-    @login_required
+    @login_optionally_required
     # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
     # https://wtforms.readthedocs.io/en/3.0.x/forms/#wtforms.form.Form.populate_obj ?
 
@@ -677,7 +688,7 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     @app.route("/settings", methods=['GET', "POST"])
-    @login_required
+    @login_optionally_required
     def settings_page():
         from changedetectionio import content_fetcher, forms
 
@@ -757,7 +768,7 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     @app.route("/import", methods=['GET', "POST"])
-    @login_required
+    @login_optionally_required
     def import_page():
         remaining_urls = []
         if request.method == 'POST':
@@ -795,7 +806,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # Clear all statuses, so we do not see the 'unviewed' class
     @app.route("/form/mark-all-viewed", methods=['GET'])
-    @login_required
+    @login_optionally_required
     def mark_all_viewed():
 
         # Save the current newest history as the most recently viewed
@@ -805,7 +816,7 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('index'))
 
     @app.route("/diff/<string:uuid>", methods=['GET', 'POST'])
-    @login_required
+    @login_optionally_required
     def diff_history_page(uuid):
 
         from changedetectionio import forms
@@ -884,6 +895,10 @@ def changedetection_app(config=None, datastore_o=None):
         is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
                     watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
 
+        password_enabled_and_share_is_off = False
+        if datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False):
+            password_enabled_and_share_is_off = not datastore.data['settings']['application'].get('shared_diff_access')
+
         output = render_template("diff.html",
                                  current_diff_url=watch['url'],
                                  current_previous_version=str(previous_version),
@@ -897,6 +912,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  left_sticky=True,
                                  newest=newest_version_file_contents,
                                  newest_version_timestamp=dates[-1],
+                                 password_enabled_and_share_is_off=password_enabled_and_share_is_off,
                                  previous=previous_version_file_contents,
                                  screenshot=screenshot_url,
                                  uuid=uuid,
@@ -907,7 +923,7 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     @app.route("/preview/<string:uuid>", methods=['GET'])
-    @login_required
+    @login_optionally_required
     def preview_page(uuid):
         content = []
         ignored_line_numbers = []
@@ -997,7 +1013,7 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     @app.route("/settings/notification-logs", methods=['GET'])
-    @login_required
+    @login_optionally_required
     def notification_logs():
         global notification_debug_log
         output = render_template("notification-log.html",
@@ -1007,7 +1023,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # We're good but backups are even better!
     @app.route("/backup", methods=['GET'])
-    @login_required
+    @login_optionally_required
     def get_backup():
 
         import zipfile
@@ -1127,7 +1143,7 @@ def changedetection_app(config=None, datastore_o=None):
             abort(404)
 
     @app.route("/form/add/quickwatch", methods=['POST'])
-    @login_required
+    @login_optionally_required
     def form_quick_watch_add():
         from changedetectionio import forms
         form = forms.quickWatchForm(request.form)
@@ -1159,7 +1175,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
     @app.route("/api/delete", methods=['GET'])
-    @login_required
+    @login_optionally_required
     def form_delete():
         uuid = request.args.get('uuid')
 
@@ -1176,7 +1192,7 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('index'))
 
     @app.route("/api/clone", methods=['GET'])
-    @login_required
+    @login_optionally_required
     def form_clone():
         uuid = request.args.get('uuid')
         # More for testing, possible to return the first/only
@@ -1191,7 +1207,7 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('index'))
 
     @app.route("/api/checknow", methods=['GET'])
-    @login_required
+    @login_optionally_required
     def form_watch_checknow():
         # Forced recheck will skip the 'skip if content is the same' rule (, 'reprocess_existing_data': True})))
         tag = request.args.get('tag')
@@ -1225,7 +1241,7 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('index', tag=tag))
 
     @app.route("/form/checkbox-operations", methods=['POST'])
-    @login_required
+    @login_optionally_required
     def form_watch_list_checkbox_operations():
         op = request.form['op']
         uuids = request.form.getlist('uuids')
@@ -1289,7 +1305,7 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('index'))
 
     @app.route("/api/share-url", methods=['GET'])
-    @login_required
+    @login_optionally_required
     def form_share_put_watch():
         """Given a watch UUID, upload the info and return a share-link
            the share-link can be imported/added"""

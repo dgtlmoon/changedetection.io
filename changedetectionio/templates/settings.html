@@ -58,6 +58,11 @@
                     </div>
 
                     <div class="pure-control-group">
+                        {{ render_checkbox_field(form.application.form.shared_diff_access, class="shared_diff_access") }}
+                        <span class="pure-form-message-inline">Allow access to view watch diff page when password is enabled (Good for sharing the diff page)
+                        </span>
+                    </div>
+                    <div class="pure-control-group">
                         {{ render_field(form.application.form.base_url, placeholder="http://yoursite.com:5000/",
                         class="m-d") }}
                         <span class="pure-form-message-inline">
