@@ -171,6 +171,7 @@ class User(flask_login.UserMixin):
 
     pass
 
+
 def login_optionally_required(func):
     @wraps(func)
     def decorated_view(*args, **kwargs):
@@ -190,7 +191,7 @@ def login_optionally_required(func):
             rss_url_token = request.args.get('token')
             # Both not none and they are the same
             if app_rss_token and rss_url_token and rss_url_token == app_rss_token:
-                return None
+                return func(*args, **kwargs)
 
         elif request.method in flask_login.config.EXEMPT_METHODS:
             return func(*args, **kwargs)
