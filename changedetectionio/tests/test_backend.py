@@ -3,7 +3,7 @@
 import time
 from flask import url_for
 from urllib.request import urlopen
-from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
+from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_rss_token_from_UI
 
 sleep_time_for_fetch_thread = 3
 
@@ -76,7 +76,8 @@ def test_check_basic_change_detection_functionality(client, live_server):
     assert b'unviewed' in res.data
 
     # #75, and it should be in the RSS feed
-    res = client.get(url_for("rss"))
+    rss_token = extract_rss_token_from_UI(client)
+    res = client.get(url_for("rss", token=rss_token, _external=True))
     expected_url = url_for('test_endpoint', _external=True)
     assert b'<rss' in res.data
 
