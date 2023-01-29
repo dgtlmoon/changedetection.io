@@ -98,6 +98,12 @@ def wait_for_all_checks(client):
 
 def live_server_setup(live_server):
 
+    @live_server.app.route('/test-random-content-endpoint')
+    def test_random_content_endpoint():
+        import secrets
+        return "Random content - {}\n".format(secrets.token_hex(64))
+
+
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
         ctype = request.args.get('content_type')
