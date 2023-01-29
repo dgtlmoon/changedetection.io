@@ -175,9 +175,8 @@ class User(flask_login.UserMixin):
 def login_optionally_required(func):
     @wraps(func)
     def decorated_view(*args, **kwargs):
+
         has_password_enabled = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
-        if not has_password_enabled:
-            return func(*args, **kwargs)
 
         # Permitted
         if request.endpoint == 'static_content' and request.view_args['group'] == 'styles':
@@ -189,16 +188,18 @@ def login_optionally_required(func):
         elif request.endpoint == 'rss':
             app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
             rss_url_token = request.args.get('token')
-            # Both not none and they are the same
-            if app_rss_token and rss_url_token and rss_url_token == app_rss_token:
-                return func(*args, **kwargs)
+            if rss_url_token != app_rss_token:
+                return "Access denied, bad token", 403
 
         elif request.method in flask_login.config.EXEMPT_METHODS:
             return func(*args, **kwargs)
         elif app.config.get('LOGIN_DISABLED'):
             return func(*args, **kwargs)
+        elif not has_password_enabled:
+            return func(*args, **kwargs)
         elif not current_user.is_authenticated:
             return app.login_manager.unauthorized()
+
         return func(*args, **kwargs)
 
     return decorated_view

@@ -70,6 +70,15 @@ def extract_api_key_from_UI(client):
     api_key = m.group(1)
     return api_key.strip()
 
+# kinda funky, but works for now
+def extract_rss_token_from_UI(client):
+    import re
+    res = client.get(
+        url_for("index"),
+    )
+    m = re.search('token=(.+?)"', str(res.data))
+    token_key = m.group(1)
+    return token_key.strip()
 
 # kinda funky, but works for now
 def extract_UUID_from_client(client):
