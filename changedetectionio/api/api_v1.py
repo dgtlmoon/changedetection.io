@@ -202,8 +202,11 @@ class CreateWatch(Resource):
         del extras['url']
 
         new_uuid = self.datastore.add_watch(url=url, extras=extras)
-        self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid, 'skip_when_checksum_same': True}))
-        return {'uuid': new_uuid}, 201
+        if new_uuid:
+            self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid, 'skip_when_checksum_same': True}))
+            return {'uuid': new_uuid}, 201
+        else:
+            return "Invalid or unsupported URL", 400
 
     @auth.check_token
     def get(self):

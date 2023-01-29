@@ -74,7 +74,6 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.add_extension('jinja2.ext.loopcontrols')
 csrf = CSRFProtect()
 csrf.init_app(app)
-
 notification_debug_log=[]
 
 watch_api = Api(app, decorators=[csrf.exempt])
@@ -586,6 +585,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
         if request.method == 'POST' and form.validate():
+
             extra_update_obj = {}
 
             if request.args.get('unpause_on_save'):
@@ -1133,7 +1133,8 @@ def changedetection_app(config=None, datastore_o=None):
         form = forms.quickWatchForm(request.form)
 
         if not form.validate():
-            flash("Error")
+            for widget, l in form.errors.items():
+                flash(','.join(l), 'error')
             return redirect(url_for('index'))
 
         url = request.form.get('url').strip()
@@ -1144,15 +1145,14 @@ def changedetection_app(config=None, datastore_o=None):
         add_paused = request.form.get('edit_and_watch_submit_button') != None
         new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip(), extras={'paused': add_paused})
 
-
-        if not add_paused and new_uuid:
-            # Straight into the queue.
-            update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
-            flash("Watch added.")
-
-        if add_paused:
-            flash('Watch added in Paused state, saving will unpause.')
-            return redirect(url_for('edit_page', uuid=new_uuid, unpause_on_save=1))
+        if new_uuid:
+            if add_paused:
+                flash('Watch added in Paused state, saving will unpause.')
+                return redirect(url_for('edit_page', uuid=new_uuid, unpause_on_save=1))
+            else:
+                # Straight into the queue.
+                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
+                flash("Watch added.")
 
         return redirect(url_for('index'))
 
@@ -1184,8 +1184,9 @@ def changedetection_app(config=None, datastore_o=None):
             uuid = list(datastore.data['watching'].keys()).pop()
 
         new_uuid = datastore.clone(uuid)
-        update_q.put(queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid, 'skip_when_checksum_same': True}))
-        flash('Cloned.')
+        if new_uuid:
+            update_q.put(queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid, 'skip_when_checksum_same': True}))
+            flash('Cloned.')
 
         return redirect(url_for('index'))
 
