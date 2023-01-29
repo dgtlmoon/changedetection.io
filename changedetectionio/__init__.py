@@ -189,9 +189,7 @@ def login_optionally_required(func):
             return func(*args, **kwargs)
         elif app.config.get('LOGIN_DISABLED'):
             return func(*args, **kwargs)
-        elif not has_password_enabled:
-            return func(*args, **kwargs)
-        elif not current_user.is_authenticated:
+        elif has_password_enabled and not current_user.is_authenticated:
             return app.login_manager.unauthorized()
 
         return func(*args, **kwargs)
