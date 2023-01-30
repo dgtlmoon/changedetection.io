@@ -297,8 +297,8 @@ class base_html_playwright(Fetcher):
                 proxy=self.proxy,
                 # This is needed to enable JavaScript execution on GitHub and others
                 bypass_csp=True,
-                # Can't think why we need the service workers for our use case?
-                service_workers='block',
+                # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
+                service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'),
                 # Should never be needed
                 accept_downloads=False
             )
