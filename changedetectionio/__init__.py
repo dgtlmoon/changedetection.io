@@ -36,7 +36,7 @@ from flask import (
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.40.1.1'
+__version__ = '0.40.2'
 
 datastore = None
 
