@@ -53,7 +53,6 @@ app = Flask(__name__,
             static_url_path="",
             static_folder="static",
             template_folder="templates")
-from flask_compress import Compress
 
 # Super handy for compressing large BrowserSteps responses and others
 FlaskCompress(app)
