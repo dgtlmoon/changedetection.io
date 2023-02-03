@@ -892,8 +892,9 @@ def changedetection_app(config=None, datastore_o=None):
 
         system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
 
-        is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
-                    watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
+        is_html_webdriver = False
+        if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver':
+            is_html_webdriver = True
 
         password_enabled_and_share_is_off = False
         if datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False):
