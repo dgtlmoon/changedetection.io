@@ -15,6 +15,9 @@ def test_inscriptus():
     stripped_text_from_html = get_text(html_content)
     assert stripped_text_from_html == 'test!\nok man'
 
+def test_setup(client, live_server):
+    live_server_setup(live_server)
+
 # Assert that non-200's dont give notifications or register as a change
 def test_non_200_doesnt_trigger_change(client, live_server):
 
@@ -55,10 +58,8 @@ def test_non_200_doesnt_trigger_change(client, live_server):
 
         assert b'code: 200' in res.data
 
-
 def test_check_basic_change_detection_functionality(client, live_server):
     set_original_response()
-    live_server_setup(live_server)
 
     # Add our URL to the import page
     res = client.post(
