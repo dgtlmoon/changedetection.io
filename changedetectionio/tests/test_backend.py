@@ -20,13 +20,15 @@ def test_setup(client, live_server):
 
 # Assert that non-200's dont give notifications or register as a change
 def test_non_200_doesnt_trigger_change(client, live_server):
+    # live_server_setup(live_server)
 
     set_original_response()
-    #live_server_setup(live_server)
+    url = url_for('test_changing_status_code_endpoint', _external=True)
+
     # Add our URL to the import page
     res = client.post(
         url_for("import_page"),
-        data={"urls": url_for('test_changing_status_code_endpoint', _external=True)},
+        data={"urls": url},
         follow_redirects=True
     )
 
@@ -37,13 +39,12 @@ def test_non_200_doesnt_trigger_change(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={
-                "include_filters": ".foobar-detection",
-                "fetch_backend": "html_requests",
-                "headers": "",
-                "proxy": "proxy-two",
-                "tag": "",
-                "url": url_for('test_changing_status_code_endpoint', _external=True),
-              },
+            "include_filters": ".foobar-detection",
+            "fetch_backend": "html_requests",
+            "headers": "",
+            "tag": "",
+            "url": url
+        },
         follow_redirects=True
     )
 
@@ -52,7 +53,6 @@ def test_non_200_doesnt_trigger_change(client, live_server):
 
     # hit the mark all viewed link
     res = client.get(url_for("mark_all_viewed"), follow_redirects=True)
-
 
     # Now be sure the filter is missing and then recheck it
     set_modified_response()
@@ -72,12 +72,12 @@ def test_non_200_doesnt_trigger_change(client, live_server):
 
         # load preview page so we can see what was returned
         res = client.get(url_for("preview_page", uuid="first"))
-#        with open('/tmp/debug-'+ecode+'.html', 'wb') as f:
-#            f.write(res.data)
+        #        with open('/tmp/debug-'+ecode+'.html', 'wb') as f:
+        #            f.write(res.data)
 
         # Should still say the original 200, because "ignore_status_codes" should be off by default
         # commented out - this will fail because we also show what the error was
-        #assert b'code: '+ecode.encode('utf-8') not in res.data
+        # assert b'code: '+ecode.encode('utf-8') not in res.data
 
         assert b'code: 200' in res.data
 
