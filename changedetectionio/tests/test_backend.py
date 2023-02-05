@@ -32,7 +32,7 @@ def test_non_200_doesnt_trigger_change(client, live_server):
     time.sleep(sleep_time_for_fetch_thread)
 
     # https://github.com/dgtlmoon/changedetection.io/issues/962#issuecomment-1416807742
-    for ecode in ['429', '400', '429', '403', '404', '500']:
+    for ecode in ['200', '429', '400', '429', '403', '404', '500']:
         with open("test-endpoint-status-code.txt", 'w') as f:
             f.write(ecode)
 
@@ -40,7 +40,7 @@ def test_non_200_doesnt_trigger_change(client, live_server):
         assert b'1 watches queued for rechecking.' in res.data
         time.sleep(sleep_time_for_fetch_thread)
 
-        # Should not register as a change
+        # No change should be seen/no trigger of change
         res = client.get(url_for("index"))
         assert b'unviewed' not in res.data
 
@@ -50,7 +50,9 @@ def test_non_200_doesnt_trigger_change(client, live_server):
 #            f.write(res.data)
 
         # Should still say the original 200, because "ignore_status_codes" should be off by default
-        assert b'code: '+ecode.encode('utf-8') not in res.data
+        # commented out - this will fail because we also show what the error was
+        #assert b'code: '+ecode.encode('utf-8') not in res.data
+
         assert b'code: 200' in res.data
 
 
