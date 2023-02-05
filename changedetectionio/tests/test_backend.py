@@ -19,7 +19,7 @@ def test_inscriptus():
 def test_non_200_doesnt_trigger_change(client, live_server):
 
     set_original_response()
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
     # Add our URL to the import page
     res = client.post(
         url_for("import_page"),
