@@ -117,10 +117,11 @@ def live_server_setup(live_server):
     def test_changing_status_code_endpoint():
         # status_code can also be overriden in a file, used for doing things that it wouldnt normally expect
         # (test_non_200_doesnt_trigger_change)
-        status_code='200'
+        status_code = '200'
         if os.path.isfile("test-endpoint-status-code.txt"):
             with open("test-endpoint-status-code.txt", 'r') as f:
                 status_code = f.read().strip()
+            os.unlink("test-endpoint-status-code.txt")
 
         # Contents includes the status code, which will change and should not trigger a change
         # (Non-200 should get ignored)
