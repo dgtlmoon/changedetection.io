@@ -15,6 +15,44 @@ def test_inscriptus():
     stripped_text_from_html = get_text(html_content)
     assert stripped_text_from_html == 'test!\nok man'
 
+# Assert that non-200's dont give notifications or register as a change
+def test_non_200_doesnt_trigger_change(client, live_server):
+
+    set_original_response()
+    live_server_setup(live_server)
+    # Add our URL to the import page
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": url_for('test_changing_status_code_endpoint', _external=True)},
+        follow_redirects=True
+    )
+
+    assert b"1 Imported" in res.data
+
+    time.sleep(sleep_time_for_fetch_thread)
+
+    # https://github.com/dgtlmoon/changedetection.io/issues/962#issuecomment-1416807742
+    for ecode in ['429', '400', '429', '403', '404', '500']:
+        with open("test-endpoint-status-code.txt", 'w') as f:
+            f.write(ecode)
+
+        res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
+        assert b'1 watches queued for rechecking.' in res.data
+        time.sleep(sleep_time_for_fetch_thread)
+
+        # Should not register as a change
+        res = client.get(url_for("index"))
+        assert b'unviewed' not in res.data
+
+        # load preview page so we can see what was returned
+        res = client.get(url_for("preview_page", uuid="first"))
+#        with open('/tmp/debug-'+ecode+'.html', 'wb') as f:
+#            f.write(res.data)
+
+        # Should still say the original 200, because "ignore_status_codes" should be off by default
+        assert b'code: '+ecode.encode('utf-8') not in res.data
+        assert b'code: 200' in res.data
+
 
 def test_check_basic_change_detection_functionality(client, live_server):
     set_original_response()

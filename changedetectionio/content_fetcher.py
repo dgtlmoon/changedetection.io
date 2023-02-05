@@ -568,7 +568,6 @@ class html_requests(Fetcher):
         if not r.content or not len(r.content):
             raise EmptyReply(url=url, status_code=r.status_code)
 
-        # @todo test this
         # @todo maybe you really want to test zero-byte return pages?
         if r.status_code != 200 and not ignore_status_codes:
             # maybe check with content works?

@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import os.path
 
 from flask import make_response, request
 from flask import url_for
@@ -112,6 +113,22 @@ def live_server_setup(live_server):
         import secrets
         return "Random content - {}\n".format(secrets.token_hex(64))
 
+    @live_server.app.route('/test-changing-status-code-endpoint')
+    def test_changing_status_code_endpoint():
+        # status_code can also be overriden in a file, used for doing things that it wouldnt normally expect
+        # (test_non_200_doesnt_trigger_change)
+        status_code='200'
+        if os.path.isfile("test-endpoint-status-code.txt"):
+            with open("test-endpoint-status-code.txt", 'r') as f:
+                status_code = f.read().strip()
+
+        # Contents includes the status code, which will change and should not trigger a change
+        # (Non-200 should get ignored)
+        with open("test-datastore/endpoint-content.txt", "r") as f:
+            contents ="{} code: {} ".format(f.read(), status_code)
+            resp = make_response(contents, status_code)
+            resp.headers['Content-Type'] = 'text/html'
+            return resp, status_code
 
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
