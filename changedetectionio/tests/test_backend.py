@@ -58,6 +58,10 @@ def test_non_200_doesnt_trigger_change(client, live_server):
 
         assert b'code: 200' in res.data
 
+    # Cleanup everything
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
 def test_check_basic_change_detection_functionality(client, live_server):
     set_original_response()
 
