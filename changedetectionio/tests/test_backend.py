@@ -20,7 +20,7 @@ def test_setup(client, live_server):
 
 # Assert that non-200's dont give notifications or register as a change
 def test_non_200_doesnt_trigger_change(client, live_server):
-    # live_server_setup(live_server)
+  #  live_server_setup(live_server)
 
     set_original_response()
     url = url_for('test_changing_status_code_endpoint', _external=True)
@@ -58,7 +58,7 @@ def test_non_200_doesnt_trigger_change(client, live_server):
     set_modified_response()
 
     # https://github.com/dgtlmoon/changedetection.io/issues/962#issuecomment-1416807742
-    for ecode in ['429', '400', '429', '403', '404', '500']:
+    for ecode in ['429', '400', '204', '429', '403', '404', '500']:
         with open("test-endpoint-status-code.txt", 'w') as f:
             f.write(ecode)
 

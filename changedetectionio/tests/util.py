@@ -127,6 +127,8 @@ def live_server_setup(live_server):
         # (Non-200 should get ignored)
         with open("test-datastore/endpoint-content.txt", "r") as f:
             contents ="{} code: {} ".format(f.read(), status_code)
+            if status_code == '204':
+                contents=''
             resp = make_response(contents, status_code)
             resp.headers['Content-Type'] = 'text/html'
             return resp, status_code
