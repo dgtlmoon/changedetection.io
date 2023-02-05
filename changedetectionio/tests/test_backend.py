@@ -34,8 +34,31 @@ def test_non_200_doesnt_trigger_change(client, live_server):
 
     time.sleep(sleep_time_for_fetch_thread)
 
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={
+                "include_filters": ".foobar-detection",
+                "fetch_backend": "html_requests",
+                "headers": "",
+                "proxy": "proxy-two",
+                "tag": "",
+                "url": url_for('test_changing_status_code_endpoint', _external=True),
+              },
+        follow_redirects=True
+    )
+
+    # A recheck will happen here automatically
+    time.sleep(sleep_time_for_fetch_thread)
+
+    # hit the mark all viewed link
+    res = client.get(url_for("mark_all_viewed"), follow_redirects=True)
+
+
+    # Now be sure the filter is missing and then recheck it
+    set_modified_response()
+
     # https://github.com/dgtlmoon/changedetection.io/issues/962#issuecomment-1416807742
-    for ecode in ['200', '429', '400', '429', '403', '404', '500']:
+    for ecode in ['429', '400', '429', '403', '404', '500']:
         with open("test-endpoint-status-code.txt", 'w') as f:
             f.write(ecode)
 
