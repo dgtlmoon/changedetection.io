@@ -41,7 +41,6 @@ services:
   #
   #        Base URL of your changedetection.io install (Added to the notification alert)
   #      - BASE_URL=https://mysite.com
-
   #        Respect proxy_pass type settings, `proxy_set_header Host "localhost";` and `proxy_set_header X-Forwarded-Prefix /app;`
   #        More here https://github.com/dgtlmoon/changedetection.io/wiki/Running-changedetection.io-behind-a-reverse-proxy-sub-directory
   #      - USE_X_SETTINGS=1
@@ -95,7 +94,10 @@ services:
 #            - CHROME_REFRESH_TIME=600000
 #            - DEFAULT_BLOCK_ADS=true
 #            - DEFAULT_STEALTH=true
-
+#
+#             Ignore HTTPS errors, like for self-signed certs
+#            - DEFAULT_IGNORE_HTTPS_ERRORS=true
+#
 volumes:
   changedetection-data:
 
