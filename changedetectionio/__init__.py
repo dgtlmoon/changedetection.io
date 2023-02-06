@@ -36,7 +36,7 @@ from flask import (
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.40.1.1'
+__version__ = '0.40.2'
 
 datastore = None
 
@@ -53,7 +53,6 @@ app = Flask(__name__,
             static_url_path="",
             static_folder="static",
             template_folder="templates")
-from flask_compress import Compress
 
 # Super handy for compressing large BrowserSteps responses and others
 FlaskCompress(app)
@@ -892,8 +891,9 @@ def changedetection_app(config=None, datastore_o=None):
 
         system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
 
-        is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
-                    watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
+        is_html_webdriver = False
+        if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver':
+            is_html_webdriver = True
 
         password_enabled_and_share_is_off = False
         if datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False):
