@@ -26,6 +26,12 @@ class TestDiffBuilder(unittest.TestCase):
         self.assertIn('(removed) for having learned computerese,', output)
         self.assertIn('(removed) I continue to examine bits, bytes and words', output)
 
+        # UTF-8 test, show failure
+        output = diff.render_diff(previous_file=base_dir + "/test-content/before.txt",
+                                  newest_file=base_dir + "/test-content/after-3.txt")
+        output = output.split("\n")
+        print(output)
+
         # @todo test blocks of changed, blocks of added, blocks of removed
 
 if __name__ == '__main__':
