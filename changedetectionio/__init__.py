@@ -505,41 +505,6 @@ def changedetection_app(config=None, datastore_o=None):
         output = render_template("clear_all_history.html")
         return output
 
-
-    # If they edited an existing watch, we need to know to reset the current/previous md5 to include
-    # the excluded text.
-    def get_current_checksum_include_ignore_text(uuid):
-
-        import hashlib
-
-        from changedetectionio import fetch_site_status
-
-        # Get the most recent one
-        newest_history_key = datastore.data['watching'][uuid].get('newest_history_key')
-
-        # 0 means that theres only one, so that there should be no 'unviewed' history available
-        if newest_history_key == 0:
-            newest_history_key = list(datastore.data['watching'][uuid].history.keys())[0]
-
-        if newest_history_key:
-            with open(datastore.data['watching'][uuid].history[newest_history_key],
-                      encoding='utf-8') as file:
-                raw_content = file.read()
-
-                handler = fetch_site_status.perform_site_check(datastore=datastore)
-                stripped_content = html_tools.strip_ignore_text(raw_content,
-                                                             datastore.data['watching'][uuid]['ignore_text'])
-
-                if datastore.data['settings']['application'].get('ignore_whitespace', False):
-                    checksum = hashlib.md5(stripped_content.translate(None, b'\r\n\t ')).hexdigest()
-                else:
-                    checksum = hashlib.md5(stripped_content).hexdigest()
-
-                return checksum
-
-        return datastore.data['watching'][uuid]['previous_md5']
-
-
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     @login_optionally_required
     # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
@@ -946,7 +911,7 @@ def changedetection_app(config=None, datastore_o=None):
         is_html_webdriver = False
         if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver':
             is_html_webdriver = True
-            
+
         # Never requested successfully, but we detected a fetch error
         if datastore.data['watching'][uuid].history_n == 0 and (watch.get_error_text() or watch.get_error_snapshot()):
             flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
