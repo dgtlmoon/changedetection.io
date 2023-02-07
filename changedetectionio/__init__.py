@@ -943,9 +943,10 @@ def changedetection_app(config=None, datastore_o=None):
         extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
 
 
-        is_html_webdriver = True if watch.get('fetch_backend') == 'html_webdriver' or (
-                watch.get('fetch_backend', None) is None and system_uses_webdriver) else False
-
+        is_html_webdriver = False
+        if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver':
+            is_html_webdriver = True
+            
         # Never requested successfully, but we detected a fetch error
         if datastore.data['watching'][uuid].history_n == 0 and (watch.get_error_text() or watch.get_error_snapshot()):
             flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
