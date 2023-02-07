@@ -153,7 +153,9 @@ class model(dict):
     @property
     def is_pdf(self):
         # content_type field is set in the future
-        return '.pdf' in self.get('url', '').lower() or 'pdf' in self.get('content_type', '').lower()
+        # https://github.com/dgtlmoon/changedetection.io/issues/1392
+        # Not sure the best logic here
+        return self.get('url', '').lower().endswith('.pdf') or 'pdf' in self.get('content_type', '').lower()
 
     @property
     def label(self):
