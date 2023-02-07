@@ -30,11 +30,13 @@ class TestDiffBuilder(unittest.TestCase):
         output = diff.render_diff(previous_file=base_dir + "/test-content/before.txt",
                                   newest_file=base_dir + "/test-content/after-3.txt")
         output = output.split("\n")
-        self.assertIn('(removed) After twenty years, as cursed as I may be', output)
-        self.assertIn('(removed) for having learned computerese,', output)
-        self.assertIn('(removed) I continue to examine bits, bytes and words', output)
-        self.assertIn('(removed) ok', output)
-        self.assertIn("(removed) and insure that I'm one of those computer nerds.", output)
+        output.sort()
+        expected = ['(removed) After twenty years, as cursed as I may be',
+                    '(removed) for having learned computerese,',
+                    '(removed) I continue to examine bits, bytes and words','(removed) ok'
+            ,"(removed) and insure that I'm one of those computer nerds."]
+        expected.sort()
+        self.assertEqual(output,expected)
 
         # @todo test blocks of changed, blocks of added, blocks of removed
 
