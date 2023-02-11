@@ -1036,7 +1036,8 @@ def changedetection_app(config=None, datastore_o=None):
             os.unlink(previous_backup_filename)
 
         # create a ZipFile object
-        backupname = "changedetection-backup-{}.zip".format(int(time.time()))
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        backupname = "changedetection-backup-{}.zip".format(timestamp)
         backup_filepath = os.path.join(datastore_o.datastore_path, backupname)
 
         with zipfile.ZipFile(backup_filepath, "w",

@@ -1,0 +1,55 @@
+diff --git a/changedetectionio/content_fetcher.py b/changedetectionio/content_fetcher.py
+index 475e90c5..843a273e 100644
+--- a/changedetectionio/content_fetcher.py
++++ b/changedetectionio/content_fetcher.py
+@@ -122,6 +122,15 @@ class Fetcher():
+         # Should set self.error, self.status_code and self.content
+         pass
+ 
++    def restock_status(self):
++        x=1
++
++    def extracted_price(self):
++        x=1
++
++    def run_all_js_extractions(self):
++        x=1
++
+     @abstractmethod
+     def quit(self):
+         return
+diff --git a/changedetectionio/fetch_site_status.py b/changedetectionio/fetch_site_status.py
+index 04b57367..0ef63fbf 100644
+--- a/changedetectionio/fetch_site_status.py
++++ b/changedetectionio/fetch_site_status.py
+@@ -199,6 +199,13 @@ class perform_site_check():
+         if watch.get('track_ldjson_price_data', '') == PRICE_DATA_TRACK_ACCEPT:
+             include_filters_rule.append(html_tools.LD_JSON_PRODUCT_OFFER_SELECTOR)
+ 
++        # maybe run them all in playwright, return it in the `fetcher` object
++        if watch.get('pluggable_logic_rules', []):
++            # Run some JS and parse it back through Python
++            # I think we want to empty the content and append a joined list of results from these processors
++            #
++            x=1
++
+         has_filter_rule = include_filters_rule and len("".join(include_filters_rule).strip())
+         has_subtractive_selectors = subtractive_selectors and len(subtractive_selectors[0].strip())
+ 
+diff --git a/changedetectionio/pluggable_filters/__init__.py b/changedetectionio/pluggable_filters/__init__.py
+index e69de29b..e6f0d975 100644
+--- a/changedetectionio/pluggable_filters/__init__.py
++++ b/changedetectionio/pluggable_filters/__init__.py
+@@ -0,0 +1,11 @@
++class pluggable_js_filter():
++    # Test it against the page, could be JS? means its possible to enable
++    def plugin_name(self):
++        return 'restock check'
++
++    def could_be_active(self):
++        return False
++
++    def get_value(self):
++        # ie "In-stock" "out-of-stock"
++        return ''
+\ No newline at end of file
