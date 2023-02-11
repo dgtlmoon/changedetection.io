@@ -7,7 +7,7 @@ from copy import deepcopy
 from os import path, unlink
 from threading import Lock
 import json
-import logging
+from loguru import logger
 import os
 import re
 import requests
@@ -75,12 +75,12 @@ class ChangeDetectionStore:
                 for uuid, watch in self.__data['watching'].items():
                     watch['uuid']=uuid
                     self.__data['watching'][uuid] = Watch.model(datastore_path=self.datastore_path, default=watch)
-                    print("Watching:", uuid, self.__data['watching'][uuid]['url'])
+                    logger.info("Watching: {} - {}", uuid, self.__data['watching'][uuid]['url'])
 
         # First time ran, Create the datastore.
         except (FileNotFoundError):
             if include_default_watches:
-                print("No JSON DB found at {}, creating JSON store at {}".format(self.json_store_path, self.datastore_path))
+                logger.info("No JSON DB found at {}, creating JSON store at {}".format(self.json_store_path, self.datastore_path))
                 self.add_watch(url='https://news.ycombinator.com/',
                                tag='Tech news',
                                extras={'fetch_backend': 'html_requests'})
@@ -303,7 +303,7 @@ class ChangeDetectionStore:
                             apply_extras['include_filters'] = [res['css_filter']]
 
             except Exception as e:
-                logging.error("Error fetching metadata for shared watch link", url, str(e))
+                logger.error("Error fetching metadata for shared watch link", url, str(e))
                 flash("Error fetching metadata for {}".format(url), 'error')
                 return False
         from .model.Watch import is_safe_url
@@ -388,14 +388,13 @@ class ChangeDetectionStore:
 
 
     def sync_to_json(self):
-        logging.info("Saving JSON..")
-        print("Saving JSON..")
+        logger.debug("Saving JSON DB")
         try:
             data = deepcopy(self.__data)
         except RuntimeError as e:
             # Try again in 15 seconds
             time.sleep(15)
-            logging.error ("! Data changed when writing to JSON, trying again.. %s", str(e))
+            logger.error ("! Data changed when writing to JSON, trying again.. %s", str(e))
             self.sync_to_json()
             return
         else:
@@ -408,7 +407,7 @@ class ChangeDetectionStore:
                     json.dump(data, json_file, indent=4)
                 os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
-                logging.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
+                logger.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
 
             self.needs_write = False
             self.needs_write_urgent = False
@@ -419,7 +418,7 @@ class ChangeDetectionStore:
 
         while True:
             if self.stop_thread:
-                print("Shutting down datastore thread")
+                logger.info("Shutting down datastore thread")
                 return
 
             if self.needs_write or self.needs_write_urgent:
@@ -533,8 +532,8 @@ class ChangeDetectionStore:
                 try:
                     update_method = getattr(self, "update_{}".format(update_n))()
                 except Exception as e:
-                    print("Error while trying update_{}".format((update_n)))
-                    print(e)
+                    logger.error("Error while trying update_{}".format((update_n)))
+                    logger.error(str(e))
                     # Don't run any more updates
                     return
                 else:

@@ -69,8 +69,6 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
     url = url_for('test_notification_endpoint', _external=True)
     notification_url = url.replace('http', 'json')
 
-    print(">>>> Notification URL: " + notification_url)
-
     # Just a regular notification setting, this will be used by the special 'filter not found' notification
     notification_form_data = {"notification_urls": notification_url,
                               "notification_title": "New ChangeDetection.io Notification - {{watch_url}}",

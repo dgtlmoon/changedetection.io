@@ -12,7 +12,7 @@ from functools import wraps
 from threading import Event
 import datetime
 import flask_login
-import logging
+from loguru import logger
 import os
 import pytz
 import queue
@@ -1317,7 +1317,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
         except Exception as e:
-            logging.error("Error sharing -{}".format(str(e)))
+            logger.error("Error sharing -{}".format(str(e)))
             flash("Could not share, something went wrong while communicating with the share server - {}".format(str(e)), 'error')
 
         # https://changedetection.io/share/VrMv05wpXyQa
@@ -1392,7 +1392,7 @@ def notification_runner():
                 sent_obj = notification.process_notification(n_object, datastore)
 
             except Exception as e:
-                logging.error("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
+                logger.error("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
 
                 # UUID wont be present when we submit a 'test' from the global settings
                 if 'uuid' in n_object:
@@ -1415,7 +1415,7 @@ def ticker_thread_check_time_launch_checks():
     proxy_last_called_time = {}
 
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 20))
-    print("System env MINIMUM_SECONDS_RECHECK_TIME", recheck_time_minimum_seconds)
+    logger.info("System env MINIMUM_SECONDS_RECHECK_TIME - {}", recheck_time_minimum_seconds)
 
     # Spin up Workers that do the fetching
     # Can be overriden by ENV or use the default settings
@@ -1460,7 +1460,7 @@ def ticker_thread_check_time_launch_checks():
             now = time.time()
             watch = datastore.data['watching'].get(uuid)
             if not watch:
-                logging.error("Watch: {} no longer present.".format(uuid))
+                logger.error("Watch: {} no longer present.".format(uuid))
                 continue
 
             # No need todo further processing if it's paused
@@ -1493,7 +1493,7 @@ def ticker_thread_check_time_launch_checks():
                             time_since_proxy_used = int(time.time() - proxy_last_used_time)
                             if time_since_proxy_used < proxy_list_reuse_time_minimum:
                                 # Not enough time difference reached, skip this watch
-                                print("> Skipped UUID {} using proxy '{}', not enough time between proxy requests {}s/{}s".format(uuid,
+                                logger.info("> Skipped UUID {} using proxy '{}', not enough time between proxy requests {}s/{}s".format(uuid,
                                                                                                                          watch_proxy,
                                                                                                                          time_since_proxy_used,
                                                                                                                          proxy_list_reuse_time_minimum))
@@ -1504,7 +1504,7 @@ def ticker_thread_check_time_launch_checks():
 
                     # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
                     priority = int(time.time())
-                    print(
+                    logger.info(
                         "> Queued watch UUID {} last checked at {} queued at {:0.2f} priority {} jitter {:0.2f}s, {:0.2f}s since last checked".format(
                             uuid,
                             watch['last_checked'],

@@ -24,7 +24,7 @@
 from distutils.util import strtobool
 from flask import Blueprint, request, make_response
 import os
-import logging
+from loguru import logger
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio import login_optionally_required
 browsersteps_live_ui_o = {}
@@ -49,7 +49,7 @@ def cleanup_playwright_session():
     browsersteps_playwright_browser_interface_end_time = None
     browsersteps_playwright_browser_interface_start_time = None
 
-    print("Cleaning up old playwright session because time was up, calling .goodbye()")
+    logger.info("Cleaning up old playwright session because time was up, calling .goodbye()")
     try:
         browsersteps_playwright_browser_interface_context.goodbye()
     except Exception as e:
@@ -114,7 +114,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 this_session = browsersteps_live_ui_o.get(browsersteps_session_id)
                 if not this_session:
-                    print("Browser exited")
+                    logger.info("Browser exited")
                     return make_response('Browser session ran out of time :( Please reload this page.', 401)
 
                 this_session.call_action(action_name=step_operation,
@@ -122,7 +122,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                          optional_value=step_optional_value)
 
             except Exception as e:
-                print("Exception when calling step operation", step_operation, str(e))
+                logger.info("Exception when calling step operation", step_operation, str(e))
                 # Try to find something of value to give back to the user
                 return make_response(str(e).splitlines()[0], 401)
 
@@ -139,7 +139,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if request.method == 'GET':
 
             if not browsersteps_playwright_browser_interface:
-                print("Starting connection with playwright")
+                logger.info("Starting connection with playwright")
                 logging.debug("browser_steps.py connecting")
 
                 global browsersteps_playwright_browser_interface_context
@@ -162,7 +162,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                         return make_response('Unable to start the Playwright session properly, is it running?', 401)
 
                 browsersteps_playwright_browser_interface_end_time = time.time() + (seconds_keepalive-3)
-                print("Starting connection with playwright - done")
+                logger.info("Starting connection with playwright - done")
 
             if not browsersteps_live_ui_o.get(browsersteps_session_id):
                 # Boot up a new session
@@ -172,7 +172,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     proxy_url = datastore.proxy_list.get(proxy_id).get('url')
                     if proxy_url:
                         proxy = {'server': proxy_url}
-                        print("Browser Steps: UUID {} Using proxy {}".format(uuid, proxy_url))
+                        logger.info("Browser Steps: UUID {} Using proxy {}".format(uuid, proxy_url))
 
                 # Begin the new "Playwright Context" that re-uses the playwright interface
                 # Each session is a "Playwright Context" as a list, that uses the playwright interface

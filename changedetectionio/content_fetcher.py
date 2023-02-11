@@ -2,7 +2,7 @@ import hashlib
 from abc import abstractmethod
 import chardet
 import json
-import logging
+from loguru import logger
 import os
 import requests
 import sys
@@ -155,7 +155,7 @@ class Fetcher():
 
             for step in valid_steps:
                 step_n += 1
-                print(">> Iterating check - browser Step n {} - {}...".format(step_n, step['operation']))
+                logger.info(">> Iterating check - browser Step n {} - {}...".format(step_n, step['operation']))
                 self.screenshot_step("before-"+str(step_n))
                 self.save_step_html("before-"+str(step_n))
                 try:
@@ -510,7 +510,7 @@ class base_html_webdriver(Fetcher):
             try:
                 self.driver.quit()
             except Exception as e:
-                print("Content Fetcher > Exception in chrome shutdown/quit" + str(e))
+                logger.error("Content Fetcher > Exception in chrome shutdown/quit" + str(e))
 
 
 # "html_requests" is listed as the default fetcher in store.py!

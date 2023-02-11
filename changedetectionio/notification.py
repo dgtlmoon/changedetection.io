@@ -101,7 +101,7 @@ def process_notification(n_object, datastore):
         apobj = apprise.Apprise(debug=True, asset=asset)
         url = url.strip()
         if len(url):
-            print(">> Process Notification: AppRise notifying {}".format(url))
+            logger.info(">> Process Notification: AppRise notifying {}".format(url))
             with apprise.LogCapture(level=apprise.logging.DEBUG) as logs:
                 # Re 323 - Limit discord length to their 2000 char limit total or it wont send.
                 # Because different notifications may require different pre-processing, run each sequentially :(

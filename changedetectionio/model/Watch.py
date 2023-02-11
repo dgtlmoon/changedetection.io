@@ -1,5 +1,5 @@
 from distutils.util import strtobool
-import logging
+from loguru import logger
 import os
 import re
 import time
@@ -109,7 +109,7 @@ class model(dict):
 
     def ensure_data_dir_exists(self):
         if not os.path.isdir(self.watch_data_dir):
-            print ("> Creating data dir {}".format(self.watch_data_dir))
+            logger.debug("> Creating data dir {}".format(self.watch_data_dir))
             os.mkdir(self.watch_data_dir)
 
     @property
@@ -194,7 +194,7 @@ class model(dict):
         # Read the history file as a dict
         fname = os.path.join(self.watch_data_dir, "history.txt")
         if os.path.isfile(fname):
-            logging.debug("Reading history index " + str(time.time()))
+            logger.debug("UUID: {} Reading history index".format(self.get('uuid')))
             with open(fname, "r") as f:
                 for i in f.readlines():
                     if ',' in i:

@@ -51,7 +51,7 @@ class steppable_browser_interface():
         if call_action_name == 'choose_one':
             return
 
-        print("> action calling", call_action_name)
+        logger.info("> action calling", call_action_name)
         # https://playwright.dev/python/docs/selectors#xpath-selectors
         if selector.startswith('/') and not selector.startswith('//'):
             selector = "xpath=" + selector
@@ -70,7 +70,7 @@ class steppable_browser_interface():
 
         action_handler(selector, optional_value)
         self.page.wait_for_timeout(3 * 1000)
-        print("Call action done in", time.time() - now)
+        logger.info("Call action done in", time.time() - now)
 
     def action_goto_url(self, url, optional_value):
         # self.page.set_viewport_size({"width": 1280, "height": 5000})
@@ -81,7 +81,7 @@ class steppable_browser_interface():
         # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
         # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
         # This seemed to solve nearly all 'TimeoutErrors'
-        print("Time to goto URL ", time.time() - now)
+        logger.info("Time to goto URL ", time.time() - now)
 
     def action_click_element_containing_text(self, selector=None, value=''):
         if not len(value.strip()):
@@ -100,14 +100,14 @@ class steppable_browser_interface():
         self.page.evaluate(value)
 
     def action_click_element(self, selector, value):
-        print("Clicking element")
+        logger.info("Clicking element")
         if not len(selector.strip()):
             return
         self.page.click(selector, timeout=10 * 1000, delay=randint(200, 500))
 
     def action_click_element_if_exists(self, selector, value):
         import playwright._impl._api_types as _api_types
-        print("Clicking element if exists")
+        logger.info("Clicking element if exists")
         if not len(selector.strip()):
             return
         try:
@@ -207,13 +207,13 @@ class browsersteps_live_ui(steppable_browser_interface):
             self.mark_as_closed,
         )
         # Listen for all console events and handle errors
-        self.page.on("console", lambda msg: print(f"Browser steps console - {msg.type}: {msg.text} {msg.args}"))
+        self.page.on("console", lambda msg: logger.info(f"Browser steps console - {msg.type}: {msg.text} {msg.args}"))
 
-        print("Time to browser setup", time.time() - now)
+        logger.info("Time to browser setup", time.time() - now)
         self.page.wait_for_timeout(1 * 1000)
 
     def mark_as_closed(self):
-        print("Page closed, cleaning up..")
+        logger.info("Page closed, cleaning up..")
 
     @property
     def has_expired(self):
@@ -239,7 +239,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         xpath_data = self.page.evaluate("async () => {" + xpath_element_js + "}")
         # So the JS will find the smallest one first
         xpath_data['size_pos'] = sorted(xpath_data['size_pos'], key=lambda k: k['width'] * k['height'], reverse=True)
-        print("Time to complete get_current_state of browser", time.time() - now)
+        logger.info("Time to complete get_current_state of browser", time.time() - now)
         # except
         # playwright._impl._api_types.Error: Browser closed.
         # @todo show some countdown timer?

@@ -1,6 +1,6 @@
 import hashlib
 import json
-import logging
+from loguru import logger
 import os
 import re
 import urllib3
@@ -105,7 +105,7 @@ class perform_site_check():
         proxy_url = None
         if proxy_id:
             proxy_url = self.datastore.proxy_list.get(proxy_id).get('url')
-            print("UUID {} Using proxy {}".format(uuid, proxy_url))
+            logger.info("UUID {} Using proxy {}".format(uuid, proxy_url))
 
         fetcher = klass(proxy_override=proxy_url)
 
@@ -135,7 +135,7 @@ class perform_site_check():
 
         # Track the content type
         update_obj['content_type'] = fetcher.headers.get('Content-Type', '')
-
+        logger.info("UUID: {} - Fetch complete {:,} bytes".format(watch.get('uuid'), len(fetcher.content)))
         # Watches added automatically in the queue manager will skip if its the same checksum as the previous run
         # Saves a lot of CPU
         update_obj['previous_md5_before_filters'] = hashlib.md5(fetcher.content.encode('utf-8')).hexdigest()
@@ -349,6 +349,7 @@ class perform_site_check():
 
         # The main thing that all this at the moment comes down to :)
         if watch.get('previous_md5') != fetched_md5:
+            logger.debug("UUID: {} - Change detected - Prev MD5: {} - Fetched MD5: {}, applying filters...".format(uuid, watch.get('previous_md5'), fetched_md5))
             changed_detected = True
 
         # Looks like something changed, but did it match all the rules?
@@ -366,10 +367,10 @@ class perform_site_check():
                 has_unique_lines = watch.lines_contain_something_unique_compared_to_history(lines=stripped_text_from_html.splitlines())
                 # One or more lines? unsure?
                 if not has_unique_lines:
-                    logging.debug("check_unique_lines: UUID {} didnt have anything new setting change_detected=False".format(uuid))
+                    logger.debug("check_unique_lines: UUID {} didnt have anything new setting change_detected=False".format(uuid))
                     changed_detected = False
                 else:
-                    logging.debug("check_unique_lines: UUID {} had unique content".format(uuid))
+                    logger.debug("check_unique_lines: UUID {} had unique content".format(uuid))
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5
@@ -377,5 +378,10 @@ class perform_site_check():
         # On the first run of a site, watch['previous_md5'] will be None, set it the current one.
         if not watch.get('previous_md5'):
             watch['previous_md5'] = fetched_md5
+
+        if changed_detected:
+            logger.success("UUID: {} Change detected after all filters applied.", uuid)
+        else:
+            logger.info("UUID: {} NO Change detected after all filters applied.", uuid)
 
         return changed_detected, update_obj, text_content_before_ignored_filter

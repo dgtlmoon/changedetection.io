@@ -8,6 +8,7 @@ from json.decoder import JSONDecodeError
 import eventlet
 import eventlet.wsgi
 import getopt
+from loguru import logger
 import os
 import signal
 import socket
@@ -24,7 +25,7 @@ def sigterm_handler(_signo, _stack_frame):
     global app
     global datastore
 #    app.config.exit.set()
-    print('Shutdown: Got SIGTERM, DB saved to disk')
+    logger.warning('Shutdown: Got SIGTERM, DB saved to disk')
     datastore.sync_to_json()
 #    raise SystemExit
 

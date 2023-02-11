@@ -10,6 +10,7 @@ inscriptis~=2.2
 pytz
 timeago~=1.0
 validators
+loguru
 
 # Set these versions together to avoid a RequestsDependencyWarning
 # >= 2.26 also adds Brotli support if brotli is installed
