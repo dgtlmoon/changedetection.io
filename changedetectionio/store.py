@@ -571,7 +571,7 @@ class ChangeDetectionStore:
                         with open(os.path.join(target_path, "history.txt"), "w") as f:
                             f.writelines(history)
                     else:
-                        logging.warning("Datastore history directory {} does not exist, skipping history import.".format(target_path))
+                        logger.warning("Datastore history directory {} does not exist, skipping history import.".format(target_path))
 
                 # No longer needed, dynamically pulled from the disk when needed.
                 # But we should set it back to a empty dict so we don't break if this schema runs on an earlier version.
