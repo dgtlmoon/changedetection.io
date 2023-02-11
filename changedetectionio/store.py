@@ -192,27 +192,24 @@ class ChangeDetectionStore:
         tags.sort()
         return tags
 
-    def unlink_history_file(self, path):
-        try:
-            unlink(path)
-        except (FileNotFoundError, IOError):
-            pass
-
     # Delete a single watch by UUID
     def delete(self, uuid):
+        import pathlib
+        import shutil
+
         with self.lock:
             if uuid == 'all':
                 self.__data['watching'] = {}
 
                 # GitHub #30 also delete history records
                 for uuid in self.data['watching']:
-                    for path in self.data['watching'][uuid].history.values():
-                        self.unlink_history_file(path)
+                    path = pathlib.Path(os.path.join(self.datastore_path, uuid))
+                    shutil.rmtree(path)
+                    self.needs_write_urgent = True
 
             else:
-                for path in self.data['watching'][uuid].history.values():
-                    self.unlink_history_file(path)
-
+                path = pathlib.Path(os.path.join(self.datastore_path, uuid))
+                shutil.rmtree(path)
                 del self.data['watching'][uuid]
 
             self.needs_write_urgent = True
