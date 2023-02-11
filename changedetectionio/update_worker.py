@@ -244,8 +244,9 @@ class update_worker(threading.Thread):
                         process_changedetection_results = True
 
                     except content_fetcher.checksumFromPreviousCheckWasTheSame as e:
-                        # Yes fine, so nothing todo
-                        pass
+                        # Yes fine, so nothing todo, don't continue to process.
+                        process_changedetection_results = False
+                        changed_detected = False
 
                     except content_fetcher.BrowserStepsStepTimout as e:
 
