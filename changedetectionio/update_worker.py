@@ -319,15 +319,14 @@ class update_worker(threading.Thread):
                     # Different exceptions mean that we may or may not want to bump the snapshot, trigger notifications etc
                     if process_changedetection_results:
                         try:
-                            watch = self.datastore.data['watching'][uuid]
-                            fname = "" # Saved history text filename
-
-                            # For the FIRST time we check a site, or a change detected, save the snapshot.
-                            if changed_detected or not watch['last_checked']:
-                                # A change was detected
-                                watch.save_history_text(contents=contents, timestamp=str(round(time.time())))
-
+                            watch = self.datastore.data['watching'].get(uuid)
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
+
+                            # Also save the snapshot on the first time checked
+                            if changed_detected or not watch['last_checked']:
+                                watch.save_history_text(contents=contents,
+                                                        timestamp=str(round(time.time())),
+                                                        snapshot_id=update_obj.get('previous_md5', 'none'))
 
                             # A change was detected
                             if changed_detected:
