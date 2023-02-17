@@ -241,7 +241,7 @@ class model(dict):
 
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
-    def save_history_text(self, contents, timestamp):
+    def save_history_text(self, contents, timestamp, snapshot_id):
 
         self.ensure_data_dir_exists()
 
@@ -250,13 +250,16 @@ class model(dict):
         if self.__newest_history_key and int(timestamp) == int(self.__newest_history_key):
             time.sleep(timestamp - self.__newest_history_key)
 
-        snapshot_fname = "{}.txt".format(str(uuid.uuid4()))
+        snapshot_fname = f"{snapshot_id}.txt"
 
-        # in /diff/ and /preview/ we are going to assume for now that it's UTF-8 when reading
-        # most sites are utf-8 and some are even broken utf-8
-        with open(os.path.join(self.watch_data_dir, snapshot_fname), 'wb') as f:
-            f.write(contents)
-            f.close()
+        # Only write if it does not exist, this is so that we dont bother re-saving the same data by checksum under different filenames.
+        dest = os.path.join(self.watch_data_dir, snapshot_fname)
+        if not os.path.exists(dest):
+            # in /diff/ and /preview/ we are going to assume for now that it's UTF-8 when reading
+            # most sites are utf-8 and some are even broken utf-8
+            with open(dest, 'wb') as f:
+                f.write(contents)
+                f.close()
 
         # Append to index
         # @todo check last char was \n
