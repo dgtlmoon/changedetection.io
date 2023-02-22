@@ -131,6 +131,16 @@ class WatchHistory(Resource):
     # Get a list of available history for a watch by UUID
     # curl http://localhost:4000/api/v1/watch/<string:uuid>/history
     def get(self, uuid):
+        """
+        @api {get} /api/v1/watch/<string:uuid>/history Get a list of all historical snapshots available for a watch
+        @apiDescription Requires `uuid`, returns list
+        @apiExample {curl} Example usage:
+            curl http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/history/1677092977 -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json"
+        @apiName Get list of available stored snapshots for watch
+        @apiGroup Watch History
+        @apiSuccess (200) {String} OK
+        @apiSuccess (404) {String} ERR Not found
+        """
         watch = self.datastore.data['watching'].get(uuid)
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
@@ -142,11 +152,18 @@ class WatchSingleHistory(Resource):
         # datastore is a black box dependency
         self.datastore = kwargs['datastore']
 
-    # Read a given history snapshot and return its content
-    # <string:timestamp> or "latest"
-    # curl http://localhost:4000/api/v1/watch/<string:uuid>/history/<int:timestamp>
     @auth.check_token
     def get(self, uuid, timestamp):
+        """
+        @api {get} /api/v1/watch/<string:uuid>/history/<int:timestamp> Get single snapshot from watch
+        @apiDescription Requires `uuid` and `timestamp`, list of available snapshots can be found out XYZ, `timestamp` of `latest` to get the latest available.
+        @apiExample {curl} Example usage:
+            curl http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/history/1677092977 -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json"
+        @apiName Get single snapshot content
+        @apiGroup Watch History
+        @apiSuccess (200) {String} OK
+        @apiSuccess (404) {String} ERR Not found
+        """
         watch = self.datastore.data['watching'].get(uuid)
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
@@ -157,6 +174,7 @@ class WatchSingleHistory(Resource):
         if timestamp == 'latest':
             timestamp = list(watch.history.keys())[-1]
 
+        # @todo - Check for UTF-8 compatability
         with open(watch.history[timestamp], 'r') as f:
             content = f.read()
 
@@ -180,7 +198,7 @@ class CreateWatch(Resource):
         @apiExample {curl} Example usage:
             curl http://localhost:4000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "nice list"}'
         @apiName Create
-        @apiGroup CreateWatch
+        @apiGroup Watch Management
         @apiSuccess (200) {String} OK Was created
         @apiSuccess (500) {String} ERR Some other error
         """
@@ -211,7 +229,7 @@ class CreateWatch(Resource):
     @auth.check_token
     def get(self):
         """
-        @api {get} /api/v1/watch
+        @api {get} /api/v1/watch List watches
         @apiDescription Return concise list of available watches and some very basic info
         @apiExample {curl} Example usage:
             curl http://localhost:4000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45"
@@ -219,9 +237,8 @@ class CreateWatch(Resource):
         @apiParam {String} [recheck_all]       Optional Set to =1 to force recheck of all watches
         @apiParam {String} [tag]               Optional name of tag to limit results
         @apiName ListWatches
-        @apiGroup CreateWatch
-
-        :return:
+        @apiGroup Watch Management
+        @apiSuccess (200) {String} OK Was created
         """
         list = {}
 
