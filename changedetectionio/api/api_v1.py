@@ -233,12 +233,28 @@ class CreateWatch(Resource):
         @apiDescription Return concise list of available watches and some very basic info
         @apiExample {curl} Example usage:
             curl http://localhost:4000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-            recheck_all=1 to recheck all
+            {
+                "6a4b7d5c-fee4-4616-9f43-4ac97046b595": {
+                    "last_changed": 1677103794,
+                    "last_checked": 1677103794,
+                    "last_error": false,
+                    "title": "",
+                    "url": "http://www.quotationspage.com/random.php"
+                },
+                "e6f5fd5c-dbfe-468b-b8f3-f9d6ff5ad69b": {
+                    "last_changed": 0,
+                    "last_checked": 1676662819,
+                    "last_error": false,
+                    "title": "QuickLook",
+                    "url": "https://github.com/QL-Win/QuickLook/tags"
+                }
+            }
+
         @apiParam {String} [recheck_all]       Optional Set to =1 to force recheck of all watches
         @apiParam {String} [tag]               Optional name of tag to limit results
         @apiName ListWatches
         @apiGroup Watch Management
-        @apiSuccess (200) {String} OK Was created
+        @apiSuccess (200) {String} OK JSON dict
         """
         list = {}
 
