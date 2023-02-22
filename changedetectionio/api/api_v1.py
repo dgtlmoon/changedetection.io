@@ -33,7 +33,7 @@ class Watch(Resource):
     @auth.check_token
     def get(self, uuid):
         """
-        @api {get} /api/v1/watch/:uuid Single watch information
+        @api {get} /api/v1/watch/:uuid Get a single watch data
         @apiDescription Retrieve watch information and set muted/paused status
         @apiExample {curl} Example usage:
             curl http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091  -H"x-api-key:813031b16330fe25e3780cf0325daa45"
@@ -76,7 +76,7 @@ class Watch(Resource):
     @auth.check_token
     def delete(self, uuid):
         """
-        @api {delete} /api/v1/watch/:uuid Delete watch information
+        @api {delete} /api/v1/watch/:uuid Delete a watch and related history
         @apiExample {curl} Example usage:
             curl http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X DELETE -H"x-api-key:813031b16330fe25e3780cf0325daa45"
         @apiParam {uuid} uuid Watch unique ID.
@@ -90,21 +90,18 @@ class Watch(Resource):
         self.datastore.delete(uuid)
         return 'OK', 204
 
-    # Update an existing
     @auth.check_token
     @expects_json(schema_update_watch)
     def put(self, uuid):
         """
         @api {put} /api/v1/watch/:uuid Update watch information
         @apiExample {curl} Example usage:
-            Create a watch (POST)
-            curl http://localhost:4000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "nice list"}'
             Update (PUT)
             curl http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X PUT -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "new list"}'
 
-        @apiDescription Updates an existing watch using JSON, accepts the same structure as at https://github.com/dgtlmoon/changedetection.io/blob/fab7d325f764d6912bef671f1d78bf217689c537/changedetectionio/model/Watch.py#L15
+        @apiDescription Updates an existing watch using JSON, accepts the same structure as returned in <a href="#api-Watch-Watch">get single watch information</a>
         @apiParam {uuid} uuid Watch unique ID.
-        @apiName Update
+        @apiName Update a watch
         @apiGroup Watch
         @apiSuccess (200) {String} OK Was updated
         @apiSuccess (500) {String} ERR Some other error
@@ -135,7 +132,7 @@ class WatchHistory(Resource):
         @api {get} /api/v1/watch/<string:uuid>/history Get a list of all historical snapshots available for a watch
         @apiDescription Requires `uuid`, returns list
         @apiExample {curl} Example usage:
-            curl http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/history/1677092977 -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json"
+            curl http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/history -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json"
         @apiName Get list of available stored snapshots for watch
         @apiGroup Watch History
         @apiSuccess (200) {String} OK
@@ -156,7 +153,7 @@ class WatchSingleHistory(Resource):
     def get(self, uuid, timestamp):
         """
         @api {get} /api/v1/watch/<string:uuid>/history/<int:timestamp> Get single snapshot from watch
-        @apiDescription Requires `uuid` and `timestamp`, list of available snapshots can be found out XYZ, `timestamp` of `latest` to get the latest available.
+        @apiDescription Requires watch `uuid` and `timestamp`. `timestamp` of "`latest`" for latest available snapshot, or <a href="#api-Watch_History-Get_list_of_available_stored_snapshots_for_watch">use the list returned here</a>
         @apiExample {curl} Example usage:
             curl http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/history/1677092977 -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json"
         @apiName Get single snapshot content
@@ -193,20 +190,18 @@ class CreateWatch(Resource):
     @expects_json(schema_create_watch)
     def post(self):
         """
-        @api {post} /api/v1/watch Create a watch
-        @apiDescription requires `url`, Creates a watch, also accepts accepts the same structure as at https://github.com/dgtlmoon/changedetection.io/blob/fab7d325f764d6912bef671f1d78bf217689c537/changedetectionio/model/Watch.py#L15
+        @api {post} /api/v1/watch Create a single watch
+        @apiDescription Requires atleast `url` set, can accept the same structure as <a href="#api-Watch-Watch">get single watch information</a> to create.
         @apiExample {curl} Example usage:
             curl http://localhost:4000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "nice list"}'
         @apiName Create
-        @apiGroup Watch Management
+        @apiGroup Watch
         @apiSuccess (200) {String} OK Was created
         @apiSuccess (500) {String} ERR Some other error
         """
 
-        #
         json_data = request.get_json()
         url = json_data['url'].strip()
-
 
         if not validators.url(json_data['url'].strip()):
             return "Invalid or unsupported URL", 400
