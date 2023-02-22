@@ -133,6 +133,11 @@ class WatchHistory(Resource):
         @apiDescription Requires `uuid`, returns list
         @apiExample {curl} Example usage:
             curl http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/history -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json"
+            {
+                "1676649279": "/tmp/data/6a4b7d5c-fee4-4616-9f43-4ac97046b595/cb7e9be8258368262246910e6a2a4c30.txt",
+                "1677092785": "/tmp/data/6a4b7d5c-fee4-4616-9f43-4ac97046b595/e20db368d6fc633e34f559ff67bb4044.txt",
+                "1677103794": "/tmp/data/6a4b7d5c-fee4-4616-9f43-4ac97046b595/02efdd37dacdae96554a8cc85dc9c945.txt"
+            }
         @apiName Get list of available stored snapshots for watch
         @apiGroup Watch History
         @apiSuccess (200) {String} OK
