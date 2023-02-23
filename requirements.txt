@@ -31,7 +31,7 @@ dnspython<2.3.0
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise~=1.2.1
+apprise~=1.3.0
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 paho-mqtt
