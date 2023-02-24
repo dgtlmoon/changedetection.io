@@ -42,7 +42,7 @@ paho-mqtt
 cryptography~=3.4
 
 # Used for CSS filtering
-bs4
+beautifulsoup4
 
 # XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
 lxml
