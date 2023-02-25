@@ -70,7 +70,10 @@ class Watch(Resource):
             return "OK", 200
 
         # Return without history, get that via another API call
+        # Properties are not returned as a JSON, so add the required props manually
         watch['history_n'] = watch.history_n
+        watch['last_changed'] = watch.last_changed
+
         return watch
 
     @auth.check_token
