@@ -212,9 +212,7 @@ class update_worker(threading.Thread):
                         if e.page_text:
                             self.datastore.save_error_text(watch_uuid=uuid, contents=e.page_text)
 
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
-                                                                           # So that we get a trigger when the content is added again
-                                                                           'previous_md5': ''})
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
                         process_changedetection_results = False
 
                     except FilterNotFoundInResponse as e:
@@ -222,9 +220,7 @@ class update_worker(threading.Thread):
                             continue
 
                         err_text = "Warning, no filters were found, no change detection ran."
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
-                                                                           # So that we get a trigger when the content is added again
-                                                                           'previous_md5': ''})
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
 
                         # Only when enabled, send the notification
                         if self.datastore.data['watching'][uuid].get('filter_failure_notification_send', False):
@@ -241,7 +237,7 @@ class update_worker(threading.Thread):
 
                             self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
 
-                        process_changedetection_results = True
+                        process_changedetection_results = False
 
                     except content_fetcher.checksumFromPreviousCheckWasTheSame as e:
                         # Yes fine, so nothing todo, don't continue to process.
@@ -254,9 +250,7 @@ class update_worker(threading.Thread):
                             continue
 
                         err_text = "Warning, browser step at position {} could not run, target not found, check the watch, add a delay if necessary.".format(e.step_n+1)
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
-                                                                           # So that we get a trigger when the content is added again
-                                                                           'previous_md5': ''})
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
 
 
                         if self.datastore.data['watching'][uuid].get('filter_failure_notification_send', False):
@@ -272,6 +266,7 @@ class update_worker(threading.Thread):
                                 c = 0
 
                             self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
+
                         process_changedetection_results = False
 
                     except content_fetcher.EmptyReply as e:
