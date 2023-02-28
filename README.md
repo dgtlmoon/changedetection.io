@@ -63,6 +63,7 @@ Requires Playwright to be enabled.
 - You have a very sensitive list of URLs to watch and you do _not_ want to use the paid alternatives. (Remember, _you_ are the product)
 - Get notified when certain keywords appear in Twitter search results
 - Proactively search for jobs, get notified when companies update their careers page, search job portals for keywords.
+- Get alerts when new job positions are open on Bamboo HR and other job platforms
 
 _Need an actual Chrome runner with Javascript support? We support fetching via WebDriver and Playwright!</a>_
 
