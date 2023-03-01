@@ -49,6 +49,7 @@ Requires Playwright to be enabled.
 - Governmental department updates (changes are often only on their websites)
 - New software releases, security advisories when you're not on their mailing list.
 - Festivals with changes
+- Discogs restock alerts and monitoring
 - Realestate listing changes
 - Know when your favourite whiskey is on sale, or other special deals are announced before anyone else
 - COVID related news from government websites
