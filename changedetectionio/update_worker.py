@@ -78,6 +78,8 @@ class update_worker(threading.Thread):
                 'screenshot': watch.get_screenshot_as_jpeg() if watch.get('notification_screenshot') else None,
                 'current_snapshot': snapshot_contents.decode('utf-8'),
                 'diff': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], line_feed_sep=line_feed_sep),
+                'diff_added': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], False, False, True, line_feed_sep=line_feed_sep),
+                'diff_removed': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], False, True, False, line_feed_sep=line_feed_sep),
                 'diff_full': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], True, line_feed_sep=line_feed_sep)
             })
             logging.info (">> SENDING NOTIFICATION")

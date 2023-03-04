@@ -100,6 +100,8 @@ def test_check_notification(client, live_server):
                                                    "Diff URL: {{diff_url}}\n"
                                                    "Snapshot: {{current_snapshot}}\n"
                                                    "Diff: {{diff}}\n"
+                                                   "Diff Added: {{diff_added}}\n"
+                                                   "Diff Removed: {{diff_removed}}\n"
                                                    "Diff Full: {{diff_full}}\n"
                                                    ":-)",
                               "notification_screenshot": True,
@@ -147,7 +149,7 @@ def test_check_notification(client, live_server):
     assert ':-)' in notification_submission
     assert "Diff Full: Some initial text" in notification_submission
     assert "Diff: (changed) Which is across multiple lines" in notification_submission
-    assert "(into   ) which has this one new line" in notification_submission
+    assert "(into) which has this one new line" in notification_submission
     # Re #342 - check for accidental python byte encoding of non-utf8/string
     assert "b'" not in notification_submission
     assert re.search('Watch UUID: [0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}', notification_submission, re.IGNORECASE)
