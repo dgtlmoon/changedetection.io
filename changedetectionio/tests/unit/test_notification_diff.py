@@ -25,6 +25,21 @@ class TestDiffBuilder(unittest.TestCase):
         output = output.split("\n")
         self.assertIn('(removed) for having learned computerese,', output)
         self.assertIn('(removed) I continue to examine bits, bytes and words', output)
+        
+        #diff_removed
+        output = diff.render_diff(previous_file=base_dir + "/test-content/before.txt", newest_file=base_dir + "/test-content/after.txt", include_equal=False, include_removed=True, include_added=False)
+        output = output.split("\n")
+        self.assertIn('(changed) ok', output)
+        self.assertIn('(into) xok', output)
+        self.assertIn('(into) next-x-ok', output)
+        self.assertNotIn('(added) and something new', output)
+        
+        #diff_removed
+        output = diff.render_diff(previous_file=base_dir + "/test-content/before.txt", newest_file=base_dir + "/test-content/after-2.txt", include_equal=False, include_removed=True, include_added=False)
+        output = output.split("\n")
+        self.assertIn('(removed) for having learned computerese,', output)
+        self.assertIn('(removed) I continue to examine bits, bytes and words', output)
+        
 
         # @todo test blocks of changed, blocks of added, blocks of removed
 
