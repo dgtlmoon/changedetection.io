@@ -31,7 +31,7 @@ def customSequenceMatcher(before, after, include_equal=False, include_removed=Tr
 
 # only_differences - only return info about the differences, no context
 # line_feed_sep could be "<br/>" or "<li>" or "\n" etc
-def render_diff(previous_file, newest_file, include_equal=False, include_removed=True, include_added=True line_feed_sep="\n"):
+def render_diff(previous_file, newest_file, include_equal=False, include_removed=True, include_added=True, line_feed_sep="\n"):
     with open(newest_file, 'r') as f:
         newest_version_file_contents = f.read()
         newest_version_file_contents = [line.rstrip() for line in newest_version_file_contents.splitlines()]
