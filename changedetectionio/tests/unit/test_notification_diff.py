@@ -16,9 +16,9 @@ class TestDiffBuilder(unittest.TestCase):
         output = diff.render_diff(previous_file=base_dir + "/test-content/before.txt", newest_file=base_dir + "/test-content/after.txt")
         output = output.split("\n")
         self.assertIn('(changed) ok', output)
-        self.assertIn('(into   ) xok', output)
-        self.assertIn('(into   ) next-x-ok', output)
-        self.assertIn('(added  ) and something new', output)
+        self.assertIn('(into) xok', output)
+        self.assertIn('(into) next-x-ok', output)
+        self.assertIn('(added) and something new', output)
 
 
         output = diff.render_diff(previous_file=base_dir + "/test-content/before.txt", newest_file=base_dir + "/test-content/after-2.txt")
