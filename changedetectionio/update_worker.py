@@ -4,8 +4,7 @@ import queue
 import time
 
 from changedetectionio import content_fetcher
-from changedetectionio import queuedWatchMetaData
-from changedetectionio.fetch_site_status import FilterNotFoundInResponse
+from .fetchers.text_json_diff import FilterNotFoundInResponse
 
 # A single update worker
 #
@@ -153,7 +152,7 @@ class update_worker(threading.Thread):
                 os.unlink(full_path)
 
     def run(self):
-        from changedetectionio import fetch_site_status
+        from .fetchers import text_json_diff as fetch_site_status
 
         update_handler = fetch_site_status.perform_site_check(datastore=self.datastore)
 
