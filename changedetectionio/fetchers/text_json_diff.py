@@ -1,3 +1,5 @@
+# HTML to TEXT/JSON DIFFERENCE FETCHER
+
 import hashlib
 import json
 import logging

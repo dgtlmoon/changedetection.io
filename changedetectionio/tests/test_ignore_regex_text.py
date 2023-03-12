@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 
-import time
-from flask import url_for
 from . util import live_server_setup
 from changedetectionio import html_tools
 
@@ -11,7 +9,7 @@ def test_setup(live_server):
 # Unit test of the stripper
 # Always we are dealing in utf-8
 def test_strip_regex_text_func():
-    from changedetectionio import fetch_site_status
+    from ..fetchers import text_json_diff as fetch_site_status
 
     test_content = """
     but sometimes we want to remove the lines.
