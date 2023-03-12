@@ -106,8 +106,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
             if step_operation == 'Goto site':
                 step_operation = 'goto_url'
-                step_optional_value = None
-                step_selector = datastore.data['watching'][uuid].get('url')
+                step_optional_value = datastore.data['watching'][uuid].get('url')
+                step_selector = None
 
             # @todo try.. accept.. nice errors not popups..
             try:

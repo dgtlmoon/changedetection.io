@@ -25,6 +25,7 @@ browser_step_ui_config = {'Choose one': '0 0',
                           'Execute JS': '0 1',
 #                          'Extract text and use as filter': '1 0',
                           'Goto site': '0 0',
+                          'Goto URL': '0 1',
                           'Press Enter': '0 0',
                           'Select by label': '1 1',
                           'Scroll down': '0 0',
@@ -54,7 +55,7 @@ class steppable_browser_interface():
 
         print("> action calling", call_action_name)
         # https://playwright.dev/python/docs/selectors#xpath-selectors
-        if selector.startswith('/') and not selector.startswith('//'):
+        if selector and selector.startswith('/') and not selector.startswith('//'):
             selector = "xpath=" + selector
 
         action_handler = getattr(self, "action_" + call_action_name)
@@ -73,10 +74,10 @@ class steppable_browser_interface():
         self.page.wait_for_timeout(3 * 1000)
         print("Call action done in", time.time() - now)
 
-    def action_goto_url(self, url, optional_value):
+    def action_goto_url(self, selector, value):
         # self.page.set_viewport_size({"width": 1280, "height": 5000})
         now = time.time()
-        response = self.page.goto(url, timeout=0, wait_until='commit')
+        response = self.page.goto(value, timeout=0, wait_until='commit')
 
         # Wait_until = commit
         # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
