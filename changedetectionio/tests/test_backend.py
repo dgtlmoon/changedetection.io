@@ -82,7 +82,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
     assert b'<rss' in res.data
 
     # re #16 should have the diff in here too
-    assert b'(into   ) which has this one new line' in res.data
+    assert b'(into) which has this one new line' in res.data
     assert b'CDATA' in res.data
 
     assert expected_url.encode('utf-8') in res.data
