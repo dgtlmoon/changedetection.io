@@ -21,7 +21,7 @@ def test_html_to_text_func():
 
     no_links_text = \
         "Some initial text\n\nWhich is across multiple " \
-        "lines\n\nMore Text So let's see what happens. Even More Text"
+        "lines\n\nMore Text\nSo let's see what happens.\nEven More Text"
 
     # check that no links are in the extracted text
     assert text_content == no_links_text
@@ -31,7 +31,7 @@ def test_html_to_text_func():
 
     links_text = \
         "Some initial text\n\nWhich is across multiple lines\n\n[ More Text " \
-        "](/first_link) So let's see what happens. [ Even More Text ]" \
+        "](/first_link)\nSo let's see what happens.\n[ Even More Text ]" \
         "(second_link.com)"
 
     # check that links are present in the extracted text
