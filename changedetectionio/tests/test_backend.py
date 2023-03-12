@@ -11,7 +11,7 @@ sleep_time_for_fetch_thread = 3
 # Basic test to check inscriptus is not adding return line chars, basically works etc
 def test_inscriptus():
     from inscriptis import get_text
-    html_content = "<html><body>test!<br/>ok man</body></html>"
+    html_content = "<html><body>test!<br>ok man</body></html>"
     stripped_text_from_html = get_text(html_content)
     assert stripped_text_from_html == 'test!\nok man'
 

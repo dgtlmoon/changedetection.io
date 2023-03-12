@@ -49,8 +49,8 @@
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.url, placeholder="https://...", required=true, class="m-d") }}
-                        <span class="pure-form-message-inline">Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a></span><br/>
-                        <span class="pure-form-message-inline">You can use variables in the URL, perfect for inserting the current date and other logic, <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a></span><br/>
+                        <span class="pure-form-message-inline">Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a></span><br>
+                        <span class="pure-form-message-inline">You can use variables in the URL, perfect for inserting the current date and other logic, <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a></span><br>
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.title, class="m-d") }}
@@ -106,10 +106,10 @@
                         {{ render_field(form.webdriver_delay) }}
                         <div class="pure-form-message-inline">
                             <strong>If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here.</strong>
-                            <br/>
+                            <br>
                             This will wait <i>n</i> seconds before extracting the text.
                             {% if using_global_webdriver_wait %}
-                            <br/><strong>Using the current global default settings</strong>
+                            <br><strong>Using the current global default settings</strong>
                             {% endif %}
                         </div>
                     </div>
@@ -216,7 +216,7 @@ User-Agent: wonderbra 1.0") }}
 
             <div class="tab-pane-inner" id="filters-and-triggers">
                     <div class="pure-control-group">
-                            <strong>Pro-tips:</strong><br/>
+                            <strong>Pro-tips:</strong><br>
                             <ul>
                                 <li>
                                     Use the preview page to see your filters and triggers highlighted.
@@ -241,9 +241,9 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                         %}
                         {{ field }}
                         {% if '/text()' in  field %}
-                          <span class="pure-form-message-inline"><strong>Note!: //text() function does not work where the &lt;element&gt; contains &lt;![CDATA[]]&gt;</strong></span><br/>
+                          <span class="pure-form-message-inline"><strong>Note!: //text() function does not work where the &lt;element&gt; contains &lt;![CDATA[]]&gt;</strong></span><br>
                         {% endif %}
-                        <span class="pure-form-message-inline">One rule per line, <i>any</i> rules that matches will be used.<br/>
+                        <span class="pure-form-message-inline">One rule per line, <i>any</i> rules that matches will be used.<br>
 
                     <ul>
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
@@ -266,7 +266,7 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                             </li>
                     </ul>
                     Please be sure that you thoroughly understand how to write CSS, JSONPath, XPath{% if jq_support %}, or jq selector{%endif%} rules before filing an issue on GitHub! <a
-                                href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br/>
+                                href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br>
                 </span>
                     </div>
                     <div class="pure-control-group">
@@ -334,7 +334,7 @@ Unavailable") }}
                         <li>Extracts text in the final output (line by line) after other filters using regular expressions;
                             <ul>
                                 <li>Regular expression &dash; example <code>/reports.+?2022/i</code></li>
-                                <li>Use <code>//(?aiLmsux))</code> type flags (more <a href="https://docs.python.org/3/library/re.html#index-15">information here</a>)<br/></li>
+                                <li>Use <code>//(?aiLmsux))</code> type flags (more <a href="https://docs.python.org/3/library/re.html#index-15">information here</a>)<br></li>
                                 <li>Keyword example &dash; example <code>Out of stock</code></li>
                                 <li>Use groups to extract just that text &dash; example <code>/reports.+?(\d+)/i</code> returns a list of years only</li>
                             </ul>
@@ -353,7 +353,7 @@ Unavailable") }}
                     <div class="pure-control-group">
                         {% if visualselector_enabled %}
                             <span class="pure-form-message-inline">
-                                The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection &dash; after the <i>Browser Steps</i> has completed.<br/><br/>
+                                The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection &dash; after the <i>Browser Steps</i> has completed.<br><br>
                             </span>
 
                             <div id="selector-header">

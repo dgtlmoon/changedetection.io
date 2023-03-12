@@ -8,10 +8,10 @@ from . util import live_server_setup
 def set_original_ignore_response():
     test_return_data = """<html>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      </body>
      </html>
 
@@ -72,7 +72,7 @@ def test_trigger_regex_functionality(client, live_server):
     assert b'unviewed' not in res.data
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
-        f.write("regex test123<br/>\nsomething 123")
+        f.write("regex test123<br>\nsomething 123")
 
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(sleep_time_for_fetch_thread)

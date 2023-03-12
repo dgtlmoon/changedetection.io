@@ -65,7 +65,7 @@ class update_worker(threading.Thread):
         if 'notification_urls' in n_object and n_object['notification_urls']:
             # HTML needs linebreak, but MarkDown and Text can use a linefeed
             if n_object['notification_format'] == 'HTML':
-                line_feed_sep = "</br>"
+                line_feed_sep = "<br>"
             else:
                 line_feed_sep = "\n"
 

@@ -8,7 +8,7 @@ import json
 import re
 
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
-TEXT_FILTER_LIST_LINE_SUFFIX = "<br/>"
+TEXT_FILTER_LIST_LINE_SUFFIX = "<br>"
 
 # 'price' , 'lowPrice', 'highPrice' are usually under here
 # all of those may or may not appear on different websites

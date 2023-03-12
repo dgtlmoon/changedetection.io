@@ -8,10 +8,10 @@ from changedetectionio import html_tools
 def set_original_ignore_response():
     test_return_data = """<html>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      </body>
      </html>
 
@@ -24,10 +24,10 @@ def set_original_ignore_response():
 def set_modified_original_ignore_response():
     test_return_data = """<html>
        <body>
-     Some NEW nice initial text</br>
+     Some NEW nice initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      <p>new ignore stuff</p>
      <p>out of stock</p>
      <p>blah</p>
@@ -44,11 +44,11 @@ def set_modified_original_ignore_response():
 def set_modified_response_minus_block_text():
     test_return_data = """<html>
        <body>
-     Some NEW nice initial text</br>
+     Some NEW nice initial text<br>
      <p>Which is across multiple lines</p>
      <p>now on sale $2/p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      <p>new ignore stuff</p>
      <p>blah</p>
      </body>

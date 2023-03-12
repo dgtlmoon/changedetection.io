@@ -7,10 +7,10 @@ from .util import live_server_setup, extract_UUID_from_client, extract_api_key_f
 def set_response_with_ldjson():
     test_return_data = """<html>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      <div class="sametext">Some text thats the same</div>
      <div class="changetext">Some text that will change</div>
      <script type="application/ld+json">
@@ -61,10 +61,10 @@ def set_response_with_ldjson():
 def set_response_without_ldjson():
     test_return_data = """<html>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      <div class="sametext">Some text thats the same</div>
      <div class="changetext">Some text that will change</div>     
      </body>

@@ -361,7 +361,7 @@ def changedetection_app(config=None, datastore_o=None):
                 fe.title(title=watch_title)
                 latest_fname = watch.history[dates[-1]]
 
-                html_diff = diff.render_diff(prev_fname, latest_fname, include_equal=False, line_feed_sep="</br>")
+                html_diff = diff.render_diff(prev_fname, latest_fname, include_equal=False, line_feed_sep="<br>")
                 fe.content(content="<html><body><h4>{}</h4>{}</body></html>".format(watch_title, html_diff),
                            type='CDATA')
 

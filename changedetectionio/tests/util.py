@@ -9,10 +9,10 @@ def set_original_response():
     test_return_data = """<html>
     <head><title>head title</title></head>
     <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      <span class="foobar-detection" style='display:none'></span>
      </body>
      </html>
@@ -26,10 +26,10 @@ def set_modified_response():
     test_return_data = """<html>
     <head><title>modified head title</title></head>
     <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>which has this one new line</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      </body>
      </html>
     """
@@ -43,11 +43,11 @@ def set_more_modified_response():
     test_return_data = """<html>
     <head><title>modified head title</title></head>
     <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>which has this one new line</p>
-     </br>
-     So let's see what happens.  </br>
-     Ohh yeah awesome<br/>
+     <br>
+     So let's see what happens.  <br>
+     Ohh yeah awesome<br>
      </body>
      </html>
     """

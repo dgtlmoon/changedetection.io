@@ -40,7 +40,7 @@
                     <div class="pure-control-group">
                         {{ render_field(form.application.form.filter_failure_notification_threshold_attempts, class="filter_failure_notification_threshold_attempts") }}
                         <span class="pure-form-message-inline">After this many consecutive times that the CSS/xPath filter is missing, send a notification
-                            <br/>
+                            <br>
                         Set to <strong>0</strong> to disable
                         </span>
                     </div>
@@ -66,7 +66,7 @@
                         {{ render_field(form.application.form.base_url, placeholder="http://yoursite.com:5000/",
                         class="m-d") }}
                         <span class="pure-form-message-inline">
-                            Base URL used for the <code>{{ '{{ base_url }}' }}</code> token in notifications and RSS links.<br/>Default value is the ENV var 'BASE_URL' (Currently "{{settings_application['current_base_url']}}"),
+                            Base URL used for the <code>{{ '{{ base_url }}' }}</code> token in notifications and RSS links.<br>Default value is the ENV var 'BASE_URL' (Currently "{{settings_application['current_base_url']}}"),
                             <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Configurable-BASE_URL-setting">read more here</a>.
                         </span>
                     </div>
@@ -105,13 +105,13 @@
                         <p>Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render.</p>
                         <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
                     </span>
-                    <br/>
+                    <br>
                     Tip: <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">Connect using BrightData Proxies, find out more here.</a>
                 </div>
                 <fieldset class="pure-group" id="webdriver-override-options">
                     <div class="pure-form-message-inline">
                         <strong>If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here.</strong>
-                        <br/>
+                        <br>
                         This will wait <i>n</i> seconds before extracting the text.
                     </div>
                     <div class="pure-control-group">
@@ -124,14 +124,14 @@
 
                     <fieldset class="pure-group">
                     {{ render_checkbox_field(form.application.form.ignore_whitespace) }}
-                    <span class="pure-form-message-inline">Ignore whitespace, tabs and new-lines/line-feeds when considering if a change was detected.<br/>
+                    <span class="pure-form-message-inline">Ignore whitespace, tabs and new-lines/line-feeds when considering if a change was detected.<br>
                     <i>Note:</i> Changing this will change the status of your existing watches, possibly trigger alerts etc.
                     </span>
                     </fieldset>
                 <fieldset class="pure-group">
                     {{ render_checkbox_field(form.application.form.render_anchor_tag_content) }}
                     <span class="pure-form-message-inline">Render anchor tag content, default disabled, when enabled renders links as <code>(link text)[https://somesite.com]</code>
-                        <br/>
+                        <br>
                     <i>Note:</i> Changing this could affect the content of your existing watches, possibly trigger alerts etc.
                     </span>
                     </fieldset>
@@ -151,7 +151,7 @@ nav
                     {{ render_field(form.application.form.global_ignore_text, rows=5, placeholder="Some text to ignore in a line
 /some.regex\d{2}/ for case-INsensitive regex
                     ") }}
-                    <span class="pure-form-message-inline">Note: This is applied globally in addition to the per-watch rules.</span><br/>
+                    <span class="pure-form-message-inline">Note: This is applied globally in addition to the per-watch rules.</span><br>
                     <span class="pure-form-message-inline">
                         <ul>
                             <li>Note: This is applied globally in addition to the per-watch rules.</li>
@@ -170,8 +170,8 @@ nav
 
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.api_access_token_enabled) }}
-                    <div class="pure-form-message-inline">Restrict API access limit by using <code>x-api-key</code> header</div><br/>
-                    <div class="pure-form-message-inline"><br/>API Key <span id="api-key">{{api_key}}</span>
+                    <div class="pure-form-message-inline">Restrict API access limit by using <code>x-api-key</code> header</div><br>
+                    <div class="pure-form-message-inline"><br>API Key <span id="api-key">{{api_key}}</span>
                         <span style="display:none;" id="api-key-copy" >copy</span>
                     </div>
                 </div>
@@ -181,7 +181,7 @@ nav
                 <p><strong>Tip</strong>: You can connect to websites using <a href="https://brightdata.grsm.io/n0r16zf7eivq">BrightData</a> proxies, their service <strong>WebUnlocker</strong> will solve most CAPTCHAs, whilst their <strong>Residential Proxies</strong> may help to avoid CAPTCHA altogether. </p>
                 <p>It may be easier to try <strong>WebUnlocker</strong> first, WebUnlocker also supports country selection.</p>
                 <p>
-                    When you have <a href="https://brightdata.grsm.io/n0r16zf7eivq">registered</a>, enabled the required services, visit the <A href="https://brightdata.com/cp/api_example?">API example page</A>, then select <strong>Python</strong>, set the country you wish to use, then copy+paste the example URL below<br/>
+                    When you have <a href="https://brightdata.grsm.io/n0r16zf7eivq">registered</a>, enabled the required services, visit the <A href="https://brightdata.com/cp/api_example?">API example page</A>, then select <strong>Python</strong>, set the country you wish to use, then copy+paste the example URL below<br>
                     The Proxy URL with BrightData should start with <code>http://brd-customer...</code>
                 </p>
 

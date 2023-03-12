@@ -11,10 +11,10 @@ from changedetectionio.model import App
 def set_response_without_filter():
     test_return_data = """<html>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      <div id="nope-doesnt-exist">Some text thats the same</div>     
      </body>
      </html>
@@ -28,10 +28,10 @@ def set_response_without_filter():
 def set_response_with_filter():
     test_return_data = """<html>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      <div class="ticket-available">Ticket now on sale!</div>     
      </body>
      </html>
