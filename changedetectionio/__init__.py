@@ -1168,7 +1168,8 @@ def changedetection_app(config=None, datastore_o=None):
 
         new_uuid = datastore.clone(uuid)
         if new_uuid:
-            update_q.put(queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid, 'skip_when_checksum_same': True}))
+            if not datastore.data['watching'].get(uuid).get('paused'):
+                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid, 'skip_when_checksum_same': True}))
             flash('Cloned.')
 
         return redirect(url_for('index'))
