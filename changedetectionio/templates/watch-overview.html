@@ -20,6 +20,9 @@
                     {{ render_simple_field(form.watch_submit_button, title="Watch this URL!" ) }}
                     {{ render_simple_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
                 </div>
+                <div>
+                    {{ render_simple_field(form.processor, title="Edit first then Watch") }}
+                </div>
             </div>
         </fieldset>
         <span style="color:#eee; font-size: 80%;"><img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread-white.svg')}}" /> Tip: You can also add 'shared' watches. <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">More info</a></a></span>

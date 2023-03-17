@@ -4,7 +4,7 @@ import queue
 import time
 
 from changedetectionio import content_fetcher
-from .fetchers.text_json_diff import FilterNotFoundInResponse
+from .processors.text_json_diff import FilterNotFoundInResponse
 
 # A single update worker
 #
@@ -152,9 +152,9 @@ class update_worker(threading.Thread):
                 os.unlink(full_path)
 
     def run(self):
-        from .fetchers import text_json_diff as fetch_site_status
+        from .processors import text_json_diff, restock_diff
 
-        update_handler = fetch_site_status.perform_site_check(datastore=self.datastore)
+        update_handler = restock_diff.perform_site_check(datastore=self.datastore)
 
         while not self.app.config.exit.is_set():
 

@@ -511,8 +511,9 @@ def changedetection_app(config=None, datastore_o=None):
     # https://wtforms.readthedocs.io/en/3.0.x/forms/#wtforms.form.Form.populate_obj ?
 
     def edit_page(uuid):
-        from changedetectionio import forms
-        from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
+        from . import forms
+        from .blueprint.browser_steps.browser_steps import browser_step_ui_config
+        from . import processors
 
         using_default_check_time = True
         # More for testing, possible to return the first/only
@@ -633,6 +634,7 @@ def changedetection_app(config=None, datastore_o=None):
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and is_html_webdriver
 
             output = render_template("edit.html",
+                                     available_processors=processors.available_processors(),
                                      browser_steps_config=browser_step_ui_config,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
