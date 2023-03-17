@@ -15,7 +15,7 @@ from . import difference_detection_processor
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-name =  'Default text, JSON and PDF difference'
+name =  'Webpage Text/HTML, JSON and PDF difference'
 description = 'Detects all text changes where possible'
 
 class FilterNotFoundInResponse(ValueError):

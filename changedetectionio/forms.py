@@ -345,12 +345,11 @@ class ValidateCSSJSONXPATHInput(object):
 
 class quickWatchForm(Form):
     from . import processors
-    available_processors = processors.available_processors(),
 
     url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional()])
     watch_submit_button = SubmitField('Watch', render_kw={"class": "pure-button pure-button-primary"})
-    processor = RadioField(u'Fetch Method', choices=available_processors, default='text_json_diff')
+    processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
     edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
 
 

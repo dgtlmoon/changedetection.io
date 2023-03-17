@@ -19,8 +19,6 @@ class difference_detection_processor():
 
 def available_processors():
     from . import restock_diff, text_json_diff
+    x=[('text_json_diff', text_json_diff.name), ('restock_diff', restock_diff.name)]
     # @todo Make this smarter with introspection of sorts.
-    return {
-        'restock_diff': {'name': restock_diff.name, 'description': restock_diff.description},
-        'text_json-diff': {'name': text_json_diff.name, 'description': text_json_diff.description}
-    }
+    return x
