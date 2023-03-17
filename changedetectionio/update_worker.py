@@ -154,7 +154,6 @@ class update_worker(threading.Thread):
     def run(self):
         from .processors import text_json_diff, restock_diff
 
-        update_handler = restock_diff.perform_site_check(datastore=self.datastore)
 
         while not self.app.config.exit.is_set():
 
@@ -171,11 +170,20 @@ class update_worker(threading.Thread):
                     changed_detected = False
                     contents = b''
                     process_changedetection_results = True
-                    update_obj= {}
-                    print("> Processing UUID {} Priority {} URL {}".format(uuid, queued_item_data.priority, self.datastore.data['watching'][uuid]['url']))
+                    update_obj = {}
+                    print("> Processing UUID {} Priority {} URL {}".format(uuid, queued_item_data.priority,
+                                                                           self.datastore.data['watching'][uuid]['url']))
                     now = time.time()
 
                     try:
+                        processor = self.datastore.data['watching'][uuid].get('processor','text_json_diff')
+
+                        # @todo some way to switch by name
+                        if processor == 'text_json_diff':
+                            update_handler = text_json_diff.perform_site_check(datastore=self.datastore)
+                        elif processor == 'restock_diff':
+                            update_handler = restock_diff.perform_site_check(datastore=self.datastore)
+
                         changed_detected, update_obj, contents = update_handler.run(uuid, skip_when_checksum_same=queued_item_data.item.get('skip_when_checksum_same'))
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
