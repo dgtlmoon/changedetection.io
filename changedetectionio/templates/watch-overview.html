@@ -128,8 +128,11 @@
                     {% endif %}
 
                     {% if watch['processor'] == 'restock_diff'  %}
-                    <span class="tracking-ldjson-price-data" title="detecting restock conditions"> Re-stock detection</span>
-
+                    <span class="tracking-ldjson-price-data" title="detecting restock conditions">
+                        <!-- maybe some object watch['processor'][restock_diff] or.. -->
+                        {% if watch['last_checked'] %}
+                            {% if watch['in_stock'] %} In stock {% else %} Not in stock {% endif %}
+                        {% endif %}
                     {% endif %}
 
                     {% if not active_tag %}
