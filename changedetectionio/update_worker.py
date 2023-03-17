@@ -6,6 +6,7 @@ import time
 from changedetectionio import content_fetcher
 from .processors.text_json_diff import FilterNotFoundInResponse
 
+
 # A single update worker
 #
 # Requests for checking on a single site(watch) from a queue of watches
@@ -152,7 +153,9 @@ class update_worker(threading.Thread):
                 os.unlink(full_path)
 
     def run(self):
+
         from .processors import text_json_diff, restock_diff
+
 
         update_handler = restock_diff.perform_site_check(datastore=self.datastore)
 
