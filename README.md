@@ -102,6 +102,8 @@ $ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/d
 
 `:latest` tag is our latest stable release, `:dev` tag is our bleeding edge `master` branch.
 
+Alternative docker repository over at ghcr - [ghcr.io/dgtlmoon/changedetection.io](https://ghcr.io/dgtlmoon/changedetection.io)
+
 ### Windows
 
 See the install instructions at the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Microsoft-Windows

@@ -13,6 +13,7 @@ def test_setup(live_server):
 def test_strip_text_func():
     from ..processors import text_json_diff as fetch_site_status
 
+
     test_content = """
     Some content
     is listed here
