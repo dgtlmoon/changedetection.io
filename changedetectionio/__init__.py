@@ -531,6 +531,15 @@ def changedetection_app(config=None, datastore_o=None):
             flash("No watch with the UUID %s found." % (uuid), "error")
             return redirect(url_for('index'))
 
+        switch_processor = request.args.get('switch_processor')
+        if switch_processor:
+            for p in processors.available_processors():
+                if p[0] == switch_processor:
+                    datastore.data['watching'][uuid]['processor'] = switch_processor
+                    flash(f"Switched to mode - {p[1]}.")
+                    datastore.clear_watch_history(uuid)
+                    redirect(url_for('edit_page', uuid=uuid))
+
         # be sure we update with a copy instead of accidently editing the live object by reference
         default = deepcopy(datastore.data['watching'][uuid])
 
