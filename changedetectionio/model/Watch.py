@@ -311,22 +311,6 @@ class model(dict):
         # False is not an option for AppRise, must be type None
         return None
 
-    def get_screenshot_as_jpeg(self):
-        # Created by save_screenshot()
-        fname = os.path.join(self.watch_data_dir, "last-screenshot.png")
-        if os.path.isfile(fname):
-            import io
-            # Make a JPEG that's used in notifications (due to being a smaller size) available
-            from PIL import Image
-            im = Image.open(fname)
-            img_byte_arr = io.BytesIO()
-            im.convert('RGB').save(img_byte_arr, format='JPEG', quality=int(os.getenv("NOTIFICATION_SCREENSHOT_JPG_QUALITY", 75)))
-            return img_byte_arr.getvalue()
-
-        # False is not an option for AppRise, must be type None
-        return None
-
-
     def __get_file_ctime(self, filename):
         fname = os.path.join(self.watch_data_dir, filename)
         if os.path.isfile(fname):
