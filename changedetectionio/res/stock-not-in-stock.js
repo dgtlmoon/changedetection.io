@@ -9,7 +9,16 @@ function isItemInStock() {
     'sold out',
     'temporarily unavailable',
     'temporarily out of stock',
+    'aktuell nicht auf lager',
+    'nicht lieferbar',
+    'zur zeit nicht an lager',
+    '0 in stock',
+    'available for back order',
+    'produkt niedostępny',
+    'nicht zur Verfügung',
+    'we do not currently have an estimate of when this product will be back in stock.'
   ];
+
   const elementsWithZeroChildren = Array.from(document.getElementsByTagName('*')).filter(element => element.children.length === 0);
   for (let i = elementsWithZeroChildren.length - 1; i >= 0; i--) {
     const element = elementsWithZeroChildren[i];
