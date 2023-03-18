@@ -1,22 +1,28 @@
 function isItemInStock() {
   // @todo Pass these in so the same list can be used in non-JS fetchers
   const outOfStockTexts = [
-    'out of stock',
+    '0 in stock',
+    'agotado',
+    'artikel zurzeit vergriffen',
+    'available for back order',
     'backordered',
+    'brak w magazynie',
     'coming soon',
     'currently unavailable',
-    'not in stock',
-    'sold out',
-    'temporarily unavailable',
-    'temporarily out of stock',
-    'aktuell nicht auf lager',
+    'message if back in stock',
+    'nicht auf lager',
     'nicht lieferbar',
-    'zur zeit nicht an lager',
-    '0 in stock',
-    'available for back order',
+    'nicht zur verfügung',
+    'no disponible temporalmente',
+    'not in stock',
+    'out of stock',
+    'out-of-stock',
     'produkt niedostępny',
-    'nicht zur Verfügung',
-    'we do not currently have an estimate of when this product will be back in stock.'
+    'sold out',
+    'temporarily out of stock',
+    'temporarily unavailable',
+    'we do not currently have an estimate of when this product will be back in stock.',
+    'zur zeit nicht an lager',
   ];
 
   const elementsWithZeroChildren = Array.from(document.getElementsByTagName('*')).filter(element => element.children.length === 0);
