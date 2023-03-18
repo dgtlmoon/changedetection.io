@@ -78,18 +78,18 @@ class ReplyWithContentButNoText(Exception):
         return
 
 class Fetcher():
-    error = None
-    status_code = None
-    content = None
-    headers = None
     browser_steps = None
     browser_steps_screenshot_path = None
-
+    content = None
+    error = None
     fetcher_description = "No description"
+    headers = None
+    status_code = None
     webdriver_js_execute_code = None
-    xpath_element_js = ""
-
     xpath_data = None
+    xpath_element_js = ""
+    instock_data = None
+    instock_data_js = ""
 
     # Will be needed in the future by the VisualSelector, always get this where possible.
     screenshot = False
@@ -103,6 +103,7 @@ class Fetcher():
         from pkg_resources import resource_string
         # The code that scrapes elements and makes a list of elements/size/position to click on in the VisualSelector
         self.xpath_element_js = resource_string(__name__, "res/xpath_element_scraper.js").decode('utf-8')
+        self.instock_data_js = resource_string(__name__, "res/stock-not-in-stock.js").decode('utf-8')
 
 
     @abstractmethod
@@ -373,7 +374,6 @@ class base_html_playwright(Fetcher):
                 raise EmptyReply(url=url, status_code=response.status)
 
             self.status_code = response.status
-            self.content = self.page.content()
             self.headers = response.all_headers()
 
             # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
@@ -383,6 +383,7 @@ class base_html_playwright(Fetcher):
                 self.page.evaluate("var include_filters=''")
 
             self.xpath_data = self.page.evaluate("async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}")
+            self.instock_data = self.page.evaluate("async () => {" + self.instock_data_js + "}")
 
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it

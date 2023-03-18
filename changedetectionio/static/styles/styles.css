@@ -432,6 +432,9 @@ body:before {
 .button-small {
   font-size: 85%; }
 
+.button-xsmall {
+  font-size: 70%; }
+
 .fetch-error {
   padding-top: 1em;
   font-size: 80%;
@@ -980,3 +983,21 @@ ul {
   display: inline-block;
   height: 0.8rem;
   vertical-align: middle; }
+
+#quick-watch-processor-type {
+  color: #fff; }
+  #quick-watch-processor-type ul {
+    padding: 0.3rem; }
+    #quick-watch-processor-type ul li {
+      list-style: none; }
+
+.restock-label {
+  padding: 3px;
+  border-radius: 3px;
+  white-space: nowrap; }
+  .restock-label.in-stock {
+    background-color: var(--color-background-button-green);
+    color: #fff; }
+  .restock-label.not-in-stock {
+    background-color: var(--color-background-button-cancel);
+    color: #777; }

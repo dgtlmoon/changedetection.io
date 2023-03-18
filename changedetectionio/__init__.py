@@ -64,6 +64,9 @@ app.config.exit = Event()
 
 app.config['NEW_VERSION_AVAILABLE'] = False
 
+if os.getenv('FLASK_SERVER_NAME'):
+    app.config['SERVER_NAME'] = os.getenv('FLASK_SERVER_NAME')
+
 #app.config["EXPLAIN_TEMPLATE_LOADING"] = True
 
 # Disables caching of the templates
@@ -511,8 +514,9 @@ def changedetection_app(config=None, datastore_o=None):
     # https://wtforms.readthedocs.io/en/3.0.x/forms/#wtforms.form.Form.populate_obj ?
 
     def edit_page(uuid):
-        from changedetectionio import forms
-        from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
+        from . import forms
+        from .blueprint.browser_steps.browser_steps import browser_step_ui_config
+        from . import processors
 
         using_default_check_time = True
         # More for testing, possible to return the first/only
@@ -526,6 +530,15 @@ def changedetection_app(config=None, datastore_o=None):
         if not uuid in datastore.data['watching']:
             flash("No watch with the UUID %s found." % (uuid), "error")
             return redirect(url_for('index'))
+
+        switch_processor = request.args.get('switch_processor')
+        if switch_processor:
+            for p in processors.available_processors():
+                if p[0] == switch_processor:
+                    datastore.data['watching'][uuid]['processor'] = switch_processor
+                    flash(f"Switched to mode - {p[1]}.")
+                    datastore.clear_watch_history(uuid)
+                    redirect(url_for('edit_page', uuid=uuid))
 
         # be sure we update with a copy instead of accidently editing the live object by reference
         default = deepcopy(datastore.data['watching'][uuid])
@@ -633,6 +646,7 @@ def changedetection_app(config=None, datastore_o=None):
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and is_html_webdriver
 
             output = render_template("edit.html",
+                                     available_processors=processors.available_processors(),
                                      browser_steps_config=browser_step_ui_config,
                                      current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
@@ -735,6 +749,8 @@ def changedetection_app(config=None, datastore_o=None):
     @login_optionally_required
     def import_page():
         remaining_urls = []
+        from . import forms
+
         if request.method == 'POST':
             from .importer import import_url_list, import_distill_io_json
 
@@ -742,7 +758,7 @@ def changedetection_app(config=None, datastore_o=None):
             if request.values.get('urls') and len(request.values.get('urls').strip()):
                 # Import and push into the queue for immediate update check
                 importer = import_url_list()
-                importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore)
+                importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor'))
                 for uuid in importer.new_uuids:
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
@@ -760,9 +776,12 @@ def changedetection_app(config=None, datastore_o=None):
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
 
-
+        form = forms.importForm(formdata=request.form if request.method == 'POST' else None,
+#                               data=default,
+                               )
         # Could be some remaining, or we could be on GET
         output = render_template("import.html",
+                                 form=form,
                                  import_url_list_remaining="\n".join(remaining_urls),
                                  original_distill_json=''
                                  )
@@ -1126,7 +1145,8 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('index'))
 
         add_paused = request.form.get('edit_and_watch_submit_button') != None
-        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip(), extras={'paused': add_paused})
+        processor = request.form.get('processor', 'text_json_diff')
+        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip(), extras={'paused': add_paused, 'processor': processor})
 
         if new_uuid:
             if add_paused:

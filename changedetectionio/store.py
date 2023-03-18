@@ -287,6 +287,7 @@ class ChangeDetectionStore:
                     'method',
                     'paused',
                     'previous_md5',
+                    'processor',
                     'subtractive_selectors',
                     'tag',
                     'text_should_not_be_present',

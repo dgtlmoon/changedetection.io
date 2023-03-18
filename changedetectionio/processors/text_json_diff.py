@@ -10,9 +10,13 @@ import urllib3
 from changedetectionio import content_fetcher, html_tools
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
 from copy import deepcopy
+from . import difference_detection_processor
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+
+name =  'Webpage Text/HTML, JSON and PDF changes'
+description = 'Detects all text changes where possible'
 
 class FilterNotFoundInResponse(ValueError):
     def __init__(self, msg):
@@ -25,7 +29,7 @@ class PDFToHTMLToolNotFound(ValueError):
 
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
-class perform_site_check():
+class perform_site_check(difference_detection_processor):
     screenshot = None
     xpath_data = None
 
@@ -55,7 +59,7 @@ class perform_site_check():
         watch = deepcopy(self.datastore.data['watching'].get(uuid))
 
         if not watch:
-            return
+            raise Exception("Watch no longer exists.")
 
         # Protect against file:// access
         if re.search(r'^file', watch.get('url', ''), re.IGNORECASE) and not os.getenv('ALLOW_FILE_URI', False):

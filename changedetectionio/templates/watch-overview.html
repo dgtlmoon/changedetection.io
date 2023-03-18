@@ -21,6 +21,10 @@
                     {{ render_simple_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
                 </div>
             </div>
+            <div id="quick-watch-processor-type">
+                {{ render_simple_field(form.processor, title="Edit first then Watch") }}
+            </div>
+
         </fieldset>
         <span style="color:#eee; font-size: 80%;"><img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread-white.svg')}}" /> Tip: You can also add 'shared' watches. <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">More info</a></a></span>
     </form>
@@ -28,12 +32,12 @@
     <form class="pure-form" action="{{ url_for('form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <div id="checkbox-operations">
-        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%"  name="op" value="pause">Pause</button>
-        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%"  name="op" value="unpause">UnPause</button>
-        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%"  name="op" value="mute">Mute</button>
-        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%"  name="op" value="unmute">UnMute</button>
-        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%" name="op" value="recheck">Recheck</button>
-        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%" name="op" value="notification-default">Use default notification</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="pause">Pause</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause">UnPause</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="mute">Mute</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="unmute">UnMute</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="recheck">Recheck</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default">Use default notification</button>
         <button class="pure-button button-secondary button-xsmall" style="background: #dd4242; font-size: 70%" name="op" value="delete">Delete</button>
     </div>
     <div>
@@ -72,7 +76,7 @@
               {% if not ( loop.index >= 3 and loop.index <=4) %}{% continue %}{% endif %} -->
              #}
             <tr id="{{ watch.uuid }}"
-                class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }}
+                class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }} processor-{{ watch['processor'] }}
                 {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
                 {% if watch.last_notification_error is defined and watch.last_notification_error != False %}error{% endif %}
                 {% if watch.paused is defined and watch.paused != False %}paused{% endif %}
@@ -113,12 +117,26 @@
                     {% if watch.last_notification_error is defined and watch.last_notification_error != False %}
                     <div class="fetch-error notification-error"><a href="{{url_for('notification_logs')}}">{{ watch.last_notification_error }}</a></div>
                     {% endif %}
-                    {% if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  %}
-                    <div class="ldjson-price-track-offer">Embedded price data detected, follow only price data? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
+
+                    {% if watch['processor'] == 'text_json_diff'  %}
+                        {% if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  %}
+                        <div class="ldjson-price-track-offer">Embedded price data detected, follow only price data? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
+                        {% endif %}
+                        {% if watch['track_ldjson_price_data'] == 'accepted' %}
+                        <span class="tracking-ldjson-price-data" title="Automatically following embedded price information"><img src="{{url_for('static_content', group='images', filename='price-tag-icon.svg')}}"  class="status-icon price-follow-tag-icon"/> Price</span>
+                        {% endif %}
                     {% endif %}
-                    {% if watch['track_ldjson_price_data'] == 'accepted' %}
-                    <span class="tracking-ldjson-price-data" title="Automatically following embedded price information"><img src="{{url_for('static_content', group='images', filename='price-tag-icon.svg')}}"  class="status-icon price-follow-tag-icon"/> Price</span>
+
+                    {% if watch['processor'] == 'restock_diff'  %}
+                    <span class="restock-label {{'in-stock' if watch['in_stock'] else 'not-in-stock' }}" title="detecting restock conditions">
+                        <!-- maybe some object watch['processor'][restock_diff] or.. -->
+                        {% if watch['last_checked'] %}
+                            {% if watch['in_stock'] %} In stock {% else %} Not in stock {% endif %}
+                        {% else %}
+                            Not yet checked
+                        {% endif %}
                     {% endif %}
+
                     {% if not active_tag %}
                     <span class="watch-tag-list">{{ watch.tag}}</span>
                     {% endif %}

@@ -241,6 +241,10 @@ body:before {
   font-size: 85%;
 }
 
+.button-xsmall {
+  font-size: 70%;
+}
+
 .fetch-error {
   padding-top: 1em;
   font-size: 80%;
@@ -1044,3 +1048,27 @@ ul {
   vertical-align: middle;
 }
 
+
+#quick-watch-processor-type {
+  color: #fff;
+  ul {
+    padding: 0.3rem;
+    li {
+    list-style: none;
+}
+  }
+
+}
+.restock-label {
+  &.in-stock {
+    background-color: var(--color-background-button-green);
+    color: #fff;
+  }
+  &.not-in-stock {
+    background-color: var(--color-background-button-cancel);
+    color: #777;
+  }
+  padding: 3px;
+  border-radius: 3px;
+  white-space: nowrap;
+}

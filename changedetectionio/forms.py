@@ -344,11 +344,13 @@ class ValidateCSSJSONXPATHInput(object):
                     raise ValidationError("A system-error occurred when validating your jq expression")
 
 class quickWatchForm(Form):
+    from . import processors
+
     url = fields.URLField('URL', validators=[validateURL()])
     tag = StringField('Group tag', [validators.Optional()])
     watch_submit_button = SubmitField('Watch', render_kw={"class": "pure-button pure-button-primary"})
+    processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
     edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
-
 
 
 # Common to a single watch and the global settings
@@ -361,6 +363,10 @@ class commonSettingsForm(Form):
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1,
                                                                                                                                     message="Should contain one or more seconds")])
+class importForm(Form):
+    from . import processors
+    processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
+    urls = TextAreaField('URLs')
 
 class SingleBrowserStep(Form):
 
@@ -394,6 +400,8 @@ class watchForm(commonSettingsForm):
     method = SelectField('Request method', choices=valid_method, default=default_method)
     ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
     check_unique_lines = BooleanField('Only trigger when new lines appear', default=False)
+    in_stock_only = BooleanField('Only trigger when product goes BACK to in-stock', default=True)
+
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)

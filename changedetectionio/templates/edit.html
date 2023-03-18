@@ -34,8 +34,15 @@
             {% if playwright_enabled %}
             <li class="tab"><a id="browsersteps-tab" href="#browser-steps">Browser Steps</a></li>
             {% endif %}
+
+            {% if watch['processor'] == 'text_json_diff' %}
             <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
+            {% endif %}
+
+            {% if watch['processor'] == 'restock_diff' %}
+            <li class="tab"><a href="#restock">Restock Detection</a></li>
+            {% endif %}
             <li class="tab"><a href="#notifications">Notifications</a></li>
         </ul>
     </div>
@@ -51,6 +58,16 @@
                         {{ render_field(form.url, placeholder="https://...", required=true, class="m-d") }}
                         <span class="pure-form-message-inline">Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a></span><br>
                         <span class="pure-form-message-inline">You can use variables in the URL, perfect for inserting the current date and other logic, <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a></span><br>
+                        <span class="pure-form-message-inline">
+                        {% if watch['processor'] == 'text_json_diff' %}
+                            Current mode: <strong>Webpage Text/HTML, JSON and PDF changes.</strong><br>
+                          <a href="{{url_for('edit_page', uuid=uuid)}}?switch_processor=restock_diff" class="pure-button button-xsmall">Switch to re-stock detection mode.</a>
+                        {% else %}
+                        Current mode: <strong>Re-stock detection.</strong><br>
+                          <a href="{{url_for('edit_page', uuid=uuid)}}?switch_processor=text_json_diff" class="pure-button button-xsmall">Switch to Webpage Text/HTML, JSON and PDF changes mode.</a>
+                        {% endif %}
+                        </span>
+
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.title, class="m-d") }}
@@ -214,6 +231,7 @@ User-Agent: wonderbra 1.0") }}
                 </fieldset>
             </div>
 
+            {% if watch['processor'] == 'text_json_diff' %}
             <div class="tab-pane-inner" id="filters-and-triggers">
                     <div class="pure-control-group">
                             <strong>Pro-tips:</strong><br>
@@ -345,7 +363,20 @@ Unavailable") }}
                     </div>
                 </fieldset>
             </div>
+            {% endif %}
 
+            {% if watch['processor'] == 'restock_diff' %}
+            <div class="tab-pane-inner" id="restock">
+                    <fieldset>
+                        <div class="pure-control-group">
+                            {{ render_checkbox_field(form.in_stock_only) }}
+                            <span class="pure-form-message-inline">Only trigger notifications when page changes from <strong>out of stock</strong> to <strong>back in stock</strong></span>
+                        </div>
+                    </fieldset>
+            </div>
+            {% endif %}
+
+            {% if watch['processor'] == 'text_json_diff' %}
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
                 <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
 
@@ -378,6 +409,7 @@ Unavailable") }}
                     </div>
                 </fieldset>
             </div>
+            {% endif %}
 
             <div id="actions">
                 <div class="pure-control-group">
