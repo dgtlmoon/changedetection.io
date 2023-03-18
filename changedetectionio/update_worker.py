@@ -180,10 +180,11 @@ class update_worker(threading.Thread):
                         processor = self.datastore.data['watching'][uuid].get('processor','text_json_diff')
 
                         # @todo some way to switch by name
-                        if processor == 'text_json_diff':
-                            update_handler = text_json_diff.perform_site_check(datastore=self.datastore)
-                        elif processor == 'restock_diff':
+                        if processor == 'restock_diff':
                             update_handler = restock_diff.perform_site_check(datastore=self.datastore)
+                        else:
+                            # Used as a default and also by some tests
+                            update_handler = text_json_diff.perform_site_check(datastore=self.datastore)
 
                         changed_detected, update_obj, contents = update_handler.run(uuid, skip_when_checksum_same=queued_item_data.item.get('skip_when_checksum_same'))
                         # Re #342
