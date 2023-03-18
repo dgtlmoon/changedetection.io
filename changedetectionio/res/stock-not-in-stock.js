@@ -7,9 +7,13 @@ function isItemInStock() {
     'available for back order',
     'backordered',
     'brak w magazynie',
+    'brak na stanie',
     'coming soon',
     'currently unavailable',
+    'en rupture de stock',
+    'as soon as stock is available',
     'message if back in stock',
+    'nachricht bei',
     'nicht auf lager',
     'nicht lieferbar',
     'nicht zur verfügung',
@@ -17,7 +21,9 @@ function isItemInStock() {
     'not in stock',
     'out of stock',
     'out-of-stock',
+    'não estamos a aceitar encomendas',
     'produkt niedostępny',
+    'no longer in stock',
     'sold out',
     'temporarily out of stock',
     'temporarily unavailable',
@@ -29,7 +35,13 @@ function isItemInStock() {
   for (let i = elementsWithZeroChildren.length - 1; i >= 0; i--) {
     const element = elementsWithZeroChildren[i];
     if (element.offsetWidth > 0 || element.offsetHeight > 0 || element.getClientRects().length > 0) {
-      const elementText = element.textContent.toLowerCase();
+      var elementText="";
+      if (element.tagName.toLowerCase() === "input") {
+        elementText = element.value.toLowerCase();
+      } else {
+        elementText = element.textContent.toLowerCase();
+      }
+
       for (const outOfStockText of outOfStockTexts) {
         if (elementText.includes(outOfStockText)) {
           return elementText; // item is out of stock
