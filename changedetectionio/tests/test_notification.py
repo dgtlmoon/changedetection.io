@@ -163,6 +163,7 @@ def test_check_notification(client, live_server):
 
     # Check the attachment was added, and that it is a JPEG from the original PNG
     notification_submission_object = json.loads(notification_submission)
+    # We actually convert the PNG to JPEG and send it
     assert notification_submission_object['attachments'][0]['filename'] == 'last-screenshot.jpg'
     assert len(notification_submission_object['attachments'][0]['base64'])
     assert notification_submission_object['attachments'][0]['mimetype'] == 'image/jpeg'

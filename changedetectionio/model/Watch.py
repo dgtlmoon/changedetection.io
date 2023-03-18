@@ -320,7 +320,7 @@ class model(dict):
             from PIL import Image
             im = Image.open(fname)
             img_byte_arr = io.BytesIO()
-            im.save(img_byte_arr, format='JPEG', quality=int(os.getenv("NOTIFICATION_SCREENSHOT_JPG_QUALITY", 75)))
+            im.convert('RGB').save(img_byte_arr, format='JPEG', quality=int(os.getenv("NOTIFICATION_SCREENSHOT_JPG_QUALITY", 75)))
             return img_byte_arr.getvalue()
 
         # False is not an option for AppRise, must be type None
