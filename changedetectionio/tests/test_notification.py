@@ -81,8 +81,9 @@ def test_check_notification(client, live_server):
     datastore = 'test-datastore'
     with open(os.path.join(datastore, str(uuid), 'last-screenshot.png'), 'wb') as f:
         f.write(base64.b64decode(testimage_png))
-    with open(os.path.join(datastore, str(uuid), 'last-screenshot.jpg'), 'wb') as f:
-        f.write(base64.b64decode(testimage_jpg))
+# We no longer create two images
+#    with open(os.path.join(datastore, str(uuid), 'last-screenshot.jpg'), 'wb') as f:
+#        f.write(base64.b64decode(testimage_jpg))
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
