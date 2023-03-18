@@ -84,7 +84,7 @@ class perform_site_check(difference_detection_processor):
 
         # Could be removed if requests/plaintext could also return some info?
         if prefer_backend != 'html_webdriver':
-            raise Exception("Requires Chrome or compatible webdriver/playwright fetcher to work")
+            raise Exception("Re-stock detection requires Chrome or compatible webdriver/playwright fetcher to work")
 
         if watch.get('webdriver_js_execute_code') is not None and watch.get('webdriver_js_execute_code').strip():
             fetcher.webdriver_js_execute_code = watch.get('webdriver_js_execute_code')
