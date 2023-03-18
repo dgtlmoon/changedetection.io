@@ -749,6 +749,8 @@ def changedetection_app(config=None, datastore_o=None):
     @login_optionally_required
     def import_page():
         remaining_urls = []
+        from . import forms
+
         if request.method == 'POST':
             from .importer import import_url_list, import_distill_io_json
 
@@ -756,7 +758,7 @@ def changedetection_app(config=None, datastore_o=None):
             if request.values.get('urls') and len(request.values.get('urls').strip()):
                 # Import and push into the queue for immediate update check
                 importer = import_url_list()
-                importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore)
+                importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor'))
                 for uuid in importer.new_uuids:
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
@@ -774,9 +776,12 @@ def changedetection_app(config=None, datastore_o=None):
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
 
-
+        form = forms.importForm(formdata=request.form if request.method == 'POST' else None,
+#                               data=default,
+                               )
         # Could be some remaining, or we could be on GET
         output = render_template("import.html",
+                                 form=form,
                                  import_url_list_remaining="\n".join(remaining_urls),
                                  original_distill_json=''
                                  )

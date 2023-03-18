@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
+{% from '_helpers.jinja' import render_field %}
 <script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <div class="edit-form monospaced-textarea">
 
@@ -14,7 +15,6 @@
         <form class="pure-form pure-form-aligned" action="{{url_for('import_page')}}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="tab-pane-inner" id="url-list">
-                <fieldset class="pure-group">
                     <legend>
                         Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma
                         (,):
@@ -23,7 +23,7 @@
                         <br>
                         URLs which do not pass validation will stay in the textarea.
                     </legend>
-
+                {{ render_field(form.processor, class="processor") }}
 
                     <textarea name="urls" class="pure-input-1-2" placeholder="https://"
                               style="width: 100%;
@@ -31,15 +31,17 @@
                                 white-space: pre;
                                 overflow-wrap: normal;
                                 overflow-x: scroll;" rows="25">{{ import_url_list_remaining }}</textarea>
-                </fieldset>
 
+<div id="quick-watch-processor-type">
+
+                    </div>
 
             </div>
 
             <div class="tab-pane-inner" id="distill-io">
 
 
-                <fieldset class="pure-group">
+
                     <legend>
                         Copy and Paste your Distill.io watch 'export' file, this should be a JSON file.<br>
                         This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, <code>config:selections</code>, the rest (including <code>schedule</code>) are ignored.
@@ -75,7 +77,7 @@
     ]
 }
 " rows="25">{{ original_distill_json }}</textarea>
-                </fieldset>
+
             </div>
             <button type="submit" class="pure-button pure-input-1-2 pure-button-primary">Import</button>
         </form>

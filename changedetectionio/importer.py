@@ -29,6 +29,7 @@ class import_url_list(Importer):
             data,
             flash,
             datastore,
+            processor=None
             ):
 
         urls = data.split("\n")
@@ -52,7 +53,11 @@ class import_url_list(Importer):
             # Flask wtform validators wont work with basic auth, use validators package
             # Up to 5000 per batch so we dont flood the server
             if len(url) and validators.url(url.replace('source:', '')) and good < 5000:
-                new_uuid = datastore.add_watch(url=url.strip(), tag=tags, write_to_disk_now=False)
+                extras = None
+                if processor:
+                    extras = {'processor': processor}
+                new_uuid = datastore.add_watch(url=url.strip(), tag=tags, write_to_disk_now=False, extras=extras)
+
                 if new_uuid:
                     # Straight into the queue.
                     self.new_uuids.append(new_uuid)

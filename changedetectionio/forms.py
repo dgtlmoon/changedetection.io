@@ -363,6 +363,10 @@ class commonSettingsForm(Form):
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1,
                                                                                                                                     message="Should contain one or more seconds")])
+class importForm(Form):
+    from . import processors
+    processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
+    urls = TextAreaField('URLs')
 
 class SingleBrowserStep(Form):
 
