@@ -103,13 +103,21 @@ class perform_site_check(difference_detection_processor):
         fetched_md5 = None
         if fetcher.instock_data:
             fetched_md5 = hashlib.md5(fetcher.instock_data.encode('utf-8')).hexdigest()
+            # 'Possibly in stock' comes from stock-not-in-stock.js when no string found above the fold.
             update_obj["in_stock"] = True if fetcher.instock_data == 'Possibly in stock' else False
 
 
         # The main thing that all this at the moment comes down to :)
         changed_detected = False
+
         if watch.get('previous_md5') and watch.get('previous_md5') != fetched_md5:
-            changed_detected = True
+            # Yes if we only care about it going to instock, AND we are in stock
+            if watch.get('in_stock_only') and update_obj["in_stock"]:
+                changed_detected = True
+
+            if not watch.get('in_stock_only'):
+                # All cases
+                changed_detected = True
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5

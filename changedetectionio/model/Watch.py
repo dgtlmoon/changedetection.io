@@ -30,6 +30,7 @@ base_config = {
     'track_ldjson_price_data': None,
     'headers': {},  # Extra headers to send
     'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
+    'in_stock_only' : True, # Only trigger change on going to instock from out-of-stock
     'include_filters': [],
     'last_checked': 0,
     'last_error': False,

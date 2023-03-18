@@ -39,7 +39,10 @@
             <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
             {% endif %}
-            
+
+            {% if watch['processor'] == 'restock_diff' %}
+            <li class="tab"><a href="#restock">Restock Detection</a></li>
+            {% endif %}
             <li class="tab"><a href="#notifications">Notifications</a></li>
         </ul>
     </div>
@@ -359,6 +362,17 @@ Unavailable") }}
                         </span>
                     </div>
                 </fieldset>
+            </div>
+            {% endif %}
+
+            {% if watch['processor'] == 'restock_diff' %}
+            <div class="tab-pane-inner" id="restock">
+                    <fieldset>
+                        <div class="pure-control-group">
+                            {{ render_checkbox_field(form.in_stock_only) }}
+                            <span class="pure-form-message-inline">Only trigger notifications when page changes from <strong>out of stock</strong> to <strong>back in stock</strong></span>
+                        </div>
+                    </fieldset>
             </div>
             {% endif %}
 

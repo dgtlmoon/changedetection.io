@@ -1,9 +1,14 @@
 #!/usr/bin/python3
-
+import os
 import time
 from flask import url_for
 from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
-
+from changedetectionio.notification import (
+    default_notification_body,
+    default_notification_format,
+    default_notification_title,
+    valid_notification_formats,
+)
 
 
 def set_original_response():
@@ -51,9 +56,17 @@ def test_restock_detection(client, live_server):
     time.sleep(1)
     live_server_setup(live_server)
     #####################
+    notification_url = url_for('test_notification_endpoint', _external=True).replace('http://localhost', 'http://changedet').replace('http', 'json')
+
+
+    #####################
+    # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
         url_for("settings_page"),
-        data={
+        data={"application-notification_urls": notification_url,
+              "application-notification_title": "fallback-title "+default_notification_title,
+              "application-notification_body": "fallback-body "+default_notification_body,
+              "application-notification_format": default_notification_format,
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_webdriver"},
         follow_redirects=True
@@ -79,3 +92,14 @@ def test_restock_detection(client, live_server):
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'not-in-stock' not in res.data
+
+    # We should have a notification
+    assert os.path.isfile("test-datastore/notification.txt")
+    os.unlink("test-datastore/notification.txt")
+
+    # Default behaviour is to only fire notification when it goes OUT OF STOCK -> IN STOCK
+    # So here there should be no file, because we go IN STOCK -> OUT OF STOCK
+    set_original_response()
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    assert not os.path.isfile("test-datastore/notification.txt")
