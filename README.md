@@ -1,4 +1,4 @@
-## Web Site Change Detection, Monitoring and Notification.
+## Web Site Change Detection, Restock monitoring and notifications.
 
 **_Detect website content changes and perform meaningful actions - trigger notifications via Discord, Email, Slack, Telegram, API calls and many more._**
 
