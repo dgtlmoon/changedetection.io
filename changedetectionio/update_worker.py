@@ -75,7 +75,7 @@ class update_worker(threading.Thread):
             n_object.update({
                 'watch_url': watch['url'],
                 'uuid': watch_uuid,
-                'screenshot': watch.get_screenshot_as_jpeg() if watch.get('notification_screenshot') else None,
+                'screenshot': watch.get_screenshot() if watch.get('notification_screenshot') else None,
                 'current_snapshot': snapshot_contents.decode('utf-8'),
                 'diff': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], line_feed_sep=line_feed_sep),
                 'diff_added': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], include_removed=False, line_feed_sep=line_feed_sep),

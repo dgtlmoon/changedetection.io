@@ -313,17 +313,6 @@ class model(dict):
         # False is not an option for AppRise, must be type None
         return None
 
-    def get_screenshot_as_jpeg(self):
-
-        # Created by save_screenshot()
-        fname = os.path.join(self.watch_data_dir, "last-screenshot.jpg")
-        if os.path.isfile(fname):
-            return fname
-
-        # False is not an option for AppRise, must be type None
-        return None
-
-
     def __get_file_ctime(self, filename):
         fname = os.path.join(self.watch_data_dir, filename)
         if os.path.isfile(fname):
