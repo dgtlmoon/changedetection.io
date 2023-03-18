@@ -68,5 +68,5 @@ pillow
 # playwright is installed at Dockerfile build time because it's not available on all platforms
 
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup
-pytest ~=6.2
+pytest ~=7.2
 pytest-flask ~=1.2

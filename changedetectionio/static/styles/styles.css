@@ -432,6 +432,9 @@ body:before {
 .button-small {
   font-size: 85%; }
 
+.button-xsmall {
+  font-size: 70%; }
+
 .fetch-error {
   padding-top: 1em;
   font-size: 80%;

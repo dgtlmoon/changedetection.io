@@ -50,10 +50,13 @@ jobs:
         run: |
           
           # Selenium fetch
-          docker run -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py'
+          docker run --rm -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py'
           
           # Playwright/Browserless fetch
-          docker run -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
+          docker run --rm -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
+          
+          # restock detection via playwright - added name=changedet here so that playwright/browserless can connect to it
+          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
 
       - name: Test proxy interaction
         run: |

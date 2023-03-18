@@ -64,6 +64,9 @@ app.config.exit = Event()
 
 app.config['NEW_VERSION_AVAILABLE'] = False
 
+if os.getenv('FLASK_SERVER_NAME'):
+    app.config['SERVER_NAME'] = os.getenv('FLASK_SERVER_NAME')
+
 #app.config["EXPLAIN_TEMPLATE_LOADING"] = True
 
 # Disables caching of the templates

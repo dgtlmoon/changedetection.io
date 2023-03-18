@@ -32,12 +32,12 @@
     <form class="pure-form" action="{{ url_for('form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <div id="checkbox-operations">
-        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%"  name="op" value="pause">Pause</button>
-        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%"  name="op" value="unpause">UnPause</button>
-        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%"  name="op" value="mute">Mute</button>
-        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%"  name="op" value="unmute">UnMute</button>
-        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%" name="op" value="recheck">Recheck</button>
-        <button class="pure-button button-secondary button-xsmall" style="font-size: 70%" name="op" value="notification-default">Use default notification</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="pause">Pause</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause">UnPause</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="mute">Mute</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="unmute">UnMute</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="recheck">Recheck</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default">Use default notification</button>
         <button class="pure-button button-secondary button-xsmall" style="background: #dd4242; font-size: 70%" name="op" value="delete">Delete</button>
     </div>
     <div>
@@ -76,7 +76,7 @@
               {% if not ( loop.index >= 3 and loop.index <=4) %}{% continue %}{% endif %} -->
              #}
             <tr id="{{ watch.uuid }}"
-                class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }}
+                class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }} processor-{{ watch['processor'] }}
                 {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
                 {% if watch.last_notification_error is defined and watch.last_notification_error != False %}error{% endif %}
                 {% if watch.paused is defined and watch.paused != False %}paused{% endif %}
