@@ -284,7 +284,7 @@ class model(dict):
             dest = os.path.join(self.watch_data_dir, snapshot_fname)
             if not os.path.exists(dest):
                 with open(dest, 'wb') as f:
-                    f.write(brotli.compress(contents, mode=brotli.MODE_TEXT))
+                    f.write(contents)
 
         # Append to index
         # @todo check last char was \n
