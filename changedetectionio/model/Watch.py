@@ -253,7 +253,7 @@ class model(dict):
             # Brotli doesnt have a fileheader to detect it, so we rely on filename
             # https://www.rfc-editor.org/rfc/rfc7932
             with open(filepath, 'rb') as f:
-                return(brotli.decompress(f.read()))
+                return(brotli.decompress(f.read()).decode('utf-8'))
 
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             return f.read()
