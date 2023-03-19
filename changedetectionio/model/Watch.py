@@ -242,12 +242,26 @@ class model(dict):
         return self.__newest_history_key
 
     def get_history_snapshot(self, timestamp):
-        with open(self.history[timestamp], 'r', encoding='utf-8', errors='ignore') as f:
+        import brotli
+        filepath = self.history[timestamp]
+
+        # See if a brotli versions exists and switch to that
+        if not filepath.endswith('.br') and os.path.isfile(f"{filepath}.br"):
+            filepath = f"{filepath}.br"
+
+        if filepath.endswith('.br'):
+            # Brotli doesnt have a fileheader to detect it, so we rely on filename
+            # https://www.rfc-editor.org/rfc/rfc7932
+            with open(filepath, 'rb') as f:
+                return(brotli.decompress(f.read()))
+
+        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             return f.read()
 
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
     def save_history_text(self, contents, timestamp, snapshot_id):
+        import brotli
 
         self.ensure_data_dir_exists()
 
@@ -256,16 +270,21 @@ class model(dict):
         if self.__newest_history_key and int(timestamp) == int(self.__newest_history_key):
             time.sleep(timestamp - self.__newest_history_key)
 
-        snapshot_fname = f"{snapshot_id}.txt"
+        threshold = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024))
+        skip_brotli = strtobool(os.getenv('DISABLE_BROTLI_TEXT_SNAPSHOT', 'False'))
 
-        # Only write if it does not exist, this is so that we dont bother re-saving the same data by checksum under different filenames.
-        dest = os.path.join(self.watch_data_dir, snapshot_fname)
-        if not os.path.exists(dest):
-            # in /diff/ and /preview/ we are going to assume for now that it's UTF-8 when reading
-            # most sites are utf-8 and some are even broken utf-8
-            with open(dest, 'wb') as f:
-                f.write(contents)
-                f.close()
+        if not skip_brotli and len(contents) > threshold:
+            snapshot_fname = f"{snapshot_id}.txt.br"
+            dest = os.path.join(self.watch_data_dir, snapshot_fname)
+            if not os.path.exists(dest):
+                with open(dest, 'wb') as f:
+                    f.write(brotli.compress(contents, mode=brotli.MODE_TEXT))
+        else:
+            snapshot_fname = f"{snapshot_id}.txt"
+            dest = os.path.join(self.watch_data_dir, snapshot_fname)
+            if not os.path.exists(dest):
+                with open(dest, 'wb') as f:
+                    f.write(brotli.compress(contents, mode=brotli.MODE_TEXT))
 
         # Append to index
         # @todo check last char was \n
