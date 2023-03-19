@@ -28,3 +28,10 @@ pytest tests/test_notification.py
 # Re-run with HIDE_REFERER set - could affect login
 export HIDE_REFERER=True
 pytest tests/test_access_control.py
+
+# Re-run a few tests that will trigger brotli based storage
+export SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5
+pytest tests/test_access_control.py
+pytest tests/test_notification.py
+pytest tests/test_backend.py
+pytest tests/test_rss.py
