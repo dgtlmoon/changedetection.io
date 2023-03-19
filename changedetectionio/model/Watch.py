@@ -249,6 +249,11 @@ class model(dict):
         if not filepath.endswith('.br') and os.path.isfile(f"{filepath}.br"):
             filepath = f"{filepath}.br"
 
+        # OR in the backup case that the .br does not exist, but the plain one does
+        if filepath.endswith('.br') and not os.path.isfile(filepath):
+            if os.path.isfile(filepath.replace('.br', '')):
+                filepath = filepath.replace('.br', '')
+
         if filepath.endswith('.br'):
             # Brotli doesnt have a fileheader to detect it, so we rely on filename
             # https://www.rfc-editor.org/rfc/rfc7932
