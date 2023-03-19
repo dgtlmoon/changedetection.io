@@ -75,7 +75,7 @@ class update_worker(threading.Thread):
                 'watch_url': watch['url'],
                 'uuid': watch_uuid,
                 'screenshot': watch.get_screenshot() if watch.get('notification_screenshot') else None,
-                'current_snapshot': snapshot_contents.decode('utf-8'),
+                'current_snapshot': snapshot_contents,
                 'diff': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), line_feed_sep=line_feed_sep),
                 'diff_added': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_removed=False, line_feed_sep=line_feed_sep),
                 'diff_removed': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_added=False, line_feed_sep=line_feed_sep),
