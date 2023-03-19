@@ -179,9 +179,7 @@ class WatchSingleHistory(Resource):
         if timestamp == 'latest':
             timestamp = list(watch.history.keys())[-1]
 
-        # @todo - Check for UTF-8 compatability
-        with open(watch.history[timestamp], 'r') as f:
-            content = f.read()
+        content = watch.get_history_snapshot(timestamp)
 
         response = make_response(content, 200)
         response.mimetype = "text/plain"

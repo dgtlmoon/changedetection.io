@@ -340,8 +340,6 @@ def changedetection_app(config=None, datastore_o=None):
             if len(dates) < 2:
                 continue
 
-            prev_fname = watch.history[dates[-2]]
-
             if not watch.viewed:
                 # Re #239 - GUID needs to be individual for each event
                 # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
@@ -362,9 +360,12 @@ def changedetection_app(config=None, datastore_o=None):
 
                 watch_title = watch.get('title') if watch.get('title') else watch.get('url')
                 fe.title(title=watch_title)
-                latest_fname = watch.history[dates[-1]]
 
-                html_diff = diff.render_diff(prev_fname, latest_fname, include_equal=False, line_feed_sep="<br>")
+                html_diff = diff.render_diff(previous_version_file_contents=watch.get_history_snapshot(dates[-2]),
+                                             newest_version_file_contents=watch.get_history_snapshot(dates[-1]),
+                                             include_equal=False,
+                                             line_feed_sep="<br>")
+
                 fe.content(content="<html><body><h4>{}</h4>{}</body></html>".format(watch_title, html_diff),
                            type='CDATA')
 
@@ -847,28 +848,22 @@ def changedetection_app(config=None, datastore_o=None):
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, time.time())
 
-        newest_file = history[dates[-1]]
-
         # Read as binary and force decode as UTF-8
         # Windows may fail decode in python if we just use 'r' mode (chardet decode exception)
         try:
-            with open(newest_file, 'r', encoding='utf-8', errors='ignore') as f:
-                newest_version_file_contents = f.read()
+            newest_version_file_contents = watch.get_history_snapshot(dates[-1])
         except Exception as e:
-            newest_version_file_contents = "Unable to read {}.\n".format(newest_file)
+            newest_version_file_contents = "Unable to read {}.\n".format(dates[-1])
 
         previous_version = request.args.get('previous_version')
-        try:
-            previous_file = history[previous_version]
-        except KeyError:
-            # Not present, use a default value, the second one in the sorted list.
-            previous_file = history[dates[-2]]
+        previous_timestamp = dates[-2]
+        if previous_version:
+            previous_timestamp = previous_version
 
         try:
-            with open(previous_file, 'r', encoding='utf-8', errors='ignore') as f:
-                previous_version_file_contents = f.read()
+            previous_version_file_contents = watch.get_history_snapshot(previous_timestamp)
         except Exception as e:
-            previous_version_file_contents = "Unable to read {}.\n".format(previous_file)
+            previous_version_file_contents = "Unable to read {}.\n".format(previous_timestamp)
 
 
         screenshot_url = watch.get_screenshot()
@@ -948,37 +943,35 @@ def changedetection_app(config=None, datastore_o=None):
             return output
 
         timestamp = list(watch.history.keys())[-1]
-        filename = watch.history[timestamp]
         try:
-            with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
-                tmp = f.readlines()
+            tmp = watch.get_history_snapshot(timestamp).splitlines()
 
-                # Get what needs to be highlighted
-                ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
+            # Get what needs to be highlighted
+            ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
 
-                # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
-                ignored_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
-                                                                    wordlist=ignore_rules,
-                                                                    mode='line numbers'
-                                                                    )
+            # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
+            ignored_line_numbers = html_tools.strip_ignore_text(content="\n".join(tmp),
+                                                                wordlist=ignore_rules,
+                                                                mode='line numbers'
+                                                                )
 
-                trigger_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
-                                                                    wordlist=watch['trigger_text'],
-                                                                    mode='line numbers'
-                                                                    )
-                # Prepare the classes and lines used in the template
-                i=0
-                for l in tmp:
-                    classes=[]
-                    i+=1
-                    if i in ignored_line_numbers:
-                        classes.append('ignored')
-                    if i in trigger_line_numbers:
-                        classes.append('triggered')
-                    content.append({'line': l, 'classes': ' '.join(classes)})
+            trigger_line_numbers = html_tools.strip_ignore_text(content="\n".join(tmp),
+                                                                wordlist=watch['trigger_text'],
+                                                                mode='line numbers'
+                                                                )
+            # Prepare the classes and lines used in the template
+            i=0
+            for l in tmp:
+                classes=[]
+                i+=1
+                if i in ignored_line_numbers:
+                    classes.append('ignored')
+                if i in trigger_line_numbers:
+                    classes.append('triggered')
+                content.append({'line': l, 'classes': ' '.join(classes)})
 
         except Exception as e:
-            content.append({'line': "File doesnt exist or unable to read file {}".format(filename), 'classes': ''})
+            content.append({'line': f"File doesnt exist or unable to read timestamp {timestamp}", 'classes': ''})
 
         output = render_template("preview.html",
                                  content=content,

@@ -69,18 +69,17 @@ class update_worker(threading.Thread):
             else:
                 line_feed_sep = "\n"
 
-            with open(watch_history[dates[-1]], 'rb') as f:
-                snapshot_contents = f.read()
+            snapshot_contents = watch.get_history_snapshot(dates[-1])
 
             n_object.update({
                 'watch_url': watch['url'],
                 'uuid': watch_uuid,
                 'screenshot': watch.get_screenshot() if watch.get('notification_screenshot') else None,
-                'current_snapshot': snapshot_contents.decode('utf-8'),
-                'diff': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], line_feed_sep=line_feed_sep),
-                'diff_added': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], include_removed=False, line_feed_sep=line_feed_sep),
-                'diff_removed': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], include_added=False, line_feed_sep=line_feed_sep),
-                'diff_full': diff.render_diff(watch_history[dates[-2]], watch_history[dates[-1]], include_equal=True, line_feed_sep=line_feed_sep)
+                'current_snapshot': snapshot_contents,
+                'diff': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), line_feed_sep=line_feed_sep),
+                'diff_added': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_removed=False, line_feed_sep=line_feed_sep),
+                'diff_removed': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_added=False, line_feed_sep=line_feed_sep),
+                'diff_full': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_equal=True, line_feed_sep=line_feed_sep)
             })
             logging.info (">> SENDING NOTIFICATION")
             self.notification_q.put(n_object)

@@ -198,8 +198,8 @@ def test_check_json_without_filter(client, live_server):
     )
 
     # Should still see '"html": "<b>"'
-    assert b'&#34;&lt;b&gt;' in res.data
-    assert res.data.count(b'{\n') >= 2
+    assert b'&#34;html&#34;: &#34;&lt;b&gt;&#34;' in res.data
+    assert res.data.count(b'{') >= 2
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
