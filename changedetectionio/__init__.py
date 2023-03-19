@@ -950,12 +950,12 @@ def changedetection_app(config=None, datastore_o=None):
             ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
 
             # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
-            ignored_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
+            ignored_line_numbers = html_tools.strip_ignore_text(content="\n".join(tmp),
                                                                 wordlist=ignore_rules,
                                                                 mode='line numbers'
                                                                 )
 
-            trigger_line_numbers = html_tools.strip_ignore_text(content="".join(tmp),
+            trigger_line_numbers = html_tools.strip_ignore_text(content="\n".join(tmp),
                                                                 wordlist=watch['trigger_text'],
                                                                 mode='line numbers'
                                                                 )
