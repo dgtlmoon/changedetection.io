@@ -359,6 +359,10 @@ class model(dict):
             return fname
         return False
 
+    def get_history_snapshot(self, timestamp):
+        with open(self.history[timestamp], 'rb', encoding='utf-8', errors='ignore') as f:
+            return f.read()
+
     def pause(self):
         self['paused'] = True
 

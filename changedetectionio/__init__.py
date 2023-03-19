@@ -847,28 +847,22 @@ def changedetection_app(config=None, datastore_o=None):
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, time.time())
 
-        newest_file = history[dates[-1]]
-
         # Read as binary and force decode as UTF-8
         # Windows may fail decode in python if we just use 'r' mode (chardet decode exception)
         try:
-            with open(newest_file, 'r', encoding='utf-8', errors='ignore') as f:
-                newest_version_file_contents = f.read()
+            newest_version_file_contents = watch.get_history_snapshot(history[dates[-1]])
         except Exception as e:
-            newest_version_file_contents = "Unable to read {}.\n".format(newest_file)
+            newest_version_file_contents = "Unable to read {}.\n".format(history[dates[-1]])
 
         previous_version = request.args.get('previous_version')
-        try:
-            previous_file = history[previous_version]
-        except KeyError:
-            # Not present, use a default value, the second one in the sorted list.
-            previous_file = history[dates[-2]]
+        previous_timestamp = history[dates[-2]]
+        if previous_version:
+            previous_timestamp= previous_version
 
         try:
-            with open(previous_file, 'r', encoding='utf-8', errors='ignore') as f:
-                previous_version_file_contents = f.read()
+            previous_version_file_contents = watch.get_history_snapshot(previous_timestamp)
         except Exception as e:
-            previous_version_file_contents = "Unable to read {}.\n".format(previous_file)
+            previous_version_file_contents = "Unable to read {}.\n".format(previous_timestamp)
 
 
         screenshot_url = watch.get_screenshot()
