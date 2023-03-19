@@ -971,7 +971,7 @@ def changedetection_app(config=None, datastore_o=None):
                 content.append({'line': l, 'classes': ' '.join(classes)})
 
         except Exception as e:
-            content.append({'line': "File doesnt exist or unable to read file {}".format(filename), 'classes': ''})
+            content.append({'line': f"File doesnt exist or unable to read timestamp {timestamp}", 'classes': ''})
 
         output = render_template("preview.html",
                                  content=content,
