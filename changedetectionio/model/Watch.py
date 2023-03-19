@@ -241,6 +241,10 @@ class model(dict):
         bump = self.history
         return self.__newest_history_key
 
+    def get_history_snapshot(self, timestamp):
+        with open(self.history[timestamp], 'r', encoding='utf-8', errors='ignore') as f:
+            return f.read()
+
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
     def save_history_text(self, contents, timestamp, snapshot_id):
@@ -359,9 +363,6 @@ class model(dict):
             return fname
         return False
 
-    def get_history_snapshot(self, timestamp):
-        with open(self.history[timestamp], 'rb', encoding='utf-8', errors='ignore') as f:
-            return f.read()
 
     def pause(self):
         self['paused'] = True

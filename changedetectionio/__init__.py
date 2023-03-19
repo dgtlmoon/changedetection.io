@@ -850,14 +850,14 @@ def changedetection_app(config=None, datastore_o=None):
         # Read as binary and force decode as UTF-8
         # Windows may fail decode in python if we just use 'r' mode (chardet decode exception)
         try:
-            newest_version_file_contents = watch.get_history_snapshot(history[dates[-1]])
+            newest_version_file_contents = watch.get_history_snapshot(dates[-1])
         except Exception as e:
-            newest_version_file_contents = "Unable to read {}.\n".format(history[dates[-1]])
+            newest_version_file_contents = "Unable to read {}.\n".format(dates[-1])
 
         previous_version = request.args.get('previous_version')
-        previous_timestamp = history[dates[-2]]
+        previous_timestamp = dates[-2]
         if previous_version:
-            previous_timestamp= previous_version
+            previous_timestamp = previous_version
 
         try:
             previous_version_file_contents = watch.get_history_snapshot(previous_timestamp)
