@@ -412,8 +412,8 @@ class model(dict):
         # self.history will be keyed with the full path
         for k, fname in self.history.items():
             if os.path.isfile(fname):
-                with open(fname, "r") as f:
-                    contents = f.read()
+                if True:
+                    contents = self.get_history_snapshot(k)
                     res = re.findall(regex, contents, re.MULTILINE)
                     if res:
                         if not csv_writer:

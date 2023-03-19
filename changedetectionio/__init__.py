@@ -340,8 +340,6 @@ def changedetection_app(config=None, datastore_o=None):
             if len(dates) < 2:
                 continue
 
-            prev_fname = watch.history[dates[-2]]
-
             if not watch.viewed:
                 # Re #239 - GUID needs to be individual for each event
                 # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
@@ -362,9 +360,12 @@ def changedetection_app(config=None, datastore_o=None):
 
                 watch_title = watch.get('title') if watch.get('title') else watch.get('url')
                 fe.title(title=watch_title)
-                latest_fname = watch.history[dates[-1]]
 
-                html_diff = diff.render_diff(prev_fname, latest_fname, include_equal=False, line_feed_sep="<br>")
+                html_diff = diff.render_diff(previous_version_file_contents=watch.get_history_snapshot(dates[-2]),
+                                             newest_version_file_contents=watch.get_history_snapshot(dates[-1]),
+                                             include_equal=False,
+                                             line_feed_sep="<br>")
+
                 fe.content(content="<html><body><h4>{}</h4>{}</body></html>".format(watch_title, html_diff),
                            type='CDATA')
 
