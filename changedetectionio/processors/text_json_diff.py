@@ -356,9 +356,11 @@ class perform_site_check(difference_detection_processor):
             # Filter and trigger works the same, so reuse it
             # It should return the line numbers that match
             # Unblock flow if the trigger was found (some text remained after stripped what didnt match)
-            if html_tools.strip_ignore_text(content=str(stripped_text_from_html),
+            result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
                                                   wordlist=trigger_text,
-                                                  mode="line numbers"):
+                                                  mode="line numbers")
+            # Unblock if the trigger was found
+            if result:
                 blocked = False
 
         text_should_not_be_present = watch.get('text_should_not_be_present', [])

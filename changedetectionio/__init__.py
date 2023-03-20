@@ -601,6 +601,16 @@ def changedetection_app(config=None, datastore_o=None):
             if datastore.proxy_list is not None and form.data['proxy'] == '':
                 extra_update_obj['proxy'] = None
 
+            # Unsetting all filter_text methods should make it go back to default
+            # This particularly affects tests running
+            if 'filter_text_added' in form.data and not form.data.get('filter_text_added') \
+                    and 'filter_text_replaced' in form.data and not form.data.get('filter_text_replaced') \
+                    and 'filter_text_removed' in form.data and not form.data.get('filter_text_removed'):
+                extra_update_obj['filter_text_added'] = True
+                extra_update_obj['filter_text_replaced'] = True
+                extra_update_obj['filter_text_removed'] = True
+
+
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)
 

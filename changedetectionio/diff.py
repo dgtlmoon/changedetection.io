@@ -40,12 +40,12 @@ def render_diff(previous_version_file_contents, newest_version_file_contents, in
     else:
         previous_version_file_contents = ""
 
-    rendered_diff = customSequenceMatcher(previous_version_file_contents,
-                                          newest_version_file_contents,
-                                          include_equal,
-                                          include_removed,
-                                          include_added,
-                                          include_replaced)
+    rendered_diff = customSequenceMatcher(before=previous_version_file_contents,
+                                          after=newest_version_file_contents,
+                                          include_equal=include_equal,
+                                          include_removed=include_removed,
+                                          include_added=include_added,
+                                          include_replaced=include_replaced)
 
     # Recursively join lists
     f = lambda L: line_feed_sep.join([f(x) if type(x) is list else x for x in L])
