@@ -18,6 +18,7 @@ function isItemInStock() {
     'nicht lieferbar',
     'nicht zur verfügung',
     'no disponible temporalmente',
+    'not available',
     'not in stock',
     'out of stock',
     'out-of-stock',
