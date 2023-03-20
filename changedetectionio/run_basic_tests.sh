@@ -35,3 +35,4 @@ pytest tests/test_access_control.py
 pytest tests/test_notification.py
 pytest tests/test_backend.py
 pytest tests/test_rss.py
+pytest tests/test_unique_lines.py

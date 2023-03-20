@@ -329,7 +329,8 @@ class model(dict):
         # Compare each lines (set) against each history text file (set) looking for something new..
         existing_history = set({})
         for k, v in self.history.items():
-            alist = set([line.decode('utf-8').strip().lower() for line in open(v, 'rb')])
+            content = self.get_history_snapshot(k)
+            alist = set([line.strip().lower() for line in content.splitlines()])
             existing_history = existing_history.union(alist)
 
         # Check that everything in local_lines(new stuff) already exists in existing_history - it should
