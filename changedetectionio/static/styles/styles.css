@@ -1000,7 +1000,8 @@ ul {
   #quick-watch-processor-type ul {
     padding: 0.3rem; }
     #quick-watch-processor-type ul li {
-      list-style: none; }
+      list-style: none;
+      font-size: 0.8rem; }
 
 .restock-label {
   padding: 3px;

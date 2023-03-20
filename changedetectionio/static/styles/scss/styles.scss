@@ -1068,12 +1068,15 @@ ul {
   color: #fff;
   ul {
     padding: 0.3rem;
+
     li {
-    list-style: none;
-}
+      list-style: none;
+      font-size: 0.8rem;
+    }
   }
 
 }
+
 .restock-label {
   &.in-stock {
     background-color: var(--color-background-button-green);

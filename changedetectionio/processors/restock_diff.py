@@ -9,7 +9,7 @@ from copy import deepcopy
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-name = 'Re-stock detection'
+name = 'Re-stock detection for single product pages'
 description = 'Detects if the product goes back to in-stock'
 
 class perform_site_check(difference_detection_processor):
