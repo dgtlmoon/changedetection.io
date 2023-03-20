@@ -244,12 +244,6 @@ User-Agent: wonderbra 1.0") }}
                                 </li>
                             </ul>
                     </div>
-                    <fieldset>
-                        <div class="pure-control-group">
-                            {{ render_checkbox_field(form.check_unique_lines) }}
-                            <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
-                        </div>
-                    </fieldset>
                     <div class="pure-control-group">
                         {% set field = render_field(form.include_filters,
                             rows=5,
@@ -299,6 +293,22 @@ nav
                         </ul>
                       </span>
                     </div>
+                <fieldset class="pure-group">
+                    <h3>Text filtering</h3>
+                         Limit to
+                        {{ render_checkbox_field(form.filter_text_added) }}
+                        {{ render_checkbox_field(form.filter_text_replaced) }}
+                        {{ render_checkbox_field(form.filter_text_removed) }}
+                    <hr>
+                </fieldset>
+
+                <fieldset class="pure-group">
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.check_unique_lines) }}
+                        <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
+                    </div>
+                </fieldset>
+
                 <fieldset class="pure-group">
                     {{ render_field(form.ignore_text, rows=5, placeholder="Some text to ignore in a line
 /some.regex\d{2}/ for case-INsensitive regex

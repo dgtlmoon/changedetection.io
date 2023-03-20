@@ -26,6 +26,9 @@ base_config = {
     'fetch_backend': 'system', # plaintext, playwright etc
     'processor': 'text_json_diff', # could be restock_diff or others from .processors
     'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
+    'filter_text_added': True,
+    'filter_text_replaced': True,
+    'filter_text_removed': True,
     'has_ldjson_price_data': None,
     'track_ldjson_price_data': None,
     'headers': {},  # Extra headers to send
@@ -454,3 +457,8 @@ class model(dict):
     # Return list of tags, stripped and lowercase, used for searching
     def all_tags(self):
         return [s.strip().lower() for s in self.get('tag','').split(',')]
+
+    def has_special_diff_filter_options_set(self):
+        if not self.get('filter_text_added', True) or self.get('filter_text_replaced', True) or self.get('filter_text_removed', True):
+            return True
+        return False
