@@ -276,6 +276,7 @@ class perform_site_check(difference_detection_processor):
                             render_anchor_tag_content=do_anchor
                         )
 
+        # @todo whitespace coming from missing rtrim()?
         # stripped_text_from_html could be based on their preferences, replace the processed text with only that which they want to know about.
         # Rewrite's the processing text based on only what diff result they want to see
         if watch.has_special_diff_filter_options_set() and len(watch.history.keys()):
@@ -284,12 +285,12 @@ class perform_site_check(difference_detection_processor):
             # needs to not include (added) etc or it may get used twice
             # Replace the processed text with the preferred result
             stripped_text_from_html = diff.render_diff(previous_version_file_contents=watch.get_history_snapshot(prev_timestamp),
-                                                       newest_version_file_contents=stripped_text_from_html.encode('utf-8'),
+                                                       newest_version_file_contents=stripped_text_from_html,
                                                        include_equal=False,  # not the same lines
                                                        include_added=watch.get('filter_text_added', True),
                                                        include_removed=watch.get('filter_text_removed', True),
                                                        include_replaced=watch.get('filter_text_replaced', True),
-                                                       line_feed_sep="<br>")
+                                                       line_feed_sep="\n")
 
 
         # Re #340 - return the content before the 'ignore text' was applied
@@ -354,7 +355,7 @@ class perform_site_check(difference_detection_processor):
             # Filter and trigger works the same, so reuse it
             # It should return the line numbers that match
             # Unblock flow if the trigger was found (some text remained after stripped what didnt match)
-            if html_tools.strip_ignore_text(content=stripped_text_from_html.encode('utf8'),
+            if html_tools.strip_ignore_text(content=str(stripped_text_from_html),
                                                   wordlist=trigger_text,
                                                   mode="line numbers"):
                 blocked = False

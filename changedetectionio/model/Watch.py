@@ -459,6 +459,6 @@ class model(dict):
         return [s.strip().lower() for s in self.get('tag','').split(',')]
 
     def has_special_diff_filter_options_set(self):
-        if not self.get('filter_text_added', True) or self.get('filter_text_replaced', True) or self.get('filter_text_removed', True):
+        if not self.get('filter_text_added', True) or not self.get('filter_text_replaced', True) or not self.get('filter_text_removed', True):
             return True
         return False
