@@ -471,3 +471,25 @@ class model(dict):
 
         # None is set
         return False
+
+
+    def get_last_fetched_before_filters(self):
+        import brotli
+        filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
+
+        if not os.path.isfile(filepath):
+            # If a previous attempt doesnt yet exist, just snarf the previous snapshot instead
+            dates = list(self.history.keys())
+            if len(dates):
+                return self.get_history_snapshot(dates[-1])
+            else:
+                return ''
+
+        with open(filepath, 'rb') as f:
+            return(brotli.decompress(f.read()).decode('utf-8'))
+
+    def save_last_fetched_before_filters(self, contents):
+        import brotli
+        filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
+        with open(filepath, 'wb') as f:
+            f.write(brotli.compress(contents, mode=brotli.MODE_TEXT))
