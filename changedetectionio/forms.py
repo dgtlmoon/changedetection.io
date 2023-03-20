@@ -399,13 +399,19 @@ class watchForm(commonSettingsForm):
     body = TextAreaField('Request body', [validators.Optional()])
     method = SelectField('Request method', choices=valid_method, default=default_method)
     ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
-    check_unique_lines = BooleanField('Only trigger when new lines appear', default=False)
+    check_unique_lines = BooleanField('Only trigger when unique lines appear', default=False)
+
+    filter_text_added = BooleanField('Added lines', default=True)
+    filter_text_replaced = BooleanField('Replaced/changed lines', default=True)
+    filter_text_removed = BooleanField('Removed lines', default=True)
+
+    # @todo this class could be moved to its own text_json_diff_watchForm and this goes to restock_diff_Watchform perhaps
     in_stock_only = BooleanField('Only trigger when product goes BACK to in-stock', default=True)
 
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)
-    text_should_not_be_present = StringListField('Block change-detection if text matches', [validators.Optional(), ValidateListRegex()])
+    text_should_not_be_present = StringListField('Block change-detection while text matches', [validators.Optional(), ValidateListRegex()])
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})

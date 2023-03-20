@@ -26,6 +26,9 @@ base_config = {
     'fetch_backend': 'system', # plaintext, playwright etc
     'processor': 'text_json_diff', # could be restock_diff or others from .processors
     'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
+    'filter_text_added': True,
+    'filter_text_replaced': True,
+    'filter_text_removed': True,
     'has_ldjson_price_data': None,
     'track_ldjson_price_data': None,
     'headers': {},  # Extra headers to send
@@ -326,7 +329,8 @@ class model(dict):
         # Compare each lines (set) against each history text file (set) looking for something new..
         existing_history = set({})
         for k, v in self.history.items():
-            alist = set([line.decode('utf-8').strip().lower() for line in open(v, 'rb')])
+            content = self.get_history_snapshot(k)
+            alist = set([line.strip().lower() for line in content.splitlines()])
             existing_history = existing_history.union(alist)
 
         # Check that everything in local_lines(new stuff) already exists in existing_history - it should
@@ -454,3 +458,38 @@ class model(dict):
     # Return list of tags, stripped and lowercase, used for searching
     def all_tags(self):
         return [s.strip().lower() for s in self.get('tag','').split(',')]
+
+    def has_special_diff_filter_options_set(self):
+
+        # All False - nothing would be done, so act like it's not processable
+        if not self.get('filter_text_added', True) and not self.get('filter_text_replaced', True) and not self.get('filter_text_removed', True):
+            return False
+
+        # Or one is set
+        if not self.get('filter_text_added', True) or not self.get('filter_text_replaced', True) or not self.get('filter_text_removed', True):
+            return True
+
+        # None is set
+        return False
+
+
+    def get_last_fetched_before_filters(self):
+        import brotli
+        filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
+
+        if not os.path.isfile(filepath):
+            # If a previous attempt doesnt yet exist, just snarf the previous snapshot instead
+            dates = list(self.history.keys())
+            if len(dates):
+                return self.get_history_snapshot(dates[-1])
+            else:
+                return ''
+
+        with open(filepath, 'rb') as f:
+            return(brotli.decompress(f.read()).decode('utf-8'))
+
+    def save_last_fetched_before_filters(self, contents):
+        import brotli
+        filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
+        with open(filepath, 'wb') as f:
+            f.write(brotli.compress(contents, mode=brotli.MODE_TEXT))

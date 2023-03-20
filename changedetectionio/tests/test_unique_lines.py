@@ -94,7 +94,6 @@ def test_unique_lines_functionality(client, live_server):
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
 
-
     # Now set the content which contains the new text and re-ordered existing text
     set_modified_with_trigger_text_response()
     client.get(url_for("form_watch_checknow"), follow_redirects=True)

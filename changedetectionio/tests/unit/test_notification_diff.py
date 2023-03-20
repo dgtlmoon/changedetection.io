@@ -19,8 +19,12 @@ class TestDiffBuilder(unittest.TestCase):
         with open(base_dir + "/test-content/after.txt", 'r') as f:
             newest_version_file_contents = f.read()
 
-        output = diff.render_diff(previous_version_file_contents, newest_version_file_contents)
+        output = diff.render_diff(previous_version_file_contents=previous_version_file_contents,
+                                  newest_version_file_contents=newest_version_file_contents)
+
         output = output.split("\n")
+
+
         self.assertIn('(changed) ok', output)
         self.assertIn('(into) xok', output)
         self.assertIn('(into) next-x-ok', output)

@@ -279,6 +279,34 @@ class perform_site_check(difference_detection_processor):
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 
+
+        # @todo whitespace coming from missing rtrim()?
+        # stripped_text_from_html could be based on their preferences, replace the processed text with only that which they want to know about.
+        # Rewrite's the processing text based on only what diff result they want to see
+        if watch.has_special_diff_filter_options_set() and len(watch.history.keys()):
+            # Now the content comes from the diff-parser and not the returned HTTP traffic, so could be some differences
+            from .. import diff
+            # needs to not include (added) etc or it may get used twice
+            # Replace the processed text with the preferred result
+            rendered_diff = diff.render_diff(previous_version_file_contents=watch.get_last_fetched_before_filters(),
+                                                       newest_version_file_contents=stripped_text_from_html,
+                                                       include_equal=False,  # not the same lines
+                                                       include_added=watch.get('filter_text_added', True),
+                                                       include_removed=watch.get('filter_text_removed', True),
+                                                       include_replaced=watch.get('filter_text_replaced', True),
+                                                       line_feed_sep="\n",
+                                                       include_change_type_prefix=False)
+
+            watch.save_last_fetched_before_filters(text_content_before_ignored_filter)
+
+            if not rendered_diff and stripped_text_from_html:
+                # We had some content, but no differences were found
+                # Store our new file as the MD5 so it will trigger in the future
+                c = hashlib.md5(text_content_before_ignored_filter.translate(None, b'\r\n\t ')).hexdigest()
+                return False, {'previous_md5': c}, stripped_text_from_html.encode('utf-8')
+            else:
+                stripped_text_from_html = rendered_diff
+
         # Treat pages with no renderable text content as a change? No by default
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
         if not is_json and not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
@@ -337,6 +365,7 @@ class perform_site_check(difference_detection_processor):
             blocked = True
             # Filter and trigger works the same, so reuse it
             # It should return the line numbers that match
+            # Unblock flow if the trigger was found (some text remained after stripped what didnt match)
             result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
                                                   wordlist=trigger_text,
                                                   mode="line numbers")

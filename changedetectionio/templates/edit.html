@@ -244,12 +244,6 @@ User-Agent: wonderbra 1.0") }}
                                 </li>
                             </ul>
                     </div>
-                    <fieldset>
-                        <div class="pure-control-group">
-                            {{ render_checkbox_field(form.check_unique_lines) }}
-                            <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
-                        </div>
-                    </fieldset>
                     <div class="pure-control-group">
                         {% set field = render_field(form.include_filters,
                             rows=5,
@@ -287,37 +281,39 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                                 href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br>
                 </span>
                     </div>
-                    <div class="pure-control-group">
-                      {{ render_field(form.subtractive_selectors, rows=5, placeholder="header
+                <fieldset class="pure-control-group">
+                    {{ render_field(form.subtractive_selectors, rows=5, placeholder="header
 footer
 nav
 .stockticker") }}
-                      <span class="pure-form-message-inline">
+                    <span class="pure-form-message-inline">
                         <ul>
                           <li> Remove HTML element(s) by CSS selector before text conversion. </li>
                           <li> Add multiple elements or CSS selectors per line to ignore multiple parts of the HTML. </li>
                         </ul>
                       </span>
-                    </div>
-                <fieldset class="pure-group">
-                    {{ render_field(form.ignore_text, rows=5, placeholder="Some text to ignore in a line
-/some.regex\d{2}/ for case-INsensitive regex
-                    ") }}
-                    <span class="pure-form-message-inline">
-                        <ul>
-                            <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
-                            <li>Regular Expression support, wrap the entire line in forward slash <code>/regex/</code></li>
-                            <li>Changing this will affect the comparison checksum which may trigger an alert</li>
-                            <li>Use the preview/show current tab to see ignores</li>
-                        </ul>
-                </span>
+                </fieldset>
+                <div class="text-filtering">
+                <fieldset class="pure-group" id="text-filtering-type-options">
+                    <h3>Text filtering</h3>
+                        Limit trigger/ignore/block/extract to;<br>
+                        {{ render_checkbox_field(form.filter_text_added) }}
+                        {{ render_checkbox_field(form.filter_text_replaced) }}
+                        {{ render_checkbox_field(form.filter_text_removed) }}
+                    <span class="pure-form-message-inline">Note: Depending on the length and similarity of the text on each line, the algorithm may consider an <strong>addition</strong> instead of <strong>replacement</strong> for example.</span>
+                    <span class="pure-form-message-inline">So it's always better to select <strong>Added</strong>+<strong>Replaced</strong> when you're interested in new content.</span><br>
+                    <span class="pure-form-message-inline">When content is merely moved in a list, it will also trigger an <strong>addition</strong>, consider enabling <code><strong>Only trigger when unique lines appear</strong></code></span>
+                </fieldset>
 
-            </fieldset>
+                <fieldset class="pure-control-group">
+                    {{ render_checkbox_field(form.check_unique_lines) }}
+                    <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
+                </fieldset>
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.trigger_text, rows=5, placeholder="Some text to wait for in a line
 /some.regex\d{2}/ for case-INsensitive regex
-                    ") }}
+") }}
                         <span class="pure-form-message-inline">
                     <ul>
                         <li>Text to wait for before triggering a change/notification, all text and regex are tested <i>case-insensitive</i>.</li>
@@ -328,6 +324,21 @@ nav
                         </span>
                     </div>
                 </fieldset>
+                <fieldset class="pure-group">
+                    {{ render_field(form.ignore_text, rows=5, placeholder="Some text to ignore in a line
+/some.regex\d{2}/ for case-INsensitive regex
+") }}
+                    <span class="pure-form-message-inline">
+                        <ul>
+                            <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
+                            <li>Regular Expression support, wrap the entire line in forward slash <code>/regex/</code></li>
+                            <li>Changing this will affect the comparison checksum which may trigger an alert</li>
+                            <li>Use the preview/show current tab to see ignores</li>
+                        </ul>
+                </span>
+
+                </fieldset>
+
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.text_should_not_be_present, rows=5, placeholder="For example: Out of stock
@@ -362,6 +373,7 @@ Unavailable") }}
                         </span>
                     </div>
                 </fieldset>
+                </div>
             </div>
             {% endif %}
 

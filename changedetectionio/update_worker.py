@@ -322,6 +322,7 @@ class update_worker(threading.Thread):
 
                         self.cleanup_error_artifacts(uuid)
 
+                    #
                     # Different exceptions mean that we may or may not want to bump the snapshot, trigger notifications etc
                     if process_changedetection_results:
                         try:
