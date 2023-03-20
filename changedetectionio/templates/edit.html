@@ -295,19 +295,17 @@ nav
                     </div>
                 <fieldset class="pure-group">
                     <h3>Text filtering</h3>
-                         Limit to
+                        The text filters below should only apply to the following text changes -
                         {{ render_checkbox_field(form.filter_text_added) }}
                         {{ render_checkbox_field(form.filter_text_replaced) }}
                         {{ render_checkbox_field(form.filter_text_removed) }}
-                    <hr>
+
                 </fieldset>
 
-                <fieldset class="pure-group">
-                    <div class="pure-control-group">
+                    <fieldset class="pure-control-group">
                         {{ render_checkbox_field(form.check_unique_lines) }}
                         <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
-                    </div>
-                </fieldset>
+                    </fieldset>
 
                 <fieldset class="pure-group">
                     {{ render_field(form.ignore_text, rows=5, placeholder="Some text to ignore in a line
