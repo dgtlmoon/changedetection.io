@@ -459,6 +459,14 @@ class model(dict):
         return [s.strip().lower() for s in self.get('tag','').split(',')]
 
     def has_special_diff_filter_options_set(self):
+
+        # All False - nothing would be done, so act like it's not processable
+        if not self.get('filter_text_added', True) and not self.get('filter_text_replaced', True) and not self.get('filter_text_removed', True):
+            return False
+
+        # Or one is set
         if not self.get('filter_text_added', True) or not self.get('filter_text_replaced', True) or not self.get('filter_text_removed', True):
             return True
+
+        # None is set
         return False
