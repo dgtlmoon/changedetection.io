@@ -19,14 +19,18 @@ def customSequenceMatcher(before, after, include_equal=False, include_removed=Tr
             g = before[alo:ahi]
             yield g
         elif include_removed and tag == 'delete':
-            g = ["(removed) " if include_change_type_prefix else '' + i for i in same_slicer(before, alo, ahi)]
+            row_prefix = "(removed) " if include_change_type_prefix else ''
+            g = [ row_prefix + i for i in same_slicer(before, alo, ahi)]
             yield g
         elif include_replaced and tag == 'replace':
-            g = ["(changed) " if include_change_type_prefix else '' + i for i in same_slicer(before, alo, ahi)]
-            g += ["(into) " if include_change_type_prefix else '' + i for i in same_slicer(after, blo, bhi)]
+            row_prefix = "(changed) " if include_change_type_prefix else ''
+            g = [row_prefix + i for i in same_slicer(before, alo, ahi)]
+            row_prefix = "(into) " if include_change_type_prefix else ''
+            g += [row_prefix + i for i in same_slicer(after, blo, bhi)]
             yield g
         elif include_added and tag == 'insert':
-            g = ["(added) " if include_change_type_prefix else '' + i for i in same_slicer(after, blo, bhi)]
+            row_prefix = "(added) " if include_change_type_prefix else ''
+            g = [row_prefix + i for i in same_slicer(after, blo, bhi)]
             yield g
 
 # only_differences - only return info about the differences, no context
