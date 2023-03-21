@@ -1,6 +1,7 @@
 recursive-include changedetectionio/api *
 recursive-include changedetectionio/blueprint *
 recursive-include changedetectionio/model *
+recursive-include changedetectionio/processors *
 recursive-include changedetectionio/res *
 recursive-include changedetectionio/static *
 recursive-include changedetectionio/templates *
