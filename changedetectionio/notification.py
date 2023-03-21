@@ -15,7 +15,9 @@ valid_tokens = {
     'diff_full': '',
     'diff_url': '',
     'preview_url': '',
-    'current_snapshot': ''
+    'current_snapshot': '',
+    'triggered_text': '',
+
 }
 
 default_notification_format_for_watch = 'System default'
@@ -221,7 +223,8 @@ def create_notification_parameters(n_object, datastore):
             'diff_removed': n_object.get('diff_removed', ''),  # Null default in the case we use a test
             'diff_full': n_object.get('diff_full', ''),  # Null default in the case we use a test
             'preview_url': preview_url,
-            'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else ''
+            'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else '',
+            'triggered_text': n_object.get('triggered_text', '')
         })
 
     return tokens
