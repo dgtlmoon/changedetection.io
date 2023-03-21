@@ -5,17 +5,18 @@ import json
 
 valid_tokens = {
     'base_url': '',
-    'watch_url': '',
-    'watch_uuid': '',
-    'watch_title': '',
-    'watch_tag': '',
+    'current_snapshot': '',
     'diff': '',
     'diff_added': '',
-    'diff_removed': '',
     'diff_full': '',
+    'diff_removed': '',
     'diff_url': '',
     'preview_url': '',
-    'current_snapshot': ''
+    'triggered_text': '',
+    'watch_tag': '',
+    'watch_title': '',
+    'watch_url': '',
+    'watch_uuid': '',
 }
 
 default_notification_format_for_watch = 'System default'
@@ -211,17 +212,18 @@ def create_notification_parameters(n_object, datastore):
     tokens.update(
         {
             'base_url': base_url if base_url is not None else '',
-            'watch_url': watch_url,
-            'watch_uuid': uuid,
-            'watch_title': watch_title if watch_title is not None else '',
-            'watch_tag': watch_tag if watch_tag is not None else '',
-            'diff_url': diff_url,
+            'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else '',
             'diff': n_object.get('diff', ''),  # Null default in the case we use a test
             'diff_added': n_object.get('diff_added', ''),  # Null default in the case we use a test
-            'diff_removed': n_object.get('diff_removed', ''),  # Null default in the case we use a test
             'diff_full': n_object.get('diff_full', ''),  # Null default in the case we use a test
+            'diff_removed': n_object.get('diff_removed', ''),  # Null default in the case we use a test
+            'diff_url': diff_url,
             'preview_url': preview_url,
-            'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else ''
+            'triggered_text': n_object.get('triggered_text', ''),
+            'watch_tag': watch_tag if watch_tag is not None else '',
+            'watch_title': watch_title if watch_title is not None else '',
+            'watch_url': watch_url,
+            'watch_uuid': uuid,
         })
 
     return tokens

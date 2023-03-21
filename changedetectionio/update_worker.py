@@ -69,17 +69,28 @@ class update_worker(threading.Thread):
             else:
                 line_feed_sep = "\n"
 
+            # Add text that was triggered
             snapshot_contents = watch.get_history_snapshot(dates[-1])
+            trigger_text = watch.get('trigger_text', [])
+            triggered_text = ''
+
+            if len(trigger_text):
+                from . import html_tools
+                triggered_text = html_tools.get_triggered_text(content=snapshot_contents, trigger_text=trigger_text)
+                if triggered_text:
+                    triggered_text = line_feed_sep.join(triggered_text)
+
 
             n_object.update({
-                'watch_url': watch['url'],
-                'uuid': watch_uuid,
-                'screenshot': watch.get_screenshot() if watch.get('notification_screenshot') else None,
                 'current_snapshot': snapshot_contents,
                 'diff': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), line_feed_sep=line_feed_sep),
                 'diff_added': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_removed=False, line_feed_sep=line_feed_sep),
+                'diff_full': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_equal=True, line_feed_sep=line_feed_sep),
                 'diff_removed': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_added=False, line_feed_sep=line_feed_sep),
-                'diff_full': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_equal=True, line_feed_sep=line_feed_sep)
+                'screenshot': watch.get_screenshot() if watch.get('notification_screenshot') else None,
+                'triggered_text': triggered_text,
+                'uuid': watch_uuid,
+                'watch_url': watch['url'],
             })
             logging.info (">> SENDING NOTIFICATION")
             self.notification_q.put(n_object)

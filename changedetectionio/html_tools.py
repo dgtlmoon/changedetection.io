@@ -287,3 +287,18 @@ def workarounds_for_obfuscations(content):
     content = re.sub('<!--\s+-->', '', content)
 
     return content
+
+
+def get_triggered_text(content, trigger_text):
+    triggered_text = []
+    result = strip_ignore_text(content=content,
+                               wordlist=trigger_text,
+                               mode="line numbers")
+
+    i = 1
+    for p in content.splitlines():
+        if i in result:
+            triggered_text.append(p)
+        i += 1
+
+    return triggered_text
