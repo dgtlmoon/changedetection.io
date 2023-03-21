@@ -47,6 +47,21 @@
                 <a href="{{url_for('index', tag=tag) }}" class="pure-button button-tag {{'active' if active_tag == tag }}">{{ tag }}</a>
             {% endif %}
         {% endfor %}
+        
+        <ul id="post-list-buttons">
+            {% if has_unviewed %}
+            <li>
+                <a href="{{url_for('mark_all_viewed', tag=request.args.get('tag')) }}" class="pure-button button-tag ">Mark all viewed</a>
+            </li>
+            {% endif %}
+            <li>
+               <a href="{{ url_for('form_watch_checknow', tag=active_tag) }}" class="pure-button button-tag ">Recheck
+                all {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
+            </li>
+            <li>
+                <a href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>
+            </li>
+        </ul>
     </div>
 
     {% set sort_order = request.args.get('order', 'asc') == 'asc' %}
@@ -164,20 +179,7 @@
             {% endfor %}
             </tbody>
         </table>
-        <ul id="post-list-buttons">
-            {% if has_unviewed %}
-            <li>
-                <a href="{{url_for('mark_all_viewed', tag=request.args.get('tag')) }}" class="pure-button button-tag ">Mark all viewed</a>
-            </li>
-            {% endif %}
-            <li>
-               <a href="{{ url_for('form_watch_checknow', tag=active_tag) }}" class="pure-button button-tag ">Recheck
-                all {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
-            </li>
-            <li>
-                <a href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>
-            </li>
-        </ul>
+
         {# WIP for pagination, disabled for now
          {{ pagination(sorted_watches,3, pagination_page) }}
          #}
