@@ -1,0 +1,36 @@
+name: ChangeDetection.io PIP package test
+
+# Triggers the workflow on push or pull request events
+
+# This line doesnt work, even tho it is the documented one
+on: [push, pull_request]
+
+  # Changes to requirements.txt packages and Dockerfile may or may not always be compatible with arm etc, so worth testing
+  # @todo: some kind of path filter for requirements.txt and Dockerfile
+jobs:
+  test-pip-build-basics:
+    runs-on: ubuntu-latest
+    steps:
+        - uses: actions/checkout@v2
+
+        - name: Set up Python 3.9
+          uses: actions/setup-python@v2
+          with:
+            python-version: 3.9
+
+
+        - name: Test that the basic pip built package runs without error
+          run: |
+            set -e
+            mkdir dist
+            pip3 install wheel
+            python3 setup.py bdist_wheel            
+            pip3 install -r requirements.txt
+            rm ./changedetection.py
+            rm -rf changedetectio
+            
+            pip3 install dist/changedetection.io*.whl
+            changedetection.io -d /tmp -p 10000 &
+            sleep 3
+            curl http://127.0.0.1:10000/static/styles/pure-min.css >/dev/null
+            killall -9 changedetection.io
