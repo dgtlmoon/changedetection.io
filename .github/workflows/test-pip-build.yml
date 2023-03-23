@@ -21,7 +21,8 @@ jobs:
 
         - name: Test that the basic pip built package runs without error
           run: |
-            mkdir dist                        
+            mkdir dist
+            pip3 install wheel
             python3 setup.py bdist_wheel            
             pip3 install -r requirements.txt
             rm ./changedetection.py
