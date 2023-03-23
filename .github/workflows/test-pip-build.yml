@@ -27,3 +27,7 @@ jobs:
             pip3 install -r requirements.txt
             rm ./changedetection.py
             pip3 install dist/changedetection.io*.whl
+            changedetection.io -d /tmp -p 10000 &
+            sleep 3
+            curl http://127.0.0.1:10000/static/styles/pure-min.css >/dev/null
+            killall -9 changedetection.io
