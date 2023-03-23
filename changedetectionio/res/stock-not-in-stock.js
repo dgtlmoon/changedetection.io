@@ -32,7 +32,19 @@ function isItemInStock() {
     'zur zeit nicht an lager',
   ];
 
+
+  const negateOutOfStockRegexs = [
+      '[0-9] in stock'
+  ]
+  var negateOutOfStockRegexs_r = [];
+  for (let i = 0; i < negateOutOfStockRegexs.length; i++) {
+    negateOutOfStockRegexs_r.push(new RegExp(negateOutOfStockRegexs[0], 'g'));
+  }
+
+
   const elementsWithZeroChildren = Array.from(document.getElementsByTagName('*')).filter(element => element.children.length === 0);
+
+  // REGEXS THAT REALLY MEAN IT'S IN STOCK
   for (let i = elementsWithZeroChildren.length - 1; i >= 0; i--) {
     const element = elementsWithZeroChildren[i];
     if (element.offsetWidth > 0 || element.offsetHeight > 0 || element.getClientRects().length > 0) {
@@ -43,13 +55,39 @@ function isItemInStock() {
         elementText = element.textContent.toLowerCase();
       }
 
-      for (const outOfStockText of outOfStockTexts) {
-        if (elementText.includes(outOfStockText)) {
-          return elementText; // item is out of stock
+      if (elementText.length) {
+        // try which ones could mean its in stock
+        for (let i = 0; i < negateOutOfStockRegexs.length; i++) {
+          if (negateOutOfStockRegexs_r[i].test(elementText)) {
+            return 'Possibly in stock';
+          }
         }
       }
     }
   }
+
+  // OTHER STUFF THAT COULD BE THAT IT'S OUT OF STOCK
+  for (let i = elementsWithZeroChildren.length - 1; i >= 0; i--) {
+    const element = elementsWithZeroChildren[i];
+    if (element.offsetWidth > 0 || element.offsetHeight > 0 || element.getClientRects().length > 0) {
+      var elementText="";
+      if (element.tagName.toLowerCase() === "input") {
+        elementText = element.value.toLowerCase();
+      } else {
+        elementText = element.textContent.toLowerCase();
+      }
+
+      if (elementText.length) {
+        // and these mean its out of stock
+        for (const outOfStockText of outOfStockTexts) {
+          if (elementText.includes(outOfStockText)) {
+            return elementText; // item is out of stock
+          }
+        }
+      }
+    }
+  }
+
   return 'Possibly in stock'; // possibly in stock, cant decide otherwise.
 }
 
