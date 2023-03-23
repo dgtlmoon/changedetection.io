@@ -27,6 +27,8 @@ jobs:
             python3 setup.py bdist_wheel            
             pip3 install -r requirements.txt
             rm ./changedetection.py
+            rm -rf changedetectio
+            
             pip3 install dist/changedetection.io*.whl
             changedetection.io -d /tmp -p 10000 &
             sleep 3
