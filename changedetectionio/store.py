@@ -316,7 +316,8 @@ class ChangeDetectionStore:
             # #Re 569
             new_watch = Watch.model(datastore_path=self.datastore_path, default={
                 'url': url,
-                'tag': tag
+                'tag': tag,
+                'date_created': int(time.time())
             })
 
             new_uuid = new_watch['uuid']
@@ -679,3 +680,13 @@ class ChangeDetectionStore:
             except:
                 continue
         return
+
+    # We don't know when the date_created was in the past until now, so just add an index number for now.
+    def update_11(self):
+        i = 0
+        for uuid, watch in self.data['watching'].items():
+            if not watch.get('date_created'):
+                watch['date_created'] = i
+            i+=1
+        return
+
