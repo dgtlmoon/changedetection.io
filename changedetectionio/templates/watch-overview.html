@@ -69,7 +69,7 @@
             </thead>
             <tbody>
 
-            {% for watch in watches|sort(attribute='date_created', reverse=sort_order) %}
+            {% for watch in watches|sort(attribute=sort_attribute, reverse=sort_order) %}
 
             {# WIP for pagination, disabled for now
               {% if not ( loop.index >= 3 and loop.index <=4) %}{% continue %}{% endif %} -->
