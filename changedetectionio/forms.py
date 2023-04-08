@@ -138,26 +138,27 @@ class ValidateContentFetcherIsReady(object):
 
         # Better would be a radiohandler that keeps a reference to each class
         if field.data is not None and field.data != 'system':
-            prefered_fetcher = importlib.import_module(f'.{field.data}', package='changedetectionio.fetchers')
-            fetcher = prefered_fetcher.fetcher()
-            try:
-                ready = fetcher.is_ready()
+            from . import fetchers
+            if fetchers.html_webdriver is not None:
+                try:
+                    driver = fetchers.html_webdriver()
+                    driver.is_ready()
 
-            except urllib3.exceptions.MaxRetryError as e:
-                driver_url = fetcher.command_executor
-                message = field.gettext('Content fetcher \'%s\' did not respond.' % (field.data))
-                message += '<br>' + field.gettext(
-                    'Be sure that the selenium/webdriver runner is running and accessible via network from this container/host.')
-                message += '<br>' + field.gettext('Did you follow the instructions in the wiki?')
-                message += '<br><br>' + field.gettext('WebDriver Host: %s' % (driver_url))
-                message += '<br><a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">Go here for more information</a>'
-                message += '<br>'+field.gettext('Content fetcher did not respond properly, unable to use it.\n %s' % (str(e)))
+                except urllib3.exceptions.MaxRetryError as e:
+                    driver_url = fetchers.html_webdriver.command_executor
+                    message = field.gettext('Content fetcher \'%s\' did not respond.' % (field.data))
+                    message += '<br>' + field.gettext(
+                        'Be sure that the selenium/webdriver runner is running and accessible via network from this container/host.')
+                    message += '<br>' + field.gettext('Did you follow the instructions in the wiki?')
+                    message += '<br><br>' + field.gettext('WebDriver Host: %s' % (driver_url))
+                    message += '<br><a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">Go here for more information</a>'
+                    message += '<br>'+field.gettext('Content fetcher did not respond properly, unable to use it.\n %s' % (str(e)))
 
-                raise ValidationError(message)
+                    raise ValidationError(message)
 
-            except Exception as e:
-                message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.\n %s')
-                raise ValidationError(message % (field.data, e))
+                except Exception as e:
+                    message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.\n %s')
+                    raise ValidationError(message % (field.data, e))
 
 
 class ValidateNotificationBodyAndTitleWhenURLisSet(object):

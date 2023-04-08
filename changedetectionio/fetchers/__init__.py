@@ -122,22 +122,29 @@ class Fetcher():
 
 
 def available_fetchers():
-    from . import playwright, requests, webdriver, browserless
+    from . import playwright, html_requests, webdriver
 
     p = []
-    p.append(tuple(['requests', requests.fetcher.fetcher_description]))
-    p.append(tuple(['playwright', playwright.fetcher.fetcher_description]))
-    p.append(tuple(['webdriver', webdriver.fetcher.fetcher_description]))
-    p.append(tuple(['browserless', browserless.fetcher.fetcher_description]))
+    p.append(tuple(['html_requests', html_requests.fetcher.fetcher_description]))
+
+    # Prefer playwright
+    if os.getenv('PLAYWRIGHT_DRIVER_URL', False):
+        p.append(tuple(['html_webdriver', playwright.fetcher.fetcher_description]))
+
+    elif os.getenv('WEBDRIVER_URL'):
+        p.append(tuple(['html_webdriver', webdriver.fetcher.fetcher_description]))
+
 
     return p
 
+html_webdriver = None
+# Decide which is the 'real' HTML webdriver, this is more a system wide config rather than site-specific.
+use_playwright_as_chrome_fetcher = os.getenv('PLAYWRIGHT_DRIVER_URL', False)
+if use_playwright_as_chrome_fetcher:
+    from . import playwright
+    html_webdriver = getattr(playwright, "fetcher")
 
+else:
+    from . import webdriver
+    html_webdriver = getattr(webdriver, "fetcher")
 
-# Decide which is the 'real' HTML webdriver, this is more a system wide config
-# rather than site-specific.
-#use_playwright_as_chrome_fetcher = os.getenv('PLAYWRIGHT_DRIVER_URL', False)
-#if use_playwright_as_chrome_fetcher:
-#    html_webdriver = base_html_playwright
-#else:
-#    html_webdriver = base_html_webdriver

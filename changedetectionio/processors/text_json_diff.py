@@ -102,8 +102,11 @@ class perform_site_check(difference_detection_processor):
         if not prefer_backend or prefer_backend == 'system':
             prefer_backend = self.datastore.data['settings']['application']['fetch_backend']
 
-        import importlib
-        prefered_fetcher = importlib.import_module(f'.{prefer_backend}', package='changedetectionio.fetchers')
+        if prefer_backend == 'html_webdriver':
+            preferred_fetcher = fetchers.html_webdriver
+        else:
+            from ..fetchers import html_requests
+            preferred_fetcher = html_requests
 
 
         proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=uuid)
@@ -112,7 +115,7 @@ class perform_site_check(difference_detection_processor):
             proxy_url = self.datastore.proxy_list.get(proxy_id).get('url')
             print("UUID {} Using proxy {}".format(uuid, proxy_url))
 
-        fetcher = prefered_fetcher.fetcher(proxy_override=proxy_url)
+        fetcher = preferred_fetcher(proxy_override=proxy_url)
 
         # Configurable per-watch or global extra delay before extracting text (for webDriver types)
         system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
