@@ -21,7 +21,6 @@ from wtforms.validators import ValidationError
 # each select <option data-enabled="enabled-0-0"
 from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
 
-from changedetectionio import content_fetcher
 from changedetectionio.notification import (
     valid_notification_formats,
 )
@@ -135,17 +134,17 @@ class ValidateContentFetcherIsReady(object):
 
     def __call__(self, form, field):
         import urllib3.exceptions
-        from changedetectionio import content_fetcher
+        import importlib
 
         # Better would be a radiohandler that keeps a reference to each class
         if field.data is not None and field.data != 'system':
-            klass = getattr(content_fetcher, field.data)
-            some_object = klass()
+            prefered_fetcher = importlib.import_module(f'.{field.data}', package='changedetectionio.fetchers')
+            fetcher = prefered_fetcher.fetcher()
             try:
-                ready = some_object.is_ready()
+                ready = fetcher.is_ready()
 
             except urllib3.exceptions.MaxRetryError as e:
-                driver_url = some_object.command_executor
+                driver_url = fetcher.command_executor
                 message = field.gettext('Content fetcher \'%s\' did not respond.' % (field.data))
                 message += '<br>' + field.gettext(
                     'Be sure that the selenium/webdriver runner is running and accessible via network from this container/host.')

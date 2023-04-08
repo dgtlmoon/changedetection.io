@@ -4,7 +4,6 @@ import os
 import re
 import urllib3
 from . import difference_detection_processor
-from changedetectionio import content_fetcher
 from copy import deepcopy
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

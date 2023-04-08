@@ -13,7 +13,7 @@ import signal
 import socket
 import sys
 
-from . import store, changedetection_app, content_fetcher
+from . import store, changedetection_app
 from . import __version__
 
 # Only global so we can access it in the signal handler

@@ -7,10 +7,11 @@ import os
 import re
 import urllib3
 
-from changedetectionio import content_fetcher, html_tools
+from changedetectionio import html_tools
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
 from copy import deepcopy
 from . import difference_detection_processor
+from .. import fetchers
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -101,11 +102,9 @@ class perform_site_check(difference_detection_processor):
         if not prefer_backend or prefer_backend == 'system':
             prefer_backend = self.datastore.data['settings']['application']['fetch_backend']
 
-        if hasattr(content_fetcher, prefer_backend):
-            klass = getattr(content_fetcher, prefer_backend)
-        else:
-            # If the klass doesnt exist, just use a default
-            klass = getattr(content_fetcher, "html_requests")
+        import importlib
+        prefered_fetcher = importlib.import_module(f'.{prefer_backend}', package='changedetectionio.fetchers')
+
 
         proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=uuid)
         proxy_url = None
@@ -113,7 +112,7 @@ class perform_site_check(difference_detection_processor):
             proxy_url = self.datastore.proxy_list.get(proxy_id).get('url')
             print("UUID {} Using proxy {}".format(uuid, proxy_url))
 
-        fetcher = klass(proxy_override=proxy_url)
+        fetcher = prefered_fetcher.fetcher(proxy_override=proxy_url)
 
         # Configurable per-watch or global extra delay before extracting text (for webDriver types)
         system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
@@ -147,7 +146,7 @@ class perform_site_check(difference_detection_processor):
         update_obj['previous_md5_before_filters'] = hashlib.md5(fetcher.content.encode('utf-8')).hexdigest()
         if skip_when_checksum_same:
             if update_obj['previous_md5_before_filters'] == watch.get('previous_md5_before_filters'):
-                raise content_fetcher.checksumFromPreviousCheckWasTheSame()
+                raise fetchers.exceptions.checksumFromPreviousCheckWasTheSame()
 
 
         # Fetching complete, now filters
@@ -310,7 +309,7 @@ class perform_site_check(difference_detection_processor):
         # Treat pages with no renderable text content as a change? No by default
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
         if not is_json and not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
-            raise content_fetcher.ReplyWithContentButNoText(url=url, status_code=fetcher.get_last_status_code(), screenshot=screenshot)
+            raise fetchers.exceptions.ReplyWithContentButNoText(url=url, status_code=fetcher.get_last_status_code(), screenshot=screenshot)
 
         # We rely on the actual text in the html output.. many sites have random script vars etc,
         # in the future we'll implement other mechanisms.

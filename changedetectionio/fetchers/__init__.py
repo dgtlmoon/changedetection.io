@@ -1,6 +1,5 @@
 from abc import abstractmethod
 import os
-import sys
 from . import exceptions
 
 visualselector_xpath_selectors = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
@@ -31,8 +30,8 @@ class Fetcher():
     def __init__(self):
         from pkg_resources import resource_string
         # The code that scrapes elements and makes a list of elements/size/position to click on in the VisualSelector
-        self.xpath_element_js = resource_string(__name__, "res/xpath_element_scraper.js").decode('utf-8')
-        self.instock_data_js = resource_string(__name__, "res/stock-not-in-stock.js").decode('utf-8')
+        self.xpath_element_js = resource_string(__name__, "../res/xpath_element_scraper.js").decode('utf-8')
+        self.instock_data_js = resource_string(__name__, "../res/stock-not-in-stock.js").decode('utf-8')
 
 
     @abstractmethod
@@ -123,11 +122,22 @@ class Fetcher():
 
 
 def available_fetchers():
-    from . import playwright, requests, webdriver
+    from . import playwright, requests, webdriver, browserless
 
     p = []
-    p.append(tuple(['html_requests', requests.html_requests.fetcher_description]))
-    p.append(tuple(['html_playwright', playwright.html_playwright.fetcher_description]))
-    p.append(tuple(['html_webdriver', webdriver.html_webdriver.fetcher_description]))
+    p.append(tuple(['requests', requests.fetcher.fetcher_description]))
+    p.append(tuple(['playwright', playwright.fetcher.fetcher_description]))
+    p.append(tuple(['webdriver', webdriver.fetcher.fetcher_description]))
+    p.append(tuple(['browserless', browserless.fetcher.fetcher_description]))
 
     return p
+
+
+
+# Decide which is the 'real' HTML webdriver, this is more a system wide config
+# rather than site-specific.
+#use_playwright_as_chrome_fetcher = os.getenv('PLAYWRIGHT_DRIVER_URL', False)
+#if use_playwright_as_chrome_fetcher:
+#    html_webdriver = base_html_playwright
+#else:
+#    html_webdriver = base_html_webdriver

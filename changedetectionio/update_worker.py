@@ -3,7 +3,6 @@ import threading
 import queue
 import time
 
-from changedetectionio import content_fetcher
 from .processors.text_json_diff import FilterNotFoundInResponse
 from .fetchers import exceptions
 

@@ -679,7 +679,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/settings", methods=['GET', "POST"])
     @login_optionally_required
     def settings_page():
-        from changedetectionio import content_fetcher, forms
+        from . import forms
 
         default = deepcopy(datastore.data['settings'])
         if datastore.proxy_list is not None:

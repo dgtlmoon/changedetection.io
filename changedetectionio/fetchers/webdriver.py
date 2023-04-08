@@ -2,7 +2,7 @@ from . import Fetcher
 import os
 import time
 
-class html_webdriver(Fetcher):
+class fetcher(Fetcher):
     if os.getenv("WEBDRIVER_URL"):
         fetcher_description = "WebDriver Chrome/Javascript via '{}'".format(os.getenv("WEBDRIVER_URL"))
     else:
@@ -96,23 +96,8 @@ class html_webdriver(Fetcher):
 
         self.screenshot = self.driver.get_screenshot_as_png()
 
-    # Does the connection to the webdriver work? run a test connection.
+    # Try something with requests?
     def is_ready(self):
-        from selenium import webdriver
-        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-
-        self.driver = webdriver.Remote(
-            command_executor=self.command_executor,
-            desired_capabilities=DesiredCapabilities.CHROME)
-
-        # driver.quit() seems to cause better exceptions
-        self.quit()
         return True
 
-    def quit(self):
-        if self.driver:
-            try:
-                self.driver.quit()
-            except Exception as e:
-                print("Content Fetcher > Exception in chrome shutdown/quit" + str(e))
 

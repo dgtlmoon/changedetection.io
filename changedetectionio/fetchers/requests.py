@@ -1,10 +1,9 @@
 from . import Fetcher
 from . import exceptions
-from . import visualselector_xpath_selectors
 
 
 # "html_requests" is listed as the default fetcher in store.py!
-class html_requests(Fetcher):
+class fetcher(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
 
 

@@ -6,7 +6,7 @@ import os
 import logging
 import time
 
-class html_playwright(Fetcher):
+class fetcher(Fetcher):
     fetcher_description = "Playwright {}/Javascript".format(
         os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
     )
