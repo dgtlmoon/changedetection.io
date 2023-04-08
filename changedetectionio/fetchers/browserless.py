@@ -1,6 +1,5 @@
 from . import Fetcher
 import os
-import time
 import requests
 
 
@@ -15,8 +14,7 @@ class fetcher(Fetcher):
 
     def __init__(self, proxy_override=None, command_executor=None):
         super().__init__()
-
-        # @todo proxy
+        self.proxy = proxy_override
 
     def run(self,
             url,
@@ -28,10 +26,14 @@ class fetcher(Fetcher):
             current_include_filters=None,
             is_binary=False):
 
+        proxy = ""
+        if self.proxy:
+            proxy = f"--proxy-server={self.proxy}"
+
         import json
         r = requests.request(method='POST',
                              data=json.dumps({
-                                 "url": url,
+                                 "url": f"{url}?{proxy}",
                                  "elements": [],
                                  "debug": {
                                      "screenshot": True,
@@ -44,20 +46,25 @@ class fetcher(Fetcher):
                              url=os.getenv("BROWSERLESS_DRIVER_URL"),
                              headers={'Content-Type': 'application/json'},
                              timeout=timeout,
-                             #proxies=proxies,
                              verify=False)
+
+        # "waitFor": "() => document.querySelector('h1')"
+        #        extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
+        #        self.page.wait_for_timeout(extra_wait * 1000)
 
         if r.status_code == 200:
             # the basic request to browserless was OK, but how was the internal request to the site?
             result = r.json()
-            self.status_code = result['debug']['network']['inbound'][000]['status']
+
+            if result['debug']['network'].get('inbound') and len(result['debug']['network']['inbound']):
+                self.status_code = result['debug']['network']['inbound'][000]['status']
+
             self.content = result['debug']['html']
 
             self.headers = {}
             if result['debug'].get('screenshot'):
                 import base64
                 self.screenshot = base64.b64decode(result['debug']['screenshot'])
-
 
     def is_ready(self):
         # Try ping?
