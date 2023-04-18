@@ -37,19 +37,19 @@
     <div class="header">
       <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed" id="nav-menu">
         {% if has_password and not current_user.is_authenticated %}
-          <a class="pure-menu-heading" href="https://github.com/dgtlmoon/changedetection.io" rel="noopener">
+          <a class="pure-menu-heading" href="https://github.com/dgtlmoon/changedetection.io" target="_blank" rel="noopener">
             <strong>Change</strong>Detection.io</a>
         {% else %}
           <a class="pure-menu-heading" href="{{url_for('index')}}">
             <strong>Change</strong>Detection.io</a>
         {% endif %}
         {% if current_diff_url %}
-          <a class="current-diff-url" href="{{ current_diff_url }}">
+          <a class="current-diff-url" href="{{ current_diff_url }}" target="_blank" rel="noopener">
             <span style="max-width: 30%; overflow: hidden">{{ current_diff_url }}</span></a>
         {% else %}
           {% if new_version_available and not(has_password and not current_user.is_authenticated) %}
             <span id="new-version-text" class="pure-menu-heading">
-              <a href="https://github.com/dgtlmoon/changedetection.io">A new version is available</a>
+              <a href="https://github.com/dgtlmoon/changedetection.io" target="_blank" rel="noopener">A new version is available</a>
             </span>
           {% endif %}
         {% endif %}
@@ -74,7 +74,7 @@
             {% endif %}
           {% else %}
             <li class="pure-menu-item">
-              <a class="pure-menu-link" href="https://github.com/dgtlmoon/changedetection.io">Website Change Detection and Notification.</a>
+              <a class="pure-menu-link" href="https://github.com/dgtlmoon/changedetection.io" target="_blank" rel="noopener">Website Change Detection and Notification.</a>
             </li>
           {% endif %}
           {% if current_user.is_authenticated %}
@@ -97,7 +97,7 @@
             </button>
           </li>
           <li class="pure-menu-item">
-            <a class="github-link" href="https://github.com/dgtlmoon/changedetection.io">
+            <a class="github-link" href="https://github.com/dgtlmoon/changedetection.io" rel="noopener">
               {% include "svgs/github.svg" %}
             </a>
           </li>
@@ -106,7 +106,7 @@
     </div>
     {% if hosted_sticky %}
       <div class="sticky-tab" id="hosted-sticky">
-        <a href="https://lemonade.changedetection.io/start?ref={{guid}}">Let us host your instance!</a>
+        <a href="https://lemonade.changedetection.io/start?ref={{guid}}" target="_blank" rel="noopener">Let us host your instance!</a>
       </div>
     {% endif %}
     {% if left_sticky %}
