@@ -39,7 +39,7 @@
         <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default">Use default notification</button>
         <button class="pure-button button-secondary button-xsmall" style="background: #dd4242; font-size: 70%" name="op" value="delete">Delete</button>
     </div>
-    {% if watches|length >= 50 %}
+    {% if watches|length >= pagination.per_page %}
         {{ pagination.info }}
     {% endif %}
     <div>

@@ -422,7 +422,7 @@ def changedetection_app(config=None, datastore_o=None):
         existing_tags = datastore.get_all_tags()
         form = forms.quickWatchForm(request.form)
         page = request.args.get(get_page_parameter(), type=int, default=1)
-        pagination = Pagination(page=page, total=len(datastore.data['watching']), per_page=50, css_framework = "bulma")
+        pagination = Pagination(page=page, total=len(datastore.data['watching']), per_page=int(os.getenv('pagination_per_page', 50)), css_framework = "bulma")
 
         output = render_template(
             "watch-overview.html",
