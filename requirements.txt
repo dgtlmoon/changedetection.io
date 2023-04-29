@@ -2,6 +2,7 @@ eventlet>=0.31.0
 feedgen~=0.9
 flask-compress
 flask-login~=0.5
+flask-paginate
 flask_expects_json~=1.7
 flask_restful
 flask_wtf

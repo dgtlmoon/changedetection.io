@@ -95,6 +95,32 @@ ul#requests-extra_proxies {
   ul#requests-extra_proxies table tr {
     display: inline; }
 
+.pagination-page-info {
+  color: #fff;
+  font-size: 0.85rem;
+  text-transform: capitalize; }
+
+.pagination.menu > * {
+  display: inline-block; }
+
+.pagination.menu li {
+  display: inline-block; }
+
+.pagination.menu a {
+  padding: 0.65rem;
+  margin: 3px;
+  border: none;
+  background: #444;
+  border-radius: 2px;
+  color: var(--color-text-button); }
+  .pagination.menu a.disabled {
+    display: none; }
+  .pagination.menu a.active {
+    font-weight: bold;
+    background: #888; }
+  .pagination.menu a:hover {
+    background: #999; }
+
 /* spinner */
 .spinner,
 .spinner:after {
