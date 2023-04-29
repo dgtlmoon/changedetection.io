@@ -59,7 +59,7 @@
             <tr>
                 {% set link_order = "desc" if sort_order else "asc" %}
                 {% set arrow_span = "" %}
-                <th><input style="vertical-align: middle" type="checkbox" id="check-all"/> <a class="{{ 'active '+link_order if sort_attribute == 'date_added' else 'inactive' }}" href="{{url_for('index', sort='date_added', order=link_order, tag=active_tag)}}"># <span class='arrow {{link_order}}'></span></a></th>
+                <th><input style="vertical-align: middle" type="checkbox" id="check-all"/> <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}" href="{{url_for('index', sort='date_created', order=link_order, tag=active_tag)}}"># <span class='arrow {{link_order}}'></span></a></th>
                 <th></th>
                 <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('index', sort='label', order=link_order, tag=active_tag)}}">Website <span class='arrow {{link_order}}'></span></a></th>
                 <th><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('index', sort='last_checked', order=link_order, tag=active_tag)}}">Last Checked <span class='arrow {{link_order}}'></span></a></th>
