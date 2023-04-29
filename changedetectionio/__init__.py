@@ -1277,6 +1277,13 @@ def changedetection_app(config=None, datastore_o=None):
                     datastore.data['watching'][uuid.strip()]['paused'] = False
             flash("{} watches unpaused".format(len(uuids)))
 
+        elif (op == 'mark-viewed'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.set_last_viewed(uuid, int(time.time()))
+            flash("{} watches updated".format(len(uuids)))
+
         elif (op == 'mute'):
             for uuid in uuids:
                 uuid = uuid.strip()
