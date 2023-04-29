@@ -430,15 +430,26 @@ def changedetection_app(config=None, datastore_o=None):
                                  has_unviewed=datastore.has_unviewed,
                                  hosted_sticky=os.getenv("SALTED_PASS", False) == False,
                                  queued_uuids=[q_uuid.item['uuid'] for q_uuid in update_q.queue],
+                                 sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
+                                 sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
                                  system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),
                                  tags=existing_tags,
                                  watches=sorted_watches
                                  )
 
-
         if session.get('share-link'):
             del(session['share-link'])
-        return output
+
+        resp = make_response(output)
+
+        # The template can run on cookie or url query info
+        if request.args.get('sort'):
+            resp.set_cookie('sort', request.args.get('sort'))
+        if request.args.get('order'):
+            resp.set_cookie('order', request.args.get('order'))
+
+        return resp
+
 
 
     # AJAX endpoint for sending a test

@@ -20,6 +20,7 @@ base_config = {
     'body': None,
     'check_unique_lines': False,  # On change-detected, compare against all history if its something new
     'check_count': 0,
+    'date_created': None,
     'consecutive_filter_failures': 0,  # Every time the CSS/xPath filter cannot be located, reset when all is fine.
     'extract_text': [],  # Extract text by regex after filters
     'extract_title_as_title': False,
