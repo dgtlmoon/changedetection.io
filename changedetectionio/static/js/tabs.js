@@ -13,7 +13,7 @@ var has_errors = document.querySelectorAll(".messages .error");
 if (!has_errors.length) {
     if (document.location.hash == "") {
         const hash = document.querySelector(".tabs ul li:first-child a").href;
-        window.location.replaceState(undefined, undefined, hash);
+        window.history.replaceState(undefined, undefined, hash);
     } else {
         set_active_tab();
     }
