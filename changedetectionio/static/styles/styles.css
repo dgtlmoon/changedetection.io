@@ -95,6 +95,28 @@ ul#requests-extra_proxies {
   ul#requests-extra_proxies table tr {
     display: inline; }
 
+.pagination-page-info {
+  color: #fff;
+  font-size: 0.85rem;
+  text-transform: capitalize; }
+
+nav.pagination > * {
+  display: inline-block; }
+
+nav.pagination li {
+  display: inline-block; }
+
+nav.pagination .pagination-list li a {
+  padding: 0.65rem;
+  margin: 3px;
+  border: 1px solid #fff;
+  background: #444; }
+  nav.pagination .pagination-list li a.is-current {
+    font-weight: bold;
+    background: #888; }
+  nav.pagination .pagination-list li a:hover {
+    background: #999; }
+
 /* spinner */
 .spinner,
 .spinner:after {

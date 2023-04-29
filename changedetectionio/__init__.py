@@ -33,6 +33,8 @@ from flask import (
     url_for,
 )
 
+from flask_paginate import Pagination, get_page_parameter
+
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
@@ -419,6 +421,9 @@ def changedetection_app(config=None, datastore_o=None):
 
         existing_tags = datastore.get_all_tags()
         form = forms.quickWatchForm(request.form)
+        page = request.args.get(get_page_parameter(), type=int, default=1)
+        pagination = Pagination(page=page, total=len(datastore.data['watching']), per_page=50, css_framework = "bulma")
+
         output = render_template(
             "watch-overview.html",
                                  # Don't link to hosting when we're on the hosting environment
@@ -429,6 +434,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  has_proxies=datastore.proxy_list,
                                  has_unviewed=datastore.has_unviewed,
                                  hosted_sticky=os.getenv("SALTED_PASS", False) == False,
+                                 pagination=pagination,
                                  queued_uuids=[q_uuid.item['uuid'] for q_uuid in update_q.queue],
                                  sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
                                  sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),

@@ -1,0 +1,31 @@
+.pagination-page-info {
+  color: #fff;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+}
+
+nav.pagination {
+  > * {
+    display: inline-block;
+  }
+  li {
+    display: inline-block;
+  }
+  .pagination-list {
+    li {
+      a {
+        padding: 0.65rem;
+        margin: 3px;
+        border: 1px solid #fff;
+        background: #444;
+        &.is-current {
+          font-weight: bold;
+          background: #888;
+        }
+        &:hover {
+          background: #999;
+        }
+      }
+    }
+  }
+}
