@@ -26,9 +26,6 @@ $(document).ready(function() {
     data = {
         window_url : window.location.href,
         notification_urls : $('.notification-urls').val(),
-        notification_title : $('.notification-title').val(),
-        notification_body : $('.notification-body').val(),
-        notification_format : $('.notification-format').val(),
     }
     for (key in data) {
       if (!data[key].length) {

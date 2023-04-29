@@ -463,11 +463,19 @@ def changedetection_app(config=None, datastore_o=None):
 
         try:
             n_object = {'watch_url': request.form['window_url'],
-                        'notification_urls': request.form['notification_urls'].splitlines(),
-                        'notification_title': request.form['notification_title'].strip(),
-                        'notification_body': request.form['notification_body'].strip(),
-                        'notification_format': request.form['notification_format'].strip()
+                        'notification_urls': request.form['notification_urls'].splitlines()
                         }
+
+            # Only use if present, if not set in n_object it should use the default system value
+            if 'notification_format' in request.form and request.form['notification_format'].strip():
+                n_object['notification_format'] = request.form.get('notification_format', '').strip()
+
+            if 'notification_title' in request.form and request.form['notification_title'].strip():
+                n_object['notification_title'] = request.form.get('notification_title', '').strip()
+
+            if 'notification_body' in request.form and request.form['notification_body'].strip():
+                n_object['notification_body'] = request.form.get('notification_body', '').strip()
+
             notification_q.put(n_object)
         except Exception as e:
             return make_response({'error': str(e)}, 400)
