@@ -2,28 +2,28 @@
 <html lang="en" data-darkmode="{{ get_darkmode_state() }}">
 
   <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="description" content="Self hosted website change detection."/>
+    <meta charset="utf-8" >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" >
+    <meta name="description" content="Self hosted website change detection." >
     <title>Change Detection{{extra_title}}</title>
-    <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag %}- {{active_tag}}{% endif %}" href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"/>
-    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}"/>
-    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}"/>
+    <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag %}- {{active_tag}}{% endif %}" href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}" >
+    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}" >
+    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}" >
     {% if extra_stylesheets %}
       {% for m in extra_stylesheets %}
-        <link rel="stylesheet" href="{{ m }}?ver=1000"/>
+        <link rel="stylesheet" href="{{ m }}?ver=1000" >
       {% endfor %}
     {% endif %}
 
-    <link rel="apple-touch-icon" sizes="180x180" href="{{url_for('static_content', group='favicons', filename='apple-touch-icon.png')}}"/>
-    <link rel="icon" type="image/png" sizes="32x32" href="{{url_for('static_content', group='favicons', filename='favicon-32x32.png')}}"/>
-    <link rel="icon" type="image/png" sizes="16x16" href="{{url_for('static_content', group='favicons', filename='favicon-16x16.png')}}"/>
-    <link rel="manifest" href="{{url_for('static_content', group='favicons', filename='site.webmanifest')}}"/>
-    <link rel="mask-icon" href="{{url_for('static_content', group='favicons', filename='safari-pinned-tab.svg')}}" color="#5bbad5"/>
-    <link rel="shortcut icon" href="{{url_for('static_content', group='favicons', filename='favicon.ico')}}"/>
-    <meta name="msapplication-TileColor" content="#da532c"/>
-    <meta name="msapplication-config" content="favicons/browserconfig.xml"/>
-    <meta name="theme-color" content="#ffffff"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="{{url_for('static_content', group='favicons', filename='apple-touch-icon.png')}}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{url_for('static_content', group='favicons', filename='favicon-32x32.png')}}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{url_for('static_content', group='favicons', filename='favicon-16x16.png')}}">
+    <link rel="manifest" href="{{url_for('static_content', group='favicons', filename='site.webmanifest')}}">
+    <link rel="mask-icon" href="{{url_for('static_content', group='favicons', filename='safari-pinned-tab.svg')}}" color="#5bbad5">
+    <link rel="shortcut icon" href="{{url_for('static_content', group='favicons', filename='favicon.ico')}}">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="msapplication-config" content="favicons/browserconfig.xml">
+    <meta name="theme-color" content="#ffffff">
 
     <style>
       body::before {
@@ -137,7 +137,7 @@
           <li class="message">
             Share this link:
             <span id="share-link">{{ session['share-link'] }}</span>
-            <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='copy.svg')}}"/>
+            <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='copy.svg')}}" >
           </li>
         </ul>
       {% endif %}

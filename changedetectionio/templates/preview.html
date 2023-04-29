@@ -31,7 +31,7 @@
 
     <div class="tab-pane-inner" id="error-screenshot">
         <div class="snapshot-age error">{{watch.snapshot_error_screenshot_ctime|format_seconds_ago}} seconds ago</div>
-        <img id="error-screenshot-img"  style="max-width: 80%" alt="Current erroring screenshot from most recent request"/>
+        <img id="error-screenshot-img"  style="max-width: 80%" alt="Current erroring screenshot from most recent request" >
     </div>
 
     <div class="tab-pane-inner" id="text">
@@ -58,7 +58,7 @@
          {% if is_html_webdriver %}
            {% if screenshot %}
              <div class="snapshot-age">{{watch.snapshot_screenshot_ctime|format_timestamp_timeago}}</div>
-             <img style="max-width: 80%" id="screenshot-img" alt="Current screenshot from most recent request"/>
+             <img style="max-width: 80%" id="screenshot-img" alt="Current screenshot from most recent request" >
            {% else %}
               No screenshot available just yet! Try rechecking the page.
            {% endif %}
