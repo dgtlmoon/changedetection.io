@@ -50,7 +50,7 @@
     <div class="box-wrap inner">
         <form class="pure-form pure-form-stacked"
               action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next'), unpause_on_save = request.args.get('unpause_on_save')) }}" method="POST">
-             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="tab-pane-inner" id="general">
                 <fieldset>
@@ -190,7 +190,7 @@ User-Agent: wonderbra 1.0") }}
                                         </span>
                                         <div class="spinner"  style="display: none;"></div>
                                     </span>
-                                    <img  class="noselect" id="browsersteps-img" src="" style="max-width: 100%; width: 100%;" />
+                                    <img  class="noselect" id="browsersteps-img" src="" style="max-width: 100%; width: 100%;" >
                                     <canvas  class="noselect" id="browsersteps-selector-canvas" style="max-width: 100%; width: 100%;"></canvas>
                                 </div>
                             </div>
@@ -220,7 +220,7 @@ User-Agent: wonderbra 1.0") }}
                     <div class="field-group" id="notification-field-group">
                         {% if has_default_notification_urls %}
                         <div class="inline-warning">
-                            <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="Look out!" title="Lookout!"/>
+                            <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="Look out!" title="Lookout!" >
                             There are <a href="{{ url_for('settings_page')}}#notifications">system-wide notification URLs enabled</a>, this form will override notification settings for this watch only &dash; an empty Notification URL list here will still send notifications.
                         </div>
                         {% endif %}
@@ -407,7 +407,7 @@ Unavailable") }}
                                 <!-- request the screenshot and get the element offset info ready -->
                                 <!-- use img src ready load to know everything is ready to map out -->
                                 <!-- @todo: maybe something interesting like a field to select 'elements that contain text... and their parents n' -->
-                                <img id="selector-background" />
+                                <img id="selector-background" >
                                 <canvas id="selector-canvas"></canvas>
                             </div>
                             <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>

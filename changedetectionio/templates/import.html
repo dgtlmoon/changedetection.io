@@ -13,7 +13,7 @@
 
     <div class="box-wrap inner">
         <form class="pure-form pure-form-aligned" action="{{url_for('import_page')}}" method="POST">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="tab-pane-inner" id="url-list">
                     <legend>
                         Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma
