@@ -9,10 +9,10 @@
     const email_notification_prefix=JSON.parse('{{emailprefix|tojson}}');
 {% endif %}
 </script>
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <div class="edit-form">
     <div class="tabs collapsable">
         <ul>

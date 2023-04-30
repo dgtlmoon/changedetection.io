@@ -30,7 +30,7 @@
         background-image: url({{url_for('static_content', group='images', filename='gradient-border.png') }});
       }
     </style>
-    <script type="text/javascript" src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
+    <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
   </head>
 
   <body>
@@ -143,10 +143,7 @@
       {% endif %}
       {% block content %}{% endblock %}
     </section>
-    <script
-      type="text/javascript"
-      src="{{url_for('static_content', group='js', filename='toggle-theme.js')}}"
-      defer></script>
+    <script src="{{url_for('static_content', group='js', filename='toggle-theme.js')}}" defer></script>
   </body>
 
 </html>
