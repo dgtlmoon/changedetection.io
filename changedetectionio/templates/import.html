@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 {% from '_helpers.jinja' import render_field %}
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <div class="edit-form monospaced-textarea">
 
     <div class="tabs collapsable">

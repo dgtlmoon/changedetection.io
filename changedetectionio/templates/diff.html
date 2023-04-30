@@ -7,7 +7,7 @@
     const error_screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid, error_screenshot=1) }}";
     {% endif %}
 </script>
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
 <div id="settings">
     <h1>Differences</h1>
@@ -51,7 +51,7 @@
     <a onclick="next_diff();">Jump</a>
 </div>
 
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <div class="tabs">
     <ul>
         {% if last_error_text %}<li class="tab" id="error-text-tab"><a href="#error-text">Error Text</a></li> {% endif %}
@@ -149,9 +149,9 @@
 <script>
     const newest_version_timestamp = {{newest_version_timestamp}};
 </script>
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff.min.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='diff.min.js')}}"></script>
 
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff-render.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='diff-render.js')}}"></script>
 
 
 {% endblock %}

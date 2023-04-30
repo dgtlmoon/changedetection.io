@@ -2,7 +2,7 @@
 {% block content %}
 {% from '_helpers.jinja' import render_field, render_checkbox_field, render_button %}
 {% from '_common_fields.jinja' import render_common_settings_form %}
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script>
     const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
     const watch_visual_selector_data_url="{{url_for('static_content', group='visual_selector_data', filename=uuid)}}";
@@ -17,12 +17,12 @@
     const browser_steps_sync_url="{{url_for('browser_steps.browsersteps_ui_update', uuid=uuid)}}";
 </script>
 
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='visual-selector.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='visual-selector.js')}}" defer></script>
 {% if playwright_enabled %}
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='browser-steps.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='browser-steps.js')}}" defer></script>
 {% endif %}
 
 <div class="edit-form monospaced-textarea">
@@ -163,7 +163,7 @@ User-Agent: wonderbra 1.0") }}
             </div>
             {% if playwright_enabled %}
             <div class="tab-pane-inner" id="browser-steps">
-                <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
+                <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}" alt="New beta functionality">
                 <fieldset>
                     <div class="pure-control-group">
                         <!--
@@ -190,7 +190,7 @@ User-Agent: wonderbra 1.0") }}
                                         </span>
                                         <div class="spinner"  style="display: none;"></div>
                                     </span>
-                                    <img  class="noselect" id="browsersteps-img" src="" style="max-width: 100%; width: 100%;" >
+                                    <img class="noselect" id="browsersteps-img" src="" style="max-width: 100%; width: 100%;" >
                                     <canvas  class="noselect" id="browsersteps-selector-canvas" style="max-width: 100%; width: 100%;"></canvas>
                                 </div>
                             </div>
@@ -390,7 +390,7 @@ Unavailable") }}
 
             {% if watch['processor'] == 'text_json_diff' %}
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
-                <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}">
+                <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}" alt="New beta functionality">
 
                 <fieldset>
                     <div class="pure-control-group">

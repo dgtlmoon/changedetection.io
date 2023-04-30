@@ -7,9 +7,9 @@
     const error_screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid, error_screenshot=1) }}";
     {% endif %}
 </script>
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
-<script type="text/javascript" src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <div class="tabs">
     <ul>
         {% if last_error_text %}<li class="tab" id="error-text-tab"><a href="#error-text">Error Text</a></li> {% endif %}
