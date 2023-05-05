@@ -301,7 +301,7 @@ class base_html_playwright(Fetcher):
           
           if(execute_js) {{
             await page.evaluate(execute_js);
-            await page.evaluate(200);
+            await page.waitForTimeout(200);
           }}
           
           const xpath_data = await page.evaluate((include_filters) => {{ {xpath_element_js} }}, include_filters);
