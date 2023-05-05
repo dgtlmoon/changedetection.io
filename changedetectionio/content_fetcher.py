@@ -10,6 +10,7 @@ import time
 
 visualselector_xpath_selectors = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
 
+
 class Non200ErrorCodeReceived(Exception):
     def __init__(self, status_code, url, screenshot=None, xpath_data=None, page_html=None):
         # Set this so we can use it in other parts of the app
@@ -24,9 +25,11 @@ class Non200ErrorCodeReceived(Exception):
             self.page_text = html_tools.html_to_text(page_html)
         return
 
+
 class checksumFromPreviousCheckWasTheSame(Exception):
     def __init__(self):
         return
+
 
 class JSActionExceptions(Exception):
     def __init__(self, status_code, url, screenshot, message=''):
@@ -35,6 +38,7 @@ class JSActionExceptions(Exception):
         self.screenshot = screenshot
         self.message = message
         return
+
 
 class BrowserStepsStepTimout(Exception):
     def __init__(self, step_n):
@@ -51,6 +55,7 @@ class PageUnloadable(Exception):
         self.message = message
         return
 
+
 class EmptyReply(Exception):
     def __init__(self, status_code, url, screenshot=None):
         # Set this so we can use it in other parts of the app
@@ -58,6 +63,7 @@ class EmptyReply(Exception):
         self.url = url
         self.screenshot = screenshot
         return
+
 
 class ScreenshotUnavailable(Exception):
     def __init__(self, status_code, url, page_html=None):
@@ -69,6 +75,7 @@ class ScreenshotUnavailable(Exception):
             self.page_text = html_to_text(page_html)
         return
 
+
 class ReplyWithContentButNoText(Exception):
     def __init__(self, status_code, url, screenshot=None):
         # Set this so we can use it in other parts of the app
@@ -77,13 +84,14 @@ class ReplyWithContentButNoText(Exception):
         self.screenshot = screenshot
         return
 
+
 class Fetcher():
     browser_steps = None
     browser_steps_screenshot_path = None
     content = None
     error = None
     fetcher_description = "No description"
-    headers = None
+    headers = {}
     status_code = None
     webdriver_js_execute_code = None
     xpath_data = None
@@ -104,7 +112,6 @@ class Fetcher():
         # The code that scrapes elements and makes a list of elements/size/position to click on in the VisualSelector
         self.xpath_element_js = resource_string(__name__, "res/xpath_element_scraper.js").decode('utf-8')
         self.instock_data_js = resource_string(__name__, "res/stock-not-in-stock.js").decode('utf-8')
-
 
     @abstractmethod
     def get_error(self):
@@ -152,13 +159,15 @@ class Fetcher():
             interface = steppable_browser_interface()
             interface.page = self.page
 
-            valid_steps = filter(lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'), self.browser_steps)
+            valid_steps = filter(
+                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
+                self.browser_steps)
 
             for step in valid_steps:
                 step_n += 1
                 print(">> Iterating check - browser Step n {} - {}...".format(step_n, step['operation']))
-                self.screenshot_step("before-"+str(step_n))
-                self.save_step_html("before-"+str(step_n))
+                self.screenshot_step("before-" + str(step_n))
+                self.save_step_html("before-" + str(step_n))
                 try:
                     optional_value = step['optional_value']
                     selector = step['selector']
@@ -177,8 +186,6 @@ class Fetcher():
                     # Stop processing here
                     raise BrowserStepsStepTimout(step_n=step_n)
 
-
-
     # It's always good to reset these
     def delete_browser_steps_screenshots(self):
         import glob
@@ -187,6 +194,7 @@ class Fetcher():
             files = glob.glob(dest)
             for f in files:
                 os.unlink(f)
+
 
 #   Maybe for the future, each fetcher provides its own diff output, could be used for text, image
 #   the current one would return javascript output (as we use JS to generate the diff)
@@ -204,6 +212,7 @@ def available_fetchers():
                 p.append(t)
 
     return p
+
 
 class base_html_playwright(Fetcher):
     fetcher_description = "Playwright {}/Javascript".format(
@@ -278,6 +287,156 @@ class base_html_playwright(Fetcher):
             current_include_filters=None,
             is_binary=False):
 
+        # Fallback for now to the old way if browsersteps
+        # @todo - need to figure out how to get browsersteps with images on each step working
+        if self.browser_steps:
+            for step in self.browser_steps:
+                if step.get('operation'):
+                    return self.run_playwright(
+                                   url,
+                                   timeout,
+                                   request_headers,
+                                   request_body,
+                                   request_method,
+                                   ignore_status_codes,
+                                   current_include_filters,
+                                   is_binary)
+        elif os.getenv('FORCE_PLAYWRIGHT_FETCH'):
+            # Temporary backup solution until we rewrite the playwright code
+            return self.run_playwright(
+                url,
+                timeout,
+                request_headers,
+                request_body,
+                request_method,
+                ignore_status_codes,
+                current_include_filters,
+                is_binary)
+
+
+        extra_wait_ms = (int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay) * 1000
+        xpath_element_js = self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
+
+        code = f"""module.exports = async ({{ page, context }}) => {{
+          var {{ url, execute_js, user_agent, extra_wait_ms, req_headers, include_filters, xpath_element_js, screenshot_quality, proxy}} = context;
+          
+          await page.setBypassCSP(true)
+          await page.setExtraHTTPHeaders(req_headers);          
+          await page.setUserAgent(user_agent);
+          
+          if(proxy) {{
+            await page.authenticate({{
+                username: proxy['username'],
+                password: proxy['password'],
+            }});
+          }}
+          
+          const r = await page.goto(url, wait_until='commit');                  
+          await page.waitForTimeout(extra_wait_ms)
+          
+          if(execute_js) {{
+            await page.evaluate(execute_js);
+            await page.waitForTimeout(200);
+          }}
+          
+          const xpath_data = await page.evaluate((include_filters) => {{ {xpath_element_js} }}, include_filters);
+          const instock_data = await page.evaluate(() => {{ {self.instock_data_js} }});
+      
+          const html = await page.content();
+          const b64s = await page.screenshot({{ encoding: "base64", fullPage: true, quality: screenshot_quality, type: 'jpeg' }});
+          return {{
+            data: {{
+                'content': html, 
+                'headers': r.headers(), 
+                'instock_data': instock_data,
+                'screenshot': b64s,
+                'status_code': r.status(),
+                'xpath_data': xpath_data
+            }},
+            type: 'application/json',
+          }};
+        }};"""
+
+        from requests.exceptions import ConnectTimeout, ReadTimeout
+        wait_browserless_seconds = 120
+
+        browserless_function_url = os.getenv('BROWSERLESS_FUNCTION_URL')
+        from urllib.parse import urlparse
+        if not browserless_function_url:
+            # Convert/try to guess from PLAYWRIGHT_DRIVER_URL
+            o = urlparse(os.getenv('PLAYWRIGHT_DRIVER_URL'))
+            browserless_function_url = o._replace(scheme="http")._replace(path="function").geturl()
+
+
+        # Append proxy connect string
+        if self.proxy:
+            import urllib.parse
+            # Remove username/password if it exists in the URL or you will receive "ERR_NO_SUPPORTED_PROXIES" error
+            # Actual authentication handled by Puppeteer/node
+            o = urlparse(self.proxy.get('server'))
+            proxy_url = urllib.parse.quote(o._replace(netloc="{}:{}".format(o.hostname, o.port)).geturl())
+            browserless_function_url = f"{browserless_function_url}&--proxy-server={proxy_url}"
+
+
+        try:
+            response = requests.request(
+                method="POST",
+                json={
+                    "code": code,
+                    "context": {
+                        'execute_js': self.webdriver_js_execute_code,
+                        'extra_wait_ms': extra_wait_ms,
+                        'include_filters': current_include_filters,
+                        'proxy': self.proxy,
+                        'req_headers': request_headers,
+                        'screenshot_quality': int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)),
+                        'url': url,
+                        'user_agent': request_headers.get('User-Agent', 'Mozilla/5.0'),
+                    }
+                },
+                # @todo /function needs adding ws:// to http:// rebuild this
+                url=browserless_function_url,
+                timeout=wait_browserless_seconds)
+
+        except ReadTimeout:
+            raise PageUnloadable(url=url, status_code=None, message=f"No response from browserless in {wait_browserless_seconds}s")
+        except ConnectTimeout:
+            raise PageUnloadable(url=url, status_code=None, message=f"Timed out connecting to browserless, retrying..")
+        else:
+            # 200 Here means that the communication to browserless worked only, not the page state
+            if response.status_code == 200:
+                import base64
+
+                x = response.json()
+                if not x.get('screenshot'):
+                    raise ScreenshotUnavailable(url=url, status_code=None)
+
+                if not x.get('content', '').strip():
+                    raise EmptyReply(url=url, status_code=None)
+
+                if x.get('status_code', 200) != 200 and not ignore_status_codes:
+                    raise Non200ErrorCodeReceived(url=url, status_code=x.get('status_code', 200), page_html=x['content'])
+
+                self.content = x.get('content')
+                self.headers = x.get('headers')
+                self.instock_data = x.get('instock_data')
+                self.screenshot = base64.b64decode(x.get('screenshot'))
+                self.xpath_data = x.get('xpath_data')
+
+            else:
+                # Some other error from browserless
+                raise PageUnloadable(url=url, status_code=None, message=response.content.decode('utf-8'))
+
+    def run_playwright(self,
+                       url,
+                       timeout,
+                       request_headers,
+                       request_body,
+                       request_method,
+                       ignore_status_codes=False,
+                       current_include_filters=None,
+                       is_binary=False):
+
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
 
@@ -294,7 +453,7 @@ class base_html_playwright(Fetcher):
             # Set user agent to prevent Cloudflare from blocking the browser
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
             context = browser.new_context(
-                user_agent=request_headers['User-Agent'] if request_headers.get('User-Agent') else 'Mozilla/5.0',
+                user_agent=request_headers.get('User-Agent', 'Mozilla/5.0'),
                 proxy=self.proxy,
                 # This is needed to enable JavaScript execution on GitHub and others
                 bypass_csp=True,
@@ -324,12 +483,12 @@ class base_html_playwright(Fetcher):
             except playwright._impl._api_types.Error as e:
                 # Retry once - https://github.com/browserless/chrome/issues/2485
                 # Sometimes errors related to invalid cert's and other can be random
-                print ("Content Fetcher > retrying request got error - ", str(e))
+                print("Content Fetcher > retrying request got error - ", str(e))
                 time.sleep(1)
                 response = self.page.goto(url, wait_until='commit')
 
             except Exception as e:
-                print ("Content Fetcher > Other exception when page.goto", str(e))
+                print("Content Fetcher > Other exception when page.goto", str(e))
                 context.close()
                 browser.close()
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
@@ -348,7 +507,7 @@ class base_html_playwright(Fetcher):
                 # This can be ok, we will try to grab what we could retrieve
                 pass
             except Exception as e:
-                print ("Content Fetcher > Other exception when executing custom JS code", str(e))
+                print("Content Fetcher > Other exception when executing custom JS code", str(e))
                 context.close()
                 browser.close()
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
@@ -356,7 +515,7 @@ class base_html_playwright(Fetcher):
             if response is None:
                 context.close()
                 browser.close()
-                print ("Content Fetcher > Response object was none")
+                print("Content Fetcher > Response object was none")
                 raise EmptyReply(url=url, status_code=None)
 
             # Run Browser Steps here
@@ -370,7 +529,7 @@ class base_html_playwright(Fetcher):
             if len(self.page.content().strip()) == 0:
                 context.close()
                 browser.close()
-                print ("Content Fetcher > Content was empty")
+                print("Content Fetcher > Content was empty")
                 raise EmptyReply(url=url, status_code=response.status)
 
             self.status_code = response.status
@@ -382,7 +541,8 @@ class base_html_playwright(Fetcher):
             else:
                 self.page.evaluate("var include_filters=''")
 
-            self.xpath_data = self.page.evaluate("async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}")
+            self.xpath_data = self.page.evaluate(
+                "async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}")
             self.instock_data = self.page.evaluate("async () => {" + self.instock_data_js + "}")
 
             # Bug 3 in Playwright screenshot handling
@@ -394,7 +554,8 @@ class base_html_playwright(Fetcher):
             # acceptable screenshot quality here
             try:
                 # The actual screenshot
-                self.screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
+                self.screenshot = self.page.screenshot(type='jpeg', full_page=True,
+                                                       quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
             except Exception as e:
                 context.close()
                 browser.close()
@@ -402,6 +563,7 @@ class base_html_playwright(Fetcher):
 
             context.close()
             browser.close()
+
 
 class base_html_webdriver(Fetcher):
     if os.getenv("WEBDRIVER_URL"):
