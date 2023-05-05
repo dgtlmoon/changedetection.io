@@ -291,11 +291,19 @@ class base_html_playwright(Fetcher):
         xpath_element_js = self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
 
         code = f"""module.exports = async ({{ page, context }}) => {{
-          var {{ url, execute_js, user_agent, extra_wait_ms, req_headers, include_filters, xpath_element_js, screenshot_quality }} = context;
+          var {{ url, execute_js, user_agent, extra_wait_ms, req_headers, include_filters, xpath_element_js, screenshot_quality, proxy}} = context;
           
           await page.setBypassCSP(true)
           await page.setExtraHTTPHeaders(req_headers);          
           await page.setUserAgent(user_agent);
+          
+          if(proxy) {{
+            await page.authenticate({{
+                username: proxy['username'],
+                password: proxy['password'],
+            }});
+          }}
+          
           const r = await page.goto(url, wait_until='commit');                  
           await page.waitForTimeout(extra_wait_ms)
           
@@ -325,11 +333,22 @@ class base_html_playwright(Fetcher):
         wait_browserless_seconds = 120
 
         browserless_function_url = os.getenv('BROWSERLESS_FUNCTION_URL')
+        from urllib.parse import urlparse
         if not browserless_function_url:
             # Convert/try to guess from PLAYWRIGHT_DRIVER_URL
-            from urllib.parse import urlparse
             o = urlparse(os.getenv('PLAYWRIGHT_DRIVER_URL'))
             browserless_function_url = o._replace(scheme="http")._replace(path="function").geturl()
+
+
+        # Append proxy connect string
+        if self.proxy:
+            import urllib.parse
+            # Remove username/password if it exists in the URL or you will receive "ERR_NO_SUPPORTED_PROXIES" error
+            # Actual authentication handled by Puppeteer/node
+            o = urlparse(self.proxy.get('server'))
+            proxy_url = urllib.parse.quote(o._replace(netloc="{}:{}".format(o.hostname, o.port)).geturl())
+            browserless_function_url = f"{browserless_function_url}&--proxy-server={proxy_url}"
+
 
         try:
             response = requests.request(
@@ -340,6 +359,7 @@ class base_html_playwright(Fetcher):
                         'execute_js': self.webdriver_js_execute_code,
                         'extra_wait_ms': extra_wait_ms,
                         'include_filters': current_include_filters,
+                        'proxy': self.proxy,
                         'req_headers': request_headers,
                         'screenshot_quality': int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)),
                         'url': url,
@@ -369,10 +389,10 @@ class base_html_playwright(Fetcher):
                 if x.get('status_code', 200) != 200 and not ignore_status_codes:
                     raise Non200ErrorCodeReceived(url=url, status_code=x.get('status_code', 200), page_html=x['content'])
 
-                self.screenshot = base64.b64decode(x['screenshot'])
-                self.content = x['content']
-                self.headers = x['headers']
-                self.xpath_data = x['xpath_data']
+                self.screenshot = base64.b64decode(x.get('screenshot'))
+                self.content = x.get('content')
+                self.headers = x.get('headers')
+                self.xpath_data = x.get('xpath_data')
 
             else:
                 # Some other error from browserless
