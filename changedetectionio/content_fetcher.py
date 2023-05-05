@@ -291,7 +291,7 @@ class base_html_playwright(Fetcher):
         # @todo - need to figure out how to get browsersteps with images on each step working
         if self.browser_steps:
             for step in self.browser_steps:
-                if step.get('operation'):
+                if step.get('operation') and step.get('operation') != 'Choose one':
                     return self.run_playwright(
                                    url,
                                    timeout,
