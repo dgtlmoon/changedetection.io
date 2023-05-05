@@ -10,6 +10,7 @@ import time
 
 visualselector_xpath_selectors = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
 
+
 class Non200ErrorCodeReceived(Exception):
     def __init__(self, status_code, url, screenshot=None, xpath_data=None, page_html=None):
         # Set this so we can use it in other parts of the app
@@ -24,9 +25,11 @@ class Non200ErrorCodeReceived(Exception):
             self.page_text = html_tools.html_to_text(page_html)
         return
 
+
 class checksumFromPreviousCheckWasTheSame(Exception):
     def __init__(self):
         return
+
 
 class JSActionExceptions(Exception):
     def __init__(self, status_code, url, screenshot, message=''):
@@ -35,6 +38,7 @@ class JSActionExceptions(Exception):
         self.screenshot = screenshot
         self.message = message
         return
+
 
 class BrowserStepsStepTimout(Exception):
     def __init__(self, step_n):
@@ -51,6 +55,7 @@ class PageUnloadable(Exception):
         self.message = message
         return
 
+
 class EmptyReply(Exception):
     def __init__(self, status_code, url, screenshot=None):
         # Set this so we can use it in other parts of the app
@@ -58,6 +63,7 @@ class EmptyReply(Exception):
         self.url = url
         self.screenshot = screenshot
         return
+
 
 class ScreenshotUnavailable(Exception):
     def __init__(self, status_code, url, page_html=None):
@@ -69,6 +75,7 @@ class ScreenshotUnavailable(Exception):
             self.page_text = html_to_text(page_html)
         return
 
+
 class ReplyWithContentButNoText(Exception):
     def __init__(self, status_code, url, screenshot=None):
         # Set this so we can use it in other parts of the app
@@ -76,6 +83,7 @@ class ReplyWithContentButNoText(Exception):
         self.url = url
         self.screenshot = screenshot
         return
+
 
 class Fetcher():
     browser_steps = None
@@ -104,7 +112,6 @@ class Fetcher():
         # The code that scrapes elements and makes a list of elements/size/position to click on in the VisualSelector
         self.xpath_element_js = resource_string(__name__, "res/xpath_element_scraper.js").decode('utf-8')
         self.instock_data_js = resource_string(__name__, "res/stock-not-in-stock.js").decode('utf-8')
-
 
     @abstractmethod
     def get_error(self):
@@ -152,13 +159,15 @@ class Fetcher():
             interface = steppable_browser_interface()
             interface.page = self.page
 
-            valid_steps = filter(lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'), self.browser_steps)
+            valid_steps = filter(
+                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
+                self.browser_steps)
 
             for step in valid_steps:
                 step_n += 1
                 print(">> Iterating check - browser Step n {} - {}...".format(step_n, step['operation']))
-                self.screenshot_step("before-"+str(step_n))
-                self.save_step_html("before-"+str(step_n))
+                self.screenshot_step("before-" + str(step_n))
+                self.save_step_html("before-" + str(step_n))
                 try:
                     optional_value = step['optional_value']
                     selector = step['selector']
@@ -186,6 +195,7 @@ class Fetcher():
             for f in files:
                 os.unlink(f)
 
+
 #   Maybe for the future, each fetcher provides its own diff output, could be used for text, image
 #   the current one would return javascript output (as we use JS to generate the diff)
 #
@@ -202,6 +212,7 @@ def available_fetchers():
                 p.append(t)
 
     return p
+
 
 class base_html_playwright(Fetcher):
     fetcher_description = "Playwright {}/Javascript".format(
@@ -267,15 +278,14 @@ class base_html_playwright(Fetcher):
             f.write(content)
 
     def run(self,
-             url,
-             timeout,
-             request_headers,
-             request_body,
-             request_method,
-             ignore_status_codes=False,
-             current_include_filters=None,
-             is_binary=False):
-
+            url,
+            timeout,
+            request_headers,
+            request_body,
+            request_method,
+            ignore_status_codes=False,
+            current_include_filters=None,
+            is_binary=False):
 
         extra_wait_ms = (int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay) * 1000
         xpath_element_js = self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
@@ -312,7 +322,15 @@ class base_html_playwright(Fetcher):
         }};"""
 
         from requests.exceptions import ConnectTimeout, ReadTimeout
-        wait_browserless_seconds=120
+        wait_browserless_seconds = 120
+
+        browserless_function_url = os.getenv('BROWSERLESS_FUNCTION_URL')
+        if not browserless_function_url:
+            # Convert/try to guess from PLAYWRIGHT_DRIVER_URL
+            from urllib.parse import urlparse
+            o = urlparse(os.getenv('PLAYWRIGHT_DRIVER_URL'))
+            browserless_function_url = o._replace(scheme="http")._replace(path="function").geturl()
+
         try:
             response = requests.request(
                 method="POST",
@@ -329,9 +347,9 @@ class base_html_playwright(Fetcher):
                     }
                 },
                 # @todo /function needs adding ws:// to http:// rebuild this
-                url='http://127.0.0.1:3000/function',
-                # ? and add nice exception
+                url=browserless_function_url,
                 timeout=wait_browserless_seconds)
+
         except ReadTimeout:
             raise PageUnloadable(url=url, status_code=None, message=f"No response from browserless in {wait_browserless_seconds}s")
         except ConnectTimeout:
@@ -360,17 +378,15 @@ class base_html_playwright(Fetcher):
                 # Some other error from browserless
                 raise PageUnloadable(url=url, status_code=None, message=response.content.decode('utf-8'))
 
-
-
     def run_playwright(self,
-            url,
-            timeout,
-            request_headers,
-            request_body,
-            request_method,
-            ignore_status_codes=False,
-            current_include_filters=None,
-            is_binary=False):
+                       url,
+                       timeout,
+                       request_headers,
+                       request_body,
+                       request_method,
+                       ignore_status_codes=False,
+                       current_include_filters=None,
+                       is_binary=False):
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
@@ -418,12 +434,12 @@ class base_html_playwright(Fetcher):
             except playwright._impl._api_types.Error as e:
                 # Retry once - https://github.com/browserless/chrome/issues/2485
                 # Sometimes errors related to invalid cert's and other can be random
-                print ("Content Fetcher > retrying request got error - ", str(e))
+                print("Content Fetcher > retrying request got error - ", str(e))
                 time.sleep(1)
                 response = self.page.goto(url, wait_until='commit')
 
             except Exception as e:
-                print ("Content Fetcher > Other exception when page.goto", str(e))
+                print("Content Fetcher > Other exception when page.goto", str(e))
                 context.close()
                 browser.close()
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
@@ -442,7 +458,7 @@ class base_html_playwright(Fetcher):
                 # This can be ok, we will try to grab what we could retrieve
                 pass
             except Exception as e:
-                print ("Content Fetcher > Other exception when executing custom JS code", str(e))
+                print("Content Fetcher > Other exception when executing custom JS code", str(e))
                 context.close()
                 browser.close()
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
@@ -450,7 +466,7 @@ class base_html_playwright(Fetcher):
             if response is None:
                 context.close()
                 browser.close()
-                print ("Content Fetcher > Response object was none")
+                print("Content Fetcher > Response object was none")
                 raise EmptyReply(url=url, status_code=None)
 
             # Run Browser Steps here
@@ -464,7 +480,7 @@ class base_html_playwright(Fetcher):
             if len(self.page.content().strip()) == 0:
                 context.close()
                 browser.close()
-                print ("Content Fetcher > Content was empty")
+                print("Content Fetcher > Content was empty")
                 raise EmptyReply(url=url, status_code=response.status)
 
             self.status_code = response.status
@@ -476,7 +492,8 @@ class base_html_playwright(Fetcher):
             else:
                 self.page.evaluate("var include_filters=''")
 
-            self.xpath_data = self.page.evaluate("async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}")
+            self.xpath_data = self.page.evaluate(
+                "async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}")
             self.instock_data = self.page.evaluate("async () => {" + self.instock_data_js + "}")
 
             # Bug 3 in Playwright screenshot handling
@@ -488,7 +505,8 @@ class base_html_playwright(Fetcher):
             # acceptable screenshot quality here
             try:
                 # The actual screenshot
-                self.screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
+                self.screenshot = self.page.screenshot(type='jpeg', full_page=True,
+                                                       quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
             except Exception as e:
                 context.close()
                 browser.close()
@@ -496,6 +514,7 @@ class base_html_playwright(Fetcher):
 
             context.close()
             browser.close()
+
 
 class base_html_webdriver(Fetcher):
     if os.getenv("WEBDRIVER_URL"):
