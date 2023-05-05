@@ -38,15 +38,15 @@ const findUpTag = (el) => {
     if (el.name !== undefined && el.name.length) {
         var proposed = el.tagName + "[name=" + el.name + "]";
         var proposed_element = window.document.querySelectorAll(proposed);
-        if(proposed_element.length) {
+        if (proposed_element.length) {
             if (proposed_element.length === 1) {
                 return proposed;
             } else {
                 // Some sites change ID but name= stays the same, we can hit it if we know the index
                 // Find all the elements that match and work out the input[n]
-                var n=Array.from(proposed_element).indexOf(el);
+                var n = Array.from(proposed_element).indexOf(el);
                 // Return a Playwright selector for nthinput[name=zipcode]
-                return proposed+" >> nth="+n;
+                return proposed + " >> nth=" + n;
             }
         }
     }
