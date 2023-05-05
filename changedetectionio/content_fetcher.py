@@ -301,6 +301,18 @@ class base_html_playwright(Fetcher):
                                    ignore_status_codes,
                                    current_include_filters,
                                    is_binary)
+        elif os.getenv('FORCE_PLAYWRIGHT_FETCH'):
+            # Temporary backup solution until we rewrite the playwright code
+            return self.run_playwright(
+                url,
+                timeout,
+                request_headers,
+                request_body,
+                request_method,
+                ignore_status_codes,
+                current_include_filters,
+                is_binary)
+
 
         extra_wait_ms = (int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay) * 1000
         xpath_element_js = self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
