@@ -287,6 +287,23 @@ class base_html_playwright(Fetcher):
             current_include_filters=None,
             is_binary=False):
 
+        # Fallback for now to the old way if browsersteps
+        # @todo - need to figure out how to get browsersteps with images on each step working
+        for step in self.browser_steps:
+            if step['operation'] != None:
+                self.run_playwright(
+                               url,
+                               timeout,
+                               request_headers,
+                               request_body,
+                               request_method,
+                               ignore_status_codes,
+                               current_include_filters,
+                               is_binary)
+                return
+
+
+
         extra_wait_ms = (int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay) * 1000
         xpath_element_js = self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
 
