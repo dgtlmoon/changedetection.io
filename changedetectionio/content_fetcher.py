@@ -329,7 +329,7 @@ class base_html_playwright(Fetcher):
                     }
                 },
                 # @todo /function needs adding ws:// to http:// rebuild this
-                url='http://127.0.0.1:3000/function?--proxy-server=https://my-proxy.com',
+                url='http://127.0.0.1:3000/function',
                 # ? and add nice exception
                 timeout=wait_browserless_seconds)
         except ReadTimeout:
