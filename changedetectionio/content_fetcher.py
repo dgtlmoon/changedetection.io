@@ -83,7 +83,7 @@ class Fetcher():
     content = None
     error = None
     fetcher_description = "No description"
-    headers = None
+    headers = {}
     status_code = None
     webdriver_js_execute_code = None
     xpath_data = None
@@ -177,8 +177,6 @@ class Fetcher():
                     # Stop processing here
                     raise BrowserStepsStepTimout(step_n=step_n)
 
-
-
     # It's always good to reset these
     def delete_browser_steps_screenshots(self):
         import glob
@@ -269,6 +267,102 @@ class base_html_playwright(Fetcher):
             f.write(content)
 
     def run(self,
+             url,
+             timeout,
+             request_headers,
+             request_body,
+             request_method,
+             ignore_status_codes=False,
+             current_include_filters=None,
+             is_binary=False):
+
+
+        extra_wait_ms = (int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay) * 1000
+        xpath_element_js = self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
+
+        code = f"""module.exports = async ({{ page, context }}) => {{
+          var {{ url, execute_js, user_agent, extra_wait_ms, req_headers, include_filters, xpath_element_js, screenshot_quality }} = context;
+          
+          await page.setBypassCSP(true)
+          await page.setExtraHTTPHeaders(req_headers);          
+          await page.setUserAgent(user_agent);
+          const r = await page.goto(url, wait_until='commit');                  
+          await page.waitForTimeout(extra_wait_ms)
+          
+          if(execute_js) {{
+            await page.evaluate(execute_js);
+            await page.evaluate(200);
+          }}
+          
+          const xpath_data = await page.evaluate((include_filters) => {{ {xpath_element_js} }}, include_filters);
+          const instock_data = await page.evaluate(() => {{ {self.instock_data_js} }});
+      
+          const html = await page.content();
+          const b64s = await page.screenshot({{ encoding: "base64", fullPage: true, quality: screenshot_quality, type: 'jpeg' }});
+          return {{
+            data: {{
+                'content': html, 
+                'screenshot': b64s, 
+                'headers': r.headers(), 
+                'status_code': r.status(),
+                'xpath_data': xpath_data
+            }},
+            type: 'application/json',
+          }};
+        }};"""
+
+        from requests.exceptions import ConnectTimeout, ReadTimeout
+        wait_browserless_seconds=120
+        try:
+            response = requests.request(
+                method="POST",
+                json={
+                    "code": code,
+                    "context": {
+                        'execute_js': self.webdriver_js_execute_code,
+                        'extra_wait_ms': extra_wait_ms,
+                        'include_filters': current_include_filters,
+                        'req_headers': request_headers,
+                        'screenshot_quality': int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)),
+                        'url': url,
+                        'user_agent': request_headers.get('User-Agent', 'Mozilla/5.0'),
+                    }
+                },
+                # @todo /function needs adding ws:// to http:// rebuild this
+                url='http://127.0.0.1:3000/function?--proxy-server=https://my-proxy.com',
+                # ? and add nice exception
+                timeout=wait_browserless_seconds)
+        except ReadTimeout:
+            raise PageUnloadable(url=url, status_code=None, message=f"No response from browserless in {wait_browserless_seconds}s")
+        except ConnectTimeout:
+            raise PageUnloadable(url=url, status_code=None, message=f"Timed out connecting to browserless, retrying..")
+        else:
+            # 200 Here means that the communication to browserless worked only, not the page state
+            if response.status_code == 200:
+                import base64
+
+                x = response.json()
+                if not x.get('screenshot'):
+                    raise ScreenshotUnavailable(url=url, status_code=None)
+
+                if not x.get('content', '').strip():
+                    raise EmptyReply(url=url, status_code=None)
+
+                if x.get('status_code', 200) != 200 and not ignore_status_codes:
+                    raise Non200ErrorCodeReceived(url=url, status_code=x.get('status_code', 200), page_html=x['content'])
+
+                self.screenshot = base64.b64decode(x['screenshot'])
+                self.content = x['content']
+                self.headers = x['headers']
+                self.xpath_data = x['xpath_data']
+
+            else:
+                # Some other error from browserless
+                raise PageUnloadable(url=url, status_code=None, message=response.content.decode('utf-8'))
+
+
+
+    def run_playwright(self,
             url,
             timeout,
             request_headers,
@@ -294,7 +388,7 @@ class base_html_playwright(Fetcher):
             # Set user agent to prevent Cloudflare from blocking the browser
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
             context = browser.new_context(
-                user_agent=request_headers['User-Agent'] if request_headers.get('User-Agent') else 'Mozilla/5.0',
+                user_agent=request_headers.get('User-Agent', 'Mozilla/5.0'),
                 proxy=self.proxy,
                 # This is needed to enable JavaScript execution on GitHub and others
                 bypass_csp=True,
