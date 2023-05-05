@@ -320,8 +320,9 @@ class base_html_playwright(Fetcher):
           return {{
             data: {{
                 'content': html, 
-                'screenshot': b64s, 
                 'headers': r.headers(), 
+                'instock_data': instock_data,
+                'screenshot': b64s,
                 'status_code': r.status(),
                 'xpath_data': xpath_data
             }},
@@ -389,9 +390,10 @@ class base_html_playwright(Fetcher):
                 if x.get('status_code', 200) != 200 and not ignore_status_codes:
                     raise Non200ErrorCodeReceived(url=url, status_code=x.get('status_code', 200), page_html=x['content'])
 
-                self.screenshot = base64.b64decode(x.get('screenshot'))
                 self.content = x.get('content')
                 self.headers = x.get('headers')
+                self.instock_data = x.get('instock_data')
+                self.screenshot = base64.b64decode(x.get('screenshot'))
                 self.xpath_data = x.get('xpath_data')
 
             else:
