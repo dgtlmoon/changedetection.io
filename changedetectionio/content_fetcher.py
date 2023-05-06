@@ -277,7 +277,7 @@ class base_html_playwright(Fetcher):
         with open(destination, 'w') as f:
             f.write(content)
 
-    def run(self,
+    def run_fetch_browserless_puppeteer(self,
             url,
             timeout,
             request_headers,
@@ -286,33 +286,6 @@ class base_html_playwright(Fetcher):
             ignore_status_codes=False,
             current_include_filters=None,
             is_binary=False):
-
-        # Fallback for now to the old way if browsersteps
-        # @todo - need to figure out how to get browsersteps with images on each step working
-        if self.browser_steps:
-            for step in self.browser_steps:
-                if step.get('operation') and step.get('operation') != 'Choose one':
-                    return self.run_playwright(
-                                   url,
-                                   timeout,
-                                   request_headers,
-                                   request_body,
-                                   request_method,
-                                   ignore_status_codes,
-                                   current_include_filters,
-                                   is_binary)
-        elif os.getenv('FORCE_PLAYWRIGHT_FETCH'):
-            # Temporary backup solution until we rewrite the playwright code
-            return self.run_playwright(
-                url,
-                timeout,
-                request_headers,
-                request_body,
-                request_method,
-                ignore_status_codes,
-                current_include_filters,
-                is_binary)
-
 
         extra_wait_ms = (int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay) * 1000
         xpath_element_js = self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
@@ -427,7 +400,7 @@ class base_html_playwright(Fetcher):
                 # Some other error from browserless
                 raise PageUnloadable(url=url, status_code=None, message=response.content.decode('utf-8'))
 
-    def run_playwright(self,
+    def run(self,
                        url,
                        timeout,
                        request_headers,
@@ -436,6 +409,19 @@ class base_html_playwright(Fetcher):
                        ignore_status_codes=False,
                        current_include_filters=None,
                        is_binary=False):
+
+
+        if os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH'):
+            # Temporary backup solution until we rewrite the playwright code
+            return self.run_fetch_browserless_puppeteer(
+                url,
+                timeout,
+                request_headers,
+                request_body,
+                request_method,
+                ignore_status_codes,
+                current_include_filters,
+                is_binary)
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
