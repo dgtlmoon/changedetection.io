@@ -297,6 +297,7 @@ class base_html_playwright(Fetcher):
           await page.setExtraHTTPHeaders(req_headers);          
           await page.setUserAgent(user_agent);
           // https://ourcodeworld.com/articles/read/1106/how-to-solve-puppeteer-timeouterror-navigation-timeout-of-30000-ms-exceeded
+          
           await page.setDefaultNavigationTimeout(0);
           
           if(proxy_username) {{
@@ -319,13 +320,26 @@ class base_html_playwright(Fetcher):
             await page.waitForTimeout(200);
           }}
           
-          const xpath_data = await page.evaluate((include_filters) => {{ {xpath_element_js} }}, include_filters);
-          const instock_data = await page.evaluate(() => {{ {self.instock_data_js} }});
-      
-          const html = await page.content();
-          // Protocol error (Page.captureScreenshot): Cannot take screenshot with 0 width.
-          // can come from a proxy auth failure
-          const b64s = await page.screenshot({{ encoding: "base64", fullPage: true, quality: screenshot_quality, type: 'jpeg' }});
+        var html = await page.content();
+        var xpath_data;
+        var instock_data;
+        try {{
+             xpath_data = await page.evaluate((include_filters) => {{ {xpath_element_js} }}, include_filters);
+             instock_data = await page.evaluate(() => {{ {self.instock_data_js} }});
+        }} catch (e) {{
+            console.log(e);
+        }}   
+          
+      // Protocol error (Page.captureScreenshot): Cannot take screenshot with 0 width can come from a proxy auth failure
+      // Wrap it here (for now)
+      var b64s;
+      try {{
+             b64s = await page.screenshot({{ encoding: "base64", fullPage: true, quality: screenshot_quality, type: 'jpeg' }});
+        }} catch (e) {{
+            console.log(e);
+        }}
+         
+          
           return {{
             data: {{
                 'content': html, 
@@ -378,7 +392,7 @@ class base_html_playwright(Fetcher):
                     }
                 },
                 # @todo /function needs adding ws:// to http:// rebuild this
-                url=browserless_function_url,
+                url=browserless_function_url+"&--disable-features=AudioServiceOutOfProcess&dumpio=true",
                 timeout=wait_browserless_seconds)
 
         except ReadTimeout:
