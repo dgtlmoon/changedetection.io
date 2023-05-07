@@ -1313,6 +1313,13 @@ def changedetection_app(config=None, datastore_o=None):
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
             flash("{} watches queued for rechecking".format(len(uuids)))
 
+        elif (op == 'clear-history'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.clear_watch_history(uuid)
+            flash("{} watches cleared/reset.".format(len(uuids)))
+
         elif (op == 'notification-default'):
             from changedetectionio.notification import (
                 default_notification_format_for_watch
