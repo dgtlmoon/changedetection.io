@@ -169,7 +169,18 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 if proxy_id:
                     proxy_url = datastore.proxy_list.get(proxy_id).get('url')
                     if proxy_url:
+
+                        # Playwright needs separate username and password values
+                        from urllib.parse import urlparse
+                        parsed = urlparse(proxy_url)
                         proxy = {'server': proxy_url}
+
+                        if parsed.username:
+                            proxy['username'] = parsed.username
+
+                        if parsed.password:
+                            proxy['password'] = parsed.password
+
                         print("Browser Steps: UUID {} Using proxy {}".format(uuid, proxy_url))
 
                 # Begin the new "Playwright Context" that re-uses the playwright interface
