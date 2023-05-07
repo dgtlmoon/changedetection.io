@@ -339,7 +339,6 @@ class base_html_playwright(Fetcher):
             console.log(e);
         }}
          
-          
           return {{
             data: {{
                 'content': html, 
@@ -425,15 +424,14 @@ class base_html_playwright(Fetcher):
                 raise PageUnloadable(url=url, status_code=None, message=response.content.decode('utf-8'))
 
     def run(self,
-                       url,
-                       timeout,
-                       request_headers,
-                       request_body,
-                       request_method,
-                       ignore_status_codes=False,
-                       current_include_filters=None,
-                       is_binary=False):
-
+            url,
+            timeout,
+            request_headers,
+            request_body,
+            request_method,
+            ignore_status_codes=False,
+            current_include_filters=None,
+            is_binary=False):
 
         if os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH'):
             # Temporary backup solution until we rewrite the playwright code
