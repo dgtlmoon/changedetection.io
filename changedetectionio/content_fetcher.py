@@ -277,7 +277,7 @@ class base_html_playwright(Fetcher):
         with open(destination, 'w') as f:
             f.write(content)
 
-    def run(self,
+    def run_fetch_browserless_puppeteer(self,
             url,
             timeout,
             request_headers,
@@ -287,63 +287,63 @@ class base_html_playwright(Fetcher):
             current_include_filters=None,
             is_binary=False):
 
-        # Fallback for now to the old way if browsersteps
-        # @todo - need to figure out how to get browsersteps with images on each step working
-        if self.browser_steps:
-            for step in self.browser_steps:
-                if step.get('operation'):
-                    return self.run_playwright(
-                                   url,
-                                   timeout,
-                                   request_headers,
-                                   request_body,
-                                   request_method,
-                                   ignore_status_codes,
-                                   current_include_filters,
-                                   is_binary)
-        elif os.getenv('FORCE_PLAYWRIGHT_FETCH'):
-            # Temporary backup solution until we rewrite the playwright code
-            return self.run_playwright(
-                url,
-                timeout,
-                request_headers,
-                request_body,
-                request_method,
-                ignore_status_codes,
-                current_include_filters,
-                is_binary)
-
-
         extra_wait_ms = (int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay) * 1000
         xpath_element_js = self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
 
         code = f"""module.exports = async ({{ page, context }}) => {{
-          var {{ url, execute_js, user_agent, extra_wait_ms, req_headers, include_filters, xpath_element_js, screenshot_quality, proxy}} = context;
+          var {{ url, execute_js, user_agent, extra_wait_ms, req_headers, include_filters, xpath_element_js, screenshot_quality, proxy_username, proxy_password}} = context;
           
           await page.setBypassCSP(true)
           await page.setExtraHTTPHeaders(req_headers);          
           await page.setUserAgent(user_agent);
+          // https://ourcodeworld.com/articles/read/1106/how-to-solve-puppeteer-timeouterror-navigation-timeout-of-30000-ms-exceeded
           
-          if(proxy) {{
+          await page.setDefaultNavigationTimeout(0);
+          
+          if(proxy_username) {{
             await page.authenticate({{
-                username: proxy['username'],
-                password: proxy['password'],
+                username: proxy_username,
+                password: proxy_password
             }});
           }}
-          
-          const r = await page.goto(url, wait_until='commit');                  
-          await page.waitForTimeout(extra_wait_ms)
+
+        await page.setViewport({{
+          width: 1024,
+          height: 768,
+          deviceScaleFactor: 1,
+        }});
+        
+          const r = await page.goto(url, {{
+                waitUntil: 'load'                
+          }});
+                            
+          await page.waitForTimeout(1000); 
+          await page.waitForTimeout(extra_wait_ms);
           
           if(execute_js) {{
             await page.evaluate(execute_js);
             await page.waitForTimeout(200);
           }}
           
-          const xpath_data = await page.evaluate((include_filters) => {{ {xpath_element_js} }}, include_filters);
-          const instock_data = await page.evaluate(() => {{ {self.instock_data_js} }});
-      
-          const html = await page.content();
-          const b64s = await page.screenshot({{ encoding: "base64", fullPage: true, quality: screenshot_quality, type: 'jpeg' }});
+        var html = await page.content();
+        var xpath_data;
+        var instock_data;
+        try {{
+             xpath_data = await page.evaluate((include_filters) => {{ {xpath_element_js} }}, include_filters);
+             instock_data = await page.evaluate(() => {{ {self.instock_data_js} }});
+        }} catch (e) {{
+            console.log(e);
+        }}   
+          
+      // Protocol error (Page.captureScreenshot): Cannot take screenshot with 0 width can come from a proxy auth failure
+      // Wrap it here (for now)
+      var b64s;
+      try {{
+             b64s = await page.screenshot({{ encoding: "base64", fullPage: true, quality: screenshot_quality, type: 'jpeg' }});
+        }} catch (e) {{
+            console.log(e);
+        }}
+         
           return {{
             data: {{
                 'content': html, 
@@ -387,15 +387,16 @@ class base_html_playwright(Fetcher):
                         'execute_js': self.webdriver_js_execute_code,
                         'extra_wait_ms': extra_wait_ms,
                         'include_filters': current_include_filters,
-                        'proxy': self.proxy,
                         'req_headers': request_headers,
                         'screenshot_quality': int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)),
                         'url': url,
                         'user_agent': request_headers.get('User-Agent', 'Mozilla/5.0'),
+                        'proxy_username': self.proxy.get('username','') if self.proxy else False,
+                        'proxy_password': self.proxy.get('password','') if self.proxy else False,
                     }
                 },
                 # @todo /function needs adding ws:// to http:// rebuild this
-                url=browserless_function_url,
+                url=browserless_function_url+"&--disable-features=AudioServiceOutOfProcess&dumpio=true",
                 timeout=wait_browserless_seconds)
 
         except ReadTimeout:
@@ -427,15 +428,27 @@ class base_html_playwright(Fetcher):
                 # Some other error from browserless
                 raise PageUnloadable(url=url, status_code=None, message=response.content.decode('utf-8'))
 
-    def run_playwright(self,
-                       url,
-                       timeout,
-                       request_headers,
-                       request_body,
-                       request_method,
-                       ignore_status_codes=False,
-                       current_include_filters=None,
-                       is_binary=False):
+    def run(self,
+            url,
+            timeout,
+            request_headers,
+            request_body,
+            request_method,
+            ignore_status_codes=False,
+            current_include_filters=None,
+            is_binary=False):
+
+        if os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH'):
+            # Temporary backup solution until we rewrite the playwright code
+            return self.run_fetch_browserless_puppeteer(
+                url,
+                timeout,
+                request_headers,
+                request_body,
+                request_method,
+                ignore_status_codes,
+                current_include_filters,
+                is_binary)
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types

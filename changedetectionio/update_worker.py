@@ -315,7 +315,8 @@ class update_worker(threading.Thread):
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot, as_error=True)
 
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
-                                                                           'last_check_status': e.status_code})
+                                                                           'last_check_status': e.status_code,
+                                                                           'has_ldjson_price_data': None})
                         process_changedetection_results = False
                     except Exception as e:
                         self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
