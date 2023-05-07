@@ -146,8 +146,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 from . import nonContext
                 browsersteps_playwright_browser_interface_context = nonContext.c_sync_playwright()
                 browsersteps_playwright_browser_interface = browsersteps_playwright_browser_interface_context.start()
-
-                time.sleep(1)
                 # At 20 minutes, some other variable is closing it
                 # @todo find out what it is and set it
                 seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
