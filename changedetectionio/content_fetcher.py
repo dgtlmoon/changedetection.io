@@ -291,21 +291,28 @@ class base_html_playwright(Fetcher):
         xpath_element_js = self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
 
         code = f"""module.exports = async ({{ page, context }}) => {{
-          var {{ url, execute_js, user_agent, extra_wait_ms, req_headers, include_filters, xpath_element_js, screenshot_quality, proxy}} = context;
+          var {{ url, execute_js, user_agent, extra_wait_ms, req_headers, include_filters, xpath_element_js, screenshot_quality, proxy_username, proxy_password}} = context;
           
           await page.setBypassCSP(true)
           await page.setExtraHTTPHeaders(req_headers);          
           await page.setUserAgent(user_agent);
+          // https://ourcodeworld.com/articles/read/1106/how-to-solve-puppeteer-timeouterror-navigation-timeout-of-30000-ms-exceeded
+          await page.setDefaultNavigationTimeout(0);
           
-          if(proxy) {{
+          if(proxy_username) {{
             await page.authenticate({{
-                username: proxy['username'],
-                password: proxy['password'],
+                username: proxy_username,
+                password: proxy_password
             }});
           }}
-          
-          const r = await page.goto(url, wait_until='commit');                  
-          await page.waitForTimeout(extra_wait_ms)
+
+
+          const r = await page.goto(url, {{
+                waitUntil: 'load'                
+          }});
+                            
+          await page.waitForTimeout(1000); 
+          await page.waitForTimeout(extra_wait_ms);
           
           if(execute_js) {{
             await page.evaluate(execute_js);
@@ -316,6 +323,8 @@ class base_html_playwright(Fetcher):
           const instock_data = await page.evaluate(() => {{ {self.instock_data_js} }});
       
           const html = await page.content();
+          // Protocol error (Page.captureScreenshot): Cannot take screenshot with 0 width.
+          // can come from a proxy auth failure
           const b64s = await page.screenshot({{ encoding: "base64", fullPage: true, quality: screenshot_quality, type: 'jpeg' }});
           return {{
             data: {{
@@ -360,11 +369,12 @@ class base_html_playwright(Fetcher):
                         'execute_js': self.webdriver_js_execute_code,
                         'extra_wait_ms': extra_wait_ms,
                         'include_filters': current_include_filters,
-                        'proxy': self.proxy,
                         'req_headers': request_headers,
                         'screenshot_quality': int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)),
                         'url': url,
                         'user_agent': request_headers.get('User-Agent', 'Mozilla/5.0'),
+                        'proxy_username': self.proxy.get('username','') if self.proxy else False,
+                        'proxy_password': self.proxy.get('password','') if self.proxy else False,
                     }
                 },
                 # @todo /function needs adding ws:// to http:// rebuild this
