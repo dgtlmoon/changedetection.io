@@ -307,7 +307,12 @@ class base_html_playwright(Fetcher):
             }});
           }}
 
-
+        await page.setViewport({{
+          width: 1024,
+          height: 768,
+          deviceScaleFactor: 1,
+        }});
+        
           const r = await page.goto(url, {{
                 waitUntil: 'load'                
           }});
