@@ -299,7 +299,7 @@ class base_html_playwright(Fetcher):
           // https://ourcodeworld.com/articles/read/1106/how-to-solve-puppeteer-timeouterror-navigation-timeout-of-30000-ms-exceeded
           
           await page.setDefaultNavigationTimeout(0);
-          
+
           if(proxy_username) {{
             await page.authenticate({{
                 username: proxy_username,
@@ -325,7 +325,6 @@ class base_html_playwright(Fetcher):
             await page.waitForTimeout(200);
           }}
           
-        var html = await page.content();
         var xpath_data;
         var instock_data;
         try {{
@@ -337,13 +336,26 @@ class base_html_playwright(Fetcher):
           
       // Protocol error (Page.captureScreenshot): Cannot take screenshot with 0 width can come from a proxy auth failure
       // Wrap it here (for now)
-      var b64s;
-      try {{
+      
+      var b64s = false;
+      try {{      
              b64s = await page.screenshot({{ encoding: "base64", fullPage: true, quality: screenshot_quality, type: 'jpeg' }});
         }} catch (e) {{
             console.log(e);
         }}
-         
+        
+        // May fail on very large pages with 'WARNING: tile memory limits exceeded, some content may not draw'
+        if (!b64s) {{
+            console.error('ERROR: content-fetcher page was maybe too large for a screenshot, reverting to viewport only screenshot');
+            try {{
+                 b64s = await page.screenshot({{ encoding: "base64", quality: screenshot_quality, type: 'jpeg' }});
+            }} catch (e) {{
+                console.log(e);
+            }}
+         }}
+        
+        
+         var html = await page.content();
           return {{
             data: {{
                 'content': html, 
@@ -375,7 +387,7 @@ class base_html_playwright(Fetcher):
             # Actual authentication handled by Puppeteer/node
             o = urlparse(self.proxy.get('server'))
             proxy_url = urllib.parse.quote(o._replace(netloc="{}:{}".format(o.hostname, o.port)).geturl())
-            browserless_function_url = f"{browserless_function_url}&--proxy-server={proxy_url}"
+            browserless_function_url = f"{browserless_function_url}&--proxy-server={proxy_url}&dumpio=true"
 
 
         try:
@@ -396,9 +408,9 @@ class base_html_playwright(Fetcher):
                     }
                 },
                 # @todo /function needs adding ws:// to http:// rebuild this
-                url=browserless_function_url+"&--disable-features=AudioServiceOutOfProcess&dumpio=true",
+                url=browserless_function_url+"&--disable-features=AudioServiceOutOfProcess&dumpio=true&--disable-remote-fonts",
                 timeout=wait_browserless_seconds)
-
+# 'ziparchive::addglob() will throw an instance of error instead of resulting in a fatal error if glob support is not available.'
         except ReadTimeout:
             raise PageUnloadable(url=url, status_code=None, message=f"No response from browserless in {wait_browserless_seconds}s")
         except ConnectTimeout:
@@ -410,6 +422,10 @@ class base_html_playwright(Fetcher):
 
                 x = response.json()
                 if not x.get('screenshot'):
+                    # https://github.com/puppeteer/puppeteer/blob/v1.0.0/docs/troubleshooting.md#tips
+                    # https://github.com/puppeteer/puppeteer/issues/1834
+                    # https://github.com/puppeteer/puppeteer/issues/1834#issuecomment-381047051
+                    # Check your memory is shared and big enough
                     raise ScreenshotUnavailable(url=url, status_code=None)
 
                 if not x.get('content', '').strip():
