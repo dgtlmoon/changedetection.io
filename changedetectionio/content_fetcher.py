@@ -469,6 +469,7 @@ class base_html_playwright(Fetcher):
 
 
         try:
+            amp = '&' if '?' in browserless_function_url else '?'
             response = requests.request(
                 method="POST",
                 json={
@@ -487,8 +488,9 @@ class base_html_playwright(Fetcher):
                     }
                 },
                 # @todo /function needs adding ws:// to http:// rebuild this
-                url=browserless_function_url+"&--disable-features=AudioServiceOutOfProcess&dumpio=true&--disable-remote-fonts",
+                url=browserless_function_url+f"{amp}--disable-features=AudioServiceOutOfProcess&dumpio=true&--disable-remote-fonts",
                 timeout=wait_browserless_seconds)
+
 # 'ziparchive::addglob() will throw an instance of error instead of resulting in a fatal error if glob support is not available.'
         except ReadTimeout:
             raise PageUnloadable(url=url, status_code=None, message=f"No response from browserless in {wait_browserless_seconds}s")
