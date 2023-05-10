@@ -324,7 +324,7 @@ class base_html_playwright(Fetcher):
             const fs = require('fs');
             const crypto = require('crypto');
             function file_is_expired(file_path) {{
-                if (!fs.existsSync(dir_path+key)) {{
+                if (!fs.existsSync(file_path)) {{
                   return true;
                 }}
                 var stats = fs.statSync(file_path);
@@ -475,7 +475,7 @@ class base_html_playwright(Fetcher):
                 json={
                     "code": code,
                     "context": {
-                        'disk_cache_dir': False, # or path to disk cache
+                        'disk_cache_dir': False, # or path to disk cache ending in /, ie /tmp/cache/
                         'execute_js': self.webdriver_js_execute_code,
                         'extra_wait_ms': extra_wait_ms,
                         'include_filters': current_include_filters,
