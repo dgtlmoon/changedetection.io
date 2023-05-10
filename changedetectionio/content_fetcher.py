@@ -291,7 +291,8 @@ class base_html_playwright(Fetcher):
         xpath_element_js = self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
 
         code = f"""module.exports = async ({{ page, context }}) => {{
-          var {{ url, execute_js, user_agent, extra_wait_ms, req_headers, include_filters, xpath_element_js, screenshot_quality, proxy_username, proxy_password}} = context;
+        
+          var {{ url, execute_js, user_agent, extra_wait_ms, req_headers, include_filters, xpath_element_js, screenshot_quality, proxy_username, proxy_password, disk_cache_dir}} = context;
           
           await page.setBypassCSP(true)
           await page.setExtraHTTPHeaders(req_headers);          
@@ -312,6 +313,82 @@ class base_html_playwright(Fetcher):
           height: 768,
           deviceScaleFactor: 1,
         }});
+
+        // Very primitive disk cache - USE WITH EXTREME CAUTION
+        // Run browserless container with -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]"
+        if ( disk_cache_dir ) {{
+            
+            await page.setRequestInterception(true);
+                         
+            console.log(">>>>>>>>>>>>>>> LOCAL DISK CACHE ENABLED <<<<<<<<<<<<<<<<<<<<<");                 
+            const fs = require('fs');
+            const crypto = require('crypto');
+            function file_is_expired(file_path) {{
+                if (!fs.existsSync(dir_path+key)) {{
+                  return true;
+                }}
+                var stats = fs.statSync(file_path);
+                const now_date = new Date();
+                const expire_seconds = 300;
+                if ( (now_date/1000) - (stats.mtime.getTime() / 1000) > expire_seconds) {{                  
+                  console.log("CACHE EXPIRED: "+file_path);
+                  return true;
+                }}
+                return false;
+                
+            }}
+        
+            page.on('request', async (request) => {{
+                    
+                // if (blockedExtensions.some((str) => req.url().endsWith(str))) return req.abort();
+		        const url = request.url();
+                const key = crypto.createHash('md5').update(url).digest("hex");                
+                const dir_path = disk_cache_dir + key.slice(0, 1) + '/' + key.slice(1, 2) + '/' + key.slice(2, 3) + '/';             
+                                       
+                // https://stackoverflow.com/questions/4482686/check-synchronously-if-file-directory-exists-in-node-js
+                
+                if (fs.existsSync(dir_path+key)) {{
+                    file_is_expired(dir_path+key);
+                    console.log("Cache exists "+dir_path+key+ " - "+url);
+                    const cached_data = fs.readFileSync(dir_path+key);                          
+                    request.respond({{
+                        status: 200,
+                        //contentType: 'text/html', //@todo
+                        body: cached_data
+                    }});
+                    return;
+                }}                
+                request.continue();
+            }});
+            
+            page.on('response', async (response) => {{
+                const url = response.url();
+                // @todo - check response size()
+                console.log("Cache - Got "+response.request().method()+" - "+url+" - "+response.request().resourceType());
+                
+                if(response.request().method()  != 'GET' || response.request().resourceType() == 'xhr' || response.request().resourceType() == 'document' || response.status() != 200 ) {{
+                    console.log("Skipping- "+url);
+                    return;
+                }}
+                
+                const key = crypto.createHash('md5').update(url).digest("hex");
+                const dir_path = disk_cache_dir + key.slice(0, 1) + '/' + key.slice(1, 2) + '/' + key.slice(2, 3) + '/';               
+                const data = await response.text();
+                if (!fs.existsSync(dir_path)) {{
+                    fs.mkdirSync(dir_path, {{ recursive: true }})
+                }}
+                
+                var expired = false;
+                if (fs.existsSync(dir_path+key)) {{
+                  if (file_is_expired(dir_path+key)) {{
+                    fs.writeFileSync(dir_path+key, data);
+                  }}
+                }} else {{                
+                    fs.writeFileSync(dir_path+key, data);
+                }}
+		    }});		    
+          }}
+
         
           const r = await page.goto(url, {{
                 waitUntil: 'load'                
@@ -346,6 +423,7 @@ class base_html_playwright(Fetcher):
         
         // May fail on very large pages with 'WARNING: tile memory limits exceeded, some content may not draw'
         if (!b64s) {{
+            // @todo after text extract, we can place some overlay text with red background to say 'croppped'        
             console.error('ERROR: content-fetcher page was maybe too large for a screenshot, reverting to viewport only screenshot');
             try {{
                  b64s = await page.screenshot({{ encoding: "base64", quality: screenshot_quality, type: 'jpeg' }});
@@ -353,8 +431,8 @@ class base_html_playwright(Fetcher):
                 console.log(e);
             }}
          }}
-        
-        
+    
+            
          var html = await page.content();
           return {{
             data: {{
@@ -396,6 +474,7 @@ class base_html_playwright(Fetcher):
                 json={
                     "code": code,
                     "context": {
+                        'disk_cache_dir': False, # or path to disk cache
                         'execute_js': self.webdriver_js_execute_code,
                         'extra_wait_ms': extra_wait_ms,
                         'include_filters': current_include_filters,
