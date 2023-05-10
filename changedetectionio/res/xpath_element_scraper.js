@@ -17,7 +17,6 @@ try {
 
 
 
-
 // Include the getXpath script directly, easier than fetching
 function getxpath(e) {
         var n = e;
