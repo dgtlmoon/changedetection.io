@@ -214,13 +214,20 @@ $(document).ready(function () {
                     $('input[placeholder="Value"]', first_available).addClass('ok').click().focus();
                     found_something = true;
                 } else {
-                    if (x['isClickable'] || x['tagName'].startsWith('h') || x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit' || x['tagtype'] === 'checkbox' || x['tagtype'] === 'radio' || x['tagtype'] === 'li') {
+                    // There's no good way (that I know) to find if this
+                    // see https://stackoverflow.com/questions/446892/how-to-find-event-listeners-on-a-dom-node-in-javascript-or-in-debugging
+                    // https://codepen.io/azaslavsky/pen/DEJVWv
+
+                    // So we dont know if its really a clickable element or not :-(
+                    // Assume it is - then we dont fill the pages with unreliable "Click X,Y" selections
+                    // If you switch to "Click X,y" after an element here is setup, it will give the last co-ords anyway
+                    //if (x['isClickable'] || x['tagName'].startsWith('h') || x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit' || x['tagtype'] === 'checkbox' || x['tagtype'] === 'radio' || x['tagtype'] === 'li') {
                         $('select', first_available).val('Click element').change();
                         $('input[type=text]', first_available).first().val(x['xpath']);
                         found_something = true;
-                    }
+                    //}
                 }
-
+                
                 first_available.xpath_data_index = xpath_data_index;
 
                 if (!found_something) {
