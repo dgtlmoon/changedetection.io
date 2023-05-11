@@ -227,7 +227,7 @@ $(document).ready(function () {
                         found_something = true;
                     //}
                 }
-                
+
                 first_available.xpath_data_index = xpath_data_index;
 
                 if (!found_something) {
