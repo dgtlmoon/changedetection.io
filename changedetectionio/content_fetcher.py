@@ -287,168 +287,18 @@ class base_html_playwright(Fetcher):
             current_include_filters=None,
             is_binary=False):
 
+        from pkg_resources import resource_string
+
         extra_wait_ms = (int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay) * 1000
-        xpath_element_js = self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
 
-        code = f"""module.exports = async ({{ page, context }}) => {{
-        
-          var {{ url, execute_js, user_agent, extra_wait_ms, req_headers, include_filters, xpath_element_js, screenshot_quality, proxy_username, proxy_password, disk_cache_dir}} = context;
-          
-          await page.setBypassCSP(true)
-          await page.setExtraHTTPHeaders(req_headers);          
-          await page.setUserAgent(user_agent);
-          // https://ourcodeworld.com/articles/read/1106/how-to-solve-puppeteer-timeouterror-navigation-timeout-of-30000-ms-exceeded
-          
-          await page.setDefaultNavigationTimeout(0);
-
-          if(proxy_username) {{
-            await page.authenticate({{
-                username: proxy_username,
-                password: proxy_password
-            }});
-          }}
-
-        await page.setViewport({{
-          width: 1024,
-          height: 768,
-          deviceScaleFactor: 1,
-        }});
-
-        // Very primitive disk cache - USE WITH EXTREME CAUTION
-        // Run browserless container with -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]"
-        if ( disk_cache_dir ) {{
-            
-            await page.setRequestInterception(true);
-                         
-            console.log(">>>>>>>>>>>>>>> LOCAL DISK CACHE ENABLED <<<<<<<<<<<<<<<<<<<<<");                 
-            const fs = require('fs');
-            const crypto = require('crypto');
-            function file_is_expired(file_path) {{
-                if (!fs.existsSync(dir_path+key)) {{
-                  return true;
-                }}
-                var stats = fs.statSync(file_path);
-                const now_date = new Date();
-                const expire_seconds = 300;
-                if ( (now_date/1000) - (stats.mtime.getTime() / 1000) > expire_seconds) {{                  
-                  console.log("CACHE EXPIRED: "+file_path);
-                  return true;
-                }}
-                return false;
-                
-            }}
-        
-            page.on('request', async (request) => {{
-                    
-                // if (blockedExtensions.some((str) => req.url().endsWith(str))) return req.abort();
-		        const url = request.url();
-                const key = crypto.createHash('md5').update(url).digest("hex");                
-                const dir_path = disk_cache_dir + key.slice(0, 1) + '/' + key.slice(1, 2) + '/' + key.slice(2, 3) + '/';             
-                                       
-                // https://stackoverflow.com/questions/4482686/check-synchronously-if-file-directory-exists-in-node-js
-                
-                if (fs.existsSync(dir_path+key)) {{
-                    file_is_expired(dir_path+key);
-                    console.log("Cache exists "+dir_path+key+ " - "+url);
-                    const cached_data = fs.readFileSync(dir_path+key);                          
-                    request.respond({{
-                        status: 200,
-                        //contentType: 'text/html', //@todo
-                        body: cached_data
-                    }});
-                    return;
-                }}                
-                request.continue();
-            }});
-            
-            page.on('response', async (response) => {{
-                const url = response.url();
-                // @todo - check response size()
-                console.log("Cache - Got "+response.request().method()+" - "+url+" - "+response.request().resourceType());
-                
-                if(response.request().method()  != 'GET' || response.request().resourceType() == 'xhr' || response.request().resourceType() == 'document' || response.status() != 200 ) {{
-                    console.log("Skipping- "+url);
-                    return;
-                }}
-                
-                const key = crypto.createHash('md5').update(url).digest("hex");
-                const dir_path = disk_cache_dir + key.slice(0, 1) + '/' + key.slice(1, 2) + '/' + key.slice(2, 3) + '/';               
-                const data = await response.text();
-                if (!fs.existsSync(dir_path)) {{
-                    fs.mkdirSync(dir_path, {{ recursive: true }})
-                }}
-                
-                var expired = false;
-                if (fs.existsSync(dir_path+key)) {{
-                  if (file_is_expired(dir_path+key)) {{
-                    fs.writeFileSync(dir_path+key, data);
-                  }}
-                }} else {{                
-                    fs.writeFileSync(dir_path+key, data);
-                }}
-		    }});		    
-          }}
-
-        
-          const r = await page.goto(url, {{
-                waitUntil: 'load'                
-          }});
-                            
-          await page.waitForTimeout(1000); 
-          await page.waitForTimeout(extra_wait_ms);
-          
-          if(execute_js) {{
-            await page.evaluate(execute_js);
-            await page.waitForTimeout(200);
-          }}
-          
-        var xpath_data;
-        var instock_data;
-        try {{
-             xpath_data = await page.evaluate((include_filters) => {{ {xpath_element_js} }}, include_filters);
-             instock_data = await page.evaluate(() => {{ {self.instock_data_js} }});
-        }} catch (e) {{
-            console.log(e);
-        }}   
-          
-      // Protocol error (Page.captureScreenshot): Cannot take screenshot with 0 width can come from a proxy auth failure
-      // Wrap it here (for now)
-      
-      var b64s = false;
-      try {{      
-             b64s = await page.screenshot({{ encoding: "base64", fullPage: true, quality: screenshot_quality, type: 'jpeg' }});
-        }} catch (e) {{
-            console.log(e);
-        }}
-        
-        // May fail on very large pages with 'WARNING: tile memory limits exceeded, some content may not draw'
-        if (!b64s) {{
-            // @todo after text extract, we can place some overlay text with red background to say 'croppped'        
-            console.error('ERROR: content-fetcher page was maybe too large for a screenshot, reverting to viewport only screenshot');
-            try {{
-                 b64s = await page.screenshot({{ encoding: "base64", quality: screenshot_quality, type: 'jpeg' }});
-            }} catch (e) {{
-                console.log(e);
-            }}
-         }}
-    
-            
-         var html = await page.content();
-          return {{
-            data: {{
-                'content': html, 
-                'headers': r.headers(), 
-                'instock_data': instock_data,
-                'screenshot': b64s,
-                'status_code': r.status(),
-                'xpath_data': xpath_data
-            }},
-            type: 'application/json',
-          }};
-        }};"""
+        self.xpath_element_js = self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
+        code = resource_string(__name__, "res/puppeteer_fetch.js").decode('utf-8')
+        # In the future inject this is a proper JS package
+        code = code.replace('%xpath_scrape_code%', self.xpath_element_js)
+        code = code.replace('%instock_scrape_code%', self.instock_data_js)
 
         from requests.exceptions import ConnectTimeout, ReadTimeout
-        wait_browserless_seconds = 120
+        wait_browserless_seconds = 240
 
         browserless_function_url = os.getenv('BROWSERLESS_FUNCTION_URL')
         from urllib.parse import urlparse
@@ -475,7 +325,9 @@ class base_html_playwright(Fetcher):
                 json={
                     "code": code,
                     "context": {
-                        'disk_cache_dir': False, # or path to disk cache
+                        # Very primitive disk cache - USE WITH EXTREME CAUTION
+                        # Run browserless container  with -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]"
+                        'disk_cache_dir': os.getenv("PUPPETEER_DISK_CACHE", False), # or path to disk cache ending in /, ie /tmp/cache/
                         'execute_js': self.webdriver_js_execute_code,
                         'extra_wait_ms': extra_wait_ms,
                         'include_filters': current_include_filters,
@@ -484,14 +336,26 @@ class base_html_playwright(Fetcher):
                         'url': url,
                         'user_agent': request_headers.get('User-Agent', 'Mozilla/5.0'),
                         'proxy_username': self.proxy.get('username','') if self.proxy else False,
-                        'proxy_password': self.proxy.get('password','') if self.proxy else False,
+                        'proxy_password': self.proxy.get('password', '') if self.proxy else False,
+                        'no_cache_list': [
+                            'twitter',
+                            '.pdf'
+                        ],
+                        # Could use https://github.com/easylist/easylist here, or install a plugin
+                        'block_url_list': [
+                            'adnxs.com',
+                            'analytics.twitter.com',
+                            'doubleclick.net',
+                            'google-analytics.com',
+                            'googletagmanager',
+                            'trustpilot.com'
+                        ]
                     }
                 },
                 # @todo /function needs adding ws:// to http:// rebuild this
                 url=browserless_function_url+f"{amp}--disable-features=AudioServiceOutOfProcess&dumpio=true&--disable-remote-fonts",
                 timeout=wait_browserless_seconds)
 
-# 'ziparchive::addglob() will throw an instance of error instead of resulting in a fatal error if glob support is not available.'
         except ReadTimeout:
             raise PageUnloadable(url=url, status_code=None, message=f"No response from browserless in {wait_browserless_seconds}s")
         except ConnectTimeout:
@@ -535,17 +399,23 @@ class base_html_playwright(Fetcher):
             current_include_filters=None,
             is_binary=False):
 
-        if os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH'):
-            # Temporary backup solution until we rewrite the playwright code
-            return self.run_fetch_browserless_puppeteer(
-                url,
-                timeout,
-                request_headers,
-                request_body,
-                request_method,
-                ignore_status_codes,
-                current_include_filters,
-                is_binary)
+        # For now, USE_EXPERIMENTAL_PUPPETEER_FETCH is not supported by watches with BrowserSteps (for now!)
+        has_browser_steps = self.browser_steps and list(filter(
+                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
+                self.browser_steps))
+
+        if not has_browser_steps:
+            if os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH'):
+                # Temporary backup solution until we rewrite the playwright code
+                return self.run_fetch_browserless_puppeteer(
+                    url,
+                    timeout,
+                    request_headers,
+                    request_body,
+                    request_method,
+                    ignore_status_codes,
+                    current_include_filters,
+                    is_binary)
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
