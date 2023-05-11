@@ -293,14 +293,12 @@ class base_html_playwright(Fetcher):
 
         self.xpath_element_js = self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
         code = resource_string(__name__, "res/puppeteer_fetch.js").decode('utf-8')
+        # In the future inject this is a proper JS package
         code = code.replace('%xpath_scrape_code%', self.xpath_element_js)
         code = code.replace('%instock_scrape_code%', self.instock_data_js)
 
-        with open('/tmp/code.js','w') as w:
-            w.write(code)
-
         from requests.exceptions import ConnectTimeout, ReadTimeout
-        wait_browserless_seconds = 120
+        wait_browserless_seconds = 240
 
         browserless_function_url = os.getenv('BROWSERLESS_FUNCTION_URL')
         from urllib.parse import urlparse
@@ -358,7 +356,6 @@ class base_html_playwright(Fetcher):
                 url=browserless_function_url+f"{amp}--disable-features=AudioServiceOutOfProcess&dumpio=true&--disable-remote-fonts",
                 timeout=wait_browserless_seconds)
 
-# 'ziparchive::addglob() will throw an instance of error instead of resulting in a fatal error if glob support is not available.'
         except ReadTimeout:
             raise PageUnloadable(url=url, status_code=None, message=f"No response from browserless in {wait_browserless_seconds}s")
         except ConnectTimeout:
