@@ -97,6 +97,10 @@ module.exports = async ({page, context}) => {
                 console.log("Skipping (no_cache_list) - " + url);
                 return;
             }
+            if (url.toLowerCase().includes('data:')) {
+                console.log("Skipping (embedded-data) - " + url);
+                return;
+            }
             response.buffer().then(buffer => {
                 if (buffer.length > 100) {
                     console.log("Cache - Saving " + response.request().method() + " - " + url + " - " + response.request().resourceType());
