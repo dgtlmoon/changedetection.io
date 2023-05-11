@@ -399,17 +399,23 @@ class base_html_playwright(Fetcher):
             current_include_filters=None,
             is_binary=False):
 
-        if os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH'):
-            # Temporary backup solution until we rewrite the playwright code
-            return self.run_fetch_browserless_puppeteer(
-                url,
-                timeout,
-                request_headers,
-                request_body,
-                request_method,
-                ignore_status_codes,
-                current_include_filters,
-                is_binary)
+        # For now, USE_EXPERIMENTAL_PUPPETEER_FETCH is not supported by watches with BrowserSteps (for now!)
+        has_browser_steps = self.browser_steps and list(filter(
+                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
+                self.browser_steps))
+
+        if not has_browser_steps:
+            if os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH'):
+                # Temporary backup solution until we rewrite the playwright code
+                return self.run_fetch_browserless_puppeteer(
+                    url,
+                    timeout,
+                    request_headers,
+                    request_body,
+                    request_method,
+                    ignore_status_codes,
+                    current_include_filters,
+                    is_binary)
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._api_types
