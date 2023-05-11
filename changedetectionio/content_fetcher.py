@@ -377,8 +377,7 @@ class base_html_playwright(Fetcher):
             if ( disk_cache_dir ) {{
                 page.on('response', async (response) => {{
                     const url = response.url();
-                    // @todo - check response size()
-                                        
+                    // Basic filtering for sane responses
                     if(response.request().method()  != 'GET' || response.request().resourceType() == 'xhr' || response.request().resourceType() == 'document' || response.status() != 200 ) {{
                         console.log("Skipping (not useful) - Status:"+response.status()+" Method:"+response.request().method()+" ResourceType:"+response.request().resourceType()+" "+url);
                         return;
