@@ -292,7 +292,20 @@ class base_html_playwright(Fetcher):
 
         code = f"""module.exports = async ({{ page, context }}) => {{
         
-          var {{ url, execute_js, user_agent, extra_wait_ms, req_headers, include_filters, xpath_element_js, screenshot_quality, proxy_username, proxy_password, disk_cache_dir}} = context;
+          var {{ url, 
+          execute_js, 
+          user_agent, 
+          extra_wait_ms, 
+          req_headers, 
+          include_filters, 
+          xpath_element_js, 
+          screenshot_quality, 
+          proxy_username, 
+          proxy_password, 
+          disk_cache_dir,
+          no_cache_list,
+          block_url_list,
+          }} = context;
           
           await page.setBypassCSP(true)
           await page.setExtraHTTPHeaders(req_headers);          
@@ -307,16 +320,12 @@ class base_html_playwright(Fetcher):
                 password: proxy_password
             }});
           }}
-
+        
         await page.setViewport({{
           width: 1024,
           height: 768,
           deviceScaleFactor: 1,
         }});
-
-        // Very primitive disk cache - USE WITH EXTREME CAUTION
-        // Run browserless container with -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]"
-        if ( disk_cache_dir ) {{
             
             await page.setRequestInterception(true);
                          
@@ -339,56 +348,68 @@ class base_html_playwright(Fetcher):
             }}
         
             page.on('request', async (request) => {{
-                    
-                // if (blockedExtensions.some((str) => req.url().endsWith(str))) return req.abort();
-		        const url = request.url();
-                const key = crypto.createHash('md5').update(url).digest("hex");                
-                const dir_path = disk_cache_dir + key.slice(0, 1) + '/' + key.slice(1, 2) + '/' + key.slice(2, 3) + '/';             
-                                       
-                // https://stackoverflow.com/questions/4482686/check-synchronously-if-file-directory-exists-in-node-js
+                // General blocking of requests that waste traffic
+                if (block_url_list.some(substring=>request.url().toLowerCase().includes(substring))) return request.abort();
                 
-                if (fs.existsSync(dir_path+key)) {{
-                    file_is_expired(dir_path+key);
-                    console.log("Cache exists "+dir_path+key+ " - "+url);
-                    const cached_data = fs.readFileSync(dir_path+key);                          
-                    request.respond({{
-                        status: 200,
-                        //contentType: 'text/html', //@todo
-                        body: cached_data
-                    }});
-                    return;
-                }}                
-                request.continue();
+                if ( disk_cache_dir ) {{
+                    const url = request.url();
+                    const key = crypto.createHash('md5').update(url).digest("hex");                
+                    const dir_path = disk_cache_dir + key.slice(0, 1) + '/' + key.slice(1, 2) + '/' + key.slice(2, 3) + '/';             
+                                           
+                    // https://stackoverflow.com/questions/4482686/check-synchronously-if-file-directory-exists-in-node-js
+                    
+                    if (fs.existsSync(dir_path+key)) {{                        
+                        console.log("* CACHE HIT , using - "+dir_path+key+ " - "+url);
+                        const cached_data = fs.readFileSync(dir_path+key);
+                        // @todo headers can come from dir_path+key+".meta" json file                    
+                        request.respond({{
+                            status: 200,
+                            //contentType: 'text/html', //@todo
+                            body: cached_data
+                        }});
+                        return;                        
+                    }}                                    
+                }}
+                request.continue();                    
             }});
             
-            page.on('response', async (response) => {{
-                const url = response.url();
-                // @todo - check response size()
-                console.log("Cache - Got "+response.request().method()+" - "+url+" - "+response.request().resourceType());
-                
-                if(response.request().method()  != 'GET' || response.request().resourceType() == 'xhr' || response.request().resourceType() == 'document' || response.status() != 200 ) {{
-                    console.log("Skipping- "+url);
-                    return;
-                }}
-                
-                const key = crypto.createHash('md5').update(url).digest("hex");
-                const dir_path = disk_cache_dir + key.slice(0, 1) + '/' + key.slice(1, 2) + '/' + key.slice(2, 3) + '/';               
-                const data = await response.text();
-                if (!fs.existsSync(dir_path)) {{
-                    fs.mkdirSync(dir_path, {{ recursive: true }})
-                }}
-                
-                var expired = false;
-                if (fs.existsSync(dir_path+key)) {{
-                  if (file_is_expired(dir_path+key)) {{
-                    fs.writeFileSync(dir_path+key, data);
-                  }}
-                }} else {{                
-                    fs.writeFileSync(dir_path+key, data);
-                }}
-		    }});		    
-          }}
+            
+            if ( disk_cache_dir ) {{
+                page.on('response', async (response) => {{
+                    const url = response.url();
+                    // @todo - check response size()
+                                        
+                    if(response.request().method()  != 'GET' || response.request().resourceType() == 'xhr' || response.request().resourceType() == 'document' || response.status() != 200 ) {{
+                        console.log("Skipping (not useful) - Status:"+response.status()+" Method:"+response.request().method()+" ResourceType:"+response.request().resourceType()+" "+url);
+                        return;
+                    }}
+                    if (no_cache_list.some(substring=>url.toLowerCase().includes(substring))) {{
+                        console.log("Skipping (no_cache_list) - "+url);
+                        return;
+                    }}
+                    response.buffer().then(buffer => {{
+                        if(buffer.length > 100) {{
+                            console.log("Cache - Saving "+response.request().method()+" - "+url+" - "+response.request().resourceType());
+        
+                            const key = crypto.createHash('md5').update(url).digest("hex");
+                            const dir_path = disk_cache_dir + key.slice(0, 1) + '/' + key.slice(1, 2) + '/' + key.slice(2, 3) + '/'; 
 
+                            if (!fs.existsSync(dir_path)) {{
+                                fs.mkdirSync(dir_path, {{ recursive: true }})
+                            }}
+                            
+                            var expired = false;
+                            if (fs.existsSync(dir_path+key)) {{
+                              if (file_is_expired(dir_path+key)) {{
+                                fs.writeFileSync(dir_path+key, buffer);
+                              }}
+                            }} else {{
+                                fs.writeFileSync(dir_path+key, buffer);
+                            }}                        
+                        }}
+                    }});
+                }});
+		    }}   	    
         
           const r = await page.goto(url, {{
                 waitUntil: 'load'                
@@ -432,7 +453,6 @@ class base_html_playwright(Fetcher):
             }}
          }}
     
-            
          var html = await page.content();
           return {{
             data: {{
@@ -475,7 +495,9 @@ class base_html_playwright(Fetcher):
                 json={
                     "code": code,
                     "context": {
-                        'disk_cache_dir': False, # or path to disk cache ending in /, ie /tmp/cache/
+                        # Very primitive disk cache - USE WITH EXTREME CAUTION
+                        # Run browserless container  with -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]"
+                        'disk_cache_dir': os.getenv("PUPPETEER_DISK_CACHE", False), # or path to disk cache ending in /, ie /tmp/cache/
                         'execute_js': self.webdriver_js_execute_code,
                         'extra_wait_ms': extra_wait_ms,
                         'include_filters': current_include_filters,
@@ -484,7 +506,20 @@ class base_html_playwright(Fetcher):
                         'url': url,
                         'user_agent': request_headers.get('User-Agent', 'Mozilla/5.0'),
                         'proxy_username': self.proxy.get('username','') if self.proxy else False,
-                        'proxy_password': self.proxy.get('password','') if self.proxy else False,
+                        'proxy_password': self.proxy.get('password', '') if self.proxy else False,
+                        'no_cache_list': [
+                            'twitter',
+                            '.pdf'
+                        ],
+                        # Could use https://github.com/easylist/easylist here, or install a plugin
+                        'block_url_list': [
+                            'adnxs.com',
+                            'analytics.twitter.com',
+                            'doubleclick.net',
+                            'google-analytics.com',
+                            'googletagmanager',
+                            'trustpilot.com'
+                        ]
                     }
                 },
                 # @todo /function needs adding ws:// to http:// rebuild this
