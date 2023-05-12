@@ -27,58 +27,82 @@ import os
 import logging
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio import login_optionally_required
-browsersteps_live_ui_o = {}
-browsersteps_playwright_browser_interface = None
-browsersteps_playwright_browser_interface_browser = None
-browsersteps_playwright_browser_interface_context = None
-browsersteps_playwright_browser_interface_end_time = None
-browsersteps_playwright_browser_interface_start_time = None
 
-def cleanup_playwright_session():
+browsersteps_sessions = {}
+io_interface_context = None
 
-    global browsersteps_live_ui_o
-    global browsersteps_playwright_browser_interface
-    global browsersteps_playwright_browser_interface_browser
-    global browsersteps_playwright_browser_interface_context
-    global browsersteps_playwright_browser_interface_end_time
-    global browsersteps_playwright_browser_interface_start_time
-
-    browsersteps_live_ui_o = {}
-    browsersteps_playwright_browser_interface = None
-    browsersteps_playwright_browser_interface_browser = None
-    browsersteps_playwright_browser_interface_end_time = None
-    browsersteps_playwright_browser_interface_start_time = None
-
-    print("Cleaning up old playwright session because time was up, calling .goodbye()")
-    try:
-        browsersteps_playwright_browser_interface_context.goodbye()
-    except Exception as e:
-        print ("Got exception in shutdown, probably OK")
-        print (str(e))
-
-    browsersteps_playwright_browser_interface_context = None
-
-    print ("Cleaning up old playwright session because time was up - done")
 
 def construct_blueprint(datastore: ChangeDetectionStore):
-
     browser_steps_blueprint = Blueprint('browser_steps', __name__, template_folder="templates")
 
+    def start_browsersteps_session():
+        from . import nonContext
+        from . import browser_steps
+        import time
+        global browsersteps_sessions
+        global io_interface_context
+
+
+        # We keep the playwright session open for many minutes
+        seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
+
+        browsersteps_start_session = {'start_time': time.time()}
+
+        # You can only have one of these running
+        # This should be very fine to leave running for the life of the application
+        # @idea - Make it global so the pool of watch fetchers can use it also
+        if not io_interface_context:
+            io_interface_context = nonContext.c_sync_playwright()
+            # Start the Playwright context, which is actually a nodejs sub-process and communicates over STDIN/STDOUT pipes
+            io_interface_context = io_interface_context.start()
+#Element is outside of the viewport
+
+        # keep it alive for 10 seconds more than we advertise, sometimes it helps to keep it shutting down cleanly
+        keepalive = "&timeout={}".format(((seconds_keepalive + 3) * 1000))
+        try:
+            browsersteps_start_session['browser'] = io_interface_context.chromium.connect_over_cdp(
+                os.getenv('PLAYWRIGHT_DRIVER_URL', '') + keepalive)
+        except Exception as e:
+            if 'ECONNREFUSED' in str(e):
+                return make_response('Unable to start the Playwright Browser session, is it running?', 401)
+            else:
+                return make_response(str(e), 401)
+
+        # Tell Playwright to connect to Chrome and setup a new session via our stepper interface
+        browsersteps_start_session['browserstepper'] = browser_steps.browsersteps_live_ui(
+            playwright_browser=browsersteps_start_session['browser'])
+
+        # For test
+        #browsersteps_start_session['browserstepper'].action_goto_url(value="http://example.com?time="+str(time.time()))
+
+        return browsersteps_start_session
+
     @login_optionally_required
-    @browser_steps_blueprint.route("/browsersteps_update", methods=['GET', 'POST'])
+    @browser_steps_blueprint.route("/browsersteps_start_session", methods=['GET'])
+    def browsersteps_start_session():
+        # A new session was requested, return sessionID
+
+        import uuid
+        browsersteps_session_id = str(uuid.uuid4())
+
+        watch_uuid = request.args.get('uuid')
+        global browsersteps_sessions
+
+        print("Starting connection with playwright")
+        logging.debug("browser_steps.py connecting")
+        browsersteps_sessions[browsersteps_session_id] = start_browsersteps_session()
+        print("Starting connection with playwright - done")
+        return {'browsersteps_session_id': browsersteps_session_id}
+
+    # A request for an action was received
+    @login_optionally_required
+    @browser_steps_blueprint.route("/browsersteps_update", methods=['POST'])
     def browsersteps_ui_update():
         import base64
         import playwright._impl._api_types
-        import time
-
+        global browsersteps_sessions
         from changedetectionio.blueprint.browser_steps import browser_steps
 
-        global browsersteps_live_ui_o, browsersteps_playwright_browser_interface_end_time
-        global browsersteps_playwright_browser_interface_browser
-        global browsersteps_playwright_browser_interface
-        global browsersteps_playwright_browser_interface_start_time
-
-        step_n = None
         remaining =0
         uuid = request.args.get('uuid')
 
@@ -87,13 +111,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if not browsersteps_session_id:
             return make_response('No browsersteps_session_id specified', 500)
 
-        # Because we don't "really" run in a context manager ( we make the playwright interface global/long-living )
-        # We need to manage the shutdown when the time is up
-        if browsersteps_playwright_browser_interface_end_time:
-            remaining = browsersteps_playwright_browser_interface_end_time-time.time()
-            if browsersteps_playwright_browser_interface_end_time and remaining <= 0:
-                cleanup_playwright_session()
-                return make_response('Browser session expired, please reload the Browser Steps interface', 401)
+        if not browsersteps_sessions.get(browsersteps_session_id):
+            return make_response('No session exists under that ID', 500)
+
 
         # Actions - step/apply/etc, do the thing and return state
         if request.method == 'POST':
@@ -112,12 +132,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # @todo try.. accept.. nice errors not popups..
             try:
 
-                this_session = browsersteps_live_ui_o.get(browsersteps_session_id)
-                if not this_session:
-                    print("Browser exited")
-                    return make_response('Browser session ran out of time :( Please reload this page.', 401)
-
-                this_session.call_action(action_name=step_operation,
+                browsersteps_sessions[browsersteps_session_id]['browserstepper'].call_action(action_name=step_operation,
                                          selector=step_selector,
                                          optional_value=step_optional_value)
 
@@ -129,108 +144,43 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Get visual selector ready/update its data (also use the current filter info from the page?)
             # When the last 'apply' button was pressed
             # @todo this adds overhead because the xpath selection is happening twice
-            u = this_session.page.url
+            u = browsersteps_sessions[browsersteps_session_id]['browserstepper'].page.url
             if is_last_step and u:
-                (screenshot, xpath_data) = this_session.request_visualselector_data()
+                (screenshot, xpath_data) = browsersteps_sessions[browsersteps_session_id]['browserstepper'].request_visualselector_data()
                 datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
                 datastore.save_xpath_data(watch_uuid=uuid, data=xpath_data)
 
-        # Setup interface
-        if request.method == 'GET':
+#        if not this_session.page:
+#            cleanup_playwright_session()
+#            return make_response('Browser session ran out of time :( Please reload this page.', 401)
 
-            if not browsersteps_playwright_browser_interface:
-                print("Starting connection with playwright")
-                logging.debug("browser_steps.py connecting")
+        # Screenshots and other info only needed on requesting a step (POST)
+        try:
+            state = browsersteps_sessions[browsersteps_session_id]['browserstepper'].get_current_state()
+        except playwright._impl._api_types.Error as e:
+            return make_response("Browser session ran out of time :( Please reload this page."+str(e), 401)
 
-                global browsersteps_playwright_browser_interface_context
-                from . import nonContext
-                browsersteps_playwright_browser_interface_context = nonContext.c_sync_playwright()
-                browsersteps_playwright_browser_interface = browsersteps_playwright_browser_interface_context.start()
-                # At 20 minutes, some other variable is closing it
-                # @todo find out what it is and set it
-                seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
+        # Use send_file() which is way faster than read/write loop on bytes
+        import json
+        from tempfile import mkstemp
+        from flask import send_file
+        tmp_fd, tmp_file = mkstemp(text=True, suffix=".json", prefix="changedetectionio-")
 
-                # keep it alive for 10 seconds more than we advertise, sometimes it helps to keep it shutting down cleanly
-                keepalive = "&timeout={}".format(((seconds_keepalive+3) * 1000))
-                try:
-                    browsersteps_playwright_browser_interface_browser = browsersteps_playwright_browser_interface.chromium.connect_over_cdp(
-                        os.getenv('PLAYWRIGHT_DRIVER_URL', '') + keepalive)
-                except Exception as e:
-                    if 'ECONNREFUSED' in str(e):
-                        return make_response('Unable to start the Playwright session properly, is it running?', 401)
+        output = json.dumps({'screenshot': "data:image/jpeg;base64,{}".format(
+            base64.b64encode(state[0]).decode('ascii')),
+            'xpath_data': state[1],
+            'session_age_start': browsersteps_sessions[browsersteps_session_id]['browserstepper'].age_start,
+            'browser_time_remaining': round(remaining)
+        })
 
-                browsersteps_playwright_browser_interface_end_time = time.time() + (seconds_keepalive-3)
-                print("Starting connection with playwright - done")
+        with os.fdopen(tmp_fd, 'w') as f:
+            f.write(output)
 
-            if not browsersteps_live_ui_o.get(browsersteps_session_id):
-                # Boot up a new session
-                proxy_id = datastore.get_preferred_proxy_for_watch(uuid=uuid)
-                proxy = None
-                if proxy_id:
-                    proxy_url = datastore.proxy_list.get(proxy_id).get('url')
-                    if proxy_url:
-
-                        # Playwright needs separate username and password values
-                        from urllib.parse import urlparse
-                        parsed = urlparse(proxy_url)
-                        proxy = {'server': proxy_url}
-
-                        if parsed.username:
-                            proxy['username'] = parsed.username
-
-                        if parsed.password:
-                            proxy['password'] = parsed.password
-
-                        print("Browser Steps: UUID {} Using proxy {}".format(uuid, proxy_url))
-
-                # Begin the new "Playwright Context" that re-uses the playwright interface
-                # Each session is a "Playwright Context" as a list, that uses the playwright interface
-                browsersteps_live_ui_o[browsersteps_session_id] = browser_steps.browsersteps_live_ui(
-                    playwright_browser=browsersteps_playwright_browser_interface_browser,
-                    proxy=proxy)
-                this_session = browsersteps_live_ui_o[browsersteps_session_id]
-
-        if not this_session.page:
-            cleanup_playwright_session()
-            return make_response('Browser session ran out of time :( Please reload this page.', 401)
-
-        response = None
-
-        if request.method == 'POST':
-            # Screenshots and other info only needed on requesting a step (POST)
-            try:
-                state = this_session.get_current_state()
-            except playwright._impl._api_types.Error as e:
-                return make_response("Browser session ran out of time :( Please reload this page."+str(e), 401)
-
-            # Use send_file() which is way faster than read/write loop on bytes
-            import json
-            from tempfile import mkstemp
-            from flask import send_file
-            tmp_fd, tmp_file = mkstemp(text=True, suffix=".json", prefix="changedetectionio-")
-
-            output = json.dumps({'screenshot': "data:image/jpeg;base64,{}".format(
-                base64.b64encode(state[0]).decode('ascii')),
-                'xpath_data': state[1],
-                'session_age_start': this_session.age_start,
-                'browser_time_remaining': round(remaining)
-            })
-
-            with os.fdopen(tmp_fd, 'w') as f:
-                f.write(output)
-
-            response = make_response(send_file(path_or_file=tmp_file,
-                                               mimetype='application/json; charset=UTF-8',
-                                               etag=True))
-            # No longer needed
-            os.unlink(tmp_file)
-
-        elif request.method == 'GET':
-            # Just enough to get the session rolling, it will call for goto-site via POST next
-            response = make_response({
-                'session_age_start': this_session.age_start,
-                'browser_time_remaining': round(remaining)
-            })
+        response = make_response(send_file(path_or_file=tmp_file,
+                                           mimetype='application/json; charset=UTF-8',
+                                           etag=True))
+        # No longer needed
+        os.unlink(tmp_file)
 
         return response
 
