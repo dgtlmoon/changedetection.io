@@ -420,7 +420,6 @@ $(document).ready(function () {
             apply_buttons_disabled = false;
             $("#browsersteps-img").css('opacity', 1);
             $('ul#browser_steps li .control .apply').css('opacity', 1);
-            browserless_seconds_remaining = data.browser_time_remaining;
             $("#loading-status-text").hide();
             set_first_gotosite_disabled();
         }).fail(function (data) {
