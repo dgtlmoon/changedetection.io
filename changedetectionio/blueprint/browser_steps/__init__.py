@@ -56,6 +56,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Start the Playwright context, which is actually a nodejs sub-process and communicates over STDIN/STDOUT pipes
             io_interface_context = io_interface_context.start()
 
+
         # keep it alive for 10 seconds more than we advertise, sometimes it helps to keep it shutting down cleanly
         keepalive = "&timeout={}".format(((seconds_keepalive + 3) * 1000))
         try:
@@ -96,6 +97,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return browsersteps_start_session
 
+
     @login_optionally_required
     @browser_steps_blueprint.route("/browsersteps_start_session", methods=['GET'])
     def browsersteps_start_session():
@@ -109,7 +111,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         print("Starting connection with playwright")
         logging.debug("browser_steps.py connecting")
-        browsersteps_sessions[browsersteps_session_id] = start_browsersteps_session(watch_uuid=watch_uuid)
+        browsersteps_sessions[browsersteps_session_id] = start_browsersteps_session()
         print("Starting connection with playwright - done")
         return {'browsersteps_session_id': browsersteps_session_id}
 
