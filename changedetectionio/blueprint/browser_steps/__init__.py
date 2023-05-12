@@ -104,10 +104,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # A new session was requested, return sessionID
 
         import uuid
-        browsersteps_session_id = str(uuid.uuid4())
-
-        watch_uuid = request.args.get('uuid')
         global browsersteps_sessions
+
+        browsersteps_session_id = str(uuid.uuid4())
+        watch_uuid = request.args.get('uuid')
+
+        if not watch_uuid:
+            return make_response('No Watch UUID specified', 500)
 
         print("Starting connection with playwright")
         logging.debug("browser_steps.py connecting")
