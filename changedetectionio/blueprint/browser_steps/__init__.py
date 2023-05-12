@@ -35,7 +35,7 @@ io_interface_context = None
 def construct_blueprint(datastore: ChangeDetectionStore):
     browser_steps_blueprint = Blueprint('browser_steps', __name__, template_folder="templates")
 
-    def start_browsersteps_session():
+    def start_browsersteps_session(watch_uuid):
         from . import nonContext
         from . import browser_steps
         import time
@@ -55,7 +55,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             io_interface_context = nonContext.c_sync_playwright()
             # Start the Playwright context, which is actually a nodejs sub-process and communicates over STDIN/STDOUT pipes
             io_interface_context = io_interface_context.start()
-#Element is outside of the viewport
 
         # keep it alive for 10 seconds more than we advertise, sometimes it helps to keep it shutting down cleanly
         keepalive = "&timeout={}".format(((seconds_keepalive + 3) * 1000))
@@ -68,9 +67,29 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             else:
                 return make_response(str(e), 401)
 
+        proxy_id = datastore.get_preferred_proxy_for_watch(uuid=watch_uuid)
+        proxy = None
+        if proxy_id:
+            proxy_url = datastore.proxy_list.get(proxy_id).get('url')
+            if proxy_url:
+
+                # Playwright needs separate username and password values
+                from urllib.parse import urlparse
+                parsed = urlparse(proxy_url)
+                proxy = {'server': proxy_url}
+
+                if parsed.username:
+                    proxy['username'] = parsed.username
+
+                if parsed.password:
+                    proxy['password'] = parsed.password
+
+                print("Browser Steps: UUID {} selected proxy {}".format(watch_uuid, proxy_url))
+
         # Tell Playwright to connect to Chrome and setup a new session via our stepper interface
         browsersteps_start_session['browserstepper'] = browser_steps.browsersteps_live_ui(
-            playwright_browser=browsersteps_start_session['browser'])
+            playwright_browser=browsersteps_start_session['browser'],
+            proxy=proxy)
 
         # For test
         #browsersteps_start_session['browserstepper'].action_goto_url(value="http://example.com?time="+str(time.time()))
@@ -90,7 +109,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         print("Starting connection with playwright")
         logging.debug("browser_steps.py connecting")
-        browsersteps_sessions[browsersteps_session_id] = start_browsersteps_session()
+        browsersteps_sessions[browsersteps_session_id] = start_browsersteps_session(watch_uuid=watch_uuid)
         print("Starting connection with playwright - done")
         return {'browsersteps_session_id': browsersteps_session_id}
 
