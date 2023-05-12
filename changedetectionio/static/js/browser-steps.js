@@ -238,7 +238,7 @@ $(document).ready(function () {
 
     function start() {
         console.log("Starting browser-steps UI");
-        browsersteps_session_id = Date.now();
+        browsersteps_session_id = false;
         // @todo This setting of the first one should be done at the datalayer but wtforms doesnt wanna play nice
         $('#browser_steps >li:first-child').removeClass('empty');
         set_first_gotosite_disabled();
@@ -246,7 +246,7 @@ $(document).ready(function () {
         $('.clear,.remove', $('#browser_steps >li:first-child')).hide();
         $.ajax({
             type: "GET",
-            url: browser_steps_sync_url + "&browsersteps_session_id=" + browsersteps_session_id,
+            url: browser_steps_start_url,
             statusCode: {
                 400: function () {
                     // More than likely the CSRF token was lost when the server restarted
@@ -254,12 +254,12 @@ $(document).ready(function () {
                 }
             }
         }).done(function (data) {
-            xpath_data = data.xpath_data;
             $("#loading-status-text").fadeIn();
+            browsersteps_session_id = data.browsersteps_session_id;
             // This should trigger 'Goto site'
             console.log("Got startup response, requesting Goto-Site (first) step fake click");
             $('#browser_steps >li:first-child .apply').click();
-            browserless_seconds_remaining = data.browser_time_remaining;
+            browserless_seconds_remaining = 500;
             set_first_gotosite_disabled();
         }).fail(function (data) {
             console.log(data);

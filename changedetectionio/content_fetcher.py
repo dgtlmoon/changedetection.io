@@ -182,7 +182,8 @@ class Fetcher():
                                                       optional_value=optional_value)
                     self.screenshot_step(step_n)
                     self.save_step_html(step_n)
-                except TimeoutError:
+                except TimeoutError as e:
+                    print(str(e))
                     # Stop processing here
                     raise BrowserStepsStepTimout(step_n=step_n)
 

@@ -71,10 +71,10 @@ class steppable_browser_interface():
             optional_value = str(jinja2_env.from_string(optional_value).render())
 
         action_handler(selector, optional_value)
-        self.page.wait_for_timeout(3 * 1000)
+        self.page.wait_for_timeout(1.5 * 1000)
         print("Call action done in", time.time() - now)
 
-    def action_goto_url(self, selector, value):
+    def action_goto_url(self, selector=None, value=None):
         # self.page.set_viewport_size({"width": 1280, "height": 5000})
         now = time.time()
         response = self.page.goto(value, timeout=0, wait_until='commit')
@@ -105,7 +105,8 @@ class steppable_browser_interface():
         print("Clicking element")
         if not len(selector.strip()):
             return
-        self.page.locator(selector).click(timeout=30 * 1000, delay=randint(200, 500), force=True)
+
+        self.page.click(selector=selector, timeout=30 * 1000, delay=randint(200, 500))
 
     def action_click_element_if_exists(self, selector, value):
         import playwright._impl._api_types as _api_types
