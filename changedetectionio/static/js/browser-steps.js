@@ -162,7 +162,9 @@ $(document).ready(function () {
                 ) {
                     // There could be many elements here, record them all and then we'll find out which is the most 'useful'
                     // (input, textarea, button, A etc)
-                    possible_elements.push(item);
+                    if (item.width < xpath_data['browser_width']) {
+                        possible_elements.push(item);
+                    }
                 }
             });
 
