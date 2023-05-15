@@ -133,7 +133,7 @@ class steppable_browser_interface():
         self.page.wait_for_timeout(1000)
 
     def action_wait_for_seconds(self, selector, value):
-        self.page.wait_for_timeout(int(value) * 1000)
+        self.page.wait_for_timeout(float(value.strip()) * 1000)
 
     def action_wait_for_text(self, selector, value):
         import json
