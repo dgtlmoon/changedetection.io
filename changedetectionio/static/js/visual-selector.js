@@ -61,7 +61,12 @@ $(document).ready(function () {
     function bootstrap_visualselector() {
         if (1) {
             // bootstrap it, this will trigger everything else
-            $("img#selector-background").bind('load', function () {
+            $("img#selector-background").on("error", function () {
+                $('.fetching-update-notice').html("<strong>Ooops!</strong> The VisualSelector tool needs atleast one fetched page, please unpause the watch and/or wait for the watch to complete fetching and then reload this page.");
+                $('.fetching-update-notice').css('color','#bb0000');
+                $('#selector-current-xpath').hide();
+                $('#clear-selector').hide();
+            }).bind('load', function () {
                 console.log("Loaded background...");
                 c = document.getElementById("selector-canvas");
                 // greyed out fill context
@@ -79,10 +84,11 @@ $(document).ready(function () {
             }).attr("src", screenshot_url);
         }
         // Tell visualSelector that the image should update
-        var s = $("img#selector-background").attr('src')+"?"+ new Date().getTime();
-        $("img#selector-background").attr('src',s)
+        var s = $("img#selector-background").attr('src') + "?" + new Date().getTime();
+        $("img#selector-background").attr('src', s)
     }
 
+    // This is fired once the img src is loaded in bootstrap_visualselector()
     function fetch_data() {
         // Image is ready
         $('.fetching-update-notice').html("Fetching element data..");
@@ -99,7 +105,8 @@ $(document).ready(function () {
             reflow_selector();
             $('.fetching-update-notice').fadeOut();
         });
-    };
+
+    }
 
 
     function set_scale() {
