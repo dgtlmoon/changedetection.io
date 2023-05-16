@@ -54,6 +54,7 @@ class perform_site_check(difference_detection_processor):
         changed_detected = False
         screenshot = False  # as bytes
         stripped_text_from_html = ""
+        source_filter = None # A machine filter that can be applied to source: (url|filter)
 
         # DeepCopy so we can be sure we don't accidently change anything by reference
         watch = deepcopy(self.datastore.data['watching'].get(uuid))
@@ -249,6 +250,11 @@ class perform_site_check(difference_detection_processor):
 
                     for filter_rule in include_filters_rule:
                         # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
+                        if '|' in filter_rule:
+                            filter_rule, source_filter = filter_rule.split('|')
+                        else:
+                            source_filter = None
+
                         if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
                             html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
                                                                     html_content=fetcher.content,
@@ -258,6 +264,10 @@ class perform_site_check(difference_detection_processor):
                             html_content += html_tools.include_filters(include_filters=filter_rule,
                                                                        html_content=fetcher.content,
                                                                        append_pretty_line_formatting=not is_source)
+                        if source_filter == 'pretty':
+                            from bs4 import BeautifulSoup
+                            html_content = BeautifulSoup(html_content, 'html.parser').prettify()
+
 
                     if not html_content.strip():
                         raise FilterNotFoundInResponse(include_filters_rule)
