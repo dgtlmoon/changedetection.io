@@ -366,19 +366,21 @@ class ChangeDetectionStore:
     def save_error_text(self, watch_uuid, contents):
         if not self.data['watching'].get(watch_uuid):
             return
-        target_path = os.path.join(self.datastore_path, watch_uuid, "last-error.txt")
 
+        self.data['watching'][watch_uuid].ensure_data_dir_exists()
+        target_path = os.path.join(self.datastore_path, watch_uuid, "last-error.txt")
         with open(target_path, 'w') as f:
             f.write(contents)
 
     def save_xpath_data(self, watch_uuid, data, as_error=False):
+
         if not self.data['watching'].get(watch_uuid):
             return
         if as_error:
             target_path = os.path.join(self.datastore_path, watch_uuid, "elements-error.json")
         else:
             target_path = os.path.join(self.datastore_path, watch_uuid, "elements.json")
-
+        self.data['watching'][watch_uuid].ensure_data_dir_exists()
         with open(target_path, 'w') as f:
             f.write(json.dumps(data))
             f.close()
