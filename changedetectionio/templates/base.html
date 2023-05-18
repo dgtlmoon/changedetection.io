@@ -83,10 +83,15 @@
             </li>
           {% endif %}
           <li class="pure-menu-item">
+            <button class="toggle-button" id ="toggle-search" type="button" title="Search list">
+                {% include "svgs/search-icon.svg" %}
+            </button>
+          </li>
+          <li class="pure-menu-item">
             {% if dark_mode %}
             {% set darkClass = 'dark' %}
             {% endif %}
-            <button class="toggle-theme {{darkClass}}" type="button" title="Toggle Light/Dark Mode">
+            <button class="toggle-button {{darkClass}}"  id ="toggle-light-mode" type="button" title="Toggle Light/Dark Mode">
               <span class="visually-hidden">Toggle light/dark mode</span>
               <span class="icon-light">
                 {% include "svgs/light-mode-toggle-icon.svg" %}

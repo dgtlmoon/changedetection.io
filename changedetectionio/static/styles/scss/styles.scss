@@ -54,8 +54,29 @@ a.github-link {
   }
 }
 
-button.toggle-theme {
-  width: 4rem;
+#toggle-light-mode {
+  width: 3rem;
+  .icon-dark {
+    display: none;
+  }
+
+  &.dark {
+    .icon-light {
+      display: none;
+    }
+
+    .icon-dark {
+      display: block;
+    }
+  }
+}
+
+#toggle-search {
+  width: 2rem;
+}
+
+button.toggle-button {
+
   background: transparent;
   border: none;
   cursor: pointer;
@@ -74,19 +95,7 @@ button.toggle-theme {
     display: block;
   }
 
-  .icon-dark {
-    display: none;
-  }
 
-  &.dark {
-    .icon-light {
-      display: none;
-    }
-
-    .icon-dark {
-      display: block;
-    }
-  }
 }
 
 .pure-menu-horizontal {

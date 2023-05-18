@@ -3,7 +3,7 @@
  * Toggles theme between light and dark mode.
  */
 $(document).ready(function () {
-  const button = document.getElementsByClassName("toggle-theme")[0];
+  const button = document.getElementById("toggle-light-mode");
 
   button.onclick = () => {
     const htmlElement = document.getElementsByTagName("html");
