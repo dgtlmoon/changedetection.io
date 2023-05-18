@@ -355,6 +355,9 @@ a.github-link {
     display: inline-block;
     opacity: 1; }
 
+#search-result-info {
+  color: #fff; }
+
 button.toggle-button {
   vertical-align: middle;
   background: transparent;
