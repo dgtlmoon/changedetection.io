@@ -331,23 +331,44 @@ a.github-link {
   a.github-link:hover {
     color: var(--color-icon-github-hover); }
 
-button.toggle-theme {
-  width: 4rem;
+#toggle-light-mode {
+  width: 3rem; }
+  #toggle-light-mode .icon-dark {
+    display: none; }
+  #toggle-light-mode.dark .icon-light {
+    display: none; }
+  #toggle-light-mode.dark .icon-dark {
+    display: block; }
+
+#toggle-search {
+  width: 2rem; }
+
+#search-q {
+  opacity: 0;
+  -webkit-transition: all .9s ease;
+  -moz-transition: all .9s ease;
+  transition: all .9s ease;
+  width: 0;
+  display: none; }
+  #search-q.expanded {
+    width: auto;
+    display: inline-block;
+    opacity: 1; }
+
+#search-result-info {
+  color: #fff; }
+
+button.toggle-button {
+  vertical-align: middle;
   background: transparent;
   border: none;
   cursor: pointer;
   color: var(--color-icon-github); }
-  button.toggle-theme:hover {
+  button.toggle-button:hover {
     color: var(--color-icon-github-hover); }
-  button.toggle-theme svg {
+  button.toggle-button svg {
     fill: currentColor; }
-  button.toggle-theme .icon-light {
-    display: block; }
-  button.toggle-theme .icon-dark {
-    display: none; }
-  button.toggle-theme.dark .icon-light {
-    display: none; }
-  button.toggle-theme.dark .icon-dark {
+  button.toggle-button .icon-light {
     display: block; }
 
 .pure-menu-horizontal {

@@ -54,8 +54,47 @@ a.github-link {
   }
 }
 
-button.toggle-theme {
-  width: 4rem;
+#toggle-light-mode {
+  width: 3rem;
+  .icon-dark {
+    display: none;
+  }
+
+  &.dark {
+    .icon-light {
+      display: none;
+    }
+
+    .icon-dark {
+      display: block;
+    }
+  }
+}
+
+#toggle-search {
+  width: 2rem;
+}
+
+#search-q {
+  opacity: 0;
+  -webkit-transition: all .9s ease;
+  -moz-transition: all .9s ease;
+  transition: all .9s ease;
+  width: 0;
+  display: none;
+  &.expanded {
+    width: auto;
+    display: inline-block;
+
+    opacity: 1;
+  }
+}
+#search-result-info {
+  color: #fff;
+}
+
+button.toggle-button {
+  vertical-align: middle;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -74,19 +113,7 @@ button.toggle-theme {
     display: block;
   }
 
-  .icon-dark {
-    display: none;
-  }
 
-  &.dark {
-    .icon-light {
-      display: none;
-    }
-
-    .icon-dark {
-      display: block;
-    }
-  }
 }
 
 .pure-menu-horizontal {

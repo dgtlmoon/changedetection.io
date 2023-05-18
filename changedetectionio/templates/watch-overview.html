@@ -44,6 +44,7 @@
     {% if watches|length >= pagination.per_page %}
         {{ pagination.info }}
     {% endif %}
+    {% if search_q %}<div id="search-result-info">Searching "<strong><i>{{search_q}}</i></strong>"</div>{% endif %}
     <div>
         <a href="{{url_for('index')}}" class="pure-button button-tag {{'active' if not active_tag }}">All</a>
         {% for tag in tags %}
