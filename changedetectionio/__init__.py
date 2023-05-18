@@ -403,6 +403,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
+        search_q = request.args.get('q').strip().lower() if request.args.get('q') else False
         for uuid, watch in datastore.data['watching'].items():
 
             if limit_tag != None:
@@ -413,16 +414,24 @@ def changedetection_app(config=None, datastore_o=None):
                     tag_in_watch = tag_in_watch.strip()
                     if tag_in_watch == limit_tag:
                         watch['uuid'] = uuid
-                        sorted_watches.append(watch)
+                        if search_q:
+                            if (watch.get('title') and search_q in watch.get('title')) or search_q in watch.get('url', '').lower():
+                                sorted_watches.append(watch)
+                        else:
+                            sorted_watches.append(watch)
 
             else:
                 watch['uuid'] = uuid
-                sorted_watches.append(watch)
+                if search_q:
+                    if (watch.get('title') and search_q in watch.get('title')) or search_q in watch.get('url', '').lower():
+                        sorted_watches.append(watch)
+                else:
+                    sorted_watches.append(watch)
 
         existing_tags = datastore.get_all_tags()
         form = forms.quickWatchForm(request.form)
         page = request.args.get(get_page_parameter(), type=int, default=1)
-        total_count = len(sorted_watches) if sorted_watches else len(datastore.data['watching'])
+        total_count = len(sorted_watches)
         pagination = Pagination(page=page, total=total_count, per_page=int(os.getenv('pagination_per_page', 50)), css_framework = "semantic")
 
         output = render_template(
@@ -437,6 +446,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  hosted_sticky=os.getenv("SALTED_PASS", False) == False,
                                  pagination=pagination,
                                  queued_uuids=[q_uuid.item['uuid'] for q_uuid in update_q.queue],
+                                 search_q=request.args.get('q','').strip(),
                                  sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
                                  sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
                                  system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),

@@ -75,8 +75,23 @@ a.github-link {
   width: 2rem;
 }
 
-button.toggle-button {
+#search-q {
+  opacity: 0;
+  -webkit-transition: all .9s ease;
+  -moz-transition: all .9s ease;
+  transition: all .9s ease;
+  width: 0;
+  display: none;
+  &.expanded {
+    width: auto;
+    display: inline-block;
 
+    opacity: 1;
+  }
+}
+
+button.toggle-button {
+  vertical-align: middle;
   background: transparent;
   border: none;
   cursor: pointer;

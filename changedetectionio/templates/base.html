@@ -82,10 +82,15 @@
               <a href="{{url_for('logout')}}" class="pure-menu-link">LOG OUT</a>
             </li>
           {% endif %}
-          <li class="pure-menu-item">
-            <button class="toggle-button" id ="toggle-search" type="button" title="Search list">
+          <li class="pure-menu-item pure-form" id="search-menu-item">
+            <!-- We use GET here so it offers people a chance to set bookmarks etc -->
+            <form name="searchForm" action="/" method="GET">
+              <input id="search-q" class="" name="q" placeholder="URL or Title {% if active_tag %}in '{{ active_tag }}'{% endif %}" required="" type="text" value="">
+              <input name="tag" type="hidden" value="{% if active_tag %}{{active_tag}}{% endif %}">
+              <button class="toggle-button " id="toggle-search" type="button" title="Search, or Use Alt+S Key" >
                 {% include "svgs/search-icon.svg" %}
-            </button>
+              </button>
+            </form>
           </li>
           <li class="pure-menu-item">
             {% if dark_mode %}
