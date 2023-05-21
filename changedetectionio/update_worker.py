@@ -262,6 +262,7 @@ class update_worker(threading.Thread):
                         # Yes fine, so nothing todo, don't continue to process.
                         process_changedetection_results = False
                         changed_detected = False
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': False})
 
                     except content_fetcher.BrowserStepsStepTimout as e:
 
