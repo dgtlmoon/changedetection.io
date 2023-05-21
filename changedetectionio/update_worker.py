@@ -5,7 +5,7 @@ import time
 
 from changedetectionio import content_fetcher
 from .processors.text_json_diff import FilterNotFoundInResponse
-
+from .processors.restock_diff import UnableToExtractRestockData
 
 # A single update worker
 #
@@ -318,6 +318,11 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code,
                                                                            'has_ldjson_price_data': None})
+                        process_changedetection_results = False
+                    except UnableToExtractRestockData as e:
+                        # Usually when fetcher.instock_data returns empty
+                        self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Unable to extract restock data for this page unfortunately. (Got code {e.status_code} from server)"})
                         process_changedetection_results = False
                     except Exception as e:
                         self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
