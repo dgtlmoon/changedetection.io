@@ -384,6 +384,7 @@ class base_html_playwright(Fetcher):
                 self.headers = x.get('headers')
                 self.instock_data = x.get('instock_data')
                 self.screenshot = base64.b64decode(x.get('screenshot'))
+                self.status_code = x.get('status_code')
                 self.xpath_data = x.get('xpath_data')
 
             else:
