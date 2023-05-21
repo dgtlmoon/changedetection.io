@@ -66,6 +66,7 @@ Requires Playwright to be enabled.
 - Proactively search for jobs, get notified when companies update their careers page, search job portals for keywords.
 - Get alerts when new job positions are open on Bamboo HR and other job platforms
 - Website defacement monitoring
+- Pokémon Card Restock Tracker / Pokémon TCG Tracker
 
 _Need an actual Chrome runner with Javascript support? We support fetching via WebDriver and Playwright!</a>_
 
