@@ -280,6 +280,10 @@ def test_headers_textfile_in_request(client, live_server):
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
+
+    res = client.get(url_for("edit_page", uuid="first"))
+    assert b"Extra headers file found and will be added to this watch" in res.data
+
     # Not needed anymore
     os.unlink('test-datastore/headers.txt')
     os.unlink('test-datastore/headers-testtag.txt')
