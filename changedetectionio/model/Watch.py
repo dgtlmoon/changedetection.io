@@ -474,8 +474,16 @@ class model(dict):
         return False
 
     def has_extra_headers_file(self):
-        filepath = os.path.join(self.watch_data_dir, 'headers.txt')
-        return os.path.isfile(filepath)
+        if os.path.isfile(os.path.join(self.watch_data_dir, 'headers.txt')):
+            return True
+
+        for f in self.all_tags:
+            fname = re.sub(r'[\W_-]', '', f).lower().strip() + ".txt"
+            filepath = os.path.join(self.__datastore_path, fname)
+            if os.path.isfile(filepath):
+                return True
+
+        return False
 
     def get_all_headers(self):
         from .App import parse_headers_from_text_file
