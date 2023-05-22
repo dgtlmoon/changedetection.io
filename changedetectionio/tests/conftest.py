@@ -18,6 +18,7 @@ def cleanup(datastore_path):
         'count.txt',
         'endpoint-content.txt'
         'headers.txt',
+        'headers-testtag.txt',
         'notification.txt',
         'secret.txt',
         'url-watches.json',
