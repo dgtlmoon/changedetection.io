@@ -152,11 +152,16 @@
 {{ render_field(form.headers, rows=5, placeholder="Example
 Cookie: foobar
 User-Agent: wonderbra 1.0") }}
-                        {% if has_extra_headers_file %}
+
                         <div class="pure-form-message-inline">
-                            <strong>Alert! Extra headers file found and will be added to this watch!</strong>
+                            {% if has_extra_headers_file %}
+                                <strong>Alert! Extra headers file found and will be added to this watch!</strong>
+                            {% else %}
+                                Headers can be read from a textfile <code>headers.txt</code> in your data-directory, or per-watch in the watch sub-directory of the main data directory.<br>
+                                Also supported is <code>tagname.txt</code> in your data-directory (all letters in tagname converted to lowercase)
+                            {% endif %}
                         </div>
-                        {% endif %}
+
                     </div>
                     <div class="pure-control-group" id="request-body">
                                         {{ render_field(form.body, rows=5, placeholder="Example
