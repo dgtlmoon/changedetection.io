@@ -1,4 +1,5 @@
 import json
+import os
 import time
 from flask import url_for
 from . util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
@@ -238,6 +239,7 @@ def test_method_in_request(client, live_server):
     assert b'Deleted' in res.data
 
 def test_headers_textfile_in_request(client, live_server):
+
     # Add our URL to the import page
     test_url = url_for('test_headers', _external=True)
 
@@ -286,9 +288,11 @@ def test_headers_textfile_in_request(client, live_server):
         url_for("preview_page", uuid="first"),
         follow_redirects=True
     )
-    assert b"global-header: nice" in res.data
-    assert b"next-global-header: nice" in res.data
-    assert b"cool: yeah" in res.data
+
+    assert b"Global-Header:nice" in res.data
+    assert b"Next-Global-Header:nice" in res.data
+    assert b"Xxx:ooo" in res.data
+    os.unlink('test-datastore/headers.txt')
 
     #unlink headers.txt on start/stop
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
