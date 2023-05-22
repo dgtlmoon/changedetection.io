@@ -479,7 +479,7 @@ class model(dict):
             return True
 
         for f in self.all_tags:
-            fname = re.sub(r'[\W_-]', '', f).lower().strip() + ".txt"
+            fname = "headers-"+re.sub(r'[\W_]', '', f).lower().strip() + ".txt"
             filepath = os.path.join(self.__datastore_path, fname)
             if os.path.isfile(filepath):
                 return True
@@ -499,7 +499,7 @@ class model(dict):
 
         # Or each by tag, as tagname.txt in the main datadir
         for f in self.all_tags:
-            fname = re.sub(r'[\W_-]', '', f).lower().strip() + ".txt"
+            fname = "headers-"+re.sub(r'[\W_]', '', f).lower().strip() + ".txt"
             filepath = os.path.join(self.__datastore_path, fname)
             try:
                 if os.path.isfile(filepath):
