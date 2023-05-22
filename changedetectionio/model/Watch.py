@@ -473,6 +473,31 @@ class model(dict):
         # None is set
         return False
 
+    def has_extra_headers_file(self):
+        filepath = os.path.join(self.watch_data_dir, 'headers.txt')
+        return os.path.isfile(filepath)
+
+    def get_all_headers(self):
+        from .App import parse_headers_from_text_file
+        headers = self.get('headers', {}).copy()
+        # Available headers on the disk could 'headers.txt' in the watch data dir
+        filepath = os.path.join(self.watch_data_dir, 'headers.txt')
+        try:
+            if os.path.isfile(filepath):
+                headers.update(parse_headers_from_text_file(filepath))
+        except Exception as e:
+            print(f"ERROR reading headers.txt at {filepath}", str(e))
+
+        # Or each by tag, as tagname.txt in the main datadir
+        for f in self.all_tags:
+            fname = re.sub(r'[\W_-]', '', f).lower().strip() + ".txt"
+            filepath = os.path.join(self.__datastore_path, fname)
+            try:
+                if os.path.isfile(filepath):
+                    headers.update(parse_headers_from_text_file(filepath))
+            except Exception as e:
+                print(f"ERROR reading headers.txt at {filepath}", str(e))
+        return headers
 
     def get_last_fetched_before_filters(self):
         import brotli

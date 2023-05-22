@@ -1444,6 +1444,7 @@ def check_for_new_version():
         # Check daily
         app.config.exit.wait(86400)
 
+
 def notification_runner():
     global notification_debug_log
     from datetime import datetime

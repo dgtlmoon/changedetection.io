@@ -3,7 +3,7 @@ from flask import (
 )
 
 from . model import App, Watch
-from copy import deepcopy
+from copy import deepcopy, copy
 from os import path, unlink
 from threading import Lock
 import json
@@ -474,8 +474,6 @@ class ChangeDetectionStore:
         return proxy_list if len(proxy_list) else None
 
 
-
-
     def get_preferred_proxy_for_watch(self, uuid):
         """
         Returns the preferred proxy by ID key
@@ -506,6 +504,24 @@ class ChangeDetectionStore:
             return first_default
 
         return None
+
+    def has_extra_headers_file(self):
+        filepath = os.path.join(self.datastore_path, 'headers.txt')
+        return os.path.isfile(filepath)
+
+    def get_all_headers(self):
+        from .model.App import parse_headers_from_text_file
+        headers = copy(self.data['settings'].get('headers', {}))
+
+        filepath = os.path.join(self.datastore_path, 'headers.txt')
+        try:
+            if os.path.isfile(filepath):
+                headers.update(parse_headers_from_text_file(filepath))
+        except Exception as e:
+            print(f"ERROR reading headers.txt at {filepath}", str(e))
+
+        return headers
+
 
     # Run all updates
     # IMPORTANT - Each update could be run even when they have a new install and the schema is correct
