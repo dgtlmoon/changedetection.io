@@ -473,6 +473,7 @@ class model(dict):
         # None is set
         return False
 
+    @property
     def has_extra_headers_file(self):
         if os.path.isfile(os.path.join(self.watch_data_dir, 'headers.txt')):
             return True

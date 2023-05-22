@@ -152,6 +152,11 @@
 {{ render_field(form.headers, rows=5, placeholder="Example
 Cookie: foobar
 User-Agent: wonderbra 1.0") }}
+                        {% if has_extra_headers_file %}
+                        <div class="pure-form-message-inline">
+                            <strong>Alert! Extra headers file found and will be added to this watch!</strong>
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="pure-control-group" id="request-body">
                                         {{ render_field(form.body, rows=5, placeholder="Example

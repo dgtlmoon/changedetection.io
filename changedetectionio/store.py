@@ -505,6 +505,7 @@ class ChangeDetectionStore:
 
         return None
 
+    @property
     def has_extra_headers_file(self):
         filepath = os.path.join(self.datastore_path, 'headers.txt')
         return os.path.isfile(filepath)
