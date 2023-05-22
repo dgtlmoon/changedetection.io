@@ -1,7 +1,8 @@
 import json
+import os
 import time
 from flask import url_for
-from . util import set_original_response, set_modified_response, live_server_setup
+from . util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
 def test_setup(live_server):
     live_server_setup(live_server)
@@ -234,3 +235,72 @@ def test_method_in_request(client, live_server):
     # Should be only one with method set to PATCH
     assert watches_with_method == 1
 
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+def test_headers_textfile_in_request(client, live_server):
+    #live_server_setup(live_server)
+    # Add our URL to the import page
+    test_url = url_for('test_headers', _external=True)
+
+    # Add the test URL twice, we will check
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+
+    time.sleep(1)
+
+
+    # Add some headers to a request
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={
+              "url": test_url,
+              "tag": "testtag",
+              "fetch_backend": "html_requests",
+              "headers": "xxx:ooo\ncool:yeah\r\n"},
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    wait_for_all_checks(client)
+
+    with open('test-datastore/headers-testtag.txt', 'w') as f:
+        f.write("tag-header: test")
+
+    with open('test-datastore/headers.txt', 'w') as f:
+        f.write("global-header: nice\r\nnext-global-header: nice")
+
+    with open('test-datastore/'+extract_UUID_from_client(client)+'/headers.txt', 'w') as f:
+        f.write("watch-header: nice")
+
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+
+    # Give the thread time to pick it up
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("edit_page", uuid="first"))
+    assert b"Extra headers file found and will be added to this watch" in res.data
+
+    # Not needed anymore
+    os.unlink('test-datastore/headers.txt')
+    os.unlink('test-datastore/headers-testtag.txt')
+    os.unlink('test-datastore/'+extract_UUID_from_client(client)+'/headers.txt')
+    # The service should echo back the request verb
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    assert b"Global-Header:nice" in res.data
+    assert b"Next-Global-Header:nice" in res.data
+    assert b"Xxx:ooo" in res.data
+    assert b"Watch-Header:nice" in res.data
+    assert b"Tag-Header:test" in res.data
+
+
+    #unlink headers.txt on start/stop
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data

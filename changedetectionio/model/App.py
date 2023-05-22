@@ -49,3 +49,15 @@ class model(dict):
     def __init__(self, *arg, **kw):
         super(model, self).__init__(*arg, **kw)
         self.update(self.base_config)
+
+
+def parse_headers_from_text_file(filepath):
+    headers = {}
+    with open(filepath, 'r') as f:
+        for l in f.readlines():
+            l = l.strip()
+            if not l.startswith('#') and ':' in l:
+                (k, v) = l.split(':')
+                headers[k.strip()] = v.strip()
+
+    return headers
