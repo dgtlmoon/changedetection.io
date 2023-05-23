@@ -137,12 +137,13 @@ def _get_stripped_text_from_json_match(match):
 def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None):
     stripped_text_from_html = False
 
-    # Try to parse/filter out the JSON, if we get some parser error, then maybe it's embedded <script type=ldjson>
+    # Try to parse/filter out the JSON, if we get some parser error, then maybe it's embedded within HTML tags
     try:
         stripped_text_from_html = _parse_json(json.loads(content), json_filter)
     except json.JSONDecodeError:
 
         # Foreach <script json></script> blob.. just return the first that matches json_filter
+        # As a last resort, try to parse the whole <body>
         s = []
         soup = BeautifulSoup(content, 'html.parser')
 
@@ -150,18 +151,15 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
             bs_result = soup.findAll('script', {"type": "application/ld+json"})
         else:
             bs_result = soup.findAll('script')
-        
-        # As a last resort, we will try to parse the page contents.
-        bs_result += [soup.find('body')]
+        bs_result += soup.findAll('body')
 
         bs_jsons = []
         for result in bs_result:
             # Skip empty tags, and things that dont even look like JSON
-            if not result.string or not '{' in result.string:
+            if not result.text or '{' not in result.text:
                 continue
-            
             try:
-                json_data = json.loads(result.string)
+                json_data = json.loads(result.text)
                 bs_jsons.append(json_data)
             except json.JSONDecodeError:
                 # Skip objects which cannot be parsed
