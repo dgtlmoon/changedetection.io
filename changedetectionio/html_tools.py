@@ -150,10 +150,9 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
             bs_result = soup.findAll('script', {"type": "application/ld+json"})
         else:
             bs_result = soup.findAll('script')
-        try:
-            page_content = soup.text
-            json.loads(page_content)
-        bs_result += soup.findAll('pre')
+        
+        # As a last resort, we will try to parse the page contents.
+        bs_result += [soup.find('body')]
 
         bs_jsons = []
         for result in bs_result:
@@ -165,7 +164,7 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
                 json_data = json.loads(result.string)
                 bs_jsons.append(json_data)
             except json.JSONDecodeError:
-                # Skip object which cannot be parsed
+                # Skip objects which cannot be parsed
                 continue
 
         if not bs_jsons:
