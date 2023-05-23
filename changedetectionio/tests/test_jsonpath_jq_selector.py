@@ -64,6 +64,24 @@ and it can also be repeated
         with pytest.raises(html_tools.JSONNotFound) as e_info:
             html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jq:.id")
 
+
+def test_unittest_inline_extract_body():
+    content = """
+    <html>
+        <head></head>
+        <body>
+            <pre style="word-wrap: break-word; white-space: pre-wrap;">
+                {"testKey": 42}
+            </pre>
+        </body>
+    </html>
+    """
+    from .. import html_tools
+
+    # See that we can find the second <script> one, which is not broken, and matches our filter
+    text = html_tools.extract_json_as_string(content, "json:$.testKey")
+    assert text == '42'
+
 def set_original_ext_response():
     data = """
         [
