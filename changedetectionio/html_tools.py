@@ -150,32 +150,38 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
             bs_result = soup.findAll('script', {"type": "application/ld+json"})
         else:
             bs_result = soup.findAll('script')
+        try:
+            page_content = soup.text
+            json.loads(page_content)
+        bs_result += soup.findAll('pre')
 
-
-        if not bs_result:
-            raise JSONNotFound("No parsable JSON found in this document")
-
+        bs_jsons = []
         for result in bs_result:
             # Skip empty tags, and things that dont even look like JSON
             if not result.string or not '{' in result.string:
                 continue
-                
+            
             try:
                 json_data = json.loads(result.string)
+                bs_jsons.append(json_data)
             except json.JSONDecodeError:
-                # Just skip it
+                # Skip object which cannot be parsed
                 continue
-            else:
-                stripped_text_from_html = _parse_json(json_data, json_filter)
-                if ensure_is_ldjson_info_type:
-                    # Could sometimes be list, string or something else random
-                    if isinstance(json_data, dict):
-                        # If it has LD JSON 'key' @type, and @type is 'product', and something was found for the search
-                        # (Some sites have multiple of the same ld+json @type='product', but some have the review part, some have the 'price' part)
-                        if json_data.get('@type', False) and json_data.get('@type','').lower() == ensure_is_ldjson_info_type.lower() and stripped_text_from_html:
-                            break
-                elif stripped_text_from_html:
-                    break
+
+        if not bs_jsons:
+            raise JSONNotFound("No parsable JSON found in this document")
+        
+        for json_data in bs_jsons:
+            stripped_text_from_html = _parse_json(json_data, json_filter)
+            if ensure_is_ldjson_info_type:
+                # Could sometimes be list, string or something else random
+                if isinstance(json_data, dict):
+                    # If it has LD JSON 'key' @type, and @type is 'product', and something was found for the search
+                    # (Some sites have multiple of the same ld+json @type='product', but some have the review part, some have the 'price' part)
+                    if json_data.get('@type', False) and json_data.get('@type','').lower() == ensure_is_ldjson_info_type.lower() and stripped_text_from_html:
+                        break
+            elif stripped_text_from_html:
+                break
 
     if not stripped_text_from_html:
         # Re 265 - Just return an empty string when filter not found
