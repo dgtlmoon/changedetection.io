@@ -13,7 +13,7 @@ def test_headers_in_request(client, live_server):
     #live_server_setup(live_server)
     # Add our URL to the import page
     test_url = url_for('test_headers', _external=True)
-    if os.getenv('PLAYWRIGHT_DRIVER_URL') or os.getenv('WEBDRIVER_URL'):
+    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
         # Because its no longer calling back to localhost but from browserless, set in test-only.yml
         test_url = test_url.replace('localhost', 'changedet')
 
