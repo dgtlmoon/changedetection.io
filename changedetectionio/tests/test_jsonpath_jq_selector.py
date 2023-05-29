@@ -3,7 +3,7 @@
 
 import time
 from flask import url_for, escape
-from . util import live_server_setup
+from . util import live_server_setup, wait_for_all_checks
 import pytest
 jq_support = True
 
@@ -432,6 +432,32 @@ def test_ignore_json_order(client, live_server):
 
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+def test_correct_header_detect(client, live_server):
+    
+    # Like in https://github.com/dgtlmoon/changedetection.io/pull/1593
+    # Specify extra html that JSON is sometimes wrapped in - when using Browserless/Puppeteer etc
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write('<html><body>{"hello" : 123, "world": 123}')
+
+    # Add our URL to the import page
+    # Check weird casing is cleaned up and detected also
+    test_url = url_for('test_endpoint', content_type="aPPlication/JSon", uppercase_headers=True, _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    wait_for_all_checks(client)
+
+
+    res = client.get(url_for("index"))
+    # This will be fixed in #1593
+    assert b'No parsable JSON found in this document' in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
