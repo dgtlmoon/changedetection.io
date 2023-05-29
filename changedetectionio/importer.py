@@ -52,7 +52,8 @@ class import_url_list(Importer):
 
             # Flask wtform validators wont work with basic auth, use validators package
             # Up to 5000 per batch so we dont flood the server
-            if len(url) and validators.url(url.replace('source:', '')) and good < 5000:
+            # @todo validators.url failed on local hostnames (such as referring to ourself when using browserless)
+            if len(url) and 'http' in url.lower() and good < 5000:
                 extras = None
                 if processor:
                     extras = {'processor': processor}
