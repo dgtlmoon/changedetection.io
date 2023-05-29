@@ -455,7 +455,6 @@ def test_ignore_json_order(client, live_server):
     assert b'Deleted' in res.data
 
 def test_correct_header_detect(client, live_server):
-    
     # Like in https://github.com/dgtlmoon/changedetection.io/pull/1593
     # Specify extra html that JSON is sometimes wrapped in - when using Browserless/Puppeteer etc
     with open("test-datastore/endpoint-content.txt", "w") as f:
@@ -471,11 +470,17 @@ def test_correct_header_detect(client, live_server):
     )
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
-
-
     res = client.get(url_for("index"))
-    # This will be fixed in #1593
-    assert b'No parsable JSON found in this document' in res.data
+
+    # Fixed in #1593
+    assert b'No parsable JSON found in this document' not in res.data
+
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+    assert b'&#34;world&#34;:' in res.data
+    assert res.data.count(b'{') >= 2
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
