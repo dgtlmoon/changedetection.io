@@ -15,7 +15,7 @@ def test_headers_in_request(client, live_server):
     test_url = url_for('test_headers', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
         # Because its no longer calling back to localhost but from browserless, set in test-only.yml
-        test_url = test_url.replace('localhost', 'cdio')
+        test_url = test_url.replace('localhost', 'changedet')
 
     # Add the test URL twice, we will check
     res = client.post(
