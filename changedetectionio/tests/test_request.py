@@ -10,8 +10,12 @@ def test_setup(live_server):
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
 def test_headers_in_request(client, live_server):
+    #live_server_setup(live_server)
     # Add our URL to the import page
     test_url = url_for('test_headers', _external=True)
+    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
+        # Because its no longer calling back to localhost but from browserless, set in test-only.yml
+        test_url = test_url.replace('localhost', 'cdio')
 
     # Add the test URL twice, we will check
     res = client.post(
@@ -30,7 +34,7 @@ def test_headers_in_request(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(3)
+    wait_for_all_checks(client)
     cookie_header = '_ga=GA1.2.1022228332; cookie-preferences=analytics:accepted;'
 
 
@@ -40,7 +44,7 @@ def test_headers_in_request(client, live_server):
         data={
               "url": test_url,
               "tag": "",
-              "fetch_backend": "html_requests",
+              "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
               "headers": "xxx:ooo\ncool:yeah\r\ncookie:"+cookie_header},
         follow_redirects=True
     )
@@ -48,7 +52,7 @@ def test_headers_in_request(client, live_server):
 
 
     # Give the thread time to pick up the first version
-    time.sleep(5)
+    wait_for_all_checks(client)
 
     # The service should echo back the request headers
     res = client.get(
@@ -64,7 +68,7 @@ def test_headers_in_request(client, live_server):
     from html import escape
     assert escape(cookie_header).encode('utf-8') in res.data
 
-    time.sleep(5)
+    wait_for_all_checks(client)
 
     # Re #137 -  Examine the JSON index file, it should have only one set of headers entered
     watches_with_headers = 0
@@ -80,6 +84,9 @@ def test_headers_in_request(client, live_server):
 def test_body_in_request(client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_body', _external=True)
+    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
+        # Because its no longer calling back to localhost but from browserless, set in test-only.yml
+        test_url = test_url.replace('localhost', 'cdio')
 
     res = client.post(
         url_for("import_page"),
@@ -168,6 +175,9 @@ def test_body_in_request(client, live_server):
 def test_method_in_request(client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_method', _external=True)
+    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
+        # Because its no longer calling back to localhost but from browserless, set in test-only.yml
+        test_url = test_url.replace('localhost', 'cdio')
 
     # Add the test URL twice, we will check
     res = client.post(
@@ -242,7 +252,11 @@ def test_headers_textfile_in_request(client, live_server):
     #live_server_setup(live_server)
     # Add our URL to the import page
     test_url = url_for('test_headers', _external=True)
+    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
+        # Because its no longer calling back to localhost but from browserless, set in test-only.yml
+        test_url = test_url.replace('localhost', 'cdio')
 
+    print ("TEST URL IS ",test_url)
     # Add the test URL twice, we will check
     res = client.post(
         url_for("import_page"),
@@ -260,7 +274,7 @@ def test_headers_textfile_in_request(client, live_server):
         data={
               "url": test_url,
               "tag": "testtag",
-              "fetch_backend": "html_requests",
+              "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
               "headers": "xxx:ooo\ncool:yeah\r\n"},
         follow_redirects=True
     )
