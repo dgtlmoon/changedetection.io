@@ -147,6 +147,13 @@ class Fetcher():
     def is_ready(self):
         return True
 
+    def get_all_headers(self):
+        """
+        Get all headers but ensure all keys are lowercase
+        :return:
+        """
+        return {k.lower(): v for k, v in self.headers.items()}
+
     def iterate_browser_steps(self):
         from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
         from playwright._impl._api_types import TimeoutError

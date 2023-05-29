@@ -38,7 +38,7 @@ from flask_paginate import Pagination, get_page_parameter
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.42.1'
+__version__ = '0.42.2'
 
 datastore = None
 
@@ -123,6 +123,15 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
         return 'Not yet'
 
     return timeago.format(timestamp, time.time())
+
+
+@app.template_filter('pagination_slice')
+def _jinja2_filter_pagination_slice(arr, skip):
+    per_page = datastore.data['settings']['application'].get('pager_size', 50)
+    if per_page:
+        return arr[skip:skip + per_page]
+
+    return arr
 
 @app.template_filter('format_seconds_ago')
 def _jinja2_filter_seconds_precise(timestamp):
@@ -432,7 +441,11 @@ def changedetection_app(config=None, datastore_o=None):
         form = forms.quickWatchForm(request.form)
         page = request.args.get(get_page_parameter(), type=int, default=1)
         total_count = len(sorted_watches)
-        pagination = Pagination(page=page, total=total_count, per_page=int(os.getenv('pagination_per_page', 50)), css_framework = "semantic")
+
+        pagination = Pagination(page=page,
+                                total=total_count,
+                                per_page=datastore.data['settings']['application'].get('pager_size', 50), css_framework="semantic")
+
 
         output = render_template(
             "watch-overview.html",

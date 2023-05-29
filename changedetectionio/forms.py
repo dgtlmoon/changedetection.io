@@ -481,6 +481,10 @@ class globalSettingsApplicationForm(commonSettingsForm):
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     ignore_whitespace = BooleanField('Ignore whitespace')
     password = SaltyPasswordField()
+    pager_size = IntegerField('Pager size',
+                              render_kw={"style": "width: 5em;"},
+                              validators=[validators.NumberRange(min=0,
+                                                                 message="Should be atleast zero (disabled)")])
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
     shared_diff_access = BooleanField('Allow access to view diff page when password is enabled', default=False, validators=[validators.Optional()])

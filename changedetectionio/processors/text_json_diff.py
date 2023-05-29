@@ -139,7 +139,7 @@ class perform_site_check(difference_detection_processor):
         self.xpath_data = fetcher.xpath_data
 
         # Track the content type
-        update_obj['content_type'] = fetcher.headers.get('Content-Type', '')
+        update_obj['content_type'] = fetcher.get_all_headers().get('content-type', '').lower()
 
         # Watches added automatically in the queue manager will skip if its the same checksum as the previous run
         # Saves a lot of CPU
@@ -159,7 +159,7 @@ class perform_site_check(difference_detection_processor):
         # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
         # return content().textfilter().jsonextract().checksumcompare() ?
 
-        is_json = 'application/json' in fetcher.headers.get('Content-Type', '')
+        is_json = 'application/json' in fetcher.get_all_headers().get('content-type', '').lower()
         is_html = not is_json
 
         # source: support, basically treat it as plaintext
@@ -167,7 +167,7 @@ class perform_site_check(difference_detection_processor):
             is_html = False
             is_json = False
 
-        if watch.is_pdf or 'application/pdf' in fetcher.headers.get('Content-Type', '').lower():
+        if watch.is_pdf or 'application/pdf' in fetcher.get_all_headers().get('content-type', '').lower():
             from shutil import which
             tool = os.getenv("PDF_TO_HTML_TOOL", "pdftohtml")
             if not which(tool):
@@ -235,7 +235,7 @@ class perform_site_check(difference_detection_processor):
             html_content = fetcher.content
 
             # If not JSON,  and if it's not text/plain..
-            if 'text/plain' in fetcher.headers.get('Content-Type', '').lower():
+            if 'text/plain' in fetcher.get_all_headers().get('content-type', '').lower():
                 # Don't run get_text or xpath/css filters on plaintext
                 stripped_text_from_html = html_content
             else:

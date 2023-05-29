@@ -238,7 +238,7 @@ class update_worker(threading.Thread):
                         if not self.datastore.data['watching'].get(uuid):
                             continue
 
-                        err_text = "Warning, no filters were found, no change detection ran."
+                        err_text = "Warning, no filters were found, no change detection ran - Did the page change layout? update your Visual Filter if necessary."
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
 
                         # Only when enabled, send the notification

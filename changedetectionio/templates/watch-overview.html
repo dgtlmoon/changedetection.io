@@ -79,7 +79,7 @@
                 <td colspan="6">No website watches configured, please add a URL in the box above, or <a href="{{ url_for('import_page')}}" >import a list</a>.</td>
             </tr>
             {% endif %}
-            {% for watch in (watches|sort(attribute=sort_attribute, reverse=sort_order == 'asc'))[pagination.skip:pagination.skip+pagination.per_page] %}
+            {% for watch in (watches|sort(attribute=sort_attribute, reverse=sort_order == 'asc'))|pagination_slice(skip=pagination.skip) %}
             <tr id="{{ watch.uuid }}"
                 class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }} processor-{{ watch['processor'] }}
                 {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
