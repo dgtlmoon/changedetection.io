@@ -119,16 +119,26 @@ def live_server_setup(live_server):
         status_code = request.args.get('status_code')
         content = request.args.get('content') or None
 
+        # Used to just try to break the header detection
+        uppercase_headers = request.args.get('uppercase_headers')
+
         try:
             if content is not None:
                 resp = make_response(content, status_code)
-                resp.headers['Content-Type'] = ctype if ctype else 'text/html'
+                if uppercase_headers:
+                    ctype=ctype.upper()
+                    resp.headers['CONTENT-TYPE'] = ctype if ctype else 'text/html'
+                else:
+                    resp.headers['Content-Type'] = ctype if ctype else 'text/html'
                 return resp
 
             # Tried using a global var here but didn't seem to work, so reading from a file instead.
             with open("test-datastore/endpoint-content.txt", "r") as f:
                 resp = make_response(f.read(), status_code)
-                resp.headers['Content-Type'] = ctype if ctype else 'text/html'
+                if uppercase_headers:
+                    resp.headers['CONTENT-TYPE'] = ctype if ctype else 'text/html'
+                else:
+                    resp.headers['Content-Type'] = ctype if ctype else 'text/html'
                 return resp
         except FileNotFoundError:
             return make_response('', status_code)
