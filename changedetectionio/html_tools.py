@@ -137,12 +137,13 @@ def _get_stripped_text_from_json_match(match):
 def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None):
     stripped_text_from_html = False
 
-    # Try to parse/filter out the JSON, if we get some parser error, then maybe it's embedded <script type=ldjson>
+    # Try to parse/filter out the JSON, if we get some parser error, then maybe it's embedded within HTML tags
     try:
         stripped_text_from_html = _parse_json(json.loads(content), json_filter)
     except json.JSONDecodeError:
 
         # Foreach <script json></script> blob.. just return the first that matches json_filter
+        # As a last resort, try to parse the whole <body>
         s = []
         soup = BeautifulSoup(content, 'html.parser')
 
@@ -150,32 +151,34 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
             bs_result = soup.findAll('script', {"type": "application/ld+json"})
         else:
             bs_result = soup.findAll('script')
+        bs_result += soup.findAll('body')
 
-
-        if not bs_result:
-            raise JSONNotFound("No parsable JSON found in this document")
-
+        bs_jsons = []
         for result in bs_result:
             # Skip empty tags, and things that dont even look like JSON
-            if not result.string or not '{' in result.string:
+            if not result.text or '{' not in result.text:
                 continue
-                
             try:
-                json_data = json.loads(result.string)
+                json_data = json.loads(result.text)
+                bs_jsons.append(json_data)
             except json.JSONDecodeError:
-                # Just skip it
+                # Skip objects which cannot be parsed
                 continue
-            else:
-                stripped_text_from_html = _parse_json(json_data, json_filter)
-                if ensure_is_ldjson_info_type:
-                    # Could sometimes be list, string or something else random
-                    if isinstance(json_data, dict):
-                        # If it has LD JSON 'key' @type, and @type is 'product', and something was found for the search
-                        # (Some sites have multiple of the same ld+json @type='product', but some have the review part, some have the 'price' part)
-                        if json_data.get('@type', False) and json_data.get('@type','').lower() == ensure_is_ldjson_info_type.lower() and stripped_text_from_html:
-                            break
-                elif stripped_text_from_html:
-                    break
+
+        if not bs_jsons:
+            raise JSONNotFound("No parsable JSON found in this document")
+        
+        for json_data in bs_jsons:
+            stripped_text_from_html = _parse_json(json_data, json_filter)
+            if ensure_is_ldjson_info_type:
+                # Could sometimes be list, string or something else random
+                if isinstance(json_data, dict):
+                    # If it has LD JSON 'key' @type, and @type is 'product', and something was found for the search
+                    # (Some sites have multiple of the same ld+json @type='product', but some have the review part, some have the 'price' part)
+                    if json_data.get('@type', False) and json_data.get('@type','').lower() == ensure_is_ldjson_info_type.lower() and stripped_text_from_html:
+                        break
+            elif stripped_text_from_html:
+                break
 
     if not stripped_text_from_html:
         # Re 265 - Just return an empty string when filter not found
