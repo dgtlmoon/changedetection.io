@@ -414,22 +414,21 @@ def changedetection_app(config=None, datastore_o=None):
         sorted_watches = []
         search_q = request.args.get('q').strip().lower() if request.args.get('q') else False
         for uuid, watch in datastore.data['watching'].items():
-# @todo fix
-#            if limit_tag:
-#                # Support for comma separated list of tags.
-#                if not watch.get('tag'):
-#                    continue
+
+            if limit_tag:
+                if limit_tag in watch.get('tag', []):
+                    sorted_watches.append(watch)
+                continue
+
 #                for tag_in_watch in watch.get('tag', []):
-#                    tag_in_watch = tag_in_watch.strip()
 #                    if tag_in_watch == limit_tag:
 #                        watch['uuid'] = uuid
 #                        if search_q:
 #                            if (watch.get('title') and search_q in watch.get('title').lower()) or search_q in watch.get('url', '').lower():
 #                                sorted_watches.append(watch)
 #                        else:
-#                            sorted_watches.append(watch)
-            if 0:
-                x=1
+
+
             else:
                 #watch['uuid'] = uuid
                 if search_q:
