@@ -144,7 +144,9 @@
                     {% endif %}
 
                     {% if not active_tag %}
-                    <span class="watch-tag-list">{{ watch.tag}}</span>
+                        {% for t in watch.tag %}
+                          <span class="watch-tag-list">{{ tags[t].title }}</span>
+                        {% endfor %}
                     {% endif %}
                 </td>
                 <td class="last-checked">{{watch|format_last_checked_time|safe}}</td>
