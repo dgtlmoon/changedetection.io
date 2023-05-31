@@ -455,10 +455,10 @@ class model(dict):
 
         return csv_output_filename
 
-    @property
-    # Return list of tags, stripped and lowercase, used for searching
-    def all_tags(self):
-        return [s.strip().lower() for s in self.get('tag','').split(',')]
+#    @property
+#    # Return list of tags, stripped and lowercase, used for searching
+#    def all_tags(self):
+#        return [s.strip().lower() for s in self.get('tag','').split(',')]
 
     def has_special_diff_filter_options_set(self):
 
@@ -478,11 +478,11 @@ class model(dict):
         if os.path.isfile(os.path.join(self.watch_data_dir, 'headers.txt')):
             return True
 
-        for f in self.all_tags:
-            fname = "headers-"+re.sub(r'[\W_]', '', f).lower().strip() + ".txt"
-            filepath = os.path.join(self.__datastore_path, fname)
-            if os.path.isfile(filepath):
-                return True
+#        for f in self.all_tags:
+#            fname = "headers-"+re.sub(r'[\W_]', '', f).lower().strip() + ".txt"
+#            filepath = os.path.join(self.__datastore_path, fname)
+#            if os.path.isfile(filepath):
+#                return True
 
         return False
 
@@ -498,14 +498,14 @@ class model(dict):
             print(f"ERROR reading headers.txt at {filepath}", str(e))
 
         # Or each by tag, as tagname.txt in the main datadir
-        for f in self.all_tags:
-            fname = "headers-"+re.sub(r'[\W_]', '', f).lower().strip() + ".txt"
-            filepath = os.path.join(self.__datastore_path, fname)
-            try:
-                if os.path.isfile(filepath):
-                    headers.update(parse_headers_from_text_file(filepath))
-            except Exception as e:
-                print(f"ERROR reading headers.txt at {filepath}", str(e))
+#        for f in self.all_tags:
+#            fname = "headers-"+re.sub(r'[\W_]', '', f).lower().strip() + ".txt"
+#            filepath = os.path.join(self.__datastore_path, fname)
+#            try:
+#                if os.path.isfile(filepath):
+#                    headers.update(parse_headers_from_text_file(filepath))
+#            except Exception as e:
+#                print(f"ERROR reading headers.txt at {filepath}", str(e))
         return headers
 
     def get_last_fetched_before_filters(self):

@@ -414,21 +414,22 @@ def changedetection_app(config=None, datastore_o=None):
         sorted_watches = []
         search_q = request.args.get('q').strip().lower() if request.args.get('q') else False
         for uuid, watch in datastore.data['watching'].items():
-
-            if limit_tag:
-                # Support for comma separated list of tags.
-                if not watch.get('tag'):
-                    continue
-                for tag_in_watch in watch.get('tag', '').split(','):
-                    tag_in_watch = tag_in_watch.strip()
-                    if tag_in_watch == limit_tag:
-                        watch['uuid'] = uuid
-                        if search_q:
-                            if (watch.get('title') and search_q in watch.get('title').lower()) or search_q in watch.get('url', '').lower():
-                                sorted_watches.append(watch)
-                        else:
-                            sorted_watches.append(watch)
-
+# @todo fix
+#            if limit_tag:
+#                # Support for comma separated list of tags.
+#                if not watch.get('tag'):
+#                    continue
+#                for tag_in_watch in watch.get('tag', []):
+#                    tag_in_watch = tag_in_watch.strip()
+#                    if tag_in_watch == limit_tag:
+#                        watch['uuid'] = uuid
+#                        if search_q:
+#                            if (watch.get('title') and search_q in watch.get('title').lower()) or search_q in watch.get('url', '').lower():
+#                                sorted_watches.append(watch)
+#                        else:
+#                            sorted_watches.append(watch)
+            if 0:
+                x=1
             else:
                 #watch['uuid'] = uuid
                 if search_q:
@@ -664,7 +665,10 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Because wtforms doesn't support accessing other data in process_
             # Convert tag name to UUID on save
-            form.data['tag'] = datastore.add_tag(name=form.data.get('tag'))
+            tag_uuids = []
+            for t in form.data.get('tag', '').split(','):
+                tag_uuids.append(datastore.add_tag(name=t))
+            extra_update_obj['tag'] = tag_uuids
 
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)

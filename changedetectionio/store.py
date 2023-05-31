@@ -16,6 +16,8 @@ import threading
 import time
 import uuid as uuid_builder
 
+dictfilt = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
+
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change
@@ -527,11 +529,15 @@ class ChangeDetectionStore:
             new_uuid = new_tag['uuid']
 
             self.__data['settings']['application']['tags'].update({new_uuid: new_tag})
-            self.sync_to_json()
 
         return new_uuid
 
-
+    def get_all_tags_for_watch(self, watch_uuid):
+        """This should be in Watch model but Watch doesn't have access to datastore, not sure how to solve that yet"""
+        watch = self.data['watching'].get(watch_uuid)
+        if watch:
+            return dictfilt(self.__data['settings']['application']['tags'], watch.get('tags',[]))
+        return []
 
     # Run all updates
     # IMPORTANT - Each update could be run even when they have a new install and the schema is correct

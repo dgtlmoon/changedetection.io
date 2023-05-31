@@ -261,9 +261,9 @@ class CreateWatch(Resource):
 
         tag_limit = request.args.get('tag', None)
         for k, watch in self.datastore.data['watching'].items():
-            if tag_limit:
-                if not tag_limit.lower() in watch.all_tags:
-                    continue
+  #          if tag_limit:
+ #               if not tag_limit.lower() in watch.all_tags:
+#                    continue
 
             list[k] = {'url': watch['url'],
                        'title': watch['title'],

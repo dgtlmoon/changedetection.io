@@ -28,6 +28,8 @@ from changedetectionio.notification import (
 
 from wtforms.fields import FormField
 
+dictfilt = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
+
 valid_method = {
     'GET',
     'POST',
@@ -89,15 +91,21 @@ class SaltyPasswordField(StringField):
                 self.data = ""
         else:
             self.data = False
+
 class StringTagUUID(StringField):
     # Is what is shown when field <input> is rendered
     def _value(self):
         # Tag UUID to name
-        tag = self.datastore.data['settings']['application']['tags'].get(self.data)
-        if tag:
-            return tag.get('title')
-        else:
-            return u''
+
+        tag_uuids = []
+        for i in self.data:
+            tag = self.datastore.data['settings']['application']['tags'].get(i)
+            if tag:
+                tag_title = tag.get('title')
+                if tag_title:
+                    tag_uuids.append(tag_title)
+
+        return ', '.join(tag_uuids)
 
 class TimeBetweenCheckForm(Form):
     weeks = IntegerField('Weeks', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
