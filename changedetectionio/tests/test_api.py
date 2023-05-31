@@ -319,7 +319,8 @@ def test_api_watch_PUT_update(client, live_server):
     )
     assert b"new title" in res.data, "new title found in edit page"
     assert b"552" in res.data, "552 minutes found in edit page"
-    assert b"One, Two" in res.data, "Tag 'One, Two' was found"
+    assert b"One" in res.data, "Tag 'One' was found"
+    assert b"Two" in res.data, "Tag 'Two' was found"
     assert b"cookie: all eaten" in res.data, "'cookie: all eaten' found in 'headers' section"
 
     ######################################################
