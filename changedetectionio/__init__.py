@@ -437,7 +437,6 @@ def changedetection_app(config=None, datastore_o=None):
                 else:
                     sorted_watches.append(watch)
 
-        existing_tags = datastore.get_all_tags()
         form = forms.quickWatchForm(request.form)
         page = request.args.get(get_page_parameter(), type=int, default=1)
         total_count = len(sorted_watches)
@@ -463,7 +462,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
                                  sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
                                  system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),
-                                 tags=existing_tags,
+                                 tags=datastore.data['settings']['application'].get('tags'),
                                  watches=sorted_watches
                                  )
 
@@ -606,8 +605,12 @@ def changedetection_app(config=None, datastore_o=None):
 
         # proxy_override set to the json/text list of the items
         form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
-                               data=default,
+                               data=default
                                )
+
+        # For the form widget tag uuid lookup
+        form.tag.datastore = datastore # in _value
+
 
         form.fetch_backend.choices.append(("system", 'System settings default'))
 
@@ -659,6 +662,9 @@ def changedetection_app(config=None, datastore_o=None):
                 extra_update_obj['filter_text_replaced'] = True
                 extra_update_obj['filter_text_removed'] = True
 
+            # Because wtforms doesn't support accessing other data in process_
+            # Convert tag name to UUID on save
+            form.data['tag'] = datastore.add_tag(name=form.data.get('tag'))
 
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)
@@ -1419,6 +1425,8 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.price_data_follower as price_data_follower
     app.register_blueprint(price_data_follower.construct_blueprint(datastore, update_q), url_prefix='/price_data_follower')
 
+    import changedetectionio.blueprint.tags as tags
+    app.register_blueprint(tags.construct_blueprint(datastore), url_prefix='/tags')
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()

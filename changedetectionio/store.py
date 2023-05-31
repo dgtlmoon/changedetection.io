@@ -178,20 +178,6 @@ class ChangeDetectionStore:
 
         return self.__data
 
-    def get_all_tags(self):
-        tags = []
-        for uuid, watch in self.data['watching'].items():
-            if watch['tag'] is None:
-                continue
-            # Support for comma separated list of tags.
-            for tag in watch['tag'].split(','):
-                tag = tag.strip()
-                if tag not in tags:
-                    tags.append(tag)
-
-        tags.sort()
-        return tags
-
     # Delete a single watch by UUID
     def delete(self, uuid):
         import pathlib
@@ -522,6 +508,29 @@ class ChangeDetectionStore:
             print(f"ERROR reading headers.txt at {filepath}", str(e))
 
         return headers
+
+    def add_tag(self, name):
+        # If name exists, return that
+        n = name.strip().lower()
+        for uuid, tag in self.__data['settings']['application'].get('tags',{}).items():
+            if n == tag.get('title','').lower().strip():
+                return uuid
+
+        # Eventually almost everything todo with a watch will apply as a Tag
+        # So we use the same model as Watch
+        with self.lock:
+            new_tag = Watch.model(datastore_path=self.datastore_path, default={
+                'title': name.strip(),
+                'date_created': int(time.time())
+            })
+
+            new_uuid = new_tag['uuid']
+
+            self.__data['settings']['application']['tags'].update({new_uuid: new_tag})
+            self.sync_to_json()
+
+        return new_uuid
+
 
 
     # Run all updates

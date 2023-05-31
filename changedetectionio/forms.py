@@ -89,6 +89,15 @@ class SaltyPasswordField(StringField):
                 self.data = ""
         else:
             self.data = False
+class StringTagUUID(StringField):
+    # Is what is shown when field <input> is rendered
+    def _value(self):
+        # Tag UUID to name
+        tag = self.datastore.data['settings']['application']['tags'].get(self.data)
+        if tag:
+            return tag.get('title')
+        else:
+            return u''
 
 class TimeBetweenCheckForm(Form):
     weeks = IntegerField('Weeks', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
@@ -347,7 +356,7 @@ class quickWatchForm(Form):
     from . import processors
 
     url = fields.URLField('URL', validators=[validateURL()])
-    tag = StringField('Group tag', [validators.Optional()])
+    tag = StringTagUUID('Group tag', [validators.Optional()])
     watch_submit_button = SubmitField('Watch', render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
     edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
@@ -355,6 +364,7 @@ class quickWatchForm(Form):
 
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
+
     notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers()])
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
@@ -382,7 +392,7 @@ class SingleBrowserStep(Form):
 class watchForm(commonSettingsForm):
 
     url = fields.URLField('URL', validators=[validateURL()])
-    tag = StringField('Group tag', [validators.Optional()], default='')
+    tag = StringTagUUID('Group tag', [validators.Optional()], default='')
 
     time_between_check = FormField(TimeBetweenCheckForm)
 
