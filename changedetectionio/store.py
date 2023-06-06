@@ -304,14 +304,13 @@ class ChangeDetectionStore:
         with self.lock:
             # #Re 569
             # Could be in 'tags' var or extras, smash them together and strip
-            apply_extras['tag']= []
-            tags = list(filter(None,list(set().union(tag.split(','), extras.get('tag', '').split(',')))))
-            for t in list(map(str.strip,tags)):
+            apply_extras['tag'] = []
+            tags = list(filter(None, list(set().union(tag.split(','), extras.get('tag', '').split(',')))))
+            for t in list(map(str.strip, tags)):
                 # for each stripped tag, add tag as UUID
                 apply_extras['tag'].append(self.add_tag(t))
 
-
-            new_watch = Watch.model(datastore_path=self.datastore_path)
+            new_watch = Watch.model(datastore_path=self.datastore_path, url=url)
 
             new_uuid = new_watch.get('uuid')
 
