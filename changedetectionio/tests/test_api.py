@@ -297,6 +297,8 @@ def test_api_watch_PUT_update(client, live_server):
         url_for("edit_page", uuid=watch_uuid),
     )
     assert b"cookie: yum" in res.data, "'cookie: yum' found in 'headers' section"
+    assert b"One" in res.data, "Tag 'One' was found"
+    assert b"Two" in res.data, "Tag 'Two' was found"
 
     # HTTP PUT ( UPDATE an existing watch )
     res = client.put(
