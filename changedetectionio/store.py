@@ -242,10 +242,11 @@ class ChangeDetectionStore:
 
         self.needs_write_urgent = True
 
-    def add_watch(self, url, tag="", extras=None, write_to_disk_now=True):
+    def add_watch(self, url, tag='', extras=None, write_to_disk_now=True):
 
         if extras is None:
             extras = {}
+
         # should always be str
         if tag is None or not tag:
             tag = ''
@@ -302,13 +303,18 @@ class ChangeDetectionStore:
 
         with self.lock:
             # #Re 569
-            new_watch = Watch.model(datastore_path=self.datastore_path, default={
-                'url': url,
-                'tag': tag,
-                'date_created': int(time.time())
-            })
+            # Could be in 'tags' var or extras, smash them together and strip
+            apply_extras['tag']= []
+            tags = list(filter(None,list(set().union(tag.split(','), extras.get('tag', '').split(',')))))
+            for t in list(map(str.strip,tags)):
+                # for each stripped tag, add tag as UUID
+                apply_extras['tag'].append(self.add_tag(t))
 
-            new_uuid = new_watch['uuid']
+
+            new_watch = Watch.model(datastore_path=self.datastore_path)
+
+            new_uuid = new_watch.get('uuid')
+
             logging.debug("Added URL {} - {}".format(url, new_uuid))
 
             for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
@@ -316,9 +322,9 @@ class ChangeDetectionStore:
                     del apply_extras[k]
 
             new_watch.update(apply_extras)
+            new_watch.ensure_data_dir_exists()
             self.__data['watching'][new_uuid] = new_watch
 
-        self.__data['watching'][new_uuid].ensure_data_dir_exists()
 
         if write_to_disk_now:
             self.sync_to_json()
@@ -520,15 +526,15 @@ class ChangeDetectionStore:
 
         # Eventually almost everything todo with a watch will apply as a Tag
         # So we use the same model as Watch
-        with self.lock:
-            new_tag = Watch.model(datastore_path=self.datastore_path, default={
-                'title': name.strip(),
-                'date_created': int(time.time())
-            })
 
-            new_uuid = new_tag['uuid']
+        new_tag = Watch.model(datastore_path=self.datastore_path, default={
+            'title': name.strip(),
+            'date_created': int(time.time())
+        })
 
-            self.__data['settings']['application']['tags'].update({new_uuid: new_tag})
+        new_uuid = new_tag['uuid']
+
+        self.__data['settings']['application']['tags'].update({new_uuid: new_tag})
 
         return new_uuid
 
