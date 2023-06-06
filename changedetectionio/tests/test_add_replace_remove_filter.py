@@ -105,7 +105,7 @@ def test_check_removed_line_contains_trigger(client, live_server):
 
 
 def test_check_add_line_contains_trigger(client, live_server):
-
+    live_server_setup(live_server)
     sleep_time_for_fetch_thread = 3
 
     # Give the endpoint time to spin up

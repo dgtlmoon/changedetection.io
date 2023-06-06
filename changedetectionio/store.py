@@ -301,28 +301,28 @@ class ChangeDetectionStore:
             flash('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX', 'error')
             return None
 
-        with self.lock:
-            # #Re 569
-            # Could be in 'tags' var or extras, smash them together and strip
-            apply_extras['tag'] = []
-            tags = list(filter(None, list(set().union(tag.split(','), extras.get('tag', '').split(',')))))
-            for t in list(map(str.strip, tags)):
-                # for each stripped tag, add tag as UUID
-                apply_extras['tag'].append(self.add_tag(t))
 
-            new_watch = Watch.model(datastore_path=self.datastore_path, url=url)
+        # #Re 569
+        # Could be in 'tags' var or extras, smash them together and strip
+        apply_extras['tag'] = []
+        tags = list(filter(None, list(set().union(tag.split(','), extras.get('tag', '').split(',')))))
+        for t in list(map(str.strip, tags)):
+            # for each stripped tag, add tag as UUID
+            apply_extras['tag'].append(self.add_tag(t))
 
-            new_uuid = new_watch.get('uuid')
+        new_watch = Watch.model(datastore_path=self.datastore_path, url=url)
 
-            logging.debug("Added URL {} - {}".format(url, new_uuid))
+        new_uuid = new_watch.get('uuid')
 
-            for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
-                if k in apply_extras:
-                    del apply_extras[k]
+        logging.debug("Added URL {} - {}".format(url, new_uuid))
 
-            new_watch.update(apply_extras)
-            new_watch.ensure_data_dir_exists()
-            self.__data['watching'][new_uuid] = new_watch
+        for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
+            if k in apply_extras:
+                del apply_extras[k]
+
+        new_watch.update(apply_extras)
+        new_watch.ensure_data_dir_exists()
+        self.__data['watching'][new_uuid] = new_watch
 
 
         if write_to_disk_now:

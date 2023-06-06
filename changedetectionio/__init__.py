@@ -662,12 +662,12 @@ def changedetection_app(config=None, datastore_o=None):
                 extra_update_obj['filter_text_replaced'] = True
                 extra_update_obj['filter_text_removed'] = True
 
-            # Because wtforms doesn't support accessing other data in process_
-            # Convert tag name to UUID on save
+            # Because wtforms doesn't support accessing other data in process_ , but we convert the CSV list of tags back to a list of UUIDs
             tag_uuids = []
-            for t in form.data.get('tag', '').split(','):
-                tag_uuids.append(datastore.add_tag(name=t))
-            extra_update_obj['tag'] = tag_uuids
+            if form.data.get('tag'):
+                for t in form.data.get('tag', '').split(','):
+                    tag_uuids.append(datastore.add_tag(name=t))
+                extra_update_obj['tag'] = tag_uuids
 
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)
