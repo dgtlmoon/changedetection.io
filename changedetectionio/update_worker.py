@@ -177,7 +177,7 @@ class update_worker(threading.Thread):
                 uuid = queued_item_data.item.get('uuid')
                 self.current_uuid = uuid
 
-                if uuid in list(self.datastore.data['watching'].keys()):
+                if uuid in list(self.datastore.data['watching'].keys()) and self.datastore.data['watching'][uuid].get('url'):
                     changed_detected = False
                     contents = b''
                     process_changedetection_results = True
