@@ -205,9 +205,9 @@ class ChangeDetectionStore:
     # Clone a watch by UUID
     def clone(self, uuid):
         url = self.data['watching'][uuid]['url']
-        tag = self.data['watching'][uuid]['tag']
+        tag = self.data['watching'][uuid].get('tag',[])
         extras = self.data['watching'][uuid]
-        new_uuid = self.add_watch(url=url, tag=tag, extras=extras)
+        new_uuid = self.add_watch(url=url, tag_uuids=tag, extras=extras)
         return new_uuid
 
     def url_exists(self, url):
@@ -242,7 +242,7 @@ class ChangeDetectionStore:
 
         self.needs_write_urgent = True
 
-    def add_watch(self, url, tag='', extras=None, write_to_disk_now=True):
+    def add_watch(self, url, tag='', extras=None, tag_uuids=None, write_to_disk_now=True):
 
         if extras is None:
             extras = {}
@@ -305,10 +305,15 @@ class ChangeDetectionStore:
         # #Re 569
         # Could be in 'tags' var or extras, smash them together and strip
         apply_extras['tag'] = []
-        tags = list(filter(None, list(set().union(tag.split(','), extras.get('tag', '').split(',')))))
-        for t in list(map(str.strip, tags)):
-            # for each stripped tag, add tag as UUID
-            apply_extras['tag'].append(self.add_tag(t))
+        if tag:
+            tags = list(filter(None, list(set().union(tag.split(','), extras.get('tag', '').split(',')))))
+            for t in list(map(str.strip, tags)):
+                # for each stripped tag, add tag as UUID
+                apply_extras['tag'].append(self.add_tag(t))
+
+        # Or if UUIDs given directly
+        if tag_uuids:
+            apply_extras['tag'] = list(set(apply_extras['tag'] + tag_uuids))
 
         new_watch = Watch.model(datastore_path=self.datastore_path, url=url)
 
