@@ -305,7 +305,7 @@ class ChangeDetectionStore:
         # #Re 569
         # Could be in 'tags' var or extras, smash them together and strip
         apply_extras['tag'] = []
-        if tag:
+        if tag or extras.get('tag'):
             tags = list(filter(None, list(set().union(tag.split(','), extras.get('tag', '').split(',')))))
             for t in list(map(str.strip, tags)):
                 # for each stripped tag, add tag as UUID
