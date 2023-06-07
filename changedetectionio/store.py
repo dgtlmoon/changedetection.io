@@ -537,12 +537,13 @@ class ChangeDetectionStore:
 
         return new_uuid
 
-    def get_all_tags_for_watch(self, watch_uuid):
+    def get_all_tags_for_watch(self, uuid):
         """This should be in Watch model but Watch doesn't have access to datastore, not sure how to solve that yet"""
-        watch = self.data['watching'].get(watch_uuid)
+        watch = self.data['watching'].get(uuid)
+        # Should return a dict of full tag info linked by UUID
         if watch:
-            return dictfilt(self.__data['settings']['application']['tags'], watch.get('tags',[]))
-        return []
+            return dictfilt(self.__data['settings']['application']['tags'], watch.get('tag', []))
+        return {}
 
     # Run all updates
     # IMPORTANT - Each update could be run even when they have a new install and the schema is correct

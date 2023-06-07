@@ -57,6 +57,7 @@ def test_setup(client, live_server):
     live_server_setup(live_server)
 
 def test_api_simple(client, live_server):
+    #live_server_setup(live_server)
 
     api_key = extract_api_key_from_UI(client)
 
