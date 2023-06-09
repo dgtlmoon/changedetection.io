@@ -24,7 +24,7 @@
         <table class="pure-table pure-table-striped watch-table">
             <thead>
             <tr>
-                <th></th>
+                <th>Tag / Label name</th>
                 <th></th>
             </tr>
             </thead>
@@ -39,7 +39,7 @@
                 <td class="title-col inline">{{tag.title}}</td>
                 <td>
                     <a class="pure-button pure-button-primary" href="{{ url_for('tags.form_tag_edit', uuid=uuid) }}">Edit</a>&nbsp;
-                    <a class="pure-button pure-button-primary" href="{{ url_for('tags.form_tag_delete', uuid=uuid) }}">Delete</a>&nbsp;
+                    <!--<a class="pure-button pure-button-primary" href="{{ url_for('tags.form_tag_delete', uuid=uuid) }}">Delete Tag</a>&nbsp;-->
                 </td>
             </tr>
             {% endfor %}
