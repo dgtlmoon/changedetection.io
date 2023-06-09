@@ -42,11 +42,10 @@ class perform_site_check(difference_detection_processor):
 
         # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False}
-        extra_headers = watch.get('headers', [])
 
-        # Tweak the base config with the per-watch ones
-        request_headers = deepcopy(self.datastore.data['settings']['headers'])
-        request_headers.update(extra_headers)
+        request_headers = watch.get('headers', [])
+        request_headers.update(self.datastore.get_all_base_headers())
+        request_headers.update(self.datastore.get_all_headers_in_textfile_for_watch(uuid=uuid))
 
         # https://github.com/psf/requests/issues/4525
         # Requests doesnt yet support brotli encoding, so don't put 'br' here, be totally sure that the user cannot

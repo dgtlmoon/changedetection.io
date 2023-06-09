@@ -508,10 +508,13 @@ class ChangeDetectionStore:
         filepath = os.path.join(self.datastore_path, 'headers.txt')
         return os.path.isfile(filepath)
 
-    def get_all_headers(self):
+    def get_all_base_headers(self):
         from .model.App import parse_headers_from_text_file
-        headers = copy(self.data['settings'].get('headers', {}))
+        headers = {}
+        # Global app settings
+        headers.update(self.data['settings'].get('headers', {}))
 
+        # Global in /datastore
         filepath = os.path.join(self.datastore_path, 'headers.txt')
         try:
             if os.path.isfile(filepath):
@@ -520,6 +523,37 @@ class ChangeDetectionStore:
             print(f"ERROR reading headers.txt at {filepath}", str(e))
 
         return headers
+
+    def get_all_headers_in_textfile_for_watch(self, uuid):
+        from .model.App import parse_headers_from_text_file
+        headers = {}
+
+        watch = self.data['watching'].get(uuid)
+        if watch:
+
+            # In /datastore/xyz-xyz/headers.txt
+            filepath = os.path.join(watch.watch_data_dir, 'headers.txt')
+            try:
+                if os.path.isfile(filepath):
+                    headers.update(parse_headers_from_text_file(filepath))
+            except Exception as e:
+                print(f"ERROR reading headers.txt at {filepath}", str(e))
+
+            # In /datastore/tag-name.txt
+            tags = self.get_all_tags_for_watch(uuid=uuid)
+            for tag_uuid, tag in tags.items():
+                fname = "headers-"+re.sub(r'[\W_]', '', tag.get('title')).lower().strip() + ".txt"
+                filepath = os.path.join(self.datastore_path, fname)
+                try:
+                    if os.path.isfile(filepath):
+                        headers.update(parse_headers_from_text_file(filepath))
+                except Exception as e:
+                    print(f"ERROR reading headers.txt at {filepath}", str(e))
+
+        return headers
+
+
+
 
     def add_tag(self, name):
         # If name exists, return that

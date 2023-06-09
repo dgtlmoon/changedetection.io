@@ -722,7 +722,7 @@ def changedetection_app(config=None, datastore_o=None):
                                      form=form,
                                      has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
                                      has_empty_checktime=using_default_check_time,
-                                     has_extra_headers_file=watch.has_extra_headers_file or datastore.has_extra_headers_file,
+                                     has_extra_headers_file=len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
                                      is_html_webdriver=is_html_webdriver,
                                      jq_support=jq_support,
                                      playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False),
