@@ -143,9 +143,9 @@
                     </span>
                     {% endif %}
 
-                    {% if not active_tag %}
-                        {% for t in watch.tag %}
-                          <span class="watch-tag-list">{{ tags[t].title }}</span>
+                    {% if not active_tag and tags %}
+                        {% for uuid, tag in tags.items() %}
+                          <span class="watch-tag-list">{{ tag.title }}</span>
                         {% endfor %}
                     {% endif %}
                 </td>
