@@ -24,7 +24,7 @@ def test_check_notification(client, live_server):
     set_original_response()
 
     # Give the endpoint time to spin up
-    time.sleep(3)
+    time.sleep(1)
 
     # Re 360 - new install should have defaults set
     res = client.get(url_for("settings_page"))
@@ -105,7 +105,7 @@ def test_check_notification(client, live_server):
 
     notification_form_data.update({
         "url": test_url,
-        "tag": "my tag",
+        "tag": "my tag, my second tag",
         "title": "my title",
         "headers": "",
         "fetch_backend": "html_requests"})
@@ -150,7 +150,7 @@ def test_check_notification(client, live_server):
     assert "b'" not in notification_submission
     assert re.search('Watch UUID: [0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}', notification_submission, re.IGNORECASE)
     assert "Watch title: my title" in notification_submission
-    assert "Watch tag: my tag" in notification_submission
+    assert "Watch tag: my tag, my second tag" in notification_submission
     assert "diff/" in notification_submission
     assert "preview/" in notification_submission
     assert ":-)" in notification_submission
