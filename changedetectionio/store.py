@@ -552,8 +552,16 @@ class ChangeDetectionStore:
 
         return headers
 
+    def get_tag_overrides_for_watch(self, uuid, attr):
+        tags = self.get_all_tags_for_watch(uuid=uuid)
+        ret = []
 
+        if tags:
+            for tag_uuid, tag in tags.items():
+                if attr in tag and tag[attr]:
+                    ret=[*ret, *tag[attr]]
 
+        return ret
 
     def add_tag(self, name):
         # If name exists, return that
