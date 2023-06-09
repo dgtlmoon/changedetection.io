@@ -100,7 +100,7 @@ class update_worker(threading.Thread):
     def send_filter_failure_notification(self, watch_uuid):
 
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
-        watch = self.datastore.data['watching'].get(watch_uuid, False)
+        watch = self.datastore.data['watching'].get(watch_uuid)
         if not watch:
             return
 

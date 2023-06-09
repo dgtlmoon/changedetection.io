@@ -190,7 +190,7 @@ def create_notification_parameters(n_object, datastore):
         tag_list = []
         tags = datastore.get_all_tags_for_watch(uuid)
         if tags:
-            for uuid, tag in tags.items():
+            for tag_uuid, tag in tags.items():
                 tag_list.append(tag.get('title'))
         watch_tag = ', '.join(tag_list)
     else:
