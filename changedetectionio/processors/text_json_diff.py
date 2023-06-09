@@ -191,6 +191,8 @@ class perform_site_check(difference_detection_processor):
             fetcher.content = fetcher.content.replace('</body>', metadata + '</body>')
 
         # Better would be if Watch.model could access the global data also
+        # and then use getattr https://docs.python.org/3/reference/datamodel.html#object.__getitem__
+        # https://realpython.com/inherit-python-dict/ instead of doing it procedurely
         include_filters_from_tags = self.datastore.get_tag_overrides_for_watch(uuid=uuid, attr='include_filters')
         include_filters_rule = [*watch.get('include_filters', []), *include_filters_from_tags]
 
