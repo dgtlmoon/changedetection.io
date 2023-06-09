@@ -514,19 +514,19 @@ class ChangeDetectionStore:
         # Global app settings
         headers.update(self.data['settings'].get('headers', {}))
 
-        # Global in /datastore
+        return headers
+
+    def get_all_headers_in_textfile_for_watch(self, uuid):
+        from .model.App import parse_headers_from_text_file
+        headers = {}
+
+        # Global in /datastore/headers.txt
         filepath = os.path.join(self.datastore_path, 'headers.txt')
         try:
             if os.path.isfile(filepath):
                 headers.update(parse_headers_from_text_file(filepath))
         except Exception as e:
             print(f"ERROR reading headers.txt at {filepath}", str(e))
-
-        return headers
-
-    def get_all_headers_in_textfile_for_watch(self, uuid):
-        from .model.App import parse_headers_from_text_file
-        headers = {}
 
         watch = self.data['watching'].get(uuid)
         if watch:
