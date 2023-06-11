@@ -123,6 +123,17 @@ Then visit http://127.0.0.1:5000 , You should now be able to access the UI.
 
 _Now with per-site configurable support for using a fast built in HTTP fetcher or use a Chrome based fetcher for monitoring of JavaScript websites!_
 
+### Deploy on Easypanel
+
+[Easypanel](https://easypanel.io) it's a modern server control panel. You can use it to deploy Change Detection on your own server.
+[![Deploy to Easypanel](https://easypanel.io/img/deploy-on-easypanel-40.svg)](https://easypanel.io/docs/templates/changedetection)
+
+**Instructions**
+- Create a VM that runs Ubuntu on your cloud provider.
+- Install Easypanel using the instructions from the website.
+- Create a new project.
+- Install Change Detection using the dedicated template.
+
 ## Updating changedetection.io
 
 ### Docker
