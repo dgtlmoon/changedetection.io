@@ -126,6 +126,7 @@ _Now with per-site configurable support for using a fast built in HTTP fetcher o
 ### Deploy on Easypanel
 
 [Easypanel](https://easypanel.io) it's a modern server control panel. You can use it to deploy Change Detection on your own server.
+
 [![Deploy to Easypanel](https://easypanel.io/img/deploy-on-easypanel-40.svg)](https://easypanel.io/docs/templates/changedetection)
 
 **Instructions**
