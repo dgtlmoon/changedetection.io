@@ -31,10 +31,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         title = request.form.get('name').strip()
 
- # @todo
-#        if datastore.tag_exists_by_name(title):
-#            flash(f'The URL {title} already exists', "error")
-#            return redirect(url_for('tags.tags_overview_page'))
+        if datastore.tag_exists_by_name(title):
+            flash(f'The tag "{title}" already exists', "error")
+            return redirect(url_for('tags.tags_overview_page'))
+
         datastore.add_tag(title)
         flash("Tag added")
 

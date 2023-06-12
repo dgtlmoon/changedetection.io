@@ -4,6 +4,8 @@ import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
+def test_setup(client, live_server):
+    live_server_setup(live_server)
 
 def set_original_response():
     test_return_data = """<html>
@@ -22,7 +24,7 @@ def set_original_response():
 
 
 def test_setup_group_tag(client, live_server):
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
     set_original_response()
 
     # Add a tag with some config, import a tag and it should roughly work
@@ -82,3 +84,21 @@ def test_setup_group_tag(client, live_server):
     )
     assert b'Should be only this' in res.data
     assert b'And never this' not in res.data
+
+def test_tag_import_singular(client, live_server):
+    #live_server_setup(live_server)
+
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url + " test-tag, test-tag\r\n"+ test_url + "?x=1 test-tag, test-tag\r\n"},
+        follow_redirects=True
+    )
+    assert b"2 Imported" in res.data
+
+    res = client.get(
+        url_for("tags.tags_overview_page"),
+        follow_redirects=True
+    )
+    assert res.data.count(b'test-tag') == 1
+
