@@ -2,10 +2,10 @@
 
 Live your data-life pro-actively, track website content changes and receive notifications via Discord, Email, Slack, Telegram and 70+ more
 
-[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />](https://lemonade.changedetection.io/start?src=pip)
+[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring"  title="Self-hosted web page change monitoring"  />](https://changedetection.io)
 
 
-[**Don't have time? Let us host it for you! try our extremely affordable subscription use our proxies and support!**](https://lemonade.changedetection.io/start) 
+[**Don't have time? Let us host it for you! try our extremely affordable subscription use our proxies and support!**](https://changedetection.io) 
 
 
 #### Example use cases
