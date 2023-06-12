@@ -204,15 +204,16 @@ class ChangeDetectionStore:
                 # GitHub #30 also delete history records
                 for uuid in self.data['watching']:
                     path = pathlib.Path(os.path.join(self.datastore_path, uuid))
-                    shutil.rmtree(path)
-                    self.needs_write_urgent = True
+                    if os.path.exists(path):
+                        shutil.rmtree(path)
 
             else:
                 path = pathlib.Path(os.path.join(self.datastore_path, uuid))
-                shutil.rmtree(path)
+                if os.path.exists(path):
+                    shutil.rmtree(path)
                 del self.data['watching'][uuid]
 
-            self.needs_write_urgent = True
+        self.needs_write_urgent = True
 
     # Clone a watch by UUID
     def clone(self, uuid):
