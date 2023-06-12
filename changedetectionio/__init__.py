@@ -451,6 +451,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  # Don't link to hosting when we're on the hosting environment
                                  active_tag=limit_tag,
                                  app_rss_token=datastore.data['settings']['application']['rss_access_token'],
+                                 datastore=datastore,
                                  form=form,
                                  guid=datastore.data['app_guid'],
                                  has_proxies=datastore.proxy_list,

@@ -588,9 +588,11 @@ class ChangeDetectionStore:
     def get_all_tags_for_watch(self, uuid):
         """This should be in Watch model but Watch doesn't have access to datastore, not sure how to solve that yet"""
         watch = self.data['watching'].get(uuid)
+
         # Should return a dict of full tag info linked by UUID
         if watch:
             return dictfilt(self.__data['settings']['application']['tags'], watch.get('tag', []))
+
         return {}
 
     def tag_exists_by_name(self, tag_name):
