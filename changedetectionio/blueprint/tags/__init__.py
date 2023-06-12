@@ -24,26 +24,31 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from .form import SingleTag
         add_form = SingleTag(request.form)
 
-
         if not add_form.validate():
             for widget, l in add_form.errors.items():
                 flash(','.join(l), 'error')
             return redirect(url_for('tags.tags_overview_page'))
 
-#        title = request.form.get('name').strip()
-        #@todo validation
-        #if datastore.tag_exists_by_name(title):
+        title = request.form.get('name').strip()
+
+ # @todo
+#        if datastore.tag_exists_by_name(title):
 #            flash(f'The URL {title} already exists', "error")
 #            return redirect(url_for('tags.tags_overview_page'))
-
+        datastore.add_tag(title)
         flash("Tag added")
-        datastore.needs_write_urgent = True
+
+
         return redirect(url_for('tags.tags_overview_page'))
 
     @tags_blueprint.route("/edit/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def form_tag_edit(uuid):
         from changedetectionio import forms
+
+        if uuid == 'first':
+            uuid = list(datastore.data['settings']['application']['tags'].keys()).pop()
+
         default = datastore.data['settings']['application']['tags'].get(uuid)
 
         form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
@@ -63,6 +68,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def form_tag_edit_submit(uuid):
         from changedetectionio import forms
+        if uuid == 'first':
+            uuid = list(datastore.data['settings']['application']['tags'].keys()).pop()
 
         default = datastore.data['settings']['application']['tags'].get(uuid)
 
@@ -77,6 +84,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         datastore.data['settings']['application']['tags'][uuid].update(form.data)
         datastore.needs_write_urgent = True
+        flash("Updated")
 
         return redirect(url_for('tags.tags_overview_page'))
 
