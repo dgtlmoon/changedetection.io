@@ -197,16 +197,16 @@ class perform_site_check(difference_detection_processor):
         include_filters_rule = [*watch.get('include_filters', []), *include_filters_from_tags]
 
         subtractive_selectors = [*self.datastore.get_tag_overrides_for_watch(uuid=uuid, attr='subtractive_selectors'),
-                                 watch.get("subtractive_selectors", []),
-                                 self.datastore.data["settings"]["application"].get("global_subtractive_selectors", [])
+                                 *watch.get("subtractive_selectors", []),
+                                 *self.datastore.data["settings"]["application"].get("global_subtractive_selectors", [])
                                  ]
 
         # Inject a virtual LD+JSON price tracker rule
         if watch.get('track_ldjson_price_data', '') == PRICE_DATA_TRACK_ACCEPT:
             include_filters_rule.append(html_tools.LD_JSON_PRODUCT_OFFER_SELECTOR)
 
-        has_filter_rule = include_filters_rule and len("".join(include_filters_rule).strip())
-        has_subtractive_selectors = subtractive_selectors and len(subtractive_selectors[0].strip())
+        has_filter_rule = len(include_filters_rule) and len(include_filters_rule[0].strip())
+        has_subtractive_selectors = len(subtractive_selectors) and len(subtractive_selectors[0].strip())
 
         if is_json and not has_filter_rule:
             include_filters_rule.append("json:$")
