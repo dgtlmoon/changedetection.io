@@ -33,8 +33,6 @@ class perform_site_check(difference_detection_processor):
 
         if not watch:
             raise Exception("Watch no longer exists.")
-        # This should automatically override watch object, but I don't find the best way just yet.
-        watch.update(self.datastore.get_tag_overrides_for_watch(uuid=uuid))
 
         # Protect against file:// access
         if re.search(r'^file', watch.get('url', ''), re.IGNORECASE) and not os.getenv('ALLOW_FILE_URI', False):
