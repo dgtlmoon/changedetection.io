@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, extract_api_key_from_UI
+from .util import live_server_setup, extract_api_key_from_UI, wait_for_all_checks
 
 import json
 import uuid
@@ -87,7 +87,7 @@ def test_api_simple(client, live_server):
     watch_uuid = res.json.get('uuid')
     assert res.status_code == 201
 
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Verify its in the list and that recheck worked
     res = client.get(
@@ -108,7 +108,7 @@ def test_api_simple(client, live_server):
     )
     assert len(res.json) == 0
 
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     set_modified_response()
     # Trigger recheck of all ?recheck_all=1
@@ -116,7 +116,7 @@ def test_api_simple(client, live_server):
         url_for("createwatch", recheck_all='1'),
         headers={'x-api-key': api_key},
     )
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Did the recheck fire?
     res = client.get(

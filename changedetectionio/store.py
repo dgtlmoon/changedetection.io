@@ -305,7 +305,7 @@ class ChangeDetectionStore:
 
 
         # #Re 569
-        # Could be in 'tags' var or extras, smash them together and strip
+        # Could be in 'tags',  var or extras, smash them together and strip
         apply_extras['tags'] = []
         if tag or extras.get('tags'):
             tags = list(filter(None, list(set().union(tag.split(','), extras.get('tags', '').split(',')))))
