@@ -21,6 +21,7 @@ def test_setup(live_server):
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
 def test_check_notification(client, live_server):
+    #live_server_setup(live_server)
     set_original_response()
 
     # Give the endpoint time to spin up
@@ -105,7 +106,7 @@ def test_check_notification(client, live_server):
 
     notification_form_data.update({
         "url": test_url,
-        "tag": "my tag, my second tag",
+        "tags": "my tag, my second tag",
         "title": "my title",
         "headers": "",
         "fetch_backend": "html_requests"})

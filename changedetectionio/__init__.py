@@ -661,10 +661,14 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Because wtforms doesn't support accessing other data in process_ , but we convert the CSV list of tags back to a list of UUIDs
             tag_uuids = []
-            if form.data.get('tag'):
-                for t in form.data.get('tag', '').split(','):
-                    tag_uuids.append(datastore.add_tag(name=t))
-                extra_update_obj['tags'] = tag_uuids
+            if form.data.get('tags'):
+                # Sometimes in testing this can be list, dont know why
+                if type(form.data.get('tags')) == list:
+                    extra_update_obj['tags'] = form.data.get('tags')
+                else:
+                    for t in form.data.get('tags').split(','):
+                        tag_uuids.append(datastore.add_tag(name=t))
+                    extra_update_obj['tags'] = tag_uuids
 
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)

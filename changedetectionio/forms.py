@@ -93,19 +93,23 @@ class SaltyPasswordField(StringField):
             self.data = False
 
 class StringTagUUID(StringField):
+
+   # process_formdata(self, valuelist) handled manually in POST handler
+
     # Is what is shown when field <input> is rendered
     def _value(self):
         # Tag UUID to name
+        if self.data and type(self.data) is list:
+            tag_titles=[]
+            for i in self.data:
+                tag = self.datastore.data['settings']['application']['tags'].get(i)
+                if tag:
+                    tag_title = tag.get('title')
+                    if tag_title:
+                        tag_titles.append(tag_title)
 
-        tag_uuids = []
-        for i in self.data:
-            tag = self.datastore.data['settings']['application']['tags'].get(i)
-            if tag:
-                tag_title = tag.get('title')
-                if tag_title:
-                    tag_uuids.append(tag_title)
-
-        return ', '.join(tag_uuids)
+            return ', '.join(tag_titles)
+        return 'error'
 
 class TimeBetweenCheckForm(Form):
     weeks = IntegerField('Weeks', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
