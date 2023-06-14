@@ -26,7 +26,7 @@ def test_check_watch_field_storage(client, live_server):
                "title" : "My title",
                "ignore_text" : "ignore this",
                "url": test_url,
-               "tag": "woohoo",
+               "tags": "woohoo",
                "headers": "curl:foo",
                'fetch_backend': "html_requests"
                },

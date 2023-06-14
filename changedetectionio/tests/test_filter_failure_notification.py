@@ -37,7 +37,7 @@ def run_filter_test(client, content_filter):
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("form_quick_watch_add"),
-        data={"url": test_url, "tag": ''},
+        data={"url": test_url, "tags": ''},
         follow_redirects=True
     )
 
@@ -71,7 +71,7 @@ def run_filter_test(client, content_filter):
 
     notification_form_data.update({
         "url": test_url,
-        "tag": "my tag",
+        "tags": "my tag",
         "title": "my title 123",
         "headers": "",
         "filter_failure_notification_send": 'y',

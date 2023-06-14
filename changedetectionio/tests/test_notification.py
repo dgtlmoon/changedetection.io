@@ -63,7 +63,7 @@ def test_check_notification(client, live_server):
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("form_quick_watch_add"),
-        data={"url": test_url, "tag": ''},
+        data={"url": test_url, "tags": ''},
         follow_redirects=True
     )
     assert b"Watch added" in res.data
@@ -210,7 +210,7 @@ def test_check_notification(client, live_server):
         url_for("edit_page", uuid="first"),
         data={
         "url": test_url,
-        "tag": "my tag",
+        "tags": "my tag",
         "title": "my title",
         "notification_urls": '',
         "notification_title": '',
@@ -244,7 +244,7 @@ def test_notification_validation(client, live_server):
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("form_quick_watch_add"),
-        data={"url": test_url, "tag": 'nice one'},
+        data={"url": test_url, "tags": 'nice one'},
         follow_redirects=True
     )
 
@@ -304,7 +304,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server):
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("form_quick_watch_add"),
-        data={"url": test_url, "tag": 'nice one'},
+        data={"url": test_url, "tags": 'nice one'},
         follow_redirects=True
     )
 

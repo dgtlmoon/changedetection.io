@@ -246,7 +246,7 @@ def check_json_filter(json_filter, client, live_server):
         url_for("edit_page", uuid="first"),
         data={"include_filters": json_filter,
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "headers": "",
               "fetch_backend": "html_requests"
               },
@@ -313,7 +313,7 @@ def check_json_filter_bool_val(json_filter, client, live_server):
         url_for("edit_page", uuid="first"),
         data={"include_filters": json_filter,
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "headers": "",
               "fetch_backend": "html_requests"
               },
@@ -374,7 +374,7 @@ def check_json_ext_filter(json_filter, client, live_server):
         url_for("edit_page", uuid="first"),
         data={"include_filters": json_filter,
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "headers": "",
               "fetch_backend": "html_requests"
               },

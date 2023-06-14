@@ -77,7 +77,7 @@ def test_restock_detection(client, live_server):
 
     client.post(
         url_for("form_quick_watch_add"),
-        data={"url": test_url, "tag": '', 'processor': 'restock_diff'},
+        data={"url": test_url, "tags": '', 'processor': 'restock_diff'},
         follow_redirects=True
     )
 

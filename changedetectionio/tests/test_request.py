@@ -102,7 +102,7 @@ def test_body_in_request(client, live_server):
         url_for("edit_page", uuid="first"),
         data={
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "method": "POST",
               "fetch_backend": "html_requests",
               "body": "something something"},
@@ -118,7 +118,7 @@ def test_body_in_request(client, live_server):
         url_for("edit_page", uuid="first"),
         data={
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "method": "POST",
               "fetch_backend": "html_requests",
               "body": body_value},
@@ -163,7 +163,7 @@ def test_body_in_request(client, live_server):
         url_for("edit_page", uuid="first"),
         data={
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "method": "GET",
               "fetch_backend": "html_requests",
               "body": "invalid"},
@@ -202,7 +202,7 @@ def test_method_in_request(client, live_server):
         url_for("edit_page", uuid="first"),
         data={
             "url": test_url,
-            "tag": "",
+            "tags": "",
             "fetch_backend": "html_requests",
             "method": "invalid"},
         follow_redirects=True
@@ -214,7 +214,7 @@ def test_method_in_request(client, live_server):
         url_for("edit_page", uuid="first"),
         data={
             "url": test_url,
-            "tag": "",
+            "tags": "",
             "fetch_backend": "html_requests",
             "method": "PATCH"},
         follow_redirects=True

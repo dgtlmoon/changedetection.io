@@ -78,7 +78,7 @@ def test_check_ignore_elements(client, live_server):
 
     client.post(
         url_for("edit_page", uuid="first"),
-        data={"include_filters": 'span,p', "url": test_url, "tag": "", "subtractive_selectors": ".foobar-detection", 'fetch_backend': "html_requests"},
+        data={"include_filters": 'span,p', "url": test_url, "tags": "", "subtractive_selectors": ".foobar-detection", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
 

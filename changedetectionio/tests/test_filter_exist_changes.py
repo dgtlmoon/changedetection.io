@@ -56,7 +56,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("form_quick_watch_add"),
-        data={"url": test_url, "tag": 'cinema'},
+        data={"url": test_url, "tags": 'cinema'},
         follow_redirects=True
     )
     assert b"Watch added" in res.data
@@ -89,7 +89,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
 
     notification_form_data.update({
         "url": test_url,
-        "tag": "my tag",
+        "tags": "my tag",
         "title": "my title",
         "headers": "",
         "include_filters": '.ticket-available',

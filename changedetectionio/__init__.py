@@ -1122,7 +1122,7 @@ def changedetection_app(config=None, datastore_o=None):
             ) as f:
                 for uuid in datastore.data["watching"]:
                     url = datastore.data["watching"][uuid]["url"]
-                    tag = datastore.data["watching"][uuid]["tag"]
+                    tag = datastore.data["watching"][uuid]["tags"]
                     f.write("{} {}\r\n".format(url, tag))
 
             # Add it to the Zip
@@ -1210,7 +1210,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         add_paused = request.form.get('edit_and_watch_submit_button') != None
         processor = request.form.get('processor', 'text_json_diff')
-        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tag').strip(), extras={'paused': add_paused, 'processor': processor})
+        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tags').strip(), extras={'paused': add_paused, 'processor': processor})
 
         if new_uuid:
             if add_paused:
