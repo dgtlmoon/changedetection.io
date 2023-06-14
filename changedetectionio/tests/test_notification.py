@@ -3,7 +3,7 @@ import os
 import time
 import re
 from flask import url_for
-from . util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup
+from .util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, wait_for_all_checks
 from . util import  extract_UUID_from_client
 import logging
 import base64
@@ -69,7 +69,7 @@ def test_check_notification(client, live_server):
     assert b"Watch added" in res.data
 
     # Give the thread time to pick up the first version
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # We write the PNG to disk, but a JPEG should appear in the notification
     # Write the last screenshot png
@@ -129,7 +129,7 @@ def test_check_notification(client, live_server):
 
 
     ## Now recheck, and it should have sent the notification
-    time.sleep(3)
+    wait_for_all_checks(client)
     set_modified_response()
 
     # Trigger a check
@@ -194,11 +194,11 @@ def test_check_notification(client, live_server):
 
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(1)
+    wait_for_all_checks(client)
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(1)
+    wait_for_all_checks(client)
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(1)
+    wait_for_all_checks(client)
     assert os.path.exists("test-datastore/notification.txt") == False
 
     res = client.get(url_for("notification_logs"))
@@ -310,7 +310,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server):
 
     assert b"Watch added" in res.data
 
-    time.sleep(2)
+    wait_for_all_checks(client)
     set_modified_response()
 
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
