@@ -102,3 +102,14 @@ def test_tag_import_singular(client, live_server):
     )
     assert res.data.count(b'test-tag') == 1
 
+def test_tag_add_in_ui(client, live_server):
+    #live_server_setup(live_server)
+#
+    res = client.post(
+        url_for("tags.form_tag_add"),
+        data={"name": "new-test-tag"},
+        follow_redirects=True
+    )
+    assert b"Tag added" in res.data
+    assert b"new-test-tag" in res.data
+    

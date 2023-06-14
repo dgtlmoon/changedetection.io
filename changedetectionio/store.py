@@ -596,7 +596,7 @@ class ChangeDetectionStore:
         return {}
 
     def tag_exists_by_name(self, tag_name):
-        return any(v.lower() == tag_name.lower() for k, v in self.__data['settings']['application']['tags'].items())
+        return any(v.get('title', '').lower() == tag_name.lower() for k, v in self.__data['settings']['application']['tags'].items())
 
     # Run all updates
     # IMPORTANT - Each update could be run even when they have a new install and the schema is correct
