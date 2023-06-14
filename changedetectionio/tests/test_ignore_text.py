@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from . util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 from changedetectionio import html_tools
 
 def test_setup(live_server):
@@ -84,7 +84,6 @@ def set_modified_ignore_response():
 
 
 def test_check_ignore_text_functionality(client, live_server):
-    sleep_time_for_fetch_thread = 3
 
     # Use a mix of case in ZzZ to prove it works case-insensitive.
     ignore_text = "XXXXX\r\nYYYYY\r\nzZzZZ\r\nnew ignore stuff"
@@ -103,7 +102,7 @@ def test_check_ignore_text_functionality(client, live_server):
     assert b"1 Imported" in res.data
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -124,7 +123,7 @@ def test_check_ignore_text_functionality(client, live_server):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
@@ -137,7 +136,7 @@ def test_check_ignore_text_functionality(client, live_server):
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
@@ -151,7 +150,7 @@ def test_check_ignore_text_functionality(client, live_server):
     # Just to be sure.. set a regular modified change..
     set_modified_original_ignore_response()
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
@@ -167,7 +166,6 @@ def test_check_ignore_text_functionality(client, live_server):
     assert b'Deleted' in res.data
 
 def test_check_global_ignore_text_functionality(client, live_server):
-    sleep_time_for_fetch_thread = 3
 
     # Give the endpoint time to spin up
     time.sleep(1)
@@ -198,7 +196,7 @@ def test_check_global_ignore_text_functionality(client, live_server):
     assert b"1 Imported" in res.data
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
 
     # Goto the edit page of the item, add our ignore text
@@ -220,7 +218,7 @@ def test_check_global_ignore_text_functionality(client, live_server):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # so that we are sure everything is viewed and in a known 'nothing changed' state
     res = client.get(url_for("diff_history_page", uuid="first"))
@@ -237,7 +235,7 @@ def test_check_global_ignore_text_functionality(client, live_server):
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
@@ -247,7 +245,7 @@ def test_check_global_ignore_text_functionality(client, live_server):
     # Just to be sure.. set a regular modified change that will trigger it
     set_modified_original_ignore_response()
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
