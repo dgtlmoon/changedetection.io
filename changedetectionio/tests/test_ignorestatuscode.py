@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from . util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 
 def test_setup(live_server):
@@ -40,7 +40,7 @@ def set_some_changed_response():
 
 
 def test_normal_page_check_works_with_ignore_status_code(client, live_server):
-    sleep_time_for_fetch_thread = 3
+
 
     # Give the endpoint time to spin up
     time.sleep(1)
@@ -68,15 +68,15 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     set_some_changed_response()
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
@@ -115,7 +115,7 @@ def test_403_page_check_works_with_ignore_status_code(client, live_server):
     assert b"Updated watch." in res.data
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     #  Make a change
     set_some_changed_response()
@@ -123,7 +123,7 @@ def test_403_page_check_works_with_ignore_status_code(client, live_server):
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should have 'unviewed' still
     # Because it should be looking at only that 'sametext' id
