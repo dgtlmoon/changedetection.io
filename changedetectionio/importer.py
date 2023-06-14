@@ -122,7 +122,7 @@ class import_distill_io_json(Importer):
 
 # Does this need to be here anymore?
                 if d.get('tags', False):
-                    extras['tag'] = ", ".join(d['tags'])
+                    extras['tags'] = ", ".join(d['tags'])
 
                 new_uuid = datastore.add_watch(url=d['uri'].strip(),
                                                extras=extras,

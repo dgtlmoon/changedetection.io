@@ -52,7 +52,8 @@ base_config = {
     'previous_md5_before_filters': False,  # Used for skipping changedetection entirely
     'proxy': None,  # Preferred proxy connection
     'subtractive_selectors': [],
-    'tag': [], # list of UUIDs to App.Tags
+    'tag': '', # Old system of text name for a tag, to be removed
+    'tags': [], # list of UUIDs to App.Tags
     'text_should_not_be_present': [],  # Text that should not present
     # Re #110, so then if this is set to None, we know to use the default value instead
     # Requires setting to None on submit if it's the same as the default

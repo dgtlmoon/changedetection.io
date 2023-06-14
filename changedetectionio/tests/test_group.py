@@ -2,7 +2,8 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI
+
 
 def test_setup(client, live_server):
     live_server_setup(live_server)
@@ -22,6 +23,20 @@ def set_original_response():
         f.write(test_return_data)
     return None
 
+def set_modified_response():
+    test_return_data = """<html>
+       <body>
+     Some initial text<br>
+     <p id="only-this">Should be REALLY only this</p>
+     <br>
+     <p id="not-this">And never this</p>     
+     </body>
+     </html>
+    """
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+    return None
 
 def test_setup_group_tag(client, live_server):
     #live_server_setup(live_server)
@@ -56,7 +71,7 @@ def test_setup_group_tag(client, live_server):
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("import_page"),
-        data={"urls": test_url + " test-tag, extra-import-tag"},
+        data={"urls": test_url + "?first-imported=1 test-tag, extra-import-tag"},
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
@@ -72,7 +87,6 @@ def test_setup_group_tag(client, live_server):
     assert b'import-tag' in res.data
     assert b'extra-import-tag' in res.data
 
-    time.sleep(1)
     wait_for_all_checks(client)
 
     res = client.get(url_for("index"))
@@ -84,6 +98,28 @@ def test_setup_group_tag(client, live_server):
     )
     assert b'Should be only this' in res.data
     assert b'And never this' not in res.data
+
+
+    # RSS Group tag filter
+    # An extra one that should be excluded
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url + "?should-be-excluded=1 some-tag"},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    wait_for_all_checks(client)
+    set_modified_response()
+    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    rss_token = extract_rss_token_from_UI(client)
+    res = client.get(
+        url_for("rss", token=rss_token, tag="extra-import-tag", _external=True),
+        follow_redirects=True
+    )
+    assert b"should-be-excluded" not in res.data
+    assert res.status_code == 200
+    assert b"first-imported=1" in res.data
 
 def test_tag_import_singular(client, live_server):
     #live_server_setup(live_server)
@@ -100,6 +136,7 @@ def test_tag_import_singular(client, live_server):
         url_for("tags.tags_overview_page"),
         follow_redirects=True
     )
+    # Should be only 1 tag because they both had the same
     assert res.data.count(b'test-tag') == 1
 
 def test_tag_add_in_ui(client, live_server):
@@ -112,4 +149,3 @@ def test_tag_add_in_ui(client, live_server):
     )
     assert b"Tag added" in res.data
     assert b"new-test-tag" in res.data
-    

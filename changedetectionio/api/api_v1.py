@@ -259,7 +259,7 @@ class CreateWatch(Resource):
         """
         list = {}
 
-        tag_limit = request.args.get('tag', '').lower()
+        tag_limit = request.args.get('tags', '').lower()
 
         for uuid, watch in self.datastore.data['watching'].items():
             # Watch tags by name (replace the other calls?)

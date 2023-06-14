@@ -206,7 +206,7 @@ class ChangeDetectionStore:
     # Clone a watch by UUID
     def clone(self, uuid):
         url = self.data['watching'][uuid]['url']
-        tag = self.data['watching'][uuid].get('tag',[])
+        tag = self.data['watching'][uuid].get('tags',[])
         extras = self.data['watching'][uuid]
         new_uuid = self.add_watch(url=url, tag_uuids=tag, extras=extras)
         return new_uuid
@@ -280,6 +280,7 @@ class ChangeDetectionStore:
                     'processor',
                     'subtractive_selectors',
                     'tag',
+                    'tags',
                     'text_should_not_be_present',
                     'title',
                     'trigger_text',
@@ -305,16 +306,16 @@ class ChangeDetectionStore:
 
         # #Re 569
         # Could be in 'tags' var or extras, smash them together and strip
-        apply_extras['tag'] = []
-        if tag or extras.get('tag'):
-            tags = list(filter(None, list(set().union(tag.split(','), extras.get('tag', '').split(',')))))
+        apply_extras['tags'] = []
+        if tag or extras.get('tags'):
+            tags = list(filter(None, list(set().union(tag.split(','), extras.get('tags', '').split(',')))))
             for t in list(map(str.strip, tags)):
                 # for each stripped tag, add tag as UUID
-                apply_extras['tag'].append(self.add_tag(t))
+                apply_extras['tags'].append(self.add_tag(t))
 
         # Or if UUIDs given directly
         if tag_uuids:
-            apply_extras['tag'] = list(set(apply_extras['tag'] + tag_uuids))
+            apply_extras['tags'] = list(set(apply_extras['tags'] + tag_uuids))
 
         new_watch = Watch.model(datastore_path=self.datastore_path, url=url)
 
@@ -591,7 +592,7 @@ class ChangeDetectionStore:
 
         # Should return a dict of full tag info linked by UUID
         if watch:
-            return dictfilt(self.__data['settings']['application']['tags'], watch.get('tag', []))
+            return dictfilt(self.__data['settings']['application']['tags'], watch.get('tags', []))
 
         return {}
 
