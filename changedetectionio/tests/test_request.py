@@ -43,7 +43,7 @@ def test_headers_in_request(client, live_server):
         url_for("edit_page", uuid="first"),
         data={
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
               "headers": "xxx:ooo\ncool:yeah\r\ncookie:"+cookie_header},
         follow_redirects=True
@@ -273,7 +273,7 @@ def test_headers_textfile_in_request(client, live_server):
         url_for("edit_page", uuid="first"),
         data={
               "url": test_url,
-              "tag": "testtag",
+              "tags": "testtag",
               "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
               "headers": "xxx:ooo\ncool:yeah\r\n"},
         follow_redirects=True

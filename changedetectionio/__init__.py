@@ -423,6 +423,7 @@ def changedetection_app(config=None, datastore_o=None):
                 for tag_uuid, t in datastore.get_all_tags_for_watch(uuid=uuid).items():
                     if tag_uuid == limit_tag or t.get('title', '').lower() == limit_tag:
                         has_tag = True
+                        limit_tag = t
                         break
                 if not has_tag:
                     continue
