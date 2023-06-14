@@ -400,7 +400,7 @@ class SingleBrowserStep(Form):
 class watchForm(commonSettingsForm):
 
     url = fields.URLField('URL', validators=[validateURL()])
-    tag = StringTagUUID('Group tag', [validators.Optional()], default='')
+    tags = StringTagUUID('Group tag', [validators.Optional()], default='')
 
     time_between_check = FormField(TimeBetweenCheckForm)
 
