@@ -1,5 +1,5 @@
 # pip dependencies install stage
-FROM python:3.10-slim as builder
+FROM python:3.10-slim-bookworm as builder
 
 # See `cryptography` pin comment in requirements.txt
 ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
@@ -29,10 +29,10 @@ RUN pip install --target=/dependencies playwright~=1.27.1 \
     || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
 
 # Final image stage
-FROM python:3.10-slim
+FROM python:3.10-slim-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libssl1.1 \
+    libssl3 \
     libxslt1.1 \
     # For pdftohtml
     poppler-utils \
