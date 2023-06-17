@@ -9,13 +9,7 @@ $(document).ready(function () {
     const htmlElement = document.getElementsByTagName("html");
     const isDarkMode = htmlElement[0].dataset.darkmode === "true";
     htmlElement[0].dataset.darkmode = !isDarkMode;
-    if (isDarkMode) {
-      button.classList.remove("dark");
-      setCookieValue(false);
-    } else {
-      button.classList.add("dark");
-      setCookieValue(true);
-    }
+    setCookieValue(!isDarkMode);
   };
 
   const setCookieValue = (value) => {
