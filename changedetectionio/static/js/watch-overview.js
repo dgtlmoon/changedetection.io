@@ -4,6 +4,9 @@ $(function () {
     $(this).closest('.unviewed').removeClass('unviewed');
   });
 
+    $("#checkbox-assign-tag").click(function (e) {
+        $('#op_extradata').val(prompt("Enter a tag name"));
+    });
 
   $('.with-share-link > *').click(function () {
       $("#copied-clipboard").remove();
