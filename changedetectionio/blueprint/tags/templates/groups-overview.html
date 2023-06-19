@@ -21,9 +21,10 @@
 
     <!-- @todo maybe some overview matrix, 'tick' with which has notification, filter rules etc -->
     <div id="watch-table-wrapper">
-        <table class="pure-table pure-table-striped watch-table">
+        <table class="pure-table pure-table-striped watch-table group-overview-table">
             <thead>
             <tr>
+                <th></th>
                 <th>Tag / Label name</th>
                 <th></th>
             </tr>
@@ -31,11 +32,14 @@
             <tbody>
             {% if not available_tags|length %}
             <tr>
-                <td colspan="2">No website organisational tags/groups configured</td>
+                <td colspan="3">No website organisational tags/groups configured</td>
             </tr>
             {% endif %}
             {% for uuid, tag in available_tags.items()  %}
             <tr id="{{ uuid }}" class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }}">
+                <td class="watch-controls">
+                    <a class="link-mute state-{{'on' if tag.notification_muted else 'off'}}" href="{{url_for('tags.mute', uuid=tag.uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="Mute notifications" title="Mute notifications" class="icon icon-mute" ></a>
+                </td>
                 <td class="title-col inline">{{tag.title}}</td>
                 <td>
                     <a class="pure-button pure-button-primary" href="{{ url_for('tags.form_tag_edit', uuid=uuid) }}">Edit</a>&nbsp;

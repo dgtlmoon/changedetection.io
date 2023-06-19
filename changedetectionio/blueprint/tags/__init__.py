@@ -41,6 +41,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return redirect(url_for('tags.tags_overview_page'))
 
+    @tags_blueprint.route("/mute/<string:uuid>", methods=['GET'])
+    @login_optionally_required
+    def mute(uuid):
+        if datastore.data['settings']['application']['tags'].get(uuid):
+            datastore.data['settings']['application']['tags'][uuid]['notification_muted'] = not datastore.data['settings']['application']['tags'][uuid]['notification_muted']
+        return redirect(url_for('tags.tags_overview_page'))
+
     @tags_blueprint.route("/edit/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def form_tag_edit(uuid):
