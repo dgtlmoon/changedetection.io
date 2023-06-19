@@ -98,9 +98,9 @@ class StringTagUUID(StringField):
 
     # Is what is shown when field <input> is rendered
     def _value(self):
-        # Tag UUID to name
+        # Tag UUID to name, on submit it will convert it back (in the submit handler of init.py)
         if self.data and type(self.data) is list:
-            tag_titles=[]
+            tag_titles = []
             for i in self.data:
                 tag = self.datastore.data['settings']['application']['tags'].get(i)
                 if tag:
@@ -109,6 +109,10 @@ class StringTagUUID(StringField):
                         tag_titles.append(tag_title)
 
             return ', '.join(tag_titles)
+
+        if not self.data:
+            return ''
+
         return 'error'
 
 class TimeBetweenCheckForm(Form):

@@ -32,6 +32,9 @@
             </tr>
             </thead>
             <tbody>
+            <!--
+            @Todo - connect Last checked, Last Changed, Number of Watches etc
+            --->
             {% if not available_tags|length %}
             <tr>
                 <td colspan="3">No website organisational tags/groups configured</td>
@@ -45,7 +48,8 @@
                 <td class="title-col inline">{{tag.title}}</td>
                 <td>
                     <a class="pure-button pure-button-primary" href="{{ url_for('tags.form_tag_edit', uuid=uuid) }}">Edit</a>&nbsp;
-                    <!--<a class="pure-button pure-button-primary" href="{{ url_for('tags.form_tag_delete', uuid=uuid) }}">Delete Tag</a>&nbsp;-->
+                    <a class="pure-button pure-button-primary" href="{{ url_for('tags.delete', uuid=uuid) }}" title="Deletes and removes tag">Delete</a>
+                    <a class="pure-button pure-button-primary" href="{{ url_for('tags.unlink', uuid=uuid) }}" title="Keep the tag but unlink any watches">Unlink</a>
                 </td>
             </tr>
             {% endfor %}

@@ -48,6 +48,34 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             datastore.data['settings']['application']['tags'][uuid]['notification_muted'] = not datastore.data['settings']['application']['tags'][uuid]['notification_muted']
         return redirect(url_for('tags.tags_overview_page'))
 
+    @tags_blueprint.route("/delete/<string:uuid>", methods=['GET'])
+    @login_optionally_required
+    def delete(uuid):
+        removed = 0
+        # Delete the tag, and any tag reference
+        if datastore.data['settings']['application']['tags'].get(uuid):
+            del datastore.data['settings']['application']['tags'][uuid]
+
+        for watch_uuid, watch in datastore.data['watching'].items():
+            if watch.get('tags') and uuid in watch['tags']:
+                removed += 1
+                watch['tags'].remove(uuid)
+
+        flash(f"Tag deleted and removed from {removed} watches")
+        return redirect(url_for('tags.tags_overview_page'))
+
+    @tags_blueprint.route("/unlink/<string:uuid>", methods=['GET'])
+    @login_optionally_required
+    def unlink(uuid):
+        unlinked = 0
+        for watch_uuid, watch in datastore.data['watching'].items():
+            if watch.get('tags') and uuid in watch['tags']:
+                unlinked += 1
+                watch['tags'].remove(uuid)
+
+        flash(f"Tag unlinked removed from {unlinked} watches")
+        return redirect(url_for('tags.tags_overview_page'))
+
     @tags_blueprint.route("/edit/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def form_tag_edit(uuid):
