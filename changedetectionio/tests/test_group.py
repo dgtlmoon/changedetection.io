@@ -248,13 +248,15 @@ def test_limit_tag_ui(client, live_server):
 
     res = client.get(url_for("index"))
     assert b'test-tag' in res.data
-    assert res.data.count(b'test-tag') == 21 # Should be 20 times, plus the link 1
+
+    # All should be here
+    assert res.data.count(b'processor-text_json_diff') == 40
 
     tag_uuid = get_UUID_for_tag_name(client, name="test-tag")
 
     res = client.get(url_for("index", tag=tag_uuid))
 
+    # Just a subset should be here
     assert b'test-tag' in res.data
-    assert res.data.count(b'test-tag') == 21 # Should be 20 times, plus the link 1
-
-    assert res.data.count(b'edit/') == 20  # Should be 20 times (edit link)
+    assert res.data.count(b'processor-text_json_diff') == 20
+    assert b"object at" not in res.data
