@@ -179,8 +179,8 @@
             </li>
             {% endif %}
             <li>
-               <a href="{{ url_for('form_watch_checknow', tag=active_tag['uuid']) }}" class="pure-button button-tag ">Recheck
-                all {% if active_tag%}in "{{active_tag['title']}}"{%endif%}</a>
+               <a href="{{ url_for('form_watch_checknow', tag=active_tag) }}" class="pure-button button-tag ">Recheck
+                all {% if active_tag%} in "{{tags[active_tag].title}}"{%endif%}</a>
             </li>
             <li>
                 <a href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>
