@@ -123,6 +123,7 @@ def test_setup_group_tag(client, live_server):
     assert b"first-imported=1" in res.data
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
+
 def test_tag_import_singular(client, live_server):
     #live_server_setup(live_server)
 
@@ -223,3 +224,37 @@ def test_group_tag_notification(client, live_server):
 
     #@todo Test that multiple notifications fired
     #@todo Test that each of multiple notifications with different settings
+
+
+def test_limit_tag_ui(client, live_server):
+    #live_server_setup(live_server)
+
+    test_url = url_for('test_endpoint', _external=True)
+    urls=[]
+
+    for i in range(20):
+        urls.append(test_url+"?x="+str(i)+" test-tag")
+
+    for i in range(20):
+        urls.append(test_url+"?non-grouped="+str(i))
+
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": "\r\n".join(urls)},
+        follow_redirects=True
+    )
+
+    assert b"40 Imported" in res.data
+
+    res = client.get(url_for("index"))
+    assert b'test-tag' in res.data
+    assert res.data.count(b'test-tag') == 21 # Should be 20 times, plus the link 1
+
+    tag_uuid = get_UUID_for_tag_name(client, name="test-tag")
+
+    res = client.get(url_for("index", tag=tag_uuid))
+
+    assert b'test-tag' in res.data
+    assert res.data.count(b'test-tag') == 21 # Should be 20 times, plus the link 1
+
+    assert res.data.count(b'edit/') == 20  # Should be 20 times, plus the link 1

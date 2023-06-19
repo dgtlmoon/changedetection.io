@@ -786,3 +786,16 @@ class ChangeDetectionStore:
             i+=1
         return
 
+    # Create tag objects and their references from existing tag text
+    def update_12(self):
+        i = 0
+        for uuid, watch in self.data['watching'].items():
+            # Split out and convert old tag string
+            tag = watch.get('tag')
+            if tag:
+                tag_uuids = []
+                for t in tag.split(','):
+                    tag_uuids.append(self.add_tag(name=t))
+
+                self.data['watching'][uuid]['tags'] = tag_uuids
+

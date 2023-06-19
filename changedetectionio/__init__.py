@@ -317,24 +317,19 @@ def changedetection_app(config=None, datastore_o=None):
             return "Access denied, bad token", 403
 
         from . import diff
-        limit_tag = request.args.get('tag')
+        limit_tag = request.args.get('tag', '').lower().strip()
+        # Be sure limit_tag is a uuid
+        for uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
+            if limit_tag == tag.get('title', '').lower().strip():
+                limit_tag = uuid
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
 
         # @todo needs a .itemsWithTag() or something - then we can use that in Jinaj2 and throw this away
         for uuid, watch in datastore.data['watching'].items():
-
-            if limit_tag:
-                # if not by name or UUID..
-                has_tag = False
-                for tag_uuid, t in datastore.get_all_tags_for_watch(uuid=uuid).items():
-                    if tag_uuid == limit_tag or t.get('title', '').lower() == limit_tag:
-                        has_tag = True
-                        break
-                if not has_tag:
+            if limit_tag and not limit_tag in watch['tags']:
                     continue
-
             watch['uuid'] = uuid
             sorted_watches.append(watch)
 
@@ -396,7 +391,13 @@ def changedetection_app(config=None, datastore_o=None):
         global datastore
         from changedetectionio import forms
 
-        limit_tag = request.args.get('tag','').lower()
+        limit_tag = request.args.get('tag', '').lower().strip()
+
+        # Be sure limit_tag is a uuid
+        for uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
+            if limit_tag == tag.get('title', '').lower().strip():
+                limit_tag = uuid
+
 
         # Redirect for the old rss path which used the /?rss=true
         if request.args.get('rss'):
@@ -417,15 +418,7 @@ def changedetection_app(config=None, datastore_o=None):
         sorted_watches = []
         search_q = request.args.get('q').strip().lower() if request.args.get('q') else False
         for uuid, watch in datastore.data['watching'].items():
-            if limit_tag:
-                # if not by name or UUID..
-                has_tag = False
-                for tag_uuid, t in datastore.get_all_tags_for_watch(uuid=uuid).items():
-                    if tag_uuid == limit_tag or t.get('title', '').lower() == limit_tag:
-                        has_tag = True
-                        limit_tag = t
-                        break
-                if not has_tag:
+            if limit_tag and not limit_tag in watch['tags']:
                     continue
 
             if search_q:
