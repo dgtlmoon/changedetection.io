@@ -113,7 +113,7 @@ class update_worker(threading.Thread):
                 n_object = {}
                 n_object['notification_urls'] = tag.get('notification_urls')
 
-                n_object['notification_title'] = tag.get('notification_title') if tag.get('notification_title')else \
+                n_object['notification_title'] = tag.get('notification_title') if tag.get('notification_title') else \
                     self.datastore.data['settings']['application']['notification_title']
 
                 n_object['notification_body'] = tag.get('notification_body') if tag.get('notification_body') else \

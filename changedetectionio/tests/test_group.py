@@ -2,7 +2,8 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI
+from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, get_UUID_for_tag_name
+import os
 
 
 def test_setup(client, live_server):
@@ -59,7 +60,7 @@ def test_setup_group_tag(client, live_server):
         follow_redirects=True
     )
     assert b"Updated" in res.data
-
+    tag_uuid = get_UUID_for_tag_name(client, name="test-tag")
     res = client.get(
         url_for("tags.form_tag_edit", uuid="first")
     )
@@ -120,7 +121,8 @@ def test_setup_group_tag(client, live_server):
     assert b"should-be-excluded" not in res.data
     assert res.status_code == 200
     assert b"first-imported=1" in res.data
-
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 def test_tag_import_singular(client, live_server):
     #live_server_setup(live_server)
 
@@ -138,6 +140,8 @@ def test_tag_import_singular(client, live_server):
     )
     # Should be only 1 tag because they both had the same
     assert res.data.count(b'test-tag') == 1
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
 def test_tag_add_in_ui(client, live_server):
     #live_server_setup(live_server)
@@ -149,3 +153,73 @@ def test_tag_add_in_ui(client, live_server):
     )
     assert b"Tag added" in res.data
     assert b"new-test-tag" in res.data
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+def test_group_tag_notification(client, live_server):
+    #live_server_setup(live_server)
+    set_original_response()
+
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url, "tags": 'test-tag, other-tag'},
+        follow_redirects=True
+    )
+
+    assert b"Watch added" in res.data
+
+    notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
+    notification_form_data = {"notification_urls": notification_url,
+                              "notification_title": "New GROUP TAG ChangeDetection.io Notification - {{watch_url}}",
+                              "notification_body": "BASE URL: {{base_url}}\n"
+                                                   "Watch URL: {{watch_url}}\n"
+                                                   "Watch UUID: {{watch_uuid}}\n"
+                                                   "Watch title: {{watch_title}}\n"
+                                                   "Watch tag: {{watch_tag}}\n"
+                                                   "Preview: {{preview_url}}\n"
+                                                   "Diff URL: {{diff_url}}\n"
+                                                   "Snapshot: {{current_snapshot}}\n"
+                                                   "Diff: {{diff}}\n"
+                                                   "Diff Added: {{diff_added}}\n"
+                                                   "Diff Removed: {{diff_removed}}\n"
+                                                   "Diff Full: {{diff_full}}\n"
+                                                   ":-)",
+                              "notification_screenshot": True,
+                              "notification_format": "Text",
+                              "title": "test-tag"}
+
+    res = client.post(
+        url_for("tags.form_tag_edit_submit", uuid=get_UUID_for_tag_name(client, name="test-tag")),
+        data=notification_form_data,
+        follow_redirects=True
+    )
+    assert b"Updated" in res.data
+
+    wait_for_all_checks(client)
+
+    set_modified_response()
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    time.sleep(3)
+
+    assert os.path.isfile("test-datastore/notification.txt")
+
+    # Verify what was sent as a notification, this file should exist
+    with open("test-datastore/notification.txt", "r") as f:
+        notification_submission = f.read()
+    os.unlink("test-datastore/notification.txt")
+
+    # Did we see the URL that had a change, in the notification?
+    # Diff was correctly executed
+    assert test_url in notification_submission
+    assert ':-)' in notification_submission
+    assert "Diff Full: Some initial text" in notification_submission
+    assert "New GROUP TAG ChangeDetection.io" in notification_submission
+    assert "test-tag" in notification_submission
+    assert "other-tag" in notification_submission
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+    #@todo Test that multiple notifications fired
+    #@todo Test that each of multiple notifications with different settings

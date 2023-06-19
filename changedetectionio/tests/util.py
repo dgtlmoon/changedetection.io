@@ -70,6 +70,16 @@ def extract_api_key_from_UI(client):
     api_key = m.group(1)
     return api_key.strip()
 
+
+# kinda funky, but works for now
+def get_UUID_for_tag_name(client, name):
+    app_config = client.application.config.get('DATASTORE').data
+    for uuid, tag in app_config['settings']['application'].get('tags', {}).items():
+        if name == tag.get('title', '').lower().strip():
+            return uuid
+    return None
+
+
 # kinda funky, but works for now
 def extract_rss_token_from_UI(client):
     import re

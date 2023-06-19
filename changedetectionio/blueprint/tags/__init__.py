@@ -57,8 +57,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         form.datastore=datastore # needed?
 
         output = render_template("edit-tag.html",
+                                 data=default,
                                  form=form,
-                                 data=default
+                                 settings_application=datastore.data['settings']['application'],
                                  )
 
         return output
