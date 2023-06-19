@@ -1121,8 +1121,8 @@ def changedetection_app(config=None, datastore_o=None):
                 os.path.join(datastore_o.datastore_path, list_with_tags_file), "w"
             ) as f:
                 for uuid in datastore.data["watching"]:
-                    url = datastore.data["watching"][uuid]["url"]
-                    tag = datastore.data["watching"][uuid]["tags"]
+                    url = datastore.data["watching"][uuid].get('url')
+                    tag = datastore.data["watching"][uuid].get('tags', {})
                     f.write("{} {}\r\n".format(url, tag))
 
             # Add it to the Zip
@@ -1278,9 +1278,11 @@ def changedetection_app(config=None, datastore_o=None):
         elif tag != None:
             # Items that have this current tag
             for watch_uuid, watch in datastore.data['watching'].items():
-                if (tag != None and tag in watch['tags']):
+                if (tag != None and tag in watch.get('tags', {})):
                     if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
-                        update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False}))
+                        update_q.put(
+                            queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False})
+                        )
                         i += 1
 
         else:
