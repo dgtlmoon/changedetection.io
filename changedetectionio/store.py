@@ -16,6 +16,8 @@ import threading
 import time
 import uuid as uuid_builder
 
+dictfilt = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
+
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change
@@ -178,20 +180,6 @@ class ChangeDetectionStore:
 
         return self.__data
 
-    def get_all_tags(self):
-        tags = []
-        for uuid, watch in self.data['watching'].items():
-            if watch['tag'] is None:
-                continue
-            # Support for comma separated list of tags.
-            for tag in watch['tag'].split(','):
-                tag = tag.strip()
-                if tag not in tags:
-                    tags.append(tag)
-
-        tags.sort()
-        return tags
-
     # Delete a single watch by UUID
     def delete(self, uuid):
         import pathlib
@@ -218,9 +206,9 @@ class ChangeDetectionStore:
     # Clone a watch by UUID
     def clone(self, uuid):
         url = self.data['watching'][uuid]['url']
-        tag = self.data['watching'][uuid]['tag']
+        tag = self.data['watching'][uuid].get('tags',[])
         extras = self.data['watching'][uuid]
-        new_uuid = self.add_watch(url=url, tag=tag, extras=extras)
+        new_uuid = self.add_watch(url=url, tag_uuids=tag, extras=extras)
         return new_uuid
 
     def url_exists(self, url):
@@ -255,10 +243,11 @@ class ChangeDetectionStore:
 
         self.needs_write_urgent = True
 
-    def add_watch(self, url, tag="", extras=None, write_to_disk_now=True):
+    def add_watch(self, url, tag='', extras=None, tag_uuids=None, write_to_disk_now=True):
 
         if extras is None:
             extras = {}
+
         # should always be str
         if tag is None or not tag:
             tag = ''
@@ -291,6 +280,7 @@ class ChangeDetectionStore:
                     'processor',
                     'subtractive_selectors',
                     'tag',
+                    'tags',
                     'text_should_not_be_present',
                     'title',
                     'trigger_text',
@@ -313,25 +303,34 @@ class ChangeDetectionStore:
             flash('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX', 'error')
             return None
 
-        with self.lock:
-            # #Re 569
-            new_watch = Watch.model(datastore_path=self.datastore_path, default={
-                'url': url,
-                'tag': tag,
-                'date_created': int(time.time())
-            })
 
-            new_uuid = new_watch['uuid']
-            logging.debug("Added URL {} - {}".format(url, new_uuid))
+        # #Re 569
+        # Could be in 'tags',  var or extras, smash them together and strip
+        apply_extras['tags'] = []
+        if tag or extras.get('tags'):
+            tags = list(filter(None, list(set().union(tag.split(','), extras.get('tags', '').split(',')))))
+            for t in list(map(str.strip, tags)):
+                # for each stripped tag, add tag as UUID
+                apply_extras['tags'].append(self.add_tag(t))
 
-            for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
-                if k in apply_extras:
-                    del apply_extras[k]
+        # Or if UUIDs given directly
+        if tag_uuids:
+            apply_extras['tags'] = list(set(apply_extras['tags'] + tag_uuids))
 
-            new_watch.update(apply_extras)
-            self.__data['watching'][new_uuid] = new_watch
+        new_watch = Watch.model(datastore_path=self.datastore_path, url=url)
 
-        self.__data['watching'][new_uuid].ensure_data_dir_exists()
+        new_uuid = new_watch.get('uuid')
+
+        logging.debug("Added URL {} - {}".format(url, new_uuid))
+
+        for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
+            if k in apply_extras:
+                del apply_extras[k]
+
+        new_watch.update(apply_extras)
+        new_watch.ensure_data_dir_exists()
+        self.__data['watching'][new_uuid] = new_watch
+
 
         if write_to_disk_now:
             self.sync_to_json()
@@ -511,10 +510,19 @@ class ChangeDetectionStore:
         filepath = os.path.join(self.datastore_path, 'headers.txt')
         return os.path.isfile(filepath)
 
-    def get_all_headers(self):
+    def get_all_base_headers(self):
         from .model.App import parse_headers_from_text_file
-        headers = copy(self.data['settings'].get('headers', {}))
+        headers = {}
+        # Global app settings
+        headers.update(self.data['settings'].get('headers', {}))
 
+        return headers
+
+    def get_all_headers_in_textfile_for_watch(self, uuid):
+        from .model.App import parse_headers_from_text_file
+        headers = {}
+
+        # Global in /datastore/headers.txt
         filepath = os.path.join(self.datastore_path, 'headers.txt')
         try:
             if os.path.isfile(filepath):
@@ -522,8 +530,76 @@ class ChangeDetectionStore:
         except Exception as e:
             print(f"ERROR reading headers.txt at {filepath}", str(e))
 
+        watch = self.data['watching'].get(uuid)
+        if watch:
+
+            # In /datastore/xyz-xyz/headers.txt
+            filepath = os.path.join(watch.watch_data_dir, 'headers.txt')
+            try:
+                if os.path.isfile(filepath):
+                    headers.update(parse_headers_from_text_file(filepath))
+            except Exception as e:
+                print(f"ERROR reading headers.txt at {filepath}", str(e))
+
+            # In /datastore/tag-name.txt
+            tags = self.get_all_tags_for_watch(uuid=uuid)
+            for tag_uuid, tag in tags.items():
+                fname = "headers-"+re.sub(r'[\W_]', '', tag.get('title')).lower().strip() + ".txt"
+                filepath = os.path.join(self.datastore_path, fname)
+                try:
+                    if os.path.isfile(filepath):
+                        headers.update(parse_headers_from_text_file(filepath))
+                except Exception as e:
+                    print(f"ERROR reading headers.txt at {filepath}", str(e))
+
         return headers
 
+    def get_tag_overrides_for_watch(self, uuid, attr):
+        tags = self.get_all_tags_for_watch(uuid=uuid)
+        ret = []
+
+        if tags:
+            for tag_uuid, tag in tags.items():
+                if attr in tag and tag[attr]:
+                    ret=[*ret, *tag[attr]]
+
+        return ret
+
+    def add_tag(self, name):
+        print (">>> Adding new tag -", name)
+        # If name exists, return that
+        n = name.strip().lower()
+        for uuid, tag in self.__data['settings']['application'].get('tags', {}).items():
+            if n == tag.get('title', '').lower().strip():
+                print (f">>> Tag {name} already exists")
+                return uuid
+
+        # Eventually almost everything todo with a watch will apply as a Tag
+        # So we use the same model as a Watch
+        with self.lock:
+            new_tag = Watch.model(datastore_path=self.datastore_path, default={
+                'title': name.strip(),
+                'date_created': int(time.time())
+            })
+
+            new_uuid = new_tag.get('uuid')
+
+            self.__data['settings']['application']['tags'][new_uuid] = new_tag
+
+        return new_uuid
+
+    def get_all_tags_for_watch(self, uuid):
+        """This should be in Watch model but Watch doesn't have access to datastore, not sure how to solve that yet"""
+        watch = self.data['watching'].get(uuid)
+
+        # Should return a dict of full tag info linked by UUID
+        if watch:
+            return dictfilt(self.__data['settings']['application']['tags'], watch.get('tags', []))
+
+        return {}
+
+    def tag_exists_by_name(self, tag_name):
+        return any(v.get('title', '').lower() == tag_name.lower() for k, v in self.__data['settings']['application']['tags'].items())
 
     # Run all updates
     # IMPORTANT - Each update could be run even when they have a new install and the schema is correct
@@ -709,4 +785,17 @@ class ChangeDetectionStore:
                 watch['date_created'] = i
             i+=1
         return
+
+    # Create tag objects and their references from existing tag text
+    def update_12(self):
+        i = 0
+        for uuid, watch in self.data['watching'].items():
+            # Split out and convert old tag string
+            tag = watch.get('tag')
+            if tag:
+                tag_uuids = []
+                for t in tag.split(','):
+                    tag_uuids.append(self.add_tag(name=t))
+
+                self.data['watching'][uuid]['tags'] = tag_uuids
 

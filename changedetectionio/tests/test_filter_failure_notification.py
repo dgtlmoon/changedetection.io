@@ -1,7 +1,7 @@
 import os
 import time
 from flask import url_for
-from .util import set_original_response, live_server_setup, extract_UUID_from_client
+from .util import set_original_response, live_server_setup, extract_UUID_from_client, wait_for_all_checks
 from changedetectionio.model import App
 
 
@@ -37,14 +37,14 @@ def run_filter_test(client, content_filter):
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("form_quick_watch_add"),
-        data={"url": test_url, "tag": ''},
+        data={"url": test_url, "tags": ''},
         follow_redirects=True
     )
 
     assert b"Watch added" in res.data
 
     # Give the thread time to pick up the first version
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -71,8 +71,8 @@ def run_filter_test(client, content_filter):
 
     notification_form_data.update({
         "url": test_url,
-        "tag": "my tag",
-        "title": "my title",
+        "tags": "my tag",
+        "title": "my title 123",
         "headers": "",
         "filter_failure_notification_send": 'y',
         "include_filters": content_filter,
@@ -85,43 +85,55 @@ def run_filter_test(client, content_filter):
     )
 
     assert b"Updated watch." in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Now the notification should not exist, because we didnt reach the threshold
     assert not os.path.isfile("test-datastore/notification.txt")
 
-    for i in range(0, App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT):
+    # -2 because we would have checked twice above (on adding and on edit)
+    for i in range(0, App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT-2):
         res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-        time.sleep(3)
+        wait_for_all_checks(client)
+        assert not os.path.isfile("test-datastore/notification.txt"), f"test-datastore/notification.txt should not exist - Attempt {i}"
 
     # We should see something in the frontend
     assert b'Warning, no filters were found' in res.data
 
+    # One more check should trigger it (see -2 above)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
     # Now it should exist and contain our "filter not found" alert
     assert os.path.isfile("test-datastore/notification.txt")
-    notification = False
+
     with open("test-datastore/notification.txt", 'r') as f:
         notification = f.read()
+
     assert 'CSS/xPath filter was not present in the page' in notification
     assert content_filter.replace('"', '\\"') in notification
 
-    # Remove it and prove that it doesnt trigger when not expected
+    # Remove it and prove that it doesn't trigger when not expected
+    # It should register a change, but no 'filter not found'
     os.unlink("test-datastore/notification.txt")
     set_response_with_filter()
 
+    # Try several times, it should NOT have 'filter not found'
     for i in range(0, App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT):
         client.get(url_for("form_watch_checknow"), follow_redirects=True)
-        time.sleep(3)
+        wait_for_all_checks(client)
 
     # It should have sent a notification, but..
     assert os.path.isfile("test-datastore/notification.txt")
-    # but it should not contain the info about the failed filter
+    # but it should not contain the info about a failed filter (because there was none in this case)
     with open("test-datastore/notification.txt", 'r') as f:
         notification = f.read()
     assert not 'CSS/xPath filter was not present in the page' in notification
 
-    # Re #1247 - All tokens got replaced
+    # Re #1247 - All tokens got replaced correctly in the notification
+    res = client.get(url_for("index"))
     uuid = extract_UUID_from_client(client)
+    # UUID is correct, but notification contains tag uuid as UUIID wtf
     assert uuid in notification
 
     # cleanup for the next
@@ -137,7 +149,7 @@ def test_setup(live_server):
 
 def test_check_include_filters_failure_notification(client, live_server):
     set_original_response()
-    time.sleep(1)
+    wait_for_all_checks(client)
     run_filter_test(client, '#nope-doesnt-exist')
 
 def test_check_xpath_filter_failure_notification(client, live_server):

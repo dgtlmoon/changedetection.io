@@ -96,7 +96,7 @@ def test_check_markup_include_filters_restriction(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"include_filters": include_filters, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"include_filters": include_filters, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -157,7 +157,7 @@ def test_check_multiple_filters(client, live_server):
         url_for("edit_page", uuid="first"),
         data={"include_filters": include_filters,
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "headers": "",
               'fetch_backend': "html_requests"},
         follow_redirects=True

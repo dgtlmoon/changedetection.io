@@ -13,7 +13,7 @@
             <div id="watch-add-wrapper-zone">
                 <div>
                     {{ render_simple_field(form.url, placeholder="https://...", required=true) }}
-                    {{ render_simple_field(form.tag, value=active_tag if active_tag else '', placeholder="watch label / tag") }}
+                    {{ render_simple_field(form.tags, value=tags[active_tag].title if active_tag else '', placeholder="watch label / tag") }}
                 </div>
                 <div>
                     {{ render_simple_field(form.watch_submit_button, title="Watch this URL!" ) }}
@@ -30,12 +30,14 @@
 
     <form class="pure-form" action="{{ url_for('form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
+    <input type="hidden" id="op_extradata" name="op_extradata" value="" >
     <div id="checkbox-operations">
         <button class="pure-button button-secondary button-xsmall"  name="op" value="pause">Pause</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause">UnPause</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="mute">Mute</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="unmute">UnMute</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="recheck">Recheck</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="assign-tag" id="checkbox-assign-tag">Tag</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="mark-viewed">Mark viewed</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default">Use default notification</button>
         <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="clear-history">Clear/reset history</button>
@@ -47,9 +49,9 @@
     {% if search_q %}<div id="search-result-info">Searching "<strong><i>{{search_q}}</i></strong>"</div>{% endif %}
     <div>
         <a href="{{url_for('index')}}" class="pure-button button-tag {{'active' if not active_tag }}">All</a>
-        {% for tag in tags %}
+        {% for uuid, tag in tags.items() %}
             {% if tag != "" %}
-                <a href="{{url_for('index', tag=tag) }}" class="pure-button button-tag {{'active' if active_tag == tag }}">{{ tag }}</a>
+                <a href="{{url_for('index', tag=uuid) }}" class="pure-button button-tag {{'active' if active_tag == uuid }}">{{ tag.title }}</a>
             {% endif %}
         {% endfor %}
     </div>
@@ -143,9 +145,11 @@
                     </span>
                     {% endif %}
 
-                    {% if not active_tag %}
-                    <span class="watch-tag-list">{{ watch.tag}}</span>
-                    {% endif %}
+
+                    {% for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() %}
+                      <span class="watch-tag-list">{{ watch_tag.title }}</span>
+                    {% endfor %}
+
                 </td>
                 <td class="last-checked">{{watch|format_last_checked_time|safe}}</td>
                 <td class="last-changed">{% if watch.history_n >=2 and watch.last_changed >0 %}
@@ -178,7 +182,7 @@
             {% endif %}
             <li>
                <a href="{{ url_for('form_watch_checknow', tag=active_tag) }}" class="pure-button button-tag ">Recheck
-                all {% if active_tag%}in "{{active_tag}}"{%endif%}</a>
+                all {% if active_tag%} in "{{tags[active_tag].title}}"{%endif%}</a>
             </li>
             <li>
                 <a href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>

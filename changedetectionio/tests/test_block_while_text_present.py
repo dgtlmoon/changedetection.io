@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from . util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 from changedetectionio import html_tools
 
 def set_original_ignore_response():
@@ -61,7 +61,7 @@ def set_modified_response_minus_block_text():
 
 
 def test_check_block_changedetection_text_NOT_present(client, live_server):
-    sleep_time_for_fetch_thread = 3
+
     live_server_setup(live_server)
     # Use a mix of case in ZzZ to prove it works case-insensitive.
     ignore_text = "out of stoCk\r\nfoobar"
@@ -81,7 +81,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server):
     assert b"1 Imported" in res.data
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -96,7 +96,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server):
     assert b"Updated watch." in res.data
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     # Check it saved
     res = client.get(
         url_for("edit_page", uuid="first"),
@@ -107,7 +107,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
@@ -120,7 +120,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server):
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
@@ -131,7 +131,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server):
     # Now we set a change where the text is gone, it should now trigger
     set_modified_response_minus_block_text()
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 

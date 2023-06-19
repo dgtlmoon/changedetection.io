@@ -52,7 +52,8 @@ base_config = {
     'previous_md5_before_filters': False,  # Used for skipping changedetection entirely
     'proxy': None,  # Preferred proxy connection
     'subtractive_selectors': [],
-    'tag': None,
+    'tag': '', # Old system of text name for a tag, to be removed
+    'tags': [], # list of UUIDs to App.Tags
     'text_should_not_be_present': [],  # Text that should not present
     # Re #110, so then if this is set to None, we know to use the default value instead
     # Requires setting to None on submit if it's the same as the default
@@ -455,10 +456,6 @@ class model(dict):
 
         return csv_output_filename
 
-    @property
-    # Return list of tags, stripped and lowercase, used for searching
-    def all_tags(self):
-        return [s.strip().lower() for s in self.get('tag','').split(',')]
 
     def has_special_diff_filter_options_set(self):
 
@@ -473,40 +470,6 @@ class model(dict):
         # None is set
         return False
 
-    @property
-    def has_extra_headers_file(self):
-        if os.path.isfile(os.path.join(self.watch_data_dir, 'headers.txt')):
-            return True
-
-        for f in self.all_tags:
-            fname = "headers-"+re.sub(r'[\W_]', '', f).lower().strip() + ".txt"
-            filepath = os.path.join(self.__datastore_path, fname)
-            if os.path.isfile(filepath):
-                return True
-
-        return False
-
-    def get_all_headers(self):
-        from .App import parse_headers_from_text_file
-        headers = self.get('headers', {}).copy()
-        # Available headers on the disk could 'headers.txt' in the watch data dir
-        filepath = os.path.join(self.watch_data_dir, 'headers.txt')
-        try:
-            if os.path.isfile(filepath):
-                headers.update(parse_headers_from_text_file(filepath))
-        except Exception as e:
-            print(f"ERROR reading headers.txt at {filepath}", str(e))
-
-        # Or each by tag, as tagname.txt in the main datadir
-        for f in self.all_tags:
-            fname = "headers-"+re.sub(r'[\W_]', '', f).lower().strip() + ".txt"
-            filepath = os.path.join(self.__datastore_path, fname)
-            try:
-                if os.path.isfile(filepath):
-                    headers.update(parse_headers_from_text_file(filepath))
-            except Exception as e:
-                print(f"ERROR reading headers.txt at {filepath}", str(e))
-        return headers
 
     def get_last_fetched_before_filters(self):
         import brotli

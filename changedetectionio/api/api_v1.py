@@ -218,6 +218,11 @@ class CreateWatch(Resource):
                 return "Invalid proxy choice, currently supported proxies are '{}'".format(', '.join(plist)), 400
 
         extras = copy.deepcopy(json_data)
+
+        # Because we renamed 'tag' to 'tags' but dont want to change the API (can do this in v2 of the API)
+        if extras.get('tag'):
+            extras['tags'] = extras.get('tag')
+
         del extras['url']
 
         new_uuid = self.datastore.add_watch(url=url, extras=extras)
@@ -259,13 +264,16 @@ class CreateWatch(Resource):
         """
         list = {}
 
-        tag_limit = request.args.get('tag', None)
-        for k, watch in self.datastore.data['watching'].items():
-            if tag_limit:
-                if not tag_limit.lower() in watch.all_tags:
-                    continue
+        tag_limit = request.args.get('tag', '').lower()
 
-            list[k] = {'url': watch['url'],
+
+        for uuid, watch in self.datastore.data['watching'].items():
+            # Watch tags by name (replace the other calls?)
+            tags = self.datastore.get_all_tags_for_watch(uuid=uuid)
+            if tag_limit and not any(v.get('title').lower() == tag_limit for k, v in tags.items()):
+                continue
+
+            list[uuid] = {'url': watch['url'],
                        'title': watch['title'],
                        'last_checked': watch['last_checked'],
                        'last_changed': watch.last_changed,

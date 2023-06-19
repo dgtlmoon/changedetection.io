@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 from changedetectionio import html_tools
 
 
@@ -39,7 +39,6 @@ def test_setup(client, live_server):
     live_server_setup(live_server)
 
 def test_check_removed_line_contains_trigger(client, live_server):
-    sleep_time_for_fetch_thread = 3
 
     # Give the endpoint time to spin up
     time.sleep(1)
@@ -54,7 +53,7 @@ def test_check_removed_line_contains_trigger(client, live_server):
     assert b"1 Imported" in res.data
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -67,20 +66,20 @@ def test_check_removed_line_contains_trigger(client, live_server):
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     set_original(excluding='Something irrelevant')
 
     # A line thats not the trigger should not trigger anything
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
     assert b'1 watches queued for rechecking.' in res.data
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
 
     # The trigger line is REMOVED,  this should trigger
     set_original(excluding='The golden line')
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
@@ -89,14 +88,14 @@ def test_check_removed_line_contains_trigger(client, live_server):
     client.get(url_for("mark_all_viewed"), follow_redirects=True)
     set_original(excluding=None)
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
 
     # Remove it again, and we should get a trigger
     set_original(excluding='The golden line')
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
@@ -105,8 +104,7 @@ def test_check_removed_line_contains_trigger(client, live_server):
 
 
 def test_check_add_line_contains_trigger(client, live_server):
-
-    sleep_time_for_fetch_thread = 3
+    #live_server_setup(live_server)
 
     # Give the endpoint time to spin up
     time.sleep(1)
@@ -136,8 +134,7 @@ def test_check_add_line_contains_trigger(client, live_server):
     assert b"1 Imported" in res.data
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
-
+    wait_for_all_checks(client)
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
@@ -150,23 +147,25 @@ def test_check_add_line_contains_trigger(client, live_server):
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     set_original(excluding='Something irrelevant')
 
     # A line thats not the trigger should not trigger anything
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
     assert b'1 watches queued for rechecking.' in res.data
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
 
     # The trigger line is ADDED,  this should trigger
     set_original(add_line='<p>Oh yes please</p>')
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
+    # Takes a moment for apprise to fire
+    time.sleep(3)
     with open("test-datastore/notification.txt", 'r') as f:
         response= f.read()
         assert '-Oh yes please-' in response

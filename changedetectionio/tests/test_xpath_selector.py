@@ -89,7 +89,7 @@ def test_check_xpath_filter_utf8(client, live_server):
     time.sleep(1)
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"include_filters": filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"include_filters": filter, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -143,7 +143,7 @@ def test_check_xpath_text_function_utf8(client, live_server):
     time.sleep(1)
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"include_filters": filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"include_filters": filter, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -189,7 +189,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"include_filters": xpath_filter, "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"include_filters": xpath_filter, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -231,7 +231,7 @@ def test_xpath_validation(client, live_server):
 
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"include_filters": "/something horrible", "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"include_filters": "/something horrible", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"is not a valid XPath expression" in res.data
@@ -261,7 +261,7 @@ def test_check_with_prefix_include_filters(client, live_server):
 
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"include_filters":  "xpath://*[contains(@class, 'sametext')]", "url": test_url, "tag": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"include_filters":  "xpath://*[contains(@class, 'sametext')]", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
 

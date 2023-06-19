@@ -45,6 +45,15 @@ def test_check_access_control(app, client, live_server):
         res = client.get(url_for("diff_history_page", uuid="first"))
         assert b'Random content' in res.data
 
+        # Check wrong password does not let us in
+        res = c.post(
+            url_for("login"),
+            data={"password": "WRONG PASSWORD"},
+            follow_redirects=True
+        )
+
+        assert b"LOG OUT" not in res.data
+        assert b"Incorrect password" in res.data
 
 
         # Menu should not be available yet

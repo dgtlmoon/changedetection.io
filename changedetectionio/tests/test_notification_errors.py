@@ -17,7 +17,7 @@ def test_check_notification_error_handling(client, live_server):
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("form_quick_watch_add"),
-        data={"url": test_url, "tag": ''},
+        data={"url": test_url, "tags": ''},
         follow_redirects=True
     )
     assert b"Watch added" in res.data
@@ -32,7 +32,7 @@ def test_check_notification_error_handling(client, live_server):
               "notification_body": "xxxxx",
               "notification_format": "Text",
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "title": "",
               "headers": "",
               "time_between_check-minutes": "180",

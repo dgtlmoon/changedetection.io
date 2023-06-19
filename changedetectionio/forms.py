@@ -28,6 +28,8 @@ from changedetectionio.notification import (
 
 from wtforms.fields import FormField
 
+dictfilt = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
+
 valid_method = {
     'GET',
     'POST',
@@ -89,6 +91,29 @@ class SaltyPasswordField(StringField):
                 self.data = ""
         else:
             self.data = False
+
+class StringTagUUID(StringField):
+
+   # process_formdata(self, valuelist) handled manually in POST handler
+
+    # Is what is shown when field <input> is rendered
+    def _value(self):
+        # Tag UUID to name, on submit it will convert it back (in the submit handler of init.py)
+        if self.data and type(self.data) is list:
+            tag_titles = []
+            for i in self.data:
+                tag = self.datastore.data['settings']['application']['tags'].get(i)
+                if tag:
+                    tag_title = tag.get('title')
+                    if tag_title:
+                        tag_titles.append(tag_title)
+
+            return ', '.join(tag_titles)
+
+        if not self.data:
+            return ''
+
+        return 'error'
 
 class TimeBetweenCheckForm(Form):
     weeks = IntegerField('Weeks', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
@@ -347,7 +372,7 @@ class quickWatchForm(Form):
     from . import processors
 
     url = fields.URLField('URL', validators=[validateURL()])
-    tag = StringField('Group tag', [validators.Optional()])
+    tags = StringTagUUID('Group tag', [validators.Optional()])
     watch_submit_button = SubmitField('Watch', render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
     edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
@@ -355,6 +380,7 @@ class quickWatchForm(Form):
 
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
+
     notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers()])
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
@@ -382,7 +408,7 @@ class SingleBrowserStep(Form):
 class watchForm(commonSettingsForm):
 
     url = fields.URLField('URL', validators=[validateURL()])
-    tag = StringField('Group tag', [validators.Optional()], default='')
+    tags = StringTagUUID('Group tag', [validators.Optional()], default='')
 
     time_between_check = FormField(TimeBetweenCheckForm)
 

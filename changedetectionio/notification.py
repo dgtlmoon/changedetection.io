@@ -186,8 +186,13 @@ def create_notification_parameters(n_object, datastore):
     uuid = n_object['uuid'] if 'uuid' in n_object else ''
 
     if uuid != '':
-        watch_title = datastore.data['watching'][uuid]['title']
-        watch_tag = datastore.data['watching'][uuid]['tag']
+        watch_title = datastore.data['watching'][uuid].get('title', '')
+        tag_list = []
+        tags = datastore.get_all_tags_for_watch(uuid)
+        if tags:
+            for tag_uuid, tag in tags.items():
+                tag_list.append(tag.get('title'))
+        watch_tag = ', '.join(tag_list)
     else:
         watch_title = 'Change Detection'
         watch_tag = ''

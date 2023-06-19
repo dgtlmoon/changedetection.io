@@ -28,7 +28,7 @@ def test_preferred_proxy(client, live_server):
                 "fetch_backend": "html_requests",
                 "headers": "",
                 "proxy": "proxy-two",
-                "tag": "",
+                "tags": "",
                 "url": url,
               },
         follow_redirects=True

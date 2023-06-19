@@ -18,7 +18,7 @@ def test_bad_access(client, live_server):
         url_for("edit_page", uuid="first"),
         data={
               "url": 'javascript:alert(document.domain)',
-              "tag": "",
+              "tags": "",
               "method": "GET",
               "fetch_backend": "html_requests",
               "body": ""},
@@ -29,7 +29,7 @@ def test_bad_access(client, live_server):
 
     res = client.post(
         url_for("form_quick_watch_add"),
-        data={"url": '            javascript:alert(123)', "tag": ''},
+        data={"url": '            javascript:alert(123)', "tags": ''},
         follow_redirects=True
     )
 
@@ -37,7 +37,7 @@ def test_bad_access(client, live_server):
 
     res = client.post(
         url_for("form_quick_watch_add"),
-        data={"url": '%20%20%20javascript:alert(123)%20%20', "tag": ''},
+        data={"url": '%20%20%20javascript:alert(123)%20%20', "tags": ''},
         follow_redirects=True
     )
 
@@ -46,7 +46,7 @@ def test_bad_access(client, live_server):
 
     res = client.post(
         url_for("form_quick_watch_add"),
-        data={"url": ' source:javascript:alert(document.domain)', "tag": ''},
+        data={"url": ' source:javascript:alert(document.domain)', "tags": ''},
         follow_redirects=True
     )
 
@@ -56,7 +56,7 @@ def test_bad_access(client, live_server):
 
     client.post(
         url_for("form_quick_watch_add"),
-        data={"url": 'file:///tasty/disk/drive', "tag": ''},
+        data={"url": 'file:///tasty/disk/drive', "tags": ''},
         follow_redirects=True
     )
     time.sleep(1)

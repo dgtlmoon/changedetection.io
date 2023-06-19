@@ -120,9 +120,9 @@ class import_distill_io_json(Importer):
                 except IndexError:
                     pass
 
-
+# Does this need to be here anymore?
                 if d.get('tags', False):
-                    extras['tag'] = ", ".join(d['tags'])
+                    extras['tags'] = ", ".join(d['tags'])
 
                 new_uuid = datastore.add_watch(url=d['uri'].strip(),
                                                extras=extras,

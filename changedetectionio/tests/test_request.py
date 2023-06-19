@@ -25,7 +25,7 @@ def test_headers_in_request(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(1)
+    wait_for_all_checks(client)
 
     res = client.post(
         url_for("import_page"),
@@ -43,7 +43,7 @@ def test_headers_in_request(client, live_server):
         url_for("edit_page", uuid="first"),
         data={
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
               "headers": "xxx:ooo\ncool:yeah\r\ncookie:"+cookie_header},
         follow_redirects=True
@@ -95,14 +95,14 @@ def test_body_in_request(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # add the first 'version'
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "method": "POST",
               "fetch_backend": "html_requests",
               "body": "something something"},
@@ -110,7 +110,7 @@ def test_body_in_request(client, live_server):
     )
     assert b"Updated watch." in res.data
 
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Now the change which should trigger a change
     body_value = 'Test Body Value'
@@ -118,7 +118,7 @@ def test_body_in_request(client, live_server):
         url_for("edit_page", uuid="first"),
         data={
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "method": "POST",
               "fetch_backend": "html_requests",
               "body": body_value},
@@ -126,7 +126,7 @@ def test_body_in_request(client, live_server):
     )
     assert b"Updated watch." in res.data
 
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # The service should echo back the body
     res = client.get(
@@ -163,7 +163,7 @@ def test_body_in_request(client, live_server):
         url_for("edit_page", uuid="first"),
         data={
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "method": "GET",
               "fetch_backend": "html_requests",
               "body": "invalid"},
@@ -187,7 +187,7 @@ def test_method_in_request(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(2)
+    wait_for_all_checks(client)
     res = client.post(
         url_for("import_page"),
         data={"urls": test_url},
@@ -195,14 +195,14 @@ def test_method_in_request(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     # Attempt to add a method which is not valid
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={
             "url": test_url,
-            "tag": "",
+            "tags": "",
             "fetch_backend": "html_requests",
             "method": "invalid"},
         follow_redirects=True
@@ -214,7 +214,7 @@ def test_method_in_request(client, live_server):
         url_for("edit_page", uuid="first"),
         data={
             "url": test_url,
-            "tag": "",
+            "tags": "",
             "fetch_backend": "html_requests",
             "method": "PATCH"},
         follow_redirects=True
@@ -222,7 +222,7 @@ def test_method_in_request(client, live_server):
     assert b"Updated watch." in res.data
 
     # Give the thread time to pick up the first version
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     # The service should echo back the request verb
     res = client.get(
@@ -233,7 +233,7 @@ def test_method_in_request(client, live_server):
     # The test call service will return the verb as the body
     assert b"PATCH" in res.data
 
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     watches_with_method = 0
     with open('test-datastore/url-watches.json') as f:
@@ -265,7 +265,7 @@ def test_headers_textfile_in_request(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(1)
+    wait_for_all_checks(client)
 
 
     # Add some headers to a request
@@ -273,7 +273,7 @@ def test_headers_textfile_in_request(client, live_server):
         url_for("edit_page", uuid="first"),
         data={
               "url": test_url,
-              "tag": "testtag",
+              "tags": "testtag",
               "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
               "headers": "xxx:ooo\ncool:yeah\r\n"},
         follow_redirects=True

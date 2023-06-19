@@ -3,7 +3,7 @@
 import time
 from flask import url_for
 from urllib.request import urlopen
-from .util import set_original_response, set_modified_response, live_server_setup
+from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 
 sleep_time_for_fetch_thread = 3
 
@@ -42,7 +42,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server):
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
     assert b'1 watches queued for rechecking.' in res.data
 
-    time.sleep(5)
+    wait_for_all_checks(client)
 
     # Now something should be ready, indicated by having a 'unviewed' class
     res = client.get(url_for("index"))
@@ -60,7 +60,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server):
 # `subtractive_selectors` should still work in `source:` type requests
 def test_check_ignore_elements(client, live_server):
     set_original_response()
-    time.sleep(2)
+    time.sleep(1)
     test_url = 'source:'+url_for('test_endpoint', _external=True)
     # Add our URL to the import page
     res = client.post(
@@ -71,14 +71,14 @@ def test_check_ignore_elements(client, live_server):
 
     assert b"1 Imported" in res.data
 
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     #####################
     # We want <span> and <p> ONLY, but ignore span with .foobar-detection
 
     client.post(
         url_for("edit_page", uuid="first"),
-        data={"include_filters": 'span,p', "url": test_url, "tag": "", "subtractive_selectors": ".foobar-detection", 'fetch_backend': "html_requests"},
+        data={"include_filters": 'span,p', "url": test_url, "tags": "", "subtractive_selectors": ".foobar-detection", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
 

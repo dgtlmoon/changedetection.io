@@ -208,7 +208,7 @@ def test_check_json_without_filter(client, live_server):
     )
 
     # Give the thread time to pick it up
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     res = client.get(
         url_for("preview_page", uuid="first"),
@@ -238,7 +238,7 @@ def check_json_filter(json_filter, client, live_server):
     assert b"1 Imported" in res.data
 
     # Give the thread time to pick it up
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -246,7 +246,7 @@ def check_json_filter(json_filter, client, live_server):
         url_for("edit_page", uuid="first"),
         data={"include_filters": json_filter,
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "headers": "",
               "fetch_backend": "html_requests"
               },
@@ -261,14 +261,14 @@ def check_json_filter(json_filter, client, live_server):
     assert bytes(escape(json_filter).encode('utf-8')) in res.data
 
     # Give the thread time to pick it up
-    time.sleep(3)
+    wait_for_all_checks(client)
     #  Make a change
     set_modified_response()
 
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
-    time.sleep(4)
+    wait_for_all_checks(client)
 
     # It should have 'unviewed' still
     res = client.get(url_for("index"))
@@ -306,14 +306,14 @@ def check_json_filter_bool_val(json_filter, client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(3)
+    wait_for_all_checks(client)
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"include_filters": json_filter,
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "headers": "",
               "fetch_backend": "html_requests"
               },
@@ -322,14 +322,14 @@ def check_json_filter_bool_val(json_filter, client, live_server):
     assert b"Updated watch." in res.data
 
     # Give the thread time to pick it up
-    time.sleep(3)
+    wait_for_all_checks(client)
     #  Make a change
     set_modified_response()
 
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     res = client.get(url_for("diff_history_page", uuid="first"))
     # But the change should be there, tho its hard to test the change was detected because it will show old and new versions
@@ -366,7 +366,7 @@ def check_json_ext_filter(json_filter, client, live_server):
     assert b"1 Imported" in res.data
 
     # Give the thread time to pick it up
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -374,7 +374,7 @@ def check_json_ext_filter(json_filter, client, live_server):
         url_for("edit_page", uuid="first"),
         data={"include_filters": json_filter,
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "headers": "",
               "fetch_backend": "html_requests"
               },
@@ -389,14 +389,14 @@ def check_json_ext_filter(json_filter, client, live_server):
     assert bytes(escape(json_filter).encode('utf-8')) in res.data
 
     # Give the thread time to pick it up
-    time.sleep(3)
+    wait_for_all_checks(client)
     #  Make a change
     set_modified_ext_response()
 
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
-    time.sleep(4)
+    wait_for_all_checks(client)
 
     # It should have 'unviewed'
     res = client.get(url_for("index"))
@@ -428,14 +428,14 @@ def test_ignore_json_order(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write('{"world" : 123, "hello": 123}')
 
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
@@ -446,7 +446,7 @@ def test_ignore_json_order(client, live_server):
 
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data

@@ -91,7 +91,7 @@ def test_check_filter_multiline(client, live_server):
         data={"include_filters": '',
               'extract_text': '/something.+?6 billion.+?lines/si',
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "headers": "",
               'fetch_backend': "html_requests"
               },
@@ -146,7 +146,7 @@ def test_check_filter_and_regex_extract(client, live_server):
         data={"include_filters": include_filters,
               'extract_text': '\d+ online\r\n\d+ guests\r\n/somecase insensitive \d+/i\r\n/somecase insensitive (345\d)/i',
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "headers": "",
               'fetch_backend': "html_requests"
               },

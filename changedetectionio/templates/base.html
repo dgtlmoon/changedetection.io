@@ -59,6 +59,9 @@
             {% if not
             current_diff_url %}
               <li class="pure-menu-item">
+                <a href="{{ url_for('tags.tags_overview_page')}}" class="pure-menu-link">GROUPS</a>
+              </li>
+              <li class="pure-menu-item">
                 <a href="{{ url_for('settings_page')}}" class="pure-menu-link">SETTINGS</a>
               </li>
               <li class="pure-menu-item">
@@ -86,7 +89,7 @@
             <!-- We use GET here so it offers people a chance to set bookmarks etc -->
             <form name="searchForm" action="" method="GET">
               <input id="search-q" class="" name="q" placeholder="URL or Title {% if active_tag %}in '{{ active_tag }}'{% endif %}" required="" type="text" value="">
-              <input name="tag" type="hidden" value="{% if active_tag %}{{active_tag}}{% endif %}">
+              <input name="tags" type="hidden" value="{% if active_tag %}{{active_tag}}{% endif %}">
               <button class="toggle-button " id="toggle-search" type="button" title="Search, or Use Alt+S Key" >
                 {% include "svgs/search-icon.svg" %}
               </button>

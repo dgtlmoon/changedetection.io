@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, extract_api_key_from_UI
+from .util import live_server_setup, extract_api_key_from_UI, wait_for_all_checks
 
 import json
 import uuid
@@ -57,6 +57,7 @@ def test_setup(client, live_server):
     live_server_setup(live_server)
 
 def test_api_simple(client, live_server):
+    #live_server_setup(live_server)
 
     api_key = extract_api_key_from_UI(client)
 
@@ -86,7 +87,7 @@ def test_api_simple(client, live_server):
     watch_uuid = res.json.get('uuid')
     assert res.status_code == 201
 
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Verify its in the list and that recheck worked
     res = client.get(
@@ -107,7 +108,7 @@ def test_api_simple(client, live_server):
     )
     assert len(res.json) == 0
 
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     set_modified_response()
     # Trigger recheck of all ?recheck_all=1
@@ -115,7 +116,7 @@ def test_api_simple(client, live_server):
         url_for("createwatch", recheck_all='1'),
         headers={'x-api-key': api_key},
     )
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Did the recheck fire?
     res = client.get(
@@ -297,6 +298,8 @@ def test_api_watch_PUT_update(client, live_server):
         url_for("edit_page", uuid=watch_uuid),
     )
     assert b"cookie: yum" in res.data, "'cookie: yum' found in 'headers' section"
+    assert b"One" in res.data, "Tag 'One' was found"
+    assert b"Two" in res.data, "Tag 'Two' was found"
 
     # HTTP PUT ( UPDATE an existing watch )
     res = client.put(
@@ -319,7 +322,8 @@ def test_api_watch_PUT_update(client, live_server):
     )
     assert b"new title" in res.data, "new title found in edit page"
     assert b"552" in res.data, "552 minutes found in edit page"
-    assert b"One, Two" in res.data, "Tag 'One, Two' was found"
+    assert b"One" in res.data, "Tag 'One' was found"
+    assert b"Two" in res.data, "Tag 'Two' was found"
     assert b"cookie: all eaten" in res.data, "'cookie: all eaten' found in 'headers' section"
 
     ######################################################

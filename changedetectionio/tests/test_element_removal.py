@@ -129,7 +129,7 @@ def test_element_removal_full(client, live_server):
         data={
             "subtractive_selectors": subtractive_selectors_data,
             "url": test_url,
-            "tag": "",
+            "tags": "",
             "headers": "",
             "fetch_backend": "html_requests",
         },

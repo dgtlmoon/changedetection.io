@@ -19,7 +19,7 @@ def test_visual_selector_content_ready(client, live_server):
 
     res = client.post(
         url_for("form_quick_watch_add"),
-        data={"url": test_url, "tag": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
+        data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
         follow_redirects=True
     )
     assert b"Watch added in Paused state, saving will unpause" in res.data
@@ -28,7 +28,7 @@ def test_visual_selector_content_ready(client, live_server):
         url_for("edit_page", uuid="first", unpause_on_save=1),
         data={
               "url": test_url,
-              "tag": "",
+              "tags": "",
               "headers": "",
               'fetch_backend': "html_webdriver",
               'webdriver_js_execute_code': 'document.querySelector("button[name=test-button]").click();'

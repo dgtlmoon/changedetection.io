@@ -57,7 +57,6 @@ class perform_site_check(difference_detection_processor):
 
         # DeepCopy so we can be sure we don't accidently change anything by reference
         watch = deepcopy(self.datastore.data['watching'].get(uuid))
-
         if not watch:
             raise Exception("Watch no longer exists.")
 
@@ -71,9 +70,9 @@ class perform_site_check(difference_detection_processor):
         update_obj = {'last_notification_error': False, 'last_error': False}
 
         # Tweak the base config with the per-watch ones
-        extra_headers = watch.get_all_headers()
-        request_headers = self.datastore.get_all_headers()
-        request_headers.update(extra_headers)
+        request_headers = watch.get('headers', [])
+        request_headers.update(self.datastore.get_all_base_headers())
+        request_headers.update(self.datastore.get_all_headers_in_textfile_for_watch(uuid=uuid))
 
         # https://github.com/psf/requests/issues/4525
         # Requests doesnt yet support brotli encoding, so don't put 'br' here, be totally sure that the user cannot
@@ -191,21 +190,23 @@ class perform_site_check(difference_detection_processor):
 
             fetcher.content = fetcher.content.replace('</body>', metadata + '</body>')
 
+        # Better would be if Watch.model could access the global data also
+        # and then use getattr https://docs.python.org/3/reference/datamodel.html#object.__getitem__
+        # https://realpython.com/inherit-python-dict/ instead of doing it procedurely
+        include_filters_from_tags = self.datastore.get_tag_overrides_for_watch(uuid=uuid, attr='include_filters')
+        include_filters_rule = [*watch.get('include_filters', []), *include_filters_from_tags]
 
-        include_filters_rule = deepcopy(watch.get('include_filters', []))
-        # include_filters_rule = watch['include_filters']
-        subtractive_selectors = watch.get(
-            "subtractive_selectors", []
-        ) + self.datastore.data["settings"]["application"].get(
-            "global_subtractive_selectors", []
-        )
+        subtractive_selectors = [*self.datastore.get_tag_overrides_for_watch(uuid=uuid, attr='subtractive_selectors'),
+                                 *watch.get("subtractive_selectors", []),
+                                 *self.datastore.data["settings"]["application"].get("global_subtractive_selectors", [])
+                                 ]
 
         # Inject a virtual LD+JSON price tracker rule
         if watch.get('track_ldjson_price_data', '') == PRICE_DATA_TRACK_ACCEPT:
             include_filters_rule.append(html_tools.LD_JSON_PRODUCT_OFFER_SELECTOR)
 
-        has_filter_rule = include_filters_rule and len("".join(include_filters_rule).strip())
-        has_subtractive_selectors = subtractive_selectors and len(subtractive_selectors[0].strip())
+        has_filter_rule = len(include_filters_rule) and len(include_filters_rule[0].strip())
+        has_subtractive_selectors = len(subtractive_selectors) and len(subtractive_selectors[0].strip())
 
         if is_json and not has_filter_rule:
             include_filters_rule.append("json:$")

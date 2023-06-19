@@ -20,7 +20,7 @@ def test_jinja2_in_url_query(client, live_server):
                               "date={% now 'Europe/Berlin', '%Y' %}.{% now 'Europe/Berlin', '%m' %}.{% now 'Europe/Berlin', '%d' %}", )
     res = client.post(
         url_for("form_quick_watch_add"),
-        data={"url": full_url, "tag": "test"},
+        data={"url": full_url, "tags": "test"},
         follow_redirects=True
     )
     assert b"Watch added" in res.data
