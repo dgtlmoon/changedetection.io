@@ -257,4 +257,4 @@ def test_limit_tag_ui(client, live_server):
     assert b'test-tag' in res.data
     assert res.data.count(b'test-tag') == 21 # Should be 20 times, plus the link 1
 
-    assert res.data.count(b'edit/') == 20  # Should be 20 times, plus the link 1
+    assert res.data.count(b'edit/') == 20  # Should be 20 times (edit link)
