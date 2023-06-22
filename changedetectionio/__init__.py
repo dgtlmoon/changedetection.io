@@ -1364,7 +1364,7 @@ def changedetection_app(config=None, datastore_o=None):
             flash("{} watches set to use default notification settings".format(len(uuids)))
 
         elif (op == 'assign-tag'):
-            op_extradata = request.form.get('op_extradata', '')
+            op_extradata = request.form.get('op_extradata', '').strip()
             if op_extradata:
                 tag_uuid = datastore.add_tag(name=op_extradata)
                 if op_extradata and tag_uuid:
