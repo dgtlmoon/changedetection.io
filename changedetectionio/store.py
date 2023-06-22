@@ -566,9 +566,12 @@ class ChangeDetectionStore:
         return ret
 
     def add_tag(self, name):
-        print (">>> Adding new tag -", name)
         # If name exists, return that
         n = name.strip().lower()
+        print (f">>> Adding new tag - '{n}")
+        if not n:
+            return False
+
         for uuid, tag in self.__data['settings']['application'].get('tags', {}).items():
             if n == tag.get('title', '').lower().strip():
                 print (f">>> Tag {name} already exists")
