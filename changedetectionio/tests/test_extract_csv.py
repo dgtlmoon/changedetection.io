@@ -24,7 +24,7 @@ def test_check_extract_text_from_diff(client, live_server):
     )
 
     assert b"1 Imported" in res.data
-    time.sleep(1)
+    wait_for_all_checks
 
     # Load in 5 different numbers/changes
     last_date=""

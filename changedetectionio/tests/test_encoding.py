@@ -3,7 +3,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 import pytest
 
 
@@ -39,7 +39,7 @@ def test_check_encoding_detection(client, live_server):
     )
 
     # Give the thread time to pick it up
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     res = client.get(
         url_for("preview_page", uuid="first"),
@@ -68,7 +68,7 @@ def test_check_encoding_detection_missing_content_type_header(client, live_serve
     )
 
     # Give the thread time to pick it up
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     res = client.get(
         url_for("preview_page", uuid="first"),

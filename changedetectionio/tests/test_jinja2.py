@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
@@ -24,7 +24,7 @@ def test_jinja2_in_url_query(client, live_server):
         follow_redirects=True
     )
     assert b"Watch added" in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(
         url_for("preview_page", uuid="first"),

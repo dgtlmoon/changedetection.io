@@ -93,7 +93,8 @@ def test_check_xpath_filter_utf8(client, live_server):
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
+
     res = client.get(url_for("index"))
     assert b'Unicode strings with encoding declaration are not supported.' not in res.data
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)

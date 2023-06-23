@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 
 def set_original_ignore_response():
@@ -67,7 +67,7 @@ def test_unique_lines_functionality(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # Add our URL to the import page
     res = client.post(
@@ -83,12 +83,13 @@ def test_unique_lines_functionality(client, live_server):
     #  Make a change
     set_modified_swapped_lines()
 
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
+
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))

@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from . util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 
 def set_original_ignore_response():
@@ -42,7 +42,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server):
     assert b"1 Imported" in res.data
 
     # it needs time to save the original version
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     ### test regex with filter
     res = client.post(
@@ -55,7 +55,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server):
     )
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     client.get(url_for("diff_history_page", uuid="first"))
 
@@ -64,7 +64,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server):
         f.write("<html>some new noise with cool stuff2 ok</html>")
 
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (nothing should match the regex and filter)
     res = client.get(url_for("index"))
@@ -75,7 +75,8 @@ def test_trigger_regex_functionality_with_filter(client, live_server):
         f.write("<html>some new noise with <span id=in-here>cool stuff6</span> ok</html>")
 
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
+
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 

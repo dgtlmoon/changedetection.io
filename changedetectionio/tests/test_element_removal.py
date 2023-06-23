@@ -159,7 +159,7 @@ def test_element_removal_full(client, live_server):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # There should not be an unviewed change, as changes should be removed
     res = client.get(url_for("index"))

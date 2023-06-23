@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import set_original_response, set_modified_response, live_server_setup
+from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 
 sleep_time_for_fetch_thread = 3
 
@@ -22,7 +22,7 @@ def test_fetch_pdf(client, live_server):
 
     assert b"1 Imported" in res.data
 
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     res = client.get(
         url_for("preview_page", uuid="first"),
         follow_redirects=True

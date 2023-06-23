@@ -2,7 +2,7 @@ import os
 import time
 import re
 from flask import url_for
-from . util import set_original_response, set_modified_response, live_server_setup
+from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 import logging
 
 def test_check_notification_error_handling(client, live_server):
@@ -11,7 +11,7 @@ def test_check_notification_error_handling(client, live_server):
     set_original_response()
 
     # Give the endpoint time to spin up
-    time.sleep(2)
+    time.sleep(1)
 
     # Set a URL and fetch it, then set a notification URL which is going to give errors
     test_url = url_for('test_endpoint', _external=True)
@@ -22,7 +22,7 @@ def test_check_notification_error_handling(client, live_server):
     )
     assert b"Watch added" in res.data
 
-    time.sleep(2)
+    wait_for_all_checks(client)
     set_modified_response()
 
     res = client.post(

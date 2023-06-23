@@ -3,7 +3,7 @@
 import time
 from flask import url_for
 from urllib.request import urlopen
-from .util import set_original_response, set_modified_response, live_server_setup
+from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 
 sleep_time_for_fetch_thread = 3
 
@@ -35,14 +35,14 @@ def test_check_basic_change_detection_functionality(client, live_server):
 
     assert b"1 Imported" in res.data
 
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # Do this a few times.. ensures we dont accidently set the status
     for n in range(3):
         client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
         # Give the thread time to pick it up
-        time.sleep(sleep_time_for_fetch_thread)
+        wait_for_all_checks(client)
 
         # It should report nothing found (no new 'unviewed' class)
         res = client.get(url_for("index"))
@@ -64,7 +64,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
@@ -86,7 +86,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))

@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 
 def set_original_ignore_response():
@@ -32,8 +32,7 @@ def test_obfuscations(client, live_server):
     assert b"1 Imported" in res.data
 
     # Give the thread time to pick it up
-    time.sleep(3)
-
+    wait_for_all_checks(client)
     # Check HTML conversion detected and workd
     res = client.get(
         url_for("preview_page", uuid="first"),

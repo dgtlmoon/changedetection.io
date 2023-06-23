@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from . util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 
 def set_original_ignore_response():
@@ -64,7 +64,7 @@ def test_trigger_functionality(client, live_server):
     set_original_ignore_response()
 
     # Give the endpoint time to spin up
-    time.sleep(1)
+    wait_for_all_checks(client)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -96,7 +96,7 @@ def test_trigger_functionality(client, live_server):
     assert bytes(trigger_text.encode('utf-8')) in res.data
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     
     # so that we set the state to 'unviewed' after all the edits
     client.get(url_for("diff_history_page", uuid="first"))
@@ -105,7 +105,7 @@ def test_trigger_functionality(client, live_server):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
@@ -118,18 +118,19 @@ def test_trigger_functionality(client, live_server):
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
 
     # Now set the content which contains the trigger text
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     set_modified_with_trigger_text_response()
 
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
+
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
     

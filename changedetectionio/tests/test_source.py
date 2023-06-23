@@ -22,7 +22,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server):
 
     assert b"1 Imported" in res.data
 
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     #####################
 
@@ -82,7 +82,7 @@ def test_check_ignore_elements(client, live_server):
         follow_redirects=True
     )
 
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     res = client.get(
         url_for("preview_page", uuid="first"),
