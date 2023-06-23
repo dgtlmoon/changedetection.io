@@ -19,9 +19,9 @@ def test_rss_and_token(client, live_server):
     assert b"1 Imported" in res.data
     rss_token = extract_rss_token_from_UI(client)
 
-    time.sleep(2)
+    wait_for_all_checks(client)
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     # Add our URL to the import page
     res = client.get(

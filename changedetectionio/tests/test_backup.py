@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from .util import set_original_response, set_modified_response, live_server_setup
+from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 from flask import url_for
 from urllib.request import urlopen
 from zipfile import ZipFile
@@ -24,7 +24,7 @@ def test_backup(client, live_server):
     )
 
     assert b"1 Imported" in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     res = client.get(
         url_for("get_backup"),

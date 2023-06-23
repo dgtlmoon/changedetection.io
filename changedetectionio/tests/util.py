@@ -107,7 +107,7 @@ def wait_for_all_checks(client):
     attempt=0
     time.sleep(0.1)
     while attempt < 60:
-        time.sleep(1)
+        time.sleep(0.5)
         res = client.get(url_for("index"))
         if not b'Checking now' in res.data:
             break

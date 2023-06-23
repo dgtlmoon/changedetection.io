@@ -94,7 +94,7 @@ def test_restock_detection(client, live_server):
     assert b'not-in-stock' not in res.data
 
     # We should have a notification
-    time.sleep(2)
+    wait_for_all_checks(client)
     assert os.path.isfile("test-datastore/notification.txt")
     os.unlink("test-datastore/notification.txt")
 

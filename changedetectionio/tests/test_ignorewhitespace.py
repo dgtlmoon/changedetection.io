@@ -2,7 +2,8 @@
 
 import time
 from flask import url_for
-from . util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
+
 
 def test_setup(live_server):
     live_server_setup(live_server)
@@ -50,7 +51,6 @@ def set_original_ignore_response():
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
 def test_check_ignore_whitespace(client, live_server):
-    sleep_time_for_fetch_thread = 3
 
     # Give the endpoint time to spin up
     time.sleep(1)
@@ -78,17 +78,17 @@ def test_check_ignore_whitespace(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     set_original_ignore_response_but_with_whitespace()
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))

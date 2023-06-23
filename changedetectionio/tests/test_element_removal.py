@@ -5,7 +5,7 @@ import time
 from flask import url_for
 
 from ..html_tools import *
-from .util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 
 def test_setup(live_server):
@@ -120,7 +120,7 @@ def test_element_removal_full(client, live_server):
         url_for("import_page"), data={"urls": test_url}, follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(1)
+    wait_for_all_checks(client)
     # Goto the edit page, add the filter data
     # Not sure why \r needs to be added - absent of the #changetext this is not necessary
     subtractive_selectors_data = "header\r\nfooter\r\nnav\r\n#changetext"
@@ -147,7 +147,7 @@ def test_element_removal_full(client, live_server):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # so that we set the state to 'unviewed' after all the edits
     client.get(url_for("diff_history_page", uuid="first"))

@@ -2,7 +2,8 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, extract_UUID_from_client, extract_api_key_from_UI
+from .util import live_server_setup, extract_UUID_from_client, extract_api_key_from_UI, wait_for_all_checks
+
 
 def set_response_with_ldjson():
     test_return_data = """<html>
@@ -92,7 +93,7 @@ def test_check_ldjson_price_autodetect(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Should get a notice that it's available
     res = client.get(url_for("index"))
@@ -102,11 +103,11 @@ def test_check_ldjson_price_autodetect(client, live_server):
     uuid = extract_UUID_from_client(client)
 
     client.get(url_for('price_data_follower.accept', uuid=uuid, follow_redirects=True))
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(2)
+    wait_for_all_checks(client)
     # Offer should be gone
     res = client.get(url_for("index"))
     assert b'Embedded price data' not in res.data
@@ -138,7 +139,7 @@ def test_check_ldjson_price_autodetect(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'ldjson-price-track-offer' not in res.data
     

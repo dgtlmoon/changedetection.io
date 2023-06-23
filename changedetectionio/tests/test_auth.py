@@ -19,7 +19,7 @@ def test_basic_auth(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(1)
+    wait_for_all_checks(client)
 
     # Check form validation
     res = client.post(
@@ -29,7 +29,7 @@ def test_basic_auth(client, live_server):
     )
     assert b"Updated watch." in res.data
 
-    time.sleep(1)
+    wait_for_all_checks(client)
     res = client.get(
         url_for("preview_page", uuid="first"),
         follow_redirects=True

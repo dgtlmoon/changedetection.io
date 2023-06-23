@@ -1,4 +1,4 @@
-from . util import live_server_setup, extract_UUID_from_client
+from .util import live_server_setup, extract_UUID_from_client, wait_for_all_checks
 from flask import url_for
 import time
 
@@ -19,10 +19,10 @@ def test_check_access_control(app, client, live_server):
         )
 
         assert b"1 Imported" in res.data
-        time.sleep(2)
+        wait_for_all_checks(client)
         res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
         assert b'1 watches queued for rechecking.' in res.data
-        time.sleep(2)
+        wait_for_all_checks(client)
 
         # Enable password check and diff page access bypass
         res = c.post(

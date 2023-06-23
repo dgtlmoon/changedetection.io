@@ -4,7 +4,7 @@
 import os
 import time
 from flask import url_for
-from .util import set_original_response, live_server_setup
+from .util import set_original_response, live_server_setup, wait_for_all_checks
 from changedetectionio.model import App
 
 
@@ -62,7 +62,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
     assert b"Watch added" in res.data
 
     # Give the thread time to pick up the first version
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -101,14 +101,14 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Shouldn't exist, shouldn't have fired
     assert not os.path.isfile("test-datastore/notification.txt")
     # Now the filter should exist
     set_response_with_filter()
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     assert os.path.isfile("test-datastore/notification.txt")
 

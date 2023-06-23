@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 from ..html_tools import *
 
@@ -82,7 +82,7 @@ def test_check_filter_multiline(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -99,7 +99,7 @@ def test_check_filter_multiline(client, live_server):
     )
 
     assert b"Updated watch." in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     res = client.get(
         url_for("preview_page", uuid="first"),
@@ -132,12 +132,12 @@ def test_check_filter_and_regex_extract(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(1)
+    wait_for_all_checks(client)
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -156,7 +156,7 @@ def test_check_filter_and_regex_extract(client, live_server):
     assert b"Updated watch." in res.data
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     #  Make a change
     set_modified_response()
@@ -164,7 +164,7 @@ def test_check_filter_and_regex_extract(client, live_server):
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should have 'unviewed' still
     # Because it should be looking at only that 'sametext' id
