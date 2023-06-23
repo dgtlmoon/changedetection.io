@@ -316,10 +316,11 @@ class ValidateCSSJSONXPATHInput(object):
                 if not self.allow_xpath:
                     raise ValidationError("XPath not permitted in this field!")
                 from lxml import etree, html
+                import elementpath
                 tree = html.fromstring("<html></html>")
 
                 try:
-                    tree.xpath(line.strip())
+                    elementpath.select(tree, line)
                 except etree.XPathEvalError as e:
                     message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
                     raise ValidationError(message % (line, str(e)))

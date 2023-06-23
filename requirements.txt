@@ -42,6 +42,8 @@ paho-mqtt
 # (introduced once apprise became a dep)
 cryptography~=3.4
 
+elementpath
+
 # Used for CSS filtering
 beautifulsoup4
 
