@@ -205,10 +205,9 @@ class ChangeDetectionStore:
 
     # Clone a watch by UUID
     def clone(self, uuid):
-        url = self.data['watching'][uuid]['url']
-        tag = self.data['watching'][uuid].get('tags',[])
+        url = self.data['watching'][uuid].get('url')
         extras = self.data['watching'][uuid]
-        new_uuid = self.add_watch(url=url, tag_uuids=tag, extras=extras)
+        new_uuid = self.add_watch(url=url, extras=extras)
         return new_uuid
 
     def url_exists(self, url):
@@ -247,10 +246,6 @@ class ChangeDetectionStore:
 
         if extras is None:
             extras = {}
-
-        # should always be str
-        if tag is None or not tag:
-            tag = ''
 
         # Incase these are copied across, assume it's a reference and deepcopy()
         apply_extras = deepcopy(extras)
@@ -303,15 +298,17 @@ class ChangeDetectionStore:
             flash('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX', 'error')
             return None
 
+        if extras.get('tags') and type(extras.get('tags')) == str:
+            extras['tags'] = list(extras.get('tags'))
 
-        # #Re 569
-        # Could be in 'tags',  var or extras, smash them together and strip
-        apply_extras['tags'] = []
-        if tag or extras.get('tags'):
-            tags = list(filter(None, list(set().union(tag.split(','), extras.get('tags', '').split(',')))))
-            for t in list(map(str.strip, tags)):
+
+        if tag:
+            if tag and type(tag) == str:
+                tag = [str]
+            for t in tag:
                 # for each stripped tag, add tag as UUID
-                apply_extras['tags'].append(self.add_tag(t))
+                for a_t in t.split(','):
+                    apply_extras['tags'].append(self.add_tag(a_t))
 
         # Or if UUIDs given directly
         if tag_uuids:
