@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, get_UUID_for_tag_name
+from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, get_UUID_for_tag_name, extract_UUID_from_client
 import os
 
 
@@ -260,3 +260,27 @@ def test_limit_tag_ui(client, live_server):
     assert b'test-tag' in res.data
     assert res.data.count(b'processor-text_json_diff') == 20
     assert b"object at" not in res.data
+
+
+def test_clone_tag(client, live_server):
+    live_server_setup(live_server)
+
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url + " test-tag, another-tag\r\n"},
+        follow_redirects=True
+    )
+
+    assert b"1 Imported" in res.data
+
+    res = client.get(url_for("index"))
+    assert b'test-tag' in res.data
+    assert b'another-tag' in res.data
+
+    watch_uuid = extract_UUID_from_client(client)
+    res = client.get(url_for("form_clone", uuid=watch_uuid), follow_redirects=True)
+
+    assert b'test-tag' in res.data
+    assert b'another-tag' in res.data
+    assert b'Cloned' in res.data

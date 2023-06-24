@@ -301,14 +301,15 @@ class ChangeDetectionStore:
         if extras.get('tags') and type(extras.get('tags')) == str:
             extras['tags'] = list(extras.get('tags'))
 
-
         if tag:
+            apply_extras['tags'] = []
             if tag and type(tag) == str:
-                tag = [str]
+                tag = [tag]
             for t in tag:
                 # for each stripped tag, add tag as UUID
                 for a_t in t.split(','):
-                    apply_extras['tags'].append(self.add_tag(a_t))
+                    tag_uuid = self.add_tag(a_t)
+                    apply_extras['tags'].append(tag_uuid)
 
         # Or if UUIDs given directly
         if tag_uuids:
