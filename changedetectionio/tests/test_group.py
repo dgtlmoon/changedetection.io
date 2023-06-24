@@ -262,8 +262,8 @@ def test_limit_tag_ui(client, live_server):
     assert b"object at" not in res.data
 
 
-def test_clone_tag(client, live_server):
-    live_server_setup(live_server)
+def test_clone_tag_on_import(client, live_server):
+    #live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -281,6 +281,32 @@ def test_clone_tag(client, live_server):
     watch_uuid = extract_UUID_from_client(client)
     res = client.get(url_for("form_clone", uuid=watch_uuid), follow_redirects=True)
 
+    assert b'Cloned' in res.data
+    # 2 times plus the top link to tag
+    assert res.data.count(b'test-tag') == 3
+    assert res.data.count(b'another-tag') == 3
+
+
+def test_clone_tag_on_quickwatchform_add(client, live_server):
+
+    test_url = url_for('test_endpoint', _external=True)
+
+    res = client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url, "tags": ' test-tag, another-tag      '},
+        follow_redirects=True
+    )
+
+    assert b"Watch added" in res.data
+
+    res = client.get(url_for("index"))
     assert b'test-tag' in res.data
     assert b'another-tag' in res.data
+
+    watch_uuid = extract_UUID_from_client(client)
+    res = client.get(url_for("form_clone", uuid=watch_uuid), follow_redirects=True)
+
     assert b'Cloned' in res.data
+    # 2 times plus the top link to tag
+    assert res.data.count(b'test-tag') == 3
+    assert res.data.count(b'another-tag') == 3
