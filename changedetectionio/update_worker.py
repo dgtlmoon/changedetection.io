@@ -66,7 +66,7 @@ class update_worker(threading.Thread):
         self.notification_q.put(n_object)
 
     # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
-    def _check_cascading_vars(self, var_name, watch):
+    def _resolve_notification_var(self, var_name, watch):
 
         from changedetectionio.notification import (
             default_notification_format_for_watch,
@@ -74,31 +74,31 @@ class update_worker(threading.Thread):
             default_notification_title,
         )
 
-
-        # Would be better if this was some kind of Object where Watch can reference the parent datastore etc
-        v = watch.get(var_name)
-        if v and not watch.get('notification_muted'):
-            return v
-
         tags = self.datastore.get_all_tags_for_watch(uuid=watch.get('uuid'))
-        if tags:
-            for tag_uuid, tag in tags.items():
-                v = tag.get(var_name)
-                if v and not tag.get('notification_muted'):
-                    return v
 
-        if self.datastore.data['settings']['application'].get(var_name):
-            return self.datastore.data['settings']['application'].get(var_name)
+        # Cascades to the first setting (ie, closest to the individual watch settings) that's defined
+        return next(
+            resolved_var
+            for resolved_var in [
 
-        # Otherwise could be defaults
-        if var_name == 'notification_format':
-            return default_notification_format_for_watch
-        if var_name == 'notification_body':
-            return default_notification_body
-        if var_name == 'notification_title':
-            return default_notification_title
+                # Would be better if this was some kind of Object where Watch can reference the parent datastore etc
+                # Resolve individual settings first if exists;
+                watch.get(var_name),
 
-        return None
+                # .. then first tag that defines the setting;
+                *[tag.get(var_name) for tag_uuid, tag in tags.items()],
+                
+                # .. otherwise, from global settings;
+                self.datastore.data['settings']['application'].get(var_name)
+            
+            ] if resolved_var
+        ) or {
+            'notification_format': default_notification_format_for_watch,
+            'notification_body': default_notification_body,
+            'notification_title': default_notification_title
+
+        # .. and finally, if not defined anywhere, use static defaults -- or just None
+        }.get(var_name)
 
     def send_content_changed_notification(self, watch_uuid):
 
@@ -119,14 +119,14 @@ class update_worker(threading.Thread):
         # Should be a better parent getter in the model object
 
         # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
-        n_object['notification_urls'] = self._check_cascading_vars('notification_urls', watch)
-        n_object['notification_title'] = self._check_cascading_vars('notification_title', watch)
-        n_object['notification_body'] = self._check_cascading_vars('notification_body', watch)
-        n_object['notification_format'] = self._check_cascading_vars('notification_format', watch)
+        n_object['notification_urls'] = self._resolve_notification_var('notification_urls', watch)
+        n_object['notification_title'] = self._resolve_notification_var('notification_title', watch)
+        n_object['notification_body'] = self._resolve_notification_var('notification_body', watch)
+        n_object['notification_format'] = self._resolve_notification_var('notification_format', watch)
 
         # (Individual watch) Only prepare to notify if the rules above matched
         queued = False
-        if n_object and n_object.get('notification_urls'):
+        if n_object and n_object.get('notification_urls') and not self._resolve_notification_var('notification_muted', watch):
             queued = True
             self.queue_notification_for_watch(n_object, watch)
 
