@@ -154,6 +154,10 @@ def test_tag_add_in_ui(client, live_server):
     )
     assert b"Tag added" in res.data
     assert b"new-test-tag" in res.data
+
+    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+    assert b'All tags deleted' in res.data
+
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
@@ -219,12 +223,10 @@ def test_group_tag_notification(client, live_server):
     assert "test-tag" in notification_submission
     assert "other-tag" in notification_submission
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
-
     #@todo Test that multiple notifications fired
     #@todo Test that each of multiple notifications with different settings
-
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
 def test_limit_tag_ui(client, live_server):
     #live_server_setup(live_server)
@@ -260,11 +262,12 @@ def test_limit_tag_ui(client, live_server):
     assert b'test-tag' in res.data
     assert res.data.count(b'processor-text_json_diff') == 20
     assert b"object at" not in res.data
-
-
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+    assert b'All tags deleted' in res.data
 def test_clone_tag_on_import(client, live_server):
     #live_server_setup(live_server)
-
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("import_page"),
@@ -285,9 +288,11 @@ def test_clone_tag_on_import(client, live_server):
     # 2 times plus the top link to tag
     assert res.data.count(b'test-tag') == 3
     assert res.data.count(b'another-tag') == 3
-
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
 def test_clone_tag_on_quickwatchform_add(client, live_server):
+    #live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
 
@@ -310,3 +315,8 @@ def test_clone_tag_on_quickwatchform_add(client, live_server):
     # 2 times plus the top link to tag
     assert res.data.count(b'test-tag') == 3
     assert res.data.count(b'another-tag') == 3
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+    assert b'All tags deleted' in res.data
