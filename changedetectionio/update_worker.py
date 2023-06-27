@@ -66,7 +66,7 @@ class update_worker(threading.Thread):
         self.notification_q.put(n_object)
 
     # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
-    def _check_vars(self, var_name, watch):
+    def _check_cascading_vars(self, var_name, watch):
 
         from changedetectionio.notification import (
             default_notification_format_for_watch,
@@ -103,7 +103,7 @@ class update_worker(threading.Thread):
     def send_content_changed_notification(self, watch_uuid):
 
         n_object = {}
-        watch = self.datastore.data['watching'].get(watch_uuid, False)
+        watch = self.datastore.data['watching'].get(watch_uuid)
         if not watch:
             return
 
@@ -119,18 +119,18 @@ class update_worker(threading.Thread):
         # Should be a better parent getter in the model object
 
         # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
-        n_object['notification_urls'] = self._check_vars('notification_urls', watch)
-        n_object['notification_title'] = self._check_vars('notification_title', watch)
-        n_object['notification_body'] = self._check_vars('notification_body', watch)
-        n_object['notification_format'] = self._check_vars('notification_format', watch)
+        n_object['notification_urls'] = self._check_cascading_vars('notification_urls', watch)
+        n_object['notification_title'] = self._check_cascading_vars('notification_title', watch)
+        n_object['notification_body'] = self._check_cascading_vars('notification_body', watch)
+        n_object['notification_format'] = self._check_cascading_vars('notification_format', watch)
 
         # (Individual watch) Only prepare to notify if the rules above matched
-        sent = False
-        if 'notification_urls' in n_object and n_object.get('notification_urls'):
-            sent = True
+        queued = False
+        if n_object and n_object.get('notification_urls'):
+            queued = True
             self.queue_notification_for_watch(n_object, watch)
 
-        return sent
+        return queued
 
 
     def send_filter_failure_notification(self, watch_uuid):
