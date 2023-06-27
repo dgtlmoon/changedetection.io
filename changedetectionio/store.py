@@ -566,7 +566,7 @@ class ChangeDetectionStore:
     def add_tag(self, name):
         # If name exists, return that
         n = name.strip().lower()
-        print (f">>> Adding new tag - '{n}")
+        print (f">>> Adding new tag - '{n}'")
         if not n:
             return False
 
