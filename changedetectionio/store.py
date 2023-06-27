@@ -205,10 +205,9 @@ class ChangeDetectionStore:
 
     # Clone a watch by UUID
     def clone(self, uuid):
-        url = self.data['watching'][uuid]['url']
-        tag = self.data['watching'][uuid].get('tags',[])
+        url = self.data['watching'][uuid].get('url')
         extras = self.data['watching'][uuid]
-        new_uuid = self.add_watch(url=url, tag_uuids=tag, extras=extras)
+        new_uuid = self.add_watch(url=url, extras=extras)
         return new_uuid
 
     def url_exists(self, url):
@@ -248,12 +247,9 @@ class ChangeDetectionStore:
         if extras is None:
             extras = {}
 
-        # should always be str
-        if tag is None or not tag:
-            tag = ''
-
         # Incase these are copied across, assume it's a reference and deepcopy()
         apply_extras = deepcopy(extras)
+        apply_extras['tags'] = [] if not apply_extras.get('tags') else apply_extras.get('tags')
 
         # Was it a share link? try to fetch the data
         if (url.startswith("https://changedetection.io/share/")):
@@ -303,19 +299,21 @@ class ChangeDetectionStore:
             flash('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX', 'error')
             return None
 
-
-        # #Re 569
-        # Could be in 'tags',  var or extras, smash them together and strip
-        apply_extras['tags'] = []
-        if tag or extras.get('tags'):
-            tags = list(filter(None, list(set().union(tag.split(','), extras.get('tags', '').split(',')))))
-            for t in list(map(str.strip, tags)):
+        if tag and type(tag) == str:
+            # Then it's probably a string of the actual tag by name, split and add it
+            for t in tag.split(','):
                 # for each stripped tag, add tag as UUID
-                apply_extras['tags'].append(self.add_tag(t))
+                for a_t in t.split(','):
+                    tag_uuid = self.add_tag(a_t)
+                    apply_extras['tags'].append(tag_uuid)
 
         # Or if UUIDs given directly
         if tag_uuids:
             apply_extras['tags'] = list(set(apply_extras['tags'] + tag_uuids))
+
+        # Make any uuids unique
+        if apply_extras.get('tags'):
+            apply_extras['tags'] = list(set(apply_extras.get('tags')))
 
         new_watch = Watch.model(datastore_path=self.datastore_path, url=url)
 
