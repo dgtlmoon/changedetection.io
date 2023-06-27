@@ -112,6 +112,7 @@ def test_import_distillio(client, live_server):
     # did the tags work?
     res = client.get( url_for("index"))
 
+    # check tags
     assert b"nice stuff" in res.data
     assert b"nerd-news" in res.data
 

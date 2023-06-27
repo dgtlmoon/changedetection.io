@@ -85,7 +85,8 @@ class import_distill_io_json(Importer):
         now = time.time()
         self.new_uuids=[]
 
-
+        # @todo Use JSONSchema like in the API to validate here.
+        
         try:
             data = json.loads(data.strip())
         except json.decoder.JSONDecodeError:
@@ -120,11 +121,8 @@ class import_distill_io_json(Importer):
                 except IndexError:
                     pass
 
-# Does this need to be here anymore?
-                if d.get('tags', False):
-                    extras['tags'] = ", ".join(d['tags'])
-
                 new_uuid = datastore.add_watch(url=d['uri'].strip(),
+                                               tag=",".join(d.get('tags', [])),
                                                extras=extras,
                                                write_to_disk_now=False)
 
