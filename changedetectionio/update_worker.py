@@ -71,7 +71,7 @@ class update_worker(threading.Thread):
         from changedetectionio.notification import (
             default_notification_format_for_watch,
             default_notification_body,
-            default_notification_title,
+            default_notification_title
         )
 
 
