@@ -92,6 +92,12 @@ def process_notification(n_object, datastore):
         n_object.get('notification_format', default_notification_format),
         valid_notification_formats[default_notification_format],
     )
+
+    # If we arrived with 'System default' then look it up
+    if n_format == default_notification_format_for_watch and datastore.data['settings']['application'].get('notification_format') != default_notification_format_for_watch:
+        # Initially text or whatever
+        n_format = datastore.data['settings']['application'].get('notification_format', valid_notification_formats[default_notification_format])
+
     
     # https://github.com/caronc/apprise/wiki/Development_LogCapture
     # Anything higher than or equal to WARNING (which covers things like Connection errors)
