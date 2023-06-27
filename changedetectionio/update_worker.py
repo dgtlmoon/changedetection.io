@@ -65,15 +65,45 @@ class update_worker(threading.Thread):
         logging.info (">> SENDING NOTIFICATION")
         self.notification_q.put(n_object)
 
+    # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
+    def _check_cascading_vars(self, var_name, watch):
+
+        from changedetectionio.notification import (
+            default_notification_format_for_watch,
+            default_notification_body,
+            default_notification_title,
+        )
+
+
+        # Would be better if this was some kind of Object where Watch can reference the parent datastore etc
+        v = watch.get(var_name)
+        if v and not watch.get('notification_muted'):
+            return v
+
+        tags = self.datastore.get_all_tags_for_watch(uuid=watch.get('uuid'))
+        if tags:
+            for tag_uuid, tag in tags.items():
+                v = tag.get(var_name)
+                if v and not tag.get('notification_muted'):
+                    return v
+
+        if self.datastore.data['settings']['application'].get(var_name):
+            return self.datastore.data['settings']['application'].get(var_name)
+
+        # Otherwise could be defaults
+        if var_name == 'notification_format':
+            return default_notification_format_for_watch
+        if var_name == 'notification_body':
+            return default_notification_body
+        if var_name == 'notification_title':
+            return default_notification_title
+
+        return None
 
     def send_content_changed_notification(self, watch_uuid):
 
-        from changedetectionio.notification import (
-            default_notification_format_for_watch
-        )
-
         n_object = {}
-        watch = self.datastore.data['watching'].get(watch_uuid, False)
+        watch = self.datastore.data['watching'].get(watch_uuid)
         if not watch:
             return
 
@@ -87,57 +117,20 @@ class update_worker(threading.Thread):
             )
 
         # Should be a better parent getter in the model object
+
         # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
-        n_object['notification_urls'] = watch.get('notification_urls')
-
-        n_object['notification_title'] = watch['notification_title'] if watch['notification_title'] else \
-            self.datastore.data['settings']['application']['notification_title']
-
-        n_object['notification_body'] = watch['notification_body'] if watch['notification_body'] else \
-            self.datastore.data['settings']['application']['notification_body']
-
-        n_object['notification_format'] = watch['notification_format'] if watch['notification_format'] != default_notification_format_for_watch else \
-            self.datastore.data['settings']['application']['notification_format']
+        n_object['notification_urls'] = self._check_cascading_vars('notification_urls', watch)
+        n_object['notification_title'] = self._check_cascading_vars('notification_title', watch)
+        n_object['notification_body'] = self._check_cascading_vars('notification_body', watch)
+        n_object['notification_format'] = self._check_cascading_vars('notification_format', watch)
 
         # (Individual watch) Only prepare to notify if the rules above matched
-        sent = False
-        if 'notification_urls' in n_object and n_object['notification_urls']:
-            sent = True
+        queued = False
+        if n_object and n_object.get('notification_urls'):
+            queued = True
             self.queue_notification_for_watch(n_object, watch)
 
-        # (Group tags) try by group tag
-        if not sent:
-            # Else, Try by tag, and use system default vars for format, body etc as fallback
-            tags = self.datastore.get_all_tags_for_watch(uuid=watch_uuid)
-            for tag_uuid, tag in tags.items():
-                n_object = {}
-                n_object['notification_urls'] = tag.get('notification_urls')
-
-                n_object['notification_title'] = tag.get('notification_title') if tag.get('notification_title') else \
-                    self.datastore.data['settings']['application']['notification_title']
-
-                n_object['notification_body'] = tag.get('notification_body') if tag.get('notification_body') else \
-                    self.datastore.data['settings']['application']['notification_body']
-
-                n_object['notification_format'] = tag.get('notification_format') if tag.get('notification_format') != default_notification_format_for_watch else \
-                    self.datastore.data['settings']['application']['notification_format']
-
-                if 'notification_urls' in n_object and n_object.get('notification_urls') and not tag.get('notification_muted'):
-                    sent = True
-                    self.queue_notification_for_watch(n_object, watch)
-
-        # (Group tags) try by global
-        if not sent:
-            # leave this as is, but repeat in a loop for each tag also
-            n_object['notification_urls'] = self.datastore.data['settings']['application'].get('notification_urls')
-            n_object['notification_title'] = self.datastore.data['settings']['application'].get('notification_title')
-            n_object['notification_body'] = self.datastore.data['settings']['application'].get('notification_body')
-            n_object['notification_format'] = self.datastore.data['settings']['application'].get('notification_format')
-            if n_object.get('notification_urls') and n_object.get('notification_body') and n_object.get('notification_title'):
-                sent = True
-                self.queue_notification_for_watch(n_object, watch)
-
-        return sent
+        return queued
 
 
     def send_filter_failure_notification(self, watch_uuid):
