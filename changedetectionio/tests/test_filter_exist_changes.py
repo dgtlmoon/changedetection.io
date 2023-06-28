@@ -103,6 +103,9 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
 
+    # apprise takes a moment to fire
+    time.sleep(3)
+
     # Shouldn't exist, shouldn't have fired
     assert not os.path.isfile("test-datastore/notification.txt")
     # Now the filter should exist
@@ -110,6 +113,9 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
+
+    # apprise takes a moment to fire
+    time.sleep(3)
     assert os.path.isfile("test-datastore/notification.txt")
 
     with open("test-datastore/notification.txt", 'r') as f:
