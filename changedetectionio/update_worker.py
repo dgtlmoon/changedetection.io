@@ -78,26 +78,27 @@ class update_worker(threading.Thread):
 
         # Cascades to the first setting (ie, closest to the individual watch settings) that's defined
         return next(
-            resolved_var
-            for resolved_var in [
+            (
+                resolved_var
+                for resolved_var in [
 
-                # Would be better if this was some kind of Object where Watch can reference the parent datastore etc
-                # Resolve individual settings first if exists;
-                watch.get(var_name),
+                    # Would be better if this was some kind of Object where Watch can reference the parent datastore etc
+                    # Resolve individual settings first if exists;
+                    watch.get(var_name),
 
-                # .. then first tag that defines the setting;
-                *[tag.get(var_name) for tag_uuid, tag in tags.items()],
-                
-                # .. otherwise, from global settings;
-                self.datastore.data['settings']['application'].get(var_name)
-            
-            ] if resolved_var
+                    # .. then first tag that defines the setting;
+                    *[tag.get(var_name) for tag_uuid, tag in tags.items()],
+                    
+                    # .. otherwise, from global settings;
+                    self.datastore.data['settings']['application'].get(var_name)
+                ] if resolved_var
+
+            # .. and finally, if not defined anywhere, use static defaults -- or just None           
+            ), None
         ) or {
             'notification_format': default_notification_format_for_watch,
             'notification_body': default_notification_body,
             'notification_title': default_notification_title
-
-        # .. and finally, if not defined anywhere, use static defaults -- or just None
         }.get(var_name)
 
     def send_content_changed_notification(self, watch_uuid):
