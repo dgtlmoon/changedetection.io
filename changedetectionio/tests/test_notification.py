@@ -24,9 +24,6 @@ def test_check_notification(client, live_server):
     #live_server_setup(live_server)
     set_original_response()
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
-
     # Re 360 - new install should have defaults set
     res = client.get(url_for("settings_page"))
     notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
@@ -142,8 +139,7 @@ def test_check_notification(client, live_server):
 
     # Did we see the URL that had a change, in the notification?
     # Diff was correctly executed
-    assert test_url in notification_submission
-    assert ':-)' in notification_submission
+
     assert "Diff Full: Some initial text" in notification_submission
     assert "Diff: (changed) Which is across multiple lines" in notification_submission
     assert "(into) which has this one new line" in notification_submission
@@ -156,7 +152,8 @@ def test_check_notification(client, live_server):
     assert "preview/" in notification_submission
     assert ":-)" in notification_submission
     assert "New ChangeDetection.io Notification - {}".format(test_url) in notification_submission
-
+    assert test_url in notification_submission
+    assert ':-)' in notification_submission
     # Check the attachment was added, and that it is a JPEG from the original PNG
     notification_submission_object = json.loads(notification_submission)
     # We keep PNG screenshots for now

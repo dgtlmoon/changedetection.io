@@ -219,13 +219,15 @@ class CreateWatch(Resource):
 
         extras = copy.deepcopy(json_data)
 
-        # Because we renamed 'tag' to 'tags' but dont want to change the API (can do this in v2 of the API)
+        # Because we renamed 'tag' to 'tags' but don't want to change the API (can do this in v2 of the API)
+        tags = None
         if extras.get('tag'):
-            extras['tags'] = extras.get('tag')
+            tags = extras.get('tag')
+            del extras['tag']
 
         del extras['url']
 
-        new_uuid = self.datastore.add_watch(url=url, extras=extras)
+        new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags)
         if new_uuid:
             self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid, 'skip_when_checksum_same': True}))
             return {'uuid': new_uuid}, 201

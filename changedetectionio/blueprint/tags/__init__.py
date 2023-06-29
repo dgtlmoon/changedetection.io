@@ -76,6 +76,16 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         flash(f"Tag unlinked removed from {unlinked} watches")
         return redirect(url_for('tags.tags_overview_page'))
 
+    @tags_blueprint.route("/delete_all", methods=['GET'])
+    @login_optionally_required
+    def delete_all():
+        for watch_uuid, watch in datastore.data['watching'].items():
+            watch['tags'] = []
+        datastore.data['settings']['application']['tags'] = {}
+
+        flash(f"All tags deleted")
+        return redirect(url_for('tags.tags_overview_page'))
+
     @tags_blueprint.route("/edit/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def form_tag_edit(uuid):

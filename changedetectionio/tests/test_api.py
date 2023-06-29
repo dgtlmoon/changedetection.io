@@ -267,7 +267,9 @@ def test_api_watch_PUT_update(client, live_server):
 
     #live_server_setup(live_server)
     api_key = extract_api_key_from_UI(client)
+
     wait_for_all_checks(client)
+
     # Create a watch
     set_original_response()
     test_url = url_for('test_endpoint', _external=True,
@@ -283,7 +285,9 @@ def test_api_watch_PUT_update(client, live_server):
 
     assert res.status_code == 201
 
+
     wait_for_all_checks(client)
+
 
     # Get a listing, it will be the first one
     res = client.get(
