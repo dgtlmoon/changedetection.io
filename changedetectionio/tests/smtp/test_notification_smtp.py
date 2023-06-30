@@ -9,6 +9,9 @@ from changedetectionio.tests.util import extract_UUID_from_client
 import logging
 import base64
 
+# NOTE - RELIES ON mailserver as hostname running, see github build recipes
+
+
 from changedetectionio.notification import (
     default_notification_body,
     default_notification_format,
@@ -16,6 +19,8 @@ from changedetectionio.notification import (
     valid_notification_formats,
 )
 
+def test_setup(live_server):
+    live_server_setup(live_server)
 
 def get_last_message_from_smtp_server():
     import socket
