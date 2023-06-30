@@ -153,6 +153,8 @@ def process_notification(n_object, datastore):
                     # https://github.com/caronc/apprise/issues/633#issuecomment-1191449321
                     if not 'format=' in url and (n_format == 'Text' or n_format == 'Markdown'):
                         prefix = '?' if not '?' in url else '&'
+                        # Apprise format is lowercase text https://github.com/caronc/apprise/issues/633
+                        n_format = n_format.tolower()
                         url = "{}{}format={}".format(url, prefix, n_format)
 
                 apobj.add(url)

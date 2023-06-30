@@ -16,6 +16,7 @@ class CustomSMTPServer(smtpd.SMTPServer):
         print('Message addressed from:', mailfrom)
         print('Message addressed to  :', rcpttos)
         print('Message length        :', len(data))
+        print(data.decode('utf8'))
         return
 
 

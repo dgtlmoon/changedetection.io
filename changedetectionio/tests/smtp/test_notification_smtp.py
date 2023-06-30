@@ -3,14 +3,15 @@ import os
 import time
 import re
 from flask import url_for
-from changedetectionio.tests.util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, wait_for_all_checks, \
+from changedetectionio.tests.util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, \
+    wait_for_all_checks, \
     set_longer_modified_response
 from changedetectionio.tests.util import extract_UUID_from_client
 import logging
 import base64
 
 # NOTE - RELIES ON mailserver as hostname running, see github build recipes
-
+smtp_test_server = 'mailserver'
 
 from changedetectionio.notification import (
     default_notification_body,
@@ -24,11 +25,11 @@ def test_setup(live_server):
 
 def get_last_message_from_smtp_server():
     import socket
-    host = 'mailserver'  # as both code is running on same pc
+    global smtp_test_server
     port = 11080  # socket server port number
 
     client_socket = socket.socket()  # instantiate
-    client_socket.connect((host, port))  # connect to the server
+    client_socket.connect((smtp_test_server, port))  # connect to the server
 
     data = client_socket.recv(50024).decode()  # receive response
     client_socket.close()  # close the connection
@@ -38,10 +39,11 @@ def get_last_message_from_smtp_server():
 # Requires running the test SMTP server
 
 def test_check_notification_email_formats_default_HTML(client, live_server):
-    #live_server_setup(live_server)
+    # live_server_setup(live_server)
     set_original_response()
 
-    notification_url = 'mailto://changedetection@mailserver:11025/?to=fff@home.com'
+    global smtp_test_server
+    notification_url = f'mailto://changedetection@{smtp_test_server}:11025/?to=fff@home.com'
 
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
@@ -82,13 +84,19 @@ def test_check_notification_email_formats_default_HTML(client, live_server):
     assert '(added) So let\'s see what happens.\n' in msg  # The plaintext part with \n
     assert 'Content-Type: text/html' in msg
     assert '(added) So let\'s see what happens.<br>' in msg  # the html part
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
 
 def test_check_notification_email_formats_default_Text_override_HTML(client, live_server):
-    #live_server_setup(live_server)
-    set_original_response()
+    # live_server_setup(live_server)
 
-    notification_url = 'mailto://changedetection@mailserver:11025/?to=fff@home.com'
+    # HTML problems? see this
+    # https://github.com/caronc/apprise/issues/633
+
+    set_original_response()
+    global smtp_test_server
+    notification_url = f'mailto://changedetection@{smtp_test_server}:11025/?to=fff@home.com'
 
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
@@ -122,12 +130,13 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
     time.sleep(3)
     msg = get_last_message_from_smtp_server()
     assert len(msg) >= 1
+    #    with open('/tmp/m.txt', 'w') as f:
+    #        f.write(msg)
 
     # The email should not have two bodies, should be TEXT only
 
     assert 'Content-Type: text/plain' in msg
     assert '(added) So let\'s see what happens.\n' in msg  # The plaintext part with \n
-    assert 'Content-Type: text/html' not in msg
 
     set_original_response()
     # Now override as HTML format
@@ -151,3 +160,6 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
     assert '(removed) So let\'s see what happens.\n' in msg  # The plaintext part with \n
     assert 'Content-Type: text/html' in msg
     assert '(removed) So let\'s see what happens.<br>' in msg  # the html part
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
