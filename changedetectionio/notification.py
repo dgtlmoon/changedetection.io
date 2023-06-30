@@ -156,6 +156,7 @@ def process_notification(n_object, datastore):
                         # Apprise format is lowercase text https://github.com/caronc/apprise/issues/633
                         n_format = n_format.tolower()
                         url = "{}{}format={}".format(url, prefix, n_format)
+                    # If n_format == HTML, then apprise email should default to text/html and we should be sending HTML only
 
                 apobj.add(url)
 
