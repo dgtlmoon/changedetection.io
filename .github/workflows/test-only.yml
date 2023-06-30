@@ -31,6 +31,8 @@ jobs:
           # Selenium+browserless
           docker run --network changedet-network -d --hostname selenium  -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome-debug:3.141.59
           docker run --network changedet-network -d --hostname browserless -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  browserless/chrome:1.53-chrome-stable
+          # Debug SMTP server/echo message back server
+          docker run --network changedet-network --hostname mailserver  -v "`pwd`/changedetectionio/tests/smtp/smtp-test-server.py:/smtp-test-server.py" python:3.10-bullseye  bash -c 'python /smtp-test-server.py' --rm -p 11025:11025 -p 11080:11080 -d 
 
       - name: Build changedetection.io container for testing
         run: |         
@@ -58,10 +60,14 @@ jobs:
           # Settings headers playwright tests - Call back in from Browserless, check headers
           docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
           docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
-          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "USE_EXPERIMENTAL_PUPPETEER_FETCH=yes" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
+          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "USE_EXPERIMENTAL_PUPPETEER_FETCH=yes" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'          
           
           # restock detection via playwright - added name=changedet here so that playwright/browserless can connect to it
           docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+
+          # SMTP content types
+          docker run --rm -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/smtp/test_notification_smtp.py'
+
 
       - name: Test with puppeteer fetcher and disk cache
         run: |

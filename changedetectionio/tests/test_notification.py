@@ -3,7 +3,8 @@ import os
 import time
 import re
 from flask import url_for
-from .util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, wait_for_all_checks
+from .util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, wait_for_all_checks, \
+    set_longer_modified_response
 from . util import  extract_UUID_from_client
 import logging
 import base64
@@ -272,7 +273,7 @@ def test_notification_validation(client, live_server):
 
 
 def test_notification_custom_endpoint_and_jinja2(client, live_server):
-    time.sleep(1)
+    #live_server_setup(live_server)
 
     # test_endpoint - that sends the contents of a file
     # test_notification_endpoint - that takes a POST and writes it to file (test-datastore/notification.txt)
@@ -283,12 +284,14 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server):
 
     res = client.post(
         url_for("settings_page"),
-        data={"application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
-              "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444 }',
-              # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
-              "application-notification_urls": test_notification_url,
+        data={
+              "application-fetch_backend": "html_requests",
               "application-minutes_between_check": 180,
-              "application-fetch_backend": "html_requests"
+              "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444 }',
+              "application-notification_format": default_notification_format,
+              "application-notification_urls": test_notification_url,
+              # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
+              "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
               },
         follow_redirects=True
     )
@@ -313,9 +316,8 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(2)
 
-
     with open("test-datastore/notification.txt", 'r') as f:
-        x=f.read()
+        x = f.read()
         j = json.loads(x)
         assert j['url'].startswith('http://localhost')
         assert j['secret'] == 444
@@ -326,5 +328,9 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server):
         notification_url = f.read()
         assert 'xxx=http' in notification_url
 
-    os.unlink("test-datastore/notification-url.txt")
+    # Should always be automatically detected as JSON content type even when we set it as 'Text' (default)
+    assert os.path.isfile("test-datastore/notification-content-type.txt")
+    with open("test-datastore/notification-content-type.txt", 'r') as f:
+        assert 'application/json' in f.read()
 
+    os.unlink("test-datastore/notification-url.txt")

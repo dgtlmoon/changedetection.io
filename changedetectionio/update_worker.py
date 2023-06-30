@@ -32,15 +32,17 @@ class update_worker(threading.Thread):
 
         watch_history = watch.history
         dates = list(watch_history.keys())
+        # Add text that was triggered
+        snapshot_contents = watch.get_history_snapshot(dates[-1])
 
         # HTML needs linebreak, but MarkDown and Text can use a linefeed
         if n_object['notification_format'] == 'HTML':
             line_feed_sep = "<br>"
+            # Snapshot will be plaintext on the disk, convert to some kind of HTML
+            snapshot_contents = snapshot_contents.replace('\n', line_feed_sep)
         else:
             line_feed_sep = "\n"
 
-        # Add text that was triggered
-        snapshot_contents = watch.get_history_snapshot(dates[-1])
         trigger_text = watch.get('trigger_text', [])
         triggered_text = ''
 
@@ -78,6 +80,9 @@ class update_worker(threading.Thread):
         # Would be better if this was some kind of Object where Watch can reference the parent datastore etc
         v = watch.get(var_name)
         if v and not watch.get('notification_muted'):
+            if var_name == 'notification_format' and v == default_notification_format_for_watch:
+                return self.datastore.data['settings']['application'].get('notification_format')
+
             return v
 
         tags = self.datastore.get_all_tags_for_watch(uuid=watch.get('uuid'))
