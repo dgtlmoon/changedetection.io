@@ -40,7 +40,7 @@ jobs:
       - name: Spin up ancillary SMTP+Echo message test server
         run: |
           # Debug SMTP server/echo message back server
-          docker run --network changedet-network -p 11025:11025 -p 11080:11080  --hostname mailserver test-changedetectionio  bash -c 'python changedetectionio/tests/smtp/smtp-test-server.py' -d
+          docker run --network changedet-network -d -p 11025:11025 -p 11080:11080  --hostname mailserver test-changedetectionio  bash -c 'python changedetectionio/tests/smtp/smtp-test-server.py' 
 
       - name: Test built container with pytest
         run: |
