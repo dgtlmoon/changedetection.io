@@ -38,7 +38,7 @@ def get_last_message_from_smtp_server():
 # Requires running the test SMTP server
 
 def test_check_notification_email_formats_default_HTML(client, live_server):
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
     set_original_response()
 
     notification_url = 'mailto://changedetection@mailserver:11025/?to=fff@home.com'
@@ -85,7 +85,7 @@ def test_check_notification_email_formats_default_HTML(client, live_server):
 
 
 def test_check_notification_email_formats_default_Text_override_HTML(client, live_server):
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
     set_original_response()
 
     notification_url = 'mailto://changedetection@mailserver:11025/?to=fff@home.com'
