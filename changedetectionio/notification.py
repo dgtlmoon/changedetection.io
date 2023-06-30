@@ -151,9 +151,12 @@ def process_notification(n_object, datastore):
                     # Apprise will default to HTML, so we need to override it
                     # So that whats' generated in n_body is in line with what is going to be sent.
                     # https://github.com/caronc/apprise/issues/633#issuecomment-1191449321
-                    if not 'format=' in url and (n_format == 'text' or n_format == 'markdown'):
+                    if not 'format=' in url and (n_format == 'Text' or n_format == 'Markdown'):
                         prefix = '?' if not '?' in url else '&'
+                        # Apprise format is lowercase text https://github.com/caronc/apprise/issues/633
+                        n_format = n_format.tolower()
                         url = "{}{}format={}".format(url, prefix, n_format)
+                    # If n_format == HTML, then apprise email should default to text/html and we should be sending HTML only
 
                 apobj.add(url)
 

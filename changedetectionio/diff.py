@@ -54,4 +54,5 @@ def render_diff(previous_version_file_contents, newest_version_file_contents, in
 
     # Recursively join lists
     f = lambda L: line_feed_sep.join([f(x) if type(x) is list else x for x in L])
-    return f(rendered_diff)
+    p= f(rendered_diff)
+    return p
