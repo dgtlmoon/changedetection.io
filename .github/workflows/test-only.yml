@@ -31,13 +31,16 @@ jobs:
           # Selenium+browserless
           docker run --network changedet-network -d --hostname selenium  -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome-debug:3.141.59
           docker run --network changedet-network -d --hostname browserless -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  browserless/chrome:1.53-chrome-stable
-          # Debug SMTP server/echo message back server
-          docker run --network changedet-network --hostname mailserver  -v "`pwd`/changedetectionio/tests/smtp/smtp-test-server.py:/smtp-test-server.py" python:3.10-bullseye  bash -c 'python /smtp-test-server.py' --rm -p 11025:11025 -p 11080:11080 -d 
 
       - name: Build changedetection.io container for testing
         run: |         
           # Build a changedetection.io container and start testing inside
           docker build . -t test-changedetectionio
+
+      - name: Spin up ancillary SMTP+Echo message test server
+        run: |
+          # Debug SMTP server/echo message back server
+          docker run --network changedet-network -d --hostname mailserver  bash -c 'python changedetectionio/tests/smtp/smtp-test-server.py' --rm -p 11025:11025 -p 11080:11080 python:3.10-bullseye 
 
       - name: Test built container with pytest
         run: |
