@@ -9,7 +9,7 @@ class difference_detection_processor():
         super().__init__(*args, **kwargs)
 
     @abstractmethod
-    def run(self, uuid, skip_when_checksum_same=True):
+    def run(self, uuid, skip_when_checksum_same=True, preferred_proxy=None):
         update_obj = {'last_notification_error': False, 'last_error': False}
         some_data = 'xxxxx'
         update_obj["previous_md5"] = hashlib.md5(some_data.encode('utf-8')).hexdigest()

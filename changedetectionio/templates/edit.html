@@ -27,6 +27,8 @@
 <script src="{{url_for('static_content', group='js', filename='browser-steps.js')}}" defer></script>
 {% endif %}
 
+<script src="{{url_for('static_content', group='js', filename='recheck-proxy.js')}}" defer></script>
+
 <div class="edit-form monospaced-textarea">
 
     <div class="tabs collapsable">
@@ -111,7 +113,8 @@
                     </div>
                 {% if form.proxy %}
                     <div class="pure-control-group inline-radio">
-                        {{ render_field(form.proxy, class="fetch-backend-proxy") }}
+                          <div>{{ form.proxy.label }} <a href="" id="check-all-proxies" class="pure-button button-secondary button-xsmall" >Check all</a></div>
+                          <div>{{ form.proxy(class="fetch-backend-proxy") }}</div>
                         <span class="pure-form-message-inline">
                         Choose a proxy for this watch
                         </span>
