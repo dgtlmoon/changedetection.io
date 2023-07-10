@@ -46,13 +46,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         except content_fetcher.Non200ErrorCodeReceived as e:
             if e.status_code == 404:
                 status.update({'status': 'OK', 'length': len(contents), 'text': f"OK but 404 (page not found)"})
+            elif e.status_code == 403:
+                status.update({'status': 'ERROR', 'length': len(contents), 'text': f"403 - Access denied"})
             else:
                 status.update({'status': 'ERROR', 'length': len(contents), 'text': f"Status code: {e.status_code}"})
         except content_fetcher.EmptyReply as e:
-            # title str(e)
             status.update({'status': 'ERROR OTHER', 'length': len(contents) if contents else 0, 'text': "Empty reply, needs chrome?"})
         except Exception as e:
-            # title str(e)
             status.update({'status': 'ERROR OTHER', 'length': len(contents) if contents else 0, 'text': 'Error: '+str(e)})
         else:
             status.update({'status': 'OK', 'length': len(contents), 'text': ''})

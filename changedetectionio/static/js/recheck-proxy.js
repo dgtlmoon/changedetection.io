@@ -60,6 +60,7 @@ $(function () {
 
     $('#check-all-proxies').click(function (e) {
         e.preventDefault()
+        $('body').addClass('proxy-check-active');
         $('.proxy-check-details').html('');
         $('.proxy-status').html('<span class="spinner"></span>').fadeIn();
         $('.proxy-timing').html('');
