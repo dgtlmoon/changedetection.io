@@ -105,7 +105,7 @@ class perform_site_check(difference_detection_processor):
             # If the klass doesnt exist, just use a default
             klass = getattr(content_fetcher, "html_requests")
 
-        if not preferred_proxy:
+        if preferred_proxy:
             proxy_id = preferred_proxy
         else:
             proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=uuid)

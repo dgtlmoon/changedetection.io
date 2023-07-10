@@ -1,19 +1,19 @@
 from concurrent.futures import ThreadPoolExecutor
-from distutils.util import strtobool
+
 from functools import wraps
 
-from flask import Blueprint, flash, redirect, url_for
+from flask import Blueprint
 from flask_login import login_required
 
 from changedetectionio.processors import text_json_diff
 from changedetectionio.store import ChangeDetectionStore
-from changedetectionio import queuedWatchMetaData
-from queue import PriorityQueue
+
 
 STATUS_CHECKING = 0
 STATUS_FAILED = 1
 STATUS_OK = 2
-_DEFAULT_POOL = ThreadPoolExecutor()
+THREADPOOL_MAX_WORKERS = 3
+_DEFAULT_POOL = ThreadPoolExecutor(max_workers=THREADPOOL_MAX_WORKERS)
 
 
 # Maybe use fetch-time if its >5 to show some expected load time?
@@ -30,26 +30,41 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     checks_in_progress = {}
 
     @threadpool
-    def long_task(x, uuid, preferred_proxy):
+    def long_task(uuid, preferred_proxy):
+        import time
         from changedetectionio import content_fetcher
-        status = {}
+
+        status = {'status': '', 'length': 0, 'text': ''}
+        from jinja2 import Environment, BaseLoader
+
         contents = ''
+        now = time.time()
         try:
             update_handler = text_json_diff.perform_site_check(datastore=datastore)
-            changed_detected, update_obj, contents = update_handler.run(uuid, preferred_proxy=preferred_proxy)
-
+            changed_detected, update_obj, contents = update_handler.run(uuid, preferred_proxy=preferred_proxy, skip_when_checksum_same=False)
+        # title, size is len contents not len xfer
         except content_fetcher.Non200ErrorCodeReceived as e:
-            status = {'status': 'ERROR', 'length': len(contents), 'status_code': e.status_code}
+            if e.status_code == 404:
+                status.update({'status': 'OK', 'length': len(contents), 'text': f"OK but 404 (page not found)"})
+            else:
+                status.update({'status': 'ERROR', 'length': len(contents), 'text': f"Status code: {e.status_code}"})
+        except content_fetcher.EmptyReply as e:
+            # title str(e)
+            status.update({'status': 'ERROR OTHER', 'length': len(contents) if contents else 0, 'text': "Empty reply, needs chrome?"})
         except Exception as e:
-            status = {'status': 'ERROR OTHER', 'length': len(contents) if contents else 0}
+            # title str(e)
+            status.update({'status': 'ERROR OTHER', 'length': len(contents) if contents else 0, 'text': 'Error: '+str(e)})
         else:
-            status = {'status': 'OK', 'length': len(contents), 'status_code': 200}
+            status.update({'status': 'OK', 'length': len(contents), 'text': ''})
+
+        if status.get('text'):
+            status['text'] = Environment(loader=BaseLoader()).from_string('{{text|e}}').render({'text': status['text']})
+
+        status['time'] = "{:.2f}s".format(time.time() - now)
 
         return status
 
-    @login_required
-    @check_proxies_blueprint.route("/<string:uuid>/status", methods=['GET'])
-    def get_recheck_status(uuid):
+    def _recalc_check_status(uuid):
 
         results = {}
         for k, v in checks_in_progress.get(uuid, {}).items():
@@ -65,22 +80,26 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return results
 
     @login_required
+    @check_proxies_blueprint.route("/<string:uuid>/status", methods=['GET'])
+    def get_recheck_status(uuid):
+        results = _recalc_check_status(uuid=uuid)
+        return results
+
+    @login_required
     @check_proxies_blueprint.route("/<string:uuid>/start", methods=['GET'])
     def start_check(uuid):
 
         if not datastore.proxy_list:
             return
 
-        if not checks_in_progress.get(uuid):
-            checks_in_progress[uuid] = {}
+        # @todo - Cancel any existing runs
+        checks_in_progress[uuid] = {}
 
         for k, v in datastore.proxy_list.items():
             if not checks_in_progress[uuid].get(k):
-                checks_in_progress[uuid][k] = long_task(x=1, uuid=uuid, preferred_proxy=k)
+                checks_in_progress[uuid][k] = long_task(uuid=uuid, preferred_proxy=k)
 
-        # Return dict of proxy labels and some status
-        # return redirect(url_for("index", uuid=uuid))
-        import time
-        return str(time.time())
+        results = _recalc_check_status(uuid=uuid)
+        return results
 
     return check_proxies_blueprint
