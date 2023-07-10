@@ -95,6 +95,25 @@ ul#requests-extra_proxies {
   ul#requests-extra_proxies table tr {
     display: inline; }
 
+#request {
+  /* Auto proxy scan/checker */ }
+  #request label[for=proxy] {
+    display: inline-block; }
+
+body.proxy-check-active #request .proxy-status {
+  width: 2em; }
+
+body.proxy-check-active #request .proxy-check-details {
+  font-size: 80%;
+  color: #555;
+  display: block;
+  padding-left: 4em; }
+
+body.proxy-check-active #request .proxy-timing {
+  font-size: 80%;
+  padding-left: 1rem;
+  color: var(--color-link); }
+
 .pagination-page-info {
   color: #fff;
   font-size: 0.85rem;
@@ -283,10 +302,6 @@ html[data-darkmode="true"] {
   --color-icon-github-hover: var(--color-grey-700);
   --color-watch-table-error: var(--color-light-red);
   --color-watch-table-row-text: var(--color-grey-800); }
-  html[data-darkmode="true"] #toggle-light-mode .icon-light {
-    display: none; }
-  html[data-darkmode="true"] #toggle-light-mode .icon-dark {
-    display: block; }
   html[data-darkmode="true"] .icon-spread {
     filter: hue-rotate(-10deg) brightness(1.5); }
   html[data-darkmode="true"] .watch-table .title-col a[target="_blank"]::after,
@@ -339,6 +354,10 @@ a.github-link {
   width: 3rem; }
   #toggle-light-mode .icon-dark {
     display: none; }
+  #toggle-light-mode.dark .icon-light {
+    display: none; }
+  #toggle-light-mode.dark .icon-dark {
+    display: block; }
 
 #toggle-search {
   width: 2rem; }

@@ -1439,6 +1439,10 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.tags as tags
     app.register_blueprint(tags.construct_blueprint(datastore), url_prefix='/tags')
 
+    import changedetectionio.blueprint.check_proxies as check_proxies
+    app.register_blueprint(check_proxies.construct_blueprint(datastore=datastore), url_prefix='/check_proxy')
+
+
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
     threading.Thread(target=notification_runner).start()

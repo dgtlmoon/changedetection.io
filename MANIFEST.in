@@ -13,3 +13,6 @@ include changedetection.py
 global-exclude *.pyc
 global-exclude node_modules
 global-exclude venv
+
+global-exclude test-datastore
+global-exclude changedetection.io*dist-info
