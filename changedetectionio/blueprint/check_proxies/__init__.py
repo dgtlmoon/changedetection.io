@@ -56,7 +56,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             if e.status_code == 403 or e.status_code == 401:
                 status.update({'status': 'ERROR OTHER', 'length': len(contents), 'text': f"Got empty reply with code {e.status_code} - Access denied"})
             else:
-                status.update({'status': 'ERROR OTHER', 'length': len(contents) if contents else 0, 'text': "Empty reply with code {e.status_code}, needs chrome?"})
+                status.update({'status': 'ERROR OTHER', 'length': len(contents) if contents else 0, 'text': f"Empty reply with code {e.status_code}, needs chrome?"})
 
         except Exception as e:
             status.update({'status': 'ERROR OTHER', 'length': len(contents) if contents else 0, 'text': 'Error: '+str(e)})
