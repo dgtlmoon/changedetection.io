@@ -94,8 +94,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if not datastore.proxy_list:
             return
 
-        # @todo - Cancel any existing runs
-        checks_in_progress[uuid] = {}
+        if checks_in_progress.get(uuid):
+            state = _recalc_check_status(uuid=uuid)
+            for proxy_key, v in state.items():
+                if v.get('status') == 'RUNNING':
+                    return state
+        else:
+            checks_in_progress[uuid] = {}
 
         for k, v in datastore.proxy_list.items():
             if not checks_in_progress[uuid].get(k):
