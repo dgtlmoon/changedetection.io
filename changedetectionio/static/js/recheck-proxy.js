@@ -12,7 +12,7 @@ $(function () {
 
     function set_proxy_check_status(proxy_key, state) {
         // select input by value name
-        const proxy_li = $("input[value=" + proxy_key + "]").parent();
+        const proxy_li = $('input[value="' + proxy_key + '" ]').parent();
         if (state['status'] === 'RUNNING') {
             $('.proxy-status', proxy_li).html('<span class="spinner"></span>');
         }
