@@ -50,6 +50,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 status.update({'status': 'ERROR', 'length': len(contents), 'text': f"403 - Access denied"})
             else:
                 status.update({'status': 'ERROR', 'length': len(contents), 'text': f"Status code: {e.status_code}"})
+        except text_json_diff.FilterNotFoundInResponse:
+            status.update({'status': 'OK', 'length': len(contents), 'text': f"OK but CSS/xPath filter not found (page changed layout?)"})
         except content_fetcher.EmptyReply as e:
             status.update({'status': 'ERROR OTHER', 'length': len(contents) if contents else 0, 'text': "Empty reply, needs chrome?"})
         except Exception as e:
