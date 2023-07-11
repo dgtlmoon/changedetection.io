@@ -201,7 +201,8 @@ class Fetcher():
             dest = os.path.join(self.browser_steps_screenshot_path, 'step_*.jpeg')
             files = glob.glob(dest)
             for f in files:
-                os.unlink(f)
+                if os.path.isfile(f):
+                    os.unlink(f)
 
 
 #   Maybe for the future, each fetcher provides its own diff output, could be used for text, image
