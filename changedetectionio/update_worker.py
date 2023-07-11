@@ -379,6 +379,9 @@ class update_worker(threading.Thread):
                         if not self.datastore.data['watching'][uuid].get('ignore_status_codes'):
                             update_obj['consecutive_filter_failures'] = 0
 
+                        # Everything ran OK, clean off any previous error
+                        update_obj['last_error'] = False
+
                         self.cleanup_error_artifacts(uuid)
 
                     #
