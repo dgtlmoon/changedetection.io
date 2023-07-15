@@ -71,3 +71,8 @@ pillow
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup
 pytest ~=7.2
 pytest-flask ~=1.2
+
+
+
+# newer versions cause rustc to always be present
+rpds-py ~=7.1
