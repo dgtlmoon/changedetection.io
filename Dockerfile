@@ -30,6 +30,7 @@ RUN pip install --target=/dependencies playwright~=1.27.1 \
 
 # Final image stage
 FROM python:3.10-slim-bullseye
+ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl1.1 \
