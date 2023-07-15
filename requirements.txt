@@ -75,4 +75,4 @@ pytest-flask ~=1.2
 
 
 # newer versions cause rustc to always be present
-rpds-py ~=7.1
+rpds-py ~=0.7
