@@ -19,7 +19,7 @@ RUN mkdir /install
 WORKDIR /install
 
 COPY requirements.txt /requirements.txt
-
+RUN pip3 install setuptools_rust
 RUN pip install --target=/dependencies -r /requirements.txt
 
 # Playwright is an alternative to Selenium
@@ -40,6 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+RUN pip3 install setuptools_rust
 
 # https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
 ENV PYTHONUNBUFFERED=1
