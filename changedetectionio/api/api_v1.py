@@ -33,7 +33,7 @@ class Watch(Resource):
     @auth.check_token
     def get(self, uuid):
         """
-        @api {get} /api/v1/watch/:uuid Get a single watch data
+        @api {get} /api/v1/watch/:uuid Single watch - get data, recheck, pause, mute.
         @apiDescription Retrieve watch information and set muted/paused status
         @apiExample {curl} Example usage:
             curl http://localhost:4000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091  -H"x-api-key:813031b16330fe25e3780cf0325daa45"
