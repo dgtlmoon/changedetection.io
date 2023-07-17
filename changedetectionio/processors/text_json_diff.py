@@ -50,7 +50,7 @@ class perform_site_check(difference_detection_processor):
 
         return regex
 
-    def run(self, uuid, skip_when_checksum_same=True):
+    def run(self, uuid, skip_when_checksum_same=True, preferred_proxy=None):
         changed_detected = False
         screenshot = False  # as bytes
         stripped_text_from_html = ""
@@ -105,7 +105,11 @@ class perform_site_check(difference_detection_processor):
             # If the klass doesnt exist, just use a default
             klass = getattr(content_fetcher, "html_requests")
 
-        proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=uuid)
+        if preferred_proxy:
+            proxy_id = preferred_proxy
+        else:
+            proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=uuid)
+
         proxy_url = None
         if proxy_id:
             proxy_url = self.datastore.proxy_list.get(proxy_id).get('url')

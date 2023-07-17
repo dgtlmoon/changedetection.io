@@ -4,18 +4,19 @@
 {% from '_common_fields.jinja' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script>
-    const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
-    const watch_visual_selector_data_url="{{url_for('static_content', group='visual_selector_data', filename=uuid)}}";
-    const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
-    const playwright_enabled={% if playwright_enabled %} true {% else %} false {% endif %};
-
-{% if emailprefix %}
-    const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
-{% endif %}
 
     const browser_steps_config=JSON.parse('{{ browser_steps_config|tojson }}');
     const browser_steps_start_url="{{url_for('browser_steps.browsersteps_start_session', uuid=uuid)}}";
     const browser_steps_sync_url="{{url_for('browser_steps.browsersteps_ui_update', uuid=uuid)}}";
+{% if emailprefix %}
+    const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
+{% endif %}
+    const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
+    const playwright_enabled={% if playwright_enabled %} true {% else %} false {% endif %};
+    const recheck_proxy_start_url="{{url_for('check_proxies.start_check', uuid=uuid)}}";
+    const proxy_recheck_status_url="{{url_for('check_proxies.get_recheck_status', uuid=uuid)}}";
+    const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
+    const watch_visual_selector_data_url="{{url_for('static_content', group='visual_selector_data', filename=uuid)}}";
 
 </script>
 
@@ -26,6 +27,8 @@
 {% if playwright_enabled %}
 <script src="{{url_for('static_content', group='js', filename='browser-steps.js')}}" defer></script>
 {% endif %}
+
+<script src="{{url_for('static_content', group='js', filename='recheck-proxy.js')}}" defer></script>
 
 <div class="edit-form monospaced-textarea">
 
@@ -111,7 +114,8 @@
                     </div>
                 {% if form.proxy %}
                     <div class="pure-control-group inline-radio">
-                        {{ render_field(form.proxy, class="fetch-backend-proxy") }}
+                          <div>{{ form.proxy.label }} <a href="" id="check-all-proxies" class="pure-button button-secondary button-xsmall" >Check/Scan all</a></div>
+                          <div>{{ form.proxy(class="fetch-backend-proxy") }}</div>
                         <span class="pure-form-message-inline">
                         Choose a proxy for this watch
                         </span>
