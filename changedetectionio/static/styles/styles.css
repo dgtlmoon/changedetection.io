@@ -316,6 +316,18 @@ html[data-darkmode="true"] {
     html[data-darkmode="true"] .watch-table .unviewed.error {
       color: var(--color-watch-table-error); }
 
+#toggle-light-mode {
+  width: 3rem;
+  /* default */ }
+  #toggle-light-mode .icon-dark {
+    display: none; }
+
+html[data-darkmode="true"] #toggle-light-mode .icon-light {
+  display: none; }
+
+html[data-darkmode="true"] #toggle-light-mode .icon-dark {
+  display: block; }
+
 body {
   color: var(--color-text);
   background: var(--color-background-page); }
@@ -349,15 +361,6 @@ a.github-link {
     fill: currentColor; }
   a.github-link:hover {
     color: var(--color-icon-github-hover); }
-
-#toggle-light-mode {
-  width: 3rem; }
-  #toggle-light-mode .icon-dark {
-    display: none; }
-  #toggle-light-mode.dark .icon-light {
-    display: none; }
-  #toggle-light-mode.dark .icon-dark {
-    display: block; }
 
 #toggle-search {
   width: 2rem; }
