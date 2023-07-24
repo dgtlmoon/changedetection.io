@@ -8,6 +8,7 @@
 @import "parts/_pagination";
 @import "parts/_spinners";
 @import "parts/_variables";
+@import "parts/_darkmode";
 
 body {
   color: var(--color-text);
@@ -54,22 +55,6 @@ a.github-link {
   }
 }
 
-#toggle-light-mode {
-  width: 3rem;
-  .icon-dark {
-    display: none;
-  }
-
-  &.dark {
-    .icon-light {
-      display: none;
-    }
-
-    .icon-dark {
-      display: block;
-    }
-  }
-}
 
 #toggle-search {
   width: 2rem;
