@@ -95,7 +95,7 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:dev,ghcr.io/${{ github.repository }}:dev
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 # Looks like this was disabled
@@ -115,7 +115,7 @@ jobs:
             ghcr.io/dgtlmoon/changedetection.io:${{ github.event.release.tag_name }}
             ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:latest
             ghcr.io/dgtlmoon/changedetection.io:latest
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 # Looks like this was disabled
