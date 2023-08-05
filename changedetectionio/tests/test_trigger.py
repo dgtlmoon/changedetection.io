@@ -8,10 +8,10 @@ from . util import live_server_setup
 def set_original_ignore_response():
     test_return_data = """<html>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      </body>
      </html>
 
@@ -24,10 +24,10 @@ def set_original_ignore_response():
 def set_modified_original_ignore_response():
     test_return_data = """<html>
        <body>
-     Some NEW nice initial text</br>
+     Some NEW nice initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      </body>
      </html>
 
@@ -40,12 +40,12 @@ def set_modified_original_ignore_response():
 def set_modified_with_trigger_text_response():
     test_return_data = """<html>
        <body>
-     Some NEW nice initial text</br>
+     Some NEW nice initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     foobar123
-     <br/>
-     So let's see what happens.  </br>
+     <br>
+     Add to cart
+     <br>
+     So let's see what happens.  <br>
      </body>
      </html>
 
@@ -60,7 +60,7 @@ def test_trigger_functionality(client, live_server):
     live_server_setup(live_server)
 
     sleep_time_for_fetch_thread = 3
-    trigger_text = "foobar123"
+    trigger_text = "Add to cart"
     set_original_ignore_response()
 
     # Give the endpoint time to spin up
@@ -76,10 +76,7 @@ def test_trigger_functionality(client, live_server):
     assert b"1 Imported" in res.data
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
-
-    # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -98,8 +95,14 @@ def test_trigger_functionality(client, live_server):
     )
     assert bytes(trigger_text.encode('utf-8')) in res.data
 
+    # Give the thread time to pick it up
+    time.sleep(sleep_time_for_fetch_thread)
+    
+    # so that we set the state to 'unviewed' after all the edits
+    client.get(url_for("diff_history_page", uuid="first"))
+
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
@@ -113,7 +116,7 @@ def test_trigger_functionality(client, live_server):
     set_modified_original_ignore_response()
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
@@ -121,16 +124,22 @@ def test_trigger_functionality(client, live_server):
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
 
-    # Just to be sure.. set a regular modified change..
+    # Now set the content which contains the trigger text
     time.sleep(sleep_time_for_fetch_thread)
     set_modified_with_trigger_text_response()
 
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     time.sleep(sleep_time_for_fetch_thread)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
+    
+    # https://github.com/dgtlmoon/changedetection.io/issues/616
+    # Apparently the actual snapshot that contains the trigger never shows
+    res = client.get(url_for("diff_history_page", uuid="first"))
+    assert b'Add to cart' in res.data
 
     # Check the preview/highlighter, we should be able to see what we triggered on, but it should be highlighted
     res = client.get(url_for("preview_page", uuid="first"))
-    # We should be able to see what we ignored
-    assert b'<div class="triggered">foobar' in res.data
+
+    # We should be able to see what we triggered on
+    assert b'<div class="triggered">Add to cart' in res.data

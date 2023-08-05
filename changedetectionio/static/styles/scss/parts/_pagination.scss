@@ -1,0 +1,37 @@
+.pagination-page-info {
+  color: #fff;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+}
+
+.pagination.menu {
+  > * {
+    display: inline-block;
+  }
+
+  li {
+    display: inline-block;
+  }
+
+  a {
+    padding: 0.65rem;
+    margin: 3px;
+    border: none;
+    background: #444;
+    border-radius: 2px;
+    color: var(--color-text-button);
+    &.disabled {
+      display: none;
+    }
+    &.active {
+      font-weight: bold;
+      background: #888;
+    }
+
+    &:hover {
+      background: #999;
+    }
+  }
+
+
+}

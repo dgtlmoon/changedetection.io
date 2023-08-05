@@ -12,15 +12,15 @@ def test_setup(live_server):
 def set_original_ignore_response_but_with_whitespace():
     test_return_data = """<html>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>
 
 
      Which is across multiple lines</p>
      <br>
-     </br>
+     <br>
 
-         So let's see what happens.  </br>
+         So let's see what happens.  <br>
 
 
      </body>
@@ -34,10 +34,10 @@ def set_original_ignore_response_but_with_whitespace():
 def set_original_ignore_response():
     test_return_data = """<html>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
      </body>
      </html>
 
@@ -61,9 +61,9 @@ def test_check_ignore_whitespace(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={
-            "minutes_between_check": 180,
-            "ignore_whitespace": "y",
-            'fetch_backend': "html_requests"
+            "requests-time_between_check-minutes": 180,
+            "application-ignore_whitespace": "y",
+            "application-fetch_backend": "html_requests"
         },
         follow_redirects=True
     )
@@ -80,12 +80,12 @@ def test_check_ignore_whitespace(client, live_server):
 
     time.sleep(sleep_time_for_fetch_thread)
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     set_original_ignore_response_but_with_whitespace()
     time.sleep(sleep_time_for_fetch_thread)
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)

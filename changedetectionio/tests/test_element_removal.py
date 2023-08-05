@@ -25,10 +25,10 @@ def set_original_response():
     </ul>
     </nav>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
     <div id="changetext">Some text that will change</div>
      </body>
     <footer>
@@ -54,10 +54,10 @@ def set_modified_response():
     </ul>
     </nav>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>Which is across multiple lines</p>
-     </br>
-     So let's see what happens.  </br>
+     <br>
+     So let's see what happens.  <br>
     <div id="changetext">Some text that changes</div>
      </body>
     <footer>
@@ -71,7 +71,6 @@ def set_modified_response():
 
 
 def test_element_removal_output():
-    from changedetectionio import fetch_site_status
     from inscriptis import get_text
 
     # Check text with sub-parts renders correctly
@@ -85,7 +84,7 @@ def test_element_removal_output():
     </ul>
     </nav>
        <body>
-     Some initial text</br>
+     Some initial text<br>
      <p>across multiple lines</p>
      <div id="changetext">Some text that changes</div>
      </body>
@@ -121,7 +120,7 @@ def test_element_removal_full(client, live_server):
         url_for("import_page"), data={"urls": test_url}, follow_redirects=True
     )
     assert b"1 Imported" in res.data
-
+    time.sleep(1)
     # Goto the edit page, add the filter data
     # Not sure why \r needs to be added - absent of the #changetext this is not necessary
     subtractive_selectors_data = "header\r\nfooter\r\nnav\r\n#changetext"
@@ -130,7 +129,7 @@ def test_element_removal_full(client, live_server):
         data={
             "subtractive_selectors": subtractive_selectors_data,
             "url": test_url,
-            "tag": "",
+            "tags": "",
             "headers": "",
             "fetch_backend": "html_requests",
         },
@@ -145,20 +144,19 @@ def test_element_removal_full(client, live_server):
     assert bytes(subtractive_selectors_data.encode("utf-8")) in res.data
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
-    # No change yet - first check
-    res = client.get(url_for("index"))
-    assert b"unviewed" not in res.data
+    # so that we set the state to 'unviewed' after all the edits
+    client.get(url_for("diff_history_page", uuid="first"))
 
     #  Make a change to header/footer/nav
     set_modified_response()
 
     # Trigger a check
-    client.get(url_for("api_watch_checknow"), follow_redirects=True)
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)

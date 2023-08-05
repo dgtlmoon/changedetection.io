@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block content %}
+{% from '_helpers.jinja' import render_field, render_checkbox_field, render_button %}
+{% from '_common_fields.jinja' import render_common_settings_form %}
+<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<script>
+
+/*{% if emailprefix %}*/
+    /*const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');*/
+/*{% endif %}*/
+
+
+</script>
+
+<script src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
+<!--<script src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>-->
+<script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
+
+<div class="edit-form monospaced-textarea">
+
+    <div class="tabs collapsable">
+        <ul>
+            <li class="tab" id=""><a href="#general">General</a></li>
+            <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
+            <li class="tab"><a href="#notifications">Notifications</a></li>
+        </ul>
+    </div>
+
+    <div class="box-wrap inner">
+        <form class="pure-form pure-form-stacked"
+              action="{{ url_for('tags.form_tag_edit', uuid=data.uuid) }}" method="POST">
+             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="tab-pane-inner" id="general">
+                <fieldset>
+                    <div class="pure-control-group">
+                        {{ render_field(form.title, placeholder="https://...", required=true, class="m-d") }}
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="tab-pane-inner" id="filters-and-triggers">
+                    <div class="pure-control-group">
+                        {% set field = render_field(form.include_filters,
+                            rows=5,
+                            placeholder="#example
+xpath://body/div/span[contains(@class, 'example-class')]",
+                            class="m-d")
+                        %}
+                        {{ field }}
+                        {% if '/text()' in  field %}
+                          <span class="pure-form-message-inline"><strong>Note!: //text() function does not work where the &lt;element&gt; contains &lt;![CDATA[]]&gt;</strong></span><br>
+                        {% endif %}
+                        <span class="pure-form-message-inline">One rule per line, <i>any</i> rules that matches will be used.<br>
+
+                    <ul>
+                        <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
+                        <li>JSON - Limit text to this JSON rule, using either <a href="https://pypi.org/project/jsonpath-ng/" target="new">JSONPath</a> or <a href="https://stedolan.github.io/jq/" target="new">jq</a> (if installed).
+                            <ul>
+                                <li>JSONPath: Prefix with <code>json:</code>, use <code>json:$</code> to force re-formatting if required,  <a href="https://jsonpath.com/" target="new">test your JSONPath here</a>.</li>
+                                {% if jq_support %}
+                                <li>jq: Prefix with <code>jq:</code> and <a href="https://jqplay.org/" target="new">test your jq here</a>. Using <a href="https://stedolan.github.io/jq/" target="new">jq</a> allows for complex filtering and processing of JSON data with built-in functions, regex, filtering, and more. See examples and documentation <a href="https://stedolan.github.io/jq/manual/" target="new">here</a>.</li>
+                                {% else %}
+                                <li>jq support not installed</li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash,
+                            <ul>
+                                <li>Example:  <code>//*[contains(@class, 'sametext')]</code> or <code>xpath://*[contains(@class, 'sametext')]</code>, <a
+                                href="http://xpather.com/" target="new">test your XPath here</a></li>
+                                <li>Example: Get all titles from an RSS feed <code>//title/text()</code></li>
+                            </ul>
+                            </li>
+                    </ul>
+                    Please be sure that you thoroughly understand how to write CSS, JSONPath, XPath{% if jq_support %}, or jq selector{%endif%} rules before filing an issue on GitHub! <a
+                                href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br>
+                </span>
+                    </div>
+                <fieldset class="pure-control-group">
+                    {{ render_field(form.subtractive_selectors, rows=5, placeholder="header
+footer
+nav
+.stockticker") }}
+                    <span class="pure-form-message-inline">
+                        <ul>
+                          <li> Remove HTML element(s) by CSS selector before text conversion. </li>
+                          <li> Add multiple elements or CSS selectors per line to ignore multiple parts of the HTML. </li>
+                        </ul>
+                      </span>
+                </fieldset>
+
+            </div>
+
+            <div class="tab-pane-inner" id="notifications">
+                <fieldset>
+                    <div  class="pure-control-group inline-radio">
+                      {{ render_checkbox_field(form.notification_muted) }}
+                    </div>
+                    {% if is_html_webdriver %}
+                    <div class="pure-control-group inline-radio">
+                      {{ render_checkbox_field(form.notification_screenshot) }}
+                        <span class="pure-form-message-inline">
+                            <strong>Use with caution!</strong> This will easily fill up your email storage quota or flood other storages.
+                        </span>
+                    </div>
+                    {% endif %}
+                    <div class="field-group" id="notification-field-group">
+                        {% if has_default_notification_urls %}
+                        <div class="inline-warning">
+                            <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="Look out!" title="Lookout!" >
+                            There are <a href="{{ url_for('settings_page')}}#notifications">system-wide notification URLs enabled</a>, this form will override notification settings for this watch only &dash; an empty Notification URL list here will still send notifications.
+                        </div>
+                        {% endif %}
+                        <a href="#notifications" id="notification-setting-reset-to-default" class="pure-button button-xsmall" style="right: 20px; top: 20px; position: absolute; background-color: #5f42dd; border-radius: 4px; font-size: 70%; color: #fff">Use system defaults</a>
+
+                        {{ render_common_settings_form(form, emailprefix, settings_application) }}
+                    </div>
+                </fieldset>
+            </div>
+
+            <div id="actions">
+                <div class="pure-control-group">
+                    {{ render_button(form.save_button) }}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
