@@ -36,6 +36,7 @@ from flask import (
 )
 from flask_login import login_required
 from flask_wtf import CSRFProtect
+from flask_cors import CORS
 
 from changedetectionio import html_tools
 
@@ -190,7 +191,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
-    #    CORS(app)
+    CORS(app)
 
     @login_manager.user_loader
     def user_loader(email):
