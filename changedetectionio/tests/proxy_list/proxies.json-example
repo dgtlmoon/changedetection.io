@@ -1,0 +1,10 @@
+{
+  "proxy-one": {
+    "label": "Proxy One",
+    "url": "http://squid-one:3128"
+  },
+  "proxy-two": {
+    "label": "Proxy Two",
+    "url": "http://squid-two:3128"
+  }
+}

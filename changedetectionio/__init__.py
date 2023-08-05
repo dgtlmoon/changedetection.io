@@ -246,6 +246,8 @@ def changedetection_app(config=None, datastore_o=None):
 
 
 
+
+
     @login_manager.user_loader
     def user_loader(email):
         user = User()

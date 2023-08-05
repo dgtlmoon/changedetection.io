@@ -2,42 +2,57 @@
 
 import difflib
 
+
+def same_slicer(l, a, b):
+    if a == b:
+        return [l[a]]
+    else:
+        return l[a:b]
+
 # like .compare but a little different output
-def customSequenceMatcher(before, after, include_equal=False):
+def customSequenceMatcher(before, after, include_equal=False, include_removed=True, include_added=True, include_replaced=True, include_change_type_prefix=True):
     cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \\t", a=before, b=after)
 
+    # @todo Line-by-line mode instead of buncghed, including `after` that is not in `before` (maybe unset?)
     for tag, alo, ahi, blo, bhi in cruncher.get_opcodes():
         if include_equal and tag == 'equal':
             g = before[alo:ahi]
             yield g
-        elif tag == 'delete':
-            g = "(removed) {}".format(before[alo])
+        elif include_removed and tag == 'delete':
+            row_prefix = "(removed) " if include_change_type_prefix else ''
+            g = [ row_prefix + i for i in same_slicer(before, alo, ahi)]
             yield g
-        elif tag == 'replace':
-            g = ["(changed) {}".format(before[alo]), "(-> into) {}".format(after[blo])]
+        elif include_replaced and tag == 'replace':
+            row_prefix = "(changed) " if include_change_type_prefix else ''
+            g = [row_prefix + i for i in same_slicer(before, alo, ahi)]
+            row_prefix = "(into) " if include_change_type_prefix else ''
+            g += [row_prefix + i for i in same_slicer(after, blo, bhi)]
             yield g
-        elif tag == 'insert':
-            g = "(added) {}".format(after[blo])
+        elif include_added and tag == 'insert':
+            row_prefix = "(added) " if include_change_type_prefix else ''
+            g = [row_prefix + i for i in same_slicer(after, blo, bhi)]
             yield g
 
 # only_differences - only return info about the differences, no context
-# line_feed_sep could be "<br/>" or "<li>" or "\n" etc
-def render_diff(previous_file, newest_file, include_equal=False, line_feed_sep="\n"):
-    with open(newest_file, 'r') as f:
-        newest_version_file_contents = f.read()
-        newest_version_file_contents = [line.rstrip() for line in newest_version_file_contents.splitlines()]
+# line_feed_sep could be "<br>" or "<li>" or "\n" etc
+def render_diff(previous_version_file_contents, newest_version_file_contents, include_equal=False, include_removed=True, include_added=True, include_replaced=True, line_feed_sep="\n", include_change_type_prefix=True):
 
-    if previous_file:
-        with open(previous_file, 'r') as f:
-            previous_version_file_contents = f.read()
+    newest_version_file_contents = [line.rstrip() for line in newest_version_file_contents.splitlines()]
+
+    if previous_version_file_contents:
             previous_version_file_contents = [line.rstrip() for line in previous_version_file_contents.splitlines()]
     else:
         previous_version_file_contents = ""
 
-    rendered_diff = customSequenceMatcher(previous_version_file_contents,
-                                          newest_version_file_contents,
-                                          include_equal)
+    rendered_diff = customSequenceMatcher(before=previous_version_file_contents,
+                                          after=newest_version_file_contents,
+                                          include_equal=include_equal,
+                                          include_removed=include_removed,
+                                          include_added=include_added,
+                                          include_replaced=include_replaced,
+                                          include_change_type_prefix=include_change_type_prefix)
 
     # Recursively join lists
     f = lambda L: line_feed_sep.join([f(x) if type(x) is list else x for x in L])
-    return f(rendered_diff)
+    p= f(rendered_diff)
+    return p
