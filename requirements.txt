@@ -6,6 +6,7 @@ flask-paginate
 flask_expects_json~=1.7
 flask_restful
 flask_wtf
+flask_cors
 flask~=2.0
 inscriptis~=2.2
 pytz
