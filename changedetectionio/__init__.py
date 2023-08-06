@@ -7,6 +7,7 @@ from feedgen.feed import FeedGenerator
 from flask_compress import Compress as FlaskCompress
 from flask_login import current_user
 from flask_restful import abort, Api
+from flask_cors import CORS
 from flask_wtf import CSRFProtect
 from functools import wraps
 from threading import Event
@@ -241,7 +242,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
-    #    CORS(app)
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 
 
