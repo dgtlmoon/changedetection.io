@@ -71,3 +71,6 @@ pillow
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup
 pytest ~=7.2
 pytest-flask ~=1.2
+
+# Pin jsonschema version to prevent build errors on armv6 while rpds-py wheels aren't available (1708)
+jsonschema==4.17.3
