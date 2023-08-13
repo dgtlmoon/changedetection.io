@@ -10,7 +10,7 @@ flask~=2.0
 inscriptis~=2.2
 pytz
 timeago~=1.0
-validators==0.21.2
+validators~=0.21
 
 
 # Set these versions together to avoid a RequestsDependencyWarning
