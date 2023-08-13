@@ -1,5 +1,6 @@
 import os
 import re
+from distutils.util import strtobool
 
 from wtforms import (
     BooleanField,
@@ -257,9 +258,10 @@ class validateURL(object):
 
     def __call__(self, form, field):
         import validators
-
+        # If hosts that only contain alphanumerics are allowed ("localhost" for example)
+        allow_simplehost = not strtobool(os.getenv('BLOCK_SIMPLEHOSTS', 'False'))
         try:
-            validators.url(field.data.strip(), simple_host=True)
+            validators.url(field.data.strip(), simple_host=allow_simplehost)
         except validators.ValidationFailure:
             message = field.gettext('\'%s\' is not a valid URL.' % (field.data.strip()))
             raise ValidationError(message)

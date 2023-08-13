@@ -1,3 +1,6 @@
+import os
+from distutils.util import strtobool
+
 from flask_expects_json import expects_json
 from changedetectionio import queuedWatchMetaData
 from flask_restful import abort, Resource
@@ -209,7 +212,9 @@ class CreateWatch(Resource):
         json_data = request.get_json()
         url = json_data['url'].strip()
 
-        if not validators.url(url, simple_host=True):
+        # If hosts that only contain alphanumerics are allowed ("localhost" for example)
+        allow_simplehost = not strtobool(os.getenv('BLOCK_SIMPLEHOSTS', 'False'))
+        if not validators.url(url, simple_host=allow_simplehost):
             return "Invalid or unsupported URL", 400
 
         if json_data.get('proxy'):
