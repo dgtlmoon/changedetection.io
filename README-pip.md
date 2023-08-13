@@ -54,5 +54,5 @@ $ changedetection.io -d /path/to/empty/data/dir -p 5000
 
 Then visit http://127.0.0.1:5000 , You should now be able to access the UI.
 
-See https://github.com/dgtlmoon/changedetection.io for more information.
+See https://changedetection.io for more information.
 

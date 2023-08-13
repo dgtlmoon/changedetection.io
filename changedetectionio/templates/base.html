@@ -37,7 +37,7 @@
     <div class="header">
       <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed" id="nav-menu">
         {% if has_password and not current_user.is_authenticated %}
-          <a class="pure-menu-heading" href="https://github.com/dgtlmoon/changedetection.io" rel="noopener">
+          <a class="pure-menu-heading" href="https://changedetection.io" rel="noopener">
             <strong>Change</strong>Detection.io</a>
         {% else %}
           <a class="pure-menu-heading" href="{{url_for('index')}}">
@@ -49,7 +49,7 @@
         {% else %}
           {% if new_version_available and not(has_password and not current_user.is_authenticated) %}
             <span id="new-version-text" class="pure-menu-heading">
-              <a href="https://github.com/dgtlmoon/changedetection.io">A new version is available</a>
+              <a href="https://changedetection.io">A new version is available</a>
             </span>
           {% endif %}
         {% endif %}
@@ -77,7 +77,7 @@
             {% endif %}
           {% else %}
             <li class="pure-menu-item">
-              <a class="pure-menu-link" href="https://github.com/dgtlmoon/changedetection.io">Website Change Detection and Notification.</a>
+              <a class="pure-menu-link" href="https://changedetection.io">Website Change Detection and Notification.</a>
             </li>
           {% endif %}
           {% if current_user.is_authenticated %}
