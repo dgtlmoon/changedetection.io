@@ -209,7 +209,7 @@ class CreateWatch(Resource):
         json_data = request.get_json()
         url = json_data['url'].strip()
 
-        if not validators.url(json_data['url'].strip()):
+        if not validators.url(url, simple_host=True):
             return "Invalid or unsupported URL", 400
 
         if json_data.get('proxy'):

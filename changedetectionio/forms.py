@@ -259,7 +259,7 @@ class validateURL(object):
         import validators
 
         try:
-            validators.url(field.data.strip())
+            validators.url(field.data.strip(), simple_host=True)
         except validators.ValidationFailure:
             message = field.gettext('\'%s\' is not a valid URL.' % (field.data.strip()))
             raise ValidationError(message)
