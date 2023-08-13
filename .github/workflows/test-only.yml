@@ -36,6 +36,8 @@ jobs:
         run: |         
           # Build a changedetection.io container and start testing inside
           docker build . -t test-changedetectionio
+          # Debug info
+          docker run test-changedetectionio  bash -c 'pip list'
 
       - name: Spin up ancillary SMTP+Echo message test server
         run: |
@@ -44,7 +46,6 @@ jobs:
 
       - name: Test built container with pytest
         run: |
-          
           # Unit tests
           docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_notification_diff'
           
