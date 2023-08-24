@@ -52,4 +52,6 @@ def test_highlight_ignore(client, live_server):
     # Should return a link
     assert b'href' in res.data
 
-
+    # And it should register in the preview page
+    res = client.get(url_for("preview_page", uuid=uuid))
+    assert b'<div class="ignored">oh yeah 456' in res.data
