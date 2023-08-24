@@ -29,7 +29,6 @@ def set_original(excluding=None, add_line=None):
         for i in test_return_data.splitlines():
             if not excluding in i:
                 output += f"{i}\n"
-
         test_return_data = output
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
@@ -39,9 +38,8 @@ def test_setup(client, live_server):
     live_server_setup(live_server)
 
 def test_check_removed_line_contains_trigger(client, live_server):
-
+    #live_server_setup(live_server)
     # Give the endpoint time to spin up
-    time.sleep(1)
     set_original()
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -52,8 +50,13 @@ def test_check_removed_line_contains_trigger(client, live_server):
     )
     assert b"1 Imported" in res.data
 
+    from .util import extract_UUID_from_client
+    uuid = extract_UUID_from_client(client)
+
     # Give the thread time to pick it up
     wait_for_all_checks(client)
+
+    #assert live_server.app.config['DATASTORE'].data['watching'][uuid]['previous_md5_before_filters'] == '3f10f9d7e3bc2b04197f525b30ca05af'
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -67,12 +70,13 @@ def test_check_removed_line_contains_trigger(client, live_server):
     )
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
-    set_original(excluding='Something irrelevant')
 
+    set_original(excluding='Something irrelevant')
     # A line thats not the trigger should not trigger anything
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
     assert b'1 watches queued for rechecking.' in res.data
     wait_for_all_checks(client)
+    assert live_server.app.config['DATASTORE'].data['watching'][uuid]['previous_md5_before_filters'] == '1262fa651e226e126fabe0275e131e82'
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
 
@@ -92,10 +96,14 @@ def test_check_removed_line_contains_trigger(client, live_server):
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
 
-    # Remove it again, and we should get a trigger
+    # It should now have 'The golden line' back, so we remove it, check again
+    # We should get a trigger
     set_original(excluding='The golden line')
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
+    #assert live_server.app.config['DATASTORE'].data['watching'][uuid]['previous_md5_before_filters'] == '2288c23519a6a90809defb37d79f98f4'
+    res = client.get(url_for("preview_page", uuid="first"))
+    assert b'The golden line' not in res.data
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
@@ -107,7 +115,7 @@ def test_check_add_line_contains_trigger(client, live_server):
     #live_server_setup(live_server)
 
     # Give the endpoint time to spin up
-    time.sleep(1)
+    #time.sleep(1)
     test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://') + "?xxx={{ watch_url }}"
 
     res = client.post(

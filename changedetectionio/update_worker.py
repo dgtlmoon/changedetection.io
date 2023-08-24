@@ -427,7 +427,6 @@ class update_worker(threading.Thread):
                         if update_handler.xpath_data:
                             self.datastore.save_xpath_data(watch_uuid=uuid, data=update_handler.xpath_data)
 
-
                 self.current_uuid = None  # Done
                 self.q.task_done()
 
