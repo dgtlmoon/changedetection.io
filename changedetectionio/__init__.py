@@ -1255,6 +1255,9 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/api/checknow", methods=['GET'])
     @login_optionally_required
     def form_watch_checknow():
+
+        # 'skip_when_checksum_same': should be False so that 'FilterNotFoundInResponse' can be checked
+
         # Forced recheck will skip the 'skip if content is the same' rule (, 'reprocess_existing_data': True})))
         tag = request.args.get('tag')
         uuid = request.args.get('uuid')
@@ -1266,7 +1269,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         if uuid:
             if uuid not in running_uuids:
-                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
+                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
             i = 1
 
         elif tag != None:
@@ -1275,7 +1278,7 @@ def changedetection_app(config=None, datastore_o=None):
                 if (tag != None and tag in watch.get('tags', {})):
                     if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                         update_q.put(
-                            queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': True})
+                            queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False})
                         )
                         i += 1
 
@@ -1283,7 +1286,7 @@ def changedetection_app(config=None, datastore_o=None):
             # No tag, no uuid, add everything.
             for watch_uuid, watch in datastore.data['watching'].items():
                 if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': True}))
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False}))
                     i += 1
         flash("{} watches queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
