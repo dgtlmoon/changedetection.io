@@ -677,7 +677,8 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.needs_write_urgent = True
 
             # Queue the watch for immediate recheck, with a higher priority
-            update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
+            # 'False' - fully reprocess the diff so we can see any new filters added
+            update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff':
