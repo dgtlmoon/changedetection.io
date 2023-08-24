@@ -199,7 +199,7 @@ def strip_ignore_text(content, wordlist, mode="content"):
 
         # Is it a regex?
         if k[0] == '/':
-            ignore_regex.append(k.strip(" /"))
+            ignore_regex.append(k.strip())
         else:
             ignore.append(k)
 
