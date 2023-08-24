@@ -201,7 +201,7 @@ def _parse_json(json_data, json_filter):
         match = jsonpath_expression.find(json_data)
         return _get_stripped_text_from_json_match(match)
 
-    if 'jq:' in json_filter:
+    if 'jq:' in json_filter or 'jqraw:' in json_filter:
 
         try:
             import jq
@@ -209,10 +209,15 @@ def _parse_json(json_data, json_filter):
             # `jq` requires full compilation in windows and so isn't generally available
             raise Exception("jq not support not found")
 
-        jq_expression = jq.compile(json_filter.replace('jq:', ''))
-        match = jq_expression.input(json_data).all()
+        if 'jq:' in json_filter:
+            jq_expression = jq.compile(json_filter.replace('jq:', ''))
+            match = jq_expression.input(json_data).all()
+            return _get_stripped_text_from_json_match(match)
 
-        return _get_stripped_text_from_json_match(match)
+        if 'jqraw:' in json_filter:
+            jq_expression = jq.compile(json_filter.replace('jqraw:', ''))
+            match = jq_expression.input(json_data).all()
+            return '\n'.join(str(item) for item in match)
 
 def _get_stripped_text_from_json_match(match):
     s = []
