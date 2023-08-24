@@ -119,3 +119,11 @@ td#diff-col div {
     max-width: 99%;
   }
 }
+
+#highlightSnippet {
+  background: var(--color-background);
+  padding: 1em;
+  border-radius: 5px;
+  background: var(--color-background);
+  box-shadow: 1px 1px 4px var(--color-shadow-jump);
+}
