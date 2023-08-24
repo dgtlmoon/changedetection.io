@@ -56,7 +56,7 @@ $(document).ready(function () {
             const posY = event.clientY + 20 + scrollTop;
 
             // Append HTML to the body, create the "Tweet Selection" dialog
-            document.body.insertAdjacentHTML('beforeend', '<div id="highlightSnippet" style="position: absolute; top: ' + posY + 'px; left: ' + posX + 'px;"><div class="pure-form-message-inline" style="font-size: 70%">Easily add text to the \'Ignore\' settings.</div><br><a data-mode="exact" href="javascript:void(0);" class="pure-button button-secondary button-xsmall">Ignore exact text</a>&nbsp;</div>');
+            document.body.insertAdjacentHTML('beforeend', '<div id="highlightSnippet" style="position: absolute; top: ' + posY + 'px; left: ' + posX + 'px;"><div class="pure-form-message-inline" style="font-size: 70%">Ignore any change on any line which contains the selected text.</div><br><a data-mode="exact" href="javascript:void(0);" class="pure-button button-secondary button-xsmall">Ignore exact text</a>&nbsp;</div>');
 
             if (/\d/.test(window.getSelection().toString())) {
                 // Offer regex replacement
