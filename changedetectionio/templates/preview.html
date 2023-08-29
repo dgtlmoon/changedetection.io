@@ -6,6 +6,7 @@
     {% if last_error_screenshot %}
     const error_screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid, error_screenshot=1) }}";
     {% endif %}
+    const highlight_submit_ignore_url="{{url_for('highlight_submit_ignore_url', uuid=uuid)}}";
 </script>
 <script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
@@ -20,7 +21,7 @@
         {% endif %}
     </ul>
 </div>
-
+<form><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
 <div id="diff-ui">
     <div class="tab-pane-inner" id="error-text">
         <div class="snapshot-age error">{{watch.error_text_ctime|format_seconds_ago}} seconds ago</div>
@@ -36,11 +37,12 @@
 
     <div class="tab-pane-inner" id="text">
         <div class="snapshot-age">{{watch.snapshot_text_ctime|format_timestamp_timeago}}</div>
-        <span class="ignored">Grey lines are ignored</span> <span class="triggered">Blue lines are triggers</span>
+        <span class="ignored">Grey lines are ignored</span> <span class="triggered">Blue lines are triggers</span> <span class="tip"><strong>Pro-tip</strong>: Highlight text to add to ignore filters</span>
+
         <table>
             <tbody>
             <tr>
-                <td id="diff-col">
+                <td id="diff-col" class="highlightable-filter">
                     {% for row in content %}
                     <div class="{{row.classes}}">{{row.line}}</div>
                     {% endfor %}
