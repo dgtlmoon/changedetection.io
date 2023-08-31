@@ -80,7 +80,7 @@ $(document).ready(function () {
                         }
                     }
                 }).done(function (data) {
-                    $("#highlightSnippet").append(data)
+                    $("#highlightSnippet").html(data)
                 }).fail(function (data) {
                     console.log(data);
                     alert('There was an error communicating with the server.');
