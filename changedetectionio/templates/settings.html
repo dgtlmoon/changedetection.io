@@ -181,21 +181,32 @@ nav
                 </div>
             </div>
             <div class="tab-pane-inner" id="proxies">
+                <div id="recommended-proxy">
+                    <div>
+                        <img style="height: 2em;" src="{{url_for('static_content', group='images', filename='brightdata.svg')}}" alt="BrightData Proxy Provider">
+                        <p>BrightData offer world-class proxy services, "Data Center" proxies are a very affordable way to proxy your requests, whilst <strong><a href="https://brightdata.grsm.io/n0r16zf7eivq">WebUnlocker</a></strong> can help solve most CAPTCHAs.</p>
+                        <p>
+                            BrightData offer many <a href="https://brightdata.com/proxy-types" target="new">many different types of proxies</a>, it is worth reading about what is best for your use-case.
+                        </p>
 
-                <p><strong>Tip</strong>: You can connect to websites using <a href="https://brightdata.grsm.io/n0r16zf7eivq">BrightData</a> proxies, their service <strong>WebUnlocker</strong> will solve most CAPTCHAs, whilst their <strong>Residential Proxies</strong> may help to avoid CAPTCHA altogether. </p>
-                <p>It may be easier to try <strong>WebUnlocker</strong> first, WebUnlocker also supports country selection.</p>
-                <p>
-                    When you have <a href="https://brightdata.grsm.io/n0r16zf7eivq">registered</a>, enabled the required services, visit the <A href="https://brightdata.com/cp/api_example?">API example page</A>, then select <strong>Python</strong>, set the country you wish to use, then copy+paste the example URL below<br>
-                    The Proxy URL with BrightData should start with <code>http://brd-customer...</code>
-                </p>
-
-                <p>When you sign up using <a href="https://brightdata.grsm.io/n0r16zf7eivq">https://brightdata.grsm.io/n0r16zf7eivq</a> BrightData will match any first deposit up to $150</p>
-
+                        <p>
+                            When you have <a href="https://brightdata.grsm.io/n0r16zf7eivq">registered</a>, enabled the required services, visit the <A href="https://brightdata.com/cp/api_example?">API example page</A>, then select <strong>Python</strong>, set the country you wish to use, then copy+paste the access Proxy URL into the "Extra Proxies" boxes below.<br>
+                        </p>
+                        <p>
+                            The Proxy URL with BrightData should start with <code>http://brd-customer...</code>
+                        </p>
+                        <p>When you sign up using <a href="https://brightdata.grsm.io/n0r16zf7eivq">https://brightdata.grsm.io/n0r16zf7eivq</a> BrightData will match any first deposit up to $150</p>
+                    </div>
+                    <div>
+                        <img style="height: 2em;" src="{{url_for('static_content', group='images', filename='oxylabs-news-feed-logo-2.svg')}}" alt="OxyLabs Proxy Provider">
+                        
+                    </div>
+                </div>
+               <p><strong>Tip</strong>: "Residential Proxy" proxy type can be more successfull than "Data Center" for blocked websites.
 
                 <div class="pure-control-group">
-                    {{ render_field(form.requests.form.extra_proxies) }}
-                    <span class="pure-form-message-inline">"Name" will be used for selecting the proxy in the Watch Edit settings</span>
-                </div>
+                {{ render_field(form.requests.form.extra_proxies) }}
+                <span class="pure-form-message-inline">"Name" will be used for selecting the proxy in the Watch Edit settings</span>
             </div>
             <div id="actions">
                 <div class="pure-control-group">
