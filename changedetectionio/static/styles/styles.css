@@ -117,8 +117,10 @@ body.proxy-check-active #request .proxy-timing {
 #recommended-proxy {
   display: grid;
   gap: 2rem;
-  grid-template-columns: repeat(2, 1fr);
   padding-bottom: 1em; }
+  @media (min-width: 991px) {
+    #recommended-proxy {
+      grid-template-columns: repeat(2, 1fr); } }
   #recommended-proxy > div {
     border: 1px #aaa solid;
     border-radius: 4px;

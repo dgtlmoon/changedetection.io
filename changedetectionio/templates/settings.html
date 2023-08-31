@@ -198,11 +198,38 @@ nav
                         <p>When you sign up using <a href="https://brightdata.grsm.io/n0r16zf7eivq">https://brightdata.grsm.io/n0r16zf7eivq</a> BrightData will match any first deposit up to $150</p>
                     </div>
                     <div>
-                        <img style="height: 2em;" src="{{url_for('static_content', group='images', filename='oxylabs-news-feed-logo-2.svg')}}" alt="OxyLabs Proxy Provider">
+                        <img style="height: 2em;"
+                             src="{{url_for('static_content', group='images', filename='oxylabs.svg')}}"
+                             alt="OxyLabs Proxy Provider">
+                        <p>
+                            Collect public data at scale with industry-leading web scraping solutions and the world’s
+                            largest ethical proxy network.
+                        </p>
+                        <p>
+                            OxyLabs also provide a <a href="https://oxylabs.io/products/web-unblocker"><strong>WebUnlocker</strong></a>
+                            proxy that bypasses sophisticated anti-bot systems, so you don’t have to.<br>
+                            Serve over <a href="https://oxylabs.io/location-proxy">195 countries</a>, providing <a
+                                href="https://oxylabs.io/products/residential-proxy-pool">Residential</a>, <a
+                                href="https://oxylabs.io/products/mobile-proxies">Mobile</a> and <a
+                                href="https://oxylabs.io/products/rotating-isp-proxies">ISP proxies</a> and much more.
+                        </p>
+                        <p>
+                            We have two referrer links available
+                        <ul>
+                            <li>OxyLabs 50 <a href="https://oxylabs.go2cloud.org/aff_c?offer_id=7&aff_id=968">https://oxylabs.go2cloud.org/aff_c?offer_id=7&aff_id=968</a>
+                            </li>
+                            <li>Oxylabs China <a href="https://oxylabs.go2cloud.org/aff_c?offer_id=17&aff_id=968">https://oxylabs.go2cloud.org/aff_c?offer_id=17&aff_id=968</a>
+                            </li>
+                        </ul>
+                        </p>
+
                         
                     </div>
                 </div>
-               <p><strong>Tip</strong>: "Residential Proxy" proxy type can be more successfull than "Data Center" for blocked websites.
+                <p>
+                    Your proxy provider may need to whitelist our IP of <code>204.15.192.195</code>
+                </p>
+               <p><strong>Tip</strong>: "Residential" and "Mobile" proxy type can be more successfull than "Data Center" for blocked websites.
 
                 <div class="pure-control-group">
                 {{ render_field(form.requests.form.extra_proxies) }}

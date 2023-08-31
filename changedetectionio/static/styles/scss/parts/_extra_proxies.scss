@@ -48,7 +48,9 @@ body.proxy-check-active {
 #recommended-proxy {
   display: grid;
   gap: 2rem;
-  grid-template-columns: repeat(2, 1fr);
+    @media  (min-width: 991px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
 
   > div {
     border: 1px #aaa solid;
