@@ -192,35 +192,32 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
 # wordlist - list of regex's (str) or words (str)
 def strip_ignore_text(content, wordlist, mode="content"):
     ignore = []
-    ignore_regex = []
-
-    # @todo check this runs case insensitive
-    for k in wordlist:
-
-        # Is it a regex?
-        if k[0] == '/':
-            ignore_regex.append(k.strip(" /"))
-        else:
-            ignore.append(k)
-
     i = 0
     output = []
     ignored_line_numbers = []
+    # Copy into a new buffer only those lines which match
+
     for line in content.splitlines():
         i += 1
         # Always ignore blank lines in this mode. (when this function gets called)
+        got_match = False
         if len(line.strip()):
-            regex_matches = False
+            for k in wordlist:
+                # Is it a regex?
+                if k[0] == '/':  # maybe if there are two? or regex?
+                    # strip first last, convert re.search(r'(?i)maN', x)
 
-            # if any of these match, skip
-            for regex in ignore_regex:
-                try:
-                    if re.search(regex, line, re.IGNORECASE):
-                        regex_matches = True
-                except Exception as e:
-                    continue
+                    # Build the regex from '/xxxx/n' type perl-ish to python opts
+                    x = re.search('^\/(.*)\/(.*)', k)
+                    p = x.group(1)
+                    if re.search(rf"{p}", line, re.IGNORECASE):
+                        got_match = True
+                else:
+                    if k.lower() in line.lower():
+                        got_match = True
 
-            if not regex_matches and not any(skip_text.lower() in line.lower() for skip_text in ignore):
+            if not got_match:
+                # Not ignored
                 output.append(line.encode('utf8'))
             else:
                 ignored_line_numbers.append(i)
