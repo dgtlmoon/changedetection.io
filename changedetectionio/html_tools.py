@@ -197,21 +197,21 @@ def strip_ignore_text(content, wordlist, mode="content"):
     ignore_regex = []
 
     ignored_line_numbers = []
-    # Copy into a new buffer only those lines which match
 
     for k in wordlist:
         # Is it a regex?
-        if k[0] == '/':  # maybe if there are two? or regex?
-            # strip first last, convert re.search(r'(?i)maN', x)
-            # Build the regex from '/xxxx/n' type perl-ish to python opts
+        x = re.search('^\/(.*)\/(.*)', k.strip())
+        if x:
+            # Starts with / but doesn't look like a regex
+            p = x.group(1)
             try:
-                x = re.search('^\/(.*)\/(.*)', k.strip())
-                p = x.group(1)
+                # @Todo python regex options can go before the regex str, but not really many of the options apply on a per-line basis
                 ignore_regex.append(re.compile(rf"{p}", re.IGNORECASE))
             except Exception as e:
-                # Didnt work as a regex, just treat it as text
+                # Badly formed regex, treat as text
                 ignore_text.append(k.strip())
         else:
+            # Had a / but doesn't work as regex
             ignore_text.append(k.strip())
 
     for line in content.splitlines():
@@ -225,7 +225,7 @@ def strip_ignore_text(content, wordlist, mode="content"):
 
             if not got_match:
                 for r in ignore_regex:
-                    if r.match(line):
+                    if r.search(line):
                         got_match = True
 
             if not got_match:
@@ -233,7 +233,6 @@ def strip_ignore_text(content, wordlist, mode="content"):
                 output.append(line.encode('utf8'))
             else:
                 ignored_line_numbers.append(i)
-
 
 
     # Used for finding out what to highlight

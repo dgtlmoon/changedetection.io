@@ -17,7 +17,8 @@ def test_strip_regex_text_func():
     but 1 lines
     skip 5 lines
     really? yes man
-    /not this
+#/not this tries weirdly formed regex or just strings starting with /
+/not this
     but including 1234 lines
     igNORe-cAse text we dont want to keep    
     but not always."""
