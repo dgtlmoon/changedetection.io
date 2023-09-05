@@ -191,40 +191,48 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
 #
 # wordlist - list of regex's (str) or words (str)
 def strip_ignore_text(content, wordlist, mode="content"):
-    ignore = []
-    ignore_regex = []
-
-    # @todo check this runs case insensitive
-    for k in wordlist:
-
-        # Is it a regex?
-        if k[0] == '/':
-            ignore_regex.append(k.strip(" /"))
-        else:
-            ignore.append(k)
-
     i = 0
     output = []
+    ignore_text = []
+    ignore_regex = []
+
     ignored_line_numbers = []
+
+    for k in wordlist:
+        # Is it a regex?
+        x = re.search('^\/(.*)\/(.*)', k.strip())
+        if x:
+            # Starts with / but doesn't look like a regex
+            p = x.group(1)
+            try:
+                # @Todo python regex options can go before the regex str, but not really many of the options apply on a per-line basis
+                ignore_regex.append(re.compile(rf"{p}", re.IGNORECASE))
+            except Exception as e:
+                # Badly formed regex, treat as text
+                ignore_text.append(k.strip())
+        else:
+            # Had a / but doesn't work as regex
+            ignore_text.append(k.strip())
+
     for line in content.splitlines():
         i += 1
         # Always ignore blank lines in this mode. (when this function gets called)
+        got_match = False
         if len(line.strip()):
-            regex_matches = False
+            for l in ignore_text:
+                if l.lower() in line.lower():
+                    got_match = True
 
-            # if any of these match, skip
-            for regex in ignore_regex:
-                try:
-                    if re.search(regex, line, re.IGNORECASE):
-                        regex_matches = True
-                except Exception as e:
-                    continue
+            if not got_match:
+                for r in ignore_regex:
+                    if r.search(line):
+                        got_match = True
 
-            if not regex_matches and not any(skip_text.lower() in line.lower() for skip_text in ignore):
+            if not got_match:
+                # Not ignored
                 output.append(line.encode('utf8'))
             else:
                 ignored_line_numbers.append(i)
-
 
 
     # Used for finding out what to highlight
