@@ -6,6 +6,9 @@
     {% if last_error_screenshot %}
     const error_screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid, error_screenshot=1) }}";
     {% endif %}
+
+    const highlight_submit_ignore_url="{{url_for('highlight_submit_ignore_url', uuid=uuid)}}";
+
 </script>
 <script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
@@ -76,7 +79,7 @@
     </div>
 
      <div class="tab-pane-inner" id="text">
-         <div class="tip">Pro-tip: Use <strong>show current snapshot</strong> tab to visualise what will be ignored.</div>
+         <div class="tip">Pro-tip: Use <strong>show current snapshot</strong> tab to visualise what will be ignored, highlight text to add to ignore filters</div>
 
          {% if password_enabled_and_share_is_off %}
            <div class="tip">Pro-tip: You can enable <strong>"share access when password is enabled"</strong> from settings</div>
@@ -91,7 +94,7 @@
                  <td id="a" style="display: none;">{{previous}}</td>
                  <td id="b" style="display: none;">{{newest}}</td>
                  <td id="diff-col">
-                     <span id="result"></span>
+                     <span id="result" class="highlightable-filter"></span>
                  </td>
              </tr>
              </tbody>

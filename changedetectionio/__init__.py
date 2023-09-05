@@ -38,7 +38,7 @@ from flask_paginate import Pagination, get_page_parameter
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.44.1'
+__version__ = '0.44.2'
 
 datastore = None
 
@@ -1429,6 +1429,27 @@ def changedetection_app(config=None, datastore_o=None):
         # in the browser - should give you a nice info page - wtf
         # paste in etc
         return redirect(url_for('index'))
+
+    @app.route("/highlight_submit_ignore_url", methods=['POST'])
+    def highlight_submit_ignore_url():
+        import re
+        mode = request.form.get('mode')
+        selection = request.form.get('selection')
+
+        uuid = request.args.get('uuid','')
+        if datastore.data["watching"].get(uuid):
+            if mode == 'exact':
+                for l in selection.splitlines():
+                    datastore.data["watching"][uuid]['ignore_text'].append(l.strip())
+            elif mode == 'digit-regex':
+                for l in selection.splitlines():
+                    # Replace any series of numbers with a regex
+                    s = re.escape(l.strip())
+                    s = re.sub(r'[0-9]+', r'\\d+', s)
+                    datastore.data["watching"][uuid]['ignore_text'].append('/' + s + '/')
+
+        return f"<a href={url_for('preview_page', uuid=uuid)}>Click to preview</a>"
+
 
     import changedetectionio.blueprint.browser_steps as browser_steps
     app.register_blueprint(browser_steps.construct_blueprint(datastore), url_prefix='/browser-steps')
