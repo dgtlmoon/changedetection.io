@@ -42,3 +42,8 @@ def test_strip_regex_text_func():
     assert b"but 1234 lines" not in stripped_content
     assert b"really" not in stripped_content
     assert b"not this" not in stripped_content
+
+    # Check line number reporting
+    stripped_content = html_tools.strip_ignore_text(test_content, ignore_lines, mode="line numbers")
+    assert stripped_content == [2, 5, 6, 7, 8, 10]
+
