@@ -191,29 +191,41 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
 #
 # wordlist - list of regex's (str) or words (str)
 def strip_ignore_text(content, wordlist, mode="content"):
-    ignore = []
     i = 0
     output = []
+    ignore_text = []
+    ignore_regex = []
+
     ignored_line_numbers = []
     # Copy into a new buffer only those lines which match
+
+    for k in wordlist:
+        # Is it a regex?
+        if k[0] == '/':  # maybe if there are two? or regex?
+            # strip first last, convert re.search(r'(?i)maN', x)
+            # Build the regex from '/xxxx/n' type perl-ish to python opts
+            try:
+                x = re.search('^\/(.*)\/(.*)', k.strip())
+                p = x.group(1)
+                ignore_regex.append(re.compile(rf"{p}", re.IGNORECASE))
+            except Exception as e:
+                # Didnt work as a regex, just treat it as text
+                ignore_text.append(k.strip())
+        else:
+            ignore_text.append(k.strip())
 
     for line in content.splitlines():
         i += 1
         # Always ignore blank lines in this mode. (when this function gets called)
         got_match = False
         if len(line.strip()):
-            for k in wordlist:
-                # Is it a regex?
-                if k[0] == '/':  # maybe if there are two? or regex?
-                    # strip first last, convert re.search(r'(?i)maN', x)
+            for l in ignore_text:
+                if l.lower() in line.lower():
+                    got_match = True
 
-                    # Build the regex from '/xxxx/n' type perl-ish to python opts
-                    x = re.search('^\/(.*)\/(.*)', k)
-                    p = x.group(1)
-                    if re.search(rf"{p}", line, re.IGNORECASE):
-                        got_match = True
-                else:
-                    if k.lower() in line.lower():
+            if not got_match:
+                for r in ignore_regex:
+                    if r.match(line):
                         got_match = True
 
             if not got_match:

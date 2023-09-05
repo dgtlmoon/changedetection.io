@@ -17,6 +17,7 @@ def test_strip_regex_text_func():
     but 1 lines
     skip 5 lines
     really? yes man
+    /not this
     but including 1234 lines
     igNORe-cAse text we dont want to keep    
     but not always."""
@@ -27,7 +28,8 @@ def test_strip_regex_text_func():
         "/\s\d{2,3}\s/",
         "/ignore-case text/",
         "really?",
-        "/skip \d lines/i"
+        "/skip \d lines/i",
+        "/not"
     ]
 
 
@@ -38,3 +40,4 @@ def test_strip_regex_text_func():
     assert b"igNORe-cAse text" not in stripped_content
     assert b"but 1234 lines" not in stripped_content
     assert b"really" not in stripped_content
+    assert b"not this" not in stripped_content
