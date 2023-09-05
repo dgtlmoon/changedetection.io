@@ -355,11 +355,13 @@ def changedetection_app(config=None, datastore_o=None):
 
                 # Include a link to the diff page, they will have to login here to see if password protection is enabled.
                 # Description is the page you watch, link takes you to the diff JS UI page
-                base_url = datastore.data['settings']['application']['base_url']
-                if base_url == '':
-                    base_url = "<base-url-env-var-not-set>"
-
-                diff_link = {'href': "{}{}".format(base_url, url_for('diff_history_page', uuid=watch['uuid']))}
+                # Dict val base_url will get overriden with the env var if it is set.
+                ext_base_url = datastore.data['settings']['application'].get('base_url')
+                if ext_base_url:
+                    # Go with overriden value
+                    diff_link = {'href': "{}{}".format(ext_base_url, url_for('diff_history_page', uuid=watch['uuid'], _external=False))}
+                else:
+                    diff_link = {'href': url_for('diff_history_page', uuid=watch['uuid'], _external=True)}
 
                 fe.link(link=diff_link)
 
