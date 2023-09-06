@@ -114,6 +114,18 @@ body.proxy-check-active #request .proxy-timing {
   padding-left: 1rem;
   color: var(--color-link); }
 
+#recommended-proxy {
+  display: grid;
+  gap: 2rem;
+  padding-bottom: 1em; }
+  @media (min-width: 991px) {
+    #recommended-proxy {
+      grid-template-columns: repeat(2, 1fr); } }
+  #recommended-proxy > div {
+    border: 1px #aaa solid;
+    border-radius: 4px;
+    padding: 1em; }
+
 .pagination-page-info {
   color: #fff;
   font-size: 0.85rem;

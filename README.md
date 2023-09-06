@@ -86,6 +86,8 @@ _Need an actual Chrome runner with Javascript support? We support fetching via W
 
 We [recommend and use Bright Data](https://brightdata.grsm.io/n0r16zf7eivq) global proxy services, Bright Data will match any first deposit up to $100 using our signup link.
 
+[OxyLabs](https://oxylabs.io) is also an excellent proxy provider and well worth using, they offer Residental, ISP, Rotating and many other proxy types to suit your project. 
+
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
 
 ## Installation
