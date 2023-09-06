@@ -15,7 +15,7 @@ def set_response_without_filter():
      <p>Which is across multiple lines</p>
      <br>
      So let's see what happens.  <br>
-     <div id="nope-doesnt-exist">Some text thats the same</div>     
+     <div id="nope-doesnt-exist">Some text thats the same</div>
      </body>
      </html>
     """
@@ -32,7 +32,7 @@ def set_response_with_filter():
      <p>Which is across multiple lines</p>
      <br>
      So let's see what happens.  <br>
-     <div class="ticket-available">Ticket now on sale!</div>     
+     <div class="ticket-available">Ticket now on sale!</div>
      </body>
      </html>
     """
@@ -84,6 +84,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
                                                    "Snapshot: {{current_snapshot}}\n"
                                                    "Diff: {{diff}}\n"
                                                    "Diff Full: {{diff_full}}\n"
+                                                   "Diff as Patch: {{diff_patch}}\n"
                                                    ":-)",
                               "notification_format": "Text"}
 
