@@ -49,6 +49,9 @@ beautifulsoup4
 # XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
 lxml
 
+# XPath 2.0-3.1 support
+elementpath
+
 # 3.141 was missing socksVersion, 3.150 was not in pypi, so we try 4.1.0
 selenium~=4.1.0
 

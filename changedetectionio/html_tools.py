@@ -52,11 +52,14 @@ def element_removal(selectors: List[str], html_content):
 # Return str Utf-8 of matched rules
 def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False):
     from lxml import etree, html
+    import elementpath
+    # xpath 2.0-3.1
+    from elementpath.xpath3 import XPath3Parser
 
     tree = html.fromstring(bytes(html_content, encoding='utf-8'))
     html_block = ""
 
-    r = tree.xpath(xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'})
+    r =  elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser)
     #@note: //title/text() wont work where <title>CDATA..
 
     for element in r:
@@ -71,7 +74,14 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
             html_block += str(element)
         elif type(element) == etree._ElementUnicodeResult:
             html_block += str(element)
+        elif type(element) == str:
+            # Because of elementpath lib.
+            # e.g. element='texts' type(element)=<class 'str'>
+            # e.g. //*[contains(@id,'post')]/div/div[2]/header/h2/a/text() | //*[contains(@id,'post')]/div/div[2]/header/h2/a/@href
+            html_block += element
         else:
+            # e.g. element=<Element a at 0x7fcb0038c0e0> type(element)=<class 'lxml.html.HtmlElement'>
+            # e.g. //*[@id="container"]/section[1]/article[2]/div[2]/table/tbody/tr[*]/td[2]/a[1]
             html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
 
     return html_block
