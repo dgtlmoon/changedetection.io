@@ -325,7 +325,7 @@ class ValidateCSSJSONXPATHInput(object):
 
                 try:
                     elementpath.select(tree, line.strip(), parser=XPath3Parser)
-                except etree.XPathEvalError as e:
+                except elementpath.ElementPathError as e:
                     message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
                     raise ValidationError(message % (line, str(e)))
                 except:
