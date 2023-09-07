@@ -9,6 +9,7 @@ valid_tokens = {
     'diff': '',
     'diff_added': '',
     'diff_full': '',
+    'diff_patch': '',
     'diff_removed': '',
     'diff_url': '',
     'preview_url': '',
@@ -98,7 +99,7 @@ def process_notification(n_object, datastore):
         # Initially text or whatever
         n_format = datastore.data['settings']['application'].get('notification_format', valid_notification_formats[default_notification_format])
 
-    
+
     # https://github.com/caronc/apprise/wiki/Development_LogCapture
     # Anything higher than or equal to WARNING (which covers things like Connection errors)
     # raise it as an exception
@@ -177,7 +178,7 @@ def process_notification(n_object, datastore):
                 log_value = logs.getvalue()
                 if log_value and 'WARNING' in log_value or 'ERROR' in log_value:
                     raise Exception(log_value)
-                
+
                 sent_objs.append({'title': n_title,
                                   'body': n_body,
                                   'url' : url,
@@ -230,6 +231,7 @@ def create_notification_parameters(n_object, datastore):
             'diff': n_object.get('diff', ''),  # Null default in the case we use a test
             'diff_added': n_object.get('diff_added', ''),  # Null default in the case we use a test
             'diff_full': n_object.get('diff_full', ''),  # Null default in the case we use a test
+            'diff_patch': n_object.get('diff_patch', ''),  # Null default in the case we use a test
             'diff_removed': n_object.get('diff_removed', ''),  # Null default in the case we use a test
             'diff_url': diff_url,
             'preview_url': preview_url,

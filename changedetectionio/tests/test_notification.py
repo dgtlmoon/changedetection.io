@@ -98,6 +98,7 @@ def test_check_notification(client, live_server):
                                                    "Diff Added: {{diff_added}}\n"
                                                    "Diff Removed: {{diff_removed}}\n"
                                                    "Diff Full: {{diff_full}}\n"
+                                                   "Diff as Patch: {{diff_patch}}\n"
                                                    ":-)",
                               "notification_screenshot": True,
                               "notification_format": "Text"}
