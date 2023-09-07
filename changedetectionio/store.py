@@ -778,15 +778,6 @@ class ChangeDetectionStore:
                 continue
         return
 
-    # We don't know when the date_created was in the past until now, so just add an index number for now.
-    def update_11(self):
-        i = 0
-        for uuid, watch in self.data['watching'].items():
-            if not watch.get('date_created'):
-                watch['date_created'] = i
-            i+=1
-        return
-
     # Create tag objects and their references from existing tag text
     def update_12(self):
         i = 0
@@ -800,3 +791,11 @@ class ChangeDetectionStore:
 
                 self.data['watching'][uuid]['tags'] = tag_uuids
 
+    # #1775 - Update 11 did not update the records correctly when adding 'date_created' values for sorting
+    def update_13(self):
+        i = 0
+        for uuid, watch in self.data['watching'].items():
+            if not watch.get('date_created'):
+                self.data['watching'][uuid]['date_created'] = i
+            i+=1
+        return
