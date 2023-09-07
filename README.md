@@ -74,7 +74,7 @@ _Need an actual Chrome runner with Javascript support? We support fetching via W
 #### Key Features
 
 - Lots of trigger filters, such as "Trigger on text", "Remove text by selector", "Ignore text", "Extract text", also using regular-expressions!
-- Target elements with xPath and CSS Selectors, Easily monitor complex JSON with JSONPath or jq
+- Target elements with xPath(1.0) and CSS Selectors, Easily monitor complex JSON with JSONPath or jq
 - Switch between fast non-JS and Chrome JS based "fetchers"
 - Track changes in PDF files (Monitor text changed in the PDF, Also monitor PDF filesize and checksums)
 - Easily specify how often a site should be checked
@@ -147,7 +147,7 @@ See the wiki for more information https://github.com/dgtlmoon/changedetection.io
 
 ## Filters
 
-XPath, JSONPath, jq, and CSS support comes baked in! You can be as specific as you need, use XPath exported from various XPath element query creation tools. 
+XPath(1.0), JSONPath, jq, and CSS support comes baked in! You can be as specific as you need, use XPath exported from various XPath element query creation tools. 
 (We support LXML `re:test`, `re:match` and `re:replace`.)
 
 ## Notifications
