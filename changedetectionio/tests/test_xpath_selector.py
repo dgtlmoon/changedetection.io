@@ -277,3 +277,45 @@ def test_check_with_prefix_include_filters(client, live_server):
     assert b"Some text that will change" not in res.data #not in selector
 
     client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+
+def test_xpath_20(client, live_server):
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+    # Give the endpoint time to spin up
+    time.sleep(1)
+
+    set_original_response()
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    time.sleep(3)
+
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"include_filters": "//*[contains(@class, 'sametext')]|//*[contains(@class, 'changetext')]",
+              "url": test_url,
+              "tags": "",
+              "headers": "",
+              'fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+
+    assert b"Updated watch." in res.data
+    time.sleep(3)
+
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    assert b"Some text thats the same" in res.data #in selector
+    assert b"Some text that will change" in res.data #in selector
+
+    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
