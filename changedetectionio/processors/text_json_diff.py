@@ -38,15 +38,15 @@ class perform_site_check(difference_detection_processor):
         self.datastore = datastore
 
     # Doesn't look like python supports forward slash auto enclosure in re.findall
-    # So convert it to inline flag "foobar(?i)" type configuration
+    # So convert it to inline flag "(?i)foobar" type configuration
     def forward_slash_enclosed_regex_to_options(self, regex):
         res = re.search(r'^/(.*?)/(\w+)$', regex, re.IGNORECASE)
 
         if res:
             regex = res.group(1)
-            regex += '(?{})'.format(res.group(2))
+            regex = f"(?{res.group(2)}){regex}"
         else:
-            regex += '(?{})'.format('i')
+            regex = f"(?i){regex}"
 
         return regex
 
