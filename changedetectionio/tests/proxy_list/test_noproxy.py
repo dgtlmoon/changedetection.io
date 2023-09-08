@@ -11,6 +11,36 @@ def test_preferred_proxy(client, live_server):
     # Call this URL then scan the containers that it never went through them
     url = "http://noproxy.changedetection.io"
 
+    # Should only be available when a proxy is setup
+    res = client.get(
+        url_for("edit_page", uuid="first", unpause_on_save=1))
+    assert b'No proxy' not in res.data
+
+    # Setup a proxy
+    res = client.post(
+        url_for("settings_page"),
+        data={
+            "requests-time_between_check-minutes": 180,
+            "application-ignore_whitespace": "y",
+            "application-fetch_backend": "html_requests",
+            "requests-extra_proxies-0-proxy_name": "custom-one-proxy",
+            "requests-extra_proxies-0-proxy_url": "http://test:awesome@squid-one:3128",
+            "requests-extra_proxies-1-proxy_name": "custom-two-proxy",
+            "requests-extra_proxies-1-proxy_url": "http://test:awesome@squid-two:3128",
+            "requests-extra_proxies-2-proxy_name": "custom-proxy",
+            "requests-extra_proxies-2-proxy_url": "http://test:awesome@squid-custom:3128",
+        },
+        follow_redirects=True
+    )
+
+    assert b"Settings updated." in res.data
+
+    # Should be available as an option
+    res = client.get(
+        url_for("settings_page", unpause_on_save=1))
+    assert b'No proxy' in res.data
+
+
     # This will add it paused
     res = client.post(
         url_for("form_quick_watch_add"),
@@ -18,6 +48,10 @@ def test_preferred_proxy(client, live_server):
         follow_redirects=True
     )
     assert b"Watch added in Paused state, saving will unpause" in res.data
+
+    res = client.get(
+        url_for("edit_page", uuid="first", unpause_on_save=1))
+    assert b'No proxy' in res.data
 
     res = client.post(
         url_for("edit_page", uuid="first", unpause_on_save=1),
