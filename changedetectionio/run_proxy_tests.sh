@@ -19,7 +19,6 @@ docker run --network changedet-network -d \
 
 
 ## 2nd test actually choose the preferred proxy from proxies.json
-
 docker run --network changedet-network \
   -v `pwd`/tests/proxy_list/proxies.json-example:/app/changedetectionio/test-datastore/proxies.json \
   test-changedetectionio \
@@ -44,7 +43,6 @@ fi
 
 
 # Test the UI configurable proxies
-
 docker run --network changedet-network \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest tests/proxy_list/test_select_custom_proxy.py'
@@ -57,5 +55,22 @@ then
   echo "Did not see a valid request to changedetection.io in the squid logs (while checking preferred proxy - squid two)"
   exit 1
 fi
+
+# Test "no-proxy" option
+docker run --network changedet-network \
+  test-changedetectionio \
+  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_noproxy.py'
+
+# Check request was never seen in any container
+for c in $(echo "squid-one squid-two squid-custom"); do
+  docker logs $c &> $c.txt
+  grep noproxy $c.txt
+  if [ $? -ne 1 ]
+  then
+    echo "Saw request for noproxy in $c container"
+    exit 1
+  fi
+done
+
 
 docker kill squid-one squid-two squid-custom
