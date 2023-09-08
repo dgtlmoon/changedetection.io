@@ -1,3 +1,5 @@
+from distutils.util import strtobool
+
 from flask import (
     flash
 )
@@ -468,6 +470,8 @@ class ChangeDetectionStore:
                     k = "ui-" + str(i) + proxy.get('proxy_name')
                     proxy_list[k] = {'label': proxy.get('proxy_name'), 'url': proxy.get('proxy_url')}
 
+        if proxy_list and strtobool(os.getenv('ENABLE_NO_PROXY_OPTION', 'True')):
+            proxy_list["no-proxy"] = {'label': "No proxy", 'url': ''}
 
         return proxy_list if len(proxy_list) else None
 
@@ -484,6 +488,9 @@ class ChangeDetectionStore:
 
         # If it's a valid one
         watch = self.data['watching'].get(uuid)
+
+        if strtobool(os.getenv('ENABLE_NO_PROXY_OPTION', 'True')) and watch.get('proxy') == "no-proxy":
+            return None
 
         if watch.get('proxy') and watch.get('proxy') in list(self.proxy_list.keys()):
             return watch.get('proxy')
