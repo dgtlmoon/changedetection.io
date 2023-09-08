@@ -48,13 +48,13 @@ def test_noproxy_option(client, live_server):
         follow_redirects=True
     )
     assert b"Watch added in Paused state, saving will unpause" in res.data
-
+    uuid = extract_UUID_from_client(client)
     res = client.get(
-        url_for("edit_page", uuid="first", unpause_on_save=1))
+        url_for("edit_page", uuid=uuid, unpause_on_save=1))
     assert b'No proxy' in res.data
 
     res = client.post(
-        url_for("edit_page", uuid="first", unpause_on_save=1),
+        url_for("edit_page", uuid=uuid, unpause_on_save=1),
         data={
                 "include_filters": "",
                 "fetch_backend": "html_requests",
@@ -72,6 +72,6 @@ def test_noproxy_option(client, live_server):
     # Now the request should NOT appear in the second-squid logs (handled by the run_test_proxies.sh script)
 
     # Prove that it actually checked
-    uuid = extract_UUID_from_client(client)
+
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked'] != 0
 

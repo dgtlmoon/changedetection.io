@@ -2,6 +2,8 @@
 
 # exit when any command fails
 set -e
+# enable debug
+set -x
 
 # Test proxy list handling, starting two squids on different ports
 # Each squid adds a different header to the response, which is the main thing we test for.
