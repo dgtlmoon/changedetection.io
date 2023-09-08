@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from ..util import live_server_setup, wait_for_all_checks
+from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
 
 def test_preferred_proxy(client, live_server):
@@ -67,6 +67,11 @@ def test_preferred_proxy(client, live_server):
     )
     assert b"unpaused" in res.data
     wait_for_all_checks(client)
-    # Now the request should appear in the second-squid logs
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
+    # Now the request should NOT appear in the second-squid logs (handled by the run_test_proxies.sh script)
+
+    # Prove that it actually checked
+    uuid = extract_UUID_from_client(client)
+    assert live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked'] != 0
+
