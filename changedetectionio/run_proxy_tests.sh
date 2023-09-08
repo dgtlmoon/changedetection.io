@@ -63,6 +63,8 @@ docker run --network changedet-network \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest tests/proxy_list/test_noproxy.py'
 
+# We need to handle grep returning 1
+set +e
 # Check request was never seen in any container
 for c in $(echo "squid-one squid-two squid-custom"); do
   echo Checking $c
