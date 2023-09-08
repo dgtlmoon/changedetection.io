@@ -65,11 +65,13 @@ docker run --network changedet-network \
 
 # Check request was never seen in any container
 for c in $(echo "squid-one squid-two squid-custom"); do
+  echo Checking $c
   docker logs $c &> $c.txt
   grep noproxy $c.txt
   if [ $? -ne 1 ]
   then
     echo "Saw request for noproxy in $c container"
+    cat $c.txt
     exit 1
   fi
 done
