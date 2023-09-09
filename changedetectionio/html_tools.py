@@ -48,7 +48,6 @@ def element_removal(selectors: List[str], html_content):
     selector = ",".join(selectors)
     return subtractive_css_selector(selector, html_content)
 
-
 # Return str Utf-8 of matched rules
 def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False):
     from lxml import etree, html
@@ -62,6 +61,15 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     r =  elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser)
     #@note: //title/text() wont work where <title>CDATA..
 
+    # Because of elementpath lib.
+    # e.g. string-join(//*[contains(@class, 'sametext')]|//*[matches(@class, 'changetext')], ', ')
+    # e.g. r='Some text thats the same, Some new text' type(r)=<class 'str'>
+    # e.g. count(//*[contains(@class, 'sametext')])
+    # e.g. r=1 type(r)=<class 'int'>
+    if type(r) != list:
+        html_block += str(r)
+        return html_block
+
     for element in r:
         # When there's more than 1 match, then add the suffix to separate each line
         # And where the matched result doesn't include something that will cause Inscriptis to add a newline
@@ -74,14 +82,19 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
             html_block += str(element)
         elif type(element) == etree._ElementUnicodeResult:
             html_block += str(element)
+        # Because of elementpath lib.
+        # e.g. element='texts' type(element)=<class 'str'>
+        # e.g. //*[contains(@id,'post')]/div/div[2]/header/h2/a/text() | //*[contains(@id,'post')]/div/div[2]/header/h2/a/@href
         elif type(element) == str:
-            # Because of elementpath lib.
-            # e.g. element='texts' type(element)=<class 'str'>
-            # e.g. //*[contains(@id,'post')]/div/div[2]/header/h2/a/text() | //*[contains(@id,'post')]/div/div[2]/header/h2/a/@href
             html_block += element
+        # Because of elementpath lib.
+        # e.g. element=7 type(element)=<class 'int'>
+        # e.g. xpath://div/table/tbody/tr[*]/count(td)
+        elif type(element) == int:
+            html_block += str(element)
+        # e.g. element=<Element a at 0x7fcb0038c0e0> type(element)=<class 'lxml.html.HtmlElement'>
+        # e.g. //*[@id="container"]/section[1]/article[2]/div[2]/table/tbody/tr[*]/td[2]/a[1]
         else:
-            # e.g. element=<Element a at 0x7fcb0038c0e0> type(element)=<class 'lxml.html.HtmlElement'>
-            # e.g. //*[@id="container"]/section[1]/article[2]/div[2]/table/tbody/tr[*]/td[2]/a[1]
             html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
 
     return html_block
