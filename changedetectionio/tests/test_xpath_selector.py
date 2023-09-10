@@ -319,3 +319,126 @@ def test_xpath_20(client, live_server):
     assert b"Some text that will change" in res.data #in selector
 
     client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+
+def test_xpath_20_function_count(client, live_server):
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+    # Give the endpoint time to spin up
+    time.sleep(1)
+
+    set_original_response()
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    time.sleep(3)
+
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"include_filters": "xpath:count(//div) * 123456789987654321",
+              "url": test_url,
+              "tags": "",
+              "headers": "",
+              'fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+
+    assert b"Updated watch." in res.data
+    time.sleep(3)
+
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    assert b"246913579975308642" in res.data #in selector
+
+    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+
+def test_xpath_20_function_count2(client, live_server):
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+    # Give the endpoint time to spin up
+    time.sleep(1)
+
+    set_original_response()
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    time.sleep(3)
+
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"include_filters": "/html/body/count(div) * 123456789987654321",
+              "url": test_url,
+              "tags": "",
+              "headers": "",
+              'fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+
+    assert b"Updated watch." in res.data
+    time.sleep(3)
+
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    assert b"246913579975308642" in res.data #in selector
+
+    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+
+def test_xpath_20_function_string_join_matches(client, live_server):
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+    # Give the endpoint time to spin up
+    time.sleep(1)
+
+    set_original_response()
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    time.sleep(3)
+
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"include_filters": "xpath:string-join(//*[contains(@class, 'sametext')]|//*[matches(@class, 'changetext')], 'specialconjunction')",
+              "url": test_url,
+              "tags": "",
+              "headers": "",
+              'fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+
+    assert b"Updated watch." in res.data
+    time.sleep(3)
+
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    assert b"Some text thats the samespecialconjunctionSome text that will change" in res.data #in selector
+
+    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
