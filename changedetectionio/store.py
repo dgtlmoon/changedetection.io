@@ -327,6 +327,9 @@ class ChangeDetectionStore:
             if k in apply_extras:
                 del apply_extras[k]
 
+        if not apply_extras.get('date_created'):
+            apply_extras['date_created'] = int(time.time())
+
         new_watch.update(apply_extras)
         new_watch.ensure_data_dir_exists()
         self.__data['watching'][new_uuid] = new_watch
