@@ -327,7 +327,7 @@ class ChangeDetectionStore:
             if k in apply_extras:
                 del apply_extras[k]
 
-        apply_extras['date_created'] = time.time()
+        apply_extras['date_created'] = int(time.time())
 
         new_watch.update(apply_extras)
         new_watch.ensure_data_dir_exists()
