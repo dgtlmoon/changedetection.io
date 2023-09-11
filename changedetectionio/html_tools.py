@@ -53,7 +53,11 @@ def element_removal(selectors: List[str], html_content):
 def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False):
     from lxml import etree, html
 
-    tree = html.fromstring(bytes(html_content, encoding='utf-8'))
+    try:
+        tree = etree.HTML(html_content)
+    except:
+        #Unicode strings with encoding declaration are not supported. Please use bytes input or XML fragments without declaration.
+        tree = html.fromstring(bytes(html_content, encoding='utf-8'))
     html_block = ""
 
     r = tree.xpath(xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'})
