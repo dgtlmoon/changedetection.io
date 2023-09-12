@@ -1270,10 +1270,10 @@ def changedetection_app(config=None, datastore_o=None):
                 update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
             i = 1
 
-        elif tag != None:
+        elif tag:
             # Items that have this current tag
             for watch_uuid, watch in datastore.data['watching'].items():
-                if (tag != None and tag in watch.get('tags', {})):
+                if tag in watch.get('tags', {}):
                     if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                         update_q.put(
                             queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False})
