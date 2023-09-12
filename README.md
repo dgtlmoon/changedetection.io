@@ -97,7 +97,12 @@ Please :star: star :star: this project and help it grow! https://github.com/dgtl
 With Docker composer, just clone this repository and..
 
 ```bash
+# if you are using docker composer v2 (from 2020 and up)
 docker compose up -d
+
+# if you still on docker composer v1
+# (note: docker composer v1 no longer receive update after July 2023)
+docker-compose up -d
 ```
 
 Docker standalone
@@ -139,6 +144,10 @@ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/dat
 ### Docker Compose
 
 ```bash
+# docker composer v1
+docker-compose pull && docker-compose up -d
+
+# docker composer v2
 docker compose pull && docker compose up -d
 ```
 
