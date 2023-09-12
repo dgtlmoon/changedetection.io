@@ -126,6 +126,7 @@ class ChangeDetectionStore:
 
         self.needs_write = True
 
+        self.scan_plugins()
         # Finally start the thread that will manage periodic data saves to JSON
         save_data_thread = threading.Thread(target=self.save_datastore).start()
 
@@ -611,6 +612,19 @@ class ChangeDetectionStore:
 
     def tag_exists_by_name(self, tag_name):
         return any(v.get('title', '').lower() == tag_name.lower() for k, v in self.__data['settings']['application']['tags'].items())
+
+    def scan_plugins(self):
+        import importlib
+        import pkgutil
+
+        discovered_plugins = {
+            name: importlib.import_module(name)
+            for finder, name, ispkg
+            in pkgutil.iter_modules()
+            if name.startswith('changedetectionio-plugin-')
+        }
+
+        return discovered_plugins
 
     # Run all updates
     # IMPORTANT - Each update could be run even when they have a new install and the schema is correct

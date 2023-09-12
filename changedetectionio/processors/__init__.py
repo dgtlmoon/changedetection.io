@@ -18,7 +18,26 @@ class difference_detection_processor():
 
 
 def available_processors():
+    import importlib
+    import pkgutil
+
     from . import restock_diff, text_json_diff
-    x=[('text_json_diff', text_json_diff.name), ('restock_diff', restock_diff.name)]
-    # @todo Make this smarter with introspection of sorts.
-    return x
+
+    processors = [('text_json_diff', text_json_diff.name), ('restock_diff', restock_diff.name)]
+
+    discovered_plugins = {
+        name: importlib.import_module(name)
+        for finder, name, ispkg
+        in pkgutil.iter_modules()
+        if name.startswith('changedetectionio-plugin-')
+    }
+
+    try:
+        for name, plugin in discovered_plugins.items():
+            if hasattr(plugin, 'processors'):
+                for machine_name, desc in plugin.processors.items():
+                    processors.append((machine_name, desc))
+    except Exception as e:
+        print (f"Problem fetching one or more plugins")
+
+    return processors

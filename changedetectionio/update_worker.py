@@ -1,6 +1,8 @@
+import importlib
 import os
-import threading
+import pkgutil
 import queue
+import threading
 import time
 
 from changedetectionio import content_fetcher
@@ -229,13 +231,28 @@ class update_worker(threading.Thread):
                     now = time.time()
 
                     try:
-                        processor = self.datastore.data['watching'][uuid].get('processor','text_json_diff')
+                        processor = self.datastore.data['watching'][uuid].get('processor', 'text_json_diff')
 
                         # @todo some way to switch by name
                         if processor == 'restock_diff':
                             update_handler = restock_diff.perform_site_check(datastore=self.datastore)
                         else:
                             # Used as a default and also by some tests
+                            discovered_plugins = {
+                                name: importlib.import_module(name)
+                                for finder, name, ispkg
+                                in pkgutil.iter_modules()
+                                if name.startswith('changedetectionio-plugin-')
+                            }
+
+                            for module_name, plugin in discovered_plugins.items():
+                                if hasattr(plugin, 'processors'):
+                                    for machine_name, desc in plugin.processors:
+                                        if machine_name == processor:
+                                            module = importlib.import_module(f"{module_name}.processors.{plugin}")
+                                            update_handler = module.perform_site_check(datastore=self.datastore)
+                                            #processors.append((machine_name, desc))
+
                             update_handler = text_json_diff.perform_site_check(datastore=self.datastore)
 
                         changed_detected, update_obj, contents = update_handler.run(uuid, skip_when_checksum_same=queued_item_data.item.get('skip_when_checksum_same'))
