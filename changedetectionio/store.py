@@ -18,6 +18,9 @@ import threading
 import time
 import uuid as uuid_builder
 
+# Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
+BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
+
 dictfilt = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
@@ -175,12 +178,21 @@ class ChangeDetectionStore:
 
     @property
     def data(self):
-        # Re #152, Return env base_url if not overriden, @todo also prefer the proxy pass url
-        env_base_url = os.getenv('BASE_URL','')
-        if not self.__data['settings']['application']['base_url']:
-          self.__data['settings']['application']['base_url'] = env_base_url.strip('" ')
+        # Re #152, Return env base_url if not overriden
+        # Re #148 - Some people have just {{ base_url }} in the body or title, but this may break some notification services
+        #           like 'Join', so it's always best to atleast set something obvious so that they are not broken.
 
-        return self.__data
+        active_base_url = BASE_URL_NOT_SET_TEXT
+        if self.__data['settings']['application'].get('base_url'):
+            active_base_url = self.__data['settings']['application'].get('base_url')
+        elif os.getenv('BASE_URL'):
+            active_base_url = os.getenv('BASE_URL')
+
+        # I looked at various ways todo the following, but in the end just copying the dict seemed simplest/most reliable
+        # even given the memory tradeoff - if you know a better way.. maybe return d|self.__data.. or something
+        d = self.__data
+        d['settings']['application']['active_base_url'] = active_base_url.strip('" ')
+        return d
 
     # Delete a single watch by UUID
     def delete(self, uuid):

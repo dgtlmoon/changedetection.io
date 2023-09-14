@@ -40,6 +40,8 @@ from changedetectionio.api import api_v1
 
 __version__ = '0.45.1'
 
+from changedetectionio.store import BASE_URL_NOT_SET_TEXT
+
 datastore = None
 
 # Local
@@ -356,12 +358,10 @@ def changedetection_app(config=None, datastore_o=None):
                 # Include a link to the diff page, they will have to login here to see if password protection is enabled.
                 # Description is the page you watch, link takes you to the diff JS UI page
                 # Dict val base_url will get overriden with the env var if it is set.
-                ext_base_url = datastore.data['settings']['application'].get('base_url')
-                if ext_base_url:
-                    # Go with overriden value
-                    diff_link = {'href': "{}{}".format(ext_base_url, url_for('diff_history_page', uuid=watch['uuid'], _external=False))}
-                else:
-                    diff_link = {'href': url_for('diff_history_page', uuid=watch['uuid'], _external=True)}
+                ext_base_url = datastore.data['settings']['application'].get('active_base_url')
+
+                # Because we are called via whatever web server, flask should figure out the right path (
+                diff_link = {'href': url_for('diff_history_page', uuid=watch['uuid'], _external=True)}
 
                 fe.link(link=diff_link)
 
@@ -714,7 +714,6 @@ def changedetection_app(config=None, datastore_o=None):
             output = render_template("edit.html",
                                      available_processors=processors.available_processors(),
                                      browser_steps_config=browser_step_ui_config,
-                                     current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                      form=form,
                                      has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
@@ -804,7 +803,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         output = render_template("settings.html",
                                  form=form,
-                                 current_base_url = datastore.data['settings']['application']['base_url'],
                                  hide_remove_pass=os.getenv("SALTED_PASS", False),
                                  api_key=datastore.data['settings']['application'].get('api_access_token'),
                                  emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),

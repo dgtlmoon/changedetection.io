@@ -502,7 +502,10 @@ class globalSettingsRequestForm(Form):
 class globalSettingsApplicationForm(commonSettingsForm):
 
     api_access_token_enabled = BooleanField('API access token security check enabled', default=True, validators=[validators.Optional()])
-    base_url = StringField('Base URL', validators=[validators.Optional()])
+    base_url = StringField('Notification base URL override',
+                           validators=[validators.Optional()],
+                           render_kw={"placeholder": os.getenv('BASE_URL', 'Not set')}
+                           )
     empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
     fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
