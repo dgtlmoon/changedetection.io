@@ -185,13 +185,13 @@ class ChangeDetectionStore:
         active_base_url = BASE_URL_NOT_SET_TEXT
         if self.__data['settings']['application'].get('base_url'):
             active_base_url = self.__data['settings']['application'].get('base_url')
-        elif os.getenv('BASE_URL', ''):
-            active_base_url = os.getenv('BASE_URL', '')
+        elif os.getenv('BASE_URL'):
+            active_base_url = os.getenv('BASE_URL')
 
         # I looked at various ways todo the following, but in the end just copying the dict seemed simplest/most reliable
         # even given the memory tradeoff - if you know a better way.. maybe return d|self.__data.. or something
         d = self.__data
-        d['settings']['application']['active_base_url'] = active_base_url
+        d['settings']['application']['active_base_url'] = active_base_url.strip('" ')
         return d
 
     # Delete a single watch by UUID
