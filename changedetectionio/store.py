@@ -17,7 +17,10 @@ import secrets
 import threading
 import time
 import uuid as uuid_builder
-BASE_URL_NOT_SET_TEXT='<not set>'
+
+# Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
+BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
+
 dictfilt = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
