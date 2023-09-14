@@ -42,11 +42,6 @@
                             <div class="pure-controls">
                                 <div id="notification-token-toggle" class="pure-button button-tag button-xsmall">Show token/placeholders</div>
                             </div>
-                            <div class="pure-control-group">
-                            <!-- unsure -->
-                                {{ render_field(form.notification_format , class="notification-format") }}
-                                <span class="pure-form-message-inline">Format for all notifications</span>
-                            </div>
                             <div class="pure-controls" style="display: none;" id="notification-tokens-info">
                                 <table class="pure-table" id="token-table">
                                     <thead>
@@ -121,6 +116,10 @@
                                     For example, an addition or removal could be perceived as a change in some cases. <a target="_new" href="https://github.com/dgtlmoon/changedetection.io/wiki/Using-the-%7B%7Bdiff%7D%7D,-%7B%7Bdiff_added%7D%7D,-and-%7B%7Bdiff_removed%7D%7D-notification-tokens">More Here</a> <br>
                                     </p>
                                 </div>
+                            </div>
+                            <div class="pure-control-group">
+                                {{ render_field(form.notification_format , class="notification-format") }}
+                                <span class="pure-form-message-inline">Format for all notifications</span>
                             </div>
                         </div>
 {% endmacro %}
