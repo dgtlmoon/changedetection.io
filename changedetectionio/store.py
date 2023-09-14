@@ -185,6 +185,8 @@ class ChangeDetectionStore:
         elif os.getenv('BASE_URL', ''):
             active_base_url = os.getenv('BASE_URL', '')
 
+        # I looked at various ways todo the following, but in the end just copying the dict seemed simplest/most reliable
+        # even given the memory tradeoff - if you know a better way.. maybe return d|self.__data.. or something
         d = self.__data
         d['settings']['application']['active_base_url'] = active_base_url
         return d
