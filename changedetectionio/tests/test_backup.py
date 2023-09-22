@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from .util import set_original_response, set_modified_response, live_server_setup
+from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 from flask import url_for
 from urllib.request import urlopen
 from zipfile import ZipFile
@@ -19,12 +19,12 @@ def test_backup(client, live_server):
     # Add our URL to the import page
     res = client.post(
         url_for("import_page"),
-        data={"urls": url_for('test_endpoint', _external=True)},
+        data={"urls": url_for('test_endpoint', _external=True)+"?somechar=őőőőőőőő"},
         follow_redirects=True
     )
 
     assert b"1 Imported" in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     res = client.get(
         url_for("get_backup"),
