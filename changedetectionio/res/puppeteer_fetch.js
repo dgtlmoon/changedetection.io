@@ -18,7 +18,9 @@ module.exports = async ({page, context}) => {
 
     await page.setBypassCSP(true)
     await page.setExtraHTTPHeaders(req_headers);
-    await page.setUserAgent(user_agent);
+    if (user_agent) {
+        await page.setUserAgent(user_agent);
+    }
     // https://ourcodeworld.com/articles/read/1106/how-to-solve-puppeteer-timeouterror-navigation-timeout-of-30000-ms-exceeded
 
     await page.setDefaultNavigationTimeout(0);

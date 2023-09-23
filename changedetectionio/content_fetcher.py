@@ -343,7 +343,7 @@ class base_html_playwright(Fetcher):
                         'req_headers': request_headers,
                         'screenshot_quality': int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)),
                         'url': url,
-                        'user_agent': request_headers.get('User-Agent', 'Mozilla/5.0'),
+                        'user_agent': request_headers.get('User-Agent', None),
                         'proxy_username': self.proxy.get('username','') if self.proxy else False,
                         'proxy_password': self.proxy.get('password', '') if self.proxy else False,
                         'no_cache_list': [
@@ -443,7 +443,7 @@ class base_html_playwright(Fetcher):
             # Set user agent to prevent Cloudflare from blocking the browser
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
             context = browser.new_context(
-                user_agent=request_headers.get('User-Agent', 'Mozilla/5.0'),
+                user_agent=request_headers.get('User-Agent', None),
                 proxy=self.proxy,
                 # This is needed to enable JavaScript execution on GitHub and others
                 bypass_csp=True,
