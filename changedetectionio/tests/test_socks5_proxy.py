@@ -18,7 +18,7 @@ def test_socks5(client, live_server):
             "requests-extra_proxies-0-proxy_name": "socks5proxy",
             # set in .github/workflows/test-only.yml
             "requests-extra_proxies-0-proxy_url": "socks5://proxy_user123:proxy_pass123@socks5proxy:1080",
-            "requests-extra_proxies-1-proxy_name": "socks 5 proxy",
+            "requests-extra_proxies-1-proxy_name": "socks5proxy",
         },
         follow_redirects=True
     )
@@ -41,7 +41,7 @@ def test_socks5(client, live_server):
                 "include_filters": "",
                 "fetch_backend": "html_requests",
                 "headers": "",
-                "proxy": "socks 5 proxy",
+                "proxy": "ui-0socks5proxy",
                 "tags": "",
                 "url": test_url,
               },
