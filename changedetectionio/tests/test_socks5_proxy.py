@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+import os
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
@@ -35,11 +35,17 @@ def test_socks5(client, live_server):
     )
     assert b"Watch added in Paused state, saving will unpause" in res.data
 
+    res = client.get(
+        url_for("edit_page", uuid="first", unpause_on_save=1),
+    )
+    # check the proxy is offered as expected
+    assert b'ui-0socks5proxy' in res.data
+
     res = client.post(
         url_for("edit_page", uuid="first", unpause_on_save=1),
         data={
                 "include_filters": "",
-                "fetch_backend": "html_requests",
+                "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
                 "headers": "",
                 "proxy": "ui-0socks5proxy",
                 "tags": "",
