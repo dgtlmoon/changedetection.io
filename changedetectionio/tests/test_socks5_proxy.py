@@ -17,7 +17,7 @@ def test_socks5(client, live_server):
             "application-fetch_backend": "html_requests",
             "requests-extra_proxies-0-proxy_name": "socks5proxy",
             # set in .github/workflows/test-only.yml
-            "requests-extra_proxies-0-proxy_url": "http://proxy_user123:proxy_pass123@socks5proxy:1080",
+            "requests-extra_proxies-0-proxy_url": "socks5://proxy_user123:proxy_pass123@socks5proxy:1080",
             "requests-extra_proxies-1-proxy_name": "socks 5 proxy",
         },
         follow_redirects=True
