@@ -691,6 +691,10 @@ class html_requests(Fetcher):
         proxies = {}
 
         # Allows override the proxy on a per-request basis
+
+        # https://requests.readthedocs.io/en/latest/user/advanced/#socks
+        # Should also work with `socks5://user:pass@host:port` type syntax.
+
         if self.proxy_override:
             proxies = {'http': self.proxy_override, 'https': self.proxy_override, 'ftp': self.proxy_override}
         else:
