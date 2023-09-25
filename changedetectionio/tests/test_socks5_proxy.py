@@ -52,7 +52,7 @@ def test_socks5(client, live_server):
               },
         follow_redirects=True
     )
-    assert b"Updated watch." in res.data
+    assert b"unpaused" in res.data
     wait_for_all_checks(client)
 
 
