@@ -57,9 +57,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 status.update({'status': 'ERROR OTHER', 'length': len(contents), 'text': f"Got empty reply with code {e.status_code} - Access denied"})
             else:
                 status.update({'status': 'ERROR OTHER', 'length': len(contents) if contents else 0, 'text': f"Empty reply with code {e.status_code}, needs chrome?"})
-
+        except content_fetcher.ReplyWithContentButNoText as e:
+            txt = f"Got reply but with no content - Status code {e.status_code} - It's possible that the filters were found, but contained no usable text (or contained only an image)."
+            status.update({'status': 'ERROR', 'text': txt})
         except Exception as e:
-            status.update({'status': 'ERROR OTHER', 'length': len(contents) if contents else 0, 'text': 'Error: '+str(e)})
+            status.update({'status': 'ERROR OTHER', 'length': len(contents) if contents else 0, 'text': 'Error: '+type(e).__name__+str(e)})
         else:
             status.update({'status': 'OK', 'length': len(contents), 'text': ''})
 
