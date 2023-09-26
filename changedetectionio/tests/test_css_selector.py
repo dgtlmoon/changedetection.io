@@ -181,7 +181,7 @@ def test_check_multiple_filters(client, live_server):
 # Mainly used when the filter contains just an IMG, this can happen when someone selects an image in the visual-selector
 # Tests fetcher can throw a "ReplyWithContentButNoText" exception after applying filter and extracting text
 def test_filter_is_empty_help_suggestion(client, live_server):
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
 
     include_filters = "#blob-a"
 
@@ -253,4 +253,3 @@ def test_filter_is_empty_help_suggestion(client, live_server):
 
     assert b'empty result or contain only an image' not in res.data
     assert b'but contained no usable text' in res.data
-    
