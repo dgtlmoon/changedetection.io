@@ -251,7 +251,11 @@ class update_worker(threading.Thread):
                         # Totally fine, it's by choice - just continue on, nothing more to care about
                         # Page had elements/content but no renderable text
                         # Backend (not filters) gave zero output
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found (With {} reply code).".format(e.status_code)})
+                        if e.has_filters:
+                            self.datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Got HTML content but no text found (With {e.status_code} reply code), it's possible that the filters you have give an empty result or contain only an image <a href=\"https://github.com/dgtlmoon/changedetection.io/wiki/Detecting-changes-in-images\">more help here</a>"})
+                        else:
+                            self.datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Got HTML content but no text found (With {e.status_code} reply code)."})
+
                         if e.screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot)
                         process_changedetection_results = False

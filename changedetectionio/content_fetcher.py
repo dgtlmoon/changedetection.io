@@ -77,11 +77,12 @@ class ScreenshotUnavailable(Exception):
 
 
 class ReplyWithContentButNoText(Exception):
-    def __init__(self, status_code, url, screenshot=None):
+    def __init__(self, status_code, url, screenshot=None, has_filters=False):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
         self.screenshot = screenshot
+        self.has_filters = has_filters
         return
 
 
