@@ -10,6 +10,25 @@ set -x
 docker run --network changedet-network -d --name squid-one --hostname squid-one --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf ubuntu/squid:4.13-21.10_edge
 docker run --network changedet-network -d --name squid-two --hostname squid-two --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf ubuntu/squid:4.13-21.10_edge
 
+# SOCKS5 related - Simple Socks5 proxy server
+docker run --network changedet-network -d --hostname socks5proxy --name socks5proxy -p 1080:1080 -e PROXY_USER=proxy_user123 -e PROXY_PASSWORD=proxy_pass123 serjs/go-socks5-proxy
+
+
+# SOCKS5 related - test from proxies.json
+docker run --network changedet-network \
+  -v `pwd`/tests/proxy_socks5/proxies.json-example:/app/changedetectionio/test-datastore/proxies.json \
+  --rm \
+  test-changedetectionio \
+  bash -c 'cd changedetectionio && pytest tests/proxy_socks5/test_socks5_proxy_sources.py'
+
+# SOCKS5 related - by manually entering in UI
+docker run --network changedet-network \
+  --rm \
+  test-changedetectionio \
+  bash -c 'cd changedetectionio && pytest tests/proxy_socks5/test_socks5_proxy.py'
+
+
+
 # Used for configuring a custom proxy URL via the UI
 docker run --network changedet-network -d \
   --name squid-custom \

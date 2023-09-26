@@ -2,7 +2,7 @@
 import os
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from changedetectionio.tests.util import live_server_setup, wait_for_all_checks
 
 
 def test_socks5(client, live_server):
