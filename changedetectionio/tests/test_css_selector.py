@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from . util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 from ..html_tools import *
 
@@ -176,3 +176,55 @@ def test_check_multiple_filters(client, live_server):
     assert b"Blob A" in res.data # CSS was ok
     assert b"Blob B" in res.data # xPath was ok
     assert b"Blob C" not in res.data # Should not be included
+
+# The filter exists, but did not contain anything useful
+# Mainly used when the filter contains just an IMG, this can happen when someone selects an image in the visual-selector
+# @todo in the future, in the image-selector, if they choose an element that only contains IMG give a helpful suggestion
+def test_filter_is_empty_help_suggestion(client, live_server):
+    live_server_setup(live_server)
+
+    include_filters = "#blob-a"
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write("""<html><body>
+         <div id="blob-a">
+           <img src="something.jpg">
+         </div>
+         </body>
+         </html>
+        """)
+
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    wait_for_all_checks(client)
+
+    # Goto the edit page, add our ignore text
+    # Add our URL to the import page
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"include_filters": include_filters,
+              "url": test_url,
+              "tags": "",
+              "headers": "",
+              'fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+
+    wait_for_all_checks(client)
+
+
+    res = client.get(
+        url_for("index"),
+        follow_redirects=True
+    )
+
+    assert b'possible that the filters you have give an empty result' in res.data
+
