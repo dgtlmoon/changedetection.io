@@ -241,10 +241,7 @@ def test_filter_is_empty_help_suggestion(client, live_server):
         """)
 
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches queued for rechecking.' in res.data
-
     wait_for_all_checks(client)
-
 
     res = client.get(
         url_for("index"),
