@@ -257,9 +257,9 @@ class update_worker(threading.Thread):
                             has_img = html_tools.include_filters(include_filters='img',
                                                                  html_content=e.html_content)
                             if has_img:
-                                extra_help = ", it's possible that the filters you have give an empty result or contain only an image <a href=\"https://github.com/dgtlmoon/changedetection.io/wiki/Detecting-changes-in-images\">more help here</a>"
+                                extra_help = ", it's possible that the filters you have give an empty result or contain only an image <a href=\"https://github.com/dgtlmoon/changedetection.io/wiki/Detecting-changes-in-images\">more help here</a>."
                             else:
-                                extra_help = ", it's possible that the filters were found, but contained no usable text"
+                                extra_help = ", it's possible that the filters were found, but contained no usable text."
 
                         self.datastore.update_watch(uuid=uuid, update_obj={
                             'last_error': f"Got HTML content but no text found (With {e.status_code} reply code){extra_help}"
