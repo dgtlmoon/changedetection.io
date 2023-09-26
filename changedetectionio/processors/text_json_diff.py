@@ -317,7 +317,8 @@ class perform_site_check(difference_detection_processor):
             raise content_fetcher.ReplyWithContentButNoText(url=url,
                                                             status_code=fetcher.get_last_status_code(),
                                                             screenshot=screenshot,
-                                                            has_filters=has_filter_rule and len(html_content)
+                                                            has_filters=has_filter_rule,
+                                                            html_content=html_content
                                                             )
 
         # We rely on the actual text in the html output.. many sites have random script vars etc,
