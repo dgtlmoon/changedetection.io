@@ -179,7 +179,7 @@ def test_check_multiple_filters(client, live_server):
 
 # The filter exists, but did not contain anything useful
 # Mainly used when the filter contains just an IMG, this can happen when someone selects an image in the visual-selector
-# @todo in the future, in the image-selector, if they choose an element that only contains IMG give a helpful suggestion
+# Tests fetcher can throw a "ReplyWithContentButNoText" exception after applying filter and extracting text
 def test_filter_is_empty_help_suggestion(client, live_server):
     live_server_setup(live_server)
 
@@ -226,5 +226,31 @@ def test_filter_is_empty_help_suggestion(client, live_server):
         follow_redirects=True
     )
 
-    assert b'possible that the filters you have give an empty result' in res.data
+    assert b'empty result or contain only an image' in res.data
 
+
+    ### Just an empty selector, no image
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write("""<html><body>
+         <div id="blob-a">
+           <!-- doo doo -->
+         </div>
+         </body>
+         </html>
+        """)
+
+    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    assert b'1 watches queued for rechecking.' in res.data
+
+    wait_for_all_checks(client)
+
+
+    res = client.get(
+        url_for("index"),
+        follow_redirects=True
+    )
+
+    assert b'empty result or contain only an image' not in res.data
+    assert b'but contained no usable text' in res.data
+    
