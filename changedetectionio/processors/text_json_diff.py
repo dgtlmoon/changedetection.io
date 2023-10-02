@@ -164,7 +164,8 @@ class perform_site_check(difference_detection_processor):
             is_html = False
             is_json = False
 
-        if watch.is_pdf or 'application/pdf' in fetcher.get_all_headers().get('content-type', '').lower():
+        is_pdf = watch.is_pdf or 'application/pdf' in fetcher.get_all_headers().get('content-type', '').lower()
+        if is_pdf:
             from shutil import which
             tool = os.getenv("PDF_TO_HTML_TOOL", "pdftohtml")
             if not which(tool):
@@ -241,7 +242,7 @@ class perform_site_check(difference_detection_processor):
                 # FYI, There is no intersection between is_html, is_json, is_binary, is_source.
                 # If child class(driver) of class Fetcher provides binary data, use it.
                 # This is for non filter.
-                if is_html and hasattr(fetcher, 'raw_content'):
+                if is_html and hasattr(fetcher, 'raw_content') and not is_pdf:
                     from bs4 import BeautifulSoup
 
                     if is_xml:
@@ -265,7 +266,7 @@ class perform_site_check(difference_detection_processor):
                         if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
                             # Use bytes content if the driver provides.
                             # Some fetcher driver(html_requests) provides raw_content of binary type.
-                            if hasattr(fetcher, 'raw_content'):
+                            if hasattr(fetcher, 'raw_content') and not is_pdf:
                                 fetcher_content = fetcher.raw_content
                             else:
                                 fetcher_content = fetcher.content
