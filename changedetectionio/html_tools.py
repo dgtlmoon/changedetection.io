@@ -67,10 +67,35 @@ def element_removal(selectors: List[str], html_content):
 
 
 # Return str Utf-8 of matched rules
-def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False):
+def xpath_filter(xpath_filter, html_content, is_xml=False, append_pretty_line_formatting=False):
     from lxml import etree, html
+    # is_xml is a user flag.
 
-    tree = html.fromstring(bytes(html_content, encoding='utf-8'))
+    # This is default case for html_requests.
+    if type(html_content) is bytes and not is_xml:
+        tree = etree.HTML(html_content)
+    # There are special XML cases that need a user intervention(is_xml).
+    elif type(html_content) is bytes and is_xml:
+        tree = etree.XML(html_content)
+    # If type is str.
+    else:
+        # XML(uses XML parser) or XHTML(uses HTML parser) may have XML encoding declaration.
+        # So remove the encoding declaration only.
+        re_xml_encoding_declaration = re.compile(r'(?<=\<\?xml version)( *= *([\'\"])[^\1\ \n]*?\2 )encoding *= ?([\'\"])[^\1\n]*?\2 *')
+        html_content = re_xml_encoding_declaration.sub('\g<1>', html_content)
+
+        # Usually XML doc doesn't have a xml-stylesheet. In this case, it would
+        # be a html decided by browser.
+        # However, if there is xml-stylesheet, and the browser renders it as xml
+        # but also removes evidences of xml doc.
+        # Therefore, in particular case, user needs 'xml:' to use xml parser.
+        if is_xml:
+            tree = etree.XML(html_content)
+        # This is default case for webdriver using browser.
+        # For most cases, it's okay to use HTML parser for XML.
+        else:
+            tree = etree.HTML(html_content)
+
     html_block = ""
 
     r = tree.xpath(xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'})

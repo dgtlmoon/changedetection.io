@@ -79,9 +79,13 @@ class perform_site_check(difference_detection_processor):
 
         # source: support
         is_source = False
+        is_xml = False
         if url.startswith('source:'):
             url = url.replace('source:', '')
             is_source = True
+        elif url.startswith('xml:'):
+            url = url.replace('xml:', '')
+            is_xml = True
 
         # Pluggable content fetcher
         prefer_backend = watch.get_fetch_backend
@@ -155,6 +159,7 @@ class perform_site_check(difference_detection_processor):
         is_html = not is_json
 
         # source: support, basically treat it as plaintext
+        # xml can be parsed only if is_html is True. So 'xml:' doesn't need it.
         if is_source:
             is_html = False
             is_json = False
@@ -220,6 +225,8 @@ class perform_site_check(difference_detection_processor):
                     stripped_text_from_html += html_tools.extract_json_as_string(content=fetcher.content, json_filter=filter)
                     is_html = False
 
+
+        # For HTML(XHTML), XML, source
         if is_html or is_source:
 
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
@@ -231,18 +238,41 @@ class perform_site_check(difference_detection_processor):
                 # Don't run get_text or xpath/css filters on plaintext
                 stripped_text_from_html = html_content
             else:
+                # FYI, There is no intersection between is_html, is_json, is_binary, is_source.
+                # If child class(driver) of class Fetcher provides binary data, use it.
+                # This is for non filter.
+                if is_html and hasattr(fetcher, 'raw_content'):
+                    from bs4 import BeautifulSoup
+
+                    if is_xml:
+                        fetcher.content = str(BeautifulSoup(fetcher.raw_content, features="xml"))
+                    else:
+                        # HTML, XHTML
+                        fetcher.content = str(BeautifulSoup(fetcher.raw_content, features="lxml"))
+
+                    # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+                    fetcher.content = html_tools.workarounds_for_obfuscations(fetcher.content)
+                    html_content = fetcher.content
+
                 # Does it have some ld+json price data? used for easier monitoring
                 update_obj['has_ldjson_price_data'] = html_tools.has_ldjson_product_info(fetcher.content)
-
-                # Then we assume HTML
+                # For  HTML(XHTML), XML.
                 if has_filter_rule:
                     html_content = ""
 
                     for filter_rule in include_filters_rule:
-                        # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
+                        # For HTML(XHTML)/XML we offer xpath as an option, just start a regular xPath "/.."
                         if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
+                            # Use bytes content if the driver provides.
+                            # Some fetcher driver(html_requests) provides raw_content of binary type.
+                            if hasattr(fetcher, 'raw_content'):
+                                fetcher_content = fetcher.raw_content
+                            else:
+                                fetcher_content = fetcher.content
+
                             html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
-                                                                    html_content=fetcher.content,
+                                                                    html_content=fetcher_content,
+                                                                    is_xml=is_xml,
                                                                     append_pretty_line_formatting=not is_source)
                         else:
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
