@@ -50,8 +50,7 @@
 #browser-steps .flex-wrapper {
   display: flex;
   flex-flow: row;
-  height: 600px;
-  /*@todo make this dynamic */ }
+  height: 70vh; }
 
 /*  this is duplicate :( */
 #browsersteps-selector-wrapper {
