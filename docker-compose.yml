@@ -54,6 +54,12 @@ services:
       # Comment out ports: when using behind a reverse proxy , enable networks: etc.
       ports:
         - 5000:5000
+      deploy:
+        resources:
+          limits:
+            memory: 1G
+        restart_policy:
+          condition: on-failure
       restart: unless-stopped
 
      # Used for fetching pages via WebDriver+Chrome where you need Javascript support.
