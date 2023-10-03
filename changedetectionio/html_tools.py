@@ -30,7 +30,7 @@ def perl_style_slash_enclosed_regex_to_options(regex):
         flags = res.group(2) if res.group(2) else 'i'
         regex = f"(?{flags}){res.group(1)}"
     else:
-        # Fall back to exactly what it contains as an option
+        # Fall back to just ignorecase as an option
         regex = f"(?i){regex}"
 
     return regex
