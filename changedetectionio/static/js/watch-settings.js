@@ -42,4 +42,8 @@ $(document).ready(function () {
         $('#notification_urls').val('');
         e.preventDefault();
     });
+    $("#notification-token-toggle").click(function (e) {
+        e.preventDefault();
+        $('#notification-tokens-info').toggle();
+    });
 });

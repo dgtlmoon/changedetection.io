@@ -229,16 +229,19 @@ class ValidateJinja2Template(object):
     def __call__(self, form, field):
         from changedetectionio import notification
 
-        from jinja2 import Environment, BaseLoader, TemplateSyntaxError
+        from jinja2 import Environment, BaseLoader, TemplateSyntaxError, UndefinedError
         from jinja2.meta import find_undeclared_variables
 
 
         try:
             jinja2_env = Environment(loader=BaseLoader)
             jinja2_env.globals.update(notification.valid_tokens)
+
             rendered = jinja2_env.from_string(field.data).render()
         except TemplateSyntaxError as e:
             raise ValidationError(f"This is not a valid Jinja2 template: {e}") from e
+        except UndefinedError as e:
+            raise ValidationError(f"A variable or function is not defined: {e}") from e
 
         ast = jinja2_env.parse(field.data)
         undefined = ", ".join(find_undeclared_variables(ast))
@@ -502,7 +505,10 @@ class globalSettingsRequestForm(Form):
 class globalSettingsApplicationForm(commonSettingsForm):
 
     api_access_token_enabled = BooleanField('API access token security check enabled', default=True, validators=[validators.Optional()])
-    base_url = StringField('Base URL', validators=[validators.Optional()])
+    base_url = StringField('Notification base URL override',
+                           validators=[validators.Optional()],
+                           render_kw={"placeholder": os.getenv('BASE_URL', 'Not set')}
+                           )
     empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
     fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])

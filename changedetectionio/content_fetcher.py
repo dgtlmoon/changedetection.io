@@ -77,11 +77,13 @@ class ScreenshotUnavailable(Exception):
 
 
 class ReplyWithContentButNoText(Exception):
-    def __init__(self, status_code, url, screenshot=None):
+    def __init__(self, status_code, url, screenshot=None, has_filters=False, html_content=''):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
         self.screenshot = screenshot
+        self.has_filters = has_filters
+        self.html_content = html_content
         return
 
 
@@ -343,8 +345,8 @@ class base_html_playwright(Fetcher):
                         'req_headers': request_headers,
                         'screenshot_quality': int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)),
                         'url': url,
-                        'user_agent': request_headers.get('User-Agent', 'Mozilla/5.0'),
-                        'proxy_username': self.proxy.get('username','') if self.proxy else False,
+                        'user_agent': {k.lower(): v for k, v in request_headers.items()}.get('user-agent', None),
+                        'proxy_username': self.proxy.get('username', '') if self.proxy else False,
                         'proxy_password': self.proxy.get('password', '') if self.proxy else False,
                         'no_cache_list': [
                             'twitter',
@@ -443,7 +445,7 @@ class base_html_playwright(Fetcher):
             # Set user agent to prevent Cloudflare from blocking the browser
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
             context = browser.new_context(
-                user_agent=request_headers.get('User-Agent', 'Mozilla/5.0'),
+                user_agent={k.lower(): v for k, v in request_headers.items()}.get('user-agent', None),
                 proxy=self.proxy,
                 # This is needed to enable JavaScript execution on GitHub and others
                 bypass_csp=True,
@@ -684,7 +686,7 @@ class html_requests(Fetcher):
             is_binary=False):
 
         # Make requests use a more modern looking user-agent
-        if not 'User-Agent' in request_headers:
+        if not {k.lower(): v for k, v in request_headers.items()}.get('user-agent', None):
             request_headers['User-Agent'] = os.getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT",
                                                       'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36')
 

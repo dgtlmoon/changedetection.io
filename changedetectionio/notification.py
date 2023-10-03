@@ -208,14 +208,10 @@ def create_notification_parameters(n_object, datastore):
         watch_tag = ''
 
     # Create URLs to customise the notification with
-    base_url = datastore.data['settings']['application']['base_url']
+    # active_base_url - set in store.py data property
+    base_url = datastore.data['settings']['application'].get('active_base_url')
 
     watch_url = n_object['watch_url']
-
-    # Re #148 - Some people have just {{ base_url }} in the body or title, but this may break some notification services
-    #           like 'Join', so it's always best to atleast set something obvious so that they are not broken.
-    if base_url == '':
-        base_url = "<base-url-env-var-not-set>"
 
     diff_url = "{}/diff/{}".format(base_url, uuid)
     preview_url = "{}/preview/{}".format(base_url, uuid)
@@ -226,7 +222,7 @@ def create_notification_parameters(n_object, datastore):
     # Valid_tokens also used as a field validator
     tokens.update(
         {
-            'base_url': base_url if base_url is not None else '',
+            'base_url': base_url,
             'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else '',
             'diff': n_object.get('diff', ''),  # Null default in the case we use a test
             'diff_added': n_object.get('diff_added', ''),  # Null default in the case we use a test

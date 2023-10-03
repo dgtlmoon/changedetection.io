@@ -32,5 +32,10 @@ $(document).ready(function () {
         window.getSelection().removeAllRanges();
 
     });
+
+    $("#notification-token-toggle").click(function (e) {
+        e.preventDefault();
+        $('#notification-tokens-info').toggle();
+    });
 });
 
