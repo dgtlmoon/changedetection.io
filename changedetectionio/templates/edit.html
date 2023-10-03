@@ -378,7 +378,7 @@ Unavailable") }}
                         {{ render_field(form.extract_text, rows=5, placeholder="\d+ online") }}
                         <span class="pure-form-message-inline">
                     <ul>
-                        <li>Extracts text in the final output (line by line) after other filters using regular expressions;
+                        <li>Extracts text in the final output (line by line) after other filters using regular expressions or string match;
                             <ul>
                                 <li>Regular expression &dash; example <code>/reports.+?2022/i</code></li>
                                 <li>Don't forget to consider the white-space at the start of a line <code>/.+?reports.+?2022/i</code></li>
@@ -387,7 +387,7 @@ Unavailable") }}
                                 <li>Use groups to extract just that text &dash; example <code>/reports.+?(\d+)/i</code> returns a list of years only</li>
                             </ul>
                         </li>
-                        <li>One line per regular-expression/ string match</li>
+                        <li>One line per regular-expression/string match</li>
                     </ul>
                         </span>
                     </div>
