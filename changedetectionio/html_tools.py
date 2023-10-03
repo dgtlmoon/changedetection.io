@@ -10,7 +10,7 @@ import re
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
 TEXT_FILTER_LIST_LINE_SUFFIX = "<br>"
 
-PERL_STYLE_REGEX = r'^/(.*?)/([a-z]?)?$'
+PERL_STYLE_REGEX = r'^/(.*?)/([a-z]*)?$'
 # 'price' , 'lowPrice', 'highPrice' are usually under here
 # all of those may or may not appear on different websites
 LD_JSON_PRODUCT_OFFER_SELECTOR = "json:$..offers"
@@ -23,12 +23,14 @@ class JSONNotFound(ValueError):
 # Doesn't look like python supports forward slash auto enclosure in re.findall
 # So convert it to inline flag "(?i)foobar" type configuration
 def perl_style_slash_enclosed_regex_to_options(regex):
+
     res = re.search(PERL_STYLE_REGEX, regex, re.IGNORECASE)
 
     if res:
         flags = res.group(2) if res.group(2) else 'i'
         regex = f"(?{flags}){res.group(1)}"
     else:
+        # Fall back to exactly what it contains as an option
         regex = f"(?i){regex}"
 
     return regex
