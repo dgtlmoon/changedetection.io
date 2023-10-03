@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 from ..html_tools import *
 
@@ -82,7 +82,7 @@ def test_check_filter_multiline(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -99,8 +99,12 @@ def test_check_filter_multiline(client, live_server):
     )
 
     assert b"Updated watch." in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
 
+    res = client.get(url_for("index"))
+    #issue 1828
+    assert b'not at the start of the expression' not in res.data
+    
     res = client.get(
         url_for("preview_page", uuid="first"),
         follow_redirects=True
@@ -115,13 +119,10 @@ def test_check_filter_multiline(client, live_server):
     assert b'aaand something lines' not in res.data
 
 def test_check_filter_and_regex_extract(client, live_server):
-    sleep_time_for_fetch_thread = 3
+
     include_filters = ".changetext"
 
     set_original_response()
-
-    # Give the endpoint time to spin up
-    time.sleep(1)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -132,19 +133,15 @@ def test_check_filter_and_regex_extract(client, live_server):
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(1)
-    # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"include_filters": include_filters,
-              'extract_text': '\d+ online\r\n\d+ guests\r\n/somecase insensitive \d+/i\r\n/somecase insensitive (345\d)/i',
+              'extract_text': '\d+ online\r\n\d+ guests\r\n/somecase insensitive \d+/i\r\n/somecase insensitive (345\d)/i\r\n/issue1828.+?2022/i',
               "url": test_url,
               "tags": "",
               "headers": "",
@@ -155,8 +152,13 @@ def test_check_filter_and_regex_extract(client, live_server):
 
     assert b"Updated watch." in res.data
 
+
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("index"))
+    #issue 1828
+    assert b'not at the start of the expression' not in res.data
 
     #  Make a change
     set_modified_response()
@@ -164,7 +166,7 @@ def test_check_filter_and_regex_extract(client, live_server):
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should have 'unviewed' still
     # Because it should be looking at only that 'sametext' id
