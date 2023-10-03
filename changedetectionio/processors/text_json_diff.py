@@ -11,16 +11,18 @@ from changedetectionio import content_fetcher, html_tools
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
 from copy import deepcopy
 from . import difference_detection_processor
+from ..html_tools import PERL_STYLE_REGEX
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-
-name =  'Webpage Text/HTML, JSON and PDF changes'
+name = 'Webpage Text/HTML, JSON and PDF changes'
 description = 'Detects all text changes where possible'
+
 
 class FilterNotFoundInResponse(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
+
 
 class PDFToHTMLToolNotFound(ValueError):
     def __init__(self, msg):
@@ -36,19 +38,6 @@ class perform_site_check(difference_detection_processor):
     def __init__(self, *args, datastore, **kwargs):
         super().__init__(*args, **kwargs)
         self.datastore = datastore
-
-    # Doesn't look like python supports forward slash auto enclosure in re.findall
-    # So convert it to inline flag "foobar(?i)" type configuration
-    def forward_slash_enclosed_regex_to_options(self, regex):
-        res = re.search(r'^/(.*?)/(\w+)$', regex, re.IGNORECASE)
-
-        if res:
-            regex = res.group(1)
-            regex += '(?{})'.format(res.group(2))
-        else:
-            regex += '(?{})'.format('i')
-
-        return regex
 
     def run(self, uuid, skip_when_checksum_same=True, preferred_proxy=None):
         changed_detected = False
@@ -135,7 +124,8 @@ class perform_site_check(difference_detection_processor):
         # requests for PDF's, images etc should be passwd the is_binary flag
         is_binary = watch.is_pdf
 
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch.get('include_filters'), is_binary=is_binary)
+        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch.get('include_filters'),
+                    is_binary=is_binary)
         fetcher.quit()
 
         self.screenshot = fetcher.screenshot
@@ -150,7 +140,6 @@ class perform_site_check(difference_detection_processor):
         if skip_when_checksum_same:
             if update_obj['previous_md5_before_filters'] == watch.get('previous_md5_before_filters'):
                 raise content_fetcher.checksumFromPreviousCheckWasTheSame()
-
 
         # Fetching complete, now filters
         # @todo move to class / maybe inside of fetcher abstract base?
@@ -231,8 +220,6 @@ class perform_site_check(difference_detection_processor):
                     stripped_text_from_html += html_tools.extract_json_as_string(content=fetcher.content, json_filter=filter)
                     is_html = False
 
-
-
         if is_html or is_source:
 
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
@@ -283,7 +270,6 @@ class perform_site_check(difference_detection_processor):
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 
-
         # @todo whitespace coming from missing rtrim()?
         # stripped_text_from_html could be based on their preferences, replace the processed text with only that which they want to know about.
         # Rewrite's the processing text based on only what diff result they want to see
@@ -293,13 +279,13 @@ class perform_site_check(difference_detection_processor):
             # needs to not include (added) etc or it may get used twice
             # Replace the processed text with the preferred result
             rendered_diff = diff.render_diff(previous_version_file_contents=watch.get_last_fetched_before_filters(),
-                                                       newest_version_file_contents=stripped_text_from_html,
-                                                       include_equal=False,  # not the same lines
-                                                       include_added=watch.get('filter_text_added', True),
-                                                       include_removed=watch.get('filter_text_removed', True),
-                                                       include_replaced=watch.get('filter_text_replaced', True),
-                                                       line_feed_sep="\n",
-                                                       include_change_type_prefix=False)
+                                             newest_version_file_contents=stripped_text_from_html,
+                                             include_equal=False,  # not the same lines
+                                             include_added=watch.get('filter_text_added', True),
+                                             include_removed=watch.get('filter_text_removed', True),
+                                             include_replaced=watch.get('filter_text_replaced', True),
+                                             line_feed_sep="\n",
+                                             include_change_type_prefix=False)
 
             watch.save_last_fetched_before_filters(text_content_before_ignored_filter)
 
@@ -340,16 +326,25 @@ class perform_site_check(difference_detection_processor):
             regex_matched_output = []
             for s_re in extract_text:
                 # incase they specified something in '/.../x'
-                regex = self.forward_slash_enclosed_regex_to_options(s_re)
-                result = re.findall(regex.encode('utf-8'), stripped_text_from_html)
+                if re.search(PERL_STYLE_REGEX, s_re, re.IGNORECASE):
+                    regex = html_tools.perl_style_slash_enclosed_regex_to_options(s_re)
+                    result = re.findall(regex.encode('utf-8'), stripped_text_from_html)
 
-                for l in result:
-                    if type(l) is tuple:
-                        # @todo - some formatter option default (between groups)
-                        regex_matched_output += list(l) + [b'\n']
-                    else:
-                        # @todo - some formatter option default (between each ungrouped result)
-                        regex_matched_output += [l] + [b'\n']
+                    for l in result:
+                        if type(l) is tuple:
+                            # @todo - some formatter option default (between groups)
+                            regex_matched_output += list(l) + [b'\n']
+                        else:
+                            # @todo - some formatter option default (between each ungrouped result)
+                            regex_matched_output += [l] + [b'\n']
+                else:
+                    # Doesnt look like regex, just hunt for plaintext and return that which matches
+                    # `stripped_text_from_html` will be bytes, so we must encode s_re also to bytes
+                    r = re.compile(re.escape(s_re.encode('utf-8')), re.IGNORECASE)
+                    res = r.findall(stripped_text_from_html)
+                    if res:
+                        for match in res:
+                            regex_matched_output += [match] + [b'\n']
 
             # Now we will only show what the regex matched
             stripped_text_from_html = b''

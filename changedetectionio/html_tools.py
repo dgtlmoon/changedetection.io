@@ -10,6 +10,7 @@ import re
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
 TEXT_FILTER_LIST_LINE_SUFFIX = "<br>"
 
+PERL_STYLE_REGEX = r'^/(.*?)/([a-z]*)?$'
 # 'price' , 'lowPrice', 'highPrice' are usually under here
 # all of those may or may not appear on different websites
 LD_JSON_PRODUCT_OFFER_SELECTOR = "json:$..offers"
@@ -17,7 +18,23 @@ LD_JSON_PRODUCT_OFFER_SELECTOR = "json:$..offers"
 class JSONNotFound(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
-        
+
+
+# Doesn't look like python supports forward slash auto enclosure in re.findall
+# So convert it to inline flag "(?i)foobar" type configuration
+def perl_style_slash_enclosed_regex_to_options(regex):
+
+    res = re.search(PERL_STYLE_REGEX, regex, re.IGNORECASE)
+
+    if res:
+        flags = res.group(2) if res.group(2) else 'i'
+        regex = f"(?{flags}){res.group(1)}"
+    else:
+        # Fall back to just ignorecase as an option
+        regex = f"(?i){regex}"
+
+    return regex
+
 # Given a CSS Rule, and a blob of HTML, return the blob of HTML that matches
 def include_filters(include_filters, html_content, append_pretty_line_formatting=False):
     soup = BeautifulSoup(html_content, "html.parser")
@@ -195,23 +212,14 @@ def strip_ignore_text(content, wordlist, mode="content"):
     output = []
     ignore_text = []
     ignore_regex = []
-
     ignored_line_numbers = []
 
     for k in wordlist:
         # Is it a regex?
-        x = re.search('^\/(.*)\/(.*)', k.strip())
-        if x:
-            # Starts with / but doesn't look like a regex
-            p = x.group(1)
-            try:
-                # @Todo python regex options can go before the regex str, but not really many of the options apply on a per-line basis
-                ignore_regex.append(re.compile(rf"{p}", re.IGNORECASE))
-            except Exception as e:
-                # Badly formed regex, treat as text
-                ignore_text.append(k.strip())
+        res = re.search(PERL_STYLE_REGEX, k, re.IGNORECASE)
+        if res:
+            ignore_regex.append(re.compile(perl_style_slash_enclosed_regex_to_options(k)))
         else:
-            # Had a / but doesn't work as regex
             ignore_text.append(k.strip())
 
     for line in content.splitlines():
