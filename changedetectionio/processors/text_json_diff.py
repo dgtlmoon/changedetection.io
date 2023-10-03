@@ -37,19 +37,6 @@ class perform_site_check(difference_detection_processor):
         super().__init__(*args, **kwargs)
         self.datastore = datastore
 
-    # Doesn't look like python supports forward slash auto enclosure in re.findall
-    # So convert it to inline flag "(?i)foobar" type configuration
-    def forward_slash_enclosed_regex_to_options(self, regex):
-        res = re.search(r'^/(.*?)/(\w+)$', regex, re.IGNORECASE)
-
-        if res:
-            regex = res.group(1)
-            regex = f"(?{res.group(2)}){regex}"
-        else:
-            regex = f"(?i){regex}"
-
-        return regex
-
     def run(self, uuid, skip_when_checksum_same=True, preferred_proxy=None):
         changed_detected = False
         screenshot = False  # as bytes
@@ -340,7 +327,7 @@ class perform_site_check(difference_detection_processor):
             regex_matched_output = []
             for s_re in extract_text:
                 # incase they specified something in '/.../x'
-                regex = self.forward_slash_enclosed_regex_to_options(s_re)
+                regex = html_tools.perl_style_slash_enclosed_regex_to_options(s_re)
                 result = re.findall(regex.encode('utf-8'), stripped_text_from_html)
 
                 for l in result:
