@@ -123,7 +123,7 @@ def test_check_filter_multiline(client, live_server):
     assert b'aaand something lines' not in res.data
 
 def test_check_filter_and_regex_extract(client, live_server):
-
+    
     include_filters = ".changetext"
 
     set_original_response()
@@ -145,7 +145,7 @@ def test_check_filter_and_regex_extract(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"include_filters": include_filters,
-              'extract_text': '\d+ online\r\n\d+ guests\r\n/somecase insensitive \d+/i\r\n/somecase insensitive (345\d)/i\r\n/issue1828.+?2022/i',
+              'extract_text': '/\d+ online/\r\n/\d+ guests/\r\n/somecase insensitive \d+/i\r\n/somecase insensitive (345\d)/i\r\n/issue1828.+?2022/i',
               "url": test_url,
               "tags": "",
               "headers": "",
