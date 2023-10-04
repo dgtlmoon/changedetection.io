@@ -76,9 +76,11 @@ def set_response_without_ldjson():
         f.write(test_return_data)
     return None
 
+def test_setup(client, live_server):
+    live_server_setup(live_server)
+
 # actually only really used by the distll.io importer, but could be handy too
 def test_check_ldjson_price_autodetect(client, live_server):
-    live_server_setup(live_server)
 
     set_response_with_ldjson()
 
