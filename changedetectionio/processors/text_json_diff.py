@@ -17,7 +17,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 name = 'Webpage Text/HTML, JSON and PDF changes'
 description = 'Detects all text changes where possible'
-
+json_filter_prefixes = ['json:', 'jq:']
 
 class FilterNotFoundInResponse(ValueError):
     def __init__(self, msg):
@@ -196,7 +196,7 @@ class perform_site_check(difference_detection_processor):
 
         # Inject a virtual LD+JSON price tracker rule
         if watch.get('track_ldjson_price_data', '') == PRICE_DATA_TRACK_ACCEPT:
-            include_filters_rule.append(html_tools.LD_JSON_PRODUCT_OFFER_SELECTOR)
+            include_filters_rule += html_tools.LD_JSON_PRODUCT_OFFER_SELECTORS
 
         has_filter_rule = len(include_filters_rule) and len(include_filters_rule[0].strip())
         has_subtractive_selectors = len(subtractive_selectors) and len(subtractive_selectors[0].strip())
@@ -214,7 +214,6 @@ class perform_site_check(difference_detection_processor):
                 pass
 
         if has_filter_rule:
-            json_filter_prefixes = ['json:', 'jq:']
             for filter in include_filters_rule:
                 if any(prefix in filter for prefix in json_filter_prefixes):
                     stripped_text_from_html += html_tools.extract_json_as_string(content=fetcher.content, json_filter=filter)

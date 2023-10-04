@@ -7,13 +7,14 @@ from typing import List
 import json
 import re
 
+
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
 TEXT_FILTER_LIST_LINE_SUFFIX = "<br>"
 
 PERL_STYLE_REGEX = r'^/(.*?)/([a-z]*)?$'
 # 'price' , 'lowPrice', 'highPrice' are usually under here
-# all of those may or may not appear on different websites
-LD_JSON_PRODUCT_OFFER_SELECTOR = "json:$..offers"
+# All of those may or may not appear on different websites - I didnt find a way todo case-insensitive searching here
+LD_JSON_PRODUCT_OFFER_SELECTORS = ["json:$..offers", "json:$..Offers"]
 
 class JSONNotFound(ValueError):
     def __init__(self, msg):
@@ -293,14 +294,17 @@ def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
 
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?
 def has_ldjson_product_info(content):
+    pricing_data = ''
+
     try:
         if not 'application/ld+json' in content:
             return False
 
-        # Always lowercase the content so the json_filter for finding $..offers matches
-        pricing_data = extract_json_as_string(content=content.lower(),
-                                              json_filter=LD_JSON_PRODUCT_OFFER_SELECTOR,
-                                              ensure_is_ldjson_info_type="product")
+        for filter in LD_JSON_PRODUCT_OFFER_SELECTORS:
+            pricing_data += extract_json_as_string(content=content,
+                                                  json_filter=filter,
+                                                  ensure_is_ldjson_info_type="product")
+
     except Exception as e:
         # Totally fine
         return False

@@ -28,7 +28,7 @@ def set_response_with_ldjson():
            "description":"You dont need it",
            "mpn":"111111",
            "sku":"22222",
-           "oFFerS":{
+           "Offers":{
               "@type":"AggregateOffer",
               "lowPrice":8097000,
               "highPrice":8099900,
@@ -177,7 +177,7 @@ def test_bad_ldjson_is_correctly_ignored(client, live_server):
                         "@type": ["Product", "SubType"],
                         "name": "My test product",
                         "description": "",
-                        "OffeRS": {
+                        "offers": {
                             "note" : "You can see the case-insensitive OffERS key, it should work",
                             "@type": "Offer",
                             "offeredBy": {
