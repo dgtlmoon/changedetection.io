@@ -193,10 +193,15 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
                     # (Some sites have multiple of the same ld+json @type='product', but some have the review part, some have the 'price' part)
                     # @type could also be a list (Product, SubType)
                     # LD_JSON auto-extract also requires some content PLUS the ldjson to be present
+                    # 1833 - could be either str or dict, should not be anything else
                     if json_data.get('@type') and stripped_text_from_html:
-                        types = [json_data.get('@type')] if isinstance(json_data.get('@type'), str) else json_data.get('@type')
-                        if ensure_is_ldjson_info_type.lower() in [x.lower().strip() for x in types]:
-                            break
+                        try:
+                            if json_data.get('@type') == str or json_data.get('@type') == dict:
+                                types = [json_data.get('@type')] if isinstance(json_data.get('@type'), str) else json_data.get('@type')
+                                if ensure_is_ldjson_info_type.lower() in [x.lower().strip() for x in types]:
+                                    break
+                        except:
+                            continue
 
             elif stripped_text_from_html:
                 break
