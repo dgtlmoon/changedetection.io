@@ -161,7 +161,6 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
 
         # Foreach <script json></script> blob.. just return the first that matches json_filter
         # As a last resort, try to parse the whole <body>
-        s = []
         soup = BeautifulSoup(content, 'html.parser')
 
         if ensure_is_ldjson_info_type:
@@ -192,8 +191,13 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
                 if isinstance(json_data, dict):
                     # If it has LD JSON 'key' @type, and @type is 'product', and something was found for the search
                     # (Some sites have multiple of the same ld+json @type='product', but some have the review part, some have the 'price' part)
-                    if json_data.get('@type', False) and json_data.get('@type','').lower() == ensure_is_ldjson_info_type.lower() and stripped_text_from_html:
-                        break
+                    # @type could also be a list (Product, SubType)
+                    # LD_JSON auto-extract also requires some content PLUS the ldjson to be present
+                    if json_data.get('@type') and stripped_text_from_html:
+                        types = [json_data.get('@type')] if isinstance(json_data.get('@type'), str) else json_data.get('@type')
+                        if ensure_is_ldjson_info_type.lower() in [x.lower().strip() for x in types]:
+                            break
+
             elif stripped_text_from_html:
                 break
 
