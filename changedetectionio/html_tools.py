@@ -7,13 +7,14 @@ from typing import List
 import json
 import re
 
+
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
 TEXT_FILTER_LIST_LINE_SUFFIX = "<br>"
 
 PERL_STYLE_REGEX = r'^/(.*?)/([a-z]*)?$'
 # 'price' , 'lowPrice', 'highPrice' are usually under here
-# all of those may or may not appear on different websites
-LD_JSON_PRODUCT_OFFER_SELECTOR = "json:$..offers"
+# All of those may or may not appear on different websites - I didnt find a way todo case-insensitive searching here
+LD_JSON_PRODUCT_OFFER_SELECTORS = ["json:$..offers", "json:$..Offers"]
 
 class JSONNotFound(ValueError):
     def __init__(self, msg):
@@ -161,7 +162,6 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
 
         # Foreach <script json></script> blob.. just return the first that matches json_filter
         # As a last resort, try to parse the whole <body>
-        s = []
         soup = BeautifulSoup(content, 'html.parser')
 
         if ensure_is_ldjson_info_type:
@@ -187,13 +187,24 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
         
         for json_data in bs_jsons:
             stripped_text_from_html = _parse_json(json_data, json_filter)
+
             if ensure_is_ldjson_info_type:
                 # Could sometimes be list, string or something else random
                 if isinstance(json_data, dict):
                     # If it has LD JSON 'key' @type, and @type is 'product', and something was found for the search
                     # (Some sites have multiple of the same ld+json @type='product', but some have the review part, some have the 'price' part)
-                    if json_data.get('@type', False) and json_data.get('@type','').lower() == ensure_is_ldjson_info_type.lower() and stripped_text_from_html:
-                        break
+                    # @type could also be a list (Product, SubType)
+                    # LD_JSON auto-extract also requires some content PLUS the ldjson to be present
+                    # 1833 - could be either str or dict, should not be anything else
+                    if json_data.get('@type') and stripped_text_from_html:
+                        try:
+                            if json_data.get('@type') == str or json_data.get('@type') == dict:
+                                types = [json_data.get('@type')] if isinstance(json_data.get('@type'), str) else json_data.get('@type')
+                                if ensure_is_ldjson_info_type.lower() in [x.lower().strip() for x in types]:
+                                    break
+                        except:
+                            continue
+
             elif stripped_text_from_html:
                 break
 
@@ -283,9 +294,18 @@ def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
 
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?
 def has_ldjson_product_info(content):
+    pricing_data = ''
+
     try:
-        pricing_data = extract_json_as_string(content=content, json_filter=LD_JSON_PRODUCT_OFFER_SELECTOR, ensure_is_ldjson_info_type="product")
-    except JSONNotFound as e:
+        if not 'application/ld+json' in content:
+            return False
+
+        for filter in LD_JSON_PRODUCT_OFFER_SELECTORS:
+            pricing_data += extract_json_as_string(content=content,
+                                                  json_filter=filter,
+                                                  ensure_is_ldjson_info_type="product")
+
+    except Exception as e:
         # Totally fine
         return False
     x=bool(pricing_data)
