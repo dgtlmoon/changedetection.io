@@ -186,6 +186,7 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
         
         for json_data in bs_jsons:
             stripped_text_from_html = _parse_json(json_data, json_filter)
+
             if ensure_is_ldjson_info_type:
                 # Could sometimes be list, string or something else random
                 if isinstance(json_data, dict):
@@ -293,8 +294,14 @@ def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?
 def has_ldjson_product_info(content):
     try:
-        pricing_data = extract_json_as_string(content=content, json_filter=LD_JSON_PRODUCT_OFFER_SELECTOR, ensure_is_ldjson_info_type="product")
-    except JSONNotFound as e:
+        if not 'application/ld+json' in content:
+            return False
+
+        # Always lowercase the content so the json_filter for finding $..offers matches
+        pricing_data = extract_json_as_string(content=content.lower(),
+                                              json_filter=LD_JSON_PRODUCT_OFFER_SELECTOR,
+                                              ensure_is_ldjson_info_type="product")
+    except Exception as e:
         # Totally fine
         return False
     x=bool(pricing_data)
