@@ -54,12 +54,14 @@ services:
       # Comment out ports: when using behind a reverse proxy , enable networks: etc.
       ports:
         - 5000:5000
-      deploy:
-        resources:
-          limits:
-            memory: 1G
-        restart_policy:
-          condition: on-failure
+#      # Workaround to fix memory leak
+#      # See https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher#playwright-memory-leak
+#      deploy:
+#        resources:
+#          limits:
+#            memory: 1G
+#        restart_policy:
+#          condition: on-failure
       restart: unless-stopped
 
      # Used for fetching pages via WebDriver+Chrome where you need Javascript support.
