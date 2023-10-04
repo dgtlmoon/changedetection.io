@@ -25,10 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - uses: actions/checkout@v4
-        - name: Set up Python 3.9
+        - name: Set up Python 3.11
           uses: actions/setup-python@v4
           with:
-            python-version: 3.9
+            python-version: 3.11
 
         # Just test that the build works, some libraries won't compile on ARM/rPi etc
         - name: Set up QEMU
