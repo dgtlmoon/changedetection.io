@@ -165,7 +165,7 @@ def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_
 
 
 def test_bad_ldjson_is_correctly_ignored(client, live_server):
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
     test_return_data = """
             <html>
             <head>
