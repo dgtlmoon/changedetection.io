@@ -89,5 +89,27 @@ services:
 #      # Ignore HTTPS errors, like for self-signed certs
 #      - DEFAULT_IGNORE_HTTPS_ERRORS=true
 
+
+#  # Workaround to fix changedetection memory leak
+#  restarter:
+#    image: docker:cli
+#    environment:
+#      - APP_SERVICE_NAME=changedetection
+#      - APP_RESTART_TIME=05:00 # HH:MM
+#      - APP_CHECK_DELAY=60 # seconds
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
+#    entrypoint: [ "/bin/sh","-c" ]
+#    command:
+#      - |
+#        while true; do
+#          if [ "$(date +'%H:%M')" = '$${APP_RESTART_TIME}' ]; then
+#            docker restart $${APP_SERVICE_NAME}
+#            echo "$(date) Docker service restart: $${APP_SERVICE_NAME}"
+#          fi
+#          sleep $${APP_CHECK_DELAY}
+#        done
+#    restart: unless-stopped
+
 volumes:
   changedetection-data:
