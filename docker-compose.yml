@@ -45,15 +45,7 @@ services:
       - changedetection-data:/datastore
 #      # Configurable proxy list support, see https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#proxy-list-support
 #      - ./proxies.json:/datastore/proxies.json
-    # Workaround to fix memory leak
-    # See https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher#playwright-memory-leak
-#    deploy:
-#      resources:
-#        limits:
-#          memory: 1G
-#      restart_policy:
-#        condition: on-failure
-#    restart: unless-stopped
+    restart: unless-stopped
     # Used for fetching pages via WebDriver+Chrome where you need Javascript support.
     # Now working on arm64 (needs testing on rPi - tested on Oracle ARM instance)
     # replace image with seleniarm/standalone-chromium:4.0.0-20211213
