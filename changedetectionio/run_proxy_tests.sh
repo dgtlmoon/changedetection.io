@@ -16,7 +16,7 @@ docker run --network changedet-network -d --hostname socks5proxy --name socks5pr
 
 # SOCKS5 related - test from proxies.json
 docker run --network changedet-network \
-  -v `pwd`/tests/proxy_socks5/proxies.json-example:/datastore/proxies.json \
+  -v `pwd`/tests/proxy_socks5/proxies.json-example:/app/changedetectionio/test-datastore/proxies.json \
   --rm \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest tests/proxy_socks5/test_socks5_proxy_sources.py'
@@ -26,8 +26,6 @@ docker run --network changedet-network \
   --rm \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest tests/proxy_socks5/test_socks5_proxy.py'
-
-
 
 # Used for configuring a custom proxy URL via the UI
 docker run --network changedet-network -d \
