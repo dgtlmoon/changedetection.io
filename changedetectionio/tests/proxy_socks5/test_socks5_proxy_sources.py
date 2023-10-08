@@ -11,6 +11,9 @@ def test_socks5_from_proxiesjson_file(client, live_server):
 
     test_url = "https://changedetection.io/CHANGELOG.txt"
 
+    res = client.get(url_for("settings_page"))
+    assert b'name="requests-proxy" type="radio" value="socks5proxy"' in res.data
+
     res = client.post(
         url_for("form_quick_watch_add"),
         data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
@@ -22,7 +25,7 @@ def test_socks5_from_proxiesjson_file(client, live_server):
         url_for("edit_page", uuid="first", unpause_on_save=1),
     )
     # check the proxy is offered as expected
-    assert b'ui-0socks5proxy' in res.data
+    assert b'name="proxy" type="radio" value="socks5proxy"' in res.data
 
     res = client.post(
         url_for("edit_page", uuid="first", unpause_on_save=1),
