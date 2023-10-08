@@ -9,7 +9,7 @@ from changedetectionio.tests.util import live_server_setup, wait_for_all_checks
 def test_socks5_from_proxiesjson_file(client, live_server):
     live_server_setup(live_server)
 
-    test_url = "http://changedetection.io/CHANGELOG.txt"
+    test_url = "https://changedetection.io/CHANGELOG.txt"
 
     res = client.post(
         url_for("form_quick_watch_add"),
