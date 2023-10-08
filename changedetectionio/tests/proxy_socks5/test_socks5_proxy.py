@@ -25,7 +25,7 @@ def test_socks5(client, live_server):
     assert b"Settings updated." in res.data
 
 
-    test_url = "http://changedetection.io/CHANGELOG.txt"
+    test_url = "https://changedetection.io/CHANGELOG.txt"
 
     res = client.post(
         url_for("form_quick_watch_add"),
