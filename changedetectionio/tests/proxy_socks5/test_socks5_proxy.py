@@ -24,8 +24,7 @@ def test_socks5(client, live_server):
 
     assert b"Settings updated." in res.data
 
-
-    test_url = "https://changedetection.io/CHANGELOG.txt"
+    test_url = "https://changedetection.io/CHANGELOG.txt?socks-test-tag=" + os.getenv('SOCKSTEST', '')
 
     res = client.post(
         url_for("form_quick_watch_add"),
@@ -43,18 +42,17 @@ def test_socks5(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first", unpause_on_save=1),
         data={
-                "include_filters": "",
-                "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
-                "headers": "",
-                "proxy": "ui-0socks5proxy",
-                "tags": "",
-                "url": test_url,
-              },
+            "include_filters": "",
+            "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
+            "headers": "",
+            "proxy": "ui-0socks5proxy",
+            "tags": "",
+            "url": test_url,
+        },
         follow_redirects=True
     )
     assert b"unpaused" in res.data
     wait_for_all_checks(client)
-
 
     res = client.get(
         url_for("preview_page", uuid="first"),
