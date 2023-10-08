@@ -33,7 +33,7 @@ def test_socks5_from_proxiesjson_file(client, live_server):
                 "include_filters": "",
                 "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
                 "headers": "",
-                "proxy": "ui-0socks5proxy",
+                "proxy": "socks5proxy",
                 "tags": "",
                 "url": test_url,
               },
