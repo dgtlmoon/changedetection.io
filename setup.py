@@ -41,7 +41,7 @@ setup(
     include_package_data=True,
     install_requires=install_requires,
     license="Apache License 2.0",
-    python_requires=">= 3.6",
+    python_requires=">= 3.7",
     classifiers=['Intended Audience :: Customer Service',
                  'Intended Audience :: Developers',
                  'Intended Audience :: Education',

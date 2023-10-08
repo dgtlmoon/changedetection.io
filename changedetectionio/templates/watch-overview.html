@@ -119,6 +119,9 @@
                             <a href="{{ url_for('settings_page', uuid=watch.uuid) }}#proxies">Try adding external proxies/locations</a>
                         
                         {% endif %}
+                        {% if 'empty result or contain only an image' in watch.last_error %}
+                            <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Detecting-changes-in-images">more help here</a>.
+                        {% endif %}
                     </div>
                     {% endif %}
                     {% if watch.last_notification_error is defined and watch.last_notification_error != False %}

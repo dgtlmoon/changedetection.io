@@ -11,12 +11,12 @@ jobs:
   test-pip-build-basics:
     runs-on: ubuntu-latest
     steps:
-        - uses: actions/checkout@v2
+        - uses: actions/checkout@v4
 
-        - name: Set up Python 3.9
-          uses: actions/setup-python@v2
+        - name: Set up Python 3.11
+          uses: actions/setup-python@v4
           with:
-            python-version: 3.9
+            python-version: 3.11
 
 
         - name: Test that the basic pip built package runs without error

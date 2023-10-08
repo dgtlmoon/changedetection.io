@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from . util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 
 def set_original_ignore_response():
@@ -26,12 +26,7 @@ def test_trigger_regex_functionality(client, live_server):
 
     live_server_setup(live_server)
 
-    sleep_time_for_fetch_thread = 3
-
     set_original_ignore_response()
-
-    # Give the endpoint time to spin up
-    time.sleep(1)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -43,7 +38,7 @@ def test_trigger_regex_functionality(client, live_server):
     assert b"1 Imported" in res.data
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (just a new one shouldnt have anything)
     res = client.get(url_for("index"))
@@ -57,7 +52,7 @@ def test_trigger_regex_functionality(client, live_server):
               "fetch_backend": "html_requests"},
         follow_redirects=True
     )
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     # so that we set the state to 'unviewed' after all the edits
     client.get(url_for("diff_history_page", uuid="first"))
 
@@ -65,7 +60,7 @@ def test_trigger_regex_functionality(client, live_server):
         f.write("some new noise")
 
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (nothing should match the regex)
     res = client.get(url_for("index"))
@@ -75,7 +70,7 @@ def test_trigger_regex_functionality(client, live_server):
         f.write("regex test123<br>\nsomething 123")
 
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 

@@ -5,14 +5,19 @@ function isItemInStock() {
     'agotado',
     'artikel zurzeit vergriffen',
     'as soon as stock is available',
+    'ausverkauft', // sold out
     'available for back order',
+    'back-order or out of stock',
     'backordered',
+    'benachrichtigt mich', // notify me
     'brak na stanie',
     'brak w magazynie',
     'coming soon',
     'currently have any tickets for this',
     'currently unavailable',
+    'dostępne wkrótce',
     'en rupture de stock',
+    'ist derzeit nicht auf lager',
     'item is no longer available',
     'message if back in stock',
     'nachricht bei',
@@ -37,6 +42,7 @@ function isItemInStock() {
     'unavailable tickets',
     'we do not currently have an estimate of when this product will be back in stock.',
     'zur zeit nicht an lager',
+    '已售完',
   ];
 
 
