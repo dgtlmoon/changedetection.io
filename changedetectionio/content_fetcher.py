@@ -1,6 +1,7 @@
-import hashlib
 from abc import abstractmethod
+from urllib.parse import urlparse
 import chardet
+import hashlib
 import json
 import logging
 import os
