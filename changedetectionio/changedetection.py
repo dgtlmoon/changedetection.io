@@ -20,13 +20,17 @@ from . import __version__
 app = None
 datastore = None
 
-def sigterm_handler(_signo, _stack_frame):
+def graceful_shutdown():
     global app
     global datastore
-#    app.config.exit.set()
-    print('Shutdown: Got SIGTERM, DB saved to disk')
+    datastore.stop_thread = True
     datastore.sync_to_json()
-#    raise SystemExit
+    app.config.exit.set()
+    sys.exit(0)
+
+def sigterm_handler(sig, frame):
+    print("Catch - SIGTERM")
+    graceful_shutdown()
 
 def main():
     global datastore
