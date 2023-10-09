@@ -23,8 +23,11 @@ datastore = None
 def graceful_shutdown():
     global app
     global datastore
+    # Stop ChangeDetectionStore thread to avoid conflict with sync_to_json()
     datastore.stop_thread = True
+    # Trigger saving data
     datastore.sync_to_json()
+    # Stop check_for_new_version, notification_runner, ticker_thread_check_time_launch_checks, update_worker
     app.config.exit.set()
     sys.exit(0)
 

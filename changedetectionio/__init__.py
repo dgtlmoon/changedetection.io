@@ -1464,7 +1464,6 @@ def changedetection_app(config=None, datastore_o=None):
     app.register_blueprint(check_proxies.construct_blueprint(datastore=datastore), url_prefix='/check_proxy')
 
 
-    # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks)
     notification_runner_thread = threading.Thread(target=notification_runner)
     ticker_thread.start()
