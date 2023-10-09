@@ -1465,8 +1465,10 @@ def changedetection_app(config=None, datastore_o=None):
 
 
     # @todo handle ctrl break
-    ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
-    threading.Thread(target=notification_runner).start()
+    ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks)
+    notification_runner_thread = threading.Thread(target=notification_runner)
+    ticker_thread.start()
+    notification_runner_thread.start()
 
     # Check for new release version, but not when running in test/build or pytest
     if not os.getenv("GITHUB_REF", False) and not config.get('disable_checkver') == True:

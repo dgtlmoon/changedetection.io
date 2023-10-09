@@ -130,7 +130,8 @@ class ChangeDetectionStore:
         self.needs_write = True
 
         # Finally start the thread that will manage periodic data saves to JSON
-        save_data_thread = threading.Thread(target=self.save_datastore).start()
+        save_data_thread = threading.Thread(target=self.save_datastore)
+        save_data_thread.start()
 
     def set_last_viewed(self, uuid, timestamp):
         logging.debug("Setting watch UUID: {} last viewed to {}".format(uuid, int(timestamp)))
