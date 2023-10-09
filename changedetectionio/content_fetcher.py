@@ -597,6 +597,24 @@ class base_html_webdriver(Fetcher):
             proxy_args['httpProxy'] = proxy_override
 
         if proxy_args:
+
+            # Convert socks5:// to selenium SOCKS5 correct config
+            o = urlparse(proxy_args.get('httpProxy', ''))
+            # https://github.com/tebeka/selenium/issues/167
+            # https://github.com/SeleniumHQ/selenium/issues/6917
+            if o.scheme == 'socks5':
+                if proxy_args.get('httpProxy'):
+                    del(proxy_args['httpProxy'])
+                path = "/" + o.path if o.path else ''
+                if not o.port:
+                    raise Exception("No Port number specific in this proxy config URL")
+                proxy_args['socksProxy'] = f"{o.hostname}:{o.port}{path}"
+                proxy_args['socksVersion'] = 5
+                proxy_args['proxyType'] = 'MANUAL'
+                if o.username:
+                    proxy_args['socksUsername'] = o.username
+                    proxy_args['socksPassword'] = o.password
+
             self.proxy = SeleniumProxy(raw=proxy_args)
 
     def run(self,
