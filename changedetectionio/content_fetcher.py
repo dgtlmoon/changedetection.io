@@ -417,7 +417,7 @@ class base_html_playwright(Fetcher):
                 lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
                 self.browser_steps))
 
-        if not has_browser_steps:
+        if not has_browser_steps and os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH'):
             if strtobool(os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH')):
                 # Temporary backup solution until we rewrite the playwright code
                 return self.run_fetch_browserless_puppeteer(
