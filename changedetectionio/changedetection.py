@@ -28,6 +28,10 @@ def graceful_shutdown():
     app.config.exit.set()
     sys.exit(0)
 
+def sigint_handler(sig, frame):
+    print("Catch - CTRL+C")
+    graceful_shutdown()
+
 def sigterm_handler(sig, frame):
     print("Catch - SIGTERM")
     graceful_shutdown()
@@ -107,6 +111,7 @@ def main():
     app = changedetection_app(app_config, datastore)
 
     signal.signal(signal.SIGTERM, sigterm_handler)
+    signal.signal(signal.SIGINT, sigint_handler)
 
     # Go into cleanup mode
     if do_cleanup:
