@@ -418,7 +418,7 @@ class base_html_playwright(Fetcher):
                 self.browser_steps))
 
         if not has_browser_steps:
-            if strtobool(os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH','')):
+            if strtobool(os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH')):
                 # Temporary backup solution until we rewrite the playwright code
                 return self.run_fetch_browserless_puppeteer(
                     url,
