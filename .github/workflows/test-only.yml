@@ -84,6 +84,7 @@ jobs:
         run: |
           cd changedetectionio
           ./run_proxy_tests.sh
+          # And again with PLAYWRIGHT_DRIVER_URL=..
           cd ..
 
       - name: Test changedetection.io container starts+runs basically without error

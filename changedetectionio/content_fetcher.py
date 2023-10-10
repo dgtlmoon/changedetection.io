@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from distutils.util import strtobool
 from urllib.parse import urlparse
 import chardet
 import hashlib
@@ -8,6 +9,7 @@ import os
 import requests
 import sys
 import time
+import urllib.parse
 
 visualselector_xpath_selectors = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
 
@@ -267,7 +269,6 @@ class base_html_playwright(Fetcher):
 
         if self.proxy:
             # Playwright needs separate username and password values
-            from urllib.parse import urlparse
             parsed = urlparse(self.proxy.get('server'))
             if parsed.username:
                 self.proxy['username'] = parsed.username
@@ -322,13 +323,12 @@ class base_html_playwright(Fetcher):
 
         # Append proxy connect string
         if self.proxy:
-            import urllib.parse
             # Remove username/password if it exists in the URL or you will receive "ERR_NO_SUPPORTED_PROXIES" error
             # Actual authentication handled by Puppeteer/node
             o = urlparse(self.proxy.get('server'))
-            proxy_url = urllib.parse.quote(o._replace(netloc="{}:{}".format(o.hostname, o.port)).geturl())
+            # Remove scheme, socks5:// doesnt always work and it will autodetect anyway
+            proxy_url = urllib.parse.quote(o._replace(netloc="{}:{}".format(o.hostname, o.port)).geturl().replace(f"{o.scheme}://", '', 1))
             browserless_function_url = f"{browserless_function_url}&--proxy-server={proxy_url}&dumpio=true"
-
 
         try:
             amp = '&' if '?' in browserless_function_url else '?'
@@ -348,7 +348,7 @@ class base_html_playwright(Fetcher):
                         'url': url,
                         'user_agent': {k.lower(): v for k, v in request_headers.items()}.get('user-agent', None),
                         'proxy_username': self.proxy.get('username', '') if self.proxy else False,
-                        'proxy_password': self.proxy.get('password', '') if self.proxy else False,
+                        'proxy_password': self.proxy.get('password', '') if self.proxy and self.proxy.get('username') else False,
                         'no_cache_list': [
                             'twitter',
                             '.pdf'
@@ -417,8 +417,8 @@ class base_html_playwright(Fetcher):
                 lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
                 self.browser_steps))
 
-        if not has_browser_steps:
-            if os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH'):
+        if not has_browser_steps and os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH'):
+            if strtobool(os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH')):
                 # Temporary backup solution until we rewrite the playwright code
                 return self.run_fetch_browserless_puppeteer(
                     url,
@@ -435,6 +435,7 @@ class base_html_playwright(Fetcher):
 
         self.delete_browser_steps_screenshots()
         response = None
+
         with sync_playwright() as p:
             browser_type = getattr(p, self.browser_type)
 
@@ -442,6 +443,9 @@ class base_html_playwright(Fetcher):
             # self.browser = browser_type.connect(self.command_executor, timeout=timeout*1000)
             # 60,000 connection timeout only
             browser = browser_type.connect_over_cdp(self.command_executor, timeout=60000)
+
+            # SOCKS5 with authentication is not supported (yet)
+            # https://github.com/microsoft/playwright/issues/10567
 
             # Set user agent to prevent Cloudflare from blocking the browser
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
@@ -479,7 +483,6 @@ class base_html_playwright(Fetcher):
                 print("Content Fetcher > retrying request got error - ", str(e))
                 time.sleep(1)
                 response = self.page.goto(url, wait_until='commit')
-
             except Exception as e:
                 print("Content Fetcher > Other exception when page.goto", str(e))
                 context.close()
@@ -633,7 +636,6 @@ class base_html_webdriver(Fetcher):
         from selenium.common.exceptions import WebDriverException
         # request_body, request_method unused for now, until some magic in the future happens.
 
-        # check env for WEBDRIVER_URL
         self.driver = webdriver.Remote(
             command_executor=self.command_executor,
             desired_capabilities=DesiredCapabilities.CHROME,
@@ -712,6 +714,10 @@ class html_requests(Fetcher):
         proxies = {}
 
         # Allows override the proxy on a per-request basis
+
+        # https://requests.readthedocs.io/en/latest/user/advanced/#socks
+        # Should also work with `socks5://user:pass@host:port` type syntax.
+
         if self.proxy_override:
             proxies = {'http': self.proxy_override, 'https': self.proxy_override, 'ftp': self.proxy_override}
         else:
