@@ -186,7 +186,6 @@ class User(flask_login.UserMixin):
 
     pass
 
-
 def login_optionally_required(func):
     @wraps(func)
     def decorated_view(*args, **kwargs):
@@ -199,7 +198,6 @@ def login_optionally_required(func):
         # Permitted
         elif request.endpoint == 'diff_history_page' and datastore.data['settings']['application'].get('shared_diff_access'):
             return func(*args, **kwargs)
-
         elif request.method in flask_login.config.EXEMPT_METHODS:
             return func(*args, **kwargs)
         elif app.config.get('LOGIN_DISABLED'):
@@ -1431,6 +1429,7 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('index'))
 
     @app.route("/highlight_submit_ignore_url", methods=['POST'])
+    @login_optionally_required
     def highlight_submit_ignore_url():
         import re
         mode = request.form.get('mode')
