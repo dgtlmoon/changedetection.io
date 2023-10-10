@@ -186,6 +186,21 @@ class User(flask_login.UserMixin):
 
     pass
 
+def login_absolutely_required(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+
+        has_password_enabled = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
+        if request.method in flask_login.config.EXEMPT_METHODS:
+            return func(*args, **kwargs)
+        elif app.config.get('LOGIN_DISABLED'):
+            return func(*args, **kwargs)
+        elif has_password_enabled and not current_user.is_authenticated:
+            return app.login_manager.unauthorized()
+
+        return func(*args, **kwargs)
+
+    return decorated_view
 
 def login_optionally_required(func):
     @wraps(func)
@@ -1430,6 +1445,7 @@ def changedetection_app(config=None, datastore_o=None):
         # paste in etc
         return redirect(url_for('index'))
 
+    @login_absolutely_required
     @app.route("/highlight_submit_ignore_url", methods=['POST'])
     def highlight_submit_ignore_url():
         import re
