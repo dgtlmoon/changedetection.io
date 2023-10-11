@@ -88,14 +88,14 @@ jobs:
 
       - name: Test changedetection.io container starts+runs basically without error
         run: |
-          docker run -p 5556:5000 --name test-changedetectionio -d test-changedetectionio
+          docker run --name test-changedetectionio -p 5556:5000  -d test-changedetectionio
           sleep 3
           # Should return 0 (no error) when grep finds it
           curl -s http://localhost:5556 |grep -q checkbox-uuid
           
           # and IPv6
           curl -s -g -6 "http://[::1]:5556"|grep -q checkbox-uuid
-          docker kill --name test-changedetectionio
+          docker kill test-changedetectionio
 
       - name: Test changedetection.io SIGTERM and SIGINT signal shutdown
         run: |
