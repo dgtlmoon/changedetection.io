@@ -77,6 +77,10 @@ ins {
   ins {
     padding: 0.5em;
   }
+
+  option:checked {
+    font-weight: bold;
+  }
 }
 
 .source {
