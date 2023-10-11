@@ -102,6 +102,7 @@ jobs:
           
           echo SIGINT Shutdown request test
           docker run --name sig-test -d test-changedetectionio
+          sleep 3
           docker kill --signal=SIGINT sig-test
           sleep 3
           # invert the check (it should be not 0/not running) 
@@ -116,6 +117,7 @@ jobs:
           
           echo SIGTERM Shutdown request test
           docker run --name sig-test -d test-changedetectionio
+          sleep 3
           docker kill --signal=SIGTERM sig-test
           sleep 3
           # invert the check (it should be not 0/not running) 
@@ -127,7 +129,7 @@ jobs:
           
           # @todo - scan the container log to see the right "graceful shutdown" text exists           
           docker rm sig-test
-          
+
 #export WEBDRIVER_URL=http://localhost:4444/wd/hub
 #pytest tests/fetchers/test_content.py
 #pytest tests/test_errorhandling.py
