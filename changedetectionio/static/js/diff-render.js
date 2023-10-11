@@ -2,6 +2,8 @@ $(document).ready(function () {
     var a = document.getElementById("a");
     var b = document.getElementById("b");
     var result = document.getElementById("result");
+    var inputs = document.getElementsByClassName("change");
+    inputs.current = 0;
 
     function changed() {
         // https://github.com/kpdecker/jsdiff/issues/389
@@ -81,8 +83,6 @@ $(document).ready(function () {
         changed();
     };
 
-    var inputs = document.getElementsByClassName("change");
-    inputs.current = 0;
 
     function next_diff() {
         var element = inputs[inputs.current];
