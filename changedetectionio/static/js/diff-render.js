@@ -43,6 +43,21 @@ $(document).ready(function () {
 
         // Jump at start
         inputs.current = 0;
+
+        // For nice mouse-over hover/title information
+        const removed_current_option = $('#diff-version option:selected')
+        if (removed_current_option) {
+            $('del').each(function () {
+                $(this).prop('title', 'Removed '+removed_current_option[0].label);
+            });
+        }
+        const inserted_current_option = $('#current-version option:selected')
+        if (removed_current_option) {
+            $('ins').each(function () {
+                $(this).prop('title', 'Inserted '+inserted_current_option[0].label);
+            });
+        }
+
         next_diff();
     }
 
