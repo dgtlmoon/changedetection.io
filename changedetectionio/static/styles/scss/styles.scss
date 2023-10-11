@@ -471,7 +471,11 @@ footer {
   padding: 10px;
 
   &#left-sticky {
-    left: 0px;
+    left: 0;
+    position: fixed;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    box-shadow: 1px 1px 4px var(--color-shadow-jump);
   }
 
   &#right-sticky {

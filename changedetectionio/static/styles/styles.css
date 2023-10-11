@@ -667,7 +667,11 @@ footer {
   background: var(--color-background);
   padding: 10px; }
   .sticky-tab#left-sticky {
-    left: 0px; }
+    left: 0;
+    position: fixed;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    box-shadow: 1px 1px 4px var(--color-shadow-jump); }
   .sticky-tab#right-sticky {
     right: 0px; }
   .sticky-tab#hosted-sticky {
