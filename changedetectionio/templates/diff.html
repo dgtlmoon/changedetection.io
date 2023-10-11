@@ -16,7 +16,7 @@
     <form class="pure-form " action="" method="GET">
         <fieldset>
             {% if versions|length >= 1 %}
-                <span>Compare</span>
+                <strong>Compare</strong>
                 <del class="change"><span>from</span></del>
                 <select id="diff-version" name="from_version" class="needs-localtime">
                     {% for version in versions|reverse %}
@@ -37,7 +37,7 @@
             {% endif %}
         </fieldset>
         <fieldset>
-Style -
+            <strong>Style</strong>
             <label for="diffWords" class="pure-checkbox">
                 <input type="radio" name="diff_type" id="diffWords" value="diffWords"> Words</label>
             <label for="diffLines" class="pure-checkbox">

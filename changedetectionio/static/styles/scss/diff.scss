@@ -81,6 +81,9 @@ ins {
   option:checked {
     font-weight: bold;
   }
+  [type=radio],[type=checkbox] {
+    vertical-align: middle;
+  }
 }
 
 .source {
