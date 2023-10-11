@@ -97,6 +97,9 @@ class ChangeDetectionStore:
                                tag='changedetection.io',
                                extras={'fetch_backend': 'html_requests'})
 
+            updates_available = self.get_updates_available()
+            self.__data['settings']['application']['schema_version'] = updates_available.pop()
+
         else:
             # Bump the update version by running updates
             self.run_updates()
@@ -627,14 +630,8 @@ class ChangeDetectionStore:
     def tag_exists_by_name(self, tag_name):
         return any(v.get('title', '').lower() == tag_name.lower() for k, v in self.__data['settings']['application']['tags'].items())
 
-    # Run all updates
-    # IMPORTANT - Each update could be run even when they have a new install and the schema is correct
-    #             So therefor - each `update_n` should be very careful about checking if it needs to actually run
-    #             Probably we should bump the current update schema version with each tag release version?
-    def run_updates(self):
+    def get_updates_available(self):
         import inspect
-        import shutil
-
         updates_available = []
         for i, o in inspect.getmembers(self, predicate=inspect.ismethod):
             m = re.search(r'update_(\d+)$', i)
@@ -642,6 +639,15 @@ class ChangeDetectionStore:
                 updates_available.append(int(m.group(1)))
         updates_available.sort()
 
+        return updates_available
+
+    # Run all updates
+    # IMPORTANT - Each update could be run even when they have a new install and the schema is correct
+    #             So therefor - each `update_n` should be very careful about checking if it needs to actually run
+    #             Probably we should bump the current update schema version with each tag release version?
+    def run_updates(self):
+        import shutil
+        updates_available = self.get_updates_available()
         for update_n in updates_available:
             if update_n > self.__data['settings']['application']['schema_version']:
                 print ("Applying update_{}".format((update_n)))
