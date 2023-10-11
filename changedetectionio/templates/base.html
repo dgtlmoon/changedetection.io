@@ -121,7 +121,8 @@
     {% endif %}
     {% if left_sticky %}
       <div class="sticky-tab" id="left-sticky">
-        <a href="{{url_for('preview_page', uuid=uuid)}}">Show current snapshot</a>
+        <a href="{{url_for('preview_page', uuid=uuid)}}">Show current snapshot</a><br>
+          Visualise <strong>triggers</strong> and <strong>ignored text</strong>
       </div>
     {% endif %}
     {% if right_sticky %}
