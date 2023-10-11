@@ -912,21 +912,29 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Read as binary and force decode as UTF-8
         # Windows may fail decode in python if we just use 'r' mode (chardet decode exception)
-        try:
-            newest_version_file_contents = watch.get_history_snapshot(dates[-1])
-        except Exception as e:
-            newest_version_file_contents = "Unable to read {}.\n".format(dates[-1])
-
-        previous_version = request.args.get('previous_version')
-        previous_timestamp = dates[-2]
-        if previous_version:
-            previous_timestamp = previous_version
+        from_version = request.args.get('from_version')
+        from_version_index = -2 # second newest
+        if from_version and from_version in dates:
+            from_version_index = dates.index(from_version)
+        else:
+            from_version = dates[from_version_index]
 
         try:
-            previous_version_file_contents = watch.get_history_snapshot(previous_timestamp)
+            from_version_file_contents = watch.get_history_snapshot(dates[from_version_index])
         except Exception as e:
-            previous_version_file_contents = "Unable to read {}.\n".format(previous_timestamp)
+            from_version_file_contents = "Unable to read to-version at index{}.\n".format(dates[from_version_index])
 
+        to_version = request.args.get('to_version')
+        to_version_index = -1
+        if to_version and to_version in dates:
+            to_version_index = dates.index(to_version)
+        else:
+            to_version = dates[to_version_index]
+
+        try:
+            to_version_file_contents = watch.get_history_snapshot(dates[to_version_index])
+        except Exception as e:
+            to_version_file_contents = "Unable to read to-version at index{}.\n".format(dates[to_version_index])
 
         screenshot_url = watch.get_screenshot()
 
@@ -942,7 +950,8 @@ def changedetection_app(config=None, datastore_o=None):
 
         output = render_template("diff.html",
                                  current_diff_url=watch['url'],
-                                 current_previous_version=str(previous_version),
+                                 from_version=str(from_version),
+                                 to_version=str(to_version),
                                  extra_stylesheets=extra_stylesheets,
                                  extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
                                  extract_form=extract_form,
@@ -951,13 +960,14 @@ def changedetection_app(config=None, datastore_o=None):
                                  last_error_screenshot=watch.get_error_snapshot(),
                                  last_error_text=watch.get_error_text(),
                                  left_sticky=True,
-                                 newest=newest_version_file_contents,
+                                 newest=to_version_file_contents,
                                  newest_version_timestamp=dates[-1],
                                  password_enabled_and_share_is_off=password_enabled_and_share_is_off,
-                                 previous=previous_version_file_contents,
+                                 from_version_file_contents=from_version_file_contents,
+                                 to_version_file_contents=to_version_file_contents,
                                  screenshot=screenshot_url,
                                  uuid=uuid,
-                                 versions=dates[:-1], # All except current/last
+                                 versions=dates, # All except current/last
                                  watch_a=watch
                                  )
 

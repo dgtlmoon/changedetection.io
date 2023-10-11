@@ -77,6 +77,13 @@ ins {
   ins {
     padding: 0.5em;
   }
+
+  option:checked {
+    font-weight: bold;
+  }
+  [type=radio],[type=checkbox] {
+    vertical-align: middle;
+  }
 }
 
 .source {
