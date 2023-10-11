@@ -88,14 +88,39 @@ jobs:
 
       - name: Test changedetection.io container starts+runs basically without error
         run: |
-          docker run -p 5556:5000 -d test-changedetectionio
+          docker run -p 5556:5000 --name test-changedetectionio -d test-changedetectionio
           sleep 3
           # Should return 0 (no error) when grep finds it
           curl -s http://localhost:5556 |grep -q checkbox-uuid
           
           # and IPv6
           curl -s -g -6 "http://[::1]:5556"|grep -q checkbox-uuid
+          docker kill --name test-changedetectionio
+
+      - name: Test changedetection.io SIGTERM and SIGINT signal shutdown
+        run: |
           
+          echo SIGINT Shutdown request test
+          docker run --name sig-test -d test-changedetectionio
+          docker kill --signal=SIGINT sig-test
+          sleep 3
+          # invert the check (it should be not 0/not running) 
+          docker inspect --format '{{json .State.Running}}' sig-test
+          if [ $? -eq 0 ]
+          then
+            exit 1
+          fi
+                    
+          echo SIGTERM Shutdown request test
+          docker run --name sig-test -d test-changedetectionio
+          docker kill --signal=SIGTERM sig-test
+          sleep 3
+          # invert the check (it should be not 0/not running) 
+          docker inspect --format '{{json .State.Running}}' sig-test
+          if [ $? -eq 0 ]
+          then
+            exit 1
+          fi
 
 #export WEBDRIVER_URL=http://localhost:4444/wd/hub
 #pytest tests/fetchers/test_content.py
