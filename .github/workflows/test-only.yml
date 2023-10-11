@@ -110,7 +110,10 @@ jobs:
           then
             exit 1
           fi
-                    
+          
+          # @todo - scan the container log to see the right "graceful shutdown" text exists 
+          docker rm sig-test
+          
           echo SIGTERM Shutdown request test
           docker run --name sig-test -d test-changedetectionio
           docker kill --signal=SIGTERM sig-test
@@ -121,7 +124,10 @@ jobs:
           then
             exit 1
           fi
-
+          
+          # @todo - scan the container log to see the right "graceful shutdown" text exists           
+          docker rm sig-test
+          
 #export WEBDRIVER_URL=http://localhost:4444/wd/hub
 #pytest tests/fetchers/test_content.py
 #pytest tests/test_errorhandling.py
