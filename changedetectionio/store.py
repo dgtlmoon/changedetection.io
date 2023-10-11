@@ -96,6 +96,11 @@ class ChangeDetectionStore:
                 self.add_watch(url='https://changedetection.io/CHANGELOG.txt',
                                tag='changedetection.io',
                                extras={'fetch_backend': 'html_requests'})
+
+        else:
+            # Bump the update version by running updates
+            self.run_updates()
+
         self.__data['version_tag'] = version_tag
 
         # Just to test that proxies.json if it exists, doesnt throw a parsing error on startup
@@ -124,9 +129,6 @@ class ChangeDetectionStore:
         if not 'api_access_token' in self.__data['settings']['application']:
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['api_access_token'] = secret
-
-        # Bump the update version by running updates
-        self.run_updates()
 
         self.needs_write = True
 
