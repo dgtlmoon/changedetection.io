@@ -103,9 +103,11 @@ jobs:
           echo SIGINT Shutdown request test
           docker run --name sig-test -d test-changedetectionio
           sleep 3
+          echo ">>> Sending SIGINT to sig-test container"
           docker kill --signal=SIGINT sig-test
           sleep 3
           # invert the check (it should be not 0/not running)
+          docker ps
           docker logs sig-test
           docker inspect --format '{{json .State.Running}}' sig-test
           if [ $? -eq 0 ]
@@ -119,9 +121,11 @@ jobs:
           echo SIGTERM Shutdown request test
           docker run --name sig-test -d test-changedetectionio
           sleep 3
+          echo ">>> Sending SIGTERM to sig-test container"
           docker kill --signal=SIGTERM sig-test
           sleep 3
           # invert the check (it should be not 0/not running)
+          docker ps
           docker logs sig-test
           docker inspect --format '{{json .State.Running}}' sig-test
           if [ $? -eq 0 ]
