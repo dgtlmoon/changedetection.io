@@ -89,7 +89,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
 
     # Following the 'diff' link, it should no longer display as 'unviewed' even after we recheck it a few times
     res = client.get(url_for("diff_history_page", uuid="first"))
-    assert b'Compare newest' in res.data
+    assert b'selected=""' in res.data, "Confirm diff history page loaded"
 
     # Check the [preview] pulls the right one
     res = client.get(
