@@ -23,6 +23,7 @@ datastore = None
 def graceful_shutdown():
     global app
     global datastore
+    print('Gracefully exiting')
     # Stop ChangeDetectionStore thread to avoid conflict with sync_to_json()
     datastore.stop_thread = True
     # Trigger saving data
