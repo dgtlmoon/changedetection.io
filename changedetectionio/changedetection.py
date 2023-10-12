@@ -33,6 +33,8 @@ def graceful_shutdown():
     sys.exit(0)
 
 def sigint_handler(sig, frame):
+    #https://docs.python.org/3/library/signal.html#signal.SIG_IGN
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
     print("Catch - CTRL+C")
     graceful_shutdown()
 
