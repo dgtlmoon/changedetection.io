@@ -115,7 +115,13 @@ jobs:
             exit 1
           fi
           
-          # @todo - scan the container log to see the right "graceful shutdown" text exists 
+          docker logs -f sig-test 2> /dev/null | grep 'graceful shutdown'
+          # both GNU or BSD grep returns 0 if the line was selected
+          if [ $? -ne 0 ]
+          then
+            exit 1
+          fi
+          
           docker rm sig-test
           
           echo SIGTERM Shutdown request test
@@ -133,7 +139,13 @@ jobs:
             exit 1
           fi
           
-          # @todo - scan the container log to see the right "graceful shutdown" text exists           
+          docker logs -f sig-test 2> /dev/null | grep 'graceful shutdown'
+          # both GNU or BSD grep returns 0 if the line was selected
+          if [ $? -ne 0 ]
+          then
+            exit 1
+          fi
+          
           docker rm sig-test
 
 #export WEBDRIVER_URL=http://localhost:4444/wd/hub
