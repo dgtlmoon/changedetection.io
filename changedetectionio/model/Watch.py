@@ -167,9 +167,7 @@ class model(dict):
     @property
     def label(self):
         # Used for sorting
-        if self['title']:
-            return self['title']
-        return self['url']
+        return self.get('title') if self.get('title') else self.get('url')
 
     @property
     def last_changed(self):
