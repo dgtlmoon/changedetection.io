@@ -171,4 +171,4 @@ def main():
         eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
 
     if is_graceful_shutdown:
-        print('Gracefully exited')
+        print('graceful shutdown')
