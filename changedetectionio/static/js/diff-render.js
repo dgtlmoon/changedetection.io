@@ -5,6 +5,24 @@ $(document).ready(function () {
     var inputs = document.getElementsByClassName("change");
     inputs.current = 0;
 
+    $('#jump-next-diff').click(function () {
+
+        var element = inputs[inputs.current];
+        var headerOffset = 80;
+        var elementPosition = element.getBoundingClientRect().top;
+        var offsetPosition = elementPosition - headerOffset + window.scrollY;
+
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth",
+        });
+
+        inputs.current++;
+        if (inputs.current >= inputs.length) {
+            inputs.current = 0;
+        }
+    });
+
     function changed() {
         // https://github.com/kpdecker/jsdiff/issues/389
         // I would love to use `{ignoreWhitespace: true}` here but it breaks the formatting
@@ -97,24 +115,6 @@ $(document).ready(function () {
     document.getElementById("ignoreWhitespace").onchange = function (e) {
         changed();
     };
-
-
-    function next_diff() {
-        var element = inputs[inputs.current];
-        var headerOffset = 80;
-        var elementPosition = element.getBoundingClientRect().top;
-        var offsetPosition = elementPosition - headerOffset + window.scrollY;
-
-        window.scrollTo({
-            top: offsetPosition,
-            behavior: "smooth",
-        });
-
-        inputs.current++;
-        if (inputs.current >= inputs.length) {
-            inputs.current = 0;
-        }
-    }
 
 });
 
