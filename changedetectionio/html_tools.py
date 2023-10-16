@@ -109,6 +109,11 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
         # e.g. xpath://div/table/tbody/tr[*]/count(td)
         elif type(element) == int:
             html_block += str(element)
+        # Because of elementpath lib.
+        # e.g. element=10000.0 type(element)=<class 'float'>
+        # e.g. xpath:'10.0E3' cast as xs:double
+        elif type(element) == float:
+            html_block += str(element)
         # e.g. element=<Element a at 0x7fcb0038c0e0> type(element)=<class 'lxml.html.HtmlElement'>
         # e.g. //*[@id="container"]/section[1]/article[2]/div[2]/table/tbody/tr[*]/td[2]/a[1]
         else:
