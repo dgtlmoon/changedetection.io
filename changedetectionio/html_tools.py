@@ -85,8 +85,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     # e.g. count(//*[contains(@class, 'sametext')])
     # e.g. r=1 type(r)=<class 'int'>
     if type(r) != list:
-        html_block += str(r)
-        return html_block
+        r = [r]
 
     for element in r:
         # When there's more than 1 match, then add the suffix to separate each line
