@@ -12,7 +12,7 @@ def set_response_with_filter():
      <p>Which is across multiple lines</p>
      <br>
      So let's see what happens.  <br>
-     <div id="nope-doesnt-exist">Some text thats the same</div>     
+     <div id="nope-doesnt-exist">Some text thats the same</div>
      </body>
      </html>
     """
@@ -66,6 +66,7 @@ def run_filter_test(client, content_filter):
                                                    "Snapshot: {{current_snapshot}}\n"
                                                    "Diff: {{diff}}\n"
                                                    "Diff Full: {{diff_full}}\n"
+                                                   "Diff as Patch: {{diff_patch}}\n"
                                                    ":-)",
                               "notification_format": "Text"}
 

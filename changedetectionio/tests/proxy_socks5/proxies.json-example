@@ -1,0 +1,6 @@
+{
+  "socks5proxy": {
+    "label": "socks5proxy",
+    "url": "socks5://proxy_user123:proxy_pass123@socks5proxy:1080"
+  }
+}

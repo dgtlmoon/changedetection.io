@@ -81,7 +81,7 @@ services:
 #        restart: unless-stopped
 
      # Used for fetching pages via Playwright+Chrome where you need Javascript support.
-
+     # Note: Playwright/browserless not supported on ARM type devices (rPi etc)
 #    playwright-chrome:
 #        hostname: playwright-chrome
 #        image: browserless/chrome

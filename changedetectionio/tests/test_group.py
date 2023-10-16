@@ -15,7 +15,7 @@ def set_original_response():
      Some initial text<br>
      <p id="only-this">Should be only this</p>
      <br>
-     <p id="not-this">And never this</p>     
+     <p id="not-this">And never this</p>
      </body>
      </html>
     """
@@ -30,7 +30,7 @@ def set_modified_response():
      Some initial text<br>
      <p id="only-this">Should be REALLY only this</p>
      <br>
-     <p id="not-this">And never this</p>     
+     <p id="not-this">And never this</p>
      </body>
      </html>
     """
@@ -189,6 +189,7 @@ def test_group_tag_notification(client, live_server):
                                                    "Diff Added: {{diff_added}}\n"
                                                    "Diff Removed: {{diff_removed}}\n"
                                                    "Diff Full: {{diff_full}}\n"
+                                                   "Diff as Patch: {{diff_patch}}\n"
                                                    ":-)",
                               "notification_screenshot": True,
                               "notification_format": "Text",

@@ -38,7 +38,9 @@ from flask_paginate import Pagination, get_page_parameter
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.45.1'
+__version__ = '0.45.3'
+
+from changedetectionio.store import BASE_URL_NOT_SET_TEXT
 
 datastore = None
 
@@ -184,7 +186,6 @@ class User(flask_login.UserMixin):
 
     pass
 
-
 def login_optionally_required(func):
     @wraps(func)
     def decorated_view(*args, **kwargs):
@@ -197,7 +198,6 @@ def login_optionally_required(func):
         # Permitted
         elif request.endpoint == 'diff_history_page' and datastore.data['settings']['application'].get('shared_diff_access'):
             return func(*args, **kwargs)
-
         elif request.method in flask_login.config.EXEMPT_METHODS:
             return func(*args, **kwargs)
         elif app.config.get('LOGIN_DISABLED'):
@@ -356,12 +356,10 @@ def changedetection_app(config=None, datastore_o=None):
                 # Include a link to the diff page, they will have to login here to see if password protection is enabled.
                 # Description is the page you watch, link takes you to the diff JS UI page
                 # Dict val base_url will get overriden with the env var if it is set.
-                ext_base_url = datastore.data['settings']['application'].get('base_url')
-                if ext_base_url:
-                    # Go with overriden value
-                    diff_link = {'href': "{}{}".format(ext_base_url, url_for('diff_history_page', uuid=watch['uuid'], _external=False))}
-                else:
-                    diff_link = {'href': url_for('diff_history_page', uuid=watch['uuid'], _external=True)}
+                ext_base_url = datastore.data['settings']['application'].get('active_base_url')
+
+                # Because we are called via whatever web server, flask should figure out the right path (
+                diff_link = {'href': url_for('diff_history_page', uuid=watch['uuid'], _external=True)}
 
                 fe.link(link=diff_link)
 
@@ -714,8 +712,8 @@ def changedetection_app(config=None, datastore_o=None):
             output = render_template("edit.html",
                                      available_processors=processors.available_processors(),
                                      browser_steps_config=browser_step_ui_config,
-                                     current_base_url=datastore.data['settings']['application']['base_url'],
                                      emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                     extra_title=f" - Edit - {watch.label}",
                                      form=form,
                                      has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
                                      has_empty_checktime=using_default_check_time,
@@ -804,7 +802,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         output = render_template("settings.html",
                                  form=form,
-                                 current_base_url = datastore.data['settings']['application']['base_url'],
                                  hide_remove_pass=os.getenv("SALTED_PASS", False),
                                  api_key=datastore.data['settings']['application'].get('api_access_token'),
                                  emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
@@ -916,21 +913,29 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Read as binary and force decode as UTF-8
         # Windows may fail decode in python if we just use 'r' mode (chardet decode exception)
-        try:
-            newest_version_file_contents = watch.get_history_snapshot(dates[-1])
-        except Exception as e:
-            newest_version_file_contents = "Unable to read {}.\n".format(dates[-1])
-
-        previous_version = request.args.get('previous_version')
-        previous_timestamp = dates[-2]
-        if previous_version:
-            previous_timestamp = previous_version
+        from_version = request.args.get('from_version')
+        from_version_index = -2 # second newest
+        if from_version and from_version in dates:
+            from_version_index = dates.index(from_version)
+        else:
+            from_version = dates[from_version_index]
 
         try:
-            previous_version_file_contents = watch.get_history_snapshot(previous_timestamp)
+            from_version_file_contents = watch.get_history_snapshot(dates[from_version_index])
         except Exception as e:
-            previous_version_file_contents = "Unable to read {}.\n".format(previous_timestamp)
+            from_version_file_contents = "Unable to read to-version at index{}.\n".format(dates[from_version_index])
 
+        to_version = request.args.get('to_version')
+        to_version_index = -1
+        if to_version and to_version in dates:
+            to_version_index = dates.index(to_version)
+        else:
+            to_version = dates[to_version_index]
+
+        try:
+            to_version_file_contents = watch.get_history_snapshot(dates[to_version_index])
+        except Exception as e:
+            to_version_file_contents = "Unable to read to-version at index{}.\n".format(dates[to_version_index])
 
         screenshot_url = watch.get_screenshot()
 
@@ -946,22 +951,24 @@ def changedetection_app(config=None, datastore_o=None):
 
         output = render_template("diff.html",
                                  current_diff_url=watch['url'],
-                                 current_previous_version=str(previous_version),
+                                 from_version=str(from_version),
+                                 to_version=str(to_version),
                                  extra_stylesheets=extra_stylesheets,
-                                 extra_title=" - Diff - {}".format(watch['title'] if watch['title'] else watch['url']),
+                                 extra_title=f" - Diff - {watch.label}",
                                  extract_form=extract_form,
                                  is_html_webdriver=is_html_webdriver,
                                  last_error=watch['last_error'],
                                  last_error_screenshot=watch.get_error_snapshot(),
                                  last_error_text=watch.get_error_text(),
                                  left_sticky=True,
-                                 newest=newest_version_file_contents,
+                                 newest=to_version_file_contents,
                                  newest_version_timestamp=dates[-1],
                                  password_enabled_and_share_is_off=password_enabled_and_share_is_off,
-                                 previous=previous_version_file_contents,
+                                 from_version_file_contents=from_version_file_contents,
+                                 to_version_file_contents=to_version_file_contents,
                                  screenshot=screenshot_url,
                                  uuid=uuid,
-                                 versions=dates[:-1], # All except current/last
+                                 versions=dates, # All except current/last
                                  watch_a=watch
                                  )
 
@@ -1270,10 +1277,10 @@ def changedetection_app(config=None, datastore_o=None):
                 update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
             i = 1
 
-        elif tag != None:
+        elif tag:
             # Items that have this current tag
             for watch_uuid, watch in datastore.data['watching'].items():
-                if (tag != None and tag in watch.get('tags', {})):
+                if tag in watch.get('tags', {}):
                     if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                         update_q.put(
                             queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False})
@@ -1433,6 +1440,7 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('index'))
 
     @app.route("/highlight_submit_ignore_url", methods=['POST'])
+    @login_optionally_required
     def highlight_submit_ignore_url():
         import re
         mode = request.form.get('mode')

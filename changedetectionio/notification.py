@@ -9,6 +9,7 @@ valid_tokens = {
     'diff': '',
     'diff_added': '',
     'diff_full': '',
+    'diff_patch': '',
     'diff_removed': '',
     'diff_url': '',
     'preview_url': '',
@@ -98,7 +99,7 @@ def process_notification(n_object, datastore):
         # Initially text or whatever
         n_format = datastore.data['settings']['application'].get('notification_format', valid_notification_formats[default_notification_format])
 
-    
+
     # https://github.com/caronc/apprise/wiki/Development_LogCapture
     # Anything higher than or equal to WARNING (which covers things like Connection errors)
     # raise it as an exception
@@ -177,7 +178,7 @@ def process_notification(n_object, datastore):
                 log_value = logs.getvalue()
                 if log_value and 'WARNING' in log_value or 'ERROR' in log_value:
                     raise Exception(log_value)
-                
+
                 sent_objs.append({'title': n_title,
                                   'body': n_body,
                                   'url' : url,
@@ -207,14 +208,10 @@ def create_notification_parameters(n_object, datastore):
         watch_tag = ''
 
     # Create URLs to customise the notification with
-    base_url = datastore.data['settings']['application']['base_url']
+    # active_base_url - set in store.py data property
+    base_url = datastore.data['settings']['application'].get('active_base_url')
 
     watch_url = n_object['watch_url']
-
-    # Re #148 - Some people have just {{ base_url }} in the body or title, but this may break some notification services
-    #           like 'Join', so it's always best to atleast set something obvious so that they are not broken.
-    if base_url == '':
-        base_url = "<base-url-env-var-not-set>"
 
     diff_url = "{}/diff/{}".format(base_url, uuid)
     preview_url = "{}/preview/{}".format(base_url, uuid)
@@ -225,11 +222,12 @@ def create_notification_parameters(n_object, datastore):
     # Valid_tokens also used as a field validator
     tokens.update(
         {
-            'base_url': base_url if base_url is not None else '',
+            'base_url': base_url,
             'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else '',
             'diff': n_object.get('diff', ''),  # Null default in the case we use a test
             'diff_added': n_object.get('diff_added', ''),  # Null default in the case we use a test
             'diff_full': n_object.get('diff_full', ''),  # Null default in the case we use a test
+            'diff_patch': n_object.get('diff_patch', ''),  # Null default in the case we use a test
             'diff_removed': n_object.get('diff_removed', ''),  # Null default in the case we use a test
             'diff_url': diff_url,
             'preview_url': preview_url,

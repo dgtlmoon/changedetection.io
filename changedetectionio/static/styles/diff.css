@@ -187,6 +187,10 @@ ins {
     padding: 0.5em; }
   #settings ins {
     padding: 0.5em; }
+  #settings option:checked {
+    font-weight: bold; }
+  #settings [type=radio], #settings [type=checkbox] {
+    vertical-align: middle; }
 
 .source {
   position: absolute;
