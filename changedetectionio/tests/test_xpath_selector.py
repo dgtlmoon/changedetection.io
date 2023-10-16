@@ -284,6 +284,8 @@ def test_various_rules(client, live_server):
      <div class="changetext">Some text that will change</div>
      <a href=''>some linky </a>
      <a href=''>another some linky </a>
+     <!-- related to https://github.com/dgtlmoon/changedetection.io/pull/1774 -->
+     <input   type="email"   id="email" />
      </body>
      </html>
     """)
