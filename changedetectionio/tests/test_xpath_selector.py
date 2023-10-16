@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from . util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 from ..html_tools import *
 
@@ -86,14 +86,14 @@ def test_check_xpath_filter_utf8(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(1)
+    wait_for_all_checks(client)
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"include_filters": filter, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'Unicode strings with encoding declaration are not supported.' not in res.data
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
@@ -140,14 +140,14 @@ def test_check_xpath_text_function_utf8(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(1)
+    wait_for_all_checks(client)
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"include_filters": filter, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'Unicode strings with encoding declaration are not supported.' not in res.data
 
@@ -164,7 +164,6 @@ def test_check_xpath_text_function_utf8(client, live_server):
     assert b'Deleted' in res.data
 
 def test_check_markup_xpath_filter_restriction(client, live_server):
-    sleep_time_for_fetch_thread = 3
 
     xpath_filter = "//*[contains(@class, 'sametext')]"
 
@@ -183,7 +182,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server):
     assert b"1 Imported" in res.data
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -195,7 +194,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server):
     assert b"Updated watch." in res.data
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # view it/reset state back to viewed
     client.get(url_for("diff_history_page", uuid="first"), follow_redirects=True)
@@ -206,7 +205,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server):
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
@@ -216,9 +215,6 @@ def test_check_markup_xpath_filter_restriction(client, live_server):
 
 def test_xpath_validation(client, live_server):
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
-
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -227,7 +223,7 @@ def test_xpath_validation(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     res = client.post(
         url_for("edit_page", uuid="first"),
@@ -244,11 +240,8 @@ def test_check_with_prefix_include_filters(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
-
     set_original_response()
-
+    wait_for_all_checks(client)
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -257,7 +250,7 @@ def test_check_with_prefix_include_filters(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     res = client.post(
         url_for("edit_page", uuid="first"),
@@ -266,7 +259,7 @@ def test_check_with_prefix_include_filters(client, live_server):
     )
 
     assert b"Updated watch." in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     res = client.get(
         url_for("preview_page", uuid="first"),
