@@ -287,6 +287,8 @@ def test_various_rules(client, live_server):
      <div class="changetext">Some text that will change</div>
      <a href=''>some linky </a>
      <a href=''>another some linky </a>
+     <!-- related to https://github.com/dgtlmoon/changedetection.io/pull/1774 -->
+     <input   type="email"   id="email" />     
      </body>
      </html>
     """)
@@ -315,13 +317,11 @@ def test_various_rules(client, live_server):
         res = client.get(url_for("index"))
         assert b'fetch-error' not in res.data, f"Should not see errors after '{r} filter"
 
-    
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
 def test_xpath_20(client, live_server):
-
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("import_page"),
@@ -359,7 +359,6 @@ def test_xpath_20(client, live_server):
 
 
 def test_xpath_20_function_count(client, live_server):
-
     set_original_response()
 
     # Add our URL to the import page
