@@ -73,7 +73,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     # xpath 2.0-3.1
     from elementpath.xpath3 import XPath3Parser
 
-    tree = html.fromstring(bytes(html_content, encoding='utf-8'))
+    tree = etree.HTML(bytes(html_content, encoding='utf-8'))
     html_block = ""
 
     r =  elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser)
