@@ -272,7 +272,7 @@ def test_check_with_prefix_include_filters(client, live_server):
     client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
 def test_various_rules(client, live_server):
     # Just check these don't error
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("""<html>
        <body>
@@ -307,8 +307,7 @@ def test_various_rules(client, live_server):
                   'fetch_backend': "html_requests"},
             follow_redirects=True
         )
-        assert b"Updated watch." in res.data
         wait_for_all_checks(client)
-
+        assert b"Updated watch." in res.data
         res = client.get(url_for("index"))
         assert b'fetch-error' not in res.data, f"Should not see errors after '{r} filter"
