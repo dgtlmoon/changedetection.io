@@ -614,14 +614,17 @@ class base_html_webdriver(Fetcher):
             is_binary=False):
 
         from selenium import webdriver
-        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+        from selenium.webdriver.chrome.options import Options as ChromeOptions
         from selenium.common.exceptions import WebDriverException
         # request_body, request_method unused for now, until some magic in the future happens.
 
+        options = ChromeOptions()
+        if self.proxy:
+            options.proxy = self.proxy
+
         self.driver = webdriver.Remote(
             command_executor=self.command_executor,
-            desired_capabilities=DesiredCapabilities.CHROME,
-            proxy=self.proxy)
+            options=options)
 
         try:
             self.driver.get(url)
@@ -653,11 +656,11 @@ class base_html_webdriver(Fetcher):
     # Does the connection to the webdriver work? run a test connection.
     def is_ready(self):
         from selenium import webdriver
-        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+        from selenium.webdriver.chrome.options import Options as ChromeOptions
 
         self.driver = webdriver.Remote(
             command_executor=self.command_executor,
-            desired_capabilities=DesiredCapabilities.CHROME)
+            options=ChromeOptions())
 
         # driver.quit() seems to cause better exceptions
         self.quit()
