@@ -6,6 +6,7 @@ from jsonpath_ng.ext import parse
 from typing import List
 import json
 import re
+import sys
 
 
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
@@ -66,6 +67,46 @@ def element_removal(selectors: List[str], html_content):
     selector = ",".join(selectors)
     return subtractive_css_selector(selector, html_content)
 
+def elementpath_tostring(obj):
+    """
+    change elementpath.select results to string type
+    # The MIT License (MIT), Copyright (c), 2018-2021, SISSA (Scuola Internazionale Superiore di Studi Avanzati)
+    # https://github.com/sissaschool/elementpath/blob/dfcc2fd3d6011b16e02bf30459a7924f547b47d0/elementpath/xpath_tokens.py#L1038
+    """
+
+    import elementpath
+    from decimal import Decimal
+    import math
+
+    if obj is None:
+        return ''
+    elif isinstance(obj, elementpath.XPathNode):
+        return obj.string_value
+    elif isinstance(obj, bool):
+        return 'true' if obj else 'false'
+    elif isinstance(obj, Decimal):
+        value = format(obj, 'f')
+        if '.' in value:
+            return value.rstrip('0').rstrip('.')
+        return value
+
+    elif isinstance(obj, float):
+        if math.isnan(obj):
+            return 'NaN'
+        elif math.isinf(obj):
+            return str(obj).upper()
+
+        value = str(obj)
+        if '.' in value:
+            value = value.rstrip('0').rstrip('.')
+        if '+' in value:
+            value = value.replace('+', '')
+        if 'e' in value:
+            return value.upper()
+        return value
+
+    return str(obj)
+
 # Return str Utf-8 of matched rules
 def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False):
     from lxml import etree, html
@@ -79,11 +120,6 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     r =  elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser)
     #@note: //title/text() wont work where <title>CDATA..
 
-    # Because of elementpath lib.
-    # e.g. string-join(//*[contains(@class, 'sametext')]|//*[matches(@class, 'changetext')], ', ')
-    # e.g. r='Some text thats the same, Some new text' type(r)=<class 'str'>
-    # e.g. count(//*[contains(@class, 'sametext')])
-    # e.g. r=1 type(r)=<class 'int'>
     if type(r) != list:
         r = [r]
 
@@ -95,29 +131,12 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
         if append_pretty_line_formatting and len(html_block) and (not hasattr( element, 'tag' ) or not element.tag in (['br', 'hr', 'div', 'p'])):
             html_block += TEXT_FILTER_LIST_LINE_SUFFIX
 
-        if type(element) == etree._ElementStringResult:
-            html_block += str(element)
-        elif type(element) == etree._ElementUnicodeResult:
-            html_block += str(element)
-        # Because of elementpath lib.
-        # e.g. element='texts' type(element)=<class 'str'>
-        # e.g. //*[contains(@id,'post')]/div/div[2]/header/h2/a/text() | //*[contains(@id,'post')]/div/div[2]/header/h2/a/@href
-        elif type(element) == str:
+        if type(element) == str:
             html_block += element
-        # Because of elementpath lib.
-        # e.g. element=7 type(element)=<class 'int'>
-        # e.g. xpath://div/table/tbody/tr[*]/count(td)
-        elif type(element) == int:
-            html_block += str(element)
-        # Because of elementpath lib.
-        # e.g. element=10000.0 type(element)=<class 'float'>
-        # e.g. xpath:'10.0E3' cast as xs:double
-        elif type(element) == float:
-            html_block += str(element)
-        # e.g. element=<Element a at 0x7fcb0038c0e0> type(element)=<class 'lxml.html.HtmlElement'>
-        # e.g. //*[@id="container"]/section[1]/article[2]/div[2]/table/tbody/tr[*]/td[2]/a[1]
-        else:
+        elif issubclass(type(element), etree._Element) or issubclass(type(element), etree._ElementTree):
             html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
+        else:
+            html_block += elementpath_tostring(element)
 
     return html_block
 
