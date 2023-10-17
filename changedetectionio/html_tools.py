@@ -139,8 +139,12 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
         if append_pretty_line_formatting and len(html_block) and (not hasattr( element, 'tag' ) or not element.tag in (['br', 'hr', 'div', 'p'])):
             html_block += TEXT_FILTER_LIST_LINE_SUFFIX
 
+        ## special logic
+        # If you need to treat an object of commonly used class(eg: str) differently
+        # the easy way is using flags and handling it before the main logic
         if is_rss:
             html_block += f"<div>{element.text}</div>\n"
+        ## main logic
         elif type(element) == str:
             html_block += element
         elif issubclass(type(element), etree._Element) or issubclass(type(element), etree._ElementTree):
