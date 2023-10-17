@@ -6,7 +6,6 @@ from jsonpath_ng.ext import parse
 from typing import List
 import json
 import re
-import sys
 
 
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
