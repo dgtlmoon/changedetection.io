@@ -76,7 +76,7 @@ $(document).ready(function () {
             });
         }
 
-        next_diff();
+        $('#jump-next-diff').click();
     }
 
     $('.needs-localtime').each(function () {
