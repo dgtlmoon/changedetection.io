@@ -79,6 +79,7 @@ def elementpath_tostring(obj):
 
     if obj is None:
         return ''
+    # https://elementpath.readthedocs.io/en/latest/xpath_api.html#elementpath.select
     elif isinstance(obj, elementpath.XPathNode):
         return obj.string_value
     elif isinstance(obj, bool):
