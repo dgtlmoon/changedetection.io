@@ -11,7 +11,7 @@ from changedetectionio import content_fetcher, html_tools
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
 from copy import deepcopy
 from . import difference_detection_processor
-from ..html_tools import PERL_STYLE_REGEX
+from ..html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -153,6 +153,14 @@ class perform_site_check(difference_detection_processor):
 
         is_json = 'application/json' in fetcher.get_all_headers().get('content-type', '').lower()
         is_html = not is_json
+        is_rss = False
+
+        ctype_header = fetcher.get_all_headers().get('content-type', '').lower()
+        # Go into RSS preprocess for converting CDATA/comment to usable text
+        if any(substring in ctype_header for substring in ['application/xml', 'application/rss', 'text/xml']):
+            if '<rss' in fetcher.content[:100].lower():
+                fetcher.content = cdata_in_document_to_text(html_content=fetcher.content)
+                is_rss = True
 
         # source: support, basically treat it as plaintext
         if is_source:
@@ -242,7 +250,8 @@ class perform_site_check(difference_detection_processor):
                         if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
                             html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
                                                                     html_content=fetcher.content,
-                                                                    append_pretty_line_formatting=not is_source)
+                                                                    append_pretty_line_formatting=not is_source,
+                                                                    is_rss=is_rss)
                         else:
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                             html_content += html_tools.include_filters(include_filters=filter_rule,
@@ -262,8 +271,9 @@ class perform_site_check(difference_detection_processor):
                     do_anchor = self.datastore.data["settings"]["application"].get("render_anchor_tag_content", False)
                     stripped_text_from_html = \
                         html_tools.html_to_text(
-                            html_content,
-                            render_anchor_tag_content=do_anchor
+                            html_content=html_content,
+                            render_anchor_tag_content=do_anchor,
+                            is_rss=is_rss
                         )
 
         # Re #340 - return the content before the 'ignore text' was applied
