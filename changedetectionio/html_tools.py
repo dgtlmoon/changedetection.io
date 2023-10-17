@@ -1,9 +1,12 @@
 
 from bs4 import BeautifulSoup
 from inscriptis import get_text
-from inscriptis.model.config import ParserConfig
 from jsonpath_ng.ext import parse
 from typing import List
+from inscriptis.css_profiles import CSS_PROFILES, HtmlElement
+from inscriptis.html_properties import Display
+from inscriptis.model.config import ParserConfig
+from xml.sax.saxutils import escape as xml_escape
 import json
 import re
 
@@ -68,10 +71,15 @@ def element_removal(selectors: List[str], html_content):
 
 
 # Return str Utf-8 of matched rules
-def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False):
+def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
     from lxml import etree, html
 
-    tree = html.fromstring(bytes(html_content, encoding='utf-8'))
+    parser = None
+    if is_rss:
+        # So that we can keep CDATA for cdata_in_document_to_text() to process
+        parser = etree.XMLParser(strip_cdata=False)
+
+    tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
     html_block = ""
 
     r = tree.xpath(xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'})
@@ -90,10 +98,12 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
         elif type(element) == etree._ElementUnicodeResult:
             html_block += str(element)
         else:
-            html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
+            if not is_rss:
+                html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
+            else:
+                html_block += f"<div>{element.text}</div>\n"
 
     return html_block
-
 
 # Extract/find element
 def extract_element(find='title', html_content=''):
@@ -260,8 +270,15 @@ def strip_ignore_text(content, wordlist, mode="content"):
 
     return "\n".encode('utf8').join(output)
 
+def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False) -> str:
+    pattern = '<!\[CDATA\[(\s*(?:.(?<!\]\]>)\s*)*)\]\]>'
+    def repl(m):
+        text = m.group(1)
+        return xml_escape(html_to_text(html_content=text))
 
-def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
+    return re.sub(pattern, repl, html_content)
+
+def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=False) -> str:
     """Converts html string to a string with just the text. If ignoring
     rendering anchor tag content is enable, anchor tag content are also
     included in the text
@@ -277,17 +294,22 @@ def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
     #  if anchor tag content flag is set to True define a config for
     #  extracting this content
     if render_anchor_tag_content:
-
         parser_config = ParserConfig(
             annotation_rules={"a": ["hyperlink"]}, display_links=True
         )
-
-    # otherwise set config to None
+    # otherwise set config to None/default
     else:
         parser_config = None
 
-    # get text and annotations via inscriptis
-    text_content = get_text(html_content, config=parser_config)
+    # RSS Mode - Inscriptis will treat `title` as something else.
+    # Make it as a regular block display element (//item/title)
+    if is_rss:
+        css = CSS_PROFILES['strict'].copy()
+        css['title'] = HtmlElement(display=Display.block)
+        text_content = get_text(html_content, ParserConfig(css=css))
+    else:
+        # get text and annotations via inscriptis
+        text_content = get_text(html_content, config=parser_config)
 
     return text_content
 
