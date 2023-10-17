@@ -5,9 +5,14 @@ from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_rss_token_from_UI
 
 
-def test_rss_and_token(client, live_server):
-    set_original_response()
+def test_setup(client, live_server):
     live_server_setup(live_server)
+
+def test_rss_and_token(client, live_server):
+#    live_server_setup(live_server)
+
+    set_original_response()
+    rss_token = extract_rss_token_from_UI(client)
 
     # Add our URL to the import page
     res = client.post(
@@ -17,11 +22,11 @@ def test_rss_and_token(client, live_server):
     )
 
     assert b"1 Imported" in res.data
-    rss_token = extract_rss_token_from_UI(client)
 
-    time.sleep(2)
+    wait_for_all_checks(client)
+    set_modified_response()
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     # Add our URL to the import page
     res = client.get(
@@ -37,3 +42,4 @@ def test_rss_and_token(client, live_server):
     )
     assert b"Access denied, bad token" not in res.data
     assert b"Random content" in res.data
+
