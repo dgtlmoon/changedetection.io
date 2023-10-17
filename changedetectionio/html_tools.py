@@ -139,15 +139,14 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
         if append_pretty_line_formatting and len(html_block) and (not hasattr( element, 'tag' ) or not element.tag in (['br', 'hr', 'div', 'p'])):
             html_block += TEXT_FILTER_LIST_LINE_SUFFIX
 
-        if type(element) == str:
+        if is_rss:
+            html_block += f"<div>{element.text}</div>\n"
+        elif type(element) == str:
             html_block += element
         elif issubclass(type(element), etree._Element) or issubclass(type(element), etree._ElementTree):
             html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
         else:
-            if not is_rss:
-                html_block += elementpath_tostring(element)
-            else:
-                html_block += f"<div>{element.text}</div>\n"
+            html_block += elementpath_tostring(element)
 
     return html_block
 
