@@ -1,7 +1,6 @@
 
 from bs4 import BeautifulSoup
-from inscriptis import get_text, get_annotated_text
-from inscriptis.model.config import ParserConfig
+from inscriptis import get_text
 from jsonpath_ng.ext import parse
 from typing import List
 from inscriptis.css_profiles import CSS_PROFILES, HtmlElement
