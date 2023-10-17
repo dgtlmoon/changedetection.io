@@ -4,6 +4,14 @@ $(function () {
         $(this).closest('.unviewed').removeClass('unviewed');
     });
 
+    $('td[data-timestamp]').each(function () {
+        $(this).prop('title', new Intl.DateTimeFormat(undefined,
+            {
+                dateStyle: 'full',
+                timeStyle: 'long'
+            }).format($(this).data('timestamp') * 1000));
+    })
+
     $("#checkbox-assign-tag").click(function (e) {
         $('#op_extradata').val(prompt("Enter a tag name"));
     });
