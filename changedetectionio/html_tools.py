@@ -301,11 +301,11 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
     else:
         parser_config = None
 
-    # if rss mode - inscriptis doesnt know anything about 'title' (//item/title)
+    # RSS Mode - Inscriptis will treat `title` as something else.
+    # Make it as a regular block display element (//item/title)
     if is_rss:
         css = CSS_PROFILES['strict'].copy()
         css['title'] = HtmlElement(display=Display.block)
-        #css['description'] = HtmlElement(display=Display.block)
         text_content = get_text(html_content, ParserConfig(css=css))
     else:
         # get text and annotations via inscriptis
