@@ -87,6 +87,7 @@ def test_rss_and_token(client, live_server):
     assert b"Access denied, bad token" not in res.data
     assert b"Random content" in res.data
 
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
 
 def test_basic_cdata_rss_markup(client, live_server):
     #live_server_setup(live_server)
@@ -114,7 +115,7 @@ def test_basic_cdata_rss_markup(client, live_server):
     assert b'<![' not in res.data
     assert b'Hackers can access your computer' in res.data
     assert b'The days of Terminator' in res.data
-
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
 
 def test_rss_xpath_filtering(client, live_server):
 #    live_server_setup(live_server)
@@ -129,6 +130,7 @@ def test_rss_xpath_filtering(client, live_server):
         follow_redirects=True
     )
     assert b"Watch added in Paused state, saving will unpause" in res.data
+
     uuid = extract_UUID_from_client(client)
     res = client.post(
         url_for("edit_page", uuid=uuid, unpause_on_save=1),
@@ -156,3 +158,5 @@ def test_rss_xpath_filtering(client, live_server):
     assert b'Some other title' in res.data  # Should ONLY be selected by the xpath
     assert b'The days of Terminator' not in res.data # Should NOT be selected by the xpath
     assert b'Some other description' not in res.data  # Should NOT be selected by the xpath
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
