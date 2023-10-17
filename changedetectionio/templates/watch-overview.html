@@ -154,8 +154,8 @@
                     {% endfor %}
 
                 </td>
-                <td class="last-checked">{{watch|format_last_checked_time|safe}}</td>
-                <td class="last-changed">{% if watch.history_n >=2 and watch.last_changed >0 %}
+                <td class="last-checked" data-timestamp="{{ watch.last_checked }}">{{watch|format_last_checked_time|safe}}</td>
+                <td class="last-changed" data-timestamp="{{ watch.last_changed }}">{% if watch.history_n >=2 and watch.last_changed >0 %}
                     {{watch.last_changed|format_timestamp_timeago}}
                     {% else %}
                     Not yet
