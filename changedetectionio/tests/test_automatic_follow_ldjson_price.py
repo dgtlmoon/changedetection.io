@@ -2,7 +2,8 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, extract_UUID_from_client, extract_api_key_from_UI
+from .util import live_server_setup, extract_UUID_from_client, extract_api_key_from_UI, wait_for_all_checks
+
 
 def set_response_with_ldjson():
     test_return_data = """<html>
@@ -27,7 +28,7 @@ def set_response_with_ldjson():
            "description":"You dont need it",
            "mpn":"111111",
            "sku":"22222",
-           "offers":{
+           "Offers":{
               "@type":"AggregateOffer",
               "lowPrice":8097000,
               "highPrice":8099900,
@@ -75,12 +76,11 @@ def set_response_without_ldjson():
         f.write(test_return_data)
     return None
 
-# actually only really used by the distll.io importer, but could be handy too
-def test_check_ldjson_price_autodetect(client, live_server):
+def test_setup(client, live_server):
     live_server_setup(live_server)
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
+# actually only really used by the distll.io importer, but could be handy too
+def test_check_ldjson_price_autodetect(client, live_server):
 
     set_response_with_ldjson()
 
@@ -92,7 +92,7 @@ def test_check_ldjson_price_autodetect(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     # Should get a notice that it's available
     res = client.get(url_for("index"))
@@ -102,11 +102,11 @@ def test_check_ldjson_price_autodetect(client, live_server):
     uuid = extract_UUID_from_client(client)
 
     client.get(url_for('price_data_follower.accept', uuid=uuid, follow_redirects=True))
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(2)
+    wait_for_all_checks(client)
     # Offer should be gone
     res = client.get(url_for("index"))
     assert b'Embedded price data' not in res.data
@@ -138,9 +138,97 @@ def test_check_ldjson_price_autodetect(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'ldjson-price-track-offer' not in res.data
     
     ##########################################################################################
     client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+
+
+def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_data):
+
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    wait_for_all_checks(client)
+
+    for k,v in client.application.config.get('DATASTORE').data['watching'].items():
+        assert v.get('last_error') == False
+        assert v.get('has_ldjson_price_data') == has_ldjson_price_data
+
+
+    ##########################################################################################
+    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+
+
+def test_bad_ldjson_is_correctly_ignored(client, live_server):
+    #live_server_setup(live_server)
+    test_return_data = """
+            <html>
+            <head>
+                <script type="application/ld+json">
+                    {
+                        "@context": "http://schema.org",
+                        "@type": ["Product", "SubType"],
+                        "name": "My test product",
+                        "description": "",
+                        "offers": {
+                            "note" : "You can see the case-insensitive OffERS key, it should work",
+                            "@type": "Offer",
+                            "offeredBy": {
+                                "@type": "Organization",
+                                "name":"Person",
+                                "telephone":"+1 999 999 999"
+                            },
+                            "price": "1",
+                            "priceCurrency": "EUR",
+                            "url": "/some/url"
+                        }
+                    }
+                </script>
+            </head>
+            <body>
+            <div class="yes">Some extra stuff</div>
+            </body></html>
+     """
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+
+    _test_runner_check_bad_format_ignored(live_server=live_server, client=client, has_ldjson_price_data=True)
+    test_return_data = """
+            <html>
+            <head>
+                <script type="application/ld+json">
+                    {
+                        "@context": "http://schema.org",
+                        "@type": ["Product", "SubType"],
+                        "name": "My test product",
+                        "description": "",
+                        "BrokenOffers": {
+                            "@type": "Offer",
+                            "offeredBy": {
+                                "@type": "Organization",
+                                "name":"Person",
+                                "telephone":"+1 999 999 999"
+                            },
+                            "price": "1",
+                            "priceCurrency": "EUR",
+                            "url": "/some/url"
+                        }
+                    }
+                </script>
+            </head>
+            <body>
+            <div class="yes">Some extra stuff</div>
+            </body></html>
+     """
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+
+    _test_runner_check_bad_format_ignored(live_server=live_server, client=client, has_ldjson_price_data=False)
+

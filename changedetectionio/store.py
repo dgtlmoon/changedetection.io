@@ -42,6 +42,7 @@ class ChangeDetectionStore:
         self.__data = App.model()
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
+        print(">>> Datastore path is ", self.json_store_path)
         self.needs_write = False
         self.start_time = time.time()
         self.stop_thread = False
