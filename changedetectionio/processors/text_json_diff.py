@@ -167,7 +167,8 @@ class perform_site_check(difference_detection_processor):
             is_html = False
             is_json = False
 
-        if watch.is_pdf or 'application/pdf' in fetcher.get_all_headers().get('content-type', '').lower():
+        inline_pdf = fetcher.get_all_headers().get('content-disposition', '') and '%PDF-1' in fetcher.content[:10]
+        if watch.is_pdf or 'application/pdf' in fetcher.get_all_headers().get('content-type', '').lower() or inline_pdf:
             from shutil import which
             tool = os.getenv("PDF_TO_HTML_TOOL", "pdftohtml")
             if not which(tool):
@@ -273,7 +274,7 @@ class perform_site_check(difference_detection_processor):
                         html_tools.html_to_text(
                             html_content=html_content,
                             render_anchor_tag_content=do_anchor,
-                            is_rss=is_rss
+                            is_rss=is_rss # #1874 activate the <title workaround hack
                         )
 
         # Re #340 - return the content before the 'ignore text' was applied
