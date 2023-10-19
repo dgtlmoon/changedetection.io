@@ -1,4 +1,3 @@
-""" Copyright Constantin Hong """
 import sys
 import os
 import pytest
@@ -45,7 +44,6 @@ hotels = """
 
 @pytest.mark.parametrize("html_content", [hotels])
 @pytest.mark.parametrize("xpath, answer", [('(//staff/given_name, //staff/age)', '25'),
-                         #[('(//traveler/first_name, //traveler/age)', 'untitled'),])
                           ("xs:date('2023-10-10')", '2023-10-10'),
                           ("if (/hotel/branch[@location = 'California']/staff[1]/age = 25) then 'is 25' else 'is not 25'", 'is 25'),
                           ("if (//hotel/branch[@location = 'California']/staff[1]/age = 25) then 'is 25' else 'is not 25'", 'is 25'),
