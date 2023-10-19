@@ -167,7 +167,8 @@ class perform_site_check(difference_detection_processor):
             is_html = False
             is_json = False
 
-        if watch.is_pdf or 'application/pdf' in fetcher.get_all_headers().get('content-type', '').lower():
+        inline_pdf = fetcher.get_all_headers().get('content-disposition', '') and '%PDF-1' in fetcher.content[:10]
+        if watch.is_pdf or 'application/pdf' in fetcher.get_all_headers().get('content-type', '').lower() or inline_pdf:
             from shutil import which
             tool = os.getenv("PDF_TO_HTML_TOOL", "pdftohtml")
             if not which(tool):
