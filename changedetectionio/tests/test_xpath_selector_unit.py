@@ -7,7 +7,6 @@ import html_tools
 # test generation guide.
 # 1. Do not include encoding in the xml declaration if the test object is a str type.
 # 2. Always paraphrase test.
-# 3. The test material must not include the tags commonly used in HTML.
 
 hotels = """
 <hotel>
