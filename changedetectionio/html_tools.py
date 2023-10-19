@@ -98,10 +98,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
         elif type(element) == etree._ElementUnicodeResult:
             html_block += str(element)
         else:
-            if not is_rss:
-                html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
-            else:
-                html_block += f"<div>{element.text}</div>\n"
+            html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
 
     return html_block
 
@@ -274,7 +271,7 @@ def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False
     pattern = '<!\[CDATA\[(\s*(?:.(?<!\]\]>)\s*)*)\]\]>'
     def repl(m):
         text = m.group(1)
-        return xml_escape(html_to_text(html_content=text))
+        return xml_escape(html_to_text(html_content=text)).strip()
 
     return re.sub(pattern, repl, html_content)
 
@@ -295,7 +292,8 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
     #  extracting this content
     if render_anchor_tag_content:
         parser_config = ParserConfig(
-            annotation_rules={"a": ["hyperlink"]}, display_links=True
+            annotation_rules={"a": ["hyperlink"]},
+            display_links=True
         )
     # otherwise set config to None/default
     else:
@@ -303,13 +301,12 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
 
     # RSS Mode - Inscriptis will treat `title` as something else.
     # Make it as a regular block display element (//item/title)
+    # This is a bit of a hack - the real way it to use XSLT to convert it to HTML #1874
     if is_rss:
-        css = CSS_PROFILES['strict'].copy()
-        css['title'] = HtmlElement(display=Display.block)
-        text_content = get_text(html_content, ParserConfig(css=css))
-    else:
-        # get text and annotations via inscriptis
-        text_content = get_text(html_content, config=parser_config)
+        html_content = re.sub(r'<title([\s>])', r'<h1\1', html_content)
+        html_content = re.sub(r'</title>', r'</h1>', html_content)
+
+    text_content = get_text(html_content, config=parser_config)
 
     return text_content
 
