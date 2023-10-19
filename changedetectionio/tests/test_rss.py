@@ -118,7 +118,7 @@ def test_basic_cdata_rss_markup(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
 
 def test_rss_xpath_filtering(client, live_server):
-#    live_server_setup(live_server)
+    #live_server_setup(live_server)
 
     set_original_cdata_xml()
 
@@ -154,6 +154,9 @@ def test_rss_xpath_filtering(client, live_server):
     )
     assert b'CDATA' not in res.data
     assert b'<![' not in res.data
+    # #1874  All but the first <title was getting selected
+    # Convert any HTML with just a top level <title> to <h1> to be sure title renders
+
     assert b'Hackers can access your computer' in res.data # Should ONLY be selected by the xpath
     assert b'Some other title' in res.data  # Should ONLY be selected by the xpath
     assert b'The days of Terminator' not in res.data # Should NOT be selected by the xpath
