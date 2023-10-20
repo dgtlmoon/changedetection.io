@@ -244,12 +244,15 @@ class ChangeDetectionStore:
         import pathlib
 
         self.__data['watching'][uuid].update({
-                'last_checked': 0,
+                'check_count': 0,
+                'fetch_time': 0.0,
                 'has_ldjson_price_data': None,
+                'last_checked': 0,
                 'last_error': False,
                 'last_notification_error': False,
                 'last_viewed': 0,
                 'previous_md5': False,
+                'previous_md5_before_filters': False,
                 'track_ldjson_price_data': None,
             })
 
