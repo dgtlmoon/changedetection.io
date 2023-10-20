@@ -77,7 +77,123 @@ hotels = """
                           ("'50000' cast as xs:integer", "50000"),
                           ("//branch[@location = 'California']/staff[1]/surname eq 'Anderson'", "true"),
                           ("fn:false()", "false")])
-def test_sample(html_content, xpath, answer):
+def test_hotels(html_content, xpath, answer):
+    html_content = html_tools.xpath_filter(xpath, html_content, append_pretty_line_formatting=True)
+    assert type(html_content) == str
+    assert answer in html_content
+
+
+
+branches_to_visit = """<?xml version="1.0" ?>
+  <branches_to_visit>
+     <manager name="Godot" room_no="501">
+         <branch>Area 51</branch>
+         <branch>A place with no name</branch>
+         <branch>Stalsk12</branch>
+     </manager>
+      <manager name="Freya" room_no="305">
+         <branch>Stalsk12</branch>
+         <branch>Barcelona</branch>
+         <branch>Paris</branch>
+     </manager>
+ </branches_to_visit>"""
+@pytest.mark.parametrize("html_content", [branches_to_visit])
+@pytest.mark.parametrize("xpath, answer", [
+    ("manager[@name = 'Godot']/branch union manager[@name = 'Freya']/branch", "Area 51"),
+    ("//manager[@name = 'Godot']/branch union //manager[@name = 'Freya']/branch", "Stalsk12"),
+    ("manager[@name = 'Godot']/branch | manager[@name = 'Freya']/branch", "Stalsk12"),
+    ("//manager[@name = 'Godot']/branch | //manager[@name = 'Freya']/branch", "Stalsk12"),
+    ("manager/branch intersect manager[@name = 'Godot']/branch", "A place with no name"),
+    ("//manager/branch intersect //manager[@name = 'Godot']/branch", "A place with no name"),
+    ("manager[@name = 'Godot']/branch intersect manager[@name = 'Freya']/branch", ""),
+    ("manager/branch except manager[@name = 'Godot']/branch", "Barcelona"),
+    ("manager[@name = 'Godot']/branch[1]  eq 'Area 51'", "true"),
+    ("//manager[@name = 'Godot']/branch[1]  eq 'Area 51'", "true"),
+    ("manager[@name = 'Godot']/branch[1]  eq 'Seoul'", "false"),
+    ("//manager[@name = 'Godot']/branch[1]  eq 'Seoul'", "false"),
+    ("manager[@name = 'Godot']/branch[2] eq manager[@name = 'Freya']/branch[2]", "false"),
+    ("//manager[@name = 'Godot']/branch[2] eq //manager[@name = 'Freya']/branch[2]", "false"),
+    ("manager[1]/@room_no lt manager[2]/@room_no", "false"),
+    ("//manager[1]/@room_no lt //manager[2]/@room_no", "false"),
+    ("manager[1]/@room_no gt manager[2]/@room_no", "true"),
+    ("//manager[1]/@room_no gt //manager[2]/@room_no", "true"),
+    ("manager[@name = 'Godot']/branch[1]  = 'Area 51'", "true"),
+    ("//manager[@name = 'Godot']/branch[1]  = 'Area 51'", "true"),
+    ("manager[@name = 'Godot']/branch[1]  = 'Seoul'", "false"),
+    ("//manager[@name = 'Godot']/branch[1]  = 'Seoul'", "false"),
+    ("manager[@name = 'Godot']/branch  = 'Area 51'", "true"),
+    ("//manager[@name = 'Godot']/branch  = 'Area 51'", "true"),
+    ("manager[@name = 'Godot']/branch  = 'Barcelona'", "false"),
+    ("//manager[@name = 'Godot']/branch  = 'Barcelona'", "false"),
+    ("manager[1]/@room_no > manager[2]/@room_no", "true"),
+    ("//manager[1]/@room_no > //manager[2]/@room_no", "true"),
+    ("manager[@name = 'Godot']/branch[ . = 'Stalsk12'] is manager[1]/branch[1]", "false"),
+    ("//manager[@name = 'Godot']/branch[ . = 'Stalsk12'] is //manager[1]/branch[1]", "false"),
+    ("manager[@name = 'Godot']/branch[ . = 'Stalsk12'] is manager[1]/branch[3]", "true"),
+    ("//manager[@name = 'Godot']/branch[ . = 'Stalsk12'] is //manager[1]/branch[3]", "true"),
+    ("manager[@name = 'Godot']/branch[ . = 'Stalsk12'] <<  manager[1]/branch[1]", "false"),
+    ("//manager[@name = 'Godot']/branch[ . = 'Stalsk12'] <<  //manager[1]/branch[1]", "false"),
+    ("manager[@name = 'Godot']/branch[ . = 'Stalsk12']  >>  manager[1]/branch[1]", "true"),
+    ("//manager[@name = 'Godot']/branch[ . = 'Stalsk12'] >>  //manager[1]/branch[1]", "true"),
+    ("manager[@name = 'Godot']/branch[ . = 'Stalsk12'] is manager[@name = 'Freya']/branch[ . = 'Stalsk12']", "false"),
+    ("//manager[@name = 'Godot']/branch[ . = 'Stalsk12'] is //manager[@name = 'Freya']/branch[ . = 'Stalsk12']", "false"),
+    ("manager[1]/@name || manager[2]/@name", "GodotFreya"),
+    ("//manager[1]/@name || //manager[2]/@name", "GodotFreya"),
+                          ])
+def test_branches_to_visit(html_content, xpath, answer):
+    html_content = html_tools.xpath_filter(xpath, html_content, append_pretty_line_formatting=True)
+    assert type(html_content) == str
+    assert answer in html_content
+
+trips = """
+<trips>
+   <trip reservation_number="10">
+       <depart>2023-10-06</depart>
+       <arrive>2023-10-10</arrive>
+       <traveler name="Christopher Anderson">
+           <duration>4</duration>
+           <price>2000.00</price>
+       </traveler>
+   </trip>
+   <trip reservation_number="12">
+       <depart>2023-10-06</depart>
+       <arrive>2023-10-12</arrive>
+       <traveler name="Frank Carter">
+           <duration>6</duration>
+           <price>3500.34</price>
+       </traveler>
+   </trip>
+</trips>"""
+@pytest.mark.parametrize("html_content", [trips])
+@pytest.mark.parametrize("xpath, answer", [
+    ("1 + 9 * 9 + 5 div 5", "83"),
+    ("(1 + 9 * 9 + 5) div 6", "14.5"),
+    ("23 idiv 3", "7"),
+    ("23 div 3", "7.66666666"),
+    ("for $i in ./trip return $i/traveler/duration * $i/traveler/price", "21002.04"),
+    ("for $i in ./trip return $i/traveler/duration ", "4"),
+    ("for $i in .//trip return $i/traveler/duration * $i/traveler/price", "21002.04"),
+    ("sum(for $i in ./trip return $i/traveler/duration * $i/traveler/price)", "29002.04"),
+    ("sum(for $i in .//trip return $i/traveler/duration * $i/traveler/price)", "29002.04"),
+    #("trip[1]/depart - trip[1]/arrive", "fail_to_get_answer"),
+    #("//trip[1]/depart - //trip[1]/arrive", "fail_to_get_answer"),
+    #("trip[1]/depart + trip[1]/arrive", "fail_to_get_answer"),
+    #("xs:date(trip[1]/depart) + xs:date(trip[1]/arrive)", "fail_to_get_answer"),
+    #("//trip[1]/depart + //trip[1]/arrive", "fail_to_get_answer"),
+    ("(456, 623) instance of xs:integer", "false"),
+    ("(456, 623) instance of xs:integer*", "true"),
+    ("/trips/trip instance of element()", "false"),
+    ("/trips/trip instance of element()*", "true"),
+    ("/trips/trip[1]/arrive instance of xs:date", "false"),
+    ("date(/trips/trip[1]/arrive) instance of xs:date", "true"),
+    ("'8' cast as xs:integer", "8"),
+    ("'11.1E3' cast as xs:double", "11100"),
+    ("6.5 cast as xs:integer", "6"),
+    #("/trips/trip[1]/arrive cast as xs:dateTime", "fail_to_get_answer"),
+    ("/trips/trip[1]/arrive cast as xs:date", "2023-10-10"),
+    ("('2023-10-12') cast as xs:date", "2023-10-12"),
+                          ])
+def test_trips(html_content, xpath, answer):
     html_content = html_tools.xpath_filter(xpath, html_content, append_pretty_line_formatting=True)
     assert type(html_content) == str
     assert answer in html_content
