@@ -323,6 +323,10 @@ $(document).ready(function () {
                 // The first step never gets these (Goto-site)
                 s += '<a data-step-index=' + i + ' class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;' +
                     '<a data-step-index=' + i + ' class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>';
+                // if a screenshot is available
+                if (browser_steps_available_screenshots.includes(i.toString())) {
+                    s += '&nbsp;<a data-step-index=' + i + ' class="pure-button button-secondary button-xsmall show-screenshot" alt="Show screenshot from last run" title="Show screenshot from last run">Pic</a>&nbsp;';
+                }
             }
             s += '</div>';
             $(this).append(s)
@@ -435,6 +439,19 @@ $(document).ready(function () {
             $("#browsersteps-img").css('opacity', 1);
         });
 
+    });
+
+    $('ul#browser_steps li .control .show-screenshot').click(function (element) {
+        var step_n = $(event.currentTarget).data('step-index');
+        w = window.open(this.href, "_blank", "width=640,height=480");
+        const url = browser_steps_fetch_screenshot_image_url + "&step_n=" + step_n;
+        w.document.body.innerHTML = `<!DOCTYPE html>
+            <html lang="en">
+                <body>
+                    <img src="${url}" style="width: 100%" alt="Browser Step at step ${step_n} from last run." title="Browser Step at step ${step_n} from last run."/>
+                </body>
+        </html>`;
+        w.document.title = `Browser Step at step ${step_n} from last run.`;
     });
 
     if (browser_steps_last_error_step) {

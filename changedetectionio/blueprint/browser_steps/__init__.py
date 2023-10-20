@@ -120,6 +120,30 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         print("Starting connection with playwright - done")
         return {'browsersteps_session_id': browsersteps_session_id}
 
+    @login_optionally_required
+    @browser_steps_blueprint.route("/browsersteps_image", methods=['GET'])
+    def browser_steps_fetch_screenshot_image():
+        from flask import (
+            make_response,
+            request,
+            send_from_directory,
+        )
+        uuid = request.args.get('uuid')
+        step_n = int(request.args.get('step_n'))
+        watch = datastore.data['watching'].get(uuid)
+        filename = f"step_before-{step_n}.jpeg"
+
+        if step_n and watch and os.path.isfile(os.path.join(watch.watch_data_dir, filename)):
+            response = make_response(send_from_directory(directory=watch.watch_data_dir, path=filename))
+            response.headers['Content-type'] = 'image/jpeg'
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = 0
+            return response
+
+        else:
+            return make_response('Unable to fetch image, is the URL correct? does the watch exist? does the step_before-n.jpeg exist?', 401)
+
     # A request for an action was received
     @login_optionally_required
     @browser_steps_blueprint.route("/browsersteps_update", methods=['POST'])
