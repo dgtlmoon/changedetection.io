@@ -44,7 +44,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
 
         # We keep the playwright session open for many minutes
-        seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
+        keepalive_seconds = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
 
         browsersteps_start_session = {'start_time': time.time()}
 
@@ -56,16 +56,18 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Start the Playwright context, which is actually a nodejs sub-process and communicates over STDIN/STDOUT pipes
             io_interface_context = io_interface_context.start()
 
+        keepalive_ms = ((keepalive_seconds + 3) * 1000)
+        base_url = os.getenv('PLAYWRIGHT_DRIVER_URL', '')
+        a = "?" if not '?' in base_url else '&'
+        base_url += a + f"timeout={keepalive_ms}"
 
-        # keep it alive for 10 seconds more than we advertise, sometimes it helps to keep it shutting down cleanly
-        keepalive = "&timeout={}".format(((seconds_keepalive + 3) * 1000))
         try:
-            browsersteps_start_session['browser'] = io_interface_context.chromium.connect_over_cdp(
-                os.getenv('PLAYWRIGHT_DRIVER_URL', '') + keepalive)
+            browsersteps_start_session['browser'] = io_interface_context.chromium.connect_over_cdp(base_url)
         except Exception as e:
             if 'ECONNREFUSED' in str(e):
                 return make_response('Unable to start the Playwright Browser session, is it running?', 401)
             else:
+                # Other errors, bad URL syntax, bad reply etc
                 return make_response(str(e), 401)
 
         proxy_id = datastore.get_preferred_proxy_for_watch(uuid=watch_uuid)
