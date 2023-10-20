@@ -195,6 +195,7 @@ trips = """
     #("/trips/trip[1]/arrive cast as xs:dateTime", "fail_to_get_answer"),
     ("/trips/trip[1]/arrive cast as xs:date", "2023-10-10"),
     ("('2023-10-12') cast as xs:date", "2023-10-12"),
+    ("for $i in //trip return concat($i/depart, '  ', $i/arrive)", "2023-10-06  2023-10-10"),
                           ])
 def test_trips(html_content, xpath, answer):
     html_content = html_tools.xpath_filter(xpath, html_content, append_pretty_line_formatting=True)
