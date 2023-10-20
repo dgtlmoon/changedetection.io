@@ -244,6 +244,7 @@ class ChangeDetectionStore:
         import pathlib
 
         self.__data['watching'][uuid].update({
+                'browser_steps_last_error_step' : None,
                 'check_count': 0,
                 'fetch_time' : 0.0,
                 'has_ldjson_price_data': None,

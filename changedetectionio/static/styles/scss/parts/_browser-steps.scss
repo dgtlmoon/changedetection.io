@@ -6,6 +6,10 @@
   }
 
   li {
+    &.browser-step-with-error {
+      background-color: #ffd6d6;
+      border-radius: 4px;
+    }
     &:not(:first-child) {
       &:hover {
         opacity: 1.0;

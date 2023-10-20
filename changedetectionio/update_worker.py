@@ -324,8 +324,13 @@ class update_worker(threading.Thread):
                         if not self.datastore.data['watching'].get(uuid):
                             continue
 
-                        err_text = "Warning, browser step at position {} could not run, target not found, check the watch, add a delay if necessary.".format(e.step_n+1)
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
+                        error_step = e.step_n + 1
+                        err_text = f"Warning, browser step at position {error_step} could not run, target not found, check the watch, add a delay if necessary, view Browser Steps to see screenshot at that step"
+                        self.datastore.update_watch(uuid=uuid,
+                                                    update_obj={'last_error': err_text,
+                                                                'browser_steps_last_error_step': error_step
+                                                                }
+                                                    )
 
 
                         if self.datastore.data['watching'][uuid].get('filter_failure_notification_send', False):

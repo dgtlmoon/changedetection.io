@@ -437,6 +437,9 @@ $(document).ready(function () {
 
     });
 
+    if (browser_steps_last_error_step) {
+        $("ul#browser_steps>li:nth-child("+browser_steps_last_error_step+")").addClass("browser-step-with-error");
+    }
 
     $("ul#browser_steps select").change(function () {
         set_greyed_state();
