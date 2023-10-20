@@ -980,6 +980,7 @@ ul {
 
 #selector-wrapper {
   height: 100%;
+  max-height: 70vh;
   overflow-y: scroll;
   position: relative; }
   #selector-wrapper > img {
