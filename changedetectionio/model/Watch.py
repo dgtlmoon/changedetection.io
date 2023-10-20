@@ -26,6 +26,7 @@ base_config = {
     'extract_title_as_title': False,
     'fetch_backend': 'system', # plaintext, playwright etc
     'processor': 'text_json_diff', # could be restock_diff or others from .processors
+    'fetch_time': 0.0,
     'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
     'filter_text_added': True,
     'filter_text_replaced': True,

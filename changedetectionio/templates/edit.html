@@ -49,6 +49,7 @@
             <li class="tab"><a href="#restock">Restock Detection</a></li>
             {% endif %}
             <li class="tab"><a href="#notifications">Notifications</a></li>
+            <li class="tab"><a href="#stats">Stats</a></li>
         </ul>
     </div>
 
@@ -441,7 +442,35 @@ Unavailable") }}
                 </fieldset>
             </div>
             {% endif %}
-
+            <div class="tab-pane-inner" id="stats">
+                <div class="pure-control-group">
+                    <style>
+                    #stats-table tr > td:first-child {
+                        font-weight: bold;
+                    }
+                    </style>
+                    <table class="pure-table" id="stats-table">
+                        <tbody>
+                        <tr>
+                            <td>Check count</td>
+                            <td>{{ watch.check_count }}</td>
+                        </tr>
+                        <tr>
+                            <td>Consecutive filter failures</td>
+                            <td>{{ watch.consecutive_filter_failures }}</td>
+                        </tr>
+                        <tr>
+                            <td>History length</td>
+                            <td>{{ watch.history|length }}</td>
+                        </tr>
+                        <tr>
+                            <td>Last fetch time</td>
+                            <td>{{ watch.fetch_time }}s</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             <div id="actions">
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
