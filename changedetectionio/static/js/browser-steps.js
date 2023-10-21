@@ -321,11 +321,13 @@ $(document).ready(function () {
             var s = '<div class="control">' + '<a data-step-index=' + i + ' class="pure-button button-secondary button-green button-xsmall apply" >Apply</a>&nbsp;';
             if (i > 0) {
                 // The first step never gets these (Goto-site)
-                s += '<a data-step-index=' + i + ' class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;' +
-                    '<a data-step-index=' + i + ' class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>';
+                s += `<a data-step-index="${i}" class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;` +
+                    `<a data-step-index="${i}" class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>`;
+
                 // if a screenshot is available
                 if (browser_steps_available_screenshots.includes(i.toString())) {
-                    s += '&nbsp;<a data-step-index=' + i + ' class="pure-button button-secondary button-xsmall show-screenshot" alt="Show screenshot from last run" title="Show screenshot from last run">Pic</a>&nbsp;';
+                    var d = (browser_steps_last_error_step === i+1) ? 'before' : 'after';
+                    s += `&nbsp;<a data-step-index="${i}" class="pure-button button-secondary button-xsmall show-screenshot" title="Show screenshot from last run" data-type="${d}">Pic</a>&nbsp;`;
                 }
             }
             s += '</div>';
@@ -444,7 +446,9 @@ $(document).ready(function () {
     $('ul#browser_steps li .control .show-screenshot').click(function (element) {
         var step_n = $(event.currentTarget).data('step-index');
         w = window.open(this.href, "_blank", "width=640,height=480");
-        const url = browser_steps_fetch_screenshot_image_url + "&step_n=" + step_n;
+        const t = $(event.currentTarget).data('type');
+
+        const url = browser_steps_fetch_screenshot_image_url + `&step_n=${step_n}&type=${t}`;
         w.document.body.innerHTML = `<!DOCTYPE html>
             <html lang="en">
                 <body>

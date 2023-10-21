@@ -23,8 +23,10 @@
 
 from distutils.util import strtobool
 from flask import Blueprint, request, make_response
-import os
 import logging
+import os
+import re
+
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio import login_optionally_required
 
@@ -130,8 +132,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         )
         uuid = request.args.get('uuid')
         step_n = int(request.args.get('step_n'))
+
         watch = datastore.data['watching'].get(uuid)
-        filename = f"step_before-{step_n}.jpeg"
+        filename = f"step_before-{step_n}.jpeg" if request.args.get('type', '') == 'before' else f"step_{step_n}.jpeg"
 
         if step_n and watch and os.path.isfile(os.path.join(watch.watch_data_dir, filename)):
             response = make_response(send_from_directory(directory=watch.watch_data_dir, path=filename))
@@ -142,7 +145,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return response
 
         else:
-            return make_response('Unable to fetch image, is the URL correct? does the watch exist? does the step_before-n.jpeg exist?', 401)
+            return make_response('Unable to fetch image, is the URL correct? does the watch exist? does the step_type-n.jpeg exist?', 401)
 
     # A request for an action was received
     @login_optionally_required
