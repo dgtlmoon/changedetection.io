@@ -622,7 +622,6 @@ def changedetection_app(config=None, datastore_o=None):
 
             if request.args.get('unpause_on_save'):
                 extra_update_obj['paused'] = False
-
             # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
             # Assume we use the default value, unless something relevant is different, then use the form value
             # values could be None, 0 etc.
@@ -708,7 +707,6 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and is_html_webdriver
-
             output = render_template("edit.html",
                                      available_processors=processors.available_processors(),
                                      browser_steps_config=browser_step_ui_config,

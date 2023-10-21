@@ -321,8 +321,14 @@ $(document).ready(function () {
             var s = '<div class="control">' + '<a data-step-index=' + i + ' class="pure-button button-secondary button-green button-xsmall apply" >Apply</a>&nbsp;';
             if (i > 0) {
                 // The first step never gets these (Goto-site)
-                s += '<a data-step-index=' + i + ' class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;' +
-                    '<a data-step-index=' + i + ' class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>';
+                s += `<a data-step-index="${i}" class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;` +
+                    `<a data-step-index="${i}" class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>`;
+
+                // if a screenshot is available
+                if (browser_steps_available_screenshots.includes(i.toString())) {
+                    var d = (browser_steps_last_error_step === i+1) ? 'before' : 'after';
+                    s += `&nbsp;<a data-step-index="${i}" class="pure-button button-secondary button-xsmall show-screenshot" title="Show screenshot from last run" data-type="${d}">Pic</a>&nbsp;`;
+                }
             }
             s += '</div>';
             $(this).append(s)
@@ -437,6 +443,24 @@ $(document).ready(function () {
 
     });
 
+    $('ul#browser_steps li .control .show-screenshot').click(function (element) {
+        var step_n = $(event.currentTarget).data('step-index');
+        w = window.open(this.href, "_blank", "width=640,height=480");
+        const t = $(event.currentTarget).data('type');
+
+        const url = browser_steps_fetch_screenshot_image_url + `&step_n=${step_n}&type=${t}`;
+        w.document.body.innerHTML = `<!DOCTYPE html>
+            <html lang="en">
+                <body>
+                    <img src="${url}" style="width: 100%" alt="Browser Step at step ${step_n} from last run." title="Browser Step at step ${step_n} from last run."/>
+                </body>
+        </html>`;
+        w.document.title = `Browser Step at step ${step_n} from last run.`;
+    });
+
+    if (browser_steps_last_error_step) {
+        $("ul#browser_steps>li:nth-child("+browser_steps_last_error_step+")").addClass("browser-step-with-error");
+    }
 
     $("ul#browser_steps select").change(function () {
         set_greyed_state();

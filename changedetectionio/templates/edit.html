@@ -4,8 +4,10 @@
 {% from '_common_fields.jinja' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script>
-
+    const browser_steps_available_screenshots=JSON.parse('{{ watch.get_browsersteps_available_screenshots|tojson }}');
     const browser_steps_config=JSON.parse('{{ browser_steps_config|tojson }}');
+    const browser_steps_fetch_screenshot_image_url="{{url_for('browser_steps.browser_steps_fetch_screenshot_image', uuid=uuid)}}";
+    const browser_steps_last_error_step={{ watch.browser_steps_last_error_step|tojson }};
     const browser_steps_start_url="{{url_for('browser_steps.browsersteps_start_session', uuid=uuid)}}";
     const browser_steps_sync_url="{{url_for('browser_steps.browsersteps_ui_update', uuid=uuid)}}";
 {% if emailprefix %}

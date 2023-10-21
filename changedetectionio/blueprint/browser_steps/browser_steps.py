@@ -138,13 +138,13 @@ class steppable_browser_interface():
     def action_wait_for_text(self, selector, value):
         import json
         v = json.dumps(value)
-        self.page.wait_for_function(f'document.querySelector("body").innerText.includes({v});', timeout=90000)
+        self.page.wait_for_function(f'document.querySelector("body").innerText.includes({v});', timeout=30000)
 
     def action_wait_for_text_in_element(self, selector, value):
         import json
         s = json.dumps(selector)
         v = json.dumps(value)
-        self.page.wait_for_function(f'document.querySelector({s}).innerText.includes({v});', timeout=90000)
+        self.page.wait_for_function(f'document.querySelector({s}).innerText.includes({v});', timeout=30000)
 
     # @todo - in the future make some popout interface to capture what needs to be set
     # https://playwright.dev/python/docs/api/class-keyboard

@@ -4,6 +4,7 @@ import os
 import re
 import time
 import uuid
+from pathlib import Path
 
 # Allowable protocols, protects against javascript: etc
 # file:// is further checked by ALLOW_FILE_URI
@@ -18,6 +19,7 @@ from changedetectionio.notification import (
 
 base_config = {
     'body': None,
+    'browser_steps_last_error_step': None,
     'check_unique_lines': False,  # On change-detected, compare against all history if its something new
     'check_count': 0,
     'date_created': None,
@@ -25,8 +27,8 @@ base_config = {
     'extract_text': [],  # Extract text by regex after filters
     'extract_title_as_title': False,
     'fetch_backend': 'system', # plaintext, playwright etc
-    'processor': 'text_json_diff', # could be restock_diff or others from .processors
     'fetch_time': 0.0,
+    'processor': 'text_json_diff', # could be restock_diff or others from .processors
     'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
     'filter_text_added': True,
     'filter_text_replaced': True,
@@ -490,3 +492,13 @@ class model(dict):
         filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
         with open(filepath, 'wb') as f:
             f.write(brotli.compress(contents, mode=brotli.MODE_TEXT))
+
+    @property
+    def get_browsersteps_available_screenshots(self):
+        "For knowing which screenshots are available to show the user in BrowserSteps UI"
+        available = []
+        for f in Path(self.watch_data_dir).glob('step_before-*.jpeg'):
+            step_n=re.search(r'step_before-(\d+)', f.name)
+            if step_n:
+                available.append(step_n.group(1))
+        return available

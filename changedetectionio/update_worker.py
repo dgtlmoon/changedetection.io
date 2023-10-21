@@ -238,7 +238,9 @@ class update_worker(threading.Thread):
                             # Used as a default and also by some tests
                             update_handler = text_json_diff.perform_site_check(datastore=self.datastore)
 
+                        self.datastore.data['watching'][uuid]['browser_steps_last_error_step'] = None
                         changed_detected, update_obj, contents = update_handler.run(uuid, skip_when_checksum_same=queued_item_data.item.get('skip_when_checksum_same'))
+
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
                         # We then convert/.decode('utf-8') for the notification etc
@@ -324,8 +326,13 @@ class update_worker(threading.Thread):
                         if not self.datastore.data['watching'].get(uuid):
                             continue
 
-                        err_text = "Warning, browser step at position {} could not run, target not found, check the watch, add a delay if necessary.".format(e.step_n+1)
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
+                        error_step = e.step_n + 1
+                        err_text = f"Warning, browser step at position {error_step} could not run, target not found, check the watch, add a delay if necessary, view Browser Steps to see screenshot at that step"
+                        self.datastore.update_watch(uuid=uuid,
+                                                    update_obj={'last_error': err_text,
+                                                                'browser_steps_last_error_step': error_step
+                                                                }
+                                                    )
 
 
                         if self.datastore.data['watching'][uuid].get('filter_failure_notification_send', False):

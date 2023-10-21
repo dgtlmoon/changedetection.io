@@ -26,6 +26,9 @@
   #browser_steps li {
     list-style: decimal;
     padding: 5px; }
+    #browser_steps li.browser-step-with-error {
+      background-color: #ffd6d6;
+      border-radius: 4px; }
     #browser_steps li:not(:first-child):hover {
       opacity: 1.0; }
     #browser_steps li .control {
