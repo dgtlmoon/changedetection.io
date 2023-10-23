@@ -2,8 +2,7 @@ $(document).ready(function () {
     var a = document.getElementById("a");
     var b = document.getElementById("b");
     var result = document.getElementById("result");
-    var inputs = document.getElementsByClassName("change");
-    inputs.current = 0;
+    var inputs;
 
     $('#jump-next-diff').click(function () {
 
@@ -59,9 +58,6 @@ $(document).ready(function () {
         result.textContent = "";
         result.appendChild(fragment);
 
-        // Jump at start
-        inputs.current = 0;
-
         // For nice mouse-over hover/title information
         const removed_current_option = $('#diff-version option:selected')
         if (removed_current_option) {
@@ -75,7 +71,11 @@ $(document).ready(function () {
                 $(this).prop('title', 'Inserted '+inserted_current_option[0].label);
             });
         }
-
+        // Set the list of possible differences to jump to
+        inputs = document.querySelectorAll('#diff-ui .change')
+        // Set the "current" diff pointer
+        inputs.current = 0;
+        // Goto diff
         $('#jump-next-diff').click();
     }
 
