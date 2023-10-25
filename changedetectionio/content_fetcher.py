@@ -479,7 +479,7 @@ class base_html_playwright(Fetcher):
                 response = browsersteps_interface.action_goto_url(value=url)
 
                 if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
-                    response = browsersteps_interface.action_execute_js(value=self.webdriver_js_execute_code)
+                    response = browsersteps_interface.action_execute_js(value=self.webdriver_js_execute_code, selector=None)
                     self.page.wait_for_timeout(1 * 1000)
 
             except playwright._impl._api_types.TimeoutError as e:
