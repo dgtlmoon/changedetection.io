@@ -85,6 +85,7 @@
               <a href="{{url_for('logout')}}" class="pure-menu-link">LOG OUT</a>
             </li>
           {% endif %}
+          {% if current_user.is_authenticated or not has_password %}
           <li class="pure-menu-item pure-form" id="search-menu-item">
             <!-- We use GET here so it offers people a chance to set bookmarks etc -->
             <form name="searchForm" action="" method="GET">
@@ -95,6 +96,7 @@
               </button>
             </form>
           </li>
+          {% endif %}
           <li class="pure-menu-item">
             <button class="toggle-button" id ="toggle-light-mode" type="button" title="Toggle Light/Dark Mode">
               <span class="visually-hidden">Toggle light/dark mode</span>
