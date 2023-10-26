@@ -338,7 +338,8 @@ class perform_site_check(difference_detection_processor):
                 # incase they specified something in '/.../x'
                 if re.search(PERL_STYLE_REGEX, s_re, re.IGNORECASE):
                     regex = html_tools.perl_style_slash_enclosed_regex_to_options(s_re)
-                    result = re.findall(regex.encode('utf-8'), stripped_text_from_html)
+                    # Both the regex (r) and (stripped_text_from_html) should be bytes by now
+                    result = re.findall(rf"{regex}".encode('utf-8'), stripped_text_from_html)
 
                     for l in result:
                         if type(l) is tuple:
