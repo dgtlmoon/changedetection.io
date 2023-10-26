@@ -422,11 +422,12 @@ def changedetection_app(config=None, datastore_o=None):
         for uuid, watch in datastore.data['watching'].items():
             if with_errors and not watch.get('last_error'):
                 continue
-            if watch.get('last_error'):
-                errored_count += 1
+
             if limit_tag and not limit_tag in watch['tags']:
                     continue
-
+            if watch.get('last_error'):
+                errored_count += 1
+                
             if search_q:
                 if (watch.get('title') and search_q in watch.get('title').lower()) or search_q in watch.get('url', '').lower():
                     sorted_watches.append(watch)
