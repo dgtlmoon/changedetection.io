@@ -472,10 +472,7 @@ class base_html_playwright(Fetcher):
             browsersteps_interface = steppable_browser_interface()
             browsersteps_interface.page = self.page
 
-            # Execute any browser steps
             try:
-                extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
-                self.page.wait_for_timeout(extra_wait * 1000)
                 response = browsersteps_interface.action_goto_url(value=url)
 
                 if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
@@ -497,6 +494,9 @@ class base_html_playwright(Fetcher):
                 browser.close()
                 print("Content Fetcher > Response object was none")
                 raise EmptyReply(url=url, status_code=None)
+
+            extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
+            self.page.wait_for_timeout(extra_wait * 1000)
 
             # Run Browser Steps here
             self.iterate_browser_steps()
