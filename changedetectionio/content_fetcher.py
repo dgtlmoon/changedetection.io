@@ -464,38 +464,19 @@ class base_html_playwright(Fetcher):
             if len(request_headers):
                 context.set_extra_http_headers(request_headers)
 
-                self.page.set_default_navigation_timeout(90000)
-                self.page.set_default_timeout(90000)
+            # Listen for all console events and handle errors
+            self.page.on("console", lambda msg: print(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
 
-                # Listen for all console events and handle errors
-                self.page.on("console", lambda msg: print(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
+            # Re-use as much code from browser steps as possible so its the same
+            from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
+            browsersteps_interface = steppable_browser_interface()
+            browsersteps_interface.page = self.page
 
-            # Goto page
             try:
-                # Wait_until = commit
-                # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
-                # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
-                # This seemed to solve nearly all 'TimeoutErrors'
-                response = self.page.goto(url, wait_until='commit')
-            except playwright._impl._api_types.Error as e:
-                # Retry once - https://github.com/browserless/chrome/issues/2485
-                # Sometimes errors related to invalid cert's and other can be random
-                print("Content Fetcher > retrying request got error - ", str(e))
-                time.sleep(1)
-                response = self.page.goto(url, wait_until='commit')
-            except Exception as e:
-                print("Content Fetcher > Other exception when page.goto", str(e))
-                context.close()
-                browser.close()
-                raise PageUnloadable(url=url, status_code=None, message=str(e))
-
-            # Execute any browser steps
-            try:
-                extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
-                self.page.wait_for_timeout(extra_wait * 1000)
+                response = browsersteps_interface.action_goto_url(value=url)
 
                 if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
-                    self.page.evaluate(self.webdriver_js_execute_code)
+                    browsersteps_interface.action_execute_js(value=self.webdriver_js_execute_code, selector=None)
 
             except playwright._impl._api_types.TimeoutError as e:
                 context.close()
@@ -514,11 +495,14 @@ class base_html_playwright(Fetcher):
                 print("Content Fetcher > Response object was none")
                 raise EmptyReply(url=url, status_code=None)
 
+            extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
+            self.page.wait_for_timeout(extra_wait * 1000)
+
             # Run Browser Steps here
             self.iterate_browser_steps()
 
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
-            time.sleep(extra_wait)
+            self.page.wait_for_timeout(extra_wait * 1000)
 
             self.content = self.page.content()
             self.status_code = response.status

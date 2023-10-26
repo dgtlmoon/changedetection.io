@@ -77,13 +77,13 @@ class steppable_browser_interface():
     def action_goto_url(self, selector=None, value=None):
         # self.page.set_viewport_size({"width": 1280, "height": 5000})
         now = time.time()
-        response = self.page.goto(value, timeout=0, wait_until='commit')
-
-        # Wait_until = commit
-        # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
-        # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
-        # This seemed to solve nearly all 'TimeoutErrors'
+        response = self.page.goto(value, timeout=0, wait_until='load')
+        # Should be the same as the puppeteer_fetch.js methods, means, load with no timeout set (skip timeout)
+        #and also wait for seconds ?
+        #await page.waitForTimeout(1000);
+        #await page.waitForTimeout(extra_wait_ms);
         print("Time to goto URL ", time.time() - now)
+        return response
 
     def action_click_element_containing_text(self, selector=None, value=''):
         if not len(value.strip()):
@@ -99,7 +99,8 @@ class steppable_browser_interface():
         self.page.fill(selector, value, timeout=10 * 1000)
 
     def action_execute_js(self, selector, value):
-        self.page.evaluate(value)
+        response = self.page.evaluate(value)
+        return response
 
     def action_click_element(self, selector, value):
         print("Clicking element")
