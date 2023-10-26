@@ -127,7 +127,7 @@
                     <div  class="pure-control-group inline-radio">
                         {{ render_checkbox_field(form.ignore_status_codes) }}
                     </div>
-                <fieldset id="webdriver-override-options">
+                <fieldset id="webdriver-override-options" class="hideable show-html_webdriver">
                     <div class="pure-control-group">
                         {{ render_field(form.webdriver_delay) }}
                         <div class="pure-form-message-inline">
@@ -139,6 +139,8 @@
                             {% endif %}
                         </div>
                     </div>
+                </fieldset>
+                <fieldset class="hideable show-html_webdriver">
                     <div class="pure-control-group">
                         {{ render_field(form.webdriver_js_execute_code) }}
                         <div class="pure-form-message-inline">
@@ -146,13 +148,8 @@
                         </div>
                     </div>
                 </fieldset>
-                <fieldset class="pure-group" id="requests-override-options">
-                    {% if not playwright_enabled %}
-                        <div class="pure-form-message-inline">
-                            <strong>Request override is currently only used by the <i>Basic fast Plaintext/HTTP Client</i> method.</strong>
-                        </div>
-                    {% endif %}
-                    <div class="pure-control-group" id="request-method">
+                <fieldset class="pure-group hideable show-html_requests" id="requests-override-options">
+                    <div class="pure-control-group " id="request-method">
                         {{ render_field(form.method) }}
                     </div>
                     <div class="pure-control-group" id="request-headers">
@@ -384,6 +381,7 @@ Unavailable") }}
                         <li>Extracts text in the final output (line by line) after other filters using regular expressions or string match;
                             <ul>
                                 <li>Regular expression &dash; example <code>/reports.+?2022/i</code></li>
+                                <li>Regular expression to match across lines &dash; example <code>/FromHere.+?ToHere/is</code></li>
                                 <li>Don't forget to consider the white-space at the start of a line <code>/.+?reports.+?2022/i</code></li>
                                 <li>Use <code>//(?aiLmsux))</code> type flags (more <a href="https://docs.python.org/3/library/re.html#index-15">information here</a>)<br></li>
                                 <li>Keyword example &dash; example <code>Out of stock</code></li>
