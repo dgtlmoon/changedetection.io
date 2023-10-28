@@ -61,7 +61,10 @@ def test_visual_selector_content_ready(client, live_server):
         follow_redirects=True
     )
     assert b'notification_screenshot' in res.data
-
+    client.get(
+        url_for("form_delete", uuid="all"),
+        follow_redirects=True
+    )
 
 def test_basic_browserstep(client, live_server):
 
@@ -102,3 +105,30 @@ def test_basic_browserstep(client, live_server):
         follow_redirects=True
     )
     assert b'I smell JavaScript' in res.data
+
+    # now test for 404 errors
+
+    res = client.post(
+        url_for("edit_page", uuid="first", unpause_on_save=1),
+        data={
+              "url": "https://changedetection.io/404",
+              "tags": "",
+              "headers": "",
+              'fetch_backend': "html_webdriver",
+              'browser_steps-0-operation': 'Goto site',
+              'browser_steps-1-operation': 'Click element',
+              'browser_steps-1-selector': 'button[name=test-button]',
+              'browser_steps-1-value': ''
+        },
+        follow_redirects=True
+    )
+    assert b"unpaused" in res.data
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("index"))
+    assert b'Error - 404' in res.data
+
+    client.get(
+        url_for("form_delete", uuid="all"),
+        follow_redirects=True
+    )
