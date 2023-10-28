@@ -5,14 +5,15 @@ import os
 from flask import url_for
 from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
+def test_setup(client, live_server):
+    live_server_setup(live_server)
+
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready
 def test_visual_selector_content_ready(client, live_server):
     import os
     import json
 
     assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
-    live_server_setup(live_server)
-
 
     # Add our URL to the import page, because the docker container (playwright/selenium) wont be able to connect to our usual test url
     test_url = "https://changedetection.io/ci-test/test-runjs.html"
@@ -101,4 +102,3 @@ def test_basic_browserstep(client, live_server):
         follow_redirects=True
     )
     assert b'I smell JavaScript' in res.data
-    
