@@ -159,6 +159,16 @@ class Fetcher():
         """
         return {k.lower(): v for k, v in self.headers.items()}
 
+    def browser_steps_get_valid_steps(self):
+        if self.browser_steps is not None and len(self.browser_steps):
+            valid_steps = filter(
+                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
+                self.browser_steps)
+
+            return valid_steps
+
+        return None
+
     def iterate_browser_steps(self):
         from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
         from playwright._impl._api_types import TimeoutError
@@ -170,10 +180,7 @@ class Fetcher():
         if self.browser_steps is not None and len(self.browser_steps):
             interface = steppable_browser_interface()
             interface.page = self.page
-
-            valid_steps = filter(
-                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
-                self.browser_steps)
+            valid_steps = self.browser_steps_get_valid_steps()
 
             for step in valid_steps:
                 step_n += 1
@@ -511,7 +518,9 @@ class base_html_playwright(Fetcher):
                 raise EmptyReply(url=url, status_code=response.status)
 
             # Run Browser Steps here
-            self.iterate_browser_steps()
+            if self.browser_steps_get_valid_steps():
+                self.iterate_browser_steps()
+                gi
             self.page.wait_for_timeout(extra_wait * 1000)
 
             # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
