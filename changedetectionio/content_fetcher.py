@@ -505,7 +505,7 @@ class base_html_playwright(Fetcher):
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
             self.page.wait_for_timeout(extra_wait * 1000)
 
-            self.content = self.page.content()
+
             self.status_code = response.status
 
             if self.status_code != 200 and not ignore_status_codes:
@@ -533,6 +533,7 @@ class base_html_playwright(Fetcher):
                 "async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}")
             self.instock_data = self.page.evaluate("async () => {" + self.instock_data_js + "}")
 
+            self.content = self.page.content()
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
