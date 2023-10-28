@@ -520,7 +520,7 @@ class base_html_playwright(Fetcher):
             # Run Browser Steps here
             if self.browser_steps_get_valid_steps():
                 self.iterate_browser_steps()
-                gi
+                
             self.page.wait_for_timeout(extra_wait * 1000)
 
             # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
