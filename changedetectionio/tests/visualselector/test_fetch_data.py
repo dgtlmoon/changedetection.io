@@ -91,12 +91,13 @@ def test_basic_browserstep(client, live_server):
               'browser_steps-0-operation': 'Goto site',
               'browser_steps-1-operation': 'Click element',
               'browser_steps-1-selector': 'button[name=test-button]',
-              'browser_steps-1-value': ''
+              'browser_steps-1-optional_value': ''
         },
         follow_redirects=True
     )
     assert b"unpaused" in res.data
     wait_for_all_checks(client)
+
     uuid = extract_UUID_from_client(client)
 
     # Check HTML conversion detected and workd
@@ -106,8 +107,6 @@ def test_basic_browserstep(client, live_server):
     )
     assert b"This text should be removed" not in res.data
     assert b"I smell JavaScript because the button was pressed" in res.data
-
-
 
     # now test for 404 errors
     res = client.post(
@@ -120,7 +119,7 @@ def test_basic_browserstep(client, live_server):
               'browser_steps-0-operation': 'Goto site',
               'browser_steps-1-operation': 'Click element',
               'browser_steps-1-selector': 'button[name=test-button]',
-              'browser_steps-1-value': ''
+              'browser_steps-1-optional_value': ''
         },
         follow_redirects=True
     )
