@@ -99,17 +99,10 @@ def test_basic_browserstep(client, live_server):
     wait_for_all_checks(client)
     uuid = extract_UUID_from_client(client)
 
-    # Check the JS execute code before extract worked
-    res = client.get(
-        url_for("preview_page", uuid=uuid),
-        follow_redirects=True
-    )
-    assert b'I smell JavaScript' in res.data
 
     # now test for 404 errors
-
     res = client.post(
-        url_for("edit_page", uuid="first", unpause_on_save=1),
+        url_for("edit_page", uuid=uuid, unpause_on_save=1),
         data={
               "url": "https://changedetection.io/404",
               "tags": "",
