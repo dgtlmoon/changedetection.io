@@ -99,6 +99,15 @@ def test_basic_browserstep(client, live_server):
     wait_for_all_checks(client)
     uuid = extract_UUID_from_client(client)
 
+    # Check HTML conversion detected and workd
+    res = client.get(
+        url_for("preview_page", uuid=uuid),
+        follow_redirects=True
+    )
+    assert b"This text should be removed" not in res.data
+    assert b"I smell JavaScript because the button was pressed" in res.data
+
+
 
     # now test for 404 errors
     res = client.post(
