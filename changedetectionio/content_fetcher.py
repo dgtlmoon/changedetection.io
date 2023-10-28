@@ -472,12 +472,18 @@ class base_html_playwright(Fetcher):
             browsersteps_interface = steppable_browser_interface()
             browsersteps_interface.page = self.page
 
-            try:
-                response = browsersteps_interface.action_goto_url(value=url)
+            response = browsersteps_interface.action_goto_url(value=url)
+            self.headers = response.all_headers()
 
+            if response is None:
+                context.close()
+                browser.close()
+                print("Content Fetcher > Response object was none")
+                raise EmptyReply(url=url, status_code=None)
+
+            try:
                 if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
                     browsersteps_interface.action_execute_js(value=self.webdriver_js_execute_code, selector=None)
-
             except playwright._impl._api_types.TimeoutError as e:
                 context.close()
                 browser.close()
@@ -489,31 +495,24 @@ class base_html_playwright(Fetcher):
                 browser.close()
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
 
-            if response is None:
-                context.close()
-                browser.close()
-                print("Content Fetcher > Response object was none")
-                raise EmptyReply(url=url, status_code=None)
-
-            extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
-            self.page.wait_for_timeout(extra_wait * 1000)
-
-            # Run Browser Steps here
-            self.iterate_browser_steps()
-
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
             self.page.wait_for_timeout(extra_wait * 1000)
 
             self.content = self.page.content()
             self.status_code = response.status
+
+            if self.status_code != 200 and not ignore_status_codes:
+                raise Non200ErrorCodeReceived(url=url, status_code=self.status_code)
+
             if len(self.page.content().strip()) == 0:
                 context.close()
                 browser.close()
                 print("Content Fetcher > Content was empty")
                 raise EmptyReply(url=url, status_code=response.status)
 
-            self.status_code = response.status
-            self.headers = response.all_headers()
+            # Run Browser Steps here
+            self.iterate_browser_steps()
+            self.page.wait_for_timeout(extra_wait * 1000)
 
             # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
             if current_include_filters is not None:
@@ -539,7 +538,7 @@ class base_html_playwright(Fetcher):
             except Exception as e:
                 context.close()
                 browser.close()
-                raise ScreenshotUnavailable(url=url, status_code=None)
+                raise ScreenshotUnavailable(url=url, status_code=response.status_code)
 
             context.close()
             browser.close()
