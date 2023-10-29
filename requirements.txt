@@ -51,9 +51,7 @@ lxml
 
 selenium~=4.14.0
 
-# https://stackoverflow.com/questions/71652965/importerror-cannot-import-name-safe-str-cmp-from-werkzeug-security/71653849#71653849
-# ImportError: cannot import name 'safe_str_cmp' from 'werkzeug.security'
-# need to revisit flask login versions
+# werkzeug can be bumped when https://github.com/maxcountryman/flask-login/issues/805 is released
 werkzeug~=2.3
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
