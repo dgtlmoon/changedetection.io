@@ -68,7 +68,7 @@ services:
 
 #    browser-chrome:
 #        hostname: browser-chrome
-#        image: selenium/standalone-chrome-debug:3.141.59
+#        image: selenium/standalone-chrome:4
 #        environment:
 #            - VNC_NO_PASSWORD=1
 #            - SCREEN_WIDTH=1920
