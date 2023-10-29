@@ -984,8 +984,9 @@ def changedetection_app(config=None, datastore_o=None):
         return output
 
     @app.route("/preview/<string:uuid>", methods=['GET'])
+    @app.route("/preview/<string:uuid>/<string:version>", methods=['GET'])
     @login_optionally_required
-    def preview_page(uuid):
+    def preview_page(uuid, version= None):
         content = []
         ignored_line_numbers = []
         trigger_line_numbers = []
@@ -1008,23 +1009,27 @@ def changedetection_app(config=None, datastore_o=None):
         if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver':
             is_html_webdriver = True
 
+        request_timestamp = request.args.get('request_timestamp')
+        timestamp = request_timestamp if request_timestamp and request_timestamp in list(watch.history.keys()) else list(watch.history.keys())[-1]
+
         # Never requested successfully, but we detected a fetch error
         if datastore.data['watching'][uuid].history_n == 0 and (watch.get_error_text() or watch.get_error_snapshot()):
             flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
             output = render_template("preview.html",
                                      content=content,
-                                     history_n=watch.history_n,
                                      extra_stylesheets=extra_stylesheets,
-#                                     current_diff_url=watch['url'],
-                                     watch=watch,
-                                     uuid=uuid,
+                                     history_n=watch.history_n,
                                      is_html_webdriver=is_html_webdriver,
                                      last_error=watch['last_error'],
+                                     last_error_screenshot=watch.get_error_snapshot(),
                                      last_error_text=watch.get_error_text(),
-                                     last_error_screenshot=watch.get_error_snapshot())
+                                     uuid=uuid,
+                                     versions=list(watch.history.keys()),
+                                     watch=watch,
+                                     )
             return output
 
-        timestamp = list(watch.history.keys())[-1]
+
         try:
             tmp = watch.get_history_snapshot(timestamp).splitlines()
 
@@ -1057,18 +1062,20 @@ def changedetection_app(config=None, datastore_o=None):
 
         output = render_template("preview.html",
                                  content=content,
-                                 history_n=watch.history_n,
-                                 extra_stylesheets=extra_stylesheets,
-                                 ignored_line_numbers=ignored_line_numbers,
-                                 triggered_line_numbers=trigger_line_numbers,
                                  current_diff_url=watch['url'],
-                                 screenshot=watch.get_screenshot(),
-                                 watch=watch,
-                                 uuid=uuid,
+                                 extra_stylesheets=extra_stylesheets,
+                                 history_n=watch.history_n,
+                                 ignored_line_numbers=ignored_line_numbers,
                                  is_html_webdriver=is_html_webdriver,
                                  last_error=watch['last_error'],
+                                 last_error_screenshot=watch.get_error_snapshot(),
                                  last_error_text=watch.get_error_text(),
-                                 last_error_screenshot=watch.get_error_snapshot())
+                                 screenshot=watch.get_screenshot(),
+                                 triggered_line_numbers=trigger_line_numbers,
+                                 uuid=uuid,
+                                 versions=list(watch.history.keys()),
+                                 watch=watch,
+                                 )
 
         return output
 
