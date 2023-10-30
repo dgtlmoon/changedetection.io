@@ -61,6 +61,14 @@ class ChangeDetectionStore:
             with open(self.json_store_path) as json_file:
                 from_disk = json.load(json_file)
 
+                # xpath2-3.1 migration backward compatibility
+                if 'xpath_migration' not in from_disk:
+                    # 'xpath:' or '/' -> 'xpath1:'
+                    print('xpath migration start')
+                    from_disk = protect_xpath1_against_migration(from_disk)
+                    self.__data['xpath_migration'] = 'converted'
+                    print('xpath migration done')
+
                 # @todo isnt there a way todo this dict.update recursively?
                 # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
                 if 'watching' in from_disk:
@@ -98,6 +106,7 @@ class ChangeDetectionStore:
                                extras={'fetch_backend': 'html_requests'})
 
             updates_available = self.get_updates_available()
+            self.__data['xpath_migration'] = 'created'
             self.__data['settings']['application']['schema_version'] = updates_available.pop()
 
         else:
@@ -834,3 +843,15 @@ class ChangeDetectionStore:
                 self.data['watching'][uuid]['date_created'] = i
             i+=1
         return
+
+
+def protect_xpath1_against_migration(json_load: dict) -> dict:
+    for awatch in json_load["watching"]:
+        if json_load["watching"][awatch]['include_filters']:
+            for num, selector in enumerate(json_load["watching"][awatch]['include_filters']):
+                if selector.startswith('/'):
+                    json_load["watching"][awatch]['include_filters'][num] = 'xpath1:' + json_load["watching"][awatch]['include_filters'][num]
+                if selector.startswith('xpath:'):
+                    json_load["watching"][awatch]['include_filters'][num] = json_load["watching"][awatch]['include_filters'][num].replace('xpath:', 'xpath1:', 1)
+    json_load['xpath_migration'] = 'converted'
+    return json_load
