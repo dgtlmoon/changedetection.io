@@ -853,5 +853,4 @@ def protect_xpath1_against_migration(json_load: dict) -> dict:
                     json_load["watching"][awatch]['include_filters'][num] = 'xpath1:' + json_load["watching"][awatch]['include_filters'][num]
                 if selector.startswith('xpath:'):
                     json_load["watching"][awatch]['include_filters'][num] = json_load["watching"][awatch]['include_filters'][num].replace('xpath:', 'xpath1:', 1)
-    json_load['xpath_migration'] = 'converted'
     return json_load
