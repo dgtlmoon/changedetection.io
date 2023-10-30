@@ -23,8 +23,10 @@
 
 from distutils.util import strtobool
 from flask import Blueprint, request, make_response
-import os
 import logging
+import os
+import re
+
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio import login_optionally_required
 
@@ -44,7 +46,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
 
         # We keep the playwright session open for many minutes
-        seconds_keepalive = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
+        keepalive_seconds = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
 
         browsersteps_start_session = {'start_time': time.time()}
 
@@ -56,16 +58,18 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Start the Playwright context, which is actually a nodejs sub-process and communicates over STDIN/STDOUT pipes
             io_interface_context = io_interface_context.start()
 
+        keepalive_ms = ((keepalive_seconds + 3) * 1000)
+        base_url = os.getenv('PLAYWRIGHT_DRIVER_URL', '')
+        a = "?" if not '?' in base_url else '&'
+        base_url += a + f"timeout={keepalive_ms}"
 
-        # keep it alive for 10 seconds more than we advertise, sometimes it helps to keep it shutting down cleanly
-        keepalive = "&timeout={}".format(((seconds_keepalive + 3) * 1000))
         try:
-            browsersteps_start_session['browser'] = io_interface_context.chromium.connect_over_cdp(
-                os.getenv('PLAYWRIGHT_DRIVER_URL', '') + keepalive)
+            browsersteps_start_session['browser'] = io_interface_context.chromium.connect_over_cdp(base_url)
         except Exception as e:
             if 'ECONNREFUSED' in str(e):
                 return make_response('Unable to start the Playwright Browser session, is it running?', 401)
             else:
+                # Other errors, bad URL syntax, bad reply etc
                 return make_response(str(e), 401)
 
         proxy_id = datastore.get_preferred_proxy_for_watch(uuid=watch_uuid)
@@ -117,6 +121,31 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         browsersteps_sessions[browsersteps_session_id] = start_browsersteps_session(watch_uuid)
         print("Starting connection with playwright - done")
         return {'browsersteps_session_id': browsersteps_session_id}
+
+    @login_optionally_required
+    @browser_steps_blueprint.route("/browsersteps_image", methods=['GET'])
+    def browser_steps_fetch_screenshot_image():
+        from flask import (
+            make_response,
+            request,
+            send_from_directory,
+        )
+        uuid = request.args.get('uuid')
+        step_n = int(request.args.get('step_n'))
+
+        watch = datastore.data['watching'].get(uuid)
+        filename = f"step_before-{step_n}.jpeg" if request.args.get('type', '') == 'before' else f"step_{step_n}.jpeg"
+
+        if step_n and watch and os.path.isfile(os.path.join(watch.watch_data_dir, filename)):
+            response = make_response(send_from_directory(directory=watch.watch_data_dir, path=filename))
+            response.headers['Content-type'] = 'image/jpeg'
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = 0
+            return response
+
+        else:
+            return make_response('Unable to fetch image, is the URL correct? does the watch exist? does the step_type-n.jpeg exist?', 401)
 
     # A request for an action was received
     @login_optionally_required

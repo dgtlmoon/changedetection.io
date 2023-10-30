@@ -159,6 +159,16 @@ class Fetcher():
         """
         return {k.lower(): v for k, v in self.headers.items()}
 
+    def browser_steps_get_valid_steps(self):
+        if self.browser_steps is not None and len(self.browser_steps):
+            valid_steps = filter(
+                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
+                self.browser_steps)
+
+            return valid_steps
+
+        return None
+
     def iterate_browser_steps(self):
         from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
         from playwright._impl._api_types import TimeoutError
@@ -170,10 +180,7 @@ class Fetcher():
         if self.browser_steps is not None and len(self.browser_steps):
             interface = steppable_browser_interface()
             interface.page = self.page
-
-            valid_steps = filter(
-                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
-                self.browser_steps)
+            valid_steps = self.browser_steps_get_valid_steps()
 
             for step in valid_steps:
                 step_n += 1
@@ -464,39 +471,26 @@ class base_html_playwright(Fetcher):
             if len(request_headers):
                 context.set_extra_http_headers(request_headers)
 
-                self.page.set_default_navigation_timeout(90000)
-                self.page.set_default_timeout(90000)
+            # Listen for all console events and handle errors
+            self.page.on("console", lambda msg: print(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
 
-                # Listen for all console events and handle errors
-                self.page.on("console", lambda msg: print(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
+            # Re-use as much code from browser steps as possible so its the same
+            from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
+            browsersteps_interface = steppable_browser_interface()
+            browsersteps_interface.page = self.page
 
-            # Goto page
-            try:
-                # Wait_until = commit
-                # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
-                # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
-                # This seemed to solve nearly all 'TimeoutErrors'
-                response = self.page.goto(url, wait_until='commit')
-            except playwright._impl._api_types.Error as e:
-                # Retry once - https://github.com/browserless/chrome/issues/2485
-                # Sometimes errors related to invalid cert's and other can be random
-                print("Content Fetcher > retrying request got error - ", str(e))
-                time.sleep(1)
-                response = self.page.goto(url, wait_until='commit')
-            except Exception as e:
-                print("Content Fetcher > Other exception when page.goto", str(e))
+            response = browsersteps_interface.action_goto_url(value=url)
+            self.headers = response.all_headers()
+
+            if response is None:
                 context.close()
                 browser.close()
-                raise PageUnloadable(url=url, status_code=None, message=str(e))
+                print("Content Fetcher > Response object was none")
+                raise EmptyReply(url=url, status_code=None)
 
-            # Execute any browser steps
             try:
-                extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
-                self.page.wait_for_timeout(extra_wait * 1000)
-
                 if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
-                    self.page.evaluate(self.webdriver_js_execute_code)
-
+                    browsersteps_interface.action_execute_js(value=self.webdriver_js_execute_code, selector=None)
             except playwright._impl._api_types.TimeoutError as e:
                 context.close()
                 browser.close()
@@ -508,28 +502,26 @@ class base_html_playwright(Fetcher):
                 browser.close()
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
 
-            if response is None:
-                context.close()
-                browser.close()
-                print("Content Fetcher > Response object was none")
-                raise EmptyReply(url=url, status_code=None)
-
-            # Run Browser Steps here
-            self.iterate_browser_steps()
-
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
-            time.sleep(extra_wait)
+            self.page.wait_for_timeout(extra_wait * 1000)
 
-            self.content = self.page.content()
+
             self.status_code = response.status
+
+            if self.status_code != 200 and not ignore_status_codes:
+                raise Non200ErrorCodeReceived(url=url, status_code=self.status_code)
+
             if len(self.page.content().strip()) == 0:
                 context.close()
                 browser.close()
                 print("Content Fetcher > Content was empty")
                 raise EmptyReply(url=url, status_code=response.status)
 
-            self.status_code = response.status
-            self.headers = response.all_headers()
+            # Run Browser Steps here
+            if self.browser_steps_get_valid_steps():
+                self.iterate_browser_steps()
+                
+            self.page.wait_for_timeout(extra_wait * 1000)
 
             # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
             if current_include_filters is not None:
@@ -541,6 +533,7 @@ class base_html_playwright(Fetcher):
                 "async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}")
             self.instock_data = self.page.evaluate("async () => {" + self.instock_data_js + "}")
 
+            self.content = self.page.content()
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
@@ -555,7 +548,7 @@ class base_html_playwright(Fetcher):
             except Exception as e:
                 context.close()
                 browser.close()
-                raise ScreenshotUnavailable(url=url, status_code=None)
+                raise ScreenshotUnavailable(url=url, status_code=response.status_code)
 
             context.close()
             browser.close()
@@ -614,14 +607,17 @@ class base_html_webdriver(Fetcher):
             is_binary=False):
 
         from selenium import webdriver
-        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+        from selenium.webdriver.chrome.options import Options as ChromeOptions
         from selenium.common.exceptions import WebDriverException
         # request_body, request_method unused for now, until some magic in the future happens.
 
+        options = ChromeOptions()
+        if self.proxy:
+            options.proxy = self.proxy
+
         self.driver = webdriver.Remote(
             command_executor=self.command_executor,
-            desired_capabilities=DesiredCapabilities.CHROME,
-            proxy=self.proxy)
+            options=options)
 
         try:
             self.driver.get(url)
@@ -653,11 +649,11 @@ class base_html_webdriver(Fetcher):
     # Does the connection to the webdriver work? run a test connection.
     def is_ready(self):
         from selenium import webdriver
-        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+        from selenium.webdriver.chrome.options import Options as ChromeOptions
 
         self.driver = webdriver.Remote(
             command_executor=self.command_executor,
-            desired_capabilities=DesiredCapabilities.CHROME)
+            options=ChromeOptions())
 
         # driver.quit() seems to cause better exceptions
         self.quit()

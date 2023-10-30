@@ -22,7 +22,8 @@ from wtforms.validators import ValidationError
 # each select <option data-enabled="enabled-0-0"
 from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
 
-from changedetectionio import content_fetcher
+from changedetectionio import content_fetcher, html_tools
+
 from changedetectionio.notification import (
     valid_notification_formats,
 )
@@ -284,11 +285,10 @@ class ValidateListRegex(object):
     def __call__(self, form, field):
 
         for line in field.data:
-            if line[0] == '/' and line[-1] == '/':
-                # Because internally we dont wrap in /
-                line = line.strip('/')
+            if re.search(html_tools.PERL_STYLE_REGEX, line, re.IGNORECASE):
                 try:
-                    re.compile(line)
+                    regex = html_tools.perl_style_slash_enclosed_regex_to_options(line)
+                    re.compile(regex)
                 except re.error:
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))

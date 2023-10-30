@@ -178,13 +178,18 @@
             </tbody>
         </table>
         <ul id="post-list-buttons">
+            {% if errored_count %}
+            <li>
+                <a href="{{url_for('index', with_errors=1, tag=request.args.get('tag')) }}" class="pure-button button-tag button-error ">With errors ({{ errored_count }})</a>
+            </li>
+            {% endif %}
             {% if has_unviewed %}
             <li>
-                <a href="{{url_for('mark_all_viewed', tag=request.args.get('tag')) }}" class="pure-button button-tag ">Mark all viewed</a>
+                <a href="{{url_for('mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Mark all viewed</a>
             </li>
             {% endif %}
             <li>
-               <a href="{{ url_for('form_watch_checknow', tag=active_tag) }}" class="pure-button button-tag ">Recheck
+               <a href="{{ url_for('form_watch_checknow', tag=active_tag, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Recheck
                 all {% if active_tag%} in "{{tags[active_tag].title}}"{%endif%}</a>
             </li>
             <li>

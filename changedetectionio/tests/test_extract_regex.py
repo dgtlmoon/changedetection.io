@@ -202,3 +202,35 @@ def test_check_filter_and_regex_extract(client, live_server):
 
     # Should not be here
     assert b'Some text that did change' not in res.data
+
+
+
+def test_regex_error_handling(client, live_server):
+
+    #live_server_setup(live_server)
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+
+    ### test regex error handling
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"extract_text": '/something bad\d{3/XYZ',
+              "url": test_url,
+              "fetch_backend": "html_requests"},
+        follow_redirects=True
+    )
+
+    with open('/tmp/fuck.html', 'wb') as f:
+        f.write(res.data)
+
+    assert b'is not a valid regular expression.' in res.data
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data

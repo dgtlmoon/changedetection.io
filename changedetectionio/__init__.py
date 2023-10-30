@@ -38,7 +38,7 @@ from flask_paginate import Pagination, get_page_parameter
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.45.3'
+__version__ = '0.45.5'
 
 from changedetectionio.store import BASE_URL_NOT_SET_TEXT
 
@@ -416,11 +416,18 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
+        with_errors = request.args.get('with_errors') == "1"
+        errored_count = 0
         search_q = request.args.get('q').strip().lower() if request.args.get('q') else False
         for uuid, watch in datastore.data['watching'].items():
+            if with_errors and not watch.get('last_error'):
+                continue
+
             if limit_tag and not limit_tag in watch['tags']:
                     continue
-
+            if watch.get('last_error'):
+                errored_count += 1
+                
             if search_q:
                 if (watch.get('title') and search_q in watch.get('title').lower()) or search_q in watch.get('url', '').lower():
                     sorted_watches.append(watch)
@@ -442,6 +449,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  active_tag=limit_tag,
                                  app_rss_token=datastore.data['settings']['application']['rss_access_token'],
                                  datastore=datastore,
+                                 errored_count=errored_count,
                                  form=form,
                                  guid=datastore.data['app_guid'],
                                  has_proxies=datastore.proxy_list,
@@ -622,7 +630,6 @@ def changedetection_app(config=None, datastore_o=None):
 
             if request.args.get('unpause_on_save'):
                 extra_update_obj['paused'] = False
-
             # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
             # Assume we use the default value, unless something relevant is different, then use the form value
             # values could be None, 0 etc.
@@ -708,7 +715,6 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and is_html_webdriver
-
             output = render_template("edit.html",
                                      available_processors=processors.available_processors(),
                                      browser_steps_config=browser_step_ui_config,
@@ -857,7 +863,10 @@ def changedetection_app(config=None, datastore_o=None):
     def mark_all_viewed():
 
         # Save the current newest history as the most recently viewed
+        with_errors = request.args.get('with_errors') == "1"
         for watch_uuid, watch in datastore.data['watching'].items():
+            if with_errors and not watch.get('last_error'):
+                continue
             datastore.set_last_viewed(watch_uuid, int(time.time()))
 
         return redirect(url_for('index'))
@@ -1266,6 +1275,8 @@ def changedetection_app(config=None, datastore_o=None):
         # Forced recheck will skip the 'skip if content is the same' rule (, 'reprocess_existing_data': True})))
         tag = request.args.get('tag')
         uuid = request.args.get('uuid')
+        with_errors = request.args.get('with_errors') == "1"
+
         i = 0
 
         running_uuids = []
@@ -1281,6 +1292,8 @@ def changedetection_app(config=None, datastore_o=None):
             # Items that have this current tag
             for watch_uuid, watch in datastore.data['watching'].items():
                 if tag in watch.get('tags', {}):
+                    if with_errors and not watch.get('last_error'):
+                        continue
                     if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                         update_q.put(
                             queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False})
@@ -1291,8 +1304,11 @@ def changedetection_app(config=None, datastore_o=None):
             # No tag, no uuid, add everything.
             for watch_uuid, watch in datastore.data['watching'].items():
                 if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
+                    if with_errors and not watch.get('last_error'):
+                        continue
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False}))
                     i += 1
+
         flash("{} watches queued for rechecking.".format(i))
         return redirect(url_for('index', tag=tag))
 
