@@ -822,6 +822,7 @@ def changedetection_app(config=None, datastore_o=None):
         from . import forms
 
         if request.method == 'POST':
+
             from .importer import import_url_list, import_distill_io_json
 
             # URL List import
@@ -845,11 +846,19 @@ def changedetection_app(config=None, datastore_o=None):
                 for uuid in d_importer.new_uuids:
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
+            # Wachete import
+            from .forms import importForm
+            form = importForm()
+            if request.files:
+                file = request.files['wachete_export']
+                from .importer import import_wachete_xlsx
+                w_importer = import_wachete_xlsx()
+                w_importer.run(data=file, flash=flash, datastore=datastore)
+                for uuid in w_importer.new_uuids:
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
-        form = forms.importForm(formdata=request.form if request.method == 'POST' else None,
-#                               data=default,
-                               )
         # Could be some remaining, or we could be on GET
+        form = forms.importForm(formdata=request.form if request.method == 'POST' else None)
         output = render_template("import.html",
                                  form=form,
                                  import_url_list_remaining="\n".join(remaining_urls),

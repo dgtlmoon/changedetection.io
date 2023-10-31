@@ -15,6 +15,7 @@ from wtforms import (
     validators,
     widgets
 )
+from flask_wtf.file import FileField, FileAllowed
 from wtforms.fields import FieldList
 from wtforms.validators import ValidationError
 
@@ -398,6 +399,7 @@ class importForm(Form):
     from . import processors
     processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
     urls = TextAreaField('URLs')
+    wachete_export = FileField(validators=[FileAllowed(['xlsx'], 'Must be .xlsx file!')])
 
 class SingleBrowserStep(Form):
 

@@ -132,3 +132,58 @@ class import_distill_io_json(Importer):
                     good += 1
 
         flash("{} Imported from Distill.io in {:.2f}s, {} Skipped.".format(len(self.new_uuids), time.time() - now, len(self.remaining_data)))
+
+class import_wachete_xlsx(Importer):
+
+    def run(self,
+            data,
+            flash,
+            datastore,
+            ):
+        good = 0
+        now = time.time()
+        self.new_uuids = []
+
+        from openpyxl import load_workbook
+
+        try:
+            wb = load_workbook(data)
+        except Exception as e:
+            #@todo correct except
+            flash("Unable to read export XLSX file, something wrong with the file?", 'error')
+            return
+
+        sheet_obj = wb.active
+
+        i = 1
+        row = 2
+        while sheet_obj.cell(row=row, column=1).value:
+            data = {}
+            while sheet_obj.cell(row=row, column=i).value:
+                column_title = sheet_obj.cell(row=1, column=i).value.strip().lower()
+                column_row_value = sheet_obj.cell(row=row, column=i).value
+                data[column_title] = column_row_value
+
+                i += 1
+
+            extras = {}
+            if data.get('xpath'):
+                #@todo split by || ?
+                extras['include_filters'] = [data.get('xpath')]
+            if data.get('title'):
+                extras['title'] = [data.get('title').strip()]
+
+            new_uuid = datastore.add_watch(url=data['url'].strip(),
+                                           extras=extras,
+                                           tag=data.get('folder'),
+                                           write_to_disk_now=False)
+            row += 1
+            i = 1
+
+            if new_uuid:
+                # Straight into the queue.
+                self.new_uuids.append(new_uuid)
+                good += 1
+
+        flash(
+            "{} Imported from Wachete xlsx.io in {:.2f}s, {} Skipped.".format(len(self.new_uuids), time.time() - now, 0))
