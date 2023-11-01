@@ -333,9 +333,8 @@ class base_html_playwright(Fetcher):
             # Remove username/password if it exists in the URL or you will receive "ERR_NO_SUPPORTED_PROXIES" error
             # Actual authentication handled by Puppeteer/node
             o = urlparse(self.proxy.get('server'))
-            # Remove scheme, socks5:// doesnt always work and it will autodetect anyway
-            proxy_url = urllib.parse.quote(o._replace(netloc="{}:{}".format(o.hostname, o.port)).geturl().replace(f"{o.scheme}://", '', 1))
-            browserless_function_url = f"{browserless_function_url}&--proxy-server={proxy_url}&dumpio=true"
+            proxy_url = urllib.parse.quote(o._replace(netloc="{}:{}".format(o.hostname, o.port)).geturl())
+            browserless_function_url = f"{browserless_function_url}&--proxy-server={proxy_url}"
 
         try:
             amp = '&' if '?' in browserless_function_url else '?'

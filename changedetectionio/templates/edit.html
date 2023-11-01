@@ -455,15 +455,15 @@ Unavailable") }}
                         <tbody>
                         <tr>
                             <td>Check count</td>
-                            <td>{{ watch.check_count }}</td>
+                            <td>{{ "{:,}".format( watch.check_count) }}</td>
                         </tr>
                         <tr>
                             <td>Consecutive filter failures</td>
-                            <td>{{ watch.consecutive_filter_failures }}</td>
+                            <td>{{ "{:,}".format( watch.consecutive_filter_failures) }}</td>
                         </tr>
                         <tr>
                             <td>History length</td>
-                            <td>{{ watch.history|length }}</td>
+                            <td>{{ "{:,}".format(watch.history|length) }}</td>
                         </tr>
                         <tr>
                             <td>Last fetch time</td>
