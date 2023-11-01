@@ -19,11 +19,16 @@ def test_check_access_control(app, client, live_server):
         )
 
         assert b"1 Imported" in res.data
-        wait_for_all_checks(client)
+        time.sleep(3)
+        # causes a 'Popped wrong request context.' error when client. is accessed?
+        #wait_for_all_checks(client)
 
         res = c.get(url_for("form_watch_checknow"), follow_redirects=True)
         assert b'1 watches queued for rechecking.' in res.data
-        wait_for_all_checks(client)
+        time.sleep(3)
+        # causes a 'Popped wrong request context.' error when client. is accessed?
+        #wait_for_all_checks(client)
+
 
         # Enable password check and diff page access bypass
         res = c.post(
