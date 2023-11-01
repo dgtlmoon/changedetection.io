@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 import time
 import validators
+from wtforms import ValidationError
+
+from changedetectionio.forms import validate_url
 
 
 class Importer():
@@ -176,6 +179,13 @@ class import_xlsx_wachete(Importer):
 
             # At minimum a URL is required.
             if data.get('url'):
+                try:
+                    validate_url(data.get('url'))
+                except ValidationError as e:
+                    print(">> import URL error", data.get('url'), str(e))
+                    # Don't bother processing anything else on this row
+                    continue
+
                 new_uuid = datastore.add_watch(url=data['url'].strip(),
                                                extras=extras,
                                                tag=data.get('folder'),
@@ -212,8 +222,10 @@ class import_xlsx_custom(Importer):
             flash("Unable to read export XLSX file, something wrong with the file?", 'error')
             return
 
-        sheet_obj = wb.active
+        # @todo cehck atleast 2 rows, same in other method
 
+        sheet_obj = wb.active
+        from .forms import validate_url
         row = 2
         while sheet_obj.cell(row=row, column=1).value:
             url = None
@@ -222,13 +234,25 @@ class import_xlsx_custom(Importer):
             for col_i, cell_map in self.import_profile.items():
                 cell_val = sheet_obj.cell(row=row, column=col_i).value
                 if cell_map == 'url':
-                    #@todo validate
                     url = cell_val.strip()
+                    try:
+                        validate_url(url)
+                    except ValidationError as e:
+                        print (">> Import URL error",url, str(e))
+                        # Don't bother processing anything else on this row
+                        url = None
+                        break
+
                 elif cell_map == 'tag':
                     tags = cell_val.strip()
                 elif cell_map == 'include_filters':
                     # @todo validate?
                     extras['include_filters'] = [cell_val.strip()]
+                elif cell_map == 'interval_minutes':
+                    hours, minutes = divmod(int(cell_val), 60)
+                    days, hours = divmod(hours, 24)
+                    weeks, days = divmod(days, 7)
+                    extras['time_between_check'] = {'weeks': weeks, 'days': days, 'hours': hours, 'minutes': minutes, 'seconds': 0}
                 else:
                     extras[cell_map] = cell_val.strip()
 

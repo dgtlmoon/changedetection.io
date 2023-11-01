@@ -17,7 +17,11 @@ from wtforms import (
 )
 from flask_wtf.file import FileField, FileAllowed
 from wtforms.fields import FieldList
+
 from wtforms.validators import ValidationError
+
+from validators.url import url as url_validator
+
 
 # default
 # each select <option data-enabled="enabled-0-0"
@@ -42,7 +46,7 @@ valid_method = {
 }
 
 default_method = 'GET'
-
+allow_simplehost = not strtobool(os.getenv('BLOCK_SIMPLEHOSTS', 'False'))
 
 class StringListField(StringField):
     widget = widgets.TextArea()
@@ -262,19 +266,23 @@ class validateURL(object):
         self.message = message
 
     def __call__(self, form, field):
-        import validators
-        # If hosts that only contain alphanumerics are allowed ("localhost" for example)
-        allow_simplehost = not strtobool(os.getenv('BLOCK_SIMPLEHOSTS', 'False'))
-        try:
-            validators.url(field.data.strip(), simple_host=allow_simplehost)
-        except validators.ValidationFailure:
-            message = field.gettext('\'%s\' is not a valid URL.' % (field.data.strip()))
-            raise ValidationError(message)
+        # This should raise a ValidationError() or not
+        validate_url(field.data)
 
-        from .model.Watch import is_safe_url
-        if not is_safe_url(field.data):
-            raise ValidationError('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX')
+def validate_url(test_url):
+    # If hosts that only contain alphanumerics are allowed ("localhost" for example)
+    try:
+        url_validator(test_url, simple_host=allow_simplehost)
+    except validators.ValidationError:
+        #@todo check for xss
+        message = f"'{test_url}' is not a valid URL."
+        # This should be wtforms.validators.
+        raise ValidationError(message)
 
+    from .model.Watch import is_safe_url
+    if not is_safe_url(test_url):
+        # This should be wtforms.validators.
+        raise ValidationError('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX or incorrect URL format')
 
 class ValidateListRegex(object):
     """
