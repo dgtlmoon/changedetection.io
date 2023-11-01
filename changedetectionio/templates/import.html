@@ -8,7 +8,7 @@
         <ul>
             <li class="tab" id=""><a href="#url-list">URL List</a></li>
             <li class="tab"><a href="#distill-io">Distill.io</a></li>
-            <li class="tab"><a href="#wachete">Wachete</a></li>
+            <li class="tab"><a href="#wachete">.XLSX / Wachete</a></li>
         </ul>
     </div>
 
@@ -81,7 +81,34 @@
 
             </div>
             <div class="tab-pane-inner" id="wachete">
-                {{ render_field(form.wachete_export, class="processor") }}
+                <div class="pure-control-group">
+                {{ render_field(form.xlsx_file, class="processor") }}
+                </div>
+                <div class="pure-control-group">
+                    {{ render_field(form.file_mapping, class="processor") }}
+                </div>
+                <div class="pure-control-group">
+                    <table style="border: 1px solid #aaa; padding: 0.5rem; border-radius: 4px;">
+                        <tr>
+                            <td><strong>Column #</strong></td>
+                            {% for n in range(4) %}
+                                <td><input type="number" name="custom_xlsx[col_{{n}}]" style="width: 4rem;" min="1"></td>
+                            {%  endfor %}
+                        </tr>
+                        <tr>
+                            <td><strong>Type</strong></td>
+                            {% for n in range(4) %}
+                                <td><select name="custom_xlsx[col_type_{{n}}]">
+                                    <option value="" style="color: #aaa"> -- none --</option>
+                                    <option value="url">URL</option>
+                                    <option value="title">Title</option>
+                                    <option value="include_filter">CSS/xPath filter</option>
+                                    <option value="tag">Group / Tag name(s)</option>
+                                </select></td>
+                            {%  endfor %}
+                        </tr>
+                    </table>
+                </div>
             </div>
             <button type="submit" class="pure-button pure-input-1-2 pure-button-primary">Import</button>
         </form>

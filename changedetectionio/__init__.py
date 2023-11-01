@@ -846,14 +846,27 @@ def changedetection_app(config=None, datastore_o=None):
                 for uuid in d_importer.new_uuids:
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
-            # Wachete import
-            from .forms import importForm
-            form = importForm()
-            if request.files:
-                file = request.files['wachete_export']
-                from .importer import import_wachete_xlsx
-                w_importer = import_wachete_xlsx()
-                w_importer.run(data=file, flash=flash, datastore=datastore)
+            # XLSX importer
+            if request.files and request.files.get('xlsx_file'):
+                file = request.files['xlsx_file']
+                from .importer import import_xlsx_wachete, import_xlsx_custom
+
+                if request.values.get('file_mapping') == 'wachete':
+                    w_importer = import_xlsx_wachete()
+                    w_importer.run(data=file, flash=flash, datastore=datastore)
+                else:
+                    w_importer = import_xlsx_custom()
+                    # Building mapping of col # to col # type
+                    map = {}
+                    for i in range(10):
+                        c = request.values.get(f"custom_xlsx[col_{i}]")
+                        v = request.values.get(f"custom_xlsx[col_type_{i}]")
+                        if c and v:
+                            map[int(c)] = v
+
+                    w_importer.import_profile = map
+                    w_importer.run(data=file, flash=flash, datastore=datastore)
+
                 for uuid in w_importer.new_uuids:
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 

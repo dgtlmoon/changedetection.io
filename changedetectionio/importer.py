@@ -12,6 +12,7 @@ class Importer():
         self.new_uuids = []
         self.good = 0
         self.remaining_data = []
+        self.import_profile = None
 
     @abstractmethod
     def run(self,
@@ -133,7 +134,7 @@ class import_distill_io_json(Importer):
 
         flash("{} Imported from Distill.io in {:.2f}s, {} Skipped.".format(len(self.new_uuids), time.time() - now, len(self.remaining_data)))
 
-class import_wachete_xlsx(Importer):
+class import_xlsx_wachete(Importer):
 
     def run(self,
             data,
@@ -173,17 +174,76 @@ class import_wachete_xlsx(Importer):
             if data.get('title'):
                 extras['title'] = [data.get('title').strip()]
 
-            new_uuid = datastore.add_watch(url=data['url'].strip(),
-                                           extras=extras,
-                                           tag=data.get('folder'),
-                                           write_to_disk_now=False)
+            # At minimum a URL is required.
+            if data.get('url'):
+                new_uuid = datastore.add_watch(url=data['url'].strip(),
+                                               extras=extras,
+                                               tag=data.get('folder'),
+                                               write_to_disk_now=False)
+                if new_uuid:
+                    # Straight into the queue.
+                    self.new_uuids.append(new_uuid)
+                    good += 1
+
             row += 1
             i = 1
 
-            if new_uuid:
-                # Straight into the queue.
-                self.new_uuids.append(new_uuid)
-                good += 1
 
         flash(
-            "{} Imported from Wachete xlsx.io in {:.2f}s, {} Skipped.".format(len(self.new_uuids), time.time() - now, 0))
+            "{} Imported from Wachete .xlsx in {:.2f}s".format(len(self.new_uuids), time.time() - now))
+
+class import_xlsx_custom(Importer):
+
+    def run(self,
+            data,
+            flash,
+            datastore,
+            ):
+        good = 0
+        now = time.time()
+        self.new_uuids = []
+
+        from openpyxl import load_workbook
+
+        try:
+            wb = load_workbook(data)
+        except Exception as e:
+            #@todo correct except
+            flash("Unable to read export XLSX file, something wrong with the file?", 'error')
+            return
+
+        sheet_obj = wb.active
+
+        row = 2
+        while sheet_obj.cell(row=row, column=1).value:
+            url = None
+            tags = None
+            extras = {}
+            for col_i, cell_map in self.import_profile.items():
+                cell_val = sheet_obj.cell(row=row, column=col_i).value
+                if cell_map == 'url':
+                    #@todo validate
+                    url = cell_val.strip()
+                elif cell_map == 'tag':
+                    tags = cell_val.strip()
+                elif cell_map == 'include_filters':
+                    # @todo validate?
+                    extras['include_filters'] = [cell_val.strip()]
+                else:
+                    extras[cell_map] = cell_val.strip()
+
+            # At minimum a URL is required.
+            if url:
+                new_uuid = datastore.add_watch(url=url,
+                                               extras=extras,
+                                               tag=tags,
+                                               write_to_disk_now=False)
+                if new_uuid:
+                    # Straight into the queue.
+                    self.new_uuids.append(new_uuid)
+                    good += 1
+
+            row += 1
+
+        flash(
+            "{} Imported from custom .xlsx in {:.2f}s".format(len(self.new_uuids), time.time() - now))

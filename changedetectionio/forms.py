@@ -399,7 +399,9 @@ class importForm(Form):
     from . import processors
     processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
     urls = TextAreaField('URLs')
-    wachete_export = FileField(validators=[FileAllowed(['xlsx'], 'Must be .xlsx file!')])
+    xlsx_file = FileField('Upload .xlsx file', validators=[FileAllowed(['xlsx'], 'Must be .xlsx file!')])
+    file_mapping = SelectField('File mapping', [validators.DataRequired()], choices={('wachete', 'Wachete mapping'), ('custom','Custom mapping')})
+
 
 class SingleBrowserStep(Form):
 
