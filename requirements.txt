@@ -1,7 +1,7 @@
 eventlet>=0.31.0
 feedgen~=0.9
 flask-compress
-flask-login
+flask-login~=0.6
 flask-paginate
 flask_expects_json~=1.7
 flask_restful
@@ -51,8 +51,7 @@ lxml
 
 selenium~=4.14.0
 
-# werkzeug can be bumped when https://github.com/maxcountryman/flask-login/issues/805 is released
-werkzeug~=2.3
+werkzeug
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1
