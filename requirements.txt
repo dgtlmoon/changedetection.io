@@ -1,12 +1,12 @@
 eventlet>=0.31.0
 feedgen~=0.9
 flask-compress
-flask-login~=0.5
+flask-login~=0.6
 flask-paginate
 flask_expects_json~=1.7
 flask_restful
 flask_wtf
-flask~=2.0
+flask~=2.3
 inscriptis~=2.2
 pytz
 timeago~=1.0
@@ -51,10 +51,7 @@ lxml
 
 selenium~=4.14.0
 
-# https://stackoverflow.com/questions/71652965/importerror-cannot-import-name-safe-str-cmp-from-werkzeug-security/71653849#71653849
-# ImportError: cannot import name 'safe_str_cmp' from 'werkzeug.security'
-# need to revisit flask login versions
-werkzeug~=2.0.0
+werkzeug
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1
