@@ -21,7 +21,7 @@ def test_check_access_control(app, client, live_server):
         assert b"1 Imported" in res.data
         wait_for_all_checks(client)
 
-        res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
+        res = c.get(url_for("form_watch_checknow"), follow_redirects=True)
         assert b'1 watches queued for rechecking.' in res.data
         wait_for_all_checks(client)
 
