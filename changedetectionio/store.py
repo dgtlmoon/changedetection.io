@@ -360,6 +360,8 @@ class ChangeDetectionStore:
         if write_to_disk_now:
             self.sync_to_json()
 
+        print("added ", url)
+
         return new_uuid
 
     def visualselector_data_is_ready(self, watch_uuid):

@@ -822,6 +822,7 @@ def changedetection_app(config=None, datastore_o=None):
         from . import forms
 
         if request.method == 'POST':
+
             from .importer import import_url_list, import_distill_io_json
 
             # URL List import
@@ -845,11 +846,32 @@ def changedetection_app(config=None, datastore_o=None):
                 for uuid in d_importer.new_uuids:
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
+            # XLSX importer
+            if request.files and request.files.get('xlsx_file'):
+                file = request.files['xlsx_file']
+                from .importer import import_xlsx_wachete, import_xlsx_custom
 
-        form = forms.importForm(formdata=request.form if request.method == 'POST' else None,
-#                               data=default,
-                               )
+                if request.values.get('file_mapping') == 'wachete':
+                    w_importer = import_xlsx_wachete()
+                    w_importer.run(data=file, flash=flash, datastore=datastore)
+                else:
+                    w_importer = import_xlsx_custom()
+                    # Building mapping of col # to col # type
+                    map = {}
+                    for i in range(10):
+                        c = request.values.get(f"custom_xlsx[col_{i}]")
+                        v = request.values.get(f"custom_xlsx[col_type_{i}]")
+                        if c and v:
+                            map[int(c)] = v
+
+                    w_importer.import_profile = map
+                    w_importer.run(data=file, flash=flash, datastore=datastore)
+
+                for uuid in w_importer.new_uuids:
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
+
         # Could be some remaining, or we could be on GET
+        form = forms.importForm(formdata=request.form if request.method == 'POST' else None)
         output = render_template("import.html",
                                  form=form,
                                  import_url_list_remaining="\n".join(remaining_urls),
