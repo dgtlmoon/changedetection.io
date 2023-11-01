@@ -8,12 +8,12 @@
         <ul>
             <li class="tab" id=""><a href="#url-list">URL List</a></li>
             <li class="tab"><a href="#distill-io">Distill.io</a></li>
-            <li class="tab"><a href="#wachete">.XLSX / Wachete</a></li>
+            <li class="tab"><a href="#xlsx">.XLSX &amp; Wachete</a></li>
         </ul>
     </div>
 
     <div class="box-wrap inner">
-        <form class="pure-form pure-form-aligned" action="{{url_for('import_page')}}" method="POST" enctype="multipart/form-data">
+        <form class="pure-form" action="{{url_for('import_page')}}" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="tab-pane-inner" id="url-list">
                     <legend>
@@ -80,14 +80,19 @@
 " rows="25">{{ original_distill_json }}</textarea>
 
             </div>
-            <div class="tab-pane-inner" id="wachete">
+            <div class="tab-pane-inner" id="xlsx">
+            <fieldset>
                 <div class="pure-control-group">
                 {{ render_field(form.xlsx_file, class="processor") }}
                 </div>
                 <div class="pure-control-group">
                     {{ render_field(form.file_mapping, class="processor") }}
                 </div>
+            </fieldset>
                 <div class="pure-control-group">
+                <span class="pure-form-message-inline">
+                    Table of custom column and data types mapping for the <strong>Custom mapping</strong> File mapping type.
+                </span>
                     <table style="border: 1px solid #aaa; padding: 0.5rem; border-radius: 4px;">
                         <tr>
                             <td><strong>Column #</strong></td>
