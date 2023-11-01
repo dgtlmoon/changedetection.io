@@ -174,8 +174,15 @@ class import_xlsx_wachete(Importer):
             if data.get('xpath'):
                 #@todo split by || ?
                 extras['include_filters'] = [data.get('xpath')]
-            if data.get('title'):
-                extras['title'] = [data.get('title').strip()]
+            if data.get('name'):
+                extras['title'] = [data.get('name').strip()]
+            if data.get('interval (min)'):
+                minutes = int(data.get('interval (min)'))
+                hours, minutes = divmod(minutes, 60)
+                days, hours = divmod(hours, 24)
+                weeks, days = divmod(days, 7)
+                extras['time_between_check'] = {'weeks': weeks, 'days': days, 'hours': hours, 'minutes': minutes, 'seconds': 0}
+
 
             # At minimum a URL is required.
             if data.get('url'):
@@ -200,7 +207,7 @@ class import_xlsx_wachete(Importer):
 
 
         flash(
-            "{} Imported from Wachete .xlsx in {:.2f}s".format(len(self.new_uuids), time.time() - now))
+            "{} imported from Wachete .xlsx in {:.2f}s".format(len(self.new_uuids), time.time() - now))
 
 class import_xlsx_custom(Importer):
 
@@ -270,4 +277,4 @@ class import_xlsx_custom(Importer):
             row += 1
 
         flash(
-            "{} Imported from custom .xlsx in {:.2f}s".format(len(self.new_uuids), time.time() - now))
+            "{} imported from custom .xlsx in {:.2f}s".format(len(self.new_uuids), time.time() - now))
