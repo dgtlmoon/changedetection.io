@@ -201,3 +201,4 @@ def test_import_watchete_xlsx(client, live_server):
             filters = watch.get('include_filters')
             assert filters[0] == '/html[1]/body[1]/div[4]/div[1]/div[1]/div[1]||//*[@id=\'content\']/div[3]/div[1]/div[1]||//*[@id=\'content\']/div[1]'
             assert watch.get('time_between_check') == {'weeks': 0, 'days': 1, 'hours': 6, 'minutes': 24, 'seconds': 0}
+            assert watch.get('fetch_backend') == 'html_requests'
