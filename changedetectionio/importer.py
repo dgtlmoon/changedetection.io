@@ -140,6 +140,26 @@ class import_distill_io_json(Importer):
 
 class import_xlsx_wachete(Importer):
 
+    def interpret_dynamic_wachet_boolean(self, flash, value):
+
+        if value is None:
+            return None
+
+        # Convert the value to a string and strip whitespace and special characters
+        value_str = str(value).strip()
+
+        # Openoffice is sometimes converting 'FALSE' to '=FALSE()'
+        # Remove '=' and '()' from the string to handle '=false()' and '=true()' cases
+        normalized_value = value_str.replace('=', '').replace('()', '')
+
+        try:
+            # Use strtobool for 'true', 'false', 'yes', 'no', '1', '0', and raise an error otherwise
+            return bool(strtobool(normalized_value))
+        except ValueError as e:
+            # The input is not a recognized boolean value
+            flash(f"Unrecognized boolean value in dynamic wachet column : {value}", 'error')
+            return None
+
     def run(self,
             data,
             flash,
@@ -184,10 +204,13 @@ class import_xlsx_wachete(Importer):
                 weeks, days = divmod(days, 7)
                 extras['time_between_check'] = {'weeks': weeks, 'days': days, 'hours': hours, 'minutes': minutes, 'seconds': 0}
             
-            # Openoffice is sometimes converting 'FALSE' to '=FALSE()'
-            if strtobool(str(data.get('dynamic wachet')).replace('=', '').replace('()', '').strip().lower()):
+            # Normalize the dynamic wachet column value to a boolean
+            dynamic_wachet = data.get('dynamic wachet')
+            dynamic_wachet = self.interpret_dynamic_wachet_boolean(flash, dynamic_wachet)
+
+            if dynamic_wachet is True:
                 extras['fetch_backend'] = 'html_webdriver'
-            else:
+            elif dynamic_wachet is False:
                 extras['fetch_backend'] = 'html_requests'
 
             # At minimum a URL is required.
