@@ -183,7 +183,9 @@ class import_xlsx_wachete(Importer):
                 days, hours = divmod(hours, 24)
                 weeks, days = divmod(days, 7)
                 extras['time_between_check'] = {'weeks': weeks, 'days': days, 'hours': hours, 'minutes': minutes, 'seconds': 0}
-            if strtobool(data.get['dynamic wachet']):
+            
+            # Openoffice is sometimes converting 'FALSE' to '=FALSE()'
+            if strtobool(str(data.get('dynamic wachet')).replace('=', '').replace('()', '').strip().lower()):
                 extras['fetch_backend'] = 'html_webdriver'
             else:
                 extras['fetch_backend'] = 'html_requests'
