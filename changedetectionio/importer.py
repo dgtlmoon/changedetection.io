@@ -205,8 +205,7 @@ class import_xlsx_wachete(Importer):
                 extras['time_between_check'] = {'weeks': weeks, 'days': days, 'hours': hours, 'minutes': minutes, 'seconds': 0}
             
             # Normalize the dynamic wachet column value to a boolean
-            dynamic_wachet = data.get('dynamic wachet')
-            dynamic_wachet = self.interpret_dynamic_wachet_boolean(flash, dynamic_wachet)
+            dynamic_wachet = self.interpret_dynamic_wachet_boolean(flash, data.get('dynamic wachet'))
 
             if dynamic_wachet is True:
                 extras['fetch_backend'] = 'html_webdriver'
