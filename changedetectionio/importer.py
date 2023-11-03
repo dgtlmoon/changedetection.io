@@ -162,6 +162,8 @@ class import_xlsx_wachete(Importer):
             extras = {}
             data = {}
             for cell in row:
+                if not cell.value:
+                    continue
                 column_title = wb.active.cell(row=1, column=cell.column).value.strip().lower()
                 data[column_title] = cell.value
 
