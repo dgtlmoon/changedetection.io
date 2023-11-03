@@ -137,6 +137,7 @@ class import_distill_io_json(Importer):
 
         flash("{} Imported from Distill.io in {:.2f}s, {} Skipped.".format(len(self.new_uuids), time.time() - now, len(self.remaining_data)))
 
+
 class import_xlsx_wachete(Importer):
 
     def run(self,
@@ -154,57 +155,64 @@ class import_xlsx_wachete(Importer):
         try:
             wb = load_workbook(data)
         except Exception as e:
-            #@todo correct except
+            # @todo correct except
             flash("Unable to read export XLSX file, something wrong with the file?", 'error')
             return
+        row_id = 2
+        for row in wb.active.iter_rows(min_row=row_id):
+            try:
+                extras = {}
+                data = {}
+                for cell in row:
+                    if not cell.value:
+                        continue
+                    column_title = wb.active.cell(row=1, column=cell.column).value.strip().lower()
+                    data[column_title] = cell.value
 
-        for row in wb.active.iter_rows(min_row=2):
-            extras = {}
-            data = {}
-            for cell in row:
-                if not cell.value:
-                    continue
-                column_title = wb.active.cell(row=1, column=cell.column).value.strip().lower()
-                data[column_title] = cell.value
+                # Forced switch to webdriver/playwright/etc
+                dynamic_wachet = str(data.get('dynamic wachet')).strip().lower()  # Convert bool to str to cover all cases
+                # libreoffice and others can have it as =FALSE() =TRUE(), or bool(true)
+                if 'true' in dynamic_wachet or dynamic_wachet == '1':
+                    extras['fetch_backend'] = 'html_webdriver'
 
-            # Forced switch to webdriver/playwright/etc
-            dynamic_wachet = str(data.get('dynamic wachet')).strip().lower() # Convert bool to str to cover all cases
-            # libreoffice and others can have it as =FALSE() =TRUE(), or bool(true)
-            if 'true' in dynamic_wachet or dynamic_wachet == '1':
-                extras['fetch_backend'] = 'html_webdriver'
+                if data.get('xpath'):
+                    # @todo split by || ?
+                    extras['include_filters'] = [data.get('xpath')]
+                if data.get('name'):
+                    extras['title'] = data.get('name').strip()
+                if data.get('interval (min)'):
+                    minutes = int(data.get('interval (min)'))
+                    hours, minutes = divmod(minutes, 60)
+                    days, hours = divmod(hours, 24)
+                    weeks, days = divmod(days, 7)
+                    extras['time_between_check'] = {'weeks': weeks, 'days': days, 'hours': hours, 'minutes': minutes, 'seconds': 0}
 
-            if data.get('xpath'):
-                #@todo split by || ?
-                extras['include_filters'] = [data.get('xpath')]
-            if data.get('name'):
-                extras['title'] = data.get('name').strip()
-            if data.get('interval (min)'):
-                minutes = int(data.get('interval (min)'))
-                hours, minutes = divmod(minutes, 60)
-                days, hours = divmod(hours, 24)
-                weeks, days = divmod(days, 7)
-                extras['time_between_check'] = {'weeks': weeks, 'days': days, 'hours': hours, 'minutes': minutes, 'seconds': 0}
+                # At minimum a URL is required.
+                if data.get('url'):
+                    try:
+                        validate_url(data.get('url'))
+                    except ValidationError as e:
+                        print(">> import URL error", data.get('url'), str(e))
+                        # Don't bother processing anything else on this row
+                        continue
 
-            # At minimum a URL is required.
-            if data.get('url'):
-                try:
-                    validate_url(data.get('url'))
-                except ValidationError as e:
-                    print(">> import URL error", data.get('url'), str(e))
-                    # Don't bother processing anything else on this row
-                    continue
-
-                new_uuid = datastore.add_watch(url=data['url'].strip(),
-                                               extras=extras,
-                                               tag=data.get('folder'),
-                                               write_to_disk_now=False)
-                if new_uuid:
-                    # Straight into the queue.
-                    self.new_uuids.append(new_uuid)
-                    good += 1
+                    new_uuid = datastore.add_watch(url=data['url'].strip(),
+                                                   extras=extras,
+                                                   tag=data.get('folder'),
+                                                   write_to_disk_now=False)
+                    if new_uuid:
+                        # Straight into the queue.
+                        self.new_uuids.append(new_uuid)
+                        good += 1
+            except Exception as e:
+                print(e)
+                flash(f"Error processing row number {row_id}, check all cell data types are correct")
+            else:
+                row_id += 1
 
         flash(
             "{} imported from Wachete .xlsx in {:.2f}s".format(len(self.new_uuids), time.time() - now))
+
 
 class import_xlsx_custom(Importer):
 
@@ -223,61 +231,67 @@ class import_xlsx_custom(Importer):
         try:
             wb = load_workbook(data)
         except Exception as e:
-            #@todo correct except
+            # @todo correct except
             flash("Unable to read export XLSX file, something wrong with the file?", 'error')
             return
 
         # @todo cehck atleast 2 rows, same in other method
 
         from .forms import validate_url
+        try:
+            row_i = 1
+            for row in wb.active.iter_rows():
+                url = None
+                tags = None
+                extras = {}
 
-        for row in wb.active.iter_rows():
-            url = None
-            tags = None
-            extras = {}
+                for cell in row:
+                    if not self.import_profile.get(cell.col_idx):
+                        continue
+                    if not cell.value:
+                        continue
 
-            for cell in row:
-                if not self.import_profile.get(cell.col_idx):
-                    continue
-                if not cell.value:
-                    continue
+                    cell_map = self.import_profile.get(cell.col_idx)
 
-                cell_map = self.import_profile.get(cell.col_idx)
+                    cell_val = str(cell.value).strip()  # could be bool
 
-                cell_val = str(cell.value).strip()  # could be bool
+                    if cell_map == 'url':
+                        url = cell.value.strip()
+                        try:
+                            validate_url(url)
+                        except ValidationError as e:
+                            print(">> Import URL error", url, str(e))
+                            # Don't bother processing anything else on this row
+                            url = None
+                            break
+                    elif cell_map == 'tag':
+                        tags = cell.value.strip()
+                    elif cell_map == 'include_filters':
+                        # @todo validate?
+                        extras['include_filters'] = [cell.value.strip()]
+                    elif cell_map == 'interval_minutes':
+                        hours, minutes = divmod(int(cell_val), 60)
+                        days, hours = divmod(hours, 24)
+                        weeks, days = divmod(days, 7)
+                        extras['time_between_check'] = {'weeks': weeks, 'days': days, 'hours': hours, 'minutes': minutes, 'seconds': 0}
+                    else:
+                        extras[cell_map] = cell_val
 
-                if cell_map == 'url':
-                    url = cell.value.strip()
-                    try:
-                        validate_url(url)
-                    except ValidationError as e:
-                        print(">> Import URL error", url, str(e))
-                        # Don't bother processing anything else on this row
-                        url = None
-                        break
-                elif cell_map == 'tag':
-                    tags = cell.value.strip()
-                elif cell_map == 'include_filters':
-                    # @todo validate?
-                    extras['include_filters'] = [cell.value.strip()]
-                elif cell_map == 'interval_minutes':
-                    hours, minutes = divmod(int(cell_val), 60)
-                    days, hours = divmod(hours, 24)
-                    weeks, days = divmod(days, 7)
-                    extras['time_between_check'] = {'weeks': weeks, 'days': days, 'hours': hours, 'minutes': minutes, 'seconds': 0}
-                else:
-                    extras[cell_map] = cell_val
-
-            # At minimum a URL is required.
-            if url:
-                new_uuid = datastore.add_watch(url=url,
-                                               extras=extras,
-                                               tag=tags,
-                                               write_to_disk_now=False)
-                if new_uuid:
-                    # Straight into the queue.
-                    self.new_uuids.append(new_uuid)
-                    good += 1
+                # At minimum a URL is required.
+                if url:
+                    new_uuid = datastore.add_watch(url=url,
+                                                   extras=extras,
+                                                   tag=tags,
+                                                   write_to_disk_now=False)
+                    if new_uuid:
+                        # Straight into the queue.
+                        self.new_uuids.append(new_uuid)
+                        good += 1
+        except Exception as e:
+            print(e)
+            flash(f"Error processing row number {row_i}, check all cell data types are correct")
+        else:
+            row_i += 1
 
         flash(
             "{} imported from custom .xlsx in {:.2f}s".format(len(self.new_uuids), time.time() - now))
