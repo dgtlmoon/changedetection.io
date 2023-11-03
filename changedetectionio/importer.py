@@ -158,6 +158,7 @@ class import_xlsx_wachete(Importer):
             # @todo correct except
             flash("Unable to read export XLSX file, something wrong with the file?", 'error')
             return
+
         row_id = 2
         for row in wb.active.iter_rows(min_row=row_id):
             try:
@@ -206,7 +207,7 @@ class import_xlsx_wachete(Importer):
                         good += 1
             except Exception as e:
                 print(e)
-                flash(f"Error processing row number {row_id}, check all cell data types are correct")
+                flash(f"Error processing row number {row_id}, check all cell data types are correct, row was skipped.", 'error')
             else:
                 row_id += 1
 
@@ -236,10 +237,10 @@ class import_xlsx_custom(Importer):
             return
 
         # @todo cehck atleast 2 rows, same in other method
-
         from .forms import validate_url
+        row_i = 1
+
         try:
-            row_i = 1
             for row in wb.active.iter_rows():
                 url = None
                 tags = None
@@ -289,7 +290,7 @@ class import_xlsx_custom(Importer):
                         good += 1
         except Exception as e:
             print(e)
-            flash(f"Error processing row number {row_i}, check all cell data types are correct")
+            flash(f"Error processing row number {row_i}, check all cell data types are correct, row was skipped.", 'error')
         else:
             row_i += 1
 
