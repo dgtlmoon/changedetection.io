@@ -167,6 +167,10 @@ def test_import_custom_xlsx(client, live_server):
             assert filters[0] == '/html[1]/body[1]/div[4]/div[1]/div[1]/div[1]||//*[@id=\'content\']/div[3]/div[1]/div[1]||//*[@id=\'content\']/div[1]'
             assert watch.get('time_between_check') == {'weeks': 0, 'days': 1, 'hours': 6, 'minutes': 24, 'seconds': 0}
 
+    # Cleanup everything
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
 def test_import_watchete_xlsx(client, live_server):
     """Test can upload a excel spreadsheet and the watches are created correctly"""
 
@@ -202,3 +206,7 @@ def test_import_watchete_xlsx(client, live_server):
             assert filters[0] == '/html[1]/body[1]/div[4]/div[1]/div[1]/div[1]||//*[@id=\'content\']/div[3]/div[1]/div[1]||//*[@id=\'content\']/div[1]'
             assert watch.get('time_between_check') == {'weeks': 0, 'days': 1, 'hours': 6, 'minutes': 24, 'seconds': 0}
             assert watch.get('fetch_backend') == 'html_requests'
+
+    # Cleanup everything
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
