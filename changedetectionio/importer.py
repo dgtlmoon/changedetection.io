@@ -144,6 +144,7 @@ class import_xlsx_wachete(Importer):
             flash,
             datastore,
             ):
+
         good = 0
         now = time.time()
         self.new_uuids = []
@@ -157,32 +158,30 @@ class import_xlsx_wachete(Importer):
             flash("Unable to read export XLSX file, something wrong with the file?", 'error')
             return
 
-        sheet_obj = wb.active
-
-        i = 1
-        row = 2
-        while sheet_obj.cell(row=row, column=1).value:
-            data = {}
-            while sheet_obj.cell(row=row, column=i).value:
-                column_title = sheet_obj.cell(row=1, column=i).value.strip().lower()
-                column_row_value = sheet_obj.cell(row=row, column=i).value
-                data[column_title] = column_row_value
-
-                i += 1
-
+        for row in wb.active.iter_rows(min_row=2):
             extras = {}
+            data = {}
+            for cell in row:
+                column_title = wb.active.cell(row=1, column=cell.column).value.strip().lower()
+                data[column_title] = cell.value
+
+            # Forced switch to webdriver/playwright/etc
+            dynamic_wachet = str(data.get('dynamic wachet')).strip().lower() # Convert bool to str to cover all cases
+            # libreoffice and others can have it as =FALSE() =TRUE(), or bool(true)
+            if 'true' in dynamic_wachet or dynamic_wachet == '1':
+                extras['fetch_backend'] = 'html_webdriver'
+
             if data.get('xpath'):
                 #@todo split by || ?
                 extras['include_filters'] = [data.get('xpath')]
             if data.get('name'):
-                extras['title'] = [data.get('name').strip()]
+                extras['title'] = data.get('name').strip()
             if data.get('interval (min)'):
                 minutes = int(data.get('interval (min)'))
                 hours, minutes = divmod(minutes, 60)
                 days, hours = divmod(hours, 24)
                 weeks, days = divmod(days, 7)
                 extras['time_between_check'] = {'weeks': weeks, 'days': days, 'hours': hours, 'minutes': minutes, 'seconds': 0}
-
 
             # At minimum a URL is required.
             if data.get('url'):
@@ -202,10 +201,6 @@ class import_xlsx_wachete(Importer):
                     self.new_uuids.append(new_uuid)
                     good += 1
 
-            row += 1
-            i = 1
-
-
         flash(
             "{} imported from Wachete .xlsx in {:.2f}s".format(len(self.new_uuids), time.time() - now))
 
@@ -216,6 +211,7 @@ class import_xlsx_custom(Importer):
             flash,
             datastore,
             ):
+
         good = 0
         now = time.time()
         self.new_uuids = []
@@ -231,37 +227,44 @@ class import_xlsx_custom(Importer):
 
         # @todo cehck atleast 2 rows, same in other method
 
-        sheet_obj = wb.active
         from .forms import validate_url
-        row = 2
-        while sheet_obj.cell(row=row, column=1).value:
+
+        for row in wb.active.iter_rows():
             url = None
             tags = None
             extras = {}
-            for col_i, cell_map in self.import_profile.items():
-                cell_val = sheet_obj.cell(row=row, column=col_i).value
+
+            for cell in row:
+                if not self.import_profile.get(cell.col_idx):
+                    continue
+                if not cell.value:
+                    continue
+
+                cell_map = self.import_profile.get(cell.col_idx)
+
+                cell_val = str(cell.value).strip()  # could be bool
+
                 if cell_map == 'url':
-                    url = cell_val.strip()
+                    url = cell.value.strip()
                     try:
                         validate_url(url)
                     except ValidationError as e:
-                        print (">> Import URL error",url, str(e))
+                        print(">> Import URL error", url, str(e))
                         # Don't bother processing anything else on this row
                         url = None
                         break
-
                 elif cell_map == 'tag':
-                    tags = cell_val.strip()
+                    tags = cell.value.strip()
                 elif cell_map == 'include_filters':
                     # @todo validate?
-                    extras['include_filters'] = [cell_val.strip()]
+                    extras['include_filters'] = [cell.value.strip()]
                 elif cell_map == 'interval_minutes':
                     hours, minutes = divmod(int(cell_val), 60)
                     days, hours = divmod(hours, 24)
                     weeks, days = divmod(days, 7)
                     extras['time_between_check'] = {'weeks': weeks, 'days': days, 'hours': hours, 'minutes': minutes, 'seconds': 0}
                 else:
-                    extras[cell_map] = cell_val.strip()
+                    extras[cell_map] = cell_val
 
             # At minimum a URL is required.
             if url:
@@ -273,8 +276,6 @@ class import_xlsx_custom(Importer):
                     # Straight into the queue.
                     self.new_uuids.append(new_uuid)
                     good += 1
-
-            row += 1
 
         flash(
             "{} imported from custom .xlsx in {:.2f}s".format(len(self.new_uuids), time.time() - now))

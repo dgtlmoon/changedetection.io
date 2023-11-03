@@ -127,6 +127,7 @@ def test_import_custom_xlsx(client, live_server):
     """Test can upload a excel spreadsheet and the watches are created correctly"""
 
     #live_server_setup(live_server)
+
     dirname = os.path.dirname(__file__)
     filename = os.path.join(dirname, 'import/spreadsheet.xlsx')
     with open(filename, 'rb') as f:
@@ -150,12 +151,11 @@ def test_import_custom_xlsx(client, live_server):
         follow_redirects=True,
     )
 
-    assert b'2 imported from custom .xlsx' in res.data
+    assert b'3 imported from custom .xlsx' in res.data
 
     res = client.get(
         url_for("index")
     )
-
 
     assert b'Somesite results ABC' in res.data
     assert b'City news results' in res.data
@@ -166,6 +166,9 @@ def test_import_custom_xlsx(client, live_server):
             filters = watch.get('include_filters')
             assert filters[0] == '/html[1]/body[1]/div[4]/div[1]/div[1]/div[1]||//*[@id=\'content\']/div[3]/div[1]/div[1]||//*[@id=\'content\']/div[1]'
             assert watch.get('time_between_check') == {'weeks': 0, 'days': 1, 'hours': 6, 'minutes': 24, 'seconds': 0}
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
 def test_import_watchete_xlsx(client, live_server):
     """Test can upload a excel spreadsheet and the watches are created correctly"""
@@ -186,7 +189,7 @@ def test_import_watchete_xlsx(client, live_server):
         follow_redirects=True,
     )
 
-    assert b'2 imported from Wachete .xlsx' in res.data
+    assert b'3 imported from Wachete .xlsx' in res.data
 
     res = client.get(
         url_for("index")
@@ -201,3 +204,10 @@ def test_import_watchete_xlsx(client, live_server):
             filters = watch.get('include_filters')
             assert filters[0] == '/html[1]/body[1]/div[4]/div[1]/div[1]/div[1]||//*[@id=\'content\']/div[3]/div[1]/div[1]||//*[@id=\'content\']/div[1]'
             assert watch.get('time_between_check') == {'weeks': 0, 'days': 1, 'hours': 6, 'minutes': 24, 'seconds': 0}
+            assert watch.get('fetch_backend') == 'system' # always uses default
+
+        if watch.get('title') == 'JS website':
+            assert watch.get('fetch_backend') == 'html_webdriver' # Has active 'dynamic wachet'
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
