@@ -152,6 +152,8 @@ def test_import_custom_xlsx(client, live_server):
     )
 
     assert b'3 imported from custom .xlsx' in res.data
+    # Because this row was actually just a header with no usable URL, we should get an error
+    assert b'Error processing row number 1' in res.data
 
     res = client.get(
         url_for("index")

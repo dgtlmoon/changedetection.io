@@ -194,6 +194,7 @@ class import_xlsx_wachete(Importer):
                         validate_url(data.get('url'))
                     except ValidationError as e:
                         print(">> import URL error", data.get('url'), str(e))
+                        flash(f"Error processing row number {row_id}, URL value was incorrect, row was skipped.", 'error')
                         # Don't bother processing anything else on this row
                         continue
 
@@ -262,6 +263,7 @@ class import_xlsx_custom(Importer):
                             validate_url(url)
                         except ValidationError as e:
                             print(">> Import URL error", url, str(e))
+                            flash(f"Error processing row number {row_i}, URL value was incorrect, row was skipped.", 'error')
                             # Don't bother processing anything else on this row
                             url = None
                             break
