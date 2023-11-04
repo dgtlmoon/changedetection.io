@@ -211,7 +211,7 @@ def test_import_watchete_xlsx(client, live_server):
         if watch.get('title') == 'JS website':
             assert watch.get('fetch_backend') == 'html_webdriver' # Has active 'dynamic wachet'
 
-        if watch.get('title') == 'Dyn Test':
+        if watch.get('title') == 'system default website':
             assert watch.get('fetch_backend') == 'system' # uses default if blank
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
