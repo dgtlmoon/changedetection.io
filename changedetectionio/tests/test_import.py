@@ -151,7 +151,7 @@ def test_import_custom_xlsx(client, live_server):
         follow_redirects=True,
     )
 
-    assert b'3 imported from custom .xlsx' in res.data
+    assert b'4 imported from custom .xlsx' in res.data
     # Because this row was actually just a header with no usable URL, we should get an error
     assert b'Error processing row number 1' in res.data
 
@@ -191,7 +191,7 @@ def test_import_watchete_xlsx(client, live_server):
         follow_redirects=True,
     )
 
-    assert b'3 imported from Wachete .xlsx' in res.data
+    assert b'4 imported from Wachete .xlsx' in res.data
 
     res = client.get(
         url_for("index")
@@ -206,10 +206,13 @@ def test_import_watchete_xlsx(client, live_server):
             filters = watch.get('include_filters')
             assert filters[0] == '/html[1]/body[1]/div[4]/div[1]/div[1]/div[1]||//*[@id=\'content\']/div[3]/div[1]/div[1]||//*[@id=\'content\']/div[1]'
             assert watch.get('time_between_check') == {'weeks': 0, 'days': 1, 'hours': 6, 'minutes': 24, 'seconds': 0}
-            assert watch.get('fetch_backend') == 'system' # always uses default
+            assert watch.get('fetch_backend') == 'html_requests' # Has inactive 'dynamic wachet'
 
         if watch.get('title') == 'JS website':
             assert watch.get('fetch_backend') == 'html_webdriver' # Has active 'dynamic wachet'
+
+        if watch.get('title') == 'system default website':
+            assert watch.get('fetch_backend') == 'system' # uses default if blank
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

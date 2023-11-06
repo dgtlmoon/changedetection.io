@@ -171,10 +171,12 @@ class import_xlsx_wachete(Importer):
                     data[column_title] = cell.value
 
                 # Forced switch to webdriver/playwright/etc
-                dynamic_wachet = str(data.get('dynamic wachet')).strip().lower()  # Convert bool to str to cover all cases
+                dynamic_wachet = str(data.get('dynamic wachet', '')).strip().lower()  # Convert bool to str to cover all cases
                 # libreoffice and others can have it as =FALSE() =TRUE(), or bool(true)
                 if 'true' in dynamic_wachet or dynamic_wachet == '1':
                     extras['fetch_backend'] = 'html_webdriver'
+                elif 'false' in dynamic_wachet or dynamic_wachet == '0':
+                    extras['fetch_backend'] = 'html_requests'
 
                 if data.get('xpath'):
                     # @todo split by || ?
