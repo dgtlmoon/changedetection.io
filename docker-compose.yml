@@ -66,25 +66,12 @@ services:
 #        browser-chrome:
 #            condition: service_started
 
-#    browser-chrome:
-#        hostname: browser-chrome
-#        image: selenium/standalone-chrome:4
-#        environment:
-#            - VNC_NO_PASSWORD=1
-#            - SCREEN_WIDTH=1920
-#            - SCREEN_HEIGHT=1080
-#            - SCREEN_DEPTH=24
-#        volumes:
-#            # Workaround to avoid the browser crashing inside a docker container
-#            # See https://github.com/SeleniumHQ/docker-selenium#quick-start
-#            - /dev/shm:/dev/shm
-#        restart: unless-stopped
-
      # Used for fetching pages via Playwright+Chrome where you need Javascript support.
      # Note: Playwright/browserless not supported on ARM type devices (rPi etc)
+     # RECOMMENDED FOR FETCHING PAGES WITH CHROME
 #    playwright-chrome:
 #        hostname: playwright-chrome
-#        image: browserless/chrome
+#        image: browserless/chrome:1.60-chrome-stable
 #        restart: unless-stopped
 #        environment:
 #            - SCREEN_WIDTH=1920
@@ -101,6 +88,23 @@ services:
 #             Ignore HTTPS errors, like for self-signed certs
 #            - DEFAULT_IGNORE_HTTPS_ERRORS=true
 #
+
+     # Used for fetching pages via Playwright+Chrome where you need Javascript support.
+     # Note: works well but is deprecated, doesnt fetch full page screenshots and other issues
+#    browser-chrome:
+#        hostname: browser-chrome
+#        image: selenium/standalone-chrome:4
+#        environment:
+#            - VNC_NO_PASSWORD=1
+#            - SCREEN_WIDTH=1920
+#            - SCREEN_HEIGHT=1080
+#            - SCREEN_DEPTH=24
+#        volumes:
+#            # Workaround to avoid the browser crashing inside a docker container
+#            # See https://github.com/SeleniumHQ/docker-selenium#quick-start
+#            - /dev/shm:/dev/shm
+#        restart: unless-stopped
+
 volumes:
   changedetection-data:
 
