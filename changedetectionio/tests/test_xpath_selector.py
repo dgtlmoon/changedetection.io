@@ -235,6 +235,27 @@ def test_xpath_validation(client, live_server):
     assert b'Deleted' in res.data
 
 
+def test_xpath1_validation(client, live_server):
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    wait_for_all_checks(client)
+
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"include_filters": "xpath1:/something horrible", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+    assert b"is not a valid XPath expression" in res.data
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+
 # actually only really used by the distll.io importer, but could be handy too
 def test_check_with_prefix_include_filters(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
