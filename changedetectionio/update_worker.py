@@ -410,6 +410,9 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
                         # Other serious error
                         process_changedetection_results = False
+#                        import traceback
+#                        print(traceback.format_exc())
+
                     else:
                         # Crash protection, the watch entry could have been removed by this point (during a slow chrome fetch etc)
                         if not self.datastore.data['watching'].get(uuid):

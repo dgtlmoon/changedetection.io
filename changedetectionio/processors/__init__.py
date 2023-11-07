@@ -1,6 +1,7 @@
 from abc import abstractmethod
 import os
 import hashlib
+from copy import deepcopy
 
 from changedetectionio import content_fetcher
 
@@ -15,7 +16,7 @@ class difference_detection_processor():
     def __init__(self, *args, datastore, watch_uuid, **kwargs):
         super().__init__(*args, **kwargs)
         self.datastore = datastore
-        self.watch = self.datastore.data['watching'].get(watch_uuid)
+        self.watch = deepcopy(self.datastore.data['watching'].get(watch_uuid))
 
 
     def call_browser(self):
