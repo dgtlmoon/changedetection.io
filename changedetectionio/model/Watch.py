@@ -19,6 +19,7 @@ from changedetectionio.notification import (
 
 base_config = {
     'body': None,
+    'browser_steps': [],
     'browser_steps_last_error_step': None,
     'check_unique_lines': False,  # On change-detected, compare against all history if its something new
     'check_count': 0,
@@ -233,6 +234,14 @@ class model(dict):
     def has_history(self):
         fname = os.path.join(self.watch_data_dir, "history.txt")
         return os.path.isfile(fname)
+
+    @property
+    def has_browser_steps(self):
+        has_browser_steps = self.get('browser_steps') and list(filter(
+                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
+                self.get('browser_steps')))
+
+        return  has_browser_steps
 
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
     @property

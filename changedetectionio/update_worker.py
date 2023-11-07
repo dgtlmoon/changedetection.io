@@ -229,17 +229,33 @@ class update_worker(threading.Thread):
                     now = time.time()
 
                     try:
-                        processor = self.datastore.data['watching'][uuid].get('processor','text_json_diff')
+                        # Processor is what we are using for detecting the "Change"
+                        processor = self.datastore.data['watching'][uuid].get('processor', 'text_json_diff')
+                        # if system...
+
+                        # Abort processing when the content was the same as the last fetch
+                        skip_when_same_checksum = queued_item_data.item.get('skip_when_checksum_same')
+
 
                         # @todo some way to switch by name
+                        # Init a new 'difference_detection_processor'
+
                         if processor == 'restock_diff':
-                            update_handler = restock_diff.perform_site_check(datastore=self.datastore)
+                            update_handler = restock_diff.perform_site_check(datastore=self.datastore,
+                                                                             watch_uuid=uuid
+                                                                             )
                         else:
                             # Used as a default and also by some tests
-                            update_handler = text_json_diff.perform_site_check(datastore=self.datastore)
+                            update_handler = text_json_diff.perform_site_check(datastore=self.datastore,
+                                                                               watch_uuid=uuid
+                                                                               )
 
+                        # Clear last errors (move to preflight func?)
                         self.datastore.data['watching'][uuid]['browser_steps_last_error_step'] = None
-                        changed_detected, update_obj, contents = update_handler.run(uuid, skip_when_checksum_same=queued_item_data.item.get('skip_when_checksum_same'))
+
+                        changed_detected, update_obj, contents = update_handler.run(uuid,
+                                                                                    skip_when_checksum_same=skip_when_same_checksum,
+                                                                                    )
 
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
