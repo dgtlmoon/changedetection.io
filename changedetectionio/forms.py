@@ -168,7 +168,9 @@ class ValidateContentFetcherIsReady(object):
     def __call__(self, form, field):
         import urllib3.exceptions
         from changedetectionio import content_fetcher
+        return
 
+# AttributeError: module 'changedetectionio.content_fetcher' has no attribute 'extra_browser_unlocked<>ASDF213r123r'
         # Better would be a radiohandler that keeps a reference to each class
         if field.data is not None and field.data != 'system':
             klass = getattr(content_fetcher, field.data)

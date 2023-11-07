@@ -96,6 +96,7 @@ class Fetcher():
     content = None
     error = None
     fetcher_description = "No description"
+    browser_connection_url = None
     headers = {}
     status_code = None
     webdriver_js_execute_code = None
@@ -251,14 +252,17 @@ class base_html_playwright(Fetcher):
 
     proxy = None
 
-    def __init__(self, proxy_override=None):
+    def __init__(self, proxy_override=None, browser_connection_url=None):
         super().__init__()
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
-        self.command_executor = os.getenv(
-            "PLAYWRIGHT_DRIVER_URL",
-            'ws://playwright-chrome:3000'
-        ).strip('"')
+
+        self.browser_connection_url = browser_connection_url
+        if not browser_connection_url:
+            self.browser_connection_url = os.getenv(
+                "PLAYWRIGHT_DRIVER_URL",
+                    'ws://playwright-chrome:3000'
+            ).strip('"')
 
         # If any proxy settings are enabled, then we should setup the proxy object
         proxy_args = {}
@@ -444,7 +448,7 @@ class base_html_playwright(Fetcher):
             # Seemed to cause a connection Exception even tho I can see it connect
             # self.browser = browser_type.connect(self.command_executor, timeout=timeout*1000)
             # 60,000 connection timeout only
-            browser = browser_type.connect_over_cdp(self.command_executor, timeout=60000)
+            browser = browser_type.connect_over_cdp(self.browser_connection_url, timeout=60000)
 
             # SOCKS5 with authentication is not supported (yet)
             # https://github.com/microsoft/playwright/issues/10567
@@ -504,7 +508,11 @@ class base_html_playwright(Fetcher):
             self.status_code = response.status
 
             if self.status_code != 200 and not ignore_status_codes:
-                raise Non200ErrorCodeReceived(url=url, status_code=self.status_code)
+
+                screenshot=self.page.screenshot(type='jpeg', full_page=True,
+                                     quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
+
+                raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
 
             if len(self.page.content().strip()) == 0:
                 context.close()
@@ -555,8 +563,6 @@ class base_html_webdriver(Fetcher):
     else:
         fetcher_description = "WebDriver Chrome/Javascript"
 
-    command_executor = ''
-
     # Configs for Proxy setup
     # In the ENV vars, is prefixed with "webdriver_", so it is for example "webdriver_sslProxy"
     selenium_proxy_settings_mappings = ['proxyType', 'ftpProxy', 'httpProxy', 'noProxy',
@@ -564,12 +570,13 @@ class base_html_webdriver(Fetcher):
                                         'socksProxy', 'socksVersion', 'socksUsername', 'socksPassword']
     proxy = None
 
-    def __init__(self, proxy_override=None):
+    def __init__(self, proxy_override=None, browser_connection_url=None):
         super().__init__()
         from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
 
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
-        self.command_executor = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub').strip('"')
+        if not self.browser_connection_url:
+            self.browser_connection_url = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub').strip('"')
 
         # If any proxy settings are enabled, then we should setup the proxy object
         proxy_args = {}
@@ -611,7 +618,7 @@ class base_html_webdriver(Fetcher):
             options.proxy = self.proxy
 
         self.driver = webdriver.Remote(
-            command_executor=self.command_executor,
+            command_executor=self.browser_connection_url,
             options=options)
 
         try:
@@ -666,9 +673,10 @@ class base_html_webdriver(Fetcher):
 class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
 
-    def __init__(self, proxy_override=None):
+    def __init__(self, proxy_override=None, browser_connection_url=None):
         super().__init__()
         self.proxy_override = proxy_override
+        # browser_connection_url is none because its always 'launched locally'
 
     def run(self,
             url,

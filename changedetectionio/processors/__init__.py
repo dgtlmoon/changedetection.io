@@ -40,6 +40,18 @@ class difference_detection_processor():
         if not prefer_fetch_backend or prefer_fetch_backend == 'system':
             prefer_fetch_backend = self.datastore.data['settings']['application'].get('fetch_backend')
 
+        # In the case that the preferred fetcher was a browser config with custom connection URL..
+        # @todo - on save watch, if its extra_browser_ then it should be obvious it will use playwright (like if its requests now..)
+        browser_connection_url = None
+        if prefer_fetch_backend.startswith('extra_browser_'):
+            (t, key) = prefer_fetch_backend.split('extra_browser_')
+            connection = list(
+                filter(lambda s: (s['browser_name'] == key), self.datastore.data['settings']['requests'].get('extra_browsers', [])))
+            if connection:
+                prefer_fetch_backend = 'base_html_playwright'
+                browser_connection_url = connection[0].get('browser_connection_url')
+
+
         # Grab the right kind of 'fetcher', (playwright, requests, etc)
         if hasattr(content_fetcher, prefer_fetch_backend):
             fetcher_obj = getattr(content_fetcher, prefer_fetch_backend)
@@ -54,8 +66,9 @@ class difference_detection_processor():
             print(f"Using proxy Key: {preferred_proxy_id} as Proxy URL {proxy_url}")
 
         # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
+        # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
         self.fetcher = fetcher_obj(proxy_override=proxy_url,
-                                   #browser_url_extra/configurable browser url=...
+                                   browser_connection_url=browser_connection_url
                                    )
 
         if self.watch.has_browser_steps:
