@@ -4,7 +4,6 @@ import hashlib
 
 class difference_detection_processor():
 
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

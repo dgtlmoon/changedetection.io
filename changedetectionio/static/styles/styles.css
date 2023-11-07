@@ -128,6 +128,27 @@ body.proxy-check-active #request .proxy-timing {
     border-radius: 4px;
     padding: 1em; }
 
+#extra-proxies-setting {
+  border: 1px solid var(--color-grey-800);
+  border-radius: 4px;
+  margin: 1em;
+  padding: 1em; }
+
+ul#requests-extra_browsers {
+  list-style: none;
+  /* tidy up the table to look more "inline" */
+  /* each proxy entry is a `table` */ }
+  ul#requests-extra_browsers li > label {
+    display: none; }
+  ul#requests-extra_browsers table tr {
+    display: inline; }
+
+#extra-browsers-setting {
+  border: 1px solid var(--color-grey-800);
+  border-radius: 4px;
+  margin: 1em;
+  padding: 1em; }
+
 .pagination-page-info {
   color: #fff;
   font-size: 0.85rem;

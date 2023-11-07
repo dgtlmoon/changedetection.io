@@ -610,6 +610,8 @@ def changedetection_app(config=None, datastore_o=None):
         # For the form widget tag uuid lookup
         form.tags.datastore = datastore # in _value
 
+        for p in datastore.extra_browsers:
+            form.fetch_backend.choices.append(p)
 
         form.fetch_backend.choices.append(("system", 'System settings default'))
 
