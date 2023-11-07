@@ -667,6 +667,7 @@ class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
 
     def __init__(self, proxy_override=None):
+        super().__init__()
         self.proxy_override = proxy_override
 
     def run(self,

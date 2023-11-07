@@ -15,15 +15,18 @@ class difference_detection_processor():
     def __init__(self, *args, datastore, watch_uuid, **kwargs):
         super().__init__(*args, **kwargs)
         self.datastore = datastore
+        self.watch = self.datastore.data['watching'].get(watch_uuid)
 
-        watch = self.datastore.data['watching'].get(watch_uuid)
-        url = watch.link
+
+    def call_browser(self):
+
+        url = self.watch.link
 
         # Requests, playwright, other browser via wss:// etc, fetch_extra_something
-        prefer_fetch_backend = watch.get('fetch_backend', 'system')
+        prefer_fetch_backend = self.watch.get('fetch_backend', 'system')
 
         # Proxy ID "key"
-        preferred_proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=watch_uuid)
+        preferred_proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=self.watch.get('uuid'))
 
         # Pluggable content self.fetcher
         if not prefer_fetch_backend or prefer_fetch_backend == 'system':
@@ -47,14 +50,14 @@ class difference_detection_processor():
                                    #browser_url_extra/configurable browser url=...
                                    )
 
-        if watch.has_browser_steps:
-            self.fetcher.browser_steps = watch.get('browser_steps', [])
-            self.fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, watch_uuid)
+        if self.watch.has_browser_steps:
+            self.fetcher.browser_steps = self.watch.get('browser_steps', [])
+            self.fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, self.watch.get('uuid'))
 
         # Tweak the base config with the per-watch ones
-        request_headers = watch.get('headers', [])
+        request_headers = self.watch.get('headers', [])
         request_headers.update(self.datastore.get_all_base_headers())
-        request_headers.update(self.datastore.get_all_headers_in_textfile_for_watch(uuid=watch_uuid))
+        request_headers.update(self.datastore.get_all_headers_in_textfile_for_watch(uuid=self.watch.get('uuid')))
 
         # https://github.com/psf/requests/issues/4525
         # Requests doesnt yet support brotli encoding, so don't put 'br' here, be totally sure that the user cannot
@@ -64,32 +67,32 @@ class difference_detection_processor():
 
         timeout = self.datastore.data['settings']['requests'].get('timeout')
 
-        request_body = watch.get('body')
-        request_method = watch.get('method')
-        ignore_status_codes = watch.get('ignore_status_codes', False)
+        request_body = self.watch.get('body')
+        request_method = self.watch.get('method')
+        ignore_status_codes = self.watch.get('ignore_status_codes', False)
 
         # Configurable per-watch or global extra delay before extracting text (for webDriver types)
         system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
-        if watch['webdriver_delay'] is not None:
-            self.fetcher.render_extract_delay = watch.get('webdriver_delay')
+        if self.watch.get('webdriver_delay'):
+            self.fetcher.render_extract_delay = self.watch.get('webdriver_delay')
         elif system_webdriver_delay is not None:
             self.fetcher.render_extract_delay = system_webdriver_delay
 
-        if watch.get('webdriver_js_execute_code') is not None and watch.get('webdriver_js_execute_code').strip():
-            self.fetcher.webdriver_js_execute_code = watch.get('webdriver_js_execute_code')
+        if self.watch.get('webdriver_js_execute_code') is not None and self.watch.get('webdriver_js_execute_code').strip():
+            self.fetcher.webdriver_js_execute_code = self.watch.get('webdriver_js_execute_code')
 
         # Requests for PDF's, images etc should be passwd the is_binary flag
-        is_binary = watch.is_pdf
+        is_binary = self.watch.is_pdf
 
         # And here we go! call the right browser with browser-specific settings
-        self.fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch.get('include_filters'),
+        self.fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, self.watch.get('include_filters'),
                     is_binary=is_binary)
         self.fetcher.quit()
 
         # After init, call run() which will do the actual change-detection
 
     @abstractmethod
-    def run(self, uuid, skip_when_checksum_same=True):
+    def run_changedetection(self, uuid, skip_when_checksum_same=True):
         update_obj = {'last_notification_error': False, 'last_error': False}
         some_data = 'xxxxx'
         update_obj["previous_md5"] = hashlib.md5(some_data.encode('utf-8')).hexdigest()

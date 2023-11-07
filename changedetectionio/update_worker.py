@@ -209,6 +209,7 @@ class update_worker(threading.Thread):
         from .processors import text_json_diff, restock_diff
 
         while not self.app.config.exit.is_set():
+            update_handler = None
 
             try:
                 queued_item_data = self.q.get(block=False)
@@ -253,7 +254,9 @@ class update_worker(threading.Thread):
                         # Clear last errors (move to preflight func?)
                         self.datastore.data['watching'][uuid]['browser_steps_last_error_step'] = None
 
-                        changed_detected, update_obj, contents = update_handler.run(uuid,
+                        update_handler.call_browser()
+
+                        changed_detected, update_obj, contents = update_handler.run_changedetection(uuid,
                                                                                     skip_when_checksum_same=skip_when_same_checksum,
                                                                                     )
 
@@ -407,6 +410,8 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
                         # Other serious error
                         process_changedetection_results = False
+
+                        # the thread is still running??
                     else:
                         # Crash protection, the watch entry could have been removed by this point (during a slow chrome fetch etc)
                         if not self.datastore.data['watching'].get(uuid):

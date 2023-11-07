@@ -19,7 +19,7 @@ class perform_site_check(difference_detection_processor):
     screenshot = None
     xpath_data = None
 
-    def run(self, uuid, skip_when_checksum_same=True):
+    def run_changedetection(self, uuid, skip_when_checksum_same=True):
 
         # DeepCopy so we can be sure we don't accidently change anything by reference
         watch = deepcopy(self.datastore.data['watching'].get(uuid))

@@ -33,8 +33,9 @@ class PDFToHTMLToolNotFound(ValueError):
 # (set_proxy_from_list)
 class perform_site_check(difference_detection_processor):
 
-    def run(self, uuid, skip_when_checksum_same=True):
+    def run_changedetection(self, uuid, skip_when_checksum_same=True):
         changed_detected = False
+        html_content = ""
         screenshot = False  # as bytes
         stripped_text_from_html = ""
 
