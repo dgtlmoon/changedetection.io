@@ -146,7 +146,13 @@ class model(dict):
                 flash(message, 'error')
                 return ''
 
+        if ready_url.startswith('source:'):
+            ready_url=ready_url.replace('source:', '')
         return ready_url
+
+    @property
+    def is_source_type_url(self):
+        return self.get('url', '').startswith('source:')
 
     @property
     def get_fetch_backend(self):

@@ -49,12 +49,6 @@ class perform_site_check(difference_detection_processor):
 
         url = watch.link
 
-        # source: support
-        is_source = False
-        if url.startswith('source:'):
-            url = url.replace('source:', '')
-            is_source = True
-
         self.screenshot = self.fetcher.screenshot
         self.xpath_data = self.fetcher.xpath_data
 
@@ -89,7 +83,7 @@ class perform_site_check(difference_detection_processor):
                 is_rss = True
 
         # source: support, basically treat it as plaintext
-        if is_source:
+        if watch.is_source_type_url:
             is_html = False
             is_json = False
 
@@ -154,7 +148,7 @@ class perform_site_check(difference_detection_processor):
                     stripped_text_from_html += html_tools.extract_json_as_string(content=self.fetcher.content, json_filter=filter)
                     is_html = False
 
-        if is_html or is_source:
+        if is_html or watch.is_source_type_url:
 
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
             self.fetcher.content = html_tools.workarounds_for_obfuscations(self.fetcher.content)
@@ -177,13 +171,13 @@ class perform_site_check(difference_detection_processor):
                         if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
                             html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
                                                                     html_content=self.fetcher.content,
-                                                                    append_pretty_line_formatting=not is_source,
+                                                                    append_pretty_line_formatting=not watch.is_source_type_url,
                                                                     is_rss=is_rss)
                         else:
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                             html_content += html_tools.include_filters(include_filters=filter_rule,
                                                                        html_content=self.fetcher.content,
-                                                                       append_pretty_line_formatting=not is_source)
+                                                                       append_pretty_line_formatting=not watch.is_source_type_url)
 
                     if not html_content.strip():
                         raise FilterNotFoundInResponse(include_filters_rule)
@@ -191,7 +185,7 @@ class perform_site_check(difference_detection_processor):
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)
 
-                if is_source:
+                if watch.is_source_type_url:
                     stripped_text_from_html = html_content
                 else:
                     # extract text
