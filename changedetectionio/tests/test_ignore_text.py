@@ -24,7 +24,6 @@ def test_strip_text_func():
 
     ignore_lines = ["sometimes"]
 
-    fetcher = fetch_site_status.perform_site_check(datastore=False)
     stripped_content = html_tools.strip_ignore_text(test_content, ignore_lines)
 
     assert b"sometimes" not in stripped_content
