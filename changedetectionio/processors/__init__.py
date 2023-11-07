@@ -1,6 +1,7 @@
 from abc import abstractmethod
 import os
 import hashlib
+import re
 from copy import deepcopy
 
 from changedetectionio import content_fetcher
@@ -17,6 +18,12 @@ class difference_detection_processor():
         super().__init__(*args, **kwargs)
         self.datastore = datastore
         self.watch = deepcopy(self.datastore.data['watching'].get(watch_uuid))
+
+        # Protect against file:// access
+        if re.search(r'^file', self.watch.get('url', ''), re.IGNORECASE) and not os.getenv('ALLOW_FILE_URI', False):
+            raise Exception(
+                "file:// type access is denied for security reasons."
+            )
 
 
     def call_browser(self):

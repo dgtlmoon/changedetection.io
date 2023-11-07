@@ -44,12 +44,6 @@ class perform_site_check(difference_detection_processor):
         if not watch:
             raise Exception("Watch no longer exists.")
 
-        # Protect against file:// access
-        if re.search(r'^file', watch.get('url', ''), re.IGNORECASE) and not os.getenv('ALLOW_FILE_URI', False):
-            raise Exception(
-                "file:// type access is denied for security reasons."
-            )
-
         # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False}
 
