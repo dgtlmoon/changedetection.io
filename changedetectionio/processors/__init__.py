@@ -87,9 +87,11 @@ class difference_detection_processor():
         # And here we go! call the right browser with browser-specific settings
         self.fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, self.watch.get('include_filters'),
                     is_binary=is_binary)
+
+        #@todo .quit here could go on close object, so we can run JS if change-detected
         self.fetcher.quit()
 
-        # After init, call run() which will do the actual change-detection
+        # After init, call run_changedetection() which will do the actual change-detection
 
     @abstractmethod
     def run_changedetection(self, uuid, skip_when_checksum_same=True):
