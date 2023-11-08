@@ -500,6 +500,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     notification_muted = BooleanField('Notifications Muted / Off', default=False)
     notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
+    notification_notify_on_failure = BooleanField('Send a notification on watch failure', default=False)
 
     def extra_tab_content(self):
         return None
