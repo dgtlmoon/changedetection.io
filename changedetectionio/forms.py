@@ -465,6 +465,7 @@ class watchForm(commonSettingsForm):
 
     notification_muted = BooleanField('Notifications Muted / Off', default=False)
     notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
+    notification_notify_on_failure = BooleanField('Send a notification on watch failure', default=False)
 
     def validate(self, **kwargs):
         if not super().validate():

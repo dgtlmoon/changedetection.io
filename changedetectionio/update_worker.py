@@ -1,19 +1,20 @@
+import logging
 import os
-import threading
 import queue
+import sys
+import threading
 import time
 
 from changedetectionio import content_fetcher, html_tools
-from .processors.text_json_diff import FilterNotFoundInResponse
 from .processors.restock_diff import UnableToExtractRestockData
+from .processors.text_json_diff import FilterNotFoundInResponse
+
 
 # A single update worker
 #
 # Requests for checking on a single site(watch) from a queue of watches
 # (another process inserts watches into the queue that are time-ready for checking)
 
-import logging
-import sys
 
 class update_worker(threading.Thread):
     current_uuid = None
@@ -52,20 +53,25 @@ class update_worker(threading.Thread):
             if triggered_text:
                 triggered_text = line_feed_sep.join(triggered_text)
 
-
         n_object.update({
             'current_snapshot': snapshot_contents,
-            'diff': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), line_feed_sep=line_feed_sep),
-            'diff_added': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_removed=False, line_feed_sep=line_feed_sep),
-            'diff_full': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_equal=True, line_feed_sep=line_feed_sep),
-            'diff_patch': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), line_feed_sep=line_feed_sep, patch_format=True),
-            'diff_removed': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_added=False, line_feed_sep=line_feed_sep),
+            'diff': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]),
+                                     line_feed_sep=line_feed_sep),
+            'diff_added': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]),
+                                           include_removed=False, line_feed_sep=line_feed_sep),
+            'diff_full': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]),
+                                          include_equal=True, line_feed_sep=line_feed_sep),
+            'diff_patch': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]),
+                                           line_feed_sep=line_feed_sep, patch_format=True),
+            'diff_removed': diff.render_diff(watch.get_history_snapshot(dates[-2]),
+                                             watch.get_history_snapshot(dates[-1]), include_added=False,
+                                             line_feed_sep=line_feed_sep),
             'screenshot': watch.get_screenshot() if watch.get('notification_screenshot') else None,
             'triggered_text': triggered_text,
             'uuid': watch.get('uuid'),
             'watch_url': watch.get('url'),
         })
-        logging.info (">> SENDING NOTIFICATION")
+        logging.info(">> SENDING NOTIFICATION")
         self.notification_q.put(n_object)
 
     # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
@@ -76,7 +82,6 @@ class update_worker(threading.Thread):
             default_notification_body,
             default_notification_title
         )
-
 
         # Would be better if this was some kind of Object where Watch can reference the parent datastore etc
         v = watch.get(var_name)
@@ -138,7 +143,6 @@ class update_worker(threading.Thread):
 
         return queued
 
-
     def send_filter_failure_notification(self, watch_uuid):
 
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
@@ -173,12 +177,15 @@ class update_worker(threading.Thread):
         if not watch:
             return
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
-        n_object = {'notification_title': "Changedetection.io - Alert - Browser step at position {} could not be run".format(step_n+1),
-                    'notification_body': "Your configured browser step at position {} for {{watch['url']}} "
-                                         "did not appear on the page after {} attempts, did the page change layout? "
-                                         "Does it need a delay added?\n\nLink: {{base_url}}/edit/{{watch_uuid}}\n\n"
-                                         "Thanks - Your omniscient changedetection.io installation :)\n".format(step_n+1, threshold),
-                    'notification_format': 'text'}
+        n_object = {
+            'notification_title': "Changedetection.io - Alert - Browser step at position {} could not be run".format(
+                step_n + 1),
+            'notification_body': "Your configured browser step at position {} for {{watch['url']}} "
+                                 "did not appear on the page after {} attempts, did the page change layout? "
+                                 "Does it need a delay added?\n\nLink: {{base_url}}/edit/{{watch_uuid}}\n\n"
+                                 "Thanks - Your omniscient changedetection.io installation :)\n".format(step_n + 1,
+                                                                                                        threshold),
+            'notification_format': 'text'}
 
         if len(watch['notification_urls']):
             n_object['notification_urls'] = watch['notification_urls']
@@ -195,6 +202,26 @@ class update_worker(threading.Thread):
             self.notification_q.put(n_object)
             print("Sent step not found notification for {}".format(watch_uuid))
 
+    def send_failure_notification(self, watch_uuid: str, error_text: str):
+        watch = self.datastore.data['watching'].get(watch_uuid)
+        if not watch:
+            return
+
+        n_object = {'notification_title': 'Changedetection.io - Alert - {}'.format(error_text),
+                    'notification_body': "Your watch {{watch_url}} failed!\n\nLink: {{base_url}}/edit/{{watch_uuid}}\n\nThanks - Your omniscient changedetection.io installation :)\n",
+                    'notification_format': 'text'}
+
+        n_object['notification_urls'] = self._check_cascading_vars('notification_urls', watch)
+
+        # Only prepare to notify if the rules above matched
+        if n_object and n_object.get('notification_urls'):
+            n_object.update({
+                'watch_url': watch['url'],
+                'uuid': watch_uuid,
+                'screenshot': None
+            })
+            self.notification_q.put(n_object)
+            print("Sent error notification for {}".format(watch_uuid))
 
     def cleanup_error_artifacts(self, uuid):
         # All went fine, remove error artifacts
@@ -203,6 +230,44 @@ class update_worker(threading.Thread):
             full_path = os.path.join(self.datastore.datastore_path, uuid, f)
             if os.path.isfile(full_path):
                 os.unlink(full_path)
+
+    def _update_watch(self, uuid, update_obj, exception):
+        # TODO check if update succeeded or had an error.
+        #   If it had an error, handle notifications
+        #   If it did not have one, clean up any error states
+
+        # TODO Future - loop over notification handlers and send them the update_obj, allowing modification
+        last_error = update_obj.get('last_error', False)
+        if last_error:
+            # TODO Future - message notification handlers
+            if self.datastore.data['watching'][uuid].get('notification_notify_on_failure', False):
+                self.send_failure_notification(watch_uuid=uuid, error_text=update_obj['last_error'])
+            pass
+        else:
+            # TODO Future - message notification handlers
+            pass
+
+        self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
+
+        if isinstance(exception, FilterNotFoundInResponse) or isinstance(exception, content_fetcher.BrowserStepsStepTimout):
+            # Only when enabled, send the notification
+            if self.datastore.data['watching'][uuid].get('filter_failure_notification_send', False):
+                c = self.datastore.data['watching'][uuid].get('consecutive_filter_failures', 5)
+                c += 1
+                # Send notification if we reached the threshold?
+                threshold = self.datastore.data['settings']['application'].get(
+                    'filter_failure_notification_threshold_attempts',
+                    0)
+                print("Filter for {} not found, consecutive_filter_failures: {}".format(uuid, c))
+                if threshold > 0 and c >= threshold:
+                    if not self.datastore.data['watching'][uuid].get('notification_muted'):
+                        if isinstance(exception, FilterNotFoundInResponse):
+                            self.send_filter_failure_notification(uuid)
+                        else:
+                            self.send_step_failure_notification(watch_uuid=uuid, step_n=exception.step_n)
+                    c = 0
+
+                self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
 
     def run(self):
 
@@ -219,17 +284,21 @@ class update_worker(threading.Thread):
                 uuid = queued_item_data.item.get('uuid')
                 self.current_uuid = uuid
 
-                if uuid in list(self.datastore.data['watching'].keys()) and self.datastore.data['watching'][uuid].get('url'):
+                if uuid in list(self.datastore.data['watching'].keys()) and self.datastore.data['watching'][uuid].get(
+                        'url'):
                     changed_detected = False
                     contents = b''
                     process_changedetection_results = True
                     update_obj = {}
                     print("> Processing UUID {} Priority {} URL {}".format(uuid, queued_item_data.priority,
-                                                                           self.datastore.data['watching'][uuid]['url']))
+                                                                           self.datastore.data['watching'][uuid][
+                                                                               'url']))
                     now = time.time()
 
+                    # TODO Future - Handle error in update handlers
+
                     try:
-                        processor = self.datastore.data['watching'][uuid].get('processor','text_json_diff')
+                        processor = self.datastore.data['watching'][uuid].get('processor', 'text_json_diff')
 
                         # @todo some way to switch by name
                         if processor == 'restock_diff':
@@ -239,7 +308,9 @@ class update_worker(threading.Thread):
                             update_handler = text_json_diff.perform_site_check(datastore=self.datastore)
 
                         self.datastore.data['watching'][uuid]['browser_steps_last_error_step'] = None
-                        changed_detected, update_obj, contents = update_handler.run(uuid, skip_when_checksum_same=queued_item_data.item.get('skip_when_checksum_same'))
+                        changed_detected, update_obj, contents = update_handler.run(uuid,
+                                                                                    skip_when_checksum_same=queued_item_data.item.get(
+                                                                                        'skip_when_checksum_same'))
 
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
@@ -263,9 +334,9 @@ class update_worker(threading.Thread):
                             else:
                                 extra_help = ", it's possible that the filters were found, but contained no usable text."
 
-                        self.datastore.update_watch(uuid=uuid, update_obj={
+                        self._update_watch(uuid=uuid, update_obj={
                             'last_error': f"Got HTML content but no text found (With {e.status_code} reply code){extra_help}"
-                        })
+                        }, exception=e)
 
                         if e.screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot)
@@ -288,7 +359,7 @@ class update_worker(threading.Thread):
                         if e.page_text:
                             self.datastore.save_error_text(watch_uuid=uuid, contents=e.page_text)
 
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
+                        self._update_watch(uuid=uuid, update_obj={'last_error': err_text}, exception=e)
                         process_changedetection_results = False
 
                     except FilterNotFoundInResponse as e:
@@ -296,22 +367,7 @@ class update_worker(threading.Thread):
                             continue
 
                         err_text = "Warning, no filters were found, no change detection ran - Did the page change layout? update your Visual Filter if necessary."
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
-
-                        # Only when enabled, send the notification
-                        if self.datastore.data['watching'][uuid].get('filter_failure_notification_send', False):
-                            c = self.datastore.data['watching'][uuid].get('consecutive_filter_failures', 5)
-                            c += 1
-                            # Send notification if we reached the threshold?
-                            threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts',
-                                                                                           0)
-                            print("Filter for {} not found, consecutive_filter_failures: {}".format(uuid, c))
-                            if threshold > 0 and c >= threshold:
-                                if not self.datastore.data['watching'][uuid].get('notification_muted'):
-                                    self.send_filter_failure_notification(uuid)
-                                c = 0
-
-                            self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
+                        self._update_watch(uuid=uuid, update_obj={'last_error': err_text}, exception=e)
 
                         process_changedetection_results = False
 
@@ -319,7 +375,7 @@ class update_worker(threading.Thread):
                         # Yes fine, so nothing todo, don't continue to process.
                         process_changedetection_results = False
                         changed_detected = False
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': False})
+                        self._update_watch(uuid=uuid, update_obj={'last_error': False}, exception=None)
 
                     except content_fetcher.BrowserStepsStepTimout as e:
 
@@ -328,46 +384,36 @@ class update_worker(threading.Thread):
 
                         error_step = e.step_n + 1
                         err_text = f"Warning, browser step at position {error_step} could not run, target not found, check the watch, add a delay if necessary, view Browser Steps to see screenshot at that step"
-                        self.datastore.update_watch(uuid=uuid,
-                                                    update_obj={'last_error': err_text,
-                                                                'browser_steps_last_error_step': error_step
-                                                                }
-                                                    )
+                        self._update_watch(uuid=uuid,
+                                           update_obj={'last_error': err_text,
+                                                       'browser_steps_last_error_step': error_step
+                                                       },
+                                           exception=e)
 
-
-                        if self.datastore.data['watching'][uuid].get('filter_failure_notification_send', False):
-                            c = self.datastore.data['watching'][uuid].get('consecutive_filter_failures', 5)
-                            c += 1
-                            # Send notification if we reached the threshold?
-                            threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts',
-                                                                                           0)
-                            print("Step for {} not found, consecutive_filter_failures: {}".format(uuid, c))
-                            if threshold > 0 and c >= threshold:
-                                if not self.datastore.data['watching'][uuid].get('notification_muted'):
-                                    self.send_step_failure_notification(watch_uuid=uuid, step_n=e.step_n)
-                                c = 0
-
-                            self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
 
                         process_changedetection_results = False
 
                     except content_fetcher.EmptyReply as e:
                         # Some kind of custom to-str handler in the exception handler that does this?
-                        err_text = "EmptyReply - try increasing 'Wait seconds before extracting text', Status Code {}".format(e.status_code)
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
-                                                                           'last_check_status': e.status_code})
+                        err_text = "EmptyReply - try increasing 'Wait seconds before extracting text', Status Code {}".format(
+                            e.status_code)
+                        self._update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                  'last_check_status': e.status_code},
+                                           exception=e)
                         process_changedetection_results = False
                     except content_fetcher.ScreenshotUnavailable as e:
                         err_text = "Screenshot unavailable, page did not render fully in the expected time - try increasing 'Wait seconds before extracting text'"
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
-                                                                           'last_check_status': e.status_code})
+                        self._update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                  'last_check_status': e.status_code},
+                                           exception=e)
                         process_changedetection_results = False
                     except content_fetcher.JSActionExceptions as e:
-                        err_text = "Error running JS Actions - Page request - "+e.message
+                        err_text = "Error running JS Actions - Page request - " + e.message
                         if e.screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot, as_error=True)
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
-                                                                           'last_check_status': e.status_code})
+                        self._update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                  'last_check_status': e.status_code},
+                                           exception=e)
                         process_changedetection_results = False
                     except content_fetcher.PageUnloadable as e:
                         err_text = "Page request from server didnt respond correctly"
@@ -377,18 +423,20 @@ class update_worker(threading.Thread):
                         if e.screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot, as_error=True)
 
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
-                                                                           'last_check_status': e.status_code,
-                                                                           'has_ldjson_price_data': None})
+                        self._update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                  'last_check_status': e.status_code,
+                                                                  'has_ldjson_price_data': None},
+                                           exception=e)
                         process_changedetection_results = False
                     except UnableToExtractRestockData as e:
                         # Usually when fetcher.instock_data returns empty
                         self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Unable to extract restock data for this page unfortunately. (Got code {e.status_code} from server)"})
+                        self._update_watch(uuid=uuid, update_obj={
+                            'last_error': f"Unable to extract restock data for this page unfortunately. (Got code {e.status_code} from server)"}, exception=e)
                         process_changedetection_results = False
                     except Exception as e:
                         self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
+                        self._update_watch(uuid=uuid, update_obj={'last_error': str(e)}, exception=e)
                         # Other serious error
                         process_changedetection_results = False
                     else:
@@ -410,7 +458,7 @@ class update_worker(threading.Thread):
                     if process_changedetection_results:
                         try:
                             watch = self.datastore.data['watching'].get(uuid)
-                            self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
+                            self._update_watch(uuid=uuid, update_obj=update_obj, exception=None)
 
                             # Also save the snapshot on the first time checked
                             if changed_detected or not watch['last_checked']:
@@ -420,11 +468,12 @@ class update_worker(threading.Thread):
 
                             # A change was detected
                             if changed_detected:
-                                print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))
+                                print(">> Change detected in UUID {} - {}".format(uuid, watch['url']))
 
                                 # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
                                 if watch.history_n >= 2:
                                     if not self.datastore.data['watching'][uuid].get('notification_muted'):
+                                        # TODO Future - handle in notification handlers
                                         self.send_content_changed_notification(watch_uuid=uuid)
 
 
@@ -432,22 +481,21 @@ class update_worker(threading.Thread):
                             # Catch everything possible here, so that if a worker crashes, we don't lose it until restart!
                             print("!!!! Exception in update_worker !!!\n", e)
                             self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
-                            self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
+                            self._update_watch(uuid=uuid, update_obj={'last_error': str(e)}, exception=e)
 
                     if self.datastore.data['watching'].get(uuid):
                         # Always record that we atleast tried
                         count = self.datastore.data['watching'][uuid].get('check_count', 0) + 1
-                        self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
-                                                                           'last_checked': round(time.time()),
-                                                                           'check_count': count
-                                                                           })
+                        self._update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
+                                                                  'last_checked': round(time.time()),
+                                                                  'check_count': count
+                                                                  }, exception=None if process_changedetection_results else Exception("Unknown"))
 
                         # Always save the screenshot if it's available
                         if update_handler.screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=update_handler.screenshot)
                         if update_handler.xpath_data:
                             self.datastore.save_xpath_data(watch_uuid=uuid, data=update_handler.xpath_data)
-
 
                 self.current_uuid = None  # Done
                 self.q.task_done()
