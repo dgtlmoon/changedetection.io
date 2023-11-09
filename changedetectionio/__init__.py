@@ -1208,8 +1208,7 @@ def changedetection_app(config=None, datastore_o=None):
             # These files should be in our subdirectory
             try:
                 # set nocache, set content-type
-                watch_dir = datastore_o.datastore_path + "/" + filename
-                response = make_response(send_from_directory(filename="elements.json", directory=watch_dir, path=watch_dir + "/elements.json"))
+                response = make_response(send_from_directory(os.path.join(datastore_o.datastore_path, filename), "elements.json"))
                 response.headers['Content-type'] = 'application/json'
                 response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
                 response.headers['Pragma'] = 'no-cache'
