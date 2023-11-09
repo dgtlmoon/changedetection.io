@@ -57,6 +57,8 @@ def test_visual_selector_content_ready(client, live_server):
     # Attempt to fetch it via the web hook that the browser would use
     res = client.get(url_for('static_content', group='visual_selector_data', filename=uuid))
     json.loads(res.data)
+    assert res.mimetype == 'application/json'
+    assert res.status_code == 200
 
 
     # Some options should be enabled
