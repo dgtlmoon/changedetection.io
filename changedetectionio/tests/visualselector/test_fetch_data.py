@@ -54,6 +54,11 @@ def test_visual_selector_content_ready(client, live_server):
     with open(os.path.join('test-datastore', uuid, 'elements.json'), 'r') as f:
         json.load(f)
 
+    # Attempt to fetch it via the web hook that the browser would use
+    res = client.get(url_for('static_content', group='visual_selector_data', filename=uuid))
+    json.loads(res.data)
+
+
     # Some options should be enabled
     # @todo - in the future, the visibility should be toggled by JS from the request type setting
     res = client.get(
