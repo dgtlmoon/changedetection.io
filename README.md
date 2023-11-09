@@ -232,6 +232,13 @@ See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configura
 
 Raspberry Pi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! See the wiki for [details](https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver)
 
+## Import support
+
+Easily [import your list of websites to watch for changes in Excel .xslx file format](https://changedetection.io/tutorial/how-import-your-website-change-detection-lists-excel), or paste in lists of website URLs as plaintext. 
+
+Excel import is recommended - that way you can better organise tags/groups of websites and other features.
+
+
 ## API Support
 
 Supports managing the website watch list [via our API](https://changedetection.io/docs/api_v1/index.html)
