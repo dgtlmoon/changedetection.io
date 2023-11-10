@@ -9,6 +9,8 @@
 @import "parts/_spinners";
 @import "parts/_variables";
 @import "parts/_darkmode";
+@import "parts/_menu";
+@import "parts/_love";
 
 body {
   color: var(--color-text);
@@ -53,11 +55,6 @@ a.github-link {
   &:hover {
     color: var(--color-icon-github-hover);
   }
-}
-
-
-#toggle-search {
-  width: 2rem;
 }
 
 #search-q {
@@ -1082,3 +1079,4 @@ ul {
   border-radius: 3px;
   white-space: nowrap;
 }
+
