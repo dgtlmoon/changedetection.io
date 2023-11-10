@@ -6,6 +6,10 @@
   }
 
   li {
+    &.browser-step-with-error {
+      background-color: #ffd6d6;
+      border-radius: 4px;
+    }
     &:not(:first-child) {
       &:hover {
         opacity: 1.0;
@@ -44,7 +48,7 @@
 #browser-steps .flex-wrapper {
   display: flex;
   flex-flow: row;
-  height: 600px; /*@todo make this dynamic */
+  height: 70vh;
 }
 
 /*  this is duplicate :( */

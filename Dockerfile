@@ -1,5 +1,5 @@
 # pip dependencies install stage
-FROM python:3.10-slim-bullseye as builder
+FROM python:3.11-slim-bookworm as builder
 
 # See `cryptography` pin comment in requirements.txt
 ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
@@ -20,19 +20,23 @@ WORKDIR /install
 
 COPY requirements.txt /requirements.txt
 
+# Instructing pip to fetch wheels from piwheels.org" on ARMv6 and ARMv7 machines
+RUN if [ "$(dpkg --print-architecture)" = "armhf" ] || [ "$(dpkg --print-architecture)" = "armel" ]; then \
+      printf "[global]\nextra-index-url=https://www.piwheels.org/simple\n" > /etc/pip.conf; \
+    fi;
+
 RUN pip install --target=/dependencies -r /requirements.txt
 
 # Playwright is an alternative to Selenium
 # Excluded this package from requirements.txt to prevent arm/v6 and arm/v7 builds from failing
 # https://github.com/dgtlmoon/changedetection.io/pull/1067 also musl/alpine (not supported)
-RUN pip install --target=/dependencies playwright~=1.27.1 \
+RUN pip install --target=/dependencies playwright~=1.39 \
     || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
 
 # Final image stage
-FROM python:3.10-slim-bullseye
+FROM python:3.11-slim-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libssl1.1 \
     libxslt1.1 \
     # For pdftohtml
     poppler-utils \

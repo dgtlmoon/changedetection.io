@@ -77,6 +77,13 @@ ins {
   ins {
     padding: 0.5em;
   }
+
+  option:checked {
+    font-weight: bold;
+  }
+  [type=radio],[type=checkbox] {
+    vertical-align: middle;
+  }
 }
 
 .source {
@@ -118,4 +125,12 @@ td#diff-col div {
   img {
     max-width: 99%;
   }
+}
+
+#highlightSnippet {
+  background: var(--color-background);
+  padding: 1em;
+  border-radius: 5px;
+  background: var(--color-background);
+  box-shadow: 1px 1px 4px var(--color-shadow-jump);
 }

@@ -1,23 +1,44 @@
 
 from bs4 import BeautifulSoup
 from inscriptis import get_text
-from inscriptis.model.config import ParserConfig
 from jsonpath_ng.ext import parse
 from typing import List
+from inscriptis.css_profiles import CSS_PROFILES, HtmlElement
+from inscriptis.html_properties import Display
+from inscriptis.model.config import ParserConfig
+from xml.sax.saxutils import escape as xml_escape
 import json
 import re
+
 
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
 TEXT_FILTER_LIST_LINE_SUFFIX = "<br>"
 
+PERL_STYLE_REGEX = r'^/(.*?)/([a-z]*)?$'
 # 'price' , 'lowPrice', 'highPrice' are usually under here
-# all of those may or may not appear on different websites
-LD_JSON_PRODUCT_OFFER_SELECTOR = "json:$..offers"
+# All of those may or may not appear on different websites - I didnt find a way todo case-insensitive searching here
+LD_JSON_PRODUCT_OFFER_SELECTORS = ["json:$..offers", "json:$..Offers"]
 
 class JSONNotFound(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
-        
+
+
+# Doesn't look like python supports forward slash auto enclosure in re.findall
+# So convert it to inline flag "(?i)foobar" type configuration
+def perl_style_slash_enclosed_regex_to_options(regex):
+
+    res = re.search(PERL_STYLE_REGEX, regex, re.IGNORECASE)
+
+    if res:
+        flags = res.group(2) if res.group(2) else 'i'
+        regex = f"(?{flags}){res.group(1)}"
+    else:
+        # Fall back to just ignorecase as an option
+        regex = f"(?i){regex}"
+
+    return regex
+
 # Given a CSS Rule, and a blob of HTML, return the blob of HTML that matches
 def include_filters(include_filters, html_content, append_pretty_line_formatting=False):
     soup = BeautifulSoup(html_content, "html.parser")
@@ -50,10 +71,15 @@ def element_removal(selectors: List[str], html_content):
 
 
 # Return str Utf-8 of matched rules
-def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False):
+def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
     from lxml import etree, html
 
-    tree = html.fromstring(bytes(html_content, encoding='utf-8'))
+    parser = None
+    if is_rss:
+        # So that we can keep CDATA for cdata_in_document_to_text() to process
+        parser = etree.XMLParser(strip_cdata=False)
+
+    tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
     html_block = ""
 
     r = tree.xpath(xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'})
@@ -75,7 +101,6 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
             html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
 
     return html_block
-
 
 # Extract/find element
 def extract_element(find='title', html_content=''):
@@ -144,7 +169,6 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
 
         # Foreach <script json></script> blob.. just return the first that matches json_filter
         # As a last resort, try to parse the whole <body>
-        s = []
         soup = BeautifulSoup(content, 'html.parser')
 
         if ensure_is_ldjson_info_type:
@@ -170,13 +194,24 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
         
         for json_data in bs_jsons:
             stripped_text_from_html = _parse_json(json_data, json_filter)
+
             if ensure_is_ldjson_info_type:
                 # Could sometimes be list, string or something else random
                 if isinstance(json_data, dict):
                     # If it has LD JSON 'key' @type, and @type is 'product', and something was found for the search
                     # (Some sites have multiple of the same ld+json @type='product', but some have the review part, some have the 'price' part)
-                    if json_data.get('@type', False) and json_data.get('@type','').lower() == ensure_is_ldjson_info_type.lower() and stripped_text_from_html:
-                        break
+                    # @type could also be a list (Product, SubType)
+                    # LD_JSON auto-extract also requires some content PLUS the ldjson to be present
+                    # 1833 - could be either str or dict, should not be anything else
+                    if json_data.get('@type') and stripped_text_from_html:
+                        try:
+                            if json_data.get('@type') == str or json_data.get('@type') == dict:
+                                types = [json_data.get('@type')] if isinstance(json_data.get('@type'), str) else json_data.get('@type')
+                                if ensure_is_ldjson_info_type.lower() in [x.lower().strip() for x in types]:
+                                    break
+                        except:
+                            continue
+
             elif stripped_text_from_html:
                 break
 
@@ -191,40 +226,39 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
 #
 # wordlist - list of regex's (str) or words (str)
 def strip_ignore_text(content, wordlist, mode="content"):
-    ignore = []
-    ignore_regex = []
-
-    # @todo check this runs case insensitive
-    for k in wordlist:
-
-        # Is it a regex?
-        if k[0] == '/':
-            ignore_regex.append(k.strip(" /"))
-        else:
-            ignore.append(k)
-
     i = 0
     output = []
+    ignore_text = []
+    ignore_regex = []
     ignored_line_numbers = []
+
+    for k in wordlist:
+        # Is it a regex?
+        res = re.search(PERL_STYLE_REGEX, k, re.IGNORECASE)
+        if res:
+            ignore_regex.append(re.compile(perl_style_slash_enclosed_regex_to_options(k)))
+        else:
+            ignore_text.append(k.strip())
+
     for line in content.splitlines():
         i += 1
         # Always ignore blank lines in this mode. (when this function gets called)
+        got_match = False
         if len(line.strip()):
-            regex_matches = False
+            for l in ignore_text:
+                if l.lower() in line.lower():
+                    got_match = True
 
-            # if any of these match, skip
-            for regex in ignore_regex:
-                try:
-                    if re.search(regex, line, re.IGNORECASE):
-                        regex_matches = True
-                except Exception as e:
-                    continue
+            if not got_match:
+                for r in ignore_regex:
+                    if r.search(line):
+                        got_match = True
 
-            if not regex_matches and not any(skip_text.lower() in line.lower() for skip_text in ignore):
+            if not got_match:
+                # Not ignored
                 output.append(line.encode('utf8'))
             else:
                 ignored_line_numbers.append(i)
-
 
 
     # Used for finding out what to highlight
@@ -233,8 +267,15 @@ def strip_ignore_text(content, wordlist, mode="content"):
 
     return "\n".encode('utf8').join(output)
 
+def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False) -> str:
+    pattern = '<!\[CDATA\[(\s*(?:.(?<!\]\]>)\s*)*)\]\]>'
+    def repl(m):
+        text = m.group(1)
+        return xml_escape(html_to_text(html_content=text)).strip()
 
-def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
+    return re.sub(pattern, repl, html_content)
+
+def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=False) -> str:
     """Converts html string to a string with just the text. If ignoring
     rendering anchor tag content is enable, anchor tag content are also
     included in the text
@@ -250,16 +291,21 @@ def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
     #  if anchor tag content flag is set to True define a config for
     #  extracting this content
     if render_anchor_tag_content:
-
         parser_config = ParserConfig(
-            annotation_rules={"a": ["hyperlink"]}, display_links=True
+            annotation_rules={"a": ["hyperlink"]},
+            display_links=True
         )
-
-    # otherwise set config to None
+    # otherwise set config to None/default
     else:
         parser_config = None
 
-    # get text and annotations via inscriptis
+    # RSS Mode - Inscriptis will treat `title` as something else.
+    # Make it as a regular block display element (//item/title)
+    # This is a bit of a hack - the real way it to use XSLT to convert it to HTML #1874
+    if is_rss:
+        html_content = re.sub(r'<title([\s>])', r'<h1\1', html_content)
+        html_content = re.sub(r'</title>', r'</h1>', html_content)
+
     text_content = get_text(html_content, config=parser_config)
 
     return text_content
@@ -267,9 +313,18 @@ def html_to_text(html_content: str, render_anchor_tag_content=False) -> str:
 
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?
 def has_ldjson_product_info(content):
+    pricing_data = ''
+
     try:
-        pricing_data = extract_json_as_string(content=content, json_filter=LD_JSON_PRODUCT_OFFER_SELECTOR, ensure_is_ldjson_info_type="product")
-    except JSONNotFound as e:
+        if not 'application/ld+json' in content:
+            return False
+
+        for filter in LD_JSON_PRODUCT_OFFER_SELECTORS:
+            pricing_data += extract_json_as_string(content=content,
+                                                  json_filter=filter,
+                                                  ensure_is_ldjson_info_type="product")
+
+    except Exception as e:
         # Totally fine
         return False
     x=bool(pricing_data)

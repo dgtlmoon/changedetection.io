@@ -1,12 +1,15 @@
-import hashlib
 from abc import abstractmethod
+from distutils.util import strtobool
+from urllib.parse import urlparse
 import chardet
+import hashlib
 import json
 import logging
 import os
 import requests
 import sys
 import time
+import urllib.parse
 
 visualselector_xpath_selectors = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
 
@@ -77,11 +80,13 @@ class ScreenshotUnavailable(Exception):
 
 
 class ReplyWithContentButNoText(Exception):
-    def __init__(self, status_code, url, screenshot=None):
+    def __init__(self, status_code, url, screenshot=None, has_filters=False, html_content=''):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
         self.screenshot = screenshot
+        self.has_filters = has_filters
+        self.html_content = html_content
         return
 
 
@@ -154,6 +159,16 @@ class Fetcher():
         """
         return {k.lower(): v for k, v in self.headers.items()}
 
+    def browser_steps_get_valid_steps(self):
+        if self.browser_steps is not None and len(self.browser_steps):
+            valid_steps = filter(
+                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
+                self.browser_steps)
+
+            return valid_steps
+
+        return None
+
     def iterate_browser_steps(self):
         from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
         from playwright._impl._api_types import TimeoutError
@@ -165,10 +180,7 @@ class Fetcher():
         if self.browser_steps is not None and len(self.browser_steps):
             interface = steppable_browser_interface()
             interface.page = self.page
-
-            valid_steps = filter(
-                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
-                self.browser_steps)
+            valid_steps = self.browser_steps_get_valid_steps()
 
             for step in valid_steps:
                 step_n += 1
@@ -264,7 +276,6 @@ class base_html_playwright(Fetcher):
 
         if self.proxy:
             # Playwright needs separate username and password values
-            from urllib.parse import urlparse
             parsed = urlparse(self.proxy.get('server'))
             if parsed.username:
                 self.proxy['username'] = parsed.username
@@ -319,13 +330,11 @@ class base_html_playwright(Fetcher):
 
         # Append proxy connect string
         if self.proxy:
-            import urllib.parse
             # Remove username/password if it exists in the URL or you will receive "ERR_NO_SUPPORTED_PROXIES" error
             # Actual authentication handled by Puppeteer/node
             o = urlparse(self.proxy.get('server'))
             proxy_url = urllib.parse.quote(o._replace(netloc="{}:{}".format(o.hostname, o.port)).geturl())
-            browserless_function_url = f"{browserless_function_url}&--proxy-server={proxy_url}&dumpio=true"
-
+            browserless_function_url = f"{browserless_function_url}&--proxy-server={proxy_url}"
 
         try:
             amp = '&' if '?' in browserless_function_url else '?'
@@ -343,9 +352,9 @@ class base_html_playwright(Fetcher):
                         'req_headers': request_headers,
                         'screenshot_quality': int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)),
                         'url': url,
-                        'user_agent': request_headers.get('User-Agent', 'Mozilla/5.0'),
-                        'proxy_username': self.proxy.get('username','') if self.proxy else False,
-                        'proxy_password': self.proxy.get('password', '') if self.proxy else False,
+                        'user_agent': {k.lower(): v for k, v in request_headers.items()}.get('user-agent', None),
+                        'proxy_username': self.proxy.get('username', '') if self.proxy else False,
+                        'proxy_password': self.proxy.get('password', '') if self.proxy and self.proxy.get('username') else False,
                         'no_cache_list': [
                             'twitter',
                             '.pdf'
@@ -414,8 +423,8 @@ class base_html_playwright(Fetcher):
                 lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
                 self.browser_steps))
 
-        if not has_browser_steps:
-            if os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH'):
+        if not has_browser_steps and os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH'):
+            if strtobool(os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH')):
                 # Temporary backup solution until we rewrite the playwright code
                 return self.run_fetch_browserless_puppeteer(
                     url,
@@ -432,6 +441,7 @@ class base_html_playwright(Fetcher):
 
         self.delete_browser_steps_screenshots()
         response = None
+
         with sync_playwright() as p:
             browser_type = getattr(p, self.browser_type)
 
@@ -440,10 +450,13 @@ class base_html_playwright(Fetcher):
             # 60,000 connection timeout only
             browser = browser_type.connect_over_cdp(self.command_executor, timeout=60000)
 
+            # SOCKS5 with authentication is not supported (yet)
+            # https://github.com/microsoft/playwright/issues/10567
+
             # Set user agent to prevent Cloudflare from blocking the browser
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
             context = browser.new_context(
-                user_agent=request_headers.get('User-Agent', 'Mozilla/5.0'),
+                user_agent={k.lower(): v for k, v in request_headers.items()}.get('user-agent', None),
                 proxy=self.proxy,
                 # This is needed to enable JavaScript execution on GitHub and others
                 bypass_csp=True,
@@ -457,40 +470,26 @@ class base_html_playwright(Fetcher):
             if len(request_headers):
                 context.set_extra_http_headers(request_headers)
 
-                self.page.set_default_navigation_timeout(90000)
-                self.page.set_default_timeout(90000)
+            # Listen for all console events and handle errors
+            self.page.on("console", lambda msg: print(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
 
-                # Listen for all console events and handle errors
-                self.page.on("console", lambda msg: print(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
+            # Re-use as much code from browser steps as possible so its the same
+            from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
+            browsersteps_interface = steppable_browser_interface()
+            browsersteps_interface.page = self.page
 
-            # Goto page
-            try:
-                # Wait_until = commit
-                # - `'commit'` - consider operation to be finished when network response is received and the document started loading.
-                # Better to not use any smarts from Playwright and just wait an arbitrary number of seconds
-                # This seemed to solve nearly all 'TimeoutErrors'
-                response = self.page.goto(url, wait_until='commit')
-            except playwright._impl._api_types.Error as e:
-                # Retry once - https://github.com/browserless/chrome/issues/2485
-                # Sometimes errors related to invalid cert's and other can be random
-                print("Content Fetcher > retrying request got error - ", str(e))
-                time.sleep(1)
-                response = self.page.goto(url, wait_until='commit')
+            response = browsersteps_interface.action_goto_url(value=url)
+            self.headers = response.all_headers()
 
-            except Exception as e:
-                print("Content Fetcher > Other exception when page.goto", str(e))
+            if response is None:
                 context.close()
                 browser.close()
-                raise PageUnloadable(url=url, status_code=None, message=str(e))
+                print("Content Fetcher > Response object was none")
+                raise EmptyReply(url=url, status_code=None)
 
-            # Execute any browser steps
             try:
-                extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
-                self.page.wait_for_timeout(extra_wait * 1000)
-
                 if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
-                    self.page.evaluate(self.webdriver_js_execute_code)
-
+                    browsersteps_interface.action_execute_js(value=self.webdriver_js_execute_code, selector=None)
             except playwright._impl._api_types.TimeoutError as e:
                 context.close()
                 browser.close()
@@ -502,28 +501,26 @@ class base_html_playwright(Fetcher):
                 browser.close()
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
 
-            if response is None:
-                context.close()
-                browser.close()
-                print("Content Fetcher > Response object was none")
-                raise EmptyReply(url=url, status_code=None)
-
-            # Run Browser Steps here
-            self.iterate_browser_steps()
-
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
-            time.sleep(extra_wait)
+            self.page.wait_for_timeout(extra_wait * 1000)
 
-            self.content = self.page.content()
+
             self.status_code = response.status
+
+            if self.status_code != 200 and not ignore_status_codes:
+                raise Non200ErrorCodeReceived(url=url, status_code=self.status_code)
+
             if len(self.page.content().strip()) == 0:
                 context.close()
                 browser.close()
                 print("Content Fetcher > Content was empty")
                 raise EmptyReply(url=url, status_code=response.status)
 
-            self.status_code = response.status
-            self.headers = response.all_headers()
+            # Run Browser Steps here
+            if self.browser_steps_get_valid_steps():
+                self.iterate_browser_steps()
+                
+            self.page.wait_for_timeout(extra_wait * 1000)
 
             # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
             if current_include_filters is not None:
@@ -535,6 +532,7 @@ class base_html_playwright(Fetcher):
                 "async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}")
             self.instock_data = self.page.evaluate("async () => {" + self.instock_data_js + "}")
 
+            self.content = self.page.content()
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
@@ -549,7 +547,7 @@ class base_html_playwright(Fetcher):
             except Exception as e:
                 context.close()
                 browser.close()
-                raise ScreenshotUnavailable(url=url, status_code=None)
+                raise ScreenshotUnavailable(url=url, status_code=response.status_code)
 
             context.close()
             browser.close()
@@ -608,15 +606,17 @@ class base_html_webdriver(Fetcher):
             is_binary=False):
 
         from selenium import webdriver
-        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+        from selenium.webdriver.chrome.options import Options as ChromeOptions
         from selenium.common.exceptions import WebDriverException
         # request_body, request_method unused for now, until some magic in the future happens.
 
-        # check env for WEBDRIVER_URL
+        options = ChromeOptions()
+        if self.proxy:
+            options.proxy = self.proxy
+
         self.driver = webdriver.Remote(
             command_executor=self.command_executor,
-            desired_capabilities=DesiredCapabilities.CHROME,
-            proxy=self.proxy)
+            options=options)
 
         try:
             self.driver.get(url)
@@ -648,11 +648,11 @@ class base_html_webdriver(Fetcher):
     # Does the connection to the webdriver work? run a test connection.
     def is_ready(self):
         from selenium import webdriver
-        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+        from selenium.webdriver.chrome.options import Options as ChromeOptions
 
         self.driver = webdriver.Remote(
             command_executor=self.command_executor,
-            desired_capabilities=DesiredCapabilities.CHROME)
+            options=ChromeOptions())
 
         # driver.quit() seems to cause better exceptions
         self.quit()
@@ -684,13 +684,17 @@ class html_requests(Fetcher):
             is_binary=False):
 
         # Make requests use a more modern looking user-agent
-        if not 'User-Agent' in request_headers:
+        if not {k.lower(): v for k, v in request_headers.items()}.get('user-agent', None):
             request_headers['User-Agent'] = os.getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT",
                                                       'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36')
 
         proxies = {}
 
         # Allows override the proxy on a per-request basis
+
+        # https://requests.readthedocs.io/en/latest/user/advanced/#socks
+        # Should also work with `socks5://user:pass@host:port` type syntax.
+
         if self.proxy_override:
             proxies = {'http': self.proxy_override, 'https': self.proxy_override, 'ftp': self.proxy_override}
         else:

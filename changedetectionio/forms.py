@@ -1,5 +1,6 @@
 import os
 import re
+from distutils.util import strtobool
 
 from wtforms import (
     BooleanField,
@@ -14,14 +15,20 @@ from wtforms import (
     validators,
     widgets
 )
+from flask_wtf.file import FileField, FileAllowed
 from wtforms.fields import FieldList
+
 from wtforms.validators import ValidationError
+
+from validators.url import url as url_validator
+
 
 # default
 # each select <option data-enabled="enabled-0-0"
 from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
 
-from changedetectionio import content_fetcher
+from changedetectionio import content_fetcher, html_tools
+
 from changedetectionio.notification import (
     valid_notification_formats,
 )
@@ -39,7 +46,7 @@ valid_method = {
 }
 
 default_method = 'GET'
-
+allow_simplehost = not strtobool(os.getenv('BLOCK_SIMPLEHOSTS', 'False'))
 
 class StringListField(StringField):
     widget = widgets.TextArea()
@@ -228,16 +235,19 @@ class ValidateJinja2Template(object):
     def __call__(self, form, field):
         from changedetectionio import notification
 
-        from jinja2 import Environment, BaseLoader, TemplateSyntaxError
+        from jinja2 import Environment, BaseLoader, TemplateSyntaxError, UndefinedError
         from jinja2.meta import find_undeclared_variables
 
 
         try:
             jinja2_env = Environment(loader=BaseLoader)
             jinja2_env.globals.update(notification.valid_tokens)
+
             rendered = jinja2_env.from_string(field.data).render()
         except TemplateSyntaxError as e:
             raise ValidationError(f"This is not a valid Jinja2 template: {e}") from e
+        except UndefinedError as e:
+            raise ValidationError(f"A variable or function is not defined: {e}") from e
 
         ast = jinja2_env.parse(field.data)
         undefined = ", ".join(find_undeclared_variables(ast))
@@ -256,18 +266,23 @@ class validateURL(object):
         self.message = message
 
     def __call__(self, form, field):
-        import validators
+        # This should raise a ValidationError() or not
+        validate_url(field.data)
 
-        try:
-            validators.url(field.data.strip())
-        except validators.ValidationFailure:
-            message = field.gettext('\'%s\' is not a valid URL.' % (field.data.strip()))
-            raise ValidationError(message)
+def validate_url(test_url):
+    # If hosts that only contain alphanumerics are allowed ("localhost" for example)
+    try:
+        url_validator(test_url, simple_host=allow_simplehost)
+    except validators.ValidationError:
+        #@todo check for xss
+        message = f"'{test_url}' is not a valid URL."
+        # This should be wtforms.validators.
+        raise ValidationError(message)
 
-        from .model.Watch import is_safe_url
-        if not is_safe_url(field.data):
-            raise ValidationError('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX')
-
+    from .model.Watch import is_safe_url
+    if not is_safe_url(test_url):
+        # This should be wtforms.validators.
+        raise ValidationError('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX or incorrect URL format')
 
 class ValidateListRegex(object):
     """
@@ -279,11 +294,10 @@ class ValidateListRegex(object):
     def __call__(self, form, field):
 
         for line in field.data:
-            if line[0] == '/' and line[-1] == '/':
-                # Because internally we dont wrap in /
-                line = line.strip('/')
+            if re.search(html_tools.PERL_STYLE_REGEX, line, re.IGNORECASE):
                 try:
-                    re.compile(line)
+                    regex = html_tools.perl_style_slash_enclosed_regex_to_options(line)
+                    re.compile(regex)
                 except re.error:
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))
@@ -393,6 +407,9 @@ class importForm(Form):
     from . import processors
     processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
     urls = TextAreaField('URLs')
+    xlsx_file = FileField('Upload .xlsx file', validators=[FileAllowed(['xlsx'], 'Must be .xlsx file!')])
+    file_mapping = SelectField('File mapping', [validators.DataRequired()], choices={('wachete', 'Wachete mapping'), ('custom','Custom mapping')})
+
 
 class SingleBrowserStep(Form):
 
@@ -476,7 +493,7 @@ class SingleExtraProxy(Form):
 
     # maybe better to set some <script>var..
     proxy_name = StringField('Name', [validators.Optional()], render_kw={"placeholder": "Name"})
-    proxy_url = StringField('Proxy URL', [validators.Optional()], render_kw={"placeholder": "http://user:pass@...:3128", "size":50})
+    proxy_url = StringField('Proxy URL', [validators.Optional()], render_kw={"placeholder": "socks5:// or regular proxy http://user:pass@...:3128", "size":50})
     # @todo do the validation here instead
 
 # datastore.data['settings']['requests']..
@@ -500,7 +517,10 @@ class globalSettingsRequestForm(Form):
 class globalSettingsApplicationForm(commonSettingsForm):
 
     api_access_token_enabled = BooleanField('API access token security check enabled', default=True, validators=[validators.Optional()])
-    base_url = StringField('Base URL', validators=[validators.Optional()])
+    base_url = StringField('Notification base URL override',
+                           validators=[validators.Optional()],
+                           render_kw={"placeholder": os.getenv('BASE_URL', 'Not set')}
+                           )
     empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
     fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])

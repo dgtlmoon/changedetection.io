@@ -7,13 +7,13 @@ jobs:
   test-application:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # Mainly just for link/flake8
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v2
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
       - name: Lint with flake8
         run: |
@@ -29,13 +29,15 @@ jobs:
           docker network create changedet-network
 
           # Selenium+browserless
-          docker run --network changedet-network -d --hostname selenium  -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome-debug:3.141.59
-          docker run --network changedet-network -d --hostname browserless -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  browserless/chrome:1.53-chrome-stable
+          docker run --network changedet-network -d --hostname selenium  -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome:4
+          docker run --network changedet-network -d --hostname browserless -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  browserless/chrome:1.60-chrome-stable
 
       - name: Build changedetection.io container for testing
         run: |         
           # Build a changedetection.io container and start testing inside
           docker build . -t test-changedetectionio
+          # Debug info
+          docker run test-changedetectionio  bash -c 'pip list'
 
       - name: Spin up ancillary SMTP+Echo message test server
         run: |
@@ -44,7 +46,6 @@ jobs:
 
       - name: Test built container with pytest
         run: |
-          
           # Unit tests
           docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_notification_diff'
           
@@ -82,6 +83,7 @@ jobs:
         run: |
           cd changedetectionio
           ./run_proxy_tests.sh
+          # And again with PLAYWRIGHT_DRIVER_URL=..
           cd ..
 
       - name: Test changedetection.io container starts+runs basically without error

@@ -471,7 +471,11 @@ footer {
   padding: 10px;
 
   &#left-sticky {
-    left: 0px;
+    left: 0;
+    position: fixed;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    box-shadow: 1px 1px 4px var(--color-shadow-jump);
   }
 
   &#right-sticky {
@@ -939,32 +943,7 @@ ul {
   }
 }
 
-#selector-wrapper {
-  height: 100%;
-  overflow-y: scroll;
-  position: relative;
-
-  //width: 100%;
-  >img {
-    position: absolute;
-    z-index: 4;
-    max-width: 100%;
-  }
-
-  >canvas {
-    position: relative;
-    z-index: 5;
-    max-width: 100%;
-
-    &:hover {
-      cursor: pointer;
-    }
-  }
-}
-
-#selector-current-xpath {
-  font-size: 80%;
-}
+@import "parts/_visualselector";
 
 #webdriver-override-options {
   input[type="number"] {

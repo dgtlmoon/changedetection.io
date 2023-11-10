@@ -4,8 +4,10 @@
 {% from '_common_fields.jinja' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script>
-
+    const browser_steps_available_screenshots=JSON.parse('{{ watch.get_browsersteps_available_screenshots|tojson }}');
     const browser_steps_config=JSON.parse('{{ browser_steps_config|tojson }}');
+    const browser_steps_fetch_screenshot_image_url="{{url_for('browser_steps.browser_steps_fetch_screenshot_image', uuid=uuid)}}";
+    const browser_steps_last_error_step={{ watch.browser_steps_last_error_step|tojson }};
     const browser_steps_start_url="{{url_for('browser_steps.browsersteps_start_session', uuid=uuid)}}";
     const browser_steps_sync_url="{{url_for('browser_steps.browsersteps_ui_update', uuid=uuid)}}";
 {% if emailprefix %}
@@ -49,6 +51,7 @@
             <li class="tab"><a href="#restock">Restock Detection</a></li>
             {% endif %}
             <li class="tab"><a href="#notifications">Notifications</a></li>
+            <li class="tab"><a href="#stats">Stats</a></li>
         </ul>
     </div>
 
@@ -109,7 +112,7 @@
                         <span class="pure-form-message-inline">
                             <p>Use the <strong>Basic</strong> method (default) where your watched site doesn't need Javascript to render.</p>
                             <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
-                            Tip: <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">Connect using BrightData Proxies, find out more here.</a>
+                            Tip: <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">Connect using Bright Data and Oxylabs Proxies, find out more here.</a>
                         </span>
                     </div>
                 {% if form.proxy %}
@@ -378,15 +381,16 @@ Unavailable") }}
                         {{ render_field(form.extract_text, rows=5, placeholder="\d+ online") }}
                         <span class="pure-form-message-inline">
                     <ul>
-                        <li>Extracts text in the final output (line by line) after other filters using regular expressions;
+                        <li>Extracts text in the final output (line by line) after other filters using regular expressions or string match;
                             <ul>
                                 <li>Regular expression &dash; example <code>/reports.+?2022/i</code></li>
+                                <li>Don't forget to consider the white-space at the start of a line <code>/.+?reports.+?2022/i</code></li>
                                 <li>Use <code>//(?aiLmsux))</code> type flags (more <a href="https://docs.python.org/3/library/re.html#index-15">information here</a>)<br></li>
                                 <li>Keyword example &dash; example <code>Out of stock</code></li>
                                 <li>Use groups to extract just that text &dash; example <code>/reports.+?(\d+)/i</code> returns a list of years only</li>
                             </ul>
                         </li>
-                        <li>One line per regular-expression/ string match</li>
+                        <li>One line per regular-expression/string match</li>
                     </ul>
                         </span>
                     </div>
@@ -440,7 +444,35 @@ Unavailable") }}
                 </fieldset>
             </div>
             {% endif %}
-
+            <div class="tab-pane-inner" id="stats">
+                <div class="pure-control-group">
+                    <style>
+                    #stats-table tr > td:first-child {
+                        font-weight: bold;
+                    }
+                    </style>
+                    <table class="pure-table" id="stats-table">
+                        <tbody>
+                        <tr>
+                            <td>Check count</td>
+                            <td>{{ "{:,}".format( watch.check_count) }}</td>
+                        </tr>
+                        <tr>
+                            <td>Consecutive filter failures</td>
+                            <td>{{ "{:,}".format( watch.consecutive_filter_failures) }}</td>
+                        </tr>
+                        <tr>
+                            <td>History length</td>
+                            <td>{{ "{:,}".format(watch.history|length) }}</td>
+                        </tr>
+                        <tr>
+                            <td>Last fetch time</td>
+                            <td>{{ watch.fetch_time }}s</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             <div id="actions">
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}

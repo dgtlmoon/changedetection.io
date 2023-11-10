@@ -3,7 +3,7 @@ import threading
 import queue
 import time
 
-from changedetectionio import content_fetcher
+from changedetectionio import content_fetcher, html_tools
 from .processors.text_json_diff import FilterNotFoundInResponse
 from .processors.restock_diff import UnableToExtractRestockData
 
@@ -58,6 +58,7 @@ class update_worker(threading.Thread):
             'diff': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), line_feed_sep=line_feed_sep),
             'diff_added': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_removed=False, line_feed_sep=line_feed_sep),
             'diff_full': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_equal=True, line_feed_sep=line_feed_sep),
+            'diff_patch': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), line_feed_sep=line_feed_sep, patch_format=True),
             'diff_removed': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_added=False, line_feed_sep=line_feed_sep),
             'screenshot': watch.get_screenshot() if watch.get('notification_screenshot') else None,
             'triggered_text': triggered_text,
@@ -237,7 +238,9 @@ class update_worker(threading.Thread):
                             # Used as a default and also by some tests
                             update_handler = text_json_diff.perform_site_check(datastore=self.datastore)
 
+                        self.datastore.data['watching'][uuid]['browser_steps_last_error_step'] = None
                         changed_detected, update_obj, contents = update_handler.run(uuid, skip_when_checksum_same=queued_item_data.item.get('skip_when_checksum_same'))
+
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
                         # We then convert/.decode('utf-8') for the notification etc
@@ -250,7 +253,20 @@ class update_worker(threading.Thread):
                         # Totally fine, it's by choice - just continue on, nothing more to care about
                         # Page had elements/content but no renderable text
                         # Backend (not filters) gave zero output
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Got HTML content but no text found (With {} reply code).".format(e.status_code)})
+                        extra_help = ""
+                        if e.has_filters:
+                            # Maybe it contains an image? offer a more helpful link
+                            has_img = html_tools.include_filters(include_filters='img',
+                                                                 html_content=e.html_content)
+                            if has_img:
+                                extra_help = ", it's possible that the filters you have give an empty result or contain only an image."
+                            else:
+                                extra_help = ", it's possible that the filters were found, but contained no usable text."
+
+                        self.datastore.update_watch(uuid=uuid, update_obj={
+                            'last_error': f"Got HTML content but no text found (With {e.status_code} reply code){extra_help}"
+                        })
+
                         if e.screenshot:
                             self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot)
                         process_changedetection_results = False
@@ -310,8 +326,13 @@ class update_worker(threading.Thread):
                         if not self.datastore.data['watching'].get(uuid):
                             continue
 
-                        err_text = "Warning, browser step at position {} could not run, target not found, check the watch, add a delay if necessary.".format(e.step_n+1)
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
+                        error_step = e.step_n + 1
+                        err_text = f"Warning, browser step at position {error_step} could not run, target not found, check the watch, add a delay if necessary, view Browser Steps to see screenshot at that step"
+                        self.datastore.update_watch(uuid=uuid,
+                                                    update_obj={'last_error': err_text,
+                                                                'browser_steps_last_error_step': error_step
+                                                                }
+                                                    )
 
 
                         if self.datastore.data['watching'][uuid].get('filter_failure_notification_send', False):

@@ -26,6 +26,9 @@
   #browser_steps li {
     list-style: decimal;
     padding: 5px; }
+    #browser_steps li.browser-step-with-error {
+      background-color: #ffd6d6;
+      border-radius: 4px; }
     #browser_steps li:not(:first-child):hover {
       opacity: 1.0; }
     #browser_steps li .control {
@@ -50,8 +53,7 @@
 #browser-steps .flex-wrapper {
   display: flex;
   flex-flow: row;
-  height: 600px;
-  /*@todo make this dynamic */ }
+  height: 70vh; }
 
 /*  this is duplicate :( */
 #browsersteps-selector-wrapper {
@@ -113,6 +115,18 @@ body.proxy-check-active #request .proxy-timing {
   font-size: 80%;
   padding-left: 1rem;
   color: var(--color-link); }
+
+#recommended-proxy {
+  display: grid;
+  gap: 2rem;
+  padding-bottom: 1em; }
+  @media (min-width: 991px) {
+    #recommended-proxy {
+      grid-template-columns: repeat(2, 1fr); } }
+  #recommended-proxy > div {
+    border: 1px #aaa solid;
+    border-radius: 4px;
+    padding: 1em; }
 
 .pagination-page-info {
   color: #fff;
@@ -656,7 +670,11 @@ footer {
   background: var(--color-background);
   padding: 10px; }
   .sticky-tab#left-sticky {
-    left: 0px; }
+    left: 0;
+    position: fixed;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    box-shadow: 1px 1px 4px var(--color-shadow-jump); }
   .sticky-tab#right-sticky {
     right: 0px; }
   .sticky-tab#hosted-sticky {
@@ -965,6 +983,7 @@ ul {
 
 #selector-wrapper {
   height: 100%;
+  max-height: 70vh;
   overflow-y: scroll;
   position: relative; }
   #selector-wrapper > img {

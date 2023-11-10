@@ -35,14 +35,18 @@ def customSequenceMatcher(before, after, include_equal=False, include_removed=Tr
 
 # only_differences - only return info about the differences, no context
 # line_feed_sep could be "<br>" or "<li>" or "\n" etc
-def render_diff(previous_version_file_contents, newest_version_file_contents, include_equal=False, include_removed=True, include_added=True, include_replaced=True, line_feed_sep="\n", include_change_type_prefix=True):
+def render_diff(previous_version_file_contents, newest_version_file_contents, include_equal=False, include_removed=True, include_added=True, include_replaced=True, line_feed_sep="\n", include_change_type_prefix=True, patch_format=False):
 
     newest_version_file_contents = [line.rstrip() for line in newest_version_file_contents.splitlines()]
 
     if previous_version_file_contents:
-            previous_version_file_contents = [line.rstrip() for line in previous_version_file_contents.splitlines()]
+        previous_version_file_contents = [line.rstrip() for line in previous_version_file_contents.splitlines()]
     else:
         previous_version_file_contents = ""
+
+    if patch_format:
+        patch = difflib.unified_diff(previous_version_file_contents, newest_version_file_contents)
+        return line_feed_sep.join(patch)
 
     rendered_diff = customSequenceMatcher(before=previous_version_file_contents,
                                           after=newest_version_file_contents,

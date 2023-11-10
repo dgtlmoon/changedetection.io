@@ -1,3 +1,5 @@
+from distutils.util import strtobool
+
 from flask import (
     flash
 )
@@ -15,6 +17,9 @@ import secrets
 import threading
 import time
 import uuid as uuid_builder
+
+# Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
+BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
 
 dictfilt = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
 
@@ -37,6 +42,7 @@ class ChangeDetectionStore:
         self.__data = App.model()
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
+        print(">>> Datastore path is ", self.json_store_path)
         self.needs_write = False
         self.start_time = time.time()
         self.stop_thread = False
@@ -90,6 +96,14 @@ class ChangeDetectionStore:
                 self.add_watch(url='https://changedetection.io/CHANGELOG.txt',
                                tag='changedetection.io',
                                extras={'fetch_backend': 'html_requests'})
+
+            updates_available = self.get_updates_available()
+            self.__data['settings']['application']['schema_version'] = updates_available.pop()
+
+        else:
+            # Bump the update version by running updates
+            self.run_updates()
+
         self.__data['version_tag'] = version_tag
 
         # Just to test that proxies.json if it exists, doesnt throw a parsing error on startup
@@ -118,9 +132,6 @@ class ChangeDetectionStore:
         if not 'api_access_token' in self.__data['settings']['application']:
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['api_access_token'] = secret
-
-        # Bump the update version by running updates
-        self.run_updates()
 
         self.needs_write = True
 
@@ -173,12 +184,21 @@ class ChangeDetectionStore:
 
     @property
     def data(self):
-        # Re #152, Return env base_url if not overriden, @todo also prefer the proxy pass url
-        env_base_url = os.getenv('BASE_URL','')
-        if not self.__data['settings']['application']['base_url']:
-          self.__data['settings']['application']['base_url'] = env_base_url.strip('" ')
+        # Re #152, Return env base_url if not overriden
+        # Re #148 - Some people have just {{ base_url }} in the body or title, but this may break some notification services
+        #           like 'Join', so it's always best to atleast set something obvious so that they are not broken.
 
-        return self.__data
+        active_base_url = BASE_URL_NOT_SET_TEXT
+        if self.__data['settings']['application'].get('base_url'):
+            active_base_url = self.__data['settings']['application'].get('base_url')
+        elif os.getenv('BASE_URL'):
+            active_base_url = os.getenv('BASE_URL')
+
+        # I looked at various ways todo the following, but in the end just copying the dict seemed simplest/most reliable
+        # even given the memory tradeoff - if you know a better way.. maybe return d|self.__data.. or something
+        d = self.__data
+        d['settings']['application']['active_base_url'] = active_base_url.strip('" ')
+        return d
 
     # Delete a single watch by UUID
     def delete(self, uuid):
@@ -224,12 +244,16 @@ class ChangeDetectionStore:
         import pathlib
 
         self.__data['watching'][uuid].update({
-                'last_checked': 0,
+                'browser_steps_last_error_step' : None,
+                'check_count': 0,
+                'fetch_time' : 0.0,
                 'has_ldjson_price_data': None,
+                'last_checked': 0,
                 'last_error': False,
                 'last_notification_error': False,
                 'last_viewed': 0,
                 'previous_md5': False,
+                'previous_md5_before_filters': False,
                 'track_ldjson_price_data': None,
             })
 
@@ -325,6 +349,9 @@ class ChangeDetectionStore:
             if k in apply_extras:
                 del apply_extras[k]
 
+        if not apply_extras.get('date_created'):
+            apply_extras['date_created'] = int(time.time())
+
         new_watch.update(apply_extras)
         new_watch.ensure_data_dir_exists()
         self.__data['watching'][new_uuid] = new_watch
@@ -332,6 +359,8 @@ class ChangeDetectionStore:
 
         if write_to_disk_now:
             self.sync_to_json()
+
+        print("added ", url)
 
         return new_uuid
 
@@ -468,6 +497,8 @@ class ChangeDetectionStore:
                     k = "ui-" + str(i) + proxy.get('proxy_name')
                     proxy_list[k] = {'label': proxy.get('proxy_name'), 'url': proxy.get('proxy_url')}
 
+        if proxy_list and strtobool(os.getenv('ENABLE_NO_PROXY_OPTION', 'True')):
+            proxy_list["no-proxy"] = {'label': "No proxy", 'url': ''}
 
         return proxy_list if len(proxy_list) else None
 
@@ -484,6 +515,9 @@ class ChangeDetectionStore:
 
         # If it's a valid one
         watch = self.data['watching'].get(uuid)
+
+        if strtobool(os.getenv('ENABLE_NO_PROXY_OPTION', 'True')) and watch.get('proxy') == "no-proxy":
+            return None
 
         if watch.get('proxy') and watch.get('proxy') in list(self.proxy_list.keys()):
             return watch.get('proxy')
@@ -602,14 +636,8 @@ class ChangeDetectionStore:
     def tag_exists_by_name(self, tag_name):
         return any(v.get('title', '').lower() == tag_name.lower() for k, v in self.__data['settings']['application']['tags'].items())
 
-    # Run all updates
-    # IMPORTANT - Each update could be run even when they have a new install and the schema is correct
-    #             So therefor - each `update_n` should be very careful about checking if it needs to actually run
-    #             Probably we should bump the current update schema version with each tag release version?
-    def run_updates(self):
+    def get_updates_available(self):
         import inspect
-        import shutil
-
         updates_available = []
         for i, o in inspect.getmembers(self, predicate=inspect.ismethod):
             m = re.search(r'update_(\d+)$', i)
@@ -617,6 +645,15 @@ class ChangeDetectionStore:
                 updates_available.append(int(m.group(1)))
         updates_available.sort()
 
+        return updates_available
+
+    # Run all updates
+    # IMPORTANT - Each update could be run even when they have a new install and the schema is correct
+    #             So therefor - each `update_n` should be very careful about checking if it needs to actually run
+    #             Probably we should bump the current update schema version with each tag release version?
+    def run_updates(self):
+        import shutil
+        updates_available = self.get_updates_available()
         for update_n in updates_available:
             if update_n > self.__data['settings']['application']['schema_version']:
                 print ("Applying update_{}".format((update_n)))
@@ -778,15 +815,6 @@ class ChangeDetectionStore:
                 continue
         return
 
-    # We don't know when the date_created was in the past until now, so just add an index number for now.
-    def update_11(self):
-        i = 0
-        for uuid, watch in self.data['watching'].items():
-            if not watch.get('date_created'):
-                watch['date_created'] = i
-            i+=1
-        return
-
     # Create tag objects and their references from existing tag text
     def update_12(self):
         i = 0
@@ -800,3 +828,11 @@ class ChangeDetectionStore:
 
                 self.data['watching'][uuid]['tags'] = tag_uuids
 
+    # #1775 - Update 11 did not update the records correctly when adding 'date_created' values for sorting
+    def update_13(self):
+        i = 0
+        for uuid, watch in self.data['watching'].items():
+            if not watch.get('date_created'):
+                self.data['watching'][uuid]['date_created'] = i
+            i+=1
+        return

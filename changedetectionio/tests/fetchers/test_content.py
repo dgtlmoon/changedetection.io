@@ -28,8 +28,6 @@ def test_fetch_webdriver_content(client, live_server):
     )
 
     assert b"1 Imported" in res.data
-    time.sleep(3)
-
     wait_for_all_checks(client)
 
 
