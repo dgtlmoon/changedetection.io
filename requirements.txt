@@ -1,7 +1,8 @@
 eventlet>=0.31.0
 feedgen~=0.9
 flask-compress
-flask-login~=0.6
+# 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)
+flask-login>=0.6.3
 flask-paginate
 flask_expects_json~=1.7
 flask_restful
