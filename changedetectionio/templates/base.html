@@ -8,10 +8,10 @@
     <title>Change Detection{{extra_title}}</title>
     <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag %}- {{active_tag}}{% endif %}" href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}" >
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}" >
-    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}" >
+    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}?v={{ get_css_version() }}" >
     {% if extra_stylesheets %}
       {% for m in extra_stylesheets %}
-        <link rel="stylesheet" href="{{ m }}?ver=1000" >
+        <link rel="stylesheet" href="{{ m }}?ver={{ get_css_version() }}" >
       {% endfor %}
     {% endif %}
 
