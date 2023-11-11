@@ -1,4 +1,4 @@
-eventlet>=0.31.0
+eventlet>=0.33.3
 feedgen~=0.9
 flask-compress
 flask-login~=0.6
@@ -24,11 +24,7 @@ chardet>2.3.0
 wtforms~=3.0
 jsonpath-ng~=1.5.3
 
-
-# dnspython 2.3.0 is not compatible with eventlet
-# * https://github.com/eventlet/eventlet/issues/781
-# * https://datastax-oss.atlassian.net/browse/PYTHON-1320
-dnspython<2.3.0
+dnspython~=2.4
 
 # jq not available on Windows so must be installed manually
 
