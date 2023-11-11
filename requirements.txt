@@ -52,7 +52,7 @@ lxml
 
 selenium~=4.14.0
 
-werkzeug
+werkzeug~=3.0
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1
