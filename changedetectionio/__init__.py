@@ -105,6 +105,10 @@ def get_darkmode_state():
     css_dark_mode = request.cookies.get('css_dark_mode', 'false')
     return 'true' if css_dark_mode and strtobool(css_dark_mode) else 'false'
 
+@app.template_global()
+def get_css_version():
+    return __version__
+
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
 # running or something similar.
 @app.template_filter('format_last_checked_time')
