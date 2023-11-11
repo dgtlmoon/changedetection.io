@@ -17,6 +17,7 @@ function isItemInStock() {
     'currently unavailable',
     'dostępne wkrótce',
     'en rupture de stock',
+    'rupture de stock',
     'ist derzeit nicht auf lager',
     'item is no longer available',
     'message if back in stock',
