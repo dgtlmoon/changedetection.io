@@ -71,7 +71,7 @@ services:
      # RECOMMENDED FOR FETCHING PAGES WITH CHROME
 #    playwright-chrome:
 #        hostname: playwright-chrome
-#        image: browserless/chrome:1.60-chrome-stable
+#        image: ghcr.io/browserless/chrome:latest
 #        restart: unless-stopped
 #        environment:
 #            - SCREEN_WIDTH=1920
