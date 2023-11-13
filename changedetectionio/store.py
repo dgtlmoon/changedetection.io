@@ -848,3 +848,13 @@ class ChangeDetectionStore:
                 self.data['watching'][uuid]['date_created'] = i
             i+=1
         return
+
+    # #1774 - protect xpath1 against migration
+    def update_14(self):
+        for awatch in self.__data["watching"]:
+            if self.__data["watching"][awatch]['include_filters']:
+                for num, selector in enumerate(self.__data["watching"][awatch]['include_filters']):
+                    if selector.startswith('/'):
+                        self.__data["watching"][awatch]['include_filters'][num] = 'xpath1:' + selector
+                    if selector.startswith('xpath:'):
+                        self.__data["watching"][awatch]['include_filters'][num] = selector.replace('xpath:', 'xpath1:', 1)

@@ -328,11 +328,30 @@ class ValidateCSSJSONXPATHInput(object):
                 return
 
             # Does it look like XPath?
-            if line.strip()[0] == '/':
+            if line.strip()[0] == '/' or line.strip().startswith('xpath:'):
+                if not self.allow_xpath:
+                    raise ValidationError("XPath not permitted in this field!")
+                from lxml import etree, html
+                import elementpath
+                # xpath 2.0-3.1
+                from elementpath.xpath3 import XPath3Parser
+                tree = html.fromstring("<html></html>")
+                line = line.replace('xpath:', '')
+
+                try:
+                    elementpath.select(tree, line.strip(), parser=XPath3Parser)
+                except elementpath.ElementPathError as e:
+                    message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
+                    raise ValidationError(message % (line, str(e)))
+                except:
+                    raise ValidationError("A system-error occurred when validating your XPath expression")
+
+            if line.strip().startswith('xpath1:'):
                 if not self.allow_xpath:
                     raise ValidationError("XPath not permitted in this field!")
                 from lxml import etree, html
                 tree = html.fromstring("<html></html>")
+                line = line.replace('xpath1:', '')
 
                 try:
                     tree.xpath(line.strip())

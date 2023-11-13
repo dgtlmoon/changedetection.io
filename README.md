@@ -268,3 +268,7 @@ I offer commercial support, this software is depended on by network security, ae
 [license-shield]: https://img.shields.io/github/license/dgtlmoon/changedetection.io.svg?style=for-the-badge
 [release-link]: https://github.com/dgtlmoon/changedetection.io/releases
 [docker-link]: https://hub.docker.com/r/dgtlmoon/changedetection.io
+
+## Third-party licenses
+
+changedetectionio.html_tools.elementpath_tostring: Copyright (c), 2018-2021, SISSA (Scuola Internazionale Superiore di Studi Avanzati), Licensed under [MIT license](https://github.com/sissaschool/elementpath/blob/master/LICENSE)

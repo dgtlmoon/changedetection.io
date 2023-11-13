@@ -69,9 +69,88 @@ def element_removal(selectors: List[str], html_content):
     selector = ",".join(selectors)
     return subtractive_css_selector(selector, html_content)
 
+def elementpath_tostring(obj):
+    """
+    change elementpath.select results to string type
+    # The MIT License (MIT), Copyright (c), 2018-2021, SISSA (Scuola Internazionale Superiore di Studi Avanzati)
+    # https://github.com/sissaschool/elementpath/blob/dfcc2fd3d6011b16e02bf30459a7924f547b47d0/elementpath/xpath_tokens.py#L1038
+    """
+
+    import elementpath
+    from decimal import Decimal
+    import math
+
+    if obj is None:
+        return ''
+    # https://elementpath.readthedocs.io/en/latest/xpath_api.html#elementpath.select
+    elif isinstance(obj, elementpath.XPathNode):
+        return obj.string_value
+    elif isinstance(obj, bool):
+        return 'true' if obj else 'false'
+    elif isinstance(obj, Decimal):
+        value = format(obj, 'f')
+        if '.' in value:
+            return value.rstrip('0').rstrip('.')
+        return value
+
+    elif isinstance(obj, float):
+        if math.isnan(obj):
+            return 'NaN'
+        elif math.isinf(obj):
+            return str(obj).upper()
+
+        value = str(obj)
+        if '.' in value:
+            value = value.rstrip('0').rstrip('.')
+        if '+' in value:
+            value = value.replace('+', '')
+        if 'e' in value:
+            return value.upper()
+        return value
+
+    return str(obj)
 
 # Return str Utf-8 of matched rules
 def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
+    from lxml import etree, html
+    import elementpath
+    # xpath 2.0-3.1
+    from elementpath.xpath3 import XPath3Parser
+
+    parser = etree.HTMLParser()
+    if is_rss:
+        # So that we can keep CDATA for cdata_in_document_to_text() to process
+        parser = etree.XMLParser(strip_cdata=False)
+
+    tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
+    html_block = ""
+
+    r = elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser)
+    #@note: //title/text() wont work where <title>CDATA..
+
+    if type(r) != list:
+        r = [r]
+
+    for element in r:
+        # When there's more than 1 match, then add the suffix to separate each line
+        # And where the matched result doesn't include something that will cause Inscriptis to add a newline
+        # (This way each 'match' reliably has a new-line in the diff)
+        # Divs are converted to 4 whitespaces by inscriptis
+        if append_pretty_line_formatting and len(html_block) and (not hasattr( element, 'tag' ) or not element.tag in (['br', 'hr', 'div', 'p'])):
+            html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+
+        if type(element) == str:
+            html_block += element
+        elif issubclass(type(element), etree._Element) or issubclass(type(element), etree._ElementTree):
+            html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
+        else:
+            html_block += elementpath_tostring(element)
+
+    return html_block
+
+# Return str Utf-8 of matched rules
+# 'xpath1:'
+def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
     from lxml import etree, html
 
     parser = None

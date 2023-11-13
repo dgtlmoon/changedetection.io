@@ -173,6 +173,11 @@ class perform_site_check(difference_detection_processor):
                                                                     html_content=self.fetcher.content,
                                                                     append_pretty_line_formatting=not watch.is_source_type_url,
                                                                     is_rss=is_rss)
+                        elif filter_rule.startswith('xpath1:'):
+                            html_content += html_tools.xpath1_filter(xpath_filter=filter_rule.replace('xpath1:', ''),
+                                                                    html_content=fetcher.content,
+                                                                    append_pretty_line_formatting=not is_source,
+                                                                    is_rss=is_rss)
                         else:
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                             html_content += html_tools.include_filters(include_filters=filter_rule,
