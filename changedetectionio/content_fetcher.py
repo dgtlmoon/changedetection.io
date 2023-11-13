@@ -254,15 +254,14 @@ class base_html_playwright(Fetcher):
 
     def __init__(self, proxy_override=None, browser_connection_url=None):
         super().__init__()
-        # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
+
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
-        self.browser_connection_url = browser_connection_url
+        # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
         if not browser_connection_url:
-            self.browser_connection_url = os.getenv(
-                "PLAYWRIGHT_DRIVER_URL",
-                    'ws://playwright-chrome:3000'
-            ).strip('"')
+            self.browser_connection_url = os.getenv("PLAYWRIGHT_DRIVER_URL", 'ws://playwright-chrome:3000').strip('"')
+        else:
+            self.browser_connection_url = browser_connection_url
 
         # If any proxy settings are enabled, then we should setup the proxy object
         proxy_args = {}
@@ -575,8 +574,10 @@ class base_html_webdriver(Fetcher):
         from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
 
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
-        if not self.browser_connection_url:
+        if not browser_connection_url:
             self.browser_connection_url = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub').strip('"')
+        else:
+            self.browser_connection_url = browser_connection_url
 
         # If any proxy settings are enabled, then we should setup the proxy object
         proxy_args = {}
