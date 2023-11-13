@@ -170,9 +170,12 @@ if (include_filters.length) {
 
         try {
             // is it xpath?
-            if (f.startsWith('/') || f.startsWith('xpath:')) {
-                q = document.evaluate(f.replace('xpath:', ''), document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            if (f.startsWith('/') || f.startsWith('xpath')) {
+                var qry_f = f.replace(/xpath(:|\d:)/, '')
+                console.log("[xpath] Scanning for included filter " + qry_f)
+                q = document.evaluate(qry_f, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
             } else {
+                console.log("[css] Scanning for included filter " + f)
                 q = document.querySelector(f);
             }
         } catch (e) {
@@ -182,8 +185,18 @@ if (include_filters.length) {
         }
 
         if (q) {
+            // Try to resolve //something/text() back to its /something so we can atleast get the bounding box
+            try {
+                if (typeof q.nodeName == 'string' && q.nodeName === '#text') {
+                    q = q.parentElement
+                }
+            } catch (e) {
+                console.log(e)
+                console.log("xpath_element_scraper: #text resolver")
+            }
+
             // #1231 - IN the case XPath attribute filter is applied, we will have to traverse up and find the element.
-            if (q.hasOwnProperty('getBoundingClientRect')) {
+            if (typeof q.getBoundingClientRect == 'function') {
                 bbox = q.getBoundingClientRect();
                 console.log("xpath_element_scraper: Got filter element, scroll from top was " + scroll_y)
             } else {
@@ -192,7 +205,8 @@ if (include_filters.length) {
                     bbox = q.ownerElement.getBoundingClientRect();
                     console.log("xpath_element_scraper: Got filter by ownerElement element, scroll from top was " + scroll_y)
                 } catch (e) {
-                    console.log("xpath_element_scraper: error looking up ownerElement")
+                    console.log(e)
+                    console.log("xpath_element_scraper: error looking up q.ownerElement")
                 }
             }
         }

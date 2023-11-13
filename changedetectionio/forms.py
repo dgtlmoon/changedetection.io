@@ -351,7 +351,7 @@ class ValidateCSSJSONXPATHInput(object):
                     raise ValidationError("XPath not permitted in this field!")
                 from lxml import etree, html
                 tree = html.fromstring("<html></html>")
-                line = line.replace('xpath1:', '')
+                line = re.sub(r'^xpath1:', '', line)
 
                 try:
                     tree.xpath(line.strip())
