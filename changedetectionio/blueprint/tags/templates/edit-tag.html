@@ -69,11 +69,12 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                                 {% endif %}
                             </ul>
                         </li>
-                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash,
+                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash. To specify XPath to be used explicitly or the XPath rule starts with an XPath function: Prefix with <code>xpath:</code>
                             <ul>
-                                <li>Example:  <code>//*[contains(@class, 'sametext')]</code> or <code>xpath://*[contains(@class, 'sametext')]</code>, <a
+                                <li>Example:  <code>//*[contains(@class, 'sametext')]</code> or <code>xpath:count(//*[contains(@class, 'sametext')])</code>, <a
                                 href="http://xpather.com/" target="new">test your XPath here</a></li>
                                 <li>Example: Get all titles from an RSS feed <code>//title/text()</code></li>
+                                <li>To use XPath1.0: Prefix with <code>xpath1:</code></li>
                             </ul>
                             </li>
                     </ul>

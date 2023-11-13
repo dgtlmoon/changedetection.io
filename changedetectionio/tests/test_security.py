@@ -1,5 +1,5 @@
 from flask import url_for
-from . util import set_original_response, set_modified_response, live_server_setup
+from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 import time
 
 
@@ -12,6 +12,7 @@ def test_bad_access(client, live_server):
     )
 
     assert b"1 Imported" in res.data
+    wait_for_all_checks(client)
 
     # Attempt to add a body with a GET method
     res = client.post(
@@ -59,7 +60,7 @@ def test_bad_access(client, live_server):
         data={"url": 'file:///tasty/disk/drive', "tags": ''},
         follow_redirects=True
     )
-    time.sleep(1)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
 
     assert b'file:// type access is denied for security reasons.' in res.data

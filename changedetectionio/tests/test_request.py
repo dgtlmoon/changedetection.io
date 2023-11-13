@@ -80,8 +80,11 @@ def test_headers_in_request(client, live_server):
 
     # Should be only one with headers set
     assert watches_with_headers==1
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
 def test_body_in_request(client, live_server):
+
     # Add our URL to the import page
     test_url = url_for('test_body', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
@@ -170,7 +173,8 @@ def test_body_in_request(client, live_server):
         follow_redirects=True
     )
     assert b"Body must be empty when Request Method is set to GET" in res.data
-
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
 def test_method_in_request(client, live_server):
     # Add our URL to the import page

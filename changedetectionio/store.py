@@ -633,6 +633,18 @@ class ChangeDetectionStore:
 
         return {}
 
+    @property
+    def extra_browsers(self):
+        res = []
+        p = list(filter(
+            lambda s: (s.get('browser_name') and s.get('browser_connection_url')),
+            self.__data['settings']['requests'].get('extra_browsers', [])))
+        if p:
+            for i in p:
+                res.append(("extra_browser_"+i['browser_name'], i['browser_name']))
+
+        return res
+
     def tag_exists_by_name(self, tag_name):
         return any(v.get('title', '').lower() == tag_name.lower() for k, v in self.__data['settings']['application']['tags'].items())
 
@@ -836,3 +848,13 @@ class ChangeDetectionStore:
                 self.data['watching'][uuid]['date_created'] = i
             i+=1
         return
+
+    # #1774 - protect xpath1 against migration
+    def update_14(self):
+        for awatch in self.__data["watching"]:
+            if self.__data["watching"][awatch]['include_filters']:
+                for num, selector in enumerate(self.__data["watching"][awatch]['include_filters']):
+                    if selector.startswith('/'):
+                        self.__data["watching"][awatch]['include_filters'][num] = 'xpath1:' + selector
+                    if selector.startswith('xpath:'):
+                        self.__data["watching"][awatch]['include_filters'][num] = selector.replace('xpath:', 'xpath1:', 1)

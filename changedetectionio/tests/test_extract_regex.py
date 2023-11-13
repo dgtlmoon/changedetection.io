@@ -227,9 +227,6 @@ def test_regex_error_handling(client, live_server):
         follow_redirects=True
     )
 
-    with open('/tmp/fuck.html', 'wb') as f:
-        f.write(res.data)
-
     assert b'is not a valid regular expression.' in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)

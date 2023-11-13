@@ -20,11 +20,6 @@ WORKDIR /install
 
 COPY requirements.txt /requirements.txt
 
-# Instructing pip to fetch wheels from piwheels.org" on ARMv6 and ARMv7 machines
-RUN if [ "$(dpkg --print-architecture)" = "armhf" ] || [ "$(dpkg --print-architecture)" = "armel" ]; then \
-      printf "[global]\nextra-index-url=https://www.piwheels.org/simple\n" > /etc/pip.conf; \
-    fi;
-
 RUN pip install --target=/dependencies -r /requirements.txt
 
 # Playwright is an alternative to Selenium

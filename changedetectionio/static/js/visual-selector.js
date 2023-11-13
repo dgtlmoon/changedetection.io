@@ -149,7 +149,7 @@ $(document).ready(function () {
             // @todo In the future paint all that match
             for (const c of current_default_xpath) {
                 for (var i = selector_data['size_pos'].length; i !== 0; i--) {
-                    if (selector_data['size_pos'][i - 1].xpath === c) {
+                    if (selector_data['size_pos'][i - 1].xpath.trim() === c.trim()) {
                         console.log("highlighting " + c);
                         current_selected_i = i - 1;
                         highlight_current_selected_i();

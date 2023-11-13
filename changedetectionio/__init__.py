@@ -38,7 +38,7 @@ from flask_paginate import Pagination, get_page_parameter
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.45.5'
+__version__ = '0.45.7.3'
 
 from changedetectionio.store import BASE_URL_NOT_SET_TEXT
 
@@ -104,6 +104,10 @@ def init_app_secret(datastore_path):
 def get_darkmode_state():
     css_dark_mode = request.cookies.get('css_dark_mode', 'false')
     return 'true' if css_dark_mode and strtobool(css_dark_mode) else 'false'
+
+@app.template_global()
+def get_css_version():
+    return __version__
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
 # running or something similar.
@@ -610,6 +614,8 @@ def changedetection_app(config=None, datastore_o=None):
         # For the form widget tag uuid lookup
         form.tags.datastore = datastore # in _value
 
+        for p in datastore.extra_browsers:
+            form.fetch_backend.choices.append(p)
 
         form.fetch_backend.choices.append(("system", 'System settings default'))
 
@@ -710,7 +716,7 @@ def changedetection_app(config=None, datastore_o=None):
             system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
 
             is_html_webdriver = False
-            if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver':
+            if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
                 is_html_webdriver = True
 
             # Only works reliably with Playwright
@@ -814,6 +820,16 @@ def changedetection_app(config=None, datastore_o=None):
                                  settings_application=datastore.data['settings']['application'])
 
         return output
+
+    @app.route("/settings/reset-api-key", methods=['GET'])
+    @login_optionally_required
+    def settings_reset_api_key():
+        import secrets
+        secret = secrets.token_hex(16)
+        datastore.data['settings']['application']['api_access_token'] = secret
+        datastore.needs_write_urgent = True
+        flash("API Key was regenerated.")
+        return redirect(url_for('settings_page')+'#api')
 
     @app.route("/import", methods=['GET', "POST"])
     @login_optionally_required
@@ -973,7 +989,7 @@ def changedetection_app(config=None, datastore_o=None):
         system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
 
         is_html_webdriver = False
-        if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver':
+        if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
             is_html_webdriver = True
 
         password_enabled_and_share_is_off = False
@@ -1027,7 +1043,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
         is_html_webdriver = False
-        if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver':
+        if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
             is_html_webdriver = True
 
         # Never requested successfully, but we detected a fetch error
@@ -1208,8 +1224,7 @@ def changedetection_app(config=None, datastore_o=None):
             # These files should be in our subdirectory
             try:
                 # set nocache, set content-type
-                watch_dir = datastore_o.datastore_path + "/" + filename
-                response = make_response(send_from_directory(filename="elements.json", directory=watch_dir, path=watch_dir + "/elements.json"))
+                response = make_response(send_from_directory(os.path.join(datastore_o.datastore_path, filename), "elements.json"))
                 response.headers['Content-type'] = 'application/json'
                 response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
                 response.headers['Pragma'] = 'no-cache'

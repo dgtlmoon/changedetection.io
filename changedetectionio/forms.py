@@ -168,7 +168,9 @@ class ValidateContentFetcherIsReady(object):
     def __call__(self, form, field):
         import urllib3.exceptions
         from changedetectionio import content_fetcher
+        return
 
+# AttributeError: module 'changedetectionio.content_fetcher' has no attribute 'extra_browser_unlocked<>ASDF213r123r'
         # Better would be a radiohandler that keeps a reference to each class
         if field.data is not None and field.data != 'system':
             klass = getattr(content_fetcher, field.data)
@@ -326,11 +328,30 @@ class ValidateCSSJSONXPATHInput(object):
                 return
 
             # Does it look like XPath?
-            if line.strip()[0] == '/':
+            if line.strip()[0] == '/' or line.strip().startswith('xpath:'):
+                if not self.allow_xpath:
+                    raise ValidationError("XPath not permitted in this field!")
+                from lxml import etree, html
+                import elementpath
+                # xpath 2.0-3.1
+                from elementpath.xpath3 import XPath3Parser
+                tree = html.fromstring("<html></html>")
+                line = line.replace('xpath:', '')
+
+                try:
+                    elementpath.select(tree, line.strip(), parser=XPath3Parser)
+                except elementpath.ElementPathError as e:
+                    message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
+                    raise ValidationError(message % (line, str(e)))
+                except:
+                    raise ValidationError("A system-error occurred when validating your XPath expression")
+
+            if line.strip().startswith('xpath1:'):
                 if not self.allow_xpath:
                     raise ValidationError("XPath not permitted in this field!")
                 from lxml import etree, html
                 tree = html.fromstring("<html></html>")
+                line = re.sub(r'^xpath1:', '', line)
 
                 try:
                     tree.xpath(line.strip())
@@ -497,6 +518,12 @@ class SingleExtraProxy(Form):
     proxy_url = StringField('Proxy URL', [validators.Optional()], render_kw={"placeholder": "socks5:// or regular proxy http://user:pass@...:3128", "size":50})
     # @todo do the validation here instead
 
+class SingleExtraBrowser(Form):
+    browser_name = StringField('Name', [validators.Optional()], render_kw={"placeholder": "Name"})
+    browser_connection_url = StringField('Browser connection URL', [validators.Optional()], render_kw={"placeholder": "wss://brightdata... wss://oxylabs etc", "size":50})
+    # @todo do the validation here instead
+
+
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     time_between_check = FormField(TimeBetweenCheckForm)
@@ -505,6 +532,7 @@ class globalSettingsRequestForm(Form):
                                   render_kw={"style": "width: 5em;"},
                                   validators=[validators.NumberRange(min=0, message="Should contain zero or more seconds")])
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
+    extra_browsers = FieldList(FormField(SingleExtraBrowser), min_entries=5)
 
     def validate_extra_proxies(self, extra_validators=None):
         for e in self.data['extra_proxies']:
