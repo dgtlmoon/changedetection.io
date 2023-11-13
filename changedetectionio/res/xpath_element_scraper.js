@@ -185,6 +185,16 @@ if (include_filters.length) {
         }
 
         if (q) {
+            // Try to resolve //something/text() back to its /something so we can atleast get the bounding box
+            try {
+                if (typeof q.nodeName == 'string' && q.nodeName === '#text') {
+                    q = q.parentElement
+                }
+            } catch (e) {
+                console.log(e)
+                console.log("xpath_element_scraper: #text resolver")
+            }
+
             // #1231 - IN the case XPath attribute filter is applied, we will have to traverse up and find the element.
             if (typeof q.getBoundingClientRect == 'function') {
                 bbox = q.getBoundingClientRect();
