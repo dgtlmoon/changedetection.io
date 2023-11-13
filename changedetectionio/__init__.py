@@ -819,6 +819,16 @@ def changedetection_app(config=None, datastore_o=None):
 
         return output
 
+    @app.route("/settings/reset-api-key", methods=['GET'])
+    @login_optionally_required
+    def settings_reset_api_key():
+        import secrets
+        secret = secrets.token_hex(16)
+        datastore.data['settings']['application']['api_access_token'] = secret
+        datastore.needs_write_urgent = True
+        flash("API Key was regenerated.")
+        return redirect(url_for('settings_page')+'#api')
+
     @app.route("/import", methods=['GET', "POST"])
     @login_optionally_required
     def import_page():
