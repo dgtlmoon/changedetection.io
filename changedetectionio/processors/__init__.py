@@ -7,12 +7,13 @@ from copy import deepcopy
 from distutils.util import strtobool
 
 class difference_detection_processor():
+
+    browser_steps = None
     datastore = None
     fetcher = None
     screenshot = None
-    xpath_data = None
-    browser_steps = None
     watch = None
+    xpath_data = None
 
     def __init__(self, *args, datastore, watch_uuid, **kwargs):
         super().__init__(*args, **kwargs)

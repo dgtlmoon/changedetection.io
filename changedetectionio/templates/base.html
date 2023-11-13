@@ -8,10 +8,10 @@
     <title>Change Detection{{extra_title}}</title>
     <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag %}- {{active_tag}}{% endif %}" href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}" >
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}" >
-    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}" >
+    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}?v={{ get_css_version() }}" >
     {% if extra_stylesheets %}
       {% for m in extra_stylesheets %}
-        <link rel="stylesheet" href="{{ m }}?ver=1000" >
+        <link rel="stylesheet" href="{{ m }}?ver={{ get_css_version() }}" >
       {% endfor %}
     {% endif %}
 
@@ -108,6 +108,20 @@
               </span>
             </button>
           </li>
+          <li class="pure-menu-item" id="heart-us">
+                <svg
+                   fill="#ff0000"
+                   class="bi bi-heart"
+                   preserveAspectRatio="xMidYMid meet"
+                   viewBox="0 0 16.9 16.1"
+                   id="svg-heart"
+                   xmlns="http://www.w3.org/2000/svg"
+                   xmlns:svg="http://www.w3.org/2000/svg">
+                  <path id="heartpath" d="M 5.338316,0.50302766 C 0.71136983,0.50647126 -3.9576371,7.2707777 8.5004254,15.503028 23.833425,5.3700277 13.220206,-2.5384409 8.6762066,1.6475589 c -0.060791,0.054322 -0.11943,0.1110064 -0.1757812,0.1699219 -0.057,-0.059 -0.1157813,-0.116875 -0.1757812,-0.171875 C 7.4724566,0.86129334 6.4060729,0.50223298 5.338316,0.50302766 Z"
+                     style="fill:var(--color-background);fill-opacity:1;stroke:#ff0000;stroke-opacity:1" />
+                </svg>
+
+          </li>
           <li class="pure-menu-item">
             <a class="github-link" href="https://github.com/dgtlmoon/changedetection.io">
               {% include "svgs/github.svg" %}
@@ -131,7 +145,44 @@
       <div class="sticky-tab" id="right-sticky">{{ right_sticky }}</div>
     {% endif %}
     <section class="content">
-      <header>
+        <div id="overlay">
+            <div class="content">
+                <strong>changedetection.io needs your support!</strong><br>
+                <p>
+                    You can help us by supporting changedetection.io on these platforms;
+                </p>
+                <p>
+                <ul>
+                    <li>
+                        <a href="https://alternativeto.net/software/changedetection-io/about/">Rate us at
+                        AlternativeTo.net</a>
+                    </li>
+                <li>
+                    <a href="https://github.com/dgtlmoon/changedetection.io">Star us on GitHub</a>
+                </li>
+                <li>
+                    <a href="https://twitter.com/change_det_io">Follow us at Twitter/X</a>
+                </li>
+                <li>
+                    <a href="https://www.linkedin.com/company/changedetection-io">Check us out on LinkedIn</a>
+                </li>
+                <li>
+                    And tell your friends and colleagues :)
+                </li>
+                </ul>
+                </p>
+                <p>
+                    The more popular changedetection.io is, the more time we can dedicate to adding amazing features!
+                </p>
+                <p>
+                    Many thanks :)<br>
+                </p>
+                <p>
+                    <i>changedetection.io team</i>
+                </p>
+            </div>
+        </div>
+        <header>
         {% block header %}{% endblock %}
       </header>
 

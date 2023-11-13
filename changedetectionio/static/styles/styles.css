@@ -352,7 +352,7 @@ html[data-darkmode="true"] {
       color: var(--color-watch-table-error); }
 
 #toggle-light-mode {
-  width: 3rem;
+  /*  width: 3rem;*/
   /* default */ }
   #toggle-light-mode .icon-dark {
     display: none; }
@@ -363,9 +363,56 @@ html[data-darkmode="true"] #toggle-light-mode .icon-light {
 html[data-darkmode="true"] #toggle-light-mode .icon-dark {
   display: block; }
 
+.pure-menu-link {
+  padding: 0.5rem 1em;
+  line-height: 1.2rem; }
+
+.pure-menu-item svg {
+  height: 1.2rem; }
+
+.pure-menu-item * {
+  vertical-align: middle; }
+
+.pure-menu-item .github-link {
+  height: 1.8rem;
+  display: block; }
+  .pure-menu-item .github-link svg {
+    height: 100%; }
+
+.pure-menu-item .bi-heart:hover {
+  cursor: pointer; }
+
+#overlay {
+  opacity: 0.95;
+  position: fixed;
+  width: 350px;
+  max-width: 100%;
+  height: 100%;
+  top: 0;
+  right: -350px;
+  background-color: var(--color-table-stripe);
+  z-index: 2;
+  transform: translateX(0);
+  transition: transform .5s ease; }
+  #overlay.visible {
+    transform: translateX(-100%); }
+  #overlay .content {
+    font-size: 0.875rem;
+    padding: 1rem;
+    margin-top: 5rem;
+    max-width: 400px;
+    color: var(--color-watch-table-row-text); }
+
+#heartpath {
+  transition: all ease 0.3s !important; }
+  #heartpath:hover {
+    fill: #ff0000 !important;
+    transition: all ease 0.3s !important; }
+
 body {
   color: var(--color-text);
-  background: var(--color-background-page); }
+  background: var(--color-background-page);
+  font-family: Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif; }
 
 .visually-hidden {
   clip: rect(0 0 0 0);
@@ -396,9 +443,6 @@ a.github-link {
     fill: currentColor; }
   a.github-link:hover {
     color: var(--color-icon-github-hover); }
-
-#toggle-search {
-  width: 2rem; }
 
 #search-q {
   opacity: 0;

@@ -1,11 +1,12 @@
-eventlet>=0.31.0
+eventlet>=0.33.3 # related to dnspython fixes
 feedgen~=0.9
 flask-compress
-flask-login~=0.6
+# 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)
+flask-login>=0.6.3
 flask-paginate
 flask_expects_json~=1.7
 flask_restful
-flask_wtf
+flask_wtf~=1.2
 flask~=2.3
 inscriptis~=2.2
 pytz
@@ -24,11 +25,7 @@ chardet>2.3.0
 wtforms~=3.0
 jsonpath-ng~=1.5.3
 
-
-# dnspython 2.3.0 is not compatible with eventlet
-# * https://github.com/eventlet/eventlet/issues/781
-# * https://datastax-oss.atlassian.net/browse/PYTHON-1320
-dnspython<2.3.0
+dnspython~=2.4 # related to eventlet fixes
 
 # jq not available on Windows so must be installed manually
 
@@ -51,7 +48,7 @@ lxml
 
 selenium~=4.14.0
 
-werkzeug
+werkzeug~=3.0
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1

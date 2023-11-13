@@ -16,3 +16,4 @@ global-exclude venv
 
 global-exclude test-datastore
 global-exclude changedetection.io*dist-info
+global-exclude changedetectionio/tests/proxy_socks5/test-datastore
