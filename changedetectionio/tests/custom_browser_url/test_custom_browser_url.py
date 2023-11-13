@@ -59,8 +59,6 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
             },
             follow_redirects=True
         )
-        with open('/tmp/fuck.html' , 'wb') as f:
-            f.write(res.data)
 
         assert b"Updated watch." in res.data
         wait_for_all_checks(client)
