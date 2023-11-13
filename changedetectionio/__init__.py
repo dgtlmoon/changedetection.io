@@ -690,6 +690,7 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.needs_write_urgent = True
 
             # Queue the watch for immediate recheck, with a higher priority
+            # 'False' - fully reprocess the diff so we can see any new filters added
             update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
 
             # Diff page [edit] link should go back to diff page
@@ -1309,6 +1310,9 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/api/checknow", methods=['GET'])
     @login_optionally_required
     def form_watch_checknow():
+
+        # 'skip_when_checksum_same': should be False so that 'FilterNotFoundInResponse' can be checked
+
         # Forced recheck will skip the 'skip if content is the same' rule (, 'reprocess_existing_data': True})))
         tag = request.args.get('tag')
         uuid = request.args.get('uuid')
