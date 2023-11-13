@@ -30,7 +30,10 @@ jobs:
 
           # Selenium+browserless
           docker run --network changedet-network -d --hostname selenium  -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome:4
-          docker run --network changedet-network -d --hostname browserless -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  browserless/chrome:1.60-chrome-stable
+          docker run --network changedet-network -d --name browserless --hostname browserless -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  browserless/chrome:1.60-chrome-stable
+          
+          # For accessing custom browser tests
+          docker run --network changedet-network -d --name browserless-custom-url --hostname browserless-custom-url -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm --shm-size="2g"  browserless/chrome:1.60-chrome-stable
 
       - name: Build changedetection.io container for testing
         run: |         
@@ -84,6 +87,12 @@ jobs:
           cd changedetectionio
           ./run_proxy_tests.sh
           # And again with PLAYWRIGHT_DRIVER_URL=..
+          cd ..
+
+      - name: Test custom browser URL
+        run: |
+          cd changedetectionio
+          ./run_custom_browser_url_tests.sh
           cd ..
 
       - name: Test changedetection.io container starts+runs basically without error

@@ -230,10 +230,14 @@ nav
                 </p>
                <p><strong>Tip</strong>: "Residential" and "Mobile" proxy type can be more successfull than "Data Center" for blocked websites.
 
-                <div class="pure-control-group">
+                <div class="pure-control-group" id="extra-proxies-setting">
                 {{ render_field(form.requests.form.extra_proxies) }}
                 <span class="pure-form-message-inline">"Name" will be used for selecting the proxy in the Watch Edit settings</span><br>
                 <span class="pure-form-message-inline">SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should whitelist the IP access instead</span>
+                </div>
+                <div class="pure-control-group" id="extra-browsers-setting">
+                    <span class="pure-form-message-inline"><i>Extra Browsers</i> allow changedetection.io to communicate with a different web-browser.</span><br>
+                  {{ render_field(form.requests.form.extra_browsers) }}
                 </div>
             </div>
             <div id="actions">

@@ -168,7 +168,9 @@ class ValidateContentFetcherIsReady(object):
     def __call__(self, form, field):
         import urllib3.exceptions
         from changedetectionio import content_fetcher
+        return
 
+# AttributeError: module 'changedetectionio.content_fetcher' has no attribute 'extra_browser_unlocked<>ASDF213r123r'
         # Better would be a radiohandler that keeps a reference to each class
         if field.data is not None and field.data != 'system':
             klass = getattr(content_fetcher, field.data)
@@ -496,6 +498,12 @@ class SingleExtraProxy(Form):
     proxy_url = StringField('Proxy URL', [validators.Optional()], render_kw={"placeholder": "socks5:// or regular proxy http://user:pass@...:3128", "size":50})
     # @todo do the validation here instead
 
+class SingleExtraBrowser(Form):
+    browser_name = StringField('Name', [validators.Optional()], render_kw={"placeholder": "Name"})
+    browser_connection_url = StringField('Browser connection URL', [validators.Optional()], render_kw={"placeholder": "wss://brightdata... wss://oxylabs etc", "size":50})
+    # @todo do the validation here instead
+
+
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     time_between_check = FormField(TimeBetweenCheckForm)
@@ -504,6 +512,7 @@ class globalSettingsRequestForm(Form):
                                   render_kw={"style": "width: 5em;"},
                                   validators=[validators.NumberRange(min=0, message="Should contain zero or more seconds")])
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
+    extra_browsers = FieldList(FormField(SingleExtraBrowser), min_entries=5)
 
     def validate_extra_proxies(self, extra_validators=None):
         for e in self.data['extra_proxies']:

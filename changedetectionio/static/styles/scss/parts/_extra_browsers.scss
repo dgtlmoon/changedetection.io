@@ -1,0 +1,24 @@
+ul#requests-extra_browsers {
+  list-style: none;
+  /* tidy up the table to look more "inline" */
+  li {
+    > label {
+      display: none;
+    }
+
+  }
+
+  /* each proxy entry is a `table` */
+  table {
+    tr {
+      display: inline;
+    }
+  }
+}
+
+#extra-browsers-setting {
+  border: 1px solid var(--color-grey-800);
+  border-radius: 4px;
+  margin: 1em;
+   padding: 1em;
+}
