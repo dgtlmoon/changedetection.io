@@ -41,7 +41,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         now = time.time()
         try:
             update_handler = text_json_diff.perform_site_check(datastore=datastore, watch_uuid=uuid)
-            changed_detected, update_obj, contents = update_handler.call_browser()
+            update_handler.call_browser()
         # title, size is len contents not len xfer
         except content_fetcher.Non200ErrorCodeReceived as e:
             if e.status_code == 404:
