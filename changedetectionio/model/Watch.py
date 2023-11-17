@@ -271,15 +271,18 @@ class model(dict):
 
         """Unfortunately for now timestamp is stored as string key"""
         keys = list(self.history.keys())
+
         last_viewed = self.get('last_viewed')
-        prev_k=keys[0]
-        for k in sorted(keys, key=lambda x: int(x)):
-            if int(k) >= int(last_viewed):
+        prev_k = keys[0]
+        sorted_keys = sorted(keys, key=lambda x: int(x))
+        sorted_keys.reverse()
+
+        for k in sorted_keys:
+            if int(k) < int(last_viewed):
                 return prev_k
             prev_k = k
 
-        #@check this, return last if not found?
-        return keys[-1]
+        return keys[0]
 
     def get_history_snapshot(self, timestamp):
         import brotli
