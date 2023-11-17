@@ -279,6 +279,10 @@ class model(dict):
 
         for k in sorted_keys:
             if int(k) < int(last_viewed):
+                if prev_k == sorted_keys[0]:
+                    # Return the second last one so we dont recommend the same version compares itself
+                    return sorted_keys[1]
+
                 return prev_k
             prev_k = k
 
