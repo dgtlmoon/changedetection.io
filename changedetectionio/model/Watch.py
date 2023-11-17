@@ -271,14 +271,20 @@ class model(dict):
 
         """Unfortunately for now timestamp is stored as string key"""
         keys = list(self.history.keys())
+        if not keys:
+            return None
 
-        last_viewed = self.get('last_viewed')
+        last_viewed = int(self.get('last_viewed'))
         prev_k = keys[0]
         sorted_keys = sorted(keys, key=lambda x: int(x))
         sorted_keys.reverse()
 
+        # When the 'last viewed' timestamp is greater than the newest snapshot, return second last
+        if last_viewed > int(sorted_keys[0]):
+            return sorted_keys[1]
+
         for k in sorted_keys:
-            if int(k) < int(last_viewed):
+            if int(k) < last_viewed:
                 if prev_k == sorted_keys[0]:
                     # Return the second last one so we dont recommend the same version compares itself
                     return sorted_keys[1]

@@ -11,7 +11,7 @@ from changedetectionio.model import Watch
 # mostly
 class TestDiffBuilder(unittest.TestCase):
 
-    def test_watch_module(self):
+    def test_watch_get_suggested_from_diff_timestamp(self):
         import uuid as uuid_builder
         watch = Watch.model(datastore_path='/tmp', default={})
         watch.ensure_data_dir_exists()
@@ -33,6 +33,17 @@ class TestDiffBuilder(unittest.TestCase):
         p = watch.get_next_snapshot_key_to_last_viewed
         assert p == "115", "Correct 'second last' last-viewed timestamp was detected when using the last timestamp"
 
+        watch['last_viewed'] = 99
+        p = watch.get_next_snapshot_key_to_last_viewed
+        assert p == "100"
+
+        watch['last_viewed'] = 200
+        p = watch.get_next_snapshot_key_to_last_viewed
+        assert p == "115", "When the 'last viewed' timestamp is greater than the newest snapshot, return second last "
+
+        watch = Watch.model(datastore_path='/tmp', default={})
+        p = watch.get_next_snapshot_key_to_last_viewed
+        assert p == None, "None when no history available"
 
 if __name__ == '__main__':
     unittest.main()
