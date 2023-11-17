@@ -41,6 +41,11 @@ class TestDiffBuilder(unittest.TestCase):
         p = watch.get_next_snapshot_key_to_last_viewed
         assert p == "115", "When the 'last viewed' timestamp is greater than the newest snapshot, return second last "
 
+        watch['last_viewed'] = 109
+        p = watch.get_next_snapshot_key_to_last_viewed
+        assert p == "109", "Correct when its the same time"
+
+        # new empty one
         watch = Watch.model(datastore_path='/tmp', default={})
         p = watch.get_next_snapshot_key_to_last_viewed
         assert p == None, "None when no history available"
