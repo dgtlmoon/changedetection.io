@@ -961,7 +961,7 @@ def changedetection_app(config=None, datastore_o=None):
         # Read as binary and force decode as UTF-8
         # Windows may fail decode in python if we just use 'r' mode (chardet decode exception)
         from_version = request.args.get('from_version')
-        from_version_index = -2 # second newest
+        from_version_index = -2  # second newest
         if from_version and from_version in dates:
             from_version_index = dates.index(from_version)
         else:
@@ -970,7 +970,7 @@ def changedetection_app(config=None, datastore_o=None):
         try:
             from_version_file_contents = watch.get_history_snapshot(dates[from_version_index])
         except Exception as e:
-            from_version_file_contents = "Unable to read to-version at index{}.\n".format(dates[from_version_index])
+            from_version_file_contents = f"Unable to read to-version at index {dates[from_version_index]}.\n"
 
         to_version = request.args.get('to_version')
         to_version_index = -1
