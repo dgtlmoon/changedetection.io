@@ -1,9 +1,13 @@
+import importlib
 import os
+import re
 import threading
 import queue
 import time
+from distutils.util import strtobool
 
 from changedetectionio import content_fetcher, html_tools
+
 from .processors.text_json_diff import FilterNotFoundInResponse
 from .processors.restock_diff import UnableToExtractRestockData
 
@@ -15,6 +19,7 @@ from .processors.restock_diff import UnableToExtractRestockData
 import logging
 import sys
 
+
 class update_worker(threading.Thread):
     current_uuid = None
 
@@ -24,6 +29,7 @@ class update_worker(threading.Thread):
         self.app = app
         self.notification_q = notification_q
         self.datastore = datastore
+
         super().__init__(*args, **kwargs)
 
     def queue_notification_for_watch(self, n_object, watch):
@@ -209,7 +215,7 @@ class update_worker(threading.Thread):
         from .processors import text_json_diff, restock_diff
 
         while not self.app.config.exit.is_set():
-            update_handler = None
+            change_processor = None
 
             try:
                 queued_item_data = self.q.get(block=False)
@@ -230,35 +236,46 @@ class update_worker(threading.Thread):
                     now = time.time()
 
                     try:
-                        # Processor is what we are using for detecting the "Change"
+                        # Protect against file:// access
+                        if re.search(r'^file://', self.datastore.data['watching'][uuid].get('url', '').strip(), re.IGNORECASE):
+                            if not strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
+                                raise Exception(
+                                    "file:// type access is denied for security reasons."
+                                )
+
+                        prefer_fetch_backend = self.datastore.data['watching'][uuid].get('fetch_backend', 'system')
+                        if not prefer_fetch_backend or prefer_fetch_backend == 'system':
+                            prefer_fetch_backend = self.datastore.data['settings']['application'].get('fetch_backend')
+
                         processor = self.datastore.data['watching'][uuid].get('processor', 'text_json_diff')
-                        # if system...
 
-                        # Abort processing when the content was the same as the last fetch
-                        skip_when_same_checksum = queued_item_data.item.get('skip_when_checksum_same')
+                        processor = 'cdio_whois_diff'
 
-
-                        # @todo some way to switch by name
-                        # Init a new 'difference_detection_processor'
-
-                        if processor == 'restock_diff':
-                            update_handler = restock_diff.perform_site_check(datastore=self.datastore,
-                                                                             watch_uuid=uuid
-                                                                             )
+                        if processor in ['text_json_diff', 'restock_diff']:
+                            base_processor_module = f"changedetectionio.processors.{processor}"
                         else:
-                            # Used as a default and also by some tests
-                            update_handler = text_json_diff.perform_site_check(datastore=self.datastore,
-                                                                               watch_uuid=uuid
-                                                                               )
+                            # Each plugin is one processor exactly
+                            base_processor_module = f"{processor}.processor"
+
+# its correct that processor dictates which fethcer it uses i think
+
+                        # these should inherit the right fetcher too
+                        module = importlib.import_module(base_processor_module)
+                        change_processor = getattr(module, 'perform_site_check')
+                        change_processor = change_processor(datastore=self.datastore,
+                                                            watch_uuid=uuid,
+                                                            prefer_fetch_backend=prefer_fetch_backend
+                                                            )
 
                         # Clear last errors (move to preflight func?)
                         self.datastore.data['watching'][uuid]['browser_steps_last_error_step'] = None
 
-                        update_handler.call_browser()
-
-                        changed_detected, update_obj, contents = update_handler.run_changedetection(uuid,
-                                                                                    skip_when_checksum_same=skip_when_same_checksum,
-                                                                                    )
+                        skip_when_same_checksum = queued_item_data.item.get('skip_when_checksum_same')
+                        # Each processor extends base class of the kind of fetcher it needs to run anyway
+                        change_processor.fetch_content()
+                        changed_detected, update_obj, contents = change_processor.run_changedetection(uuid,
+                                                                                                      skip_when_checksum_same=skip_when_same_checksum
+                                                                                                      )
 
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
@@ -465,10 +482,10 @@ class update_worker(threading.Thread):
                                                                            })
 
                         # Always save the screenshot if it's available
-                        if update_handler.screenshot:
-                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=update_handler.screenshot)
-                        if update_handler.xpath_data:
-                            self.datastore.save_xpath_data(watch_uuid=uuid, data=update_handler.xpath_data)
+                        if change_processor.screenshot:
+                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=change_processor.screenshot)
+                        if change_processor.xpath_data:
+                            self.datastore.save_xpath_data(watch_uuid=uuid, data=change_processor.xpath_data)
 
 
                 self.current_uuid = None  # Done

@@ -4,10 +4,8 @@ import hashlib
 import re
 from changedetectionio import content_fetcher
 from copy import deepcopy
-from distutils.util import strtobool
 
-class difference_detection_processor():
-
+class difference_detection_processor_interface():
     browser_steps = None
     datastore = None
     fetcher = None
@@ -15,52 +13,36 @@ class difference_detection_processor():
     watch = None
     xpath_data = None
 
-    def __init__(self, *args, datastore, watch_uuid, **kwargs):
-        super().__init__(*args, **kwargs)
+
+    @abstractmethod
+    def run_changedetection(self, uuid, skip_when_checksum_same=True):
+        update_obj = {'last_notification_error': False, 'last_error': False}
+        some_data = 'xxxxx'
+        update_obj["previous_md5"] = hashlib.md5(some_data.encode('utf-8')).hexdigest()
+        changed_detected = False
+        return changed_detected, update_obj, ''.encode('utf-8')
+
+
+class text_content_difference_detection_processor(difference_detection_processor_interface):
+
+    def __init__(self, *args, datastore, watch_uuid, prefer_fetch_backend, **kwargs):
         self.datastore = datastore
         self.watch = deepcopy(self.datastore.data['watching'].get(watch_uuid))
+        self.prefer_fetch_backend = prefer_fetch_backend
+        super().__init__(*args, **kwargs)
 
-    def call_browser(self):
-
-        # Protect against file:// access
-        if re.search(r'^file://', self.watch.get('url', '').strip(), re.IGNORECASE):
-            if not strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
-                raise Exception(
-                    "file:// type access is denied for security reasons."
-                )
-
-        url = self.watch.link
-
-        # Requests, playwright, other browser via wss:// etc, fetch_extra_something
-        prefer_fetch_backend = self.watch.get('fetch_backend', 'system')
-
-        # Proxy ID "key"
-        preferred_proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=self.watch.get('uuid'))
-
-        # Pluggable content self.fetcher
-        if not prefer_fetch_backend or prefer_fetch_backend == 'system':
-            prefer_fetch_backend = self.datastore.data['settings']['application'].get('fetch_backend')
-
-        # In the case that the preferred fetcher was a browser config with custom connection URL..
-        # @todo - on save watch, if its extra_browser_ then it should be obvious it will use playwright (like if its requests now..)
-        browser_connection_url = None
-        if prefer_fetch_backend.startswith('extra_browser_'):
-            (t, key) = prefer_fetch_backend.split('extra_browser_')
-            connection = list(
-                filter(lambda s: (s['browser_name'] == key), self.datastore.data['settings']['requests'].get('extra_browsers', [])))
-            if connection:
-                prefer_fetch_backend = 'base_html_playwright'
-                browser_connection_url = connection[0].get('browser_connection_url')
-
-
+        ########################################
+        # Attach the correct fetcher and proxy #
+        ########################################
         # Grab the right kind of 'fetcher', (playwright, requests, etc)
-        if hasattr(content_fetcher, prefer_fetch_backend):
-            fetcher_obj = getattr(content_fetcher, prefer_fetch_backend)
+        if hasattr(content_fetcher, self.prefer_fetch_backend):
+            fetcher_obj = getattr(content_fetcher, self.prefer_fetch_backend)
         else:
             # If the klass doesnt exist, just use a default
             fetcher_obj = getattr(content_fetcher, "html_requests")
 
-
+        # Proxy ID "key"
+        preferred_proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=self.watch.get('uuid'))
         proxy_url = None
         if preferred_proxy_id:
             proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
@@ -69,8 +51,22 @@ class difference_detection_processor():
         # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
         # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
         self.fetcher = fetcher_obj(proxy_override=proxy_url,
-                                   browser_connection_url=browser_connection_url
+                                   browser_connection_url=None # Default, let each fetcher work it out
                                    )
+
+    def fetch_content(self):
+
+        url = self.watch.link
+
+        # In the case that the preferred fetcher was a browser config with custom connection URL..
+        # @todo - on save watch, if its extra_browser_ then it should be obvious it will use playwright (like if its requests now..)
+        if self.prefer_fetch_backend.startswith('extra_browser_'):
+            (t, key) = self.prefer_fetch_backend.split('extra_browser_')
+            connection = list(
+                filter(lambda s: (s['browser_name'] == key), self.datastore.data['settings']['requests'].get('extra_browsers', [])))
+            if connection:
+                prefer_fetch_backend = 'base_html_playwright'
+                browser_connection_url = connection[0].get('browser_connection_url')
 
         if self.watch.has_browser_steps:
             self.fetcher.browser_steps = self.watch.get('browser_steps', [])
@@ -114,14 +110,6 @@ class difference_detection_processor():
         self.fetcher.quit()
 
         # After init, call run_changedetection() which will do the actual change-detection
-
-    @abstractmethod
-    def run_changedetection(self, uuid, skip_when_checksum_same=True):
-        update_obj = {'last_notification_error': False, 'last_error': False}
-        some_data = 'xxxxx'
-        update_obj["previous_md5"] = hashlib.md5(some_data.encode('utf-8')).hexdigest()
-        changed_detected = False
-        return changed_detected, update_obj, ''.encode('utf-8')
 
 
 def available_processors():

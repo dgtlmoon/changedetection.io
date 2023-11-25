@@ -1,8 +1,9 @@
 
 import hashlib
 import urllib3
-from . import difference_detection_processor
+#from . import browser_content_difference_detection_processor
 from copy import deepcopy
+from . import text_content_difference_detection_processor
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -15,7 +16,7 @@ class UnableToExtractRestockData(Exception):
         self.status_code = status_code
         return
 
-class perform_site_check(difference_detection_processor):
+class perform_site_check(text_content_difference_detection_processor):
     screenshot = None
     xpath_data = None
 

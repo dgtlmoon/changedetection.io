@@ -16,6 +16,7 @@ import logging
 import os
 import pytz
 import queue
+import sys
 import threading
 import time
 import timeago
@@ -79,6 +80,9 @@ app.jinja_env.add_extension('jinja2.ext.loopcontrols')
 csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log=[]
+
+from pathlib import Path
+sys.path.append(os.path.join(Path.home(), 'changedetectionio-plugins'))
 
 watch_api = Api(app, decorators=[csrf.exempt])
 

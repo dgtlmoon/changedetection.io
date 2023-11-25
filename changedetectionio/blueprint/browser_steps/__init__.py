@@ -97,7 +97,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             proxy=proxy)
 
         # For test
-        #browsersteps_start_session['browserstepper'].action_goto_url(value="http://example.com?time="+str(time.time()))
+        #browsersteps_start_session['browserstepper'].action_goto_url(value="http://exbaseample.com?time="+str(time.time()))
 
         return browsersteps_start_session
 

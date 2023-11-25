@@ -76,7 +76,7 @@ class Watch(Resource):
         # Properties are not returned as a JSON, so add the required props manually
         watch['history_n'] = watch.history_n
         watch['last_changed'] = watch.last_changed
-
+        watch['viewed'] = watch.viewed
         return watch
 
     @auth.check_token
