@@ -52,6 +52,8 @@ COPY --from=builder /dependencies /usr/local
 ENV PYTHONPATH=/usr/local
 
 EXPOSE 5000
+
+# Send the SIGINT signal because SIGTERM gets ignored
 STOPSIGNAL SIGINT
 
 # The actual flask app
