@@ -52,6 +52,7 @@ COPY --from=builder /dependencies /usr/local
 ENV PYTHONPATH=/usr/local
 
 EXPOSE 5000
+STOPSIGNAL SIGINT
 
 # The actual flask app
 COPY changedetectionio /app/changedetectionio
