@@ -281,11 +281,11 @@ class CreateWatch(Resource):
                 continue
 
             list[uuid] = {
-                'url': watch['url'],
-                'title': watch['title'],
-                'last_checked': watch['last_checked'],
                 'last_changed': watch.last_changed,
+                'last_checked': watch['last_checked'],
                 'last_error': watch['last_error'],
+                'title': watch['title'],
+                'url': watch['url'],
                 'viewed': watch.viewed
             }
 
