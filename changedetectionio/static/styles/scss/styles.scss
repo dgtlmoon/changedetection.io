@@ -402,8 +402,24 @@ label {
   }
 
   #watch-add-wrapper-zone {
-    >div {
-      display: inline-block;
+
+    @media only screen and (min-width: 760px) {
+      display: flex;
+      gap: 0.3rem;
+      flex-direction: row;
+    }
+    /* URL field grows always, other stay static in width */
+    > span {
+      flex-grow: 0;
+
+      input {
+        width: 100%;
+        padding-right: 1em;
+      }
+
+      &:first-child {
+        flex-grow: 1;
+      }
     }
 
     @media only screen and (max-width: 760px) {

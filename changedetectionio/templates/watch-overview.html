@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.jinja' import render_simple_field, render_field %}
+{% from '_helpers.jinja' import render_simple_field, render_field, render_nolabel_field %}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 
@@ -11,14 +11,11 @@
         <fieldset>
             <legend>Add a new change detection watch</legend>
             <div id="watch-add-wrapper-zone">
-                <div>
-                    {{ render_simple_field(form.url, placeholder="https://...", required=true) }}
-                    {{ render_simple_field(form.tags, value=tags[active_tag].title if active_tag else '', placeholder="watch label / tag") }}
-                </div>
-                <div>
-                    {{ render_simple_field(form.watch_submit_button, title="Watch this URL!" ) }}
-                    {{ render_simple_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
-                </div>
+
+                    {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
+                    {{ render_nolabel_field(form.tags, value=tags[active_tag].title if active_tag else '', placeholder="watch label / tag") }}
+                    {{ render_nolabel_field(form.watch_submit_button, title="Watch this URL!" ) }}
+                    {{ render_nolabel_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
             </div>
             <div id="quick-watch-processor-type">
                 {{ render_simple_field(form.processor, title="Edit first then Watch") }}

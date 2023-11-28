@@ -39,6 +39,24 @@
 {% endmacro %}
 
 
+{% macro render_nolabel_field(field) %}
+    <span>
+    {{ field(**kwargs)|safe }}
+        {% if field.errors %}
+            <span class="error">
+      {% if field.errors %}
+          <ul class=errors>
+        {% for error in field.errors %}
+            <li>{{ error }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+      </span>
+        {% endif %}
+    </span>
+{% endmacro %}
+
+
 {% macro render_button(field) %}
   {{ field(**kwargs)|safe }}
 {% endmacro %}

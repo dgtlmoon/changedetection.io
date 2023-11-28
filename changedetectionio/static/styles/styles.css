@@ -683,11 +683,23 @@ label:hover {
   #new-watch-form legend {
     color: var(--color-text-legend);
     font-weight: bold; }
-  #new-watch-form #watch-add-wrapper-zone > div {
-    display: inline-block; }
-  @media only screen and (max-width: 760px) {
-    #new-watch-form #watch-add-wrapper-zone #url {
-      width: 100%; } }
+  #new-watch-form #watch-add-wrapper-zone {
+    /* URL field grows always, other stay static in width */ }
+    @media only screen and (min-width: 760px) {
+      #new-watch-form #watch-add-wrapper-zone {
+        display: flex;
+        gap: 0.3rem;
+        flex-direction: row; } }
+    #new-watch-form #watch-add-wrapper-zone > span {
+      flex-grow: 0; }
+      #new-watch-form #watch-add-wrapper-zone > span input {
+        width: 100%;
+        padding-right: 1em; }
+      #new-watch-form #watch-add-wrapper-zone > span:first-child {
+        flex-grow: 1; }
+    @media only screen and (max-width: 760px) {
+      #new-watch-form #watch-add-wrapper-zone #url {
+        width: 100%; } }
 
 #diff-col {
   padding-left: 40px; }
