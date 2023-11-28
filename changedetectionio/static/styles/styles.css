@@ -1065,7 +1065,7 @@ ul {
 #selector-current-xpath {
   font-size: 80%; }
 
-#webdriver-override-options input[type="number"] {
+#webdriver_delay {
   width: 5em; }
 
 #api-key:hover {

@@ -944,10 +944,8 @@ ul {
 
 @import "parts/_visualselector";
 
-#webdriver-override-options {
-  input[type="number"] {
+#webdriver_delay {
     width: 5em;
-  }
 }
 
 #api-key {
