@@ -110,7 +110,7 @@ class steppable_browser_interface():
         self.page.click(selector=selector, timeout=30 * 1000, delay=randint(200, 500))
 
     def action_click_element_if_exists(self, selector, value):
-        import playwright._impl._api_types as _api_types
+        import playwright._impl._errors as _api_types
         print("Clicking element if exists")
         if not len(selector.strip()):
             return
