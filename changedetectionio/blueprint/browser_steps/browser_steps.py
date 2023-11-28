@@ -123,6 +123,9 @@ class steppable_browser_interface():
             return
 
     def action_click_x_y(self, selector, value):
+        if not re.match(r'^\s?\d+\s?,\s?\d+\s?$', value):
+            raise Exception("'Click X,Y' step should be in the format of '100 , 90'")
+
         x, y = value.strip().split(',')
         x = int(float(x.strip()))
         y = int(float(y.strip()))
