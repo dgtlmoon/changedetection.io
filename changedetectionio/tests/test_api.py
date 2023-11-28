@@ -96,7 +96,9 @@ def test_api_simple(client, live_server):
     )
     assert watch_uuid in res.json.keys()
     before_recheck_info = res.json[watch_uuid]
+
     assert before_recheck_info['last_checked'] != 0
+
     #705 `last_changed` should be zero on the first check
     assert before_recheck_info['last_changed'] == 0
     assert before_recheck_info['title'] == 'My test URL'
@@ -156,6 +158,18 @@ def test_api_simple(client, live_server):
     watch = res.json
     # @todo how to handle None/default global values?
     assert watch['history_n'] == 2, "Found replacement history section, which is in its own API"
+
+    assert watch.get('viewed') == False
+    # Loading the most recent snapshot should force viewed to become true
+    client.get(url_for("diff_history_page", uuid="first"), follow_redirects=True)
+
+    # Fetch the whole watch again, viewed should be true
+    res = client.get(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key}
+    )
+    watch = res.json
+    assert watch.get('viewed') == True
 
     # basic systeminfo check
     res = client.get(

@@ -76,7 +76,7 @@ class Watch(Resource):
         # Properties are not returned as a JSON, so add the required props manually
         watch['history_n'] = watch.history_n
         watch['last_changed'] = watch.last_changed
-
+        watch['viewed'] = watch.viewed
         return watch
 
     @auth.check_token
@@ -280,11 +280,14 @@ class CreateWatch(Resource):
             if tag_limit and not any(v.get('title').lower() == tag_limit for k, v in tags.items()):
                 continue
 
-            list[uuid] = {'url': watch['url'],
-                       'title': watch['title'],
-                       'last_checked': watch['last_checked'],
-                       'last_changed': watch.last_changed,
-                       'last_error': watch['last_error']}
+            list[uuid] = {
+                'last_changed': watch.last_changed,
+                'last_checked': watch['last_checked'],
+                'last_error': watch['last_error'],
+                'title': watch['title'],
+                'url': watch['url'],
+                'viewed': watch.viewed
+            }
 
         if request.args.get('recheck_all'):
             for uuid in self.datastore.data['watching'].keys():

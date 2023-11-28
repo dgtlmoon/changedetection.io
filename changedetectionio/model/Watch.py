@@ -113,7 +113,8 @@ class model(dict):
 
     @property
     def viewed(self):
-        if int(self['last_viewed']) >= int(self.newest_history_key) :
+        # Don't return viewed when last_viewed is 0 and newest_key is 0
+        if int(self['last_viewed']) and int(self['last_viewed']) >= int(self.newest_history_key) :
             return True
 
         return False
