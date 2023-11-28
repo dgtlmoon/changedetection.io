@@ -172,7 +172,7 @@ class Fetcher():
 
     def iterate_browser_steps(self):
         from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
-        from playwright._impl._api_types import TimeoutError
+        from playwright._impl._errors import TimeoutError
         from jinja2 import Environment
         jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
 
@@ -436,7 +436,7 @@ class base_html_playwright(Fetcher):
                     is_binary)
 
         from playwright.sync_api import sync_playwright
-        import playwright._impl._api_types
+        import playwright._impl._errors
 
         self.delete_browser_steps_screenshots()
         response = None
@@ -489,7 +489,7 @@ class base_html_playwright(Fetcher):
             try:
                 if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
                     browsersteps_interface.action_execute_js(value=self.webdriver_js_execute_code, selector=None)
-            except playwright._impl._api_types.TimeoutError as e:
+            except playwright._impl._errors.TimeoutError as e:
                 context.close()
                 browser.close()
                 # This can be ok, we will try to grab what we could retrieve

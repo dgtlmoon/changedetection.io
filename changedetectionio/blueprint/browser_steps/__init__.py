@@ -152,7 +152,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @browser_steps_blueprint.route("/browsersteps_update", methods=['POST'])
     def browsersteps_ui_update():
         import base64
-        import playwright._impl._api_types
+        import  playwright._impl._errors
         global browsersteps_sessions
         from changedetectionio.blueprint.browser_steps import browser_steps
 
