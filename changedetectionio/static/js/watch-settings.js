@@ -1,39 +1,17 @@
 $(document).ready(function () {
-    function toggle() {
-        if ($('input[name="fetch_backend"]:checked').val() == 'html_webdriver') {
-            if (playwright_enabled) {
-                // playwright supports headers, so hide everything else
-                // See #664
-                $('#requests-override-options #request-method').hide();
-                $('#requests-override-options #request-body').hide();
 
-                // @todo connect this one up
-                $('#ignore-status-codes-option').hide();
-            } else {
-                // selenium/webdriver doesnt support anything afaik, hide it all
-                $('#requests-override-options').hide();
-            }
-
-            $('#webdriver-override-options').show();
-
-        } else if ($('input[name="fetch_backend"]:checked').val() == 'system') {
-            $('#requests-override-options #request-method').hide();
-            $('#requests-override-options #request-body').hide();
-            $('#ignore-status-codes-option').hide();
-            $('#requests-override-options').hide();
-            $('#webdriver-override-options').hide();
-        } else {
-
-            $('#requests-override-options').show();
-            $('#requests-override-options *:hidden').show();
-            $('#webdriver-override-options').hide();
+    // Lazy Hide/Show elements mechanism
+    $('[data-visible-for]').hide();
+    $(':radio').on('keyup keypress blur change click', function (e){
+        $('[data-visible-for]').hide();
+        var n = $(this).attr('name') + "=" + $(this).val();
+        if (n === 'fetch_backend=system') {
+            n = "fetch_backend=" + default_system_fetch_backend;
         }
-    }
+        $(`[data-visible-for~="${n}"]`).show();
 
-    $('input[name="fetch_backend"]').click(function (e) {
-        toggle();
     });
-    toggle();
+    $(':radio:checked').change();
 
     $('#notification-setting-reset-to-default').click(function (e) {
         $('#notification_title').val('');
