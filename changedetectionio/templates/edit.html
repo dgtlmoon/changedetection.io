@@ -139,9 +139,10 @@
                             {% endif %}
                         </div>
                     </div>
-
-                    <a class="pure-button button-secondary button-xsmall show-advanced">Show advanced options</a>
-                    <div class="pure-control-group advanced-options"  style="display: none;">
+                    <div class="pure-control-group">
+                        <a class="pure-button button-secondary button-xsmall show-advanced">Show advanced options</a>
+                    </div>
+                    <div class="advanced-options"  style="display: none;">
                         {{ render_field(form.webdriver_js_execute_code) }}
                         <div class="pure-form-message-inline">
                             Run this code before performing change detection, handy for filling in fields and other
@@ -153,12 +154,14 @@
                 </fieldset>
                 <!-- html requests always -->
                 <fieldset data-visible-for="fetch_backend=html_requests" style="display: none;">
-                    <a class="pure-button button-secondary button-xsmall show-advanced">Show advanced options</a>
-                    <div class="pure-control-group advanced-options"  style="display: none;">
+                    <div class="pure-control-group">
+                        <a class="pure-button button-secondary button-xsmall show-advanced">Show advanced options</a>
+                    </div>
+                    <div class="advanced-options"  style="display: none;">
                         <div class="pure-control-group advanced-options" id="request-method" style="display: none;">
                             {{ render_field(form.method) }}
                         </div>
-                        <div class="pure-control-group advanced-options" id="request-body">
+                        <div class="advanced-options" id="request-body">
                                             {{ render_field(form.body, rows=5, placeholder="Example
 {
    \"name\":\"John\",
