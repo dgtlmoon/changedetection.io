@@ -35,7 +35,7 @@ from flask import (
 
 from flask_paginate import Pagination, get_page_parameter
 
-from changedetectionio import html_tools
+from changedetectionio import html_tools, __version__
 from changedetectionio.api import api_v1
 
 datastore = None
