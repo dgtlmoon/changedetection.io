@@ -7,30 +7,36 @@
 
 from changedetectionio import changedetection
 import multiprocessing
+import signal
 import sys
-import os
+import time
 
+parse_process = multiprocessing.Process(target=changedetection.main)
+parse_process.daemon = True
+
+# The child (flask app) exited for some reason, so do a shutdown of this wrapper
+# Note: this will get triggered even when we send it a SIGTERM to shut down (sigterm_handler)
 def sigchld_handler(_signo, _stack_frame):
-    import sys
-    print('Shutdown: Got SIGCHLD')
-    # https://stackoverflow.com/questions/40453496/python-multiprocessing-capturing-signals-to-restart-child-processes-or-shut-do
-    pid, status = os.waitpid(-1, os.WNOHANG | os.WUNTRACED | os.WCONTINUED)
+    print('Shutdown: Got SIGCHLD (child process exited)')
+    parse_process.join() # Wait for it to really exit
 
-    print('Sub-process: pid %d status %d' % (pid, status))
-    if status != 0:
-        sys.exit(1)
+# This (main process) got a SIGTERM, tell the child (Flask App) to shut down by sending it a SIGTERM also
+def sigterm_handler(_signo, _stack_frame):
+    print('Shutdown: Got SIGTERM, shutting down Flask app')
+    print('.. waiting on shutdown..')
+    parse_process.terminate()
+    parse_process.join()
+    print('... shutdown complete')
+    sys.exit(1)
 
-    raise SystemExit
+# the child-process (from multiprocess.process) should be able to tell the parent one to shutdown (or detect)
+# and the parent one is not exiting the child one at the moment
 
 if __name__ == '__main__':
 
-    #signal.signal(signal.SIGCHLD, sigchld_handler)
-
-    # The only way I could find to get Flask to shutdown, is to wrap it and then rely on the subsystem issuing SIGTERM/SIGKILL
-    parse_process = multiprocessing.Process(target=changedetection.main)
-    parse_process.daemon = True
+    signal.signal(signal.SIGCHLD, sigchld_handler)
+    signal.signal(signal.SIGTERM, sigterm_handler)
     parse_process.start()
-    import time
 
     try:
         while True:
@@ -38,6 +44,7 @@ if __name__ == '__main__':
             if not parse_process.is_alive():
                 # Process died/crashed for some reason, exit with error set
                 sys.exit(1)
+
 
     except KeyboardInterrupt:
         #parse_process.terminate() not needed, because this process will issue it to the sub-process anyway

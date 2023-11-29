@@ -20,13 +20,15 @@ from . import __version__
 app = None
 datastore = None
 
+# Parent wrapper sends us a SIGTERM, do everything required for a clean shutdown
 def sigterm_handler(_signo, _stack_frame):
     global app
     global datastore
-#    app.config.exit.set()
-    print('Shutdown: Got SIGTERM, DB saved to disk')
+    print('Child > Shutdown: Got SIGTERM, Saving DB to disk..')
     datastore.sync_to_json()
-#    raise SystemExit
+    datastore.stop_thread = True
+    app.config.exit.set()
+    sys.exit()
 
 def main():
     global datastore
