@@ -23,11 +23,12 @@ from changedetectionio.flask_app import changedetection_app
 app = None
 datastore = None
 
-# Parent wrapper sends us a SIGTERM, do everything required for a clean shutdown
-def sigterm_handler(_signo, _stack_frame):
+# Parent wrapper or OS sends us a SIGTERM/SIGINT, do everything required for a clean shutdown
+def sigshutdown_handler(_signo, _stack_frame):
     global app
     global datastore
-    print(f'Shutdown: Got Signal - {_signo}, Saving DB to disk..')
+    name = signal.Signals(_signo).name
+    print(f'Shutdown: Got Signal - {name} ({_signo}), Saving DB to disk and calling shutdown')
     datastore.sync_to_json()
     datastore.stop_thread = True
     app.config.exit.set()
@@ -107,8 +108,8 @@ def main():
 
     app = changedetection_app(app_config, datastore)
 
-    signal.signal(signal.SIGTERM, sigterm_handler)
-    signal.signal(signal.SIGINT, sigterm_handler)
+    signal.signal(signal.SIGTERM, sigshutdown_handler)
+    signal.signal(signal.SIGINT, sigshutdown_handler)
 
     # Go into cleanup mode
     if do_cleanup:
