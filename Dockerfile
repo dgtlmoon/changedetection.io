@@ -59,5 +59,5 @@ COPY changedetectionio /app/changedetectionio
 COPY changedetection.py /app/changedetection.py
 
 WORKDIR /app
+CMD ["python3","./changedetection.py", "-d", "/datastore"]
 
-CMD [ "python", "./changedetection.py" , "-d", "/datastore"]
