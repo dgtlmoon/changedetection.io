@@ -22,11 +22,10 @@ def sigchld_handler(_signo, _stack_frame):
 
 # This (main process) got a SIGTERM, tell the child (Flask App) to shut down by sending it a SIGTERM also
 def sigterm_handler(_signo, _stack_frame):
-    print('Shutdown: Got SIGTERM, shutting down Flask app')
-    print('.. waiting on shutdown..')
+    print('Shutdown: Got SIGTERM, shutting down Flask app, waiting on shutdown..')
     parse_process.terminate()
     parse_process.join()
-    print('... shutdown complete')
+    print('Shutdown: Shutdown complete, exiting.')
     sys.exit(1)
 
 # the child-process (from multiprocess.process) should be able to tell the parent one to shutdown (or detect)
