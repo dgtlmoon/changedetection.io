@@ -38,7 +38,7 @@ from flask_paginate import Pagination, get_page_parameter
 from changedetectionio import html_tools
 from changedetectionio.api import api_v1
 
-__version__ = '0.45.7.3'
+__version__ = '0.45.8'
 
 from changedetectionio.store import BASE_URL_NOT_SET_TEXT
 
