@@ -83,9 +83,13 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
         headers = {URLBase.unquote(x): URLBase.unquote(y)
                    for x, y in results['qsd+'].items()}
 
-        # Add our GET paramters in the event the user wants to pass these along
-        params = {URLBase.unquote(x): URLBase.unquote(y)
-                             for x, y in results['qsd-'].items()}
+        # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
+        # In Apprise, it relies on prefixing each request arg with "-", because it uses say &method=update as a flag for apprise
+        # but here we are making straight requests, so we need todo convert this against apprise's logic
+        for k, v in results['qsd'].items():
+            if not k.strip('+-') in results['qsd+'].keys():
+                params[URLBase.unquote(k)] = URLBase.unquote(v)
+
 
         # Determine Authentication
         auth = ''
