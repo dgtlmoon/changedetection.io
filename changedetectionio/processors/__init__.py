@@ -52,6 +52,11 @@ class difference_detection_processor():
                 prefer_fetch_backend = 'base_html_playwright'
                 browser_connection_url = connection[0].get('browser_connection_url')
 
+        # PDF should be html_requests because playwright will serve it up (so far) in a embedded page
+        # @todo https://github.com/dgtlmoon/changedetection.io/issues/2019
+        # @todo needs test to or a fix
+        if self.watch.is_pdf:
+           prefer_fetch_backend = "html_requests"
 
         # Grab the right kind of 'fetcher', (playwright, requests, etc)
         if hasattr(content_fetcher, prefer_fetch_backend):
