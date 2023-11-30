@@ -46,6 +46,9 @@ from apprise.decorators import notify
 @notify(on="puts")
 def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     import requests
+    from apprise.utils import parse_url as apprise_parse_url
+    from apprise.URLBase import URLBase
+
     url = kwargs['meta'].get('url')
 
     if url.startswith('post'):
@@ -68,14 +71,21 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     url = url.replace('delete://', 'http://')
     url = url.replace('deletes://', 'https://')
 
-    # Try to auto-guess if it's JSON
     headers = {}
+    # Convert /foobar?+some-header=hello to proper header dictionary
+    results = apprise_parse_url(url)
+    if results:
+        # Add our headers that the user can potentially over-ride if they wish
+        # to to our returned result set and tidy entries by unquoting them
+        headers = {URLBase.unquote(x): URLBase.unquote(y)
+                   for x, y in results['qsd+'].items()}
+
+    # Try to auto-guess if it's JSON
     try:
         json.loads(body)
-        headers = {'Content-Type': 'application/json; charset=utf-8'}
+        headers['Content-Type'] = 'application/json; charset=utf-8'
     except ValueError as e:
         pass
-
 
     r(url, headers=headers, data=body)
 
