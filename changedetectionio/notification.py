@@ -90,7 +90,6 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
             if not k.strip('+-') in results['qsd+'].keys():
                 params[URLBase.unquote(k)] = URLBase.unquote(v)
 
-
         # Determine Authentication
         auth = ''
         if results.get('user') and results.get('password'):
@@ -106,10 +105,10 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
         pass
 
     r(results.get('url'),
-      headers=headers,
+      auth=auth,
       data=body,
-      params=params,
-      auth=auth
+      headers=headers,
+      params=params
       )
 
 
