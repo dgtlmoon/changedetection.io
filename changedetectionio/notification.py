@@ -72,6 +72,9 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     url = url.replace('deletes://', 'https://')
 
     headers = {}
+    params = {}
+    auth = None
+
     # Convert /foobar?+some-header=hello to proper header dictionary
     results = apprise_parse_url(url)
     if results:
@@ -80,6 +83,17 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
         headers = {URLBase.unquote(x): URLBase.unquote(y)
                    for x, y in results['qsd+'].items()}
 
+        # Add our GET paramters in the event the user wants to pass these along
+        params = {URLBase.unquote(x): URLBase.unquote(y)
+                             for x, y in results['qsd-'].items()}
+
+        # Determine Authentication
+        auth = ''
+        if results.get('user') and results.get('password'):
+            auth = (URLBase.unquote(results.get('user')), URLBase.unquote(results.get('user')))
+        elif results.get('user'):
+            auth = (URLBase.unquote(results.get('user')))
+
     # Try to auto-guess if it's JSON
     try:
         json.loads(body)
@@ -87,7 +101,12 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     except ValueError as e:
         pass
 
-    r(url, headers=headers, data=body)
+    r(results.get('url'),
+      headers=headers,
+      data=body,
+      params=params,
+      auth=auth
+      )
 
 
 def process_notification(n_object, datastore):
