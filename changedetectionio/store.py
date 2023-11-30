@@ -234,7 +234,7 @@ class ChangeDetectionStore:
 
         # Probably their should be dict...
         for watch in self.data['watching'].values():
-            if watch['url'] == url:
+            if watch['url'].lower() == url.lower():
                 return True
 
         return False
@@ -333,7 +333,8 @@ class ChangeDetectionStore:
 
         # Or if UUIDs given directly
         if tag_uuids:
-            apply_extras['tags'] = list(set(apply_extras['tags'] + tag_uuids))
+            for t in tag_uuids:
+                apply_extras['tags'] = list(set(apply_extras['tags'] + [t.strip()]))
 
         # Make any uuids unique
         if apply_extras.get('tags'):

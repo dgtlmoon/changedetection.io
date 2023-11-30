@@ -240,6 +240,10 @@ def changedetection_app(config=None, datastore_o=None):
     watch_api.add_resource(api_v1.Watch, '/api/v1/watch/<string:uuid>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
+    watch_api.add_resource(api_v1.Import,
+                           '/api/v1/import',
+                           resource_class_kwargs={'datastore': datastore})
+
     watch_api.add_resource(api_v1.SystemInfo, '/api/v1/systeminfo',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
