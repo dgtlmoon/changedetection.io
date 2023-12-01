@@ -32,7 +32,7 @@ setup(
     long_description_content_type='text/markdown',
     keywords='website change monitor for changes notification change detection '
              'alerts tracking website tracker change alert website and monitoring',
-    entry_points={"console_scripts": ["changedetection.io=changedetectionio.changedetection:main"]},
+    entry_points={"console_scripts": ["changedetection.io=changedetectionio:main"]},
     zip_safe=True,
     scripts=["changedetection.py"],
     author='dgtlmoon',

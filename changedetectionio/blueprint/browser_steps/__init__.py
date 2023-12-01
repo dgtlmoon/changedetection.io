@@ -25,10 +25,9 @@ from distutils.util import strtobool
 from flask import Blueprint, request, make_response
 import logging
 import os
-import re
 
 from changedetectionio.store import ChangeDetectionStore
-from changedetectionio import login_optionally_required
+from changedetectionio.flask_app import login_optionally_required
 
 browsersteps_sessions = {}
 io_interface_context = None

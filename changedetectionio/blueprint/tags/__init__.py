@@ -1,6 +1,6 @@
 from flask import Blueprint, request, make_response, render_template, flash, url_for, redirect
 from changedetectionio.store import ChangeDetectionStore
-from changedetectionio import login_optionally_required
+from changedetectionio.flask_app import login_optionally_required
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):

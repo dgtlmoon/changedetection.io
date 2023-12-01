@@ -98,14 +98,57 @@ jobs:
 
       - name: Test changedetection.io container starts+runs basically without error
         run: |
-          docker run -p 5556:5000 -d test-changedetectionio
+          docker run --name test-changedetectionio -p 5556:5000  -d test-changedetectionio
           sleep 3
           # Should return 0 (no error) when grep finds it
           curl -s http://localhost:5556 |grep -q checkbox-uuid
           
           # and IPv6
           curl -s -g -6 "http://[::1]:5556"|grep -q checkbox-uuid
+          docker kill test-changedetectionio
+
+      - name: Test changedetection.io SIGTERM and SIGINT signal shutdown
+        run: |
           
+          echo SIGINT Shutdown request test
+          docker run --name sig-test -d test-changedetectionio
+          sleep 3
+          echo ">>> Sending SIGINT to sig-test container"
+          docker kill --signal=SIGINT sig-test
+          sleep 3
+          # invert the check (it should be not 0/not running)
+          docker ps
+          docker logs sig-test
+          test -z "`docker ps|grep sig-test`"
+          if [ $? -ne 0 ]
+          then
+            echo "Looks like container was running when it shouldnt be"
+            docker ps
+            exit 1
+          fi
+          
+          # @todo - scan the container log to see the right "graceful shutdown" text exists 
+          docker rm sig-test
+          
+          echo SIGTERM Shutdown request test
+          docker run --name sig-test -d test-changedetectionio
+          sleep 3
+          echo ">>> Sending SIGTERM to sig-test container"
+          docker kill --signal=SIGTERM sig-test
+          sleep 3
+          # invert the check (it should be not 0/not running)
+          docker ps
+          docker logs sig-test
+          test -z "`docker ps|grep sig-test`"
+          if [ $? -ne 0 ]
+          then
+            echo "Looks like container was running when it shouldnt be"
+            docker ps
+            exit 1
+          fi
+          
+          # @todo - scan the container log to see the right "graceful shutdown" text exists           
+          docker rm sig-test
 
 #export WEBDRIVER_URL=http://localhost:4444/wd/hub
 #pytest tests/fetchers/test_content.py
