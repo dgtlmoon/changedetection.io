@@ -19,6 +19,9 @@ def cleanup(datastore_path):
     for g in ["*.txt", "*.json", "*.pdf"]:
         files = glob.glob(os.path.join(datastore_path, g))
         for f in files:
+            if 'proxies.json' in f:
+                # Usually mounted by docker container during test time
+                continue
             if os.path.isfile(f):
                 os.unlink(f)
 
