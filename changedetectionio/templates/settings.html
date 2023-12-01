@@ -236,8 +236,11 @@ nav
                 <span class="pure-form-message-inline">SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should whitelist the IP access instead</span>
                 </div>
                 <div class="pure-control-group" id="extra-browsers-setting">
-                    <span class="pure-form-message-inline"><i>Extra Browsers</i> allow changedetection.io to communicate with a different web-browser.</span><br>
-                  {{ render_field(form.requests.form.extra_browsers) }}
+                    <p>
+                    <span class="pure-form-message-inline"><i>Extra Browsers</i> can be attached to further defeat CAPTCHA's on websites that are particularly hard to scrape.</span><br>
+                    <span class="pure-form-message-inline">Simply paste the connection address into the box, <a href="https://changedetection.io/tutorial/using-bright-datas-scraping-browser-pass-captchas-and-other-protection-when-monitoring">More instructions and examples here</a> </span>
+                    </p>
+                    {{ render_field(form.requests.form.extra_browsers) }}
                 </div>
             </div>
             <div id="actions">

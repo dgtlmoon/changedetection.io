@@ -127,7 +127,7 @@
                 {% endif %}
 
                 <!-- webdriver always -->
-                <fieldset data-visible-for="fetch_backend=html_webdriver">
+                <fieldset data-visible-for="fetch_backend=html_webdriver"  style="display: none;">
                     <div class="pure-control-group">
                         {{ render_field(form.webdriver_delay) }}
                         <div class="pure-form-message-inline">
@@ -153,15 +153,15 @@
                     </div>
                 </fieldset>
                 <!-- html requests always -->
-                <fieldset data-visible-for="fetch_backend=html_requests" style="display: none;">
+                <fieldset data-visible-for="fetch_backend=html_requests">
                     <div class="pure-control-group">
                         <a class="pure-button button-secondary button-xsmall show-advanced">Show advanced options</a>
                     </div>
                     <div class="advanced-options"  style="display: none;">
-                        <div class="pure-control-group advanced-options" id="request-method" style="display: none;">
+                        <div class="pure-control-group" id="request-method">
                             {{ render_field(form.method) }}
                         </div>
-                        <div class="advanced-options" id="request-body">
+                        <div id="request-body">
                                             {{ render_field(form.body, rows=5, placeholder="Example
 {
    \"name\":\"John\",
@@ -187,8 +187,8 @@ User-Agent: wonderbra 1.0") }}
                             (Not supported by Selenium browser)
                         </div>
                     </div>
-            <fieldset data-visible-for="fetch_backend=html_requests fetch_backend=html_webdriver" style="display: none;">
-                    <div  class="pure-control-group inline-radio advanced-options"  style="display: none;">
+            <fieldset data-visible-for="fetch_backend=html_requests fetch_backend=html_webdriver" >
+                    <div class="pure-control-group inline-radio advanced-options"  style="display: none;">
                     {{ render_checkbox_field(form.ignore_status_codes) }}
                     </div>
             </fieldset>
