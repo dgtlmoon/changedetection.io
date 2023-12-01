@@ -13,22 +13,14 @@ global app
 
 
 def cleanup(datastore_path):
+    import glob
     # Unlink test output files
-    files = [
-        'count.txt',
-        'endpoint-content.txt'
-        'headers.txt',
-        'headers-testtag.txt',
-        'notification.txt',
-        'secret.txt',
-        'url-watches.json',
-        'output.txt',
-    ]
-    for file in files:
-        try:
-            os.unlink("{}/{}".format(datastore_path, file))
-        except FileNotFoundError:
-            pass
+
+    for g in ["*.txt", "*.json", "*.pdf"]:
+        files = glob.glob(os.path.join(datastore_path, g))
+        for f in files:
+            if os.path.isfile(f):
+                os.unlink(f)
 
 @pytest.fixture(scope='session')
 def app(request):

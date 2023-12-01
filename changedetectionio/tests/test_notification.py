@@ -281,7 +281,8 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server):
 
     # CUSTOM JSON BODY CHECK for POST://
     set_original_response()
-    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}"
+    # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#header-manipulation
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}&+custom-header=123"
 
     res = client.post(
         url_for("settings_page"),
@@ -297,10 +298,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server):
         follow_redirects=True
     )
     assert b'Settings updated' in res.data
-    client.get(
-        url_for("form_delete", uuid="all"),
-        follow_redirects=True
-    )
+
     # Add a watch and trigger a HTTP POST
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -315,7 +313,9 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server):
     set_modified_response()
 
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(2)
+    wait_for_all_checks(client)
+
+    time.sleep(2) # plus extra delay for notifications to fire
 
     with open("test-datastore/notification.txt", 'r') as f:
         x = f.read()
@@ -328,6 +328,13 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server):
     with open("test-datastore/notification-url.txt", 'r') as f:
         notification_url = f.read()
         assert 'xxx=http' in notification_url
+        # apprise style headers should be stripped
+        assert 'custom-header' not in notification_url
+
+    with open("test-datastore/notification-headers.txt", 'r') as f:
+        notification_headers = f.read()
+        assert 'custom-header: 123' in notification_headers.lower()
+
 
     # Should always be automatically detected as JSON content type even when we set it as 'Text' (default)
     assert os.path.isfile("test-datastore/notification-content-type.txt")
@@ -335,3 +342,8 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server):
         assert 'application/json' in f.read()
 
     os.unlink("test-datastore/notification-url.txt")
+
+    client.get(
+        url_for("form_delete", uuid="all"),
+        follow_redirects=True
+    )
