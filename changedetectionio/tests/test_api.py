@@ -357,3 +357,25 @@ def test_api_watch_PUT_update(client, live_server):
     # Cleanup everything
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
+
+
+def test_api_import(client, live_server):
+    api_key = extract_api_key_from_UI(client)
+
+    res = client.post(
+        url_for("import") + "?tag=import-test",
+        data='https://website1.com\r\nhttps://website2.com',
+        headers={'x-api-key': api_key},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+    assert len(res.json) == 2
+    res = client.get(url_for("index"))
+    assert b"https://website1.com" in res.data
+    assert b"https://website2.com" in res.data
+
+    # Should see the new tag in the tag/groups list
+    res = client.get(url_for('tags.tags_overview_page'))
+    assert b'import-test' in res.data
+    
