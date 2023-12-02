@@ -11,9 +11,10 @@ _Live your data-life pro-actively._
 
 ![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master)
 
-[**Don't have time? Let us host it for you! try our $8.99/month subscription - use our proxies and support!**](https://changedetection.io) , _half the price of other website change monitoring services!_
+[**Get started with website page change monitoring straight away. Don't have time? Try our $8.99/month subscription, use our proxies and support!**](https://changedetection.io) , _half the price of other website change monitoring services!_
 
 - Chrome browser included.
+- Nothing to install, access via browser login after signup.
 - Super fast, no registration needed setup.
 - Get started watching and receiving website change notifications straight away.
 
