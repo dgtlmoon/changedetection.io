@@ -159,9 +159,9 @@ def main():
     if ssl_mode:
         # @todo finalise SSL config, but this should get you in the right direction if you need it.
         ssl_args = {
-                certfile : 'cert.pem',
-                keyfile : 'privkey.pem',
-                server_side : True,
+                'certfile' : 'cert.pem',
+                'keyfile' : 'privkey.pem',
+                'server_side' : True,
                }
     else:
         ssl_args = {}
