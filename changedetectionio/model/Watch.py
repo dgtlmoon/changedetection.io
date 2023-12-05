@@ -1,5 +1,5 @@
 from distutils.util import strtobool
-import logging
+from loguru import logger
 import os
 import re
 import time
@@ -210,7 +210,7 @@ class model(dict):
         # Read the history file as a dict
         fname = os.path.join(self.watch_data_dir, "history.txt")
         if os.path.isfile(fname):
-            logging.debug("Reading history index " + str(time.time()))
+            logger.debug("Reading history index " + str(time.time()))
             with open(fname, "r") as f:
                 for i in f.readlines():
                     if ',' in i:

@@ -2,7 +2,7 @@
 
 import hashlib
 import json
-import logging
+from loguru import logger
 import os
 import re
 import urllib3
@@ -340,10 +340,10 @@ class perform_site_check(difference_detection_processor):
                 has_unique_lines = watch.lines_contain_something_unique_compared_to_history(lines=stripped_text_from_html.splitlines())
                 # One or more lines? unsure?
                 if not has_unique_lines:
-                    logging.debug("check_unique_lines: UUID {} didnt have anything new setting change_detected=False".format(uuid))
+                    logger.debug("check_unique_lines: UUID {} didnt have anything new setting change_detected=False".format(uuid))
                     changed_detected = False
                 else:
-                    logging.debug("check_unique_lines: UUID {} had unique content".format(uuid))
+                    logger.debug("check_unique_lines: UUID {} had unique content".format(uuid))
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5

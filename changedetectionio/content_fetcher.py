@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 import chardet
 import hashlib
 import json
-import logging
+from loguru import logger
 import os
 import requests
 import sys
@@ -289,14 +289,14 @@ class base_html_playwright(Fetcher):
 
         if self.browser_steps_screenshot_path is not None:
             destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.jpeg'.format(step_n))
-            logging.debug("Saving step screenshot to {}".format(destination))
+            logger.debug("Saving step screenshot to {}".format(destination))
             with open(destination, 'wb') as f:
                 f.write(screenshot)
 
     def save_step_html(self, step_n):
         content = self.page.content()
         destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.html'.format(step_n))
-        logging.debug("Saving step HTML to {}".format(destination))
+        logger.debug("Saving step HTML to {}".format(destination))
         with open(destination, 'w') as f:
             f.write(content)
 

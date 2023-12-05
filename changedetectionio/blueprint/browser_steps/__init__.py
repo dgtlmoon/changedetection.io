@@ -23,7 +23,7 @@
 
 from distutils.util import strtobool
 from flask import Blueprint, request, make_response
-import logging
+from loguru import logger
 import os
 
 from changedetectionio.store import ChangeDetectionStore
@@ -116,7 +116,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return make_response('No Watch UUID specified', 500)
 
         print("Starting connection with playwright")
-        logging.debug("browser_steps.py connecting")
+        logger.debug("browser_steps.py connecting")
         browsersteps_sessions[browsersteps_session_id] = start_browsersteps_session(watch_uuid)
         print("Starting connection with playwright - done")
         return {'browsersteps_session_id': browsersteps_session_id}

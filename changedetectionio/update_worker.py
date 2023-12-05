@@ -12,14 +12,13 @@ from .processors.restock_diff import UnableToExtractRestockData
 # Requests for checking on a single site(watch) from a queue of watches
 # (another process inserts watches into the queue that are time-ready for checking)
 
-import logging
+from loguru import logger
 import sys
 
 class update_worker(threading.Thread):
     current_uuid = None
 
     def __init__(self, q, notification_q, app, datastore, *args, **kwargs):
-        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
         self.q = q
         self.app = app
         self.notification_q = notification_q
@@ -65,7 +64,7 @@ class update_worker(threading.Thread):
             'uuid': watch.get('uuid'),
             'watch_url': watch.get('url'),
         })
-        logging.info (">> SENDING NOTIFICATION")
+        logger.info (">> SENDING NOTIFICATION")
         self.notification_q.put(n_object)
 
     # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)

@@ -9,7 +9,7 @@ from copy import deepcopy, copy
 from os import path, unlink
 from threading import Lock
 import json
-import logging
+from loguru import logger
 import os
 import re
 import requests
@@ -139,7 +139,7 @@ class ChangeDetectionStore:
         save_data_thread = threading.Thread(target=self.save_datastore).start()
 
     def set_last_viewed(self, uuid, timestamp):
-        logging.debug("Setting watch UUID: {} last viewed to {}".format(uuid, int(timestamp)))
+        logger.debug("Setting watch UUID: {} last viewed to {}".format(uuid, int(timestamp)))
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
         self.needs_write = True
 
@@ -315,7 +315,7 @@ class ChangeDetectionStore:
                             apply_extras['include_filters'] = [res['css_filter']]
 
             except Exception as e:
-                logging.error("Error fetching metadata for shared watch link", url, str(e))
+                logger.error("Error fetching metadata for shared watch link", url, str(e))
                 flash("Error fetching metadata for {}".format(url), 'error')
                 return False
         from .model.Watch import is_safe_url
@@ -344,7 +344,7 @@ class ChangeDetectionStore:
 
         new_uuid = new_watch.get('uuid')
 
-        logging.debug("Added URL {} - {}".format(url, new_uuid))
+        logger.debug("Added URL {} - {}".format(url, new_uuid))
 
         for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
             if k in apply_extras:
@@ -415,14 +415,14 @@ class ChangeDetectionStore:
 
 
     def sync_to_json(self):
-        logging.info("Saving JSON..")
+        logger.info("Saving JSON..")
         print("Saving JSON..")
         try:
             data = deepcopy(self.__data)
         except RuntimeError as e:
             # Try again in 15 seconds
             time.sleep(15)
-            logging.error ("! Data changed when writing to JSON, trying again.. %s", str(e))
+            logger.error ("! Data changed when writing to JSON, trying again.. %s", str(e))
             self.sync_to_json()
             return
         else:
@@ -435,7 +435,7 @@ class ChangeDetectionStore:
                     json.dump(data, json_file, indent=4)
                 os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
-                logging.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
+                logger.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
 
             self.needs_write = False
             self.needs_write_urgent = False
@@ -716,7 +716,7 @@ class ChangeDetectionStore:
                         with open(os.path.join(target_path, "history.txt"), "w") as f:
                             f.writelines(history)
                     else:
-                        logging.warning("Datastore history directory {} does not exist, skipping history import.".format(target_path))
+                        logger.warning("Datastore history directory {} does not exist, skipping history import.".format(target_path))
 
                 # No longer needed, dynamically pulled from the disk when needed.
                 # But we should set it back to a empty dict so we don't break if this schema runs on an earlier version.

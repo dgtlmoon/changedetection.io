@@ -12,7 +12,8 @@ from functools import wraps
 from threading import Event
 import datetime
 import flask_login
-import logging
+from loguru import logger
+import sys
 import os
 import pytz
 import queue
@@ -49,6 +50,7 @@ extra_stylesheets = []
 update_q = queue.PriorityQueue()
 notification_q = queue.Queue()
 
+logger.add(sys.stderr)
 app = Flask(__name__,
             static_url_path="",
             static_folder="static",
@@ -1484,7 +1486,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
         except Exception as e:
-            logging.error("Error sharing -{}".format(str(e)))
+            logger.error("Error sharing -{}".format(str(e)))
             flash("Could not share, something went wrong while communicating with the share server - {}".format(str(e)), 'error')
 
         # https://changedetection.io/share/VrMv05wpXyQa
@@ -1588,7 +1590,7 @@ def notification_runner():
                 sent_obj = notification.process_notification(n_object, datastore)
 
             except Exception as e:
-                logging.error("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
+                logger.error("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
 
                 # UUID wont be present when we submit a 'test' from the global settings
                 if 'uuid' in n_object:
@@ -1656,7 +1658,7 @@ def ticker_thread_check_time_launch_checks():
             now = time.time()
             watch = datastore.data['watching'].get(uuid)
             if not watch:
-                logging.error("Watch: {} no longer present.".format(uuid))
+                logger.error("Watch: {} no longer present.".format(uuid))
                 continue
 
             # No need todo further processing if it's paused
