@@ -40,6 +40,7 @@ function isItemInStock() {
     'out-of-stock',
     'produkt niedostępny',
     'sold out',
+    'sold-out',
     'temporarily out of stock',
     'temporarily unavailable',
     'tickets unavailable',
