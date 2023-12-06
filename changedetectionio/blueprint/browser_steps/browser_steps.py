@@ -82,7 +82,7 @@ class steppable_browser_interface():
         #and also wait for seconds ?
         #await page.waitForTimeout(1000);
         #await page.waitForTimeout(extra_wait_ms);
-        logger.debug(f"Time to goto URL {time.time() - now})
+        logger.debug(f"Time to goto URL {time.time() - now}")
         return response
 
     def action_click_element_containing_text(self, selector=None, value=''):

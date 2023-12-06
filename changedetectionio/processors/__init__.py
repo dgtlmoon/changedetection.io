@@ -5,6 +5,7 @@ import re
 from changedetectionio import content_fetcher
 from copy import deepcopy
 from distutils.util import strtobool
+from loguru import logger
 
 class difference_detection_processor():
 

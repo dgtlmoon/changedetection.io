@@ -2,6 +2,7 @@ import apprise
 from jinja2 import Environment, BaseLoader
 from apprise import NotifyFormat
 import json
+from loguru import logger
 
 valid_tokens = {
     'base_url': '',

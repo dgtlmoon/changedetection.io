@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import time
 import validators
 from wtforms import ValidationError
+from loguru import logger
 
 from changedetectionio.forms import validate_url
 
