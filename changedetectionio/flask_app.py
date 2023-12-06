@@ -50,7 +50,6 @@ extra_stylesheets = []
 update_q = queue.PriorityQueue()
 notification_q = queue.Queue()
 
-logger.add(sys.stderr)
 app = Flask(__name__,
             static_url_path="",
             static_folder="static",
