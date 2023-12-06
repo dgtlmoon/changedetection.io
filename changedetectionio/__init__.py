@@ -58,12 +58,14 @@ def main():
         datastore_path = os.path.join(os.getcwd(), "../datastore")
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "6Ccsd:h:p:", "port")
+        opts, args = getopt.getopt(sys.argv[1:], "6Ccsd:h:p:l:", "port")
     except getopt.GetoptError:
-        print('backend.py -s SSL enable -h [host] -p [port] -d [datastore path]')
+        print('backend.py -s SSL enable -h [host] -p [port] -d [datastore path] -l [debug level]')
         sys.exit(2)
 
     create_datastore_dir = False
+
+    logger_level = 'DEBUG'
 
     for opt, arg in opts:
         if opt == '-s':
@@ -89,6 +91,19 @@ def main():
         # Create the datadir if it doesnt exist
         if opt == '-C':
             create_datastore_dir = True
+
+        if opt == '-l':
+            logger_level = int(arg) if arg.isdigit() else arg.upper()
+
+    # Without this, logger will be default logger will be duplicated
+    logger.remove()
+    try:
+        logger.add(sys.stderr, level=logger_level)
+    # Catch negative number or wrong log level name
+    except ValueError:
+        print("Available log level name: TRACE, DEBUG(default), INFO, SUCCESS,"
+              " WARNING, ERROR, CRITICAL")
+        sys.exit(2)
 
     # isnt there some @thingy to attach to each route to tell it, that this route needs a datastore
     app_config = {'datastore_path': datastore_path}
