@@ -115,10 +115,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if not watch_uuid:
             return make_response('No Watch UUID specified', 500)
 
-        print("Starting connection with playwright")
+        logger.debug("Starting connection with playwright")
         logger.debug("browser_steps.py connecting")
         browsersteps_sessions[browsersteps_session_id] = start_browsersteps_session(watch_uuid)
-        print("Starting connection with playwright - done")
+        logger.debug("Starting connection with playwright - done")
         return {'browsersteps_session_id': browsersteps_session_id}
 
     @login_optionally_required
