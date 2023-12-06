@@ -461,7 +461,7 @@ class ChangeDetectionStore:
     # Go through the datastore path and remove any snapshots that are not mentioned in the index
     # This usually is not used, but can be handy.
     def remove_unused_snapshots(self):
-        print ("Removing snapshots from datastore that are not in the index..")
+        logger.critical("Removing snapshots from datastore that are not in the index..")
 
         index=[]
         for uuid in self.data['watching']:
@@ -474,7 +474,7 @@ class ChangeDetectionStore:
         for uuid in self.data['watching']:
             for item in pathlib.Path(self.datastore_path).rglob(uuid+"/*.txt"):
                 if not str(item) in index:
-                    print ("Removing",item)
+                    logger.critical(f"Removing {item}")
                     unlink(item)
 
     @property
@@ -600,13 +600,13 @@ class ChangeDetectionStore:
     def add_tag(self, name):
         # If name exists, return that
         n = name.strip().lower()
-        print (f">>> Adding new tag - '{n}'")
+        logger.debug(f">>> Adding new tag - '{n}'")
         if not n:
             return False
 
         for uuid, tag in self.__data['settings']['application'].get('tags', {}).items():
             if n == tag.get('title', '').lower().strip():
-                print (f">>> Tag {name} already exists")
+                logger.error(f">>> Tag {name} already exists")
                 return uuid
 
         # Eventually almost everything todo with a watch will apply as a Tag
@@ -668,7 +668,7 @@ class ChangeDetectionStore:
         updates_available = self.get_updates_available()
         for update_n in updates_available:
             if update_n > self.__data['settings']['application']['schema_version']:
-                print ("Applying update_{}".format((update_n)))
+                logger.critical("Applying update_{}".format((update_n)))
                 # Wont exist on fresh installs
                 if os.path.exists(self.json_store_path):
                     shutil.copyfile(self.json_store_path, self.datastore_path+"/url-watches-before-{}.json".format(update_n))

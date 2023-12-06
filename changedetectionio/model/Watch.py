@@ -121,7 +121,7 @@ class model(dict):
 
     def ensure_data_dir_exists(self):
         if not os.path.isdir(self.watch_data_dir):
-            print ("> Creating data dir {}".format(self.watch_data_dir))
+            logger.debug("> Creating data dir {}".format(self.watch_data_dir))
             os.mkdir(self.watch_data_dir)
 
     @property

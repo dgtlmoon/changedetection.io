@@ -79,7 +79,7 @@ def main():
             datastore_path = arg
 
         if opt == '-6':
-            print ("Enabling IPv6 listen support")
+            logger.critical("Enabling IPv6 listen support")
             ipv6_enabled = True
 
         # Cleanup (remove text files that arent in the index)
@@ -146,7 +146,7 @@ def main():
     #         proxy_set_header X-Forwarded-Prefix /app;
 
     if os.getenv('USE_X_SETTINGS'):
-        print ("USE_X_SETTINGS is ENABLED\n")
+        logger.debug("USE_X_SETTINGS is ENABLED\n")
         from werkzeug.middleware.proxy_fix import ProxyFix
         app.wsgi_app = ProxyFix(app.wsgi_app, x_prefix=1, x_host=1)
 
