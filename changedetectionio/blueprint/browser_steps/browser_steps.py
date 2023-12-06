@@ -4,6 +4,7 @@ import os
 import time
 import re
 from random import randint
+from loguru import logger
 
 # Two flags, tell the JS which of the "Selector" or "Value" field should be enabled in the front end
 # 0- off, 1- on
