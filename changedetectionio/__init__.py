@@ -97,9 +97,9 @@ def main():
         if create_datastore_dir:
             os.mkdir(app_config['datastore_path'])
         else:
-            print(
+            logger.critical(
                 "ERROR: Directory path for the datastore '{}' does not exist, cannot start, please make sure the directory exists or specify a directory with the -d option.\n"
-                "Or use the -C parameter to create the directory.".format(app_config['datastore_path']), file=sys.stderr)
+                "Or use the -C parameter to create the directory.".format(app_config['datastore_path']))
             sys.exit(2)
 
     try:
