@@ -9,7 +9,6 @@ from copy import deepcopy, copy
 from os import path, unlink
 from threading import Lock
 import json
-from loguru import logger
 import os
 import re
 import requests
@@ -17,6 +16,7 @@ import secrets
 import threading
 import time
 import uuid as uuid_builder
+from loguru import logger
 
 # Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
 BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
@@ -42,7 +42,7 @@ class ChangeDetectionStore:
         self.__data = App.model()
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
-        print(">>> Datastore path is ", self.json_store_path)
+        logger.debug(f">>> Datastore path is {self.json_store_path}")
         self.needs_write = False
         self.start_time = time.time()
         self.stop_thread = False
@@ -83,12 +83,12 @@ class ChangeDetectionStore:
                 for uuid, watch in self.__data['watching'].items():
                     watch['uuid']=uuid
                     self.__data['watching'][uuid] = Watch.model(datastore_path=self.datastore_path, default=watch)
-                    print("Watching:", uuid, self.__data['watching'][uuid]['url'])
+                    logger.debug(f"Watching: {uuid} {self.__data['watching'][uuid]['url']}")
 
         # First time ran, Create the datastore.
         except (FileNotFoundError):
             if include_default_watches:
-                print("No JSON DB found at {}, creating JSON store at {}".format(self.json_store_path, self.datastore_path))
+                logger.critical("No JSON DB found at {}, creating JSON store at {}".format(self.json_store_path, self.datastore_path))
                 self.add_watch(url='https://news.ycombinator.com/',
                                tag='Tech news',
                                extras={'fetch_backend': 'html_requests'})
@@ -361,7 +361,7 @@ class ChangeDetectionStore:
         if write_to_disk_now:
             self.sync_to_json()
 
-        print("added ", url)
+        logger.debug(f"added {url}")
 
         return new_uuid
 
@@ -415,8 +415,7 @@ class ChangeDetectionStore:
 
 
     def sync_to_json(self):
-        logger.info("Saving JSON..")
-        print("Saving JSON..")
+        logger.critical("Saving JSON..")
         try:
             data = deepcopy(self.__data)
         except RuntimeError as e:
@@ -446,7 +445,7 @@ class ChangeDetectionStore:
 
         while True:
             if self.stop_thread:
-                print("Shutting down datastore thread")
+                logger.critical("Shutting down datastore thread")
                 return
 
             if self.needs_write or self.needs_write_urgent:
@@ -561,7 +560,7 @@ class ChangeDetectionStore:
             if os.path.isfile(filepath):
                 headers.update(parse_headers_from_text_file(filepath))
         except Exception as e:
-            print(f"ERROR reading headers.txt at {filepath}", str(e))
+            logger.error(f"ERROR reading headers.txt at {filepath} {str(e)}")
 
         watch = self.data['watching'].get(uuid)
         if watch:
@@ -572,7 +571,7 @@ class ChangeDetectionStore:
                 if os.path.isfile(filepath):
                     headers.update(parse_headers_from_text_file(filepath))
             except Exception as e:
-                print(f"ERROR reading headers.txt at {filepath}", str(e))
+                logger.error(f"ERROR reading headers.txt at {filepath} {str(e)}")
 
             # In /datastore/tag-name.txt
             tags = self.get_all_tags_for_watch(uuid=uuid)
@@ -583,7 +582,7 @@ class ChangeDetectionStore:
                     if os.path.isfile(filepath):
                         headers.update(parse_headers_from_text_file(filepath))
                 except Exception as e:
-                    print(f"ERROR reading headers.txt at {filepath}", str(e))
+                    logger.error(f"ERROR reading headers.txt at {filepath} {str(e)}")
 
         return headers
 
@@ -677,8 +676,8 @@ class ChangeDetectionStore:
                 try:
                     update_method = getattr(self, "update_{}".format(update_n))()
                 except Exception as e:
-                    print("Error while trying update_{}".format((update_n)))
-                    print(e)
+                    logger.error("Error while trying update_{}".format((update_n)))
+                    logger.error(e)
                     # Don't run any more updates
                     return
                 else:

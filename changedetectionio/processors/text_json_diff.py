@@ -2,7 +2,6 @@
 
 import hashlib
 import json
-from loguru import logger
 import os
 import re
 import urllib3
@@ -12,6 +11,7 @@ from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACC
 from copy import deepcopy
 from . import difference_detection_processor
 from ..html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
+from loguru import logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

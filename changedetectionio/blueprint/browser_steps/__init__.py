@@ -23,11 +23,11 @@
 
 from distutils.util import strtobool
 from flask import Blueprint, request, make_response
-from loguru import logger
 import os
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.flask_app import login_optionally_required
+from loguru import logger
 
 browsersteps_sessions = {}
 io_interface_context = None
@@ -88,7 +88,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 if parsed.password:
                     proxy['password'] = parsed.password
 
-                print("Browser Steps: UUID {} selected proxy {}".format(watch_uuid, proxy_url))
+                logger.debug("Browser Steps: UUID {} selected proxy {}".format(watch_uuid, proxy_url))
 
         # Tell Playwright to connect to Chrome and setup a new session via our stepper interface
         browsersteps_start_session['browserstepper'] = browser_steps.browsersteps_live_ui(
@@ -189,7 +189,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                          optional_value=step_optional_value)
 
             except Exception as e:
-                print("Exception when calling step operation", step_operation, str(e))
+                logger.error(f"Exception when calling step operation {step_operation} {str(e)}")
                 # Try to find something of value to give back to the user
                 return make_response(str(e).splitlines()[0], 401)
 

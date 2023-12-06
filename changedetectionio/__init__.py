@@ -17,6 +17,7 @@ import sys
 
 from changedetectionio import store
 from changedetectionio.flask_app import changedetection_app
+from loguru import logger
 
 
 # Only global so we can access it in the signal handler
@@ -28,9 +29,9 @@ def sigshutdown_handler(_signo, _stack_frame):
     global app
     global datastore
     name = signal.Signals(_signo).name
-    print(f'Shutdown: Got Signal - {name} ({_signo}), Saving DB to disk and calling shutdown')
+    logger.critical(f'Shutdown: Got Signal - {name} ({_signo}), Saving DB to disk and calling shutdown')
     datastore.sync_to_json()
-    print(f'Sync JSON to disk complete.')
+    logger.success(f'Sync JSON to disk complete.')
     # This will throw a SystemExit exception, because eventlet.wsgi.server doesn't know how to deal with it.
     # Solution: move to gevent or other server in the future (#2014)
     datastore.stop_thread = True
@@ -106,7 +107,7 @@ def main():
     except JSONDecodeError as e:
         # Dont' start if the JSON DB looks corrupt
         print ("ERROR: JSON DB or Proxy List JSON at '{}' appears to be corrupt, aborting".format(app_config['datastore_path']))
-        print(str(e))
+        logger.critical(str(e))
         return
 
     app = changedetection_app(app_config, datastore)

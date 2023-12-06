@@ -1613,7 +1613,7 @@ def ticker_thread_check_time_launch_checks():
     proxy_last_called_time = {}
 
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 20))
-    print("System env MINIMUM_SECONDS_RECHECK_TIME", recheck_time_minimum_seconds)
+    logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
 
     # Spin up Workers that do the fetching
     # Can be overriden by ENV or use the default settings
@@ -1691,7 +1691,7 @@ def ticker_thread_check_time_launch_checks():
                             time_since_proxy_used = int(time.time() - proxy_last_used_time)
                             if time_since_proxy_used < proxy_list_reuse_time_minimum:
                                 # Not enough time difference reached, skip this watch
-                                print("> Skipped UUID {} using proxy '{}', not enough time between proxy requests {}s/{}s".format(uuid,
+                                logger.debug("> Skipped UUID {} using proxy '{}', not enough time between proxy requests {}s/{}s".format(uuid,
                                                                                                                          watch_proxy,
                                                                                                                          time_since_proxy_used,
                                                                                                                          proxy_list_reuse_time_minimum))
@@ -1702,7 +1702,7 @@ def ticker_thread_check_time_launch_checks():
 
                     # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
                     priority = int(time.time())
-                    print(
+                    logger.debug(
                         "> Queued watch UUID {} last checked at {} queued at {:0.2f} priority {} jitter {:0.2f}s, {:0.2f}s since last checked".format(
                             uuid,
                             watch['last_checked'],
