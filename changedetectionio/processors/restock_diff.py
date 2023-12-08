@@ -71,7 +71,7 @@ class perform_site_check(difference_detection_processor):
                    ]):
                 self.fetcher.instock_data = 'Possibly in stock'
             else:
-                update_obj["in_stock"] = False
+                self.fetcher.instock_data = availability
 
         # Fallback to scraping the content for keywords (done in JS)
         if self.fetcher.instock_data:
