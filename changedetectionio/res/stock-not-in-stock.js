@@ -61,12 +61,12 @@ function isItemInStock() {
     negateOutOfStockRegexs_r.push(new RegExp(negateOutOfStockRegexs[0], 'g'));
   }
 
-
-  const elementsWithZeroChildren = Array.from(document.getElementsByTagName('*')).filter(element => element.children.length === 0);
+  const elementsToScan = Array.from(document.getElementsByTagName('*'));
+  //const elementsWithZeroChildren = Array.from(document.getElementsByTagName('*')).filter(element => element.children.length === 0);
 
   // REGEXS THAT REALLY MEAN IT'S IN STOCK
-  for (let i = elementsWithZeroChildren.length - 1; i >= 0; i--) {
-    const element = elementsWithZeroChildren[i];
+  for (let i = elementsToScan.length - 1; i >= 0; i--) {
+    const element = elementsToScan[i];
     if (element.offsetWidth > 0 || element.offsetHeight > 0 || element.getClientRects().length > 0) {
       var elementText="";
       if (element.tagName.toLowerCase() === "input") {
@@ -87,8 +87,8 @@ function isItemInStock() {
   }
 
   // OTHER STUFF THAT COULD BE THAT IT'S OUT OF STOCK
-  for (let i = elementsWithZeroChildren.length - 1; i >= 0; i--) {
-    const element = elementsWithZeroChildren[i];
+  for (let i = elementsToScan.length - 1; i >= 0; i--) {
+    const element = elementsToScan[i];
     if (element.offsetWidth > 0 || element.offsetHeight > 0 || element.getClientRects().length > 0) {
       var elementText="";
       if (element.tagName.toLowerCase() === "input") {
