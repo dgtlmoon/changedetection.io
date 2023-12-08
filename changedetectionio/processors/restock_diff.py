@@ -19,6 +19,23 @@ class perform_site_check(difference_detection_processor):
     screenshot = None
     xpath_data = None
 
+    def get_itemprop_availability(self):
+        from ..html_tools import xpath_filter
+        import re
+        # <link itemprop="availability" href="https://schema.org/OutOfStock" />
+        # https://schema.org/ItemAvailability
+        value = None
+        try:
+            value = xpath_filter("//link[@itemprop='availability']/@href", self.fetcher.content)
+            if value:
+                value = re.sub(r'(?i)^http(s)+://schema.org/', '', value.strip())
+
+        except Exception as e:
+            print("Exception getting get_itemprop_availability", str(e))
+
+        return value
+
+
     def run_changedetection(self, uuid, skip_when_checksum_same=True):
 
         # DeepCopy so we can be sure we don't accidently change anything by reference
@@ -39,6 +56,24 @@ class perform_site_check(difference_detection_processor):
 
         # Main detection method
         fetched_md5 = None
+
+        # Try/prefer the structured data first if it exists
+        # https://schema.org/ItemAvailability Which strings mean we should consider it in stock?
+        availability = self.get_itemprop_availability()
+        if availability:
+            if any(availability in s for s in
+                   [
+                       'InStock',
+                       'InStoreOnly',
+                       'LimitedAvailability',
+                       'OnlineOnly',
+                       'PreSale' # Debatable?
+                   ]):
+                self.fetcher.instock_data = 'Possibly in stock'
+            else:
+                update_obj["in_stock"] = False
+
+        # Fallback to scraping the content for keywords (done in JS)
         if self.fetcher.instock_data:
             fetched_md5 = hashlib.md5(self.fetcher.instock_data.encode('utf-8')).hexdigest()
             # 'Possibly in stock' comes from stock-not-in-stock.js when no string found above the fold.
