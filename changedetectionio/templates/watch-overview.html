@@ -141,7 +141,7 @@
                     {% if watch['processor'] == 'restock_diff'  %}
                     <span class="restock-label {{'in-stock' if watch['in_stock'] else 'not-in-stock' }}" title="detecting restock conditions">
                         <!-- maybe some object watch['processor'][restock_diff] or.. -->
-                        {% if watch['last_checked'] %}
+                        {% if watch['last_checked'] and watch['in_stock'] != None %}
                             {% if watch['in_stock'] %} In stock {% else %} Not in stock {% endif %}
                         {% else %}
                             Not yet checked
