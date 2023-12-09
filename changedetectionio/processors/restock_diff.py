@@ -32,9 +32,10 @@ class perform_site_check(difference_detection_processor):
 
         :return:
         """
-        from ..html_tools import xpath_filter
+        from ..html_tools import xpath1_filter as xpath_filter
+        # xpath1 is a lot faster and is sufficient here
         import re
-
+        import time
         value = None
         try:
             value = xpath_filter("//*[@itemtype='https://schema.org/Offer']//*[@itemprop='availability']/@href", self.fetcher.content)
@@ -42,7 +43,17 @@ class perform_site_check(difference_detection_processor):
                 value = re.sub(r'(?i)^http(s)+://schema.org/', '', value.strip())
 
         except Exception as e:
-            print("Exception getting get_itemprop_availability", str(e))
+            print("Exception getting get_itemprop_availability (itemprop='availability')", str(e))
+
+        # Try RDFa style
+        if not value:
+            try:
+                value = xpath_filter("//*[@property='schema:availability']/@content", self.fetcher.content)
+                if value:
+                    value = re.sub(r'(?i)^http(s)+://schema.org/', '', value.strip())
+
+            except Exception as e:
+                print("Exception getting get_itemprop_availability ('schema:availability')", str(e))
 
         return value
 
@@ -55,7 +66,7 @@ class perform_site_check(difference_detection_processor):
             raise Exception("Watch no longer exists.")
 
         # Unset any existing notification error
-        update_obj = {'last_notification_error': False, 'last_error': False}
+        update_obj = {'last_notification_error': False, 'last_error': False, 'in_stock': None}
 
         self.screenshot = self.fetcher.screenshot
         self.xpath_data = self.fetcher.xpath_data
@@ -85,10 +96,11 @@ class perform_site_check(difference_detection_processor):
                 update_obj['in_stock'] = False
 
         # Fallback to scraping the content for keywords (done in JS)
-        if self.fetcher.instock_data:
+        if update_obj['in_stock'] == None and self.fetcher.instock_data:
             # 'Possibly in stock' comes from stock-not-in-stock.js when no string found above the fold.
             update_obj['in_stock'] = True if self.fetcher.instock_data == 'Possibly in stock' else False
-        else:
+
+        if update_obj['in_stock'] == None:
             raise UnableToExtractRestockData(status_code=self.fetcher.status_code)
 
         # The main thing that all this at the moment comes down to :)
