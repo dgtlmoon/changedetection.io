@@ -75,14 +75,11 @@ class perform_site_check(difference_detection_processor):
         update_obj['content_type'] = self.fetcher.headers.get('Content-Type', '')
         update_obj["last_check_status"] = self.fetcher.get_last_status_code()
 
-        # Main detection method
-        fetched_md5 = None
-
         # Try/prefer the structured data first if it exists
         # https://schema.org/ItemAvailability Which strings mean we should consider it in stock?
         availability = self.get_itemprop_availability()
         if availability:
-            self.fetcher.instock_data = availability
+            self.fetcher.instock_data = availability # Stored as the text snapshot
             if any(availability in s for s in
                    [
                        'InStock',
