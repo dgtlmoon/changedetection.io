@@ -1,7 +1,8 @@
-import hashlib
-import urllib3
 from . import difference_detection_processor
+from ..html_tools import xpath1_filter as xpath_filter # xpath1 is a lot faster and is sufficient here
 from copy import deepcopy
+import re
+import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -32,10 +33,6 @@ class perform_site_check(difference_detection_processor):
 
         :return:
         """
-        from ..html_tools import xpath1_filter as xpath_filter
-        # xpath1 is a lot faster and is sufficient here
-        import re
-        import time
         value = None
         try:
             value = xpath_filter("//*[@itemtype='https://schema.org/Offer']//*[@itemprop='availability']/@href", self.fetcher.content)
