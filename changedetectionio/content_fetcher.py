@@ -311,6 +311,7 @@ class base_html_playwright(Fetcher):
             is_binary=False):
 
         from pkg_resources import resource_string
+        from urllib.parse import urlparse
 
         extra_wait_ms = (int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay) * 1000
 
@@ -323,13 +324,19 @@ class base_html_playwright(Fetcher):
         from requests.exceptions import ConnectTimeout, ReadTimeout
         wait_browserless_seconds = 240
 
-        browserless_function_url = os.getenv('BROWSERLESS_FUNCTION_URL')
-        from urllib.parse import urlparse
-        if not browserless_function_url:
-            # Convert/try to guess from PLAYWRIGHT_DRIVER_URL
-            o = urlparse(os.getenv('PLAYWRIGHT_DRIVER_URL'))
-            browserless_function_url = o._replace(scheme="http")._replace(path="function").geturl()
+        # Could be set from the browser-override
+        browserless_function_url = self.browser_connection_url
 
+        # Or use the system config defaults
+        if not self.browser_connection_url:
+            browserless_function_url = os.getenv('BROWSERLESS_FUNCTION_URL')
+
+        if not self.browser_connection_url:
+            browserless_function_url = os.getenv('PLAYWRIGHT_DRIVER_URL')
+
+        # Convert always to http:// and function/ for browserless
+        o = urlparse(browserless_function_url)
+        browserless_function_url = o._replace(scheme="http")._replace(path="function").geturl()
 
         # Append proxy connect string
         if self.proxy:
