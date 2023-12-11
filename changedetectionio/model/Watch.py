@@ -210,7 +210,7 @@ class model(dict):
         # Read the history file as a dict
         fname = os.path.join(self.watch_data_dir, "history.txt")
         if os.path.isfile(fname):
-            logger.debug(f"Reading history index {str(time.time())}")
+            logger.debug(f"Reading watch history index")
             with open(fname, "r") as f:
                 for i in f.readlines():
                     if ',' in i:
