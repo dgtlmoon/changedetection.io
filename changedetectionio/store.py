@@ -474,7 +474,7 @@ class ChangeDetectionStore:
         for uuid in self.data['watching']:
             for item in pathlib.Path(self.datastore_path).rglob(uuid+"/*.txt"):
                 if not str(item) in index:
-                    logger.critical(f"Removing {item}")
+                    logger.info(f"Removing {item}")
                     unlink(item)
 
     @property
