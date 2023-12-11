@@ -461,7 +461,7 @@ class ChangeDetectionStore:
     # Go through the datastore path and remove any snapshots that are not mentioned in the index
     # This usually is not used, but can be handy.
     def remove_unused_snapshots(self):
-        logger.critical("Removing snapshots from datastore that are not in the index..")
+        logger.info("Removing snapshots from datastore that are not in the index..")
 
         index=[]
         for uuid in self.data['watching']:
