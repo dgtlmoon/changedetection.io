@@ -81,7 +81,7 @@ def main():
             datastore_path = arg
 
         if opt == '-6':
-            logger.critical("Enabling IPv6 listen support")
+            logger.success("Enabling IPv6 listen support")
             ipv6_enabled = True
 
         # Cleanup (remove text files that arent in the index)
