@@ -121,7 +121,7 @@ def main():
         datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=__version__)
     except JSONDecodeError as e:
         # Dont' start if the JSON DB looks corrupt
-        logger.critical("ERROR: JSON DB or Proxy List JSON at '{app_config['datastore_path']}' appears to be corrupt, aborting".)
+        logger.critical(f"ERROR: JSON DB or Proxy List JSON at '{app_config['datastore_path']}' appears to be corrupt, aborting.")
         logger.critical(str(e))
         return
 
