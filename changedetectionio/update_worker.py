@@ -64,7 +64,7 @@ class update_worker(threading.Thread):
             'uuid': watch.get('uuid'),
             'watch_url': watch.get('url'),
         })
-        logger.info (">> SENDING NOTIFICATION")
+        logger.debug (">> SENDING NOTIFICATION")
         self.notification_q.put(n_object)
 
     # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
