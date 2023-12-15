@@ -10,6 +10,7 @@ import requests
 import sys
 import time
 import urllib.parse
+from playwright_stealth import stealth_sync
 
 visualselector_xpath_selectors = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
 
@@ -466,6 +467,7 @@ class base_html_playwright(Fetcher):
             )
 
             self.page = context.new_page()
+            stealth_sync(self.page)
             if len(request_headers):
                 context.set_extra_http_headers(request_headers)
 
