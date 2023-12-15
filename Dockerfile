@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     libxslt-dev \
     make \
+    wget \
     zlib1g-dev
 
 RUN mkdir /install
@@ -57,6 +58,9 @@ EXPOSE 5000
 COPY changedetectionio /app/changedetectionio
 # Starting wrapper
 COPY changedetection.py /app/changedetection.py
+
+# Healthcheck
+HEALTHCHECK --interval=1m CMD wget --no-verbose --tries=1 http://localhost:5000/ -q -O /dev/null || exit 1
 
 WORKDIR /app
 CMD ["python", "./changedetection.py", "-d", "/datastore"]
