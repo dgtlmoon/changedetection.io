@@ -4,6 +4,7 @@ import os
 import time
 import re
 from random import randint
+from playwright_stealth import stealth_sync
 
 # Two flags, tell the JS which of the "Selector" or "Value" field should be enabled in the front end
 # 0- off, 1- on
@@ -216,6 +217,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         )
 
         self.page = self.context.new_page()
+        stealth_sync(page)
 
         # self.page.set_default_navigation_timeout(keep_open)
         self.page.set_default_timeout(keep_open)
