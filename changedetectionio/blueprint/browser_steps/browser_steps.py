@@ -217,7 +217,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         )
 
         self.page = self.context.new_page()
-        stealth_sync(page)
+        stealth_sync(self.page)
 
         # self.page.set_default_navigation_timeout(keep_open)
         self.page.set_default_timeout(keep_open)
