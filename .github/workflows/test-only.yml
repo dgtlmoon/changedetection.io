@@ -119,7 +119,7 @@ jobs:
           # invert the check (it should be not 0/not running)
           docker ps
           # check signal catch(STDOUT) log
-          docker logs sig-test | grep 'Shutdown: Got Signal' || exit 1
+          docker logs sig-test | grep 'Shutdown: Got Signal - SIGINT' || exit 1
           test -z "`docker ps|grep sig-test`"
           if [ $? -ne 0 ]
           then
@@ -139,7 +139,7 @@ jobs:
           sleep 3
           # invert the check (it should be not 0/not running)
           docker ps
-          docker logs sig-test | grep 'Shutdown: Got Signal' || exit 1
+          docker logs sig-test | grep 'Shutdown: Got Signal - SIGTERM' || exit 1
           test -z "`docker ps|grep sig-test`"
           if [ $? -ne 0 ]
           then
