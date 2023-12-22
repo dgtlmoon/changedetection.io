@@ -5,7 +5,6 @@ FROM python:3.11-slim-bookworm as builder
 ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
     g++ \
     gcc \
     libc-dev \
@@ -33,6 +32,7 @@ RUN pip install --target=/dependencies playwright~=1.40 \
 FROM python:3.11-slim-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
     libxslt1.1 \
     # For pdftohtml
     poppler-utils \
