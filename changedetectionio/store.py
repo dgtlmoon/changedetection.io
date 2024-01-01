@@ -421,7 +421,7 @@ class ChangeDetectionStore:
         except RuntimeError as e:
             # Try again in 15 seconds
             time.sleep(15)
-            logger.error ("! Data changed when writing to JSON, trying again.. %s", str(e))
+            logger.error("! Data changed when writing to JSON, trying again.. %s", str(e))
             self.sync_to_json()
             return
         else:
