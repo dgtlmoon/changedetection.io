@@ -51,7 +51,9 @@ function isItemInStock() {
     'zur zeit nicht an lager',
     '品切れ',
     '已售完',
-    '품절'
+    '품절',
+    'preorder',
+    'pre-order'
   ];
 
 
