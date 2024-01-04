@@ -24,14 +24,17 @@ $(document).ready(function() {
     })
 
     data = {
-        window_url : window.location.href,
-        notification_urls : $('.notification-urls').val(),
+      notification_body: $('#notification_body').val(),
+      notification_format: $('#notification_format').val(),
+      notification_title: $('#notification_title').val(),
+      notification_urls: $('.notification-urls').val(),
+      window_url: window.location.href,
     }
-    for (key in data) {
-      if (!data[key].length) {
-        alert(key+" is empty, cannot send test.")
-        return;
-      }
+
+
+    if (!data['notification_urls'].length) {
+      alert("Notification URL list is empty, cannot send test.")
+      return;
     }
 
     $.ajax({
