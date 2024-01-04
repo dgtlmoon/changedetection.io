@@ -29,9 +29,13 @@ class update_worker(threading.Thread):
     def queue_notification_for_watch(self, notification_q, n_object, watch):
 
         from changedetectionio import diff
+        dates = []
+        trigger_text = ''
 
-        watch_history = watch.history
-        dates = list(watch_history.keys())
+        if watch:
+            watch_history = watch.history
+            dates = list(watch_history.keys())
+            trigger_text = watch.get('trigger_text', [])
 
         # Add text that was triggered
         if len(dates):
@@ -47,9 +51,7 @@ class update_worker(threading.Thread):
         else:
             line_feed_sep = "\n"
 
-        trigger_text = watch.get('trigger_text', [])
         triggered_text = ''
-
         if len(trigger_text):
             from . import html_tools
             triggered_text = html_tools.get_triggered_text(content=snapshot_contents, trigger_text=trigger_text)
@@ -71,10 +73,10 @@ class update_worker(threading.Thread):
             'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=line_feed_sep),
             'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, patch_format=True),
             'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=line_feed_sep),
-            'screenshot': watch.get_screenshot() if watch.get('notification_screenshot') else None,
+            'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
             'triggered_text': triggered_text,
-            'uuid': watch.get('uuid'),
-            'watch_url': watch.get('url'),
+            'uuid': watch.get('uuid') if watch else None,
+            'watch_url': watch.get('url') if watch else None,
         })
         logging.info(">> SENDING NOTIFICATION")
 

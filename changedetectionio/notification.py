@@ -228,7 +228,7 @@ def create_notification_parameters(n_object, datastore):
     # in the case we send a test notification from the main settings, there is no UUID.
     uuid = n_object['uuid'] if 'uuid' in n_object else ''
 
-    if uuid != '':
+    if uuid:
         watch_title = datastore.data['watching'][uuid].get('title', '')
         tag_list = []
         tags = datastore.get_all_tags_for_watch(uuid)

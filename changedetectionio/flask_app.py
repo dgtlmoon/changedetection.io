@@ -487,6 +487,7 @@ def changedetection_app(config=None, datastore_o=None):
     # AJAX endpoint for sending a test
     @app.route("/notification/send-test/<string:watch_uuid>", methods=['POST'])
     @app.route("/notification/send-test", methods=['POST'])
+    @app.route("/notification/send-test/", methods=['POST'])
     @login_optionally_required
     def ajax_callback_send_notification_test(watch_uuid=None):
 
