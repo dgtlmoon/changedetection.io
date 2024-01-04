@@ -221,13 +221,14 @@ def process_notification(n_object, datastore):
 
 
 # Notification title + body content parameters get created here.
+# ( Where we prepare the tokens in the notification to be replaced with actual values )
 def create_notification_parameters(n_object, datastore):
     from copy import deepcopy
 
     # in the case we send a test notification from the main settings, there is no UUID.
     uuid = n_object['uuid'] if 'uuid' in n_object else ''
 
-    if uuid != '':
+    if uuid:
         watch_title = datastore.data['watching'][uuid].get('title', '')
         tag_list = []
         tags = datastore.get_all_tags_for_watch(uuid)
@@ -255,7 +256,7 @@ def create_notification_parameters(n_object, datastore):
     tokens.update(
         {
             'base_url': base_url,
-            'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else '',
+            'current_snapshot': n_object.get('current_snapshot', ''),
             'diff': n_object.get('diff', ''),  # Null default in the case we use a test
             'diff_added': n_object.get('diff_added', ''),  # Null default in the case we use a test
             'diff_full': n_object.get('diff_full', ''),  # Null default in the case we use a test

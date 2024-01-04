@@ -26,47 +26,61 @@ class update_worker(threading.Thread):
         self.datastore = datastore
         super().__init__(*args, **kwargs)
 
-    def queue_notification_for_watch(self, n_object, watch):
+    def queue_notification_for_watch(self, notification_q, n_object, watch):
 
         from changedetectionio import diff
+        dates = []
+        trigger_text = ''
 
-        watch_history = watch.history
-        dates = list(watch_history.keys())
+        if watch:
+            watch_history = watch.history
+            dates = list(watch_history.keys())
+            trigger_text = watch.get('trigger_text', [])
+
         # Add text that was triggered
-        snapshot_contents = watch.get_history_snapshot(dates[-1])
+        if len(dates):
+            snapshot_contents = watch.get_history_snapshot(dates[-1])
+        else:
+            snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
 
         # HTML needs linebreak, but MarkDown and Text can use a linefeed
-        if n_object['notification_format'] == 'HTML':
+        if n_object.get('notification_format') == 'HTML':
             line_feed_sep = "<br>"
             # Snapshot will be plaintext on the disk, convert to some kind of HTML
             snapshot_contents = snapshot_contents.replace('\n', line_feed_sep)
         else:
             line_feed_sep = "\n"
 
-        trigger_text = watch.get('trigger_text', [])
         triggered_text = ''
-
         if len(trigger_text):
             from . import html_tools
             triggered_text = html_tools.get_triggered_text(content=snapshot_contents, trigger_text=trigger_text)
             if triggered_text:
                 triggered_text = line_feed_sep.join(triggered_text)
 
+        # Could be called as a 'test notification' with only 1 snapshot available
+        prev_snapshot = "Example text: example test\nExample text: change detection is cool\nExample text: some more examples\n"
+        current_snapshot = "Example text: example test\nExample text: change detection is fantastic\nExample text: even more examples\nExample text: a lot more examples"
+
+        if len(dates) > 1:
+            prev_snapshot = watch.get_history_snapshot(dates[-2])
+            current_snapshot = watch.get_history_snapshot(dates[-1])
 
         n_object.update({
             'current_snapshot': snapshot_contents,
-            'diff': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), line_feed_sep=line_feed_sep),
-            'diff_added': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_removed=False, line_feed_sep=line_feed_sep),
-            'diff_full': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_equal=True, line_feed_sep=line_feed_sep),
-            'diff_patch': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), line_feed_sep=line_feed_sep, patch_format=True),
-            'diff_removed': diff.render_diff(watch.get_history_snapshot(dates[-2]), watch.get_history_snapshot(dates[-1]), include_added=False, line_feed_sep=line_feed_sep),
-            'screenshot': watch.get_screenshot() if watch.get('notification_screenshot') else None,
+            'diff': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep),
+            'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False, line_feed_sep=line_feed_sep),
+            'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=line_feed_sep),
+            'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, patch_format=True),
+            'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=line_feed_sep),
+            'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
             'triggered_text': triggered_text,
-            'uuid': watch.get('uuid'),
-            'watch_url': watch.get('url'),
+            'uuid': watch.get('uuid') if watch else None,
+            'watch_url': watch.get('url') if watch else None,
         })
-        logging.info (">> SENDING NOTIFICATION")
-        self.notification_q.put(n_object)
+        logging.info(">> SENDING NOTIFICATION")
+
+        notification_q.put(n_object)
 
     # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
     def _check_cascading_vars(self, var_name, watch):
@@ -134,7 +148,7 @@ class update_worker(threading.Thread):
         queued = False
         if n_object and n_object.get('notification_urls'):
             queued = True
-            self.queue_notification_for_watch(n_object, watch)
+            self.queue_notification_for_watch(notification_q=self.notification_q, n_object=n_object, watch=watch)
 
         return queued
 
