@@ -10,6 +10,8 @@ prune changedetectionio/static/package-lock.json
 prune changedetectionio/static/styles/node_modules
 prune changedetectionio/static/styles/package-lock.json
 include changedetection.py
+include requirements.txt
+include README-pip.md
 global-exclude *.pyc
 global-exclude node_modules
 global-exclude venv
