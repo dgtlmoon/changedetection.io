@@ -1592,6 +1592,15 @@ def notification_runner():
 
             try:
                 from changedetectionio import notification
+                # Fallback to system config if not set
+                if not n_object.get('notification_body') and datastore.data['settings']['application'].get('notification_body'):
+                    n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
+
+                if not n_object.get('notification_title') and datastore.data['settings']['application'].get('notification_title'):
+                    n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
+
+                if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
+                    n_object['notification_title'] = datastore.data['settings']['application'].get('notification_format')
 
                 sent_obj = notification.process_notification(n_object, datastore)
 

@@ -119,8 +119,8 @@ def process_notification(n_object, datastore):
 
     # Get the notification body from datastore
     jinja2_env = Environment(loader=BaseLoader)
-    n_body = jinja2_env.from_string(n_object.get('notification_body', default_notification_body)).render(**notification_parameters)
-    n_title = jinja2_env.from_string(n_object.get('notification_title', default_notification_title)).render(**notification_parameters)
+    n_body = jinja2_env.from_string(n_object.get('notification_body', '')).render(**notification_parameters)
+    n_title = jinja2_env.from_string(n_object.get('notification_title', '')).render(**notification_parameters)
     n_format = valid_notification_formats.get(
         n_object.get('notification_format', default_notification_format),
         valid_notification_formats[default_notification_format],
@@ -187,8 +187,8 @@ def process_notification(n_object, datastore):
                     if not 'format=' in url and (n_format == 'Text' or n_format == 'Markdown'):
                         prefix = '?' if not '?' in url else '&'
                         # Apprise format is lowercase text https://github.com/caronc/apprise/issues/633
-                        n_format = n_format.tolower()
-                        url = "{}{}format={}".format(url, prefix, n_format)
+                        n_format = n_format.lower()
+                        url = f"{url}{prefix}format={n_format}"
                     # If n_format == HTML, then apprise email should default to text/html and we should be sending HTML only
 
                 apobj.add(url)
