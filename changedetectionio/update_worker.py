@@ -354,19 +354,31 @@ class update_worker(threading.Thread):
                         changed_detected = False
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': False})
 
-                    except content_fetcher.BrowserStepsStepTimout as e:
+                    except content_fetcher.BrowserStepsStepException as e:
 
                         if not self.datastore.data['watching'].get(uuid):
                             continue
 
                         error_step = e.step_n + 1
-                        err_text = f"Warning, browser step at position {error_step} could not run, target not found, check the watch, add a delay if necessary, view Browser Steps to see screenshot at that step"
+                        from playwright._impl._errors import TimeoutError, Error
+
+                        # Generally enough info for TimeoutError (couldnt locate the element after default seconds)
+                        err_text = f"Browser step at position {error_step} could not run, check the watch, add a delay if necessary, view Browser Steps to see screenshot at that step."
+
+                        if e.original_e.name == "TimeoutError":
+                            # Just the first line is enough, the rest is the stack trace
+                            err_text += " Could not find the target."
+                        else:
+                            # Other Error, more info is good.
+                            err_text += " " + str(e.original_e).splitlines()[0]
+
+                        print(f"BrowserSteps exception at step {error_step}", str(e.original_e))
+
                         self.datastore.update_watch(uuid=uuid,
                                                     update_obj={'last_error': err_text,
                                                                 'browser_steps_last_error_step': error_step
                                                                 }
                                                     )
-
 
                         if self.datastore.data['watching'][uuid].get('filter_failure_notification_send', False):
                             c = self.datastore.data['watching'][uuid].get('consecutive_filter_failures', 5)
