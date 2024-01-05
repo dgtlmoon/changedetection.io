@@ -188,9 +188,9 @@ class update_worker(threading.Thread):
             return
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
         n_object = {'notification_title': "Changedetection.io - Alert - Browser step at position {} could not be run".format(step_n+1),
-                    'notification_body': "Your configured browser step at position {} for {{watch['url']}} "
+                    'notification_body': "Your configured browser step at position {} for {{{{watch_url}}}} "
                                          "did not appear on the page after {} attempts, did the page change layout? "
-                                         "Does it need a delay added?\n\nLink: {{base_url}}/edit/{{watch_uuid}}\n\n"
+                                         "Does it need a delay added?\n\nLink: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}\n\n"
                                          "Thanks - Your omniscient changedetection.io installation :)\n".format(step_n+1, threshold),
                     'notification_format': 'text'}
 
