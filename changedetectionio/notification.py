@@ -119,8 +119,8 @@ def process_notification(n_object, datastore):
 
     # Get the notification body from datastore
     jinja2_env = Environment(loader=BaseLoader)
-    n_body = jinja2_env.from_string(n_object.get('notification_body', default_notification_body)).render(**notification_parameters)
-    n_title = jinja2_env.from_string(n_object.get('notification_title', default_notification_title)).render(**notification_parameters)
+    n_body = jinja2_env.from_string(n_object.get('notification_body', '')).render(**notification_parameters)
+    n_title = jinja2_env.from_string(n_object.get('notification_title', '')).render(**notification_parameters)
     n_format = valid_notification_formats.get(
         n_object.get('notification_format', default_notification_format),
         valid_notification_formats[default_notification_format],
