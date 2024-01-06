@@ -31,7 +31,7 @@ def sigshutdown_handler(_signo, _stack_frame):
     name = signal.Signals(_signo).name
     logger.critical(f'Shutdown: Got Signal - {name} ({_signo}), Saving DB to disk and calling shutdown')
     datastore.sync_to_json()
-    logger.success(f'Sync JSON to disk complete.')
+    logger.success('Sync JSON to disk complete.')
     # This will throw a SystemExit exception, because eventlet.wsgi.server doesn't know how to deal with it.
     # Solution: move to gevent or other server in the future (#2014)
     datastore.stop_thread = True
@@ -113,8 +113,10 @@ def main():
             os.mkdir(app_config['datastore_path'])
         else:
             logger.critical(
-                "ERROR: Directory path for the datastore '{}' does not exist, cannot start, please make sure the directory exists or specify a directory with the -d option.\n"
-                "Or use the -C parameter to create the directory.".format(app_config['datastore_path']))
+                f"ERROR: Directory path for the datastore '{app_config['datastore_path']}'"
+                f" does not exist, cannot start, please make sure the"
+                f" directory exists or specify a directory with the -d option.\n"
+                f"Or use the -C parameter to create the directory.")
             sys.exit(2)
 
     try:

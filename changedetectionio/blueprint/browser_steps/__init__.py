@@ -88,7 +88,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 if parsed.password:
                     proxy['password'] = parsed.password
 
-                logger.debug("Browser Steps: UUID {} selected proxy {}".format(watch_uuid, proxy_url))
+                logger.debug(f"Browser Steps: UUID {watch_uuid} selected proxy {proxy_url}")
 
         # Tell Playwright to connect to Chrome and setup a new session via our stepper interface
         browsersteps_start_session['browserstepper'] = browser_steps.browsersteps_live_ui(

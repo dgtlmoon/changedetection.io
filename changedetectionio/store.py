@@ -88,7 +88,7 @@ class ChangeDetectionStore:
         # First time ran, Create the datastore.
         except (FileNotFoundError):
             if include_default_watches:
-                logger.critical("No JSON DB found at {}, creating JSON store at {}".format(self.json_store_path, self.datastore_path))
+                logger.critical(f"No JSON DB found at {self.json_store_path}, creating JSON store at {self.datastore_path}")
                 self.add_watch(url='https://news.ycombinator.com/',
                                tag='Tech news',
                                extras={'fetch_backend': 'html_requests'})
@@ -139,7 +139,7 @@ class ChangeDetectionStore:
         save_data_thread = threading.Thread(target=self.save_datastore).start()
 
     def set_last_viewed(self, uuid, timestamp):
-        logger.debug("Setting watch UUID: {} last viewed to {}".format(uuid, int(timestamp)))
+        logger.debug(f"Setting watch UUID: {uuid} last viewed to {int(timestamp)}")
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
         self.needs_write = True
 
@@ -316,7 +316,7 @@ class ChangeDetectionStore:
                             apply_extras['include_filters'] = [res['css_filter']]
 
             except Exception as e:
-                logger.error("Error fetching metadata for shared watch link", url, str(e))
+                logger.error(f"Error fetching metadata for shared watch link {url} {str(e)}")
                 flash("Error fetching metadata for {}".format(url), 'error')
                 return False
         from .model.Watch import is_safe_url
@@ -345,7 +345,7 @@ class ChangeDetectionStore:
 
         new_uuid = new_watch.get('uuid')
 
-        logger.debug("Added URL {} - {}".format(url, new_uuid))
+        logger.debug(f"Added URL {url} - {new_uuid}")
 
         for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
             if k in apply_extras:
@@ -422,7 +422,7 @@ class ChangeDetectionStore:
         except RuntimeError as e:
             # Try again in 15 seconds
             time.sleep(15)
-            logger.error("! Data changed when writing to JSON, trying again.. %s", str(e))
+            logger.error(f"! Data changed when writing to JSON, trying again.. {str(e)}")
             self.sync_to_json()
             return
         else:
@@ -435,7 +435,7 @@ class ChangeDetectionStore:
                     json.dump(data, json_file, indent=4)
                 os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
-                logger.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
+                logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")
 
             self.needs_write = False
             self.needs_write_urgent = False
@@ -678,7 +678,7 @@ class ChangeDetectionStore:
         updates_available = self.get_updates_available()
         for update_n in updates_available:
             if update_n > self.__data['settings']['application']['schema_version']:
-                logger.critical("Applying update_{}".format((update_n)))
+                logger.critical(f"Applying update_{update_n}")
                 # Wont exist on fresh installs
                 if os.path.exists(self.json_store_path):
                     shutil.copyfile(self.json_store_path, self.datastore_path+"/url-watches-before-{}.json".format(update_n))
@@ -686,7 +686,7 @@ class ChangeDetectionStore:
                 try:
                     update_method = getattr(self, "update_{}".format(update_n))()
                 except Exception as e:
-                    logger.error("Error while trying update_{}".format((update_n)))
+                    logger.error(f"Error while trying update_{update_n}")
                     logger.error(e)
                     # Don't run any more updates
                     return
@@ -725,7 +725,7 @@ class ChangeDetectionStore:
                         with open(os.path.join(target_path, "history.txt"), "w") as f:
                             f.writelines(history)
                     else:
-                        logger.warning("Datastore history directory {} does not exist, skipping history import.".format(target_path))
+                        logger.warning(f"Datastore history directory {target_path} does not exist, skipping history import.")
 
                 # No longer needed, dynamically pulled from the disk when needed.
                 # But we should set it back to a empty dict so we don't break if this schema runs on an earlier version.

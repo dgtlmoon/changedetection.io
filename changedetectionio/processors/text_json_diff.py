@@ -340,10 +340,10 @@ class perform_site_check(difference_detection_processor):
                 has_unique_lines = watch.lines_contain_something_unique_compared_to_history(lines=stripped_text_from_html.splitlines())
                 # One or more lines? unsure?
                 if not has_unique_lines:
-                    logger.debug("check_unique_lines: UUID {} didnt have anything new setting change_detected=False".format(uuid))
+                    logger.debug(f"check_unique_lines: UUID {uuid} didnt have anything new setting change_detected=False")
                     changed_detected = False
                 else:
-                    logger.debug("check_unique_lines: UUID {} had unique content".format(uuid))
+                    logger.debug(f"check_unique_lines: UUID {uuid} had unique content")
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5
