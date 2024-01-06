@@ -304,7 +304,7 @@ class Import(Resource):
     @auth.check_token
     def post(self):
         """
-        @api {post} /api/v1/import - Import a list of watched URLs
+        @api {post} /api/v1/import Import a list of watched URLs
         @apiDescription Accepts a line-feed separated list of URLs to import, additionally with ?tag_uuids=(tag  id), ?tag=(name), ?proxy={key}, ?dedupe=true (default true) one URL per line.
         @apiExample {curl} Example usage:
             curl http://localhost:5000/api/v1/import --data-binary @list-of-sites.txt -H"x-api-key:8a111a21bc2f8f1dd9b9353bbd46049a"
