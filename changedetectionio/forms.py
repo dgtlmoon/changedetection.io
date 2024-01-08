@@ -43,6 +43,7 @@ valid_method = {
     'PUT',
     'PATCH',
     'DELETE',
+    'OPTIONS',
 }
 
 default_method = 'GET'
