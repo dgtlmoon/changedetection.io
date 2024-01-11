@@ -64,6 +64,7 @@ function isItemInStock() {
   }
 
   const elementsToScan = Array.from(document.getElementsByTagName('*'));
+  // Removed in #2039
   //const elementsWithZeroChildren = Array.from(document.getElementsByTagName('*')).filter(element => element.children.length === 0);
   var elementText ="";
 
