@@ -119,8 +119,8 @@ def process_notification(n_object, datastore):
 
     # Get the notification body from datastore
     jinja2_env = Environment(loader=BaseLoader)
-    n_body = jinja2_env.from_string(n_object.get('notification_body', default_notification_body)).render(**notification_parameters)
-    n_title = jinja2_env.from_string(n_object.get('notification_title', default_notification_title)).render(**notification_parameters)
+    n_body = jinja2_env.from_string(n_object.get('notification_body', '')).render(**notification_parameters)
+    n_title = jinja2_env.from_string(n_object.get('notification_title', '')).render(**notification_parameters)
     n_format = valid_notification_formats.get(
         n_object.get('notification_format', default_notification_format),
         valid_notification_formats[default_notification_format],
@@ -187,8 +187,8 @@ def process_notification(n_object, datastore):
                     if not 'format=' in url and (n_format == 'Text' or n_format == 'Markdown'):
                         prefix = '?' if not '?' in url else '&'
                         # Apprise format is lowercase text https://github.com/caronc/apprise/issues/633
-                        n_format = n_format.tolower()
-                        url = "{}{}format={}".format(url, prefix, n_format)
+                        n_format = n_format.lower()
+                        url = f"{url}{prefix}format={n_format}"
                     # If n_format == HTML, then apprise email should default to text/html and we should be sending HTML only
 
                 apobj.add(url)
@@ -221,13 +221,14 @@ def process_notification(n_object, datastore):
 
 
 # Notification title + body content parameters get created here.
+# ( Where we prepare the tokens in the notification to be replaced with actual values )
 def create_notification_parameters(n_object, datastore):
     from copy import deepcopy
 
     # in the case we send a test notification from the main settings, there is no UUID.
     uuid = n_object['uuid'] if 'uuid' in n_object else ''
 
-    if uuid != '':
+    if uuid:
         watch_title = datastore.data['watching'][uuid].get('title', '')
         tag_list = []
         tags = datastore.get_all_tags_for_watch(uuid)
@@ -255,7 +256,7 @@ def create_notification_parameters(n_object, datastore):
     tokens.update(
         {
             'base_url': base_url,
-            'current_snapshot': n_object['current_snapshot'] if 'current_snapshot' in n_object else '',
+            'current_snapshot': n_object.get('current_snapshot', ''),
             'diff': n_object.get('diff', ''),  # Null default in the case we use a test
             'diff_added': n_object.get('diff_added', ''),  # Null default in the case we use a test
             'diff_full': n_object.get('diff_full', ''),  # Null default in the case we use a test

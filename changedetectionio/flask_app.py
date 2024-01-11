@@ -485,14 +485,18 @@ def changedetection_app(config=None, datastore_o=None):
 
 
     # AJAX endpoint for sending a test
+    @app.route("/notification/send-test/<string:watch_uuid>", methods=['POST'])
     @app.route("/notification/send-test", methods=['POST'])
+    @app.route("/notification/send-test/", methods=['POST'])
     @login_optionally_required
-    def ajax_callback_send_notification_test():
+    def ajax_callback_send_notification_test(watch_uuid=None):
 
+        # Watch_uuid could be unsuet in the case its used in tag editor, global setings
         import apprise
         from .apprise_asset import asset
         apobj = apprise.Apprise(asset=asset)
 
+        watch = datastore.data['watching'].get(watch_uuid) if watch_uuid else None
 
         # validate URLS
         if not len(request.form['notification_urls'].strip()):
@@ -505,9 +509,11 @@ def changedetection_app(config=None, datastore_o=None):
                     return make_response({'error': message}, 400)
 
         try:
-            n_object = {'watch_url': request.form['window_url'],
-                        'notification_urls': request.form['notification_urls'].splitlines()
-                        }
+            # use the same as when it is triggered, but then override it with the form test values
+            n_object = {
+                'watch_url': request.form['window_url'],
+                'notification_urls': request.form['notification_urls'].splitlines()
+            }
 
             # Only use if present, if not set in n_object it should use the default system value
             if 'notification_format' in request.form and request.form['notification_format'].strip():
@@ -519,7 +525,9 @@ def changedetection_app(config=None, datastore_o=None):
             if 'notification_body' in request.form and request.form['notification_body'].strip():
                 n_object['notification_body'] = request.form.get('notification_body', '').strip()
 
-            notification_q.put(n_object)
+            from . import update_worker
+            new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
+            new_worker.queue_notification_for_watch(notification_q=notification_q, n_object=n_object, watch=watch)
         except Exception as e:
             return make_response({'error': str(e)}, 400)
 
@@ -1584,6 +1592,15 @@ def notification_runner():
 
             try:
                 from changedetectionio import notification
+                # Fallback to system config if not set
+                if not n_object.get('notification_body') and datastore.data['settings']['application'].get('notification_body'):
+                    n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
+
+                if not n_object.get('notification_title') and datastore.data['settings']['application'].get('notification_title'):
+                    n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
+
+                if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
+                    n_object['notification_title'] = datastore.data['settings']['application'].get('notification_format')
 
                 sent_obj = notification.process_notification(n_object, datastore)
 

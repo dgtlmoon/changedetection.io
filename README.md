@@ -17,7 +17,7 @@ _Live your data-life pro-actively._
 - Nothing to install, access via browser login after signup.
 - Super fast, no registration needed setup.
 - Get started watching and receiving website change notifications straight away.
-
+- See our [tutorials and how-to page for more inspiration](https://changedetection.io/tutorials) 
 
 ### Target specific parts of the webpage using the Visual Selector tool.
 
@@ -98,7 +98,7 @@ Please :star: star :star: this project and help it grow! https://github.com/dgtl
 With Docker composer, just clone this repository and..
 
 ```bash
-$ docker-compose up -d
+$ docker compose up -d
 ```
 
 Docker standalone
@@ -137,10 +137,10 @@ docker rm $(docker ps -a -f name=changedetection.io -q)
 docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
 ```
 
-### docker-compose
+### docker compose
 
 ```bash
-docker-compose pull && docker-compose up -d
+docker compose pull && docker compose up -d
 ```
 
 See the wiki for more information https://github.com/dgtlmoon/changedetection.io/wiki

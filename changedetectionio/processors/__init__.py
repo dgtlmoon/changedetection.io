@@ -43,14 +43,14 @@ class difference_detection_processor():
 
         # In the case that the preferred fetcher was a browser config with custom connection URL..
         # @todo - on save watch, if its extra_browser_ then it should be obvious it will use playwright (like if its requests now..)
-        browser_connection_url = None
+        custom_browser_connection_url = None
         if prefer_fetch_backend.startswith('extra_browser_'):
             (t, key) = prefer_fetch_backend.split('extra_browser_')
             connection = list(
                 filter(lambda s: (s['browser_name'] == key), self.datastore.data['settings']['requests'].get('extra_browsers', [])))
             if connection:
                 prefer_fetch_backend = 'base_html_playwright'
-                browser_connection_url = connection[0].get('browser_connection_url')
+                custom_browser_connection_url = connection[0].get('browser_connection_url')
 
         # PDF should be html_requests because playwright will serve it up (so far) in a embedded page
         # @todo https://github.com/dgtlmoon/changedetection.io/issues/2019
@@ -74,7 +74,7 @@ class difference_detection_processor():
         # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
         # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
         self.fetcher = fetcher_obj(proxy_override=proxy_url,
-                                   browser_connection_url=browser_connection_url
+                                   custom_browser_connection_url=custom_browser_connection_url
                                    )
 
         if self.watch.has_browser_steps:
