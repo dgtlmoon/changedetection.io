@@ -65,12 +65,13 @@ function isItemInStock() {
 
   const elementsToScan = Array.from(document.getElementsByTagName('*'));
   //const elementsWithZeroChildren = Array.from(document.getElementsByTagName('*')).filter(element => element.children.length === 0);
+  var elementText ="";
 
   // REGEXS THAT REALLY MEAN IT'S IN STOCK
   for (let i = elementsToScan.length - 1; i >= 0; i--) {
     const element = elementsToScan[i];
     if (element.offsetWidth > 0 || element.offsetHeight > 0 || element.getClientRects().length > 0) {
-      var elementText="";
+      elementText="";
       if (element.tagName.toLowerCase() === "input") {
         elementText = element.value.toLowerCase();
       } else {
@@ -92,7 +93,7 @@ function isItemInStock() {
   for (let i = elementsToScan.length - 1; i >= 0; i--) {
     const element = elementsToScan[i];
     if (element.offsetWidth > 0 || element.offsetHeight > 0 || element.getClientRects().length > 0) {
-      var elementText="";
+      elementText="";
       if (element.tagName.toLowerCase() === "input") {
         elementText = element.value.toLowerCase();
       } else {
