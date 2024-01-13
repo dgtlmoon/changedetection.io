@@ -145,6 +145,10 @@ docker compose pull && docker compose up -d
 
 See the wiki for more information https://github.com/dgtlmoon/changedetection.io/wiki
 
+### 3rd-Party Hosting Options
+
+[![Deploy on RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploy.png)](https://repocloud.io/details/?app_id=90)
+
 
 ## Filters
 
