@@ -345,7 +345,7 @@ class ChangeDetectionStore:
 
         new_uuid = new_watch.get('uuid')
 
-        logger.debug(f"Added URL {url} - {new_uuid}")
+        logger.debug(f"Adding URL {url} - {new_uuid}")
 
         for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
             if k in apply_extras:
