@@ -17,7 +17,7 @@ _Live your data-life pro-actively._
 - Nothing to install, access via browser login after signup.
 - Super fast, no registration needed setup.
 - Get started watching and receiving website change notifications straight away.
-
+- See our [tutorials and how-to page for more inspiration](https://changedetection.io/tutorials) 
 
 ### Target specific parts of the webpage using the Visual Selector tool.
 
