@@ -43,9 +43,11 @@ class JSActionExceptions(Exception):
         return
 
 
-class BrowserStepsStepTimout(Exception):
-    def __init__(self, step_n):
+class BrowserStepsStepException(Exception):
+    def __init__(self, step_n, original_e):
         self.step_n = step_n
+        self.original_e = original_e
+        print(f"Browser Steps exception at step {self.step_n}", str(original_e))
         return
 
 
@@ -91,19 +93,20 @@ class ReplyWithContentButNoText(Exception):
 
 
 class Fetcher():
+    browser_connection_is_custom = None
+    browser_connection_url = None
     browser_steps = None
     browser_steps_screenshot_path = None
     content = None
     error = None
     fetcher_description = "No description"
-    browser_connection_url = None
     headers = {}
+    instock_data = None
+    instock_data_js = ""
     status_code = None
     webdriver_js_execute_code = None
     xpath_data = None
     xpath_element_js = ""
-    instock_data = None
-    instock_data_js = ""
 
     # Will be needed in the future by the VisualSelector, always get this where possible.
     screenshot = False
@@ -172,7 +175,7 @@ class Fetcher():
 
     def iterate_browser_steps(self):
         from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
-        from playwright._impl._errors import TimeoutError
+        from playwright._impl._errors import TimeoutError, Error
         from jinja2 import Environment
         jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
 
@@ -202,10 +205,10 @@ class Fetcher():
                                                       optional_value=optional_value)
                     self.screenshot_step(step_n)
                     self.save_step_html(step_n)
-                except TimeoutError as e:
-                    print(str(e))
+
+                except (Error, TimeoutError) as e:
                     # Stop processing here
-                    raise BrowserStepsStepTimout(step_n=step_n)
+                    raise BrowserStepsStepException(step_n=step_n, original_e=e)
 
     # It's always good to reset these
     def delete_browser_steps_screenshots(self):
@@ -252,16 +255,19 @@ class base_html_playwright(Fetcher):
 
     proxy = None
 
-    def __init__(self, proxy_override=None, browser_connection_url=None):
+    def __init__(self, proxy_override=None, custom_browser_connection_url=None):
         super().__init__()
 
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
-        # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
-        if not browser_connection_url:
-            self.browser_connection_url = os.getenv("PLAYWRIGHT_DRIVER_URL", 'ws://playwright-chrome:3000').strip('"')
+        if custom_browser_connection_url:
+            self.browser_connection_is_custom = True
+            self.browser_connection_url = custom_browser_connection_url
         else:
-            self.browser_connection_url = browser_connection_url
+            # Fallback to fetching from system
+            # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
+            self.browser_connection_url = os.getenv("PLAYWRIGHT_DRIVER_URL", 'ws://playwright-chrome:3000').strip('"')
+
 
         # If any proxy settings are enabled, then we should setup the proxy object
         proxy_args = {}
@@ -421,8 +427,10 @@ class base_html_playwright(Fetcher):
             current_include_filters=None,
             is_binary=False):
 
+
         # For now, USE_EXPERIMENTAL_PUPPETEER_FETCH is not supported by watches with BrowserSteps (for now!)
-        if not self.browser_steps and os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH'):
+        # browser_connection_is_custom doesnt work with puppeteer style fetch (use playwright native too in this case)
+        if not self.browser_connection_is_custom and not self.browser_steps and os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH'):
             if strtobool(os.getenv('USE_EXPERIMENTAL_PUPPETEER_FETCH')):
                 # Temporary backup solution until we rewrite the playwright code
                 return self.run_fetch_browserless_puppeteer(
@@ -569,15 +577,16 @@ class base_html_webdriver(Fetcher):
                                         'socksProxy', 'socksVersion', 'socksUsername', 'socksPassword']
     proxy = None
 
-    def __init__(self, proxy_override=None, browser_connection_url=None):
+    def __init__(self, proxy_override=None, custom_browser_connection_url=None):
         super().__init__()
         from selenium.webdriver.common.proxy import Proxy as SeleniumProxy
 
         # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
-        if not browser_connection_url:
+        if not custom_browser_connection_url:
             self.browser_connection_url = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub').strip('"')
         else:
-            self.browser_connection_url = browser_connection_url
+            self.browser_connection_is_custom = True
+            self.browser_connection_url = custom_browser_connection_url
 
         # If any proxy settings are enabled, then we should setup the proxy object
         proxy_args = {}
@@ -674,7 +683,7 @@ class base_html_webdriver(Fetcher):
 class html_requests(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
 
-    def __init__(self, proxy_override=None, browser_connection_url=None):
+    def __init__(self, proxy_override=None, custom_browser_connection_url=None):
         super().__init__()
         self.proxy_override = proxy_override
         # browser_connection_url is none because its always 'launched locally'

@@ -27,7 +27,7 @@ install_requires = open('requirements.txt').readlines()
 setup(
     name='changedetection.io',
     version=find_version("changedetectionio", "__init__.py"),
-    description='Website change detection and monitoring service',
+    description='Website change detection and monitoring service, detect changes to web pages and send alerts/notifications.',
     long_description=open('README-pip.md').read(),
     long_description_content_type='text/markdown',
     keywords='website change monitor for changes notification change detection '
@@ -41,7 +41,7 @@ setup(
     include_package_data=True,
     install_requires=install_requires,
     license="Apache License 2.0",
-    python_requires=">= 3.7",
+    python_requires=">= 3.10",
     classifiers=['Intended Audience :: Customer Service',
                  'Intended Audience :: Developers',
                  'Intended Audience :: Education',

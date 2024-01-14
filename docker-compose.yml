@@ -90,7 +90,7 @@ services:
 #
 
      # Used for fetching pages via Playwright+Chrome where you need Javascript support.
-     # Note: works well but is deprecated, doesnt fetch full page screenshots and other issues
+     # Note: works well but is deprecated, does not fetch full page screenshots (doesnt work with Visual Selector) and other issues
 #    browser-chrome:
 #        hostname: browser-chrome
 #        image: selenium/standalone-chrome:4

@@ -58,7 +58,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             io_interface_context = io_interface_context.start()
 
         keepalive_ms = ((keepalive_seconds + 3) * 1000)
-        base_url = os.getenv('PLAYWRIGHT_DRIVER_URL', '')
+        base_url = os.getenv('PLAYWRIGHT_DRIVER_URL', '').strip('"')
         a = "?" if not '?' in base_url else '&'
         base_url += a + f"timeout={keepalive_ms}"
 
