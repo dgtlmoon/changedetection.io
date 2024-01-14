@@ -170,7 +170,7 @@ def main():
     #         proxy_set_header X-Forwarded-Prefix /app;
 
     if os.getenv('USE_X_SETTINGS'):
-        logger.info("USE_X_SETTINGS is ENABLED\n")
+        logger.info("USE_X_SETTINGS is ENABLED")
         from werkzeug.middleware.proxy_fix import ProxyFix
         app.wsgi_app = ProxyFix(app.wsgi_app, x_prefix=1, x_host=1)
 
