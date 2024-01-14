@@ -108,7 +108,7 @@ def main():
         logger.add(sys.stderr, level=logger_level)
     # Catch negative number or wrong log level name
     except ValueError:
-        print("Available log level name: TRACE, DEBUG(default), INFO, SUCCESS,"
+        print("Available log level names: TRACE, DEBUG(default), INFO, SUCCESS,"
               " WARNING, ERROR, CRITICAL")
         sys.exit(2)
 
