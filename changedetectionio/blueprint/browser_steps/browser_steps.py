@@ -54,7 +54,7 @@ class steppable_browser_interface():
         if call_action_name == 'choose_one':
             return
 
-        logger.debug(f"> action calling {call_action_name}")
+        logger.debug(f"> Action calling '{call_action_name}'")
         # https://playwright.dev/python/docs/selectors#xpath-selectors
         if selector and selector.startswith('/') and not selector.startswith('//'):
             selector = "xpath=" + selector
