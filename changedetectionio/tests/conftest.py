@@ -4,6 +4,8 @@ import pytest
 from changedetectionio import changedetection_app
 from changedetectionio import store
 import os
+import sys
+from loguru import logger
 
 # https://github.com/pallets/flask/blob/1.1.2/examples/tutorial/tests/test_auth.py
 # Much better boilerplate than the docs
@@ -50,6 +52,18 @@ def app(request):
 
     app_config = {'datastore_path': datastore_path, 'disable_checkver' : True}
     cleanup(app_config['datastore_path'])
+
+    # By ARG or ENV in Dockerfile or test-only.yml
+    if os.getenv("LOGGER_LEVEL"):
+        logger_level = os.getenv("LOGGER_LEVEL")
+    else:
+        # A default logger level for pytest
+        # Just in case if it doesn't build with TRACE log ARG in test-only.
+        logger_level = 'TRACE'
+
+    logger.remove()
+    logger.add(sys.stderr, level=logger_level)
+
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], include_default_watches=False)
     app = changedetection_app(app_config, datastore)
 

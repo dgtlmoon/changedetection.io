@@ -65,7 +65,14 @@ def main():
 
     create_datastore_dir = False
 
+    # Set a default logger level
     logger_level = 'DEBUG'
+    # Set a logger level via shell env variable
+    # Used: Dockerfile for CICD
+    # To set logger level for pytest, see the app function in tests/conftest.py
+    if os.getenv("LOGGER_LEVEL"):
+        level = os.getenv("LOGGER_LEVEL")
+        logger_level = int(level) if level.isdigit() else level.upper()
 
     for opt, arg in opts:
         if opt == '-s':
@@ -95,7 +102,7 @@ def main():
         if opt == '-l':
             logger_level = int(arg) if arg.isdigit() else arg.upper()
 
-    # Without this, logger will be default logger will be duplicated
+    # Without this, a logger will be duplicated
     logger.remove()
     try:
         logger.add(sys.stderr, level=logger_level)

@@ -38,7 +38,7 @@ jobs:
       - name: Build changedetection.io container for testing
         run: |         
           # Build a changedetection.io container and start testing inside
-          docker build . -t test-changedetectionio
+          docker build --build-arg LOGGER_LEVEL=TRACE -t test-changedetectionio .
           # Debug info
           docker run test-changedetectionio  bash -c 'pip list'
 
@@ -56,6 +56,9 @@ jobs:
           
           # All tests
           echo "run test with pytest"
+          # The default pytest logger_level is TRACE
+          # To change logger_level for pytest(test/conftest.py),
+          # append the docker option. e.g. '-e LOGGER_LEVEL=DEBUG'
           docker run --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
       - name: Test built container selenium+browserless/playwright
@@ -107,6 +110,10 @@ jobs:
           
           # and IPv6
           curl -s -g -6 "http://[::1]:5556"|grep -q checkbox-uuid
+
+          # Check whether TRACE log is enabled.
+          docker logs test-changedetectionio 2>&1 | grep 'TRACE log is enabled' || exit 1
+
           docker kill test-changedetectionio
 
       - name: Test changedetection.io SIGTERM and SIGINT signal shutdown

@@ -211,6 +211,8 @@ def login_optionally_required(func):
     return decorated_view
 
 def changedetection_app(config=None, datastore_o=None):
+    logger.trace("TRACE log is enabled")
+
     global datastore
     datastore = datastore_o
 
