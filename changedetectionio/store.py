@@ -362,7 +362,7 @@ class ChangeDetectionStore:
         if write_to_disk_now:
             self.sync_to_json()
 
-        logger.debug(f"added {url}")
+        logger.debug(f"Added '{url}'")
 
         return new_uuid
 
