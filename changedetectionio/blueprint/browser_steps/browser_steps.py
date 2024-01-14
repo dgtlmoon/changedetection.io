@@ -73,7 +73,7 @@ class steppable_browser_interface():
 
         action_handler(selector, optional_value)
         self.page.wait_for_timeout(1.5 * 1000)
-        logger.debug(f"Call action done in {time.time() - now}")
+        logger.debug(f"Call action done in {time.time()-now:.2f}s")
 
     def action_goto_url(self, selector=None, value=None):
         # self.page.set_viewport_size({"width": 1280, "height": 5000})
