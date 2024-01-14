@@ -258,7 +258,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         xpath_data = self.page.evaluate("async () => {" + xpath_element_js + "}")
         # So the JS will find the smallest one first
         xpath_data['size_pos'] = sorted(xpath_data['size_pos'], key=lambda k: k['width'] * k['height'], reverse=True)
-        logger.debug(f"Time to complete get_current_state of browser {time.time() - now}")
+        logger.debug(f"Time to complete get_current_state of browser {time.time()-now:.2f}s")
         # except
         # playwright._impl._api_types.Error: Browser closed.
         # @todo show some countdown timer?
