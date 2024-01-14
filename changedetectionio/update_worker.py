@@ -372,7 +372,7 @@ class update_worker(threading.Thread):
                             # Other Error, more info is good.
                             err_text += " " + str(e.original_e).splitlines()[0]
 
-                        print(f"BrowserSteps exception at step {error_step}", str(e.original_e))
+                        logger.debug(f"BrowserSteps exception at step {error_step} {str(e.original_e)}")
 
                         self.datastore.update_watch(uuid=uuid,
                                                     update_obj={'last_error': err_text,

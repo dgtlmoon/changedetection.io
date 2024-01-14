@@ -47,7 +47,7 @@ class BrowserStepsStepException(Exception):
     def __init__(self, step_n, original_e):
         self.step_n = step_n
         self.original_e = original_e
-        print(f"Browser Steps exception at step {self.step_n}", str(original_e))
+        logger.debug(f"Browser Steps exception at step {self.step_n} {str(original_e)}")
         return
 
 
