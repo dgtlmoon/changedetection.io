@@ -56,7 +56,13 @@ def app(request):
     logger_level = 'TRACE'
 
     logger.remove()
-    logger.add(sys.stderr, level=logger_level)
+    log_level_for_stdout = { 'DEBUG', 'SUCCESS' }
+    logger.configure(handlers=[
+        {"sink": sys.stdout, "level": logger_level,
+         "filter" : lambda record: record['level'].name in log_level_for_stdout},
+        {"sink": sys.stderr, "level": logger_level,
+         "filter": lambda record: record['level'].name not in log_level_for_stdout},
+        ])
 
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], include_default_watches=False)
     app = changedetection_app(app_config, datastore)

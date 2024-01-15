@@ -105,7 +105,13 @@ def main():
     # Without this, a logger will be duplicated
     logger.remove()
     try:
-        logger.add(sys.stderr, level=logger_level)
+        log_level_for_stdout = { 'DEBUG', 'SUCCESS' }
+        logger.configure(handlers=[
+            {"sink": sys.stdout, "level": logger_level,
+             "filter" : lambda record: record['level'].name in log_level_for_stdout},
+            {"sink": sys.stderr, "level": logger_level,
+             "filter": lambda record: record['level'].name not in log_level_for_stdout},
+            ])
     # Catch negative number or wrong log level name
     except ValueError:
         print("Available log level names: TRACE, DEBUG(default), INFO, SUCCESS,"
