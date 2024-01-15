@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from changedetectionio import queuedWatchMetaData
+from changedetectionio import queuedWatchMetaData, html_tools, __version__
 from copy import deepcopy
 from distutils.util import strtobool
 from feedgen.feed import FeedGenerator
@@ -34,8 +34,6 @@ from flask import (
 )
 
 from flask_paginate import Pagination, get_page_parameter
-
-from changedetectionio import html_tools, __version__
 from changedetectionio.api import api_v1
 
 datastore = None
@@ -49,11 +47,12 @@ extra_stylesheets = []
 update_q = queue.PriorityQueue()
 notification_q = queue.Queue()
 
-from changedetectionio.plugins import hookspecs
-from changedetectionio.plugins import whois as whois_plugin
 
 def get_plugin_manager():
     import pluggy
+    from changedetectionio.plugins import hookspecs
+    from changedetectionio.plugins import whois as whois_plugin
+
     pm = pluggy.PluginManager("eggsample")
     pm.add_hookspecs(hookspecs)
     pm.load_setuptools_entrypoints("eggsample")
