@@ -50,16 +50,14 @@ update_q = queue.PriorityQueue()
 notification_q = queue.Queue()
 
 from changedetectionio.plugins import hookspecs
-from changedetectionio.plugins import default as default_plugin
-
-
+from changedetectionio.plugins import whois as whois_plugin
 
 def get_plugin_manager():
     import pluggy
     pm = pluggy.PluginManager("eggsample")
     pm.add_hookspecs(hookspecs)
     pm.load_setuptools_entrypoints("eggsample")
-    pm.register(default_plugin)
+    pm.register(whois_plugin)
     return pm
 
 app = Flask(__name__,
