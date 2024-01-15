@@ -1,7 +1,12 @@
+"""
+Whois information lookup
+- Fetches using whois
+- Extends the 'text_json_diff' so that text filters can still be used with whois information
+"""
+
 from ..plugins import hookimpl
 import changedetectionio.processors.text_json_diff as text_json_diff
 from changedetectionio import content_fetcher
-import whois
 
 # would be changedetectionio.plugins in other apps
 
@@ -11,7 +16,7 @@ class text_json_filtering_whois(text_json_diff.perform_site_check):
         super().__init__(*args, datastore=datastore, watch_uuid=watch_uuid, **kwargs)
 
     def call_browser(self):
-
+        import whois
         # the whois data
         self.fetcher = content_fetcher.Fetcher()
         self.fetcher.is_plaintext = True
