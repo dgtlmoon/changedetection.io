@@ -49,8 +49,8 @@ extra_stylesheets = []
 update_q = queue.PriorityQueue()
 notification_q = queue.Queue()
 
-from .plugins import hookspecs
-from .plugins import default as default_plugin
+from changedetectionio.plugins import hookspecs
+from changedetectionio.plugins import default as default_plugin
 
 
 
