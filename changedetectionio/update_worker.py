@@ -259,6 +259,13 @@ class update_worker(threading.Thread):
                             update_handler = restock_diff.perform_site_check(datastore=self.datastore,
                                                                              watch_uuid=uuid
                                                                              )
+                        elif processor.startswith('plugin_processor_'):
+                            from .flask_app import get_plugin_manager
+                            pm = get_plugin_manager()
+                            x = pm.hook.processor_call(processor_name=processor, datastore=self.datastore, watch_uuid=uuid)
+                            if x:
+                                update_handler = x
+
                         else:
                             # Used as a default and also by some tests
                             update_handler = text_json_diff.perform_site_check(datastore=self.datastore,

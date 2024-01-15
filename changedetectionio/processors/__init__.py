@@ -6,6 +6,15 @@ from changedetectionio import content_fetcher
 from copy import deepcopy
 from distutils.util import strtobool
 
+# Which UI elements in settings the processor requires
+# For example, restock monitor isnt compatible with visualselector and filters
+default_processor_config = {
+    'needs_request_fetch_method': True,
+    'needs_browsersteps': True,
+    'needs_visualselector': True,
+    'needs_filters': True,
+}
+
 class difference_detection_processor():
 
     browser_steps = None
@@ -131,6 +140,15 @@ class difference_detection_processor():
 
 def available_processors():
     from . import restock_diff, text_json_diff
-    x=[('text_json_diff', text_json_diff.name), ('restock_diff', restock_diff.name)]
-    # @todo Make this smarter with introspection of sorts.
+    from ..flask_app import get_plugin_manager
+    pm = get_plugin_manager()
+    x = [('text_json_diff', text_json_diff.name, dict(default_processor_config)),
+         ('restock_diff', restock_diff.name, dict(default_processor_config))
+         ]
+
+    plugin_choices = pm.hook.extra_processor()
+    if plugin_choices:
+        for p in plugin_choices:
+            x.append(p)
+
     return x

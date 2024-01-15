@@ -39,12 +39,15 @@
         <ul>
             <li class="tab" id=""><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
-            {% if playwright_enabled %}
+            {% if playwright_enabled and processor_config['needs_browsersteps'] %}
             <li class="tab"><a id="browsersteps-tab" href="#browser-steps">Browser Steps</a></li>
             {% endif %}
 
-            {% if watch['processor'] == 'text_json_diff' %}
+            {% if processor_config['needs_visualselector']  %}
             <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
+            {% endif %}
+
+            {% if processor_config['needs_filters']  %}
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
             {% endif %}
 
@@ -67,16 +70,12 @@
                         {{ render_field(form.url, placeholder="https://...", required=true, class="m-d") }}
                         <span class="pure-form-message-inline">Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a></span><br>
                         <span class="pure-form-message-inline">You can use variables in the URL, perfect for inserting the current date and other logic, <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a></span><br>
-                        <span class="pure-form-message-inline">
-                        {% if watch['processor'] == 'text_json_diff' %}
-                            Current mode: <strong>Webpage Text/HTML, JSON and PDF changes.</strong><br>
-                          <a href="{{url_for('edit_page', uuid=uuid)}}?switch_processor=restock_diff" class="pure-button button-xsmall">Switch to re-stock detection mode.</a>
-                        {% else %}
-                        Current mode: <strong>Re-stock detection.</strong><br>
-                          <a href="{{url_for('edit_page', uuid=uuid)}}?switch_processor=text_json_diff" class="pure-button button-xsmall">Switch to Webpage Text/HTML, JSON and PDF changes mode.</a>
-                        {% endif %}
-                        </span>
-
+                    </div>
+                <div class="pure-control-group">
+                    <label for="title">Processing mode</label>
+                          {% for a in available_processors %}
+                            <a href="{{url_for('edit_page', uuid=uuid)}}?switch_processor={{ a[0] }}" class="pure-button button-xsmall {% if watch['processor'] == a[0] %}button-secondary{% endif %}">{{ a[1]}}.</a>
+                          {% endfor %}
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.title, class="m-d") }}
@@ -193,7 +192,7 @@ User-Agent: wonderbra 1.0") }}
                     </div>
             </fieldset>
             </div>
-            {% if playwright_enabled %}
+            {% if playwright_enabled and processor_config['needs_browsersteps'] %}
             <div class="tab-pane-inner" id="browser-steps">
                 <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}" alt="New beta functionality">
                 <fieldset>
@@ -264,7 +263,7 @@ User-Agent: wonderbra 1.0") }}
                 </fieldset>
             </div>
 
-            {% if watch['processor'] == 'text_json_diff' %}
+            {% if processor_config['needs_filters']  %}
             <div class="tab-pane-inner" id="filters-and-triggers">
                     <div class="pure-control-group">
                             <strong>Pro-tips:</strong><br>
@@ -423,7 +422,7 @@ Unavailable") }}
             </div>
             {% endif %}
 
-            {% if watch['processor'] == 'text_json_diff' %}
+            {% if processor_config['needs_visualselector']  %}
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
                 <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}" alt="New beta functionality">
 

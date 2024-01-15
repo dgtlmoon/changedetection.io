@@ -49,6 +49,19 @@ extra_stylesheets = []
 update_q = queue.PriorityQueue()
 notification_q = queue.Queue()
 
+from .plugins import hookspecs
+from .plugins import default as default_plugin
+
+
+
+def get_plugin_manager():
+    import pluggy
+    pm = pluggy.PluginManager("eggsample")
+    pm.add_hookspecs(hookspecs)
+    pm.load_setuptools_entrypoints("eggsample")
+    pm.register(default_plugin)
+    return pm
+
 app = Flask(__name__,
             static_url_path="",
             static_folder="static",
@@ -94,7 +107,6 @@ def init_app_secret(datastore_path):
             f.write(secret)
 
     return secret
-
 
 @app.template_global()
 def get_darkmode_state():
@@ -626,7 +638,6 @@ def changedetection_app(config=None, datastore_o=None):
             form.fetch_backend.choices.append(p)
 
         form.fetch_backend.choices.append(("system", 'System settings default'))
-
         # form.browser_steps[0] can be assumed that we 'goto url' first
 
         if datastore.proxy_list is None:
@@ -727,6 +738,8 @@ def changedetection_app(config=None, datastore_o=None):
             if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
                 is_html_webdriver = True
 
+            processor_config = next((p[2] for p in processors.available_processors() if p[0] == watch.get('processor')), None)
+
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and is_html_webdriver
             output = render_template("edit.html",
@@ -741,6 +754,7 @@ def changedetection_app(config=None, datastore_o=None):
                                      is_html_webdriver=is_html_webdriver,
                                      jq_support=jq_support,
                                      playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False),
+                                     processor_config=processor_config,
                                      settings_application=datastore.data['settings']['application'],
                                      using_global_webdriver_wait=default['webdriver_delay'] is None,
                                      uuid=uuid,

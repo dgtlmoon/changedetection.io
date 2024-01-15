@@ -410,7 +410,7 @@ class quickWatchForm(Form):
     url = fields.URLField('URL', validators=[validateURL()])
     tags = StringTagUUID('Group tag', [validators.Optional()])
     watch_submit_button = SubmitField('Watch', render_kw={"class": "pure-button pure-button-primary"})
-    processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
+    processor = RadioField(u'Processor', choices=[t[:2] for t in processors.available_processors()], default="text_json_diff")
     edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
 
 
@@ -427,7 +427,7 @@ class commonSettingsForm(Form):
                                                                                                                                     message="Should contain one or more seconds")])
 class importForm(Form):
     from . import processors
-    processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
+    processor = RadioField(u'Processor', choices=[t[:2] for t in processors.available_processors()], default="text_json_diff")
     urls = TextAreaField('URLs')
     xlsx_file = FileField('Upload .xlsx file', validators=[FileAllowed(['xlsx'], 'Must be .xlsx file!')])
     file_mapping = SelectField('File mapping', [validators.DataRequired()], choices={('wachete', 'Wachete mapping'), ('custom','Custom mapping')})

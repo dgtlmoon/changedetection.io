@@ -155,7 +155,7 @@ class perform_site_check(difference_detection_processor):
             html_content = self.fetcher.content
 
             # If not JSON,  and if it's not text/plain..
-            if 'text/plain' in self.fetcher.get_all_headers().get('content-type', '').lower():
+            if 'text/plain' in self.fetcher.get_all_headers().get('content-type', '').lower() or self.fetcher.is_plaintext:
                 # Don't run get_text or xpath/css filters on plaintext
                 stripped_text_from_html = html_content
             else:
