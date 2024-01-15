@@ -72,3 +72,5 @@ pytest-flask ~=1.2
 
 # Pin jsonschema version to prevent build errors on armv6 while rpds-py wheels aren't available (1708)
 jsonschema==4.17.3
+
+pluggy
