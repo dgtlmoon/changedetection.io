@@ -17,6 +17,7 @@ function isItemInStock() {
         'coming soon',
         'currently have any tickets for this',
         'currently unavailable',
+        'dieser artikel steht derzeit nicht zur verfügung!' //This item is currently not available
         'dostępne wkrótce',
         'en rupture de stock',
         'ist derzeit nicht auf lager',
