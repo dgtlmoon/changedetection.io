@@ -112,7 +112,10 @@ jobs:
           curl -s -g -6 "http://[::1]:5556"|grep -q checkbox-uuid
 
           # Check whether TRACE log is enabled.
-          docker logs test-changedetectionio 2>&1 | grep 'TRACE log is enabled' || exit 1
+          # Also, check whether TRACE is came from STDERR
+          docker logs test-changedetectionio 2>&1 1>/dev/null | grep 'TRACE log is enabled' || exit 1
+          # Check whether DEBUG is came from STDOUT
+          docker logs test-changedetectionio 2>/dev/null | grep 'DEBUG' || exit 1
 
           docker kill test-changedetectionio
 
