@@ -32,6 +32,7 @@ RUN pip install --target=/dependencies playwright~=1.40 \
 FROM python:3.11-slim-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
     libxslt1.1 \
     # For pdftohtml
     poppler-utils \
@@ -57,6 +58,9 @@ EXPOSE 5000
 COPY changedetectionio /app/changedetectionio
 # Starting wrapper
 COPY changedetection.py /app/changedetection.py
+
+# Healthcheck
+HEALTHCHECK --interval=1m CMD curl -f http://localhost:5000/ || exit 1
 
 WORKDIR /app
 CMD ["python", "./changedetection.py", "-d", "/datastore"]
