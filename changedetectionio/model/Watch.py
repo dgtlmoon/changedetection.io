@@ -1,10 +1,10 @@
 from distutils.util import strtobool
-import logging
 import os
 import re
 import time
 import uuid
 from pathlib import Path
+from loguru import logger
 
 # Allowable protocols, protects against javascript: etc
 # file:// is further checked by ALLOW_FILE_URI
@@ -122,7 +122,7 @@ class model(dict):
 
     def ensure_data_dir_exists(self):
         if not os.path.isdir(self.watch_data_dir):
-            print ("> Creating data dir {}".format(self.watch_data_dir))
+            logger.debug(f"> Creating data dir {self.watch_data_dir}")
             os.mkdir(self.watch_data_dir)
 
     @property
@@ -211,7 +211,7 @@ class model(dict):
         # Read the history file as a dict
         fname = os.path.join(self.watch_data_dir, "history.txt")
         if os.path.isfile(fname):
-            logging.debug("Reading history index " + str(time.time()))
+            logger.debug("Reading watch history index")
             with open(fname, "r") as f:
                 for i in f.readlines():
                     if ',' in i:

@@ -4,12 +4,12 @@ from urllib.parse import urlparse
 import chardet
 import hashlib
 import json
-import logging
 import os
 import requests
 import sys
 import time
 import urllib.parse
+from loguru import logger
 
 visualselector_xpath_selectors = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
 
@@ -47,7 +47,7 @@ class BrowserStepsStepException(Exception):
     def __init__(self, step_n, original_e):
         self.step_n = step_n
         self.original_e = original_e
-        print(f"Browser Steps exception at step {self.step_n}", str(original_e))
+        logger.debug(f"Browser Steps exception at step {self.step_n} {str(original_e)}")
         return
 
 
@@ -188,7 +188,7 @@ class Fetcher():
 
             for step in valid_steps:
                 step_n += 1
-                print(">> Iterating check - browser Step n {} - {}...".format(step_n, step['operation']))
+                logger.debug(f">> Iterating check - browser Step n {step_n} - {step['operation']}...")
                 self.screenshot_step("before-" + str(step_n))
                 self.save_step_html("before-" + str(step_n))
                 try:
@@ -205,8 +205,8 @@ class Fetcher():
                                                       optional_value=optional_value)
                     self.screenshot_step(step_n)
                     self.save_step_html(step_n)
-
                 except (Error, TimeoutError) as e:
+                    logger.debug(str(e))
                     # Stop processing here
                     raise BrowserStepsStepException(step_n=step_n, original_e=e)
 
@@ -295,14 +295,14 @@ class base_html_playwright(Fetcher):
 
         if self.browser_steps_screenshot_path is not None:
             destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.jpeg'.format(step_n))
-            logging.debug("Saving step screenshot to {}".format(destination))
+            logger.debug(f"Saving step screenshot to {destination}")
             with open(destination, 'wb') as f:
                 f.write(screenshot)
 
     def save_step_html(self, step_n):
         content = self.page.content()
         destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.html'.format(step_n))
-        logging.debug("Saving step HTML to {}".format(destination))
+        logger.debug(f"Saving step HTML to {destination}")
         with open(destination, 'w') as f:
             f.write(content)
 
@@ -491,7 +491,7 @@ class base_html_playwright(Fetcher):
             if response is None:
                 context.close()
                 browser.close()
-                print("Content Fetcher > Response object was none")
+                logger.debug("Content Fetcher > Response object was none")
                 raise EmptyReply(url=url, status_code=None)
 
             try:
@@ -503,7 +503,7 @@ class base_html_playwright(Fetcher):
                 # This can be ok, we will try to grab what we could retrieve
                 pass
             except Exception as e:
-                print("Content Fetcher > Other exception when executing custom JS code", str(e))
+                logger.debug(f"Content Fetcher > Other exception when executing custom JS code {str(e)}")
                 context.close()
                 browser.close()
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
@@ -524,7 +524,7 @@ class base_html_playwright(Fetcher):
             if len(self.page.content().strip()) == 0:
                 context.close()
                 browser.close()
-                print("Content Fetcher > Content was empty")
+                logger.debug("Content Fetcher > Content was empty")
                 raise EmptyReply(url=url, status_code=response.status)
 
             # Run Browser Steps here
@@ -676,7 +676,7 @@ class base_html_webdriver(Fetcher):
             try:
                 self.driver.quit()
             except Exception as e:
-                print("Content Fetcher > Exception in chrome shutdown/quit" + str(e))
+                logger.debug(f"Content Fetcher > Exception in chrome shutdown/quit {str(e)}")
 
 
 # "html_requests" is listed as the default fetcher in store.py!

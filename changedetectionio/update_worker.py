@@ -12,14 +12,13 @@ from .processors.restock_diff import UnableToExtractRestockData
 # Requests for checking on a single site(watch) from a queue of watches
 # (another process inserts watches into the queue that are time-ready for checking)
 
-import logging
 import sys
+from loguru import logger
 
 class update_worker(threading.Thread):
     current_uuid = None
 
     def __init__(self, q, notification_q, app, datastore, *args, **kwargs):
-        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
         self.q = q
         self.app = app
         self.notification_q = notification_q
@@ -78,8 +77,8 @@ class update_worker(threading.Thread):
             'uuid': watch.get('uuid') if watch else None,
             'watch_url': watch.get('url') if watch else None,
         })
-        logging.info(">> SENDING NOTIFICATION")
 
+        logger.debug(">> SENDING NOTIFICATION")
         notification_q.put(n_object)
 
     # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
@@ -180,7 +179,7 @@ class update_worker(threading.Thread):
                 'screenshot': None
             })
             self.notification_q.put(n_object)
-            print("Sent filter not found notification for {}".format(watch_uuid))
+            logger.error(f"Sent filter not found notification for {watch_uuid}")
 
     def send_step_failure_notification(self, watch_uuid, step_n):
         watch = self.datastore.data['watching'].get(watch_uuid, False)
@@ -207,7 +206,7 @@ class update_worker(threading.Thread):
                 'uuid': watch_uuid
             })
             self.notification_q.put(n_object)
-            print("Sent step not found notification for {}".format(watch_uuid))
+            logger.error(f"Sent step not found notification for {watch_uuid}")
 
 
     def cleanup_error_artifacts(self, uuid):
@@ -239,8 +238,9 @@ class update_worker(threading.Thread):
                     contents = b''
                     process_changedetection_results = True
                     update_obj = {}
-                    print("> Processing UUID {} Priority {} URL {}".format(uuid, queued_item_data.priority,
-                                                                           self.datastore.data['watching'][uuid]['url']))
+                    logger.debug(f"> Processing UUID {uuid} "
+                            f"Priority {queued_item_data.priority} "
+                            f"URL {self.datastore.data['watching'][uuid]['url']}")
                     now = time.time()
 
                     try:
@@ -338,7 +338,7 @@ class update_worker(threading.Thread):
                             # Send notification if we reached the threshold?
                             threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts',
                                                                                            0)
-                            print("Filter for {} not found, consecutive_filter_failures: {}".format(uuid, c))
+                            logger.error(f"Filter for {uuid} not found, consecutive_filter_failures: {c}")
                             if threshold > 0 and c >= threshold:
                                 if not self.datastore.data['watching'][uuid].get('notification_muted'):
                                     self.send_filter_failure_notification(uuid)
@@ -372,7 +372,7 @@ class update_worker(threading.Thread):
                             # Other Error, more info is good.
                             err_text += " " + str(e.original_e).splitlines()[0]
 
-                        print(f"BrowserSteps exception at step {error_step}", str(e.original_e))
+                        logger.debug(f"BrowserSteps exception at step {error_step} {str(e.original_e)}")
 
                         self.datastore.update_watch(uuid=uuid,
                                                     update_obj={'last_error': err_text,
@@ -386,7 +386,7 @@ class update_worker(threading.Thread):
                             # Send notification if we reached the threshold?
                             threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts',
                                                                                            0)
-                            print("Step for {} not found, consecutive_filter_failures: {}".format(uuid, c))
+                            logger.error(f"Step for {uuid} not found, consecutive_filter_failures: {c}")
                             if threshold > 0 and c >= threshold:
                                 if not self.datastore.data['watching'][uuid].get('notification_muted'):
                                     self.send_step_failure_notification(watch_uuid=uuid, step_n=e.step_n)
@@ -468,7 +468,7 @@ class update_worker(threading.Thread):
 
                             # A change was detected
                             if changed_detected:
-                                print (">> Change detected in UUID {} - {}".format(uuid, watch['url']))
+                                logger.debug(f">> Change detected in UUID {uuid} - {watch['url']}")
 
                                 # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
                                 if watch.history_n >= 2:
@@ -478,7 +478,8 @@ class update_worker(threading.Thread):
 
                         except Exception as e:
                             # Catch everything possible here, so that if a worker crashes, we don't lose it until restart!
-                            print("!!!! Exception in update_worker !!!\n", e)
+                            logger.critical("!!!! Exception in update_worker !!!")
+                            logger.critical(str(e))
                             self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
                             self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
 
