@@ -83,7 +83,7 @@ class ChangeDetectionStore:
                 for uuid, watch in self.__data['watching'].items():
                     watch['uuid']=uuid
                     self.__data['watching'][uuid] = Watch.model(datastore_path=self.datastore_path, default=watch)
-                    logger.debug(f"Watching: {uuid} {self.__data['watching'][uuid]['url']}")
+                    logger.info(f"Watching: {uuid} {self.__data['watching'][uuid]['url']}")
 
         # First time ran, Create the datastore.
         except (FileNotFoundError):
@@ -616,7 +616,7 @@ class ChangeDetectionStore:
 
         for uuid, tag in self.__data['settings']['application'].get('tags', {}).items():
             if n == tag.get('title', '').lower().strip():
-                logger.error(f">>> Tag {name} already exists")
+                logger.warning(f"Tag '{name}' already exists, skipping creation.")
                 return uuid
 
         # Eventually almost everything todo with a watch will apply as a Tag
