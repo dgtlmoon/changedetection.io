@@ -70,7 +70,7 @@ class difference_detection_processor():
         proxy_url = None
         if preferred_proxy_id:
             proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
-            logger.debug(f"Using proxy Key: {preferred_proxy_id} as Proxy URL {proxy_url}")
+            logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{proxy_url}' for {url}")
 
         # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
         # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)

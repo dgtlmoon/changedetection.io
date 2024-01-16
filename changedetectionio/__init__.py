@@ -60,7 +60,7 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], "6Ccsd:h:p:l:", "port")
     except getopt.GetoptError:
-        print('backend.py -s SSL enable -h [host] -p [port] -d [datastore path] -l [debug level]')
+        print('backend.py -s SSL enable -h [host] -p [port] -d [datastore path] -l [debug level - TRACE, DEBUG(default), INFO, SUCCESS, WARNING, ERROR, CRITICAL]')
         sys.exit(2)
 
     create_datastore_dir = False

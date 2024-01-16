@@ -220,7 +220,8 @@ class update_worker(threading.Thread):
     def run(self):
 
         from .processors import text_json_diff, restock_diff
-
+        now = time.time()
+        
         while not self.app.config.exit.is_set():
             update_handler = None
 
@@ -232,13 +233,12 @@ class update_worker(threading.Thread):
             else:
                 uuid = queued_item_data.item.get('uuid')
                 self.current_uuid = uuid
-
                 if uuid in list(self.datastore.data['watching'].keys()) and self.datastore.data['watching'][uuid].get('url'):
                     changed_detected = False
                     contents = b''
                     process_changedetection_results = True
                     update_obj = {}
-                    logger.debug(f"> Processing UUID {uuid} "
+                    logger.info(f"Processing watch UUID {uuid} "
                             f"Priority {queued_item_data.priority} "
                             f"URL {self.datastore.data['watching'][uuid]['url']}")
                     now = time.time()
@@ -280,7 +280,8 @@ class update_worker(threading.Thread):
                         if not isinstance(contents, (bytes, bytearray)):
                             raise Exception("Error - returned data from the fetch handler SHOULD be bytes")
                     except PermissionError as e:
-                        self.app.logger.error("File permission error updating", uuid, str(e))
+                        logger.critical(f"File permission error updating file, watch: {uuid}")
+                        logger.critical(str(e))
                         process_changedetection_results = False
                     except content_fetcher.ReplyWithContentButNoText as e:
                         # Totally fine, it's by choice - just continue on, nothing more to care about
@@ -428,11 +429,13 @@ class update_worker(threading.Thread):
                         process_changedetection_results = False
                     except UnableToExtractRestockData as e:
                         # Usually when fetcher.instock_data returns empty
-                        self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
+                        logger.error(f"Exception (UnableToExtractRestockData) reached processing watch UUID: {uuid}")
+                        logger.error(str(e))
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Unable to extract restock data for this page unfortunately. (Got code {e.status_code} from server)"})
                         process_changedetection_results = False
                     except Exception as e:
-                        self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
+                        logger.error(f"Exception reached processing watch UUID: {uuid}")
+                        logger.error(str(e))
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
                         # Other serious error
                         process_changedetection_results = False
@@ -478,9 +481,8 @@ class update_worker(threading.Thread):
 
                         except Exception as e:
                             # Catch everything possible here, so that if a worker crashes, we don't lose it until restart!
-                            logger.critical("!!!! Exception in update_worker !!!")
+                            logger.critical("!!!! Exception in update_worker while processing process_changedetection_results !!!")
                             logger.critical(str(e))
-                            self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
                             self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
 
                     if self.datastore.data['watching'].get(uuid):
@@ -500,6 +502,7 @@ class update_worker(threading.Thread):
 
                 self.current_uuid = None  # Done
                 self.q.task_done()
+                logger.debug(f"Watch {uuid} done in {time.time()-now:.2f}s")
 
                 # Give the CPU time to interrupt
                 time.sleep(0.1)
