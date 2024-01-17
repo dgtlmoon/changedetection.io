@@ -273,3 +273,9 @@ I offer commercial support, this software is depended on by network security, ae
 ## Third-party licenses
 
 changedetectionio.html_tools.elementpath_tostring: Copyright (c), 2018-2021, SISSA (Scuola Internazionale Superiore di Studi Avanzati), Licensed under [MIT license](https://github.com/sissaschool/elementpath/blob/master/LICENSE)
+
+## Contributors
+
+Recognition of fantastic contributors to the project
+
+- Constantin Hong https://github.com/Constantin1489
