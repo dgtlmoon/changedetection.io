@@ -74,3 +74,4 @@ pytest-flask ~=1.2
 jsonschema==4.17.3
 
 pluggy
+loguru

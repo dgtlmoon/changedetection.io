@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import time
 import validators
 from wtforms import ValidationError
+from loguru import logger
 
 from changedetectionio.forms import validate_url
 
@@ -195,7 +196,7 @@ class import_xlsx_wachete(Importer):
                     try:
                         validate_url(data.get('url'))
                     except ValidationError as e:
-                        print(">> import URL error", data.get('url'), str(e))
+                        logger.error(f">> Import URL error {data.get('url')} {str(e)}")
                         flash(f"Error processing row number {row_id}, URL value was incorrect, row was skipped.", 'error')
                         # Don't bother processing anything else on this row
                         continue
@@ -209,7 +210,7 @@ class import_xlsx_wachete(Importer):
                         self.new_uuids.append(new_uuid)
                         good += 1
             except Exception as e:
-                print(e)
+                logger.error(e)
                 flash(f"Error processing row number {row_id}, check all cell data types are correct, row was skipped.", 'error')
             else:
                 row_id += 1
@@ -264,7 +265,7 @@ class import_xlsx_custom(Importer):
                         try:
                             validate_url(url)
                         except ValidationError as e:
-                            print(">> Import URL error", url, str(e))
+                            logger.error(f">> Import URL error {url} {str(e)}")
                             flash(f"Error processing row number {row_i}, URL value was incorrect, row was skipped.", 'error')
                             # Don't bother processing anything else on this row
                             url = None
@@ -293,7 +294,7 @@ class import_xlsx_custom(Importer):
                         self.new_uuids.append(new_uuid)
                         good += 1
         except Exception as e:
-            print(e)
+            logger.error(e)
             flash(f"Error processing row number {row_i}, check all cell data types are correct, row was skipped.", 'error')
         else:
             row_i += 1

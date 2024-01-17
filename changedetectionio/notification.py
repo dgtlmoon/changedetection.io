@@ -3,6 +3,7 @@ import time
 from jinja2 import Environment, BaseLoader
 from apprise import NotifyFormat
 import json
+from loguru import logger
 
 valid_tokens = {
     'base_url': '',
@@ -146,7 +147,7 @@ def process_notification(n_object, datastore):
     with apprise.LogCapture(level=apprise.logging.DEBUG) as logs:
         for url in n_object['notification_urls']:
             url = url.strip()
-            print(">> Process Notification: AppRise notifying {}".format(url))
+            logger.info(">> Process Notification: AppRise notifying {}".format(url))
             url = jinja2_env.from_string(url).render(**notification_parameters)
 
             # Re 323 - Limit discord length to their 2000 char limit total or it wont send.

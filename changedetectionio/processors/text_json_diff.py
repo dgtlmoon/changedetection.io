@@ -2,7 +2,6 @@
 
 import hashlib
 import json
-import logging
 import os
 import re
 import urllib3
@@ -12,6 +11,7 @@ from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACC
 from copy import deepcopy
 from . import difference_detection_processor
 from ..html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
+from loguru import logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -340,10 +340,10 @@ class perform_site_check(difference_detection_processor):
                 has_unique_lines = watch.lines_contain_something_unique_compared_to_history(lines=stripped_text_from_html.splitlines())
                 # One or more lines? unsure?
                 if not has_unique_lines:
-                    logging.debug("check_unique_lines: UUID {} didnt have anything new setting change_detected=False".format(uuid))
+                    logger.debug(f"check_unique_lines: UUID {uuid} didnt have anything new setting change_detected=False")
                     changed_detected = False
                 else:
-                    logging.debug("check_unique_lines: UUID {} had unique content".format(uuid))
+                    logger.debug(f"check_unique_lines: UUID {uuid} had unique content")
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5

@@ -249,7 +249,7 @@ Supports managing the website watch list [via our API](https://changedetection.i
 Do you use changedetection.io to make money? does it save you time or money? Does it make your life easier? less stressful? Remember, we write this software when we should be doing actual paid work, we have to buy food and pay rent just like you.
 
 
-Firstly, consider taking out a [change detection monthly subscription - unlimited checks and watches](https://changedetection.io?src=github) , even if you don't use it, you still get the warm fuzzy feeling of helping out the project. (And who knows, you might just use it!)
+Firstly, consider taking out an officially supported [website change detection subscription](https://changedetection.io?src=github) , even if you don't use it, you still get the warm fuzzy feeling of helping out the project. (And who knows, you might just use it!)
 
 Or directly donate an amount PayPal [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?hosted_button_id=7CP6HR9ZCNDYJ)
 
@@ -273,3 +273,9 @@ I offer commercial support, this software is depended on by network security, ae
 ## Third-party licenses
 
 changedetectionio.html_tools.elementpath_tostring: Copyright (c), 2018-2021, SISSA (Scuola Internazionale Superiore di Studi Avanzati), Licensed under [MIT license](https://github.com/sissaschool/elementpath/blob/master/LICENSE)
+
+## Contributors
+
+Recognition of fantastic contributors to the project
+
+- Constantin Hong https://github.com/Constantin1489
