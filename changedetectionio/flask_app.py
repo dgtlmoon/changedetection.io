@@ -12,7 +12,8 @@ from functools import wraps
 from threading import Event
 import datetime
 import flask_login
-import logging
+from loguru import logger
+import sys
 import os
 import pytz
 import queue
@@ -219,6 +220,8 @@ def login_optionally_required(func):
     return decorated_view
 
 def changedetection_app(config=None, datastore_o=None):
+    logger.trace("TRACE log is enabled")
+
     global datastore
     datastore = datastore_o
 
@@ -1503,7 +1506,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
         except Exception as e:
-            logging.error("Error sharing -{}".format(str(e)))
+            logger.error(f"Error sharing -{str(e)}")
             flash("Could not share, something went wrong while communicating with the share server - {}".format(str(e)), 'error')
 
         # https://changedetection.io/share/VrMv05wpXyQa
@@ -1616,7 +1619,7 @@ def notification_runner():
                 sent_obj = notification.process_notification(n_object, datastore)
 
             except Exception as e:
-                logging.error("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
+                logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
 
                 # UUID wont be present when we submit a 'test' from the global settings
                 if 'uuid' in n_object:
@@ -1639,7 +1642,7 @@ def ticker_thread_check_time_launch_checks():
     proxy_last_called_time = {}
 
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 20))
-    print("System env MINIMUM_SECONDS_RECHECK_TIME", recheck_time_minimum_seconds)
+    logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
 
     # Spin up Workers that do the fetching
     # Can be overriden by ENV or use the default settings
@@ -1684,7 +1687,7 @@ def ticker_thread_check_time_launch_checks():
             now = time.time()
             watch = datastore.data['watching'].get(uuid)
             if not watch:
-                logging.error("Watch: {} no longer present.".format(uuid))
+                logger.error(f"Watch: {uuid} no longer present.")
                 continue
 
             # No need todo further processing if it's paused
@@ -1717,10 +1720,10 @@ def ticker_thread_check_time_launch_checks():
                             time_since_proxy_used = int(time.time() - proxy_last_used_time)
                             if time_since_proxy_used < proxy_list_reuse_time_minimum:
                                 # Not enough time difference reached, skip this watch
-                                print("> Skipped UUID {} using proxy '{}', not enough time between proxy requests {}s/{}s".format(uuid,
-                                                                                                                         watch_proxy,
-                                                                                                                         time_since_proxy_used,
-                                                                                                                         proxy_list_reuse_time_minimum))
+                                logger.debug(f"> Skipped UUID {uuid} "
+                                        f"using proxy '{watch_proxy}', not "
+                                        f"enough time between proxy requests "
+                                        f"{time_since_proxy_used}s/{proxy_list_reuse_time_minimum}s")
                                 continue
                             else:
                                 # Record the last used time
@@ -1728,14 +1731,12 @@ def ticker_thread_check_time_launch_checks():
 
                     # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
                     priority = int(time.time())
-                    print(
-                        "> Queued watch UUID {} last checked at {} queued at {:0.2f} priority {} jitter {:0.2f}s, {:0.2f}s since last checked".format(
-                            uuid,
-                            watch['last_checked'],
-                            now,
-                            priority,
-                            watch.jitter_seconds,
-                            now - watch['last_checked']))
+                    logger.debug(
+                        f"> Queued watch UUID {uuid} "
+                        f"last checked at {watch['last_checked']} "
+                        f"queued at {now:0.2f} priority {priority} "
+                        f"jitter {watch.jitter_seconds:0.2f}s, "
+                        f"{now - watch['last_checked']:0.2f}s since last checked")
 
                     # Into the queue with you
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid, 'skip_when_checksum_same': True}))

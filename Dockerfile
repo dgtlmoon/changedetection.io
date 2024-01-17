@@ -58,6 +58,11 @@ COPY changedetectionio /app/changedetectionio
 # Starting wrapper
 COPY changedetection.py /app/changedetection.py
 
+# Github Action test purpose(test-only.yml).
+# On production, it is effectively LOGGER_LEVEL=''.
+ARG LOGGER_LEVEL=''
+ENV LOGGER_LEVEL "$LOGGER_LEVEL"
+
 WORKDIR /app
 CMD ["python", "./changedetection.py", "-d", "/datastore"]
 

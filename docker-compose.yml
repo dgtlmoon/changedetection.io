@@ -16,6 +16,10 @@ services:
   #      - PUID=1000
   #      - PGID=1000
   #
+  #        Log levels are in descending order. (TRACE is the most detailed one)
+  #        Log output levels: TRACE, DEBUG(default), INFO, SUCCESS, WARNING, ERROR, CRITICAL
+  #      - LOGGER_LEVEL=DEBUG
+  #
   #       Alternative WebDriver/selenium URL, do not use "'s or 's!
   #      - WEBDRIVER_URL=http://browser-chrome:4444/wd/hub
   #

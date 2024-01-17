@@ -4,6 +4,7 @@ import os
 import time
 import re
 from random import randint
+from loguru import logger
 
 # Two flags, tell the JS which of the "Selector" or "Value" field should be enabled in the front end
 # 0- off, 1- on
@@ -53,7 +54,7 @@ class steppable_browser_interface():
         if call_action_name == 'choose_one':
             return
 
-        print("> action calling", call_action_name)
+        logger.debug(f"> Action calling '{call_action_name}'")
         # https://playwright.dev/python/docs/selectors#xpath-selectors
         if selector and selector.startswith('/') and not selector.startswith('//'):
             selector = "xpath=" + selector
@@ -72,7 +73,7 @@ class steppable_browser_interface():
 
         action_handler(selector, optional_value)
         self.page.wait_for_timeout(1.5 * 1000)
-        print("Call action done in", time.time() - now)
+        logger.debug(f"Call action done in {time.time()-now:.2f}s")
 
     def action_goto_url(self, selector=None, value=None):
         # self.page.set_viewport_size({"width": 1280, "height": 5000})
@@ -82,7 +83,7 @@ class steppable_browser_interface():
         #and also wait for seconds ?
         #await page.waitForTimeout(1000);
         #await page.waitForTimeout(extra_wait_ms);
-        print("Time to goto URL ", time.time() - now)
+        logger.debug(f"Time to goto URL {time.time()-now:.2f}s")
         return response
 
     def action_click_element_containing_text(self, selector=None, value=''):
@@ -103,7 +104,7 @@ class steppable_browser_interface():
         return response
 
     def action_click_element(self, selector, value):
-        print("Clicking element")
+        logger.debug("Clicking element")
         if not len(selector.strip()):
             return
 
@@ -111,7 +112,7 @@ class steppable_browser_interface():
 
     def action_click_element_if_exists(self, selector, value):
         import playwright._impl._errors as _api_types
-        print("Clicking element if exists")
+        logger.debug("Clicking element if exists")
         if not len(selector.strip()):
             return
         try:
@@ -227,11 +228,11 @@ class browsersteps_live_ui(steppable_browser_interface):
         # Listen for all console events and handle errors
         self.page.on("console", lambda msg: print(f"Browser steps console - {msg.type}: {msg.text} {msg.args}"))
 
-        print("Time to browser setup", time.time() - now)
+        logger.debug(f"Time to browser setup {time.time()-now:.2f}s")
         self.page.wait_for_timeout(1 * 1000)
 
     def mark_as_closed(self):
-        print("Page closed, cleaning up..")
+        logger.debug("Page closed, cleaning up..")
 
     @property
     def has_expired(self):
@@ -257,7 +258,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         xpath_data = self.page.evaluate("async () => {" + xpath_element_js + "}")
         # So the JS will find the smallest one first
         xpath_data['size_pos'] = sorted(xpath_data['size_pos'], key=lambda k: k['width'] * k['height'], reverse=True)
-        print("Time to complete get_current_state of browser", time.time() - now)
+        logger.debug(f"Time to complete get_current_state of browser {time.time()-now:.2f}s")
         # except
         # playwright._impl._api_types.Error: Browser closed.
         # @todo show some countdown timer?
