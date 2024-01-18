@@ -835,11 +835,14 @@ def changedetection_app(config=None, datastore_o=None):
                 flash("An error occurred, please see below.", "error")
 
         output = render_template("settings.html",
-                                 form=form,
-                                 hide_remove_pass=os.getenv("SALTED_PASS", False),
                                  api_key=datastore.data['settings']['application'].get('api_access_token'),
                                  emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
-                                 settings_application=datastore.data['settings']['application'])
+                                 form=form,
+                                 hide_remove_pass=os.getenv("SALTED_PASS", False),
+                                 settings_application=datastore.data['settings']['application'],
+                                 plugins=[]
+
+                                 )
 
         return output
 
