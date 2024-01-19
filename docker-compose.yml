@@ -95,6 +95,7 @@ services:
 
      # Used for fetching pages via Playwright+Chrome where you need Javascript support.
      # Note: works well but is deprecated, does not fetch full page screenshots (doesnt work with Visual Selector) and other issues
+     # More information about the advantages of playwright/browserless https://www.browserless.io/blog/2023/12/13/migrating-selenium-to-playwright/
 #    browser-chrome:
 #        hostname: browser-chrome
 #        image: selenium/standalone-chrome:4
