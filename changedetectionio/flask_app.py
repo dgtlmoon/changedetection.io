@@ -12,7 +12,8 @@ from functools import wraps
 from threading import Event
 import datetime
 import flask_login
-import logging
+from loguru import logger
+import sys
 import os
 import pytz
 import queue
@@ -210,6 +211,8 @@ def login_optionally_required(func):
     return decorated_view
 
 def changedetection_app(config=None, datastore_o=None):
+    logger.trace("TRACE log is enabled")
+
     global datastore
     datastore = datastore_o
 
@@ -485,14 +488,18 @@ def changedetection_app(config=None, datastore_o=None):
 
 
     # AJAX endpoint for sending a test
+    @app.route("/notification/send-test/<string:watch_uuid>", methods=['POST'])
     @app.route("/notification/send-test", methods=['POST'])
+    @app.route("/notification/send-test/", methods=['POST'])
     @login_optionally_required
-    def ajax_callback_send_notification_test():
+    def ajax_callback_send_notification_test(watch_uuid=None):
 
+        # Watch_uuid could be unsuet in the case its used in tag editor, global setings
         import apprise
         from .apprise_asset import asset
         apobj = apprise.Apprise(asset=asset)
 
+        watch = datastore.data['watching'].get(watch_uuid) if watch_uuid else None
 
         # validate URLS
         if not len(request.form['notification_urls'].strip()):
@@ -505,9 +512,11 @@ def changedetection_app(config=None, datastore_o=None):
                     return make_response({'error': message}, 400)
 
         try:
-            n_object = {'watch_url': request.form['window_url'],
-                        'notification_urls': request.form['notification_urls'].splitlines()
-                        }
+            # use the same as when it is triggered, but then override it with the form test values
+            n_object = {
+                'watch_url': request.form['window_url'],
+                'notification_urls': request.form['notification_urls'].splitlines()
+            }
 
             # Only use if present, if not set in n_object it should use the default system value
             if 'notification_format' in request.form and request.form['notification_format'].strip():
@@ -519,7 +528,9 @@ def changedetection_app(config=None, datastore_o=None):
             if 'notification_body' in request.form and request.form['notification_body'].strip():
                 n_object['notification_body'] = request.form.get('notification_body', '').strip()
 
-            notification_q.put(n_object)
+            from . import update_worker
+            new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
+            new_worker.queue_notification_for_watch(notification_q=notification_q, n_object=n_object, watch=watch)
         except Exception as e:
             return make_response({'error': str(e)}, 400)
 
@@ -1484,7 +1495,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
         except Exception as e:
-            logging.error("Error sharing -{}".format(str(e)))
+            logger.error(f"Error sharing -{str(e)}")
             flash("Could not share, something went wrong while communicating with the share server - {}".format(str(e)), 'error')
 
         # https://changedetection.io/share/VrMv05wpXyQa
@@ -1584,11 +1595,20 @@ def notification_runner():
 
             try:
                 from changedetectionio import notification
+                # Fallback to system config if not set
+                if not n_object.get('notification_body') and datastore.data['settings']['application'].get('notification_body'):
+                    n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
+
+                if not n_object.get('notification_title') and datastore.data['settings']['application'].get('notification_title'):
+                    n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
+
+                if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
+                    n_object['notification_title'] = datastore.data['settings']['application'].get('notification_format')
 
                 sent_obj = notification.process_notification(n_object, datastore)
 
             except Exception as e:
-                logging.error("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
+                logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
 
                 # UUID wont be present when we submit a 'test' from the global settings
                 if 'uuid' in n_object:
@@ -1611,7 +1631,7 @@ def ticker_thread_check_time_launch_checks():
     proxy_last_called_time = {}
 
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 20))
-    print("System env MINIMUM_SECONDS_RECHECK_TIME", recheck_time_minimum_seconds)
+    logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
 
     # Spin up Workers that do the fetching
     # Can be overriden by ENV or use the default settings
@@ -1656,7 +1676,7 @@ def ticker_thread_check_time_launch_checks():
             now = time.time()
             watch = datastore.data['watching'].get(uuid)
             if not watch:
-                logging.error("Watch: {} no longer present.".format(uuid))
+                logger.error(f"Watch: {uuid} no longer present.")
                 continue
 
             # No need todo further processing if it's paused
@@ -1689,10 +1709,10 @@ def ticker_thread_check_time_launch_checks():
                             time_since_proxy_used = int(time.time() - proxy_last_used_time)
                             if time_since_proxy_used < proxy_list_reuse_time_minimum:
                                 # Not enough time difference reached, skip this watch
-                                print("> Skipped UUID {} using proxy '{}', not enough time between proxy requests {}s/{}s".format(uuid,
-                                                                                                                         watch_proxy,
-                                                                                                                         time_since_proxy_used,
-                                                                                                                         proxy_list_reuse_time_minimum))
+                                logger.debug(f"> Skipped UUID {uuid} "
+                                        f"using proxy '{watch_proxy}', not "
+                                        f"enough time between proxy requests "
+                                        f"{time_since_proxy_used}s/{proxy_list_reuse_time_minimum}s")
                                 continue
                             else:
                                 # Record the last used time
@@ -1700,14 +1720,12 @@ def ticker_thread_check_time_launch_checks():
 
                     # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
                     priority = int(time.time())
-                    print(
-                        "> Queued watch UUID {} last checked at {} queued at {:0.2f} priority {} jitter {:0.2f}s, {:0.2f}s since last checked".format(
-                            uuid,
-                            watch['last_checked'],
-                            now,
-                            priority,
-                            watch.jitter_seconds,
-                            now - watch['last_checked']))
+                    logger.debug(
+                        f"> Queued watch UUID {uuid} "
+                        f"last checked at {watch['last_checked']} "
+                        f"queued at {now:0.2f} priority {priority} "
+                        f"jitter {watch.jitter_seconds:0.2f}s, "
+                        f"{now - watch['last_checked']:0.2f}s since last checked")
 
                     # Into the queue with you
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid, 'skip_when_checksum_same': True}))

@@ -30,7 +30,7 @@ dnspython~=2.4 # related to eventlet fixes
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise~=1.6.0
+apprise~=1.7.1
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 paho-mqtt
@@ -72,3 +72,5 @@ pytest-flask ~=1.2
 
 # Pin jsonschema version to prevent build errors on armv6 while rpds-py wheels aren't available (1708)
 jsonschema==4.17.3
+
+loguru
