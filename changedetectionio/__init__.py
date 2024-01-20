@@ -4,8 +4,6 @@
 
 __version__ = '0.45.9'
 
-from gevent import monkey
-monkey.patch_all(thread=False)
 from gevent.pywsgi import WSGIServer
 from distutils.util import strtobool
 from json.decoder import JSONDecodeError
