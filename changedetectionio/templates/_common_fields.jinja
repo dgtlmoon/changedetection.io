@@ -118,6 +118,9 @@
                                     <p>
                                         For JSON payloads, use <strong>|tojson</strong> without quotes for automatic escaping, for example - <code>{ "name": {{ '{{ watch_title|tojson }}' }} }</code>
                                     </p>
+                                    <p>
+                                        URL encoding, use <strong>|urlencode</strong>, for example - <code>gets://hook-website.com/test.php?title={{ '{{ watch_title|urlencode }}' }}</code>
+                                    </p>
                                 </div>
                             </div>
                             <div class="pure-control-group">
