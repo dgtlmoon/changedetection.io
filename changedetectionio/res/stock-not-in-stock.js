@@ -1,3 +1,10 @@
+// Restock Detector
+// (c) Leigh Morresi dgtlmoon@gmail.com
+//
+// Assumes the product is in stock to begin with, unless the following appears above the fold ;
+// - outOfStockTexts appears above the fold (out of stock)
+// - negateOutOfStockRegex (really is in stock)
+
 function isItemInStock() {
     // @todo Pass these in so the same list can be used in non-JS fetchers
     const outOfStockTexts = [
@@ -56,6 +63,7 @@ function isItemInStock() {
         '품절'
     ];
 
+    const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
     function getElementBaseText(element) {
         // .textContent can include text from children which may give the wrong results
         // scan only immediate TEXT_NODEs, which will be a child of the element
@@ -66,19 +74,13 @@ function isItemInStock() {
         return text.toLowerCase().trim();
     }
 
-    const negateOutOfStockRegexs = [
-        '[0-9] in stock'
-    ]
-    var negateOutOfStockRegexs_r = [];
-    for (let i = 0; i < negateOutOfStockRegexs.length; i++) {
-        negateOutOfStockRegexs_r.push(new RegExp(negateOutOfStockRegexs[0], 'g'));
-    }
+    const negateOutOfStockRegex = new RegExp('([0-9] in stock|add to cart)', 'ig');
 
     // The out-of-stock or in-stock-text is generally always above-the-fold
     // and often below-the-fold is a list of related products that may or may not contain trigger text
     // so it's good to filter to just the 'above the fold' elements
     // and it should be atleast 100px from the top to ignore items in the toolbar, sometimes menu items like "Coming soon" exist
-    const elementsToScan = Array.from(document.getElementsByTagName('*')).filter(element => element.getBoundingClientRect().top + window.scrollY <= window.innerHeight && element.getBoundingClientRect().top + window.scrollY >= 100);
+    const elementsToScan = Array.from(document.getElementsByTagName('*')).filter(element => element.getBoundingClientRect().top + window.scrollY <= vh && element.getBoundingClientRect().top + window.scrollY >= 100);
 
     var elementText = "";
 
@@ -94,10 +96,8 @@ function isItemInStock() {
 
         if (elementText.length) {
             // try which ones could mean its in stock
-            for (let i = 0; i < negateOutOfStockRegexs.length; i++) {
-                if (negateOutOfStockRegexs_r[i].test(elementText)) {
-                    return 'Possibly in stock';
-                }
+            if (negateOutOfStockRegex.test(elementText)) {
+                return 'Possibly in stock';
             }
         }
     }

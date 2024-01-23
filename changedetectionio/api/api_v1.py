@@ -133,6 +133,7 @@ class WatchHistory(Resource):
 
     # Get a list of available history for a watch by UUID
     # curl http://localhost:5000/api/v1/watch/<string:uuid>/history
+    @auth.check_token
     def get(self, uuid):
         """
         @api {get} /api/v1/watch/<string:uuid>/history Get a list of all historical snapshots available for a watch
