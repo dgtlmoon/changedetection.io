@@ -54,9 +54,9 @@ def get_plugin_manager():
     from changedetectionio.plugins import hookspecs
     from changedetectionio.plugins import whois as whois_plugin
 
-    pm = pluggy.PluginManager("eggsample")
+    pm = pluggy.PluginManager("changedetectionio_plugin")
     pm.add_hookspecs(hookspecs)
-    pm.load_setuptools_entrypoints("eggsample")
+    pm.load_setuptools_entrypoints("changedetectionio_plugin")
     pm.register(whois_plugin)
     return pm
 

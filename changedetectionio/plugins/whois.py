@@ -44,6 +44,3 @@ def processor_call(processor_name, datastore, watch_uuid):
         return x
     return None
 
-@hookimpl
-def eggsample_prep_condiments(condiments):
-    condiments["mint sauce"] = 1

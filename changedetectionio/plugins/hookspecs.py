@@ -1,7 +1,7 @@
 import pluggy
 from changedetectionio.store import ChangeDetectionStore
 
-hookspec = pluggy.HookspecMarker("eggsample")
+hookspec = pluggy.HookspecMarker("changedetectionio_plugin")
 
 
 @hookspec
