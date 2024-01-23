@@ -197,5 +197,9 @@ def main():
     else:
         ssl_args = {}
     sock = WSGIServer.get_listener((host, port), family=s_type)
-    cd_server = WSGIServer(sock, app, **ssl_args)
+    # changedetection.io is actually a singled threaded application and stores all
+    # data in the datastore dictionary, we will upgrade this in the future somehow.
+
+    cd_server = WSGIServer(sock, app, **ssl_args, environ={'wsgi.multithread': False,'wsgi.multiprocess': False,})
+
     cd_server.serve_forever()
