@@ -1603,7 +1603,7 @@ def notification_runner():
                     n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
 
                 if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
-                    n_object['notification_title'] = datastore.data['settings']['application'].get('notification_format')
+                    n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
 
                 sent_obj = notification.process_notification(n_object, datastore)
 
