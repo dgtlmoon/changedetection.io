@@ -511,8 +511,13 @@ class base_html_playwright(Fetcher):
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
             self.page.wait_for_timeout(extra_wait * 1000)
 
-
-            self.status_code = response.status
+            try:
+                self.status_code = response.status
+            except Exception as e:
+                # https://github.com/dgtlmoon/changedetection.io/discussions/2122#discussioncomment-8241962
+                logger.critical(f"Response from browserless/playwright did not have a status_code! Response follows.")
+                logger.critical(response)
+                raise PageUnloadable(url=url, status_code=None, message=str(e))
 
             if self.status_code != 200 and not ignore_status_codes:
 
