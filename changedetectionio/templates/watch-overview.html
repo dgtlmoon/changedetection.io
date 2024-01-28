@@ -6,10 +6,10 @@
 
 <div class="box">
 
-    <form class="pure-form" action="{{ url_for('form_quick_watch_add') }}" method="POST" id="new-watch-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
-        <fieldset>
-            <legend>Add a new change detection watch</legend>
+		    <form class="pure-form" action="{{ url_for('form_quick_watch_add') }}" method="POST" id="new-watch-form">
+			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
+			<fieldset>
+		    <legend>{{ _('Add a new change detection watch') }}</legend>
             <div id="watch-add-wrapper-zone">
 
                     {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
@@ -22,30 +22,30 @@
             </div>
 
         </fieldset>
-        <span style="color:#eee; font-size: 80%;"><img alt="Create a shareable link" style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread-white.svg')}}" > Tip: You can also add 'shared' watches. <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">More info</a></span>
+	<span st1le="color:#eee; font-size: 80%;"><img alt="Create a shareable link" style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread-white.svg')}}" > {{ _("Tip: You can also add 'shared' watches.") }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">{{ _('More info') }}</a></span>
     </form>
 
     <form class="pure-form" action="{{ url_for('form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
     <input type="hidden" id="op_extradata" name="op_extradata" value="" >
     <div id="checkbox-operations">
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="pause">Pause</button>
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause">UnPause</button>
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="mute">Mute</button>
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="unmute">UnMute</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="recheck">Recheck</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="assign-tag" id="checkbox-assign-tag">Tag</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="mark-viewed">Mark viewed</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default">Use default notification</button>
-        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="clear-history">Clear/reset history</button>
-        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="delete">Delete</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="pause">{{ _('Pause') }}</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause">{{ _('UnPause') }}</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="mute">{{ _('Mute') }}</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="unmute">{{ _('UnMute') }}</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="recheck">{{ _('Recheck') }}</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="assign-tag" id="checkbox-assign-tag">{{ _('Tag') }}</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="mark-viewed">{{ _('Mark viewed') }}</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default">{{ _('Use default notification') }}</button>
+        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="clear-history">{{ _('Clear/reset history') }}</button>
+        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="delete">{{ _('Delete') }}</button>
     </div>
     {% if watches|length >= pagination.per_page %}
         {{ pagination.info }}
     {% endif %}
     {% if search_q %}<div id="search-result-info">Searching "<strong><i>{{search_q}}</i></strong>"</div>{% endif %}
     <div>
-        <a href="{{url_for('index')}}" class="pure-button button-tag {{'active' if not active_tag }}">All</a>
+	    <a href="{{url_for('index')}}" class="pure-button button-tag {{'active' if not active_tag }}">{{ _('All') }}</a>
         {% for uuid, tag in tags.items() %}
             {% if tag != "" %}
                 <a href="{{url_for('index', tag=uuid) }}" class="pure-button button-tag {{'active' if active_tag == uuid }}">{{ tag.title }}</a>
@@ -66,9 +66,9 @@
                 {% set arrow_span = "" %}
                 <th><input style="vertical-align: middle" type="checkbox" id="check-all" > <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}"  href="{{url_for('index', sort='date_created', order=link_order, tag=active_tag)}}"># <span class='arrow {{link_order}}'></span></a></th>
                 <th></th>
-                <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('index', sort='label', order=link_order, tag=active_tag)}}">Website <span class='arrow {{link_order}}'></span></a></th>
-                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('index', sort='last_checked', order=link_order, tag=active_tag)}}">Last Checked <span class='arrow {{link_order}}'></span></a></th>
-                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('index', sort='last_changed', order=link_order, tag=active_tag)}}">Last Changed <span class='arrow {{link_order}}'></span></a></th>
+                <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('index', sort='label', order=link_order, tag=active_tag)}}">{{ _('Website') }} <span class='arrow {{link_order}}'></span></a></th>
+                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('index', sort='last_checked', order=link_order, tag=active_tag)}}">{{ _('Last Checked ') }}<span class='arrow {{link_order}}'></span></a></th>
+                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('index', sort='last_changed', order=link_order, tag=active_tag)}}">{{ _('Last Changed') }} <span class='arrow {{link_order}}'></span></a></th>
                 <th></th>
             </tr>
             </thead>
@@ -115,13 +115,13 @@
 
                         {% if '403' in watch.last_error %}
                             {% if has_proxies %}
-                                <a href="{{ url_for('settings_page', uuid=watch.uuid) }}#proxies">Try other proxies/location</a>&nbsp;
+			      <a href="{{ url_for('settings_page', uuid=watch.uuid) }}#proxies">{{ _('Try other proxies/location') }}</a>&nbsp;
                             {% endif %}
-                            <a href="{{ url_for('settings_page', uuid=watch.uuid) }}#proxies">Try adding external proxies/locations</a>
+			    <a href="{{ url_for('settings_page', uuid=watch.uuid) }}#proxies">{{ _('Try adding external proxies/locations') }}</a>
                         
                         {% endif %}
                         {% if 'empty result or contain only an image' in watch.last_error %}
-                            <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Detecting-changes-in-images">more help here</a>.
+			  <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Detecting-changes-in-images">{{ _('more help here') }}</a>.
                         {% endif %}
                     </div>
                     {% endif %}
@@ -131,10 +131,10 @@
 
                     {% if watch['processor'] == 'text_json_diff'  %}
                         {% if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  %}
-                        <div class="ldjson-price-track-offer">Embedded price data detected, follow only price data? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
+			<div class="ldjson-price-track-offer">{{ _('Embedded price data detected, follow only price data?') }} <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
                         {% endif %}
                         {% if watch['track_ldjson_price_data'] == 'accepted' %}
-                        <span class="tracking-ldjson-price-data" title="Automatically following embedded price information"><img src="{{url_for('static_content', group='images', filename='price-tag-icon.svg')}}"  class="status-icon price-follow-tag-icon" > Price</span>
+			<span class="tracking-ldjson-price-data" title="Automatically following embedded price information"><img src="{{url_for('static_content', group='images', filename='price-tag-icon.svg')}}"  class="status-icon price-follow-tag-icon" > {{ _('Price') }}</span>
                         {% endif %}
                     {% endif %}
 
@@ -164,19 +164,19 @@
                 </td>
                 <td>
                     <a {% if watch.uuid in queued_uuids %}disabled="true"{% endif %} href="{{ url_for('form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
-                       class="recheck pure-button pure-button-primary">{% if watch.uuid in queued_uuids %}Queued{% else %}Recheck{% endif %}</a>
-                    <a href="{{ url_for('edit_page', uuid=watch.uuid)}}" class="pure-button pure-button-primary">Edit</a>
+		    class="recheck pure-button pure-button-primary">{% if watch.uuid in queued_uuids %}Queued{% else %}{{ _('Recheck') }}{% endif %}</a>
+		    <a href="{{ url_for('edit_page', uuid=watch.uuid)}}" class="pure-button pure-button-primary">{{ _('Edit') }}</a>
                     {% if watch.history_n >= 2 %}
 
                         {%  if is_unviewed %}
-                           <a href="{{ url_for('diff_history_page', uuid=watch.uuid, from_version=watch.get_next_snapshot_key_to_last_viewed) }}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">Diff</a>
+			   <a href="{{ url_for('diff_history_page', uuid=watch.uuid, from_version=watch.get_next_snapshot_key_to_last_viewed) }}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">{{ _('Diff') }}</a>
                         {% else %}
-                           <a href="{{ url_for('diff_history_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">Diff</a>
+			   <a href="{{ url_for('diff_history_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">{{ _('Diff') }}</a>
                         {% endif %}
 
                     {% else %}
                         {% if watch.history_n == 1 or (watch.history_n ==0 and watch.error_text_ctime )%}
-                            <a href="{{ url_for('preview_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary">Preview</a>
+			   <a href="{{ url_for('preview_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary">{{ _('Preview') }}</a>
                         {% endif %}
                     {% endif %}
                 </td>
@@ -187,17 +187,16 @@
         <ul id="post-list-buttons">
             {% if errored_count %}
             <li>
-                <a href="{{url_for('index', with_errors=1, tag=request.args.get('tag')) }}" class="pure-button button-tag button-error ">With errors ({{ errored_count }})</a>
+		<a href="{{url_for('index', with_errors=1, tag=request.args.get('tag')) }}" class="pure-button button-tag button-error ">{{ _('With errors') }} ({{ errored_count }})</a>
             </li>
             {% endif %}
             {% if has_unviewed %}
             <li>
-                <a href="{{url_for('mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Mark all viewed</a>
+	       <a href="{{url_for('mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">{{ _('Mark all viewed') }}</a>
             </li>
             {% endif %}
             <li>
-               <a href="{{ url_for('form_watch_checknow', tag=active_tag, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Recheck
-                all {% if active_tag%} in "{{tags[active_tag].title}}"{%endif%}</a>
+		    <a href="{{ url_for('form_watch_checknow', tag=active_tag, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">{{ _('Recheck all') }} {% if active_tag%} in "{{tags[active_tag].title}}"{%endif%}</a>
             </li>
             <li>
                 <a href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>

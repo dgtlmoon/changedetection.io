@@ -21,6 +21,7 @@ from wtforms.fields import FieldList
 from wtforms.validators import ValidationError
 
 from validators.url import url as url_validator
+from flask_babel import _
 
 
 # default
@@ -409,9 +410,9 @@ class quickWatchForm(Form):
 
     url = fields.URLField('URL', validators=[validateURL()])
     tags = StringTagUUID('Group tag', [validators.Optional()])
-    watch_submit_button = SubmitField('Watch', render_kw={"class": "pure-button pure-button-primary"})
+    watch_submit_button = SubmitField(_('Watch'), render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
-    edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
+    edit_and_watch_submit_button = SubmitField(_('Edit > Watch'), render_kw={"class": "pure-button pure-button-primary"})
 
 
 # Common to a single watch and the global settings
