@@ -58,6 +58,8 @@ app = Flask(__name__,
             template_folder="templates")
 
 def get_locale():
+    # Debug i8n with simple trick
+    #return 'ko'
     return request.accept_languages.best_match(['en', 'ko'])
 babel = Babel(app)
 babel.init_app(app, locale_selector=get_locale)
