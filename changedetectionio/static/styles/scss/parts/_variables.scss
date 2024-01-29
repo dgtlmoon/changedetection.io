@@ -152,6 +152,10 @@ html[data-darkmode="true"] {
       filter: invert(.5) hue-rotate(10deg) brightness(2);
     }
 
+    .status-browsersteps {
+      filter: invert(.5) hue-rotate(10deg) brightness(1.5);
+    }
+
     .watch-controls {
       .state-off {
         img {
