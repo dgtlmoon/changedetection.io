@@ -31,6 +31,8 @@ class update_worker(threading.Thread):
         dates = []
         trigger_text = ''
 
+        now = time.time()
+
         if watch:
             watch_history = watch.history
             dates = list(watch_history.keys())
@@ -72,13 +74,14 @@ class update_worker(threading.Thread):
             'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=line_feed_sep),
             'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, patch_format=True),
             'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=line_feed_sep),
+            'notification_timestamp': now,
             'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
             'triggered_text': triggered_text,
             'uuid': watch.get('uuid') if watch else None,
             'watch_url': watch.get('url') if watch else None,
         })
-
-        logger.debug(">> SENDING NOTIFICATION")
+        logger.trace(f"Main rendered notification placeholders (diff_added etc) calculated in {time.time()-now:.3f}s")
+        logger.debug("Queued notification for sending")
         notification_q.put(n_object)
 
     # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)

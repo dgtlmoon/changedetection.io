@@ -116,6 +116,9 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
 
 def process_notification(n_object, datastore):
 
+    now = time.time()
+    if n_object.get('notification_timestamp'):
+        logger.trace(f"Time since queued {now-n_object['notification_timestamp']:.3f}s")
     # Insert variables into the notification content
     notification_parameters = create_notification_parameters(n_object, datastore)
 
@@ -132,6 +135,8 @@ def process_notification(n_object, datastore):
     if n_format == default_notification_format_for_watch and datastore.data['settings']['application'].get('notification_format') != default_notification_format_for_watch:
         # Initially text or whatever
         n_format = datastore.data['settings']['application'].get('notification_format', valid_notification_formats[default_notification_format])
+
+    logger.trace(f"Complete notification body including Jinja and placeholders calculated in  {time.time() - now:.3f}s")
 
     # https://github.com/caronc/apprise/wiki/Development_LogCapture
     # Anything higher than or equal to WARNING (which covers things like Connection errors)
