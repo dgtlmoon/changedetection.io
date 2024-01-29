@@ -152,6 +152,10 @@ def process_notification(n_object, datastore):
     with apprise.LogCapture(level=apprise.logging.DEBUG) as logs:
         for url in n_object['notification_urls']:
             url = url.strip()
+            if not url:
+                logger.warning(f"Process Notification: skipping empty notification URL.")
+                continue
+
             logger.info(">> Process Notification: AppRise notifying {}".format(url))
             url = jinja2_env.from_string(url).render(**notification_parameters)
 
