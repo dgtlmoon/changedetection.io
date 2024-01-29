@@ -317,6 +317,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/rss", methods=['GET'])
     def rss():
+        now = time.time()
         # Always requires token set
         app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
         rss_url_token = request.args.get('token')
@@ -390,6 +391,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         response = make_response(fg.rss_str())
         response.headers.set('Content-Type', 'application/rss+xml;charset=utf-8')
+        logger.trace(f"RSS generated in {time.time() - now:.3f}s")
         return response
 
     @app.route("/", methods=['GET'])
