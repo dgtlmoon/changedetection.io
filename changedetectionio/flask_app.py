@@ -13,7 +13,6 @@ from threading import Event
 import datetime
 import flask_login
 from loguru import logger
-import sys
 import os
 import pytz
 import queue
@@ -317,6 +316,8 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/rss", methods=['GET'])
     def rss():
+        from jinja2 import Environment, BaseLoader
+        jinja2_env = Environment(loader=BaseLoader)
         now = time.time()
         # Always requires token set
         app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
@@ -381,8 +382,12 @@ def changedetection_app(config=None, datastore_o=None):
                                              include_equal=False,
                                              line_feed_sep="<br>")
 
-                fe.content(content="<html><body><h4>{}</h4>{}</body></html>".format(watch_title, html_diff),
-                           type='CDATA')
+                # @todo Make this configurable and also consider html-colored markup
+                # @todo User could decide if <link> goes to the diff page, or to the watch link
+                rss_template = "<html><body>\n<h4><a href=\"{{watch_url}}\">{{watch_title}}</a></h4>\n<p>{{html_diff}}</p>\n</body></html>\n"
+                content = jinja2_env.from_string(rss_template).render(watch_title=watch_title, html_diff=html_diff, watch_url=watch.link)
+
+                fe.content(content=content, type='CDATA')
 
                 fe.guid(guid, permalink=False)
                 dt = datetime.datetime.fromtimestamp(int(watch.newest_history_key))
