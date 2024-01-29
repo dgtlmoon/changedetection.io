@@ -471,13 +471,13 @@ class update_worker(threading.Thread):
 
                             # A change was detected
                             if changed_detected:
-                                logger.debug(f">> Change detected in UUID {uuid} - {watch['url']}")
-
                                 # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
                                 if watch.history_n >= 2:
+                                    logger.info(f"Change detected in UUID {uuid} - {watch['url']}")
                                     if not self.datastore.data['watching'][uuid].get('notification_muted'):
                                         self.send_content_changed_notification(watch_uuid=uuid)
-
+                                else:
+                                    logger.info(f"Change triggered in UUID {uuid} due to first history saving (no notifications sent) - {watch['url']}")
 
                         except Exception as e:
                             # Catch everything possible here, so that if a worker crashes, we don't lose it until restart!

@@ -6,11 +6,11 @@ import os
 import re
 import urllib3
 
+from . import difference_detection_processor
+from ..html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
 from changedetectionio import content_fetcher, html_tools
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
 from copy import deepcopy
-from . import difference_detection_processor
-from ..html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
 from loguru import logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -334,6 +334,8 @@ class perform_site_check(difference_detection_processor):
             if self.datastore.data['settings']['application'].get('extract_title_as_title') or watch['extract_title_as_title']:
                 if not watch['title'] or not len(watch['title']):
                     update_obj['title'] = html_tools.extract_element(find='title', html_content=self.fetcher.content)
+
+        logger.debug(f"Watch UUID {uuid} content check - Previous MD5: {watch.get('previous_md5')}, Fetched MD5 {fetched_md5}")
 
         if changed_detected:
             if watch.get('check_unique_lines', False):
