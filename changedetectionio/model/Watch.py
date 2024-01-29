@@ -246,10 +246,10 @@ class model(dict):
     @property
     def has_browser_steps(self):
         has_browser_steps = self.get('browser_steps') and list(filter(
-                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
-                self.get('browser_steps')))
+            lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
+            self.get('browser_steps')))
 
-        return  has_browser_steps
+        return has_browser_steps
 
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
     @property
