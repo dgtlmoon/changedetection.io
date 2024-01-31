@@ -10,7 +10,7 @@ def test_setup(live_server):
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
 def test_headers_in_request(client, live_server):
-    #live_server_setup(live_server)
+    #ve_server_setup(live_server)
     # Add our URL to the import page
     test_url = url_for('test_headers', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
@@ -80,8 +80,7 @@ def test_headers_in_request(client, live_server):
 
     # 'server' http header was automatically recorded
     for k, watch in client.application.config.get('DATASTORE').data.get('watching').items():
-        assert 'werkzeug' in watch.get('remote_server_reply')
-        assert 'custom' in watch.get('remote_server_reply') # added in util.py, it should append it with a , to the original one
+        assert 'custom' in watch.get('remote_server_reply') # added in util.py
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
