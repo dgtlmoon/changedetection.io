@@ -389,10 +389,17 @@ class base_html_playwright(Fetcher):
             raise PageUnloadable(url=url, status_code=None, message=f"Timed out connecting to browserless, retrying..")
         else:
             # 200 Here means that the communication to browserless worked only, not the page state
-            if response.status_code == 200:
+            try:
+                x = response.json()
+                status_code = response.status_code
+            except Exception as e:
+                raise PageUnloadable(url=url, status_code=status_code, message="Error reading JSON response from browserless")
+
+            self.headers = x.get('headers')
+
+            if status_code == 200:
                 import base64
 
-                x = response.json()
                 if not x.get('screenshot'):
                     # https://github.com/puppeteer/puppeteer/blob/v1.0.0/docs/troubleshooting.md#tips
                     # https://github.com/puppeteer/puppeteer/issues/1834
@@ -407,7 +414,6 @@ class base_html_playwright(Fetcher):
                     raise Non200ErrorCodeReceived(url=url, status_code=x.get('status_code', 200), page_html=x['content'])
 
                 self.content = x.get('content')
-                self.headers = x.get('headers')
                 self.instock_data = x.get('instock_data')
                 self.screenshot = base64.b64decode(x.get('screenshot'))
                 self.status_code = x.get('status_code')
