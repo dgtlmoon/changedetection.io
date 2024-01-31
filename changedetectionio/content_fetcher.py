@@ -61,6 +61,10 @@ class PageUnloadable(Exception):
         self.message = message
         return
 
+class BrowserStepsInUnsupportedFetcher(Exception):
+    def __init__(self, url):
+        self.url = url
+        return
 
 class EmptyReply(Exception):
     def __init__(self, status_code, url, screenshot=None):
@@ -711,6 +715,9 @@ class html_requests(Fetcher):
             ignore_status_codes=False,
             current_include_filters=None,
             is_binary=False):
+
+        if self.browser_steps_get_valid_steps():
+            raise BrowserStepsInUnsupportedFetcher(url=url)
 
         # Make requests use a more modern looking user-agent
         if not {k.lower(): v for k, v in request_headers.items()}.get('user-agent', None):
