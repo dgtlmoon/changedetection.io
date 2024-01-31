@@ -118,10 +118,10 @@ jobs:
           docker run --name test-changedetectionio -p 5556:5000  -d test-changedetectionio
           sleep 3
           # Should return 0 (no error) when grep finds it
-          curl -s http://localhost:5556 |grep -q checkbox-uuid
+          curl --retry-connrefused --retry 6  -s http://localhost:5556 |grep -q checkbox-uuid
           
           # and IPv6
-          curl -s -g -6 "http://[::1]:5556"|grep -q checkbox-uuid
+          curl --retry-connrefused --retry 6  -s -g -6 "http://[::1]:5556"|grep -q checkbox-uuid
 
           # Check whether TRACE log is enabled.
           # Also, check whether TRACE is came from STDERR
