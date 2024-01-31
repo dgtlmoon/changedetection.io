@@ -40,12 +40,12 @@ jobs:
         path: dist/
     - name: Test that the basic pip built package runs without error
       run: |
-        set -e
+        set -ex
         pip3 install dist/changedetection.io*.whl
         changedetection.io -d /tmp -p 10000 &
         sleep 3
-        curl http://127.0.0.1:10000/static/styles/pure-min.css >/dev/null
-        curl http://127.0.0.1:10000/ >/dev/null
+        curl --retry-connrefused --retry 6 http://127.0.0.1:10000/static/styles/pure-min.css >/dev/null
+        curl --retry-connrefused --retry 6 http://127.0.0.1:10000/ >/dev/null
         killall changedetection.io
 
 
