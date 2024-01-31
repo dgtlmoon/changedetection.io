@@ -491,6 +491,17 @@ class update_worker(threading.Thread):
                     if self.datastore.data['watching'].get(uuid):
                         # Always record that we atleast tried
                         count = self.datastore.data['watching'][uuid].get('check_count', 0) + 1
+
+                        # Record the 'server' header reply, can be used for actions in the future like cloudflare/akamai workarounds
+                        try:
+                            self.datastore.update_watch(uuid=uuid,
+                                                        update_obj={
+                                                            'remote_server_reply': update_handler.fetcher.headers.get('server', '').lower()
+                                                        }
+                                                        )
+                        except Exception as e:
+                            pass
+
                         self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
                                                                            'last_checked': round(time.time()),
                                                                            'check_count': count
