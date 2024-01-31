@@ -78,6 +78,10 @@ def test_headers_in_request(client, live_server):
             if (len(app_struct['watching'][uuid]['headers'])):
                 watches_with_headers += 1
 
+    for k, watch in client.application.config.get('DATASTORE').data.get('watching').items():
+        assert 'werkzeug' in watch.get('remote_server_reply')
+        assert 'custom' in watch.get('remote_server_reply') # added in util.py, it should append it with a , to the original one
+
     # Should be only one with headers set
     assert watches_with_headers==1
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
