@@ -51,6 +51,7 @@ class BrowserStepsStepException(Exception):
         return
 
 
+# @todo - make base Exception class that announces via logger()
 class PageUnloadable(Exception):
     def __init__(self, status_code, url, message, screenshot=False):
         # Set this so we can use it in other parts of the app
@@ -389,10 +390,24 @@ class base_html_playwright(Fetcher):
             raise PageUnloadable(url=url, status_code=None, message=f"Timed out connecting to browserless, retrying..")
         else:
             # 200 Here means that the communication to browserless worked only, not the page state
-            if response.status_code == 200:
+            try:
+                x = response.json()
+            except Exception as e:
+                raise PageUnloadable(url=url, message="Error reading JSON response from browserless")
+
+            try:
+                self.status_code = response.status_code
+            except Exception as e:
+                raise PageUnloadable(url=url, message="Error reading status_code code response from browserless")
+
+            self.headers = x.get('headers')
+
+            if self.status_code != 200 and not ignore_status_codes:
+                raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, page_html=x.get('content',''))
+
+            if self.status_code == 200:
                 import base64
 
-                x = response.json()
                 if not x.get('screenshot'):
                     # https://github.com/puppeteer/puppeteer/blob/v1.0.0/docs/troubleshooting.md#tips
                     # https://github.com/puppeteer/puppeteer/issues/1834
@@ -403,16 +418,10 @@ class base_html_playwright(Fetcher):
                 if not x.get('content', '').strip():
                     raise EmptyReply(url=url, status_code=None)
 
-                if x.get('status_code', 200) != 200 and not ignore_status_codes:
-                    raise Non200ErrorCodeReceived(url=url, status_code=x.get('status_code', 200), page_html=x['content'])
-
                 self.content = x.get('content')
-                self.headers = x.get('headers')
                 self.instock_data = x.get('instock_data')
                 self.screenshot = base64.b64decode(x.get('screenshot'))
-                self.status_code = x.get('status_code')
                 self.xpath_data = x.get('xpath_data')
-
             else:
                 # Some other error from browserless
                 raise PageUnloadable(url=url, status_code=None, message=response.content.decode('utf-8'))
@@ -742,6 +751,8 @@ class html_requests(Fetcher):
                 if encoding:
                     r.encoding = encoding
 
+        self.headers = r.headers
+
         if not r.content or not len(r.content):
             raise EmptyReply(url=url, status_code=r.status_code)
 
@@ -758,7 +769,7 @@ class html_requests(Fetcher):
         else:
             self.content = r.text
 
-        self.headers = r.headers
+
         self.raw_content = r.content
 
 
