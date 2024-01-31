@@ -751,7 +751,7 @@ class html_requests(Fetcher):
                 if encoding:
                     r.encoding = encoding
 
-        self.headers = dict(r.headers)
+        self.headers = r.headers
 
         if not r.content or not len(r.content):
             raise EmptyReply(url=url, status_code=r.status_code)
