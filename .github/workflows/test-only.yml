@@ -47,7 +47,7 @@ jobs:
           # Debug SMTP server/echo message back server
           docker run --network changedet-network -d -p 11025:11025 -p 11080:11080  --hostname mailserver test-changedetectionio  bash -c 'python changedetectionio/tests/smtp/smtp-test-server.py' 
 
-      - name: Test built container with pytest
+      - name: Test built container with Pytest (generally as requests/plaintext fetching)
         run: |
           # Unit tests
           echo "run test with unittest"
@@ -61,27 +61,27 @@ jobs:
           # append the docker option. e.g. '-e LOGGER_LEVEL=DEBUG'
           docker run --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
-      - name: Test built container with selenium
+      - name: Specific tests in built container for Selenium
         run: |
           
           # Selenium fetch
           docker run --rm -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py'
 
-      - name: Test built container with playwright
+      - name: Specific tests in built container for Playwright
         run: |         
           # Playwright/Browserless fetch
           docker run --rm -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
 
-      - name: Test built container (headers  and requests checks) with Playwright
+      - name: Specific tests in built container for headers and requests checks with Playwright
         run: |                  
           # Settings headers playwright tests - Call back in from Browserless, check headers
           docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
 
-      - name: Test built container (headers  and requests checks) with Selenium
+      - name: Specific tests in built container for headers and requests checks with Selenium
         run: |                  
           docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
 
-      - name: Test built container (headers  and requests checks) with Playwright as Puppeteer experimental fetcher
+      - name: Specific tests in built container with Playwright as Puppeteer experimental fetcher
         run: |                  
           docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "USE_EXPERIMENTAL_PUPPETEER_FETCH=yes" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'          
 
