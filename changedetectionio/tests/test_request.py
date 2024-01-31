@@ -72,18 +72,17 @@ def test_headers_in_request(client, live_server):
 
     # Re #137 -  Examine the JSON index file, it should have only one set of headers entered
     watches_with_headers = 0
-    with open('test-datastore/url-watches.json') as f:
-        app_struct = json.load(f)
-        for uuid in app_struct['watching']:
-            if (len(app_struct['watching'][uuid]['headers'])):
+    for k, watch in client.application.config.get('DATASTORE').data.get('watching').items():
+            if (len(watch['headers'])):
                 watches_with_headers += 1
+    # Should be only one with headers set
+    assert watches_with_headers == 1
 
+    # 'server' http header was automatically recorded
     for k, watch in client.application.config.get('DATASTORE').data.get('watching').items():
         assert 'werkzeug' in watch.get('remote_server_reply')
         assert 'custom' in watch.get('remote_server_reply') # added in util.py, it should append it with a , to the original one
 
-    # Should be only one with headers set
-    assert watches_with_headers==1
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 

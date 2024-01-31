@@ -748,6 +748,8 @@ class html_requests(Fetcher):
                 if encoding:
                     r.encoding = encoding
 
+        self.headers = r.headers
+
         if not r.content or not len(r.content):
             raise EmptyReply(url=url, status_code=r.status_code)
 
@@ -764,7 +766,7 @@ class html_requests(Fetcher):
         else:
             self.content = r.text
 
-        self.headers = r.headers
+
         self.raw_content = r.content
 
 

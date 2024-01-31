@@ -494,7 +494,7 @@ class update_worker(threading.Thread):
 
                         # Record the 'server' header reply, can be used for actions in the future like cloudflare/akamai workarounds
                         try:
-                            server_header = update_handler.fetcher.headers.get('server', '').trim().lower()[:255]
+                            server_header = update_handler.fetcher.headers.get('server', '').strip().lower()[:255]
                             self.datastore.update_watch(uuid=uuid,
                                                         update_obj={'remote_server_reply': server_header}
                                                         )
