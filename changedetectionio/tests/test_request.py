@@ -70,12 +70,11 @@ def test_headers_in_request(client, live_server):
 
     wait_for_all_checks(client)
 
-    # Re #137 -  Examine the JSON index file, it should have only one set of headers entered
+    # Re #137 -  It should have only one set of headers entered
     watches_with_headers = 0
     for k, watch in client.application.config.get('DATASTORE').data.get('watching').items():
             if (len(watch['headers'])):
                 watches_with_headers += 1
-    # Should be only one with headers set
     assert watches_with_headers == 1
 
     # 'server' http header was automatically recorded
