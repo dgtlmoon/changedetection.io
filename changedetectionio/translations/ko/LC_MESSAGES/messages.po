@@ -18,6 +18,70 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.14.0\n"
 
+#: forms.py:185
+msgid "Content fetcher '{}' did not respond."
+msgstr ""
+
+#: forms.py:186
+msgid ""
+"Be sure that the selenium/webdriver runner is running and accessible via "
+"network from this container/host."
+msgstr ""
+
+#: forms.py:188
+msgid "Did you follow the instructions in the wiki?"
+msgstr ""
+
+#: forms.py:189
+msgid "WebDriver Host: {}"
+msgstr ""
+
+#: forms.py:191
+msgid ""
+"Content fetcher did not respond properly, unable to use it.\n"
+" {}"
+msgstr ""
+
+#: forms.py:196
+msgid ""
+"Content fetcher '{}' did not respond properly, unable to use it.\n"
+" {}"
+msgstr ""
+
+#: forms.py:212
+msgid "Notification Body and Title is required when a Notification URL is used"
+msgstr ""
+
+#: forms.py:229
+msgid "'{}' is not a valid AppRise URL."
+msgstr ""
+
+#: forms.py:306
+msgid "RegEx '{}' is not a valid regular expression."
+msgstr ""
+
+#: forms.py:346 forms.py:361
+msgid "'{}' is not a valid XPath expression. ({})"
+msgstr "'{}'은 유효한 xpath 표현식이 아닙니다. ({})"
+
+#: forms.py:381
+#, python-format
+msgid "'%s' is not a valid JSONPath expression. (%s)"
+msgstr ""
+
+#: forms.py:403
+#, python-format
+msgid "'%s' is not a valid jq expression. (%s)"
+msgstr ""
+
+#: forms.py:413
+msgid "Watch"
+msgstr "감시"
+
+#: forms.py:415
+msgid "Edit > Watch"
+msgstr "설정 > 감시"
+
 #: blueprint/tags/templates/edit-tag.html:27 templates/edit.html:40
 #: templates/settings.html:19
 msgid "General"
@@ -30,7 +94,7 @@ msgstr "알림"
 
 #: templates/base.html:52
 msgid "A new version is available"
-msgstr ""
+msgstr "새 버전을 설치할 수 있습니다."
 
 #: templates/base.html:62
 msgid "GROUPS"
@@ -252,7 +316,7 @@ msgstr "로딩중"
 
 #: templates/edit.html:248
 msgid "Use with caution!"
-msgstr ""
+msgstr "주의하여 사용하세요!"
 
 #: templates/edit.html:248
 msgid "This will easily fill up your email storage quota or flood other storages."
@@ -273,7 +337,7 @@ msgstr ""
 #: templates/preview.html:40
 #, fuzzy
 msgid "Blue lines are triggers"
-msgstr "필터 &amp; 트리거"
+msgstr "파란라인은 트리거입니다."
 
 #: templates/preview.html:40
 msgid "Pro-tip</strong>: Highlight text to add to ignore filters"
@@ -285,7 +349,7 @@ msgstr "페칭"
 
 #: templates/settings.html:22
 msgid "Global Filters"
-msgstr "글로벌 필터"
+msgstr "전역 필터"
 
 #: templates/watch-overview.html:12
 msgid "Add a new change detection watch"
@@ -398,5 +462,5 @@ msgstr "모두 읽음 표시"
 
 #: templates/watch-overview.html:199
 msgid "Recheck all"
-msgstr "재감시"
+msgstr "전체 재감시"
 
