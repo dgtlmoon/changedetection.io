@@ -60,7 +60,8 @@ function isItemInStock() {
         'zur zeit nicht an lager',
         '品切れ',
         '已售完',
-        '품절'
+        '품절',
+        'prodotto esaurito'
     ];
 
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
