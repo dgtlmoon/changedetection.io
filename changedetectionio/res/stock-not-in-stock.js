@@ -47,6 +47,7 @@ function isItemInStock() {
         'não estamos a aceitar encomendas',
         'out of stock',
         'out-of-stock',
+        'prodotto esaurito',
         'produkt niedostępny',
         'sold out',
         'sold-out',
