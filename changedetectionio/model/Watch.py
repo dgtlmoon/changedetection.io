@@ -45,6 +45,7 @@ base_config = {
     'last_error': False,
     'last_viewed': 0,  # history key value of the last viewed via the [diff] link
     'method': 'GET',
+    'notification_alert_count': 0,
     # Custom notification content
     'notification_body': None,
     'notification_format': default_notification_format_for_watch,

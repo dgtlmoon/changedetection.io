@@ -150,6 +150,10 @@ class update_worker(threading.Thread):
         queued = False
         if n_object and n_object.get('notification_urls'):
             queued = True
+
+            count = watch.get('notification_alert_count', 0) + 1
+            self.datastore.update_watch(uuid=watch_uuid, update_obj={'notification_alert_count': count})
+
             self.queue_notification_for_watch(notification_q=self.notification_q, n_object=n_object, watch=watch)
 
         return queued
