@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 
 def set_original_ignore_response():
@@ -53,11 +53,8 @@ def set_modified_with_trigger_text_response():
 def test_unique_lines_functionality(client, live_server):
     live_server_setup(live_server)
 
-    sleep_time_for_fetch_thread = 3
 
     set_original_ignore_response()
-    # Give the endpoint time to spin up
-    time.sleep(1)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -67,7 +64,7 @@ def test_unique_lines_functionality(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # Add our URL to the import page
     res = client.post(
@@ -83,12 +80,11 @@ def test_unique_lines_functionality(client, live_server):
     #  Make a change
     set_modified_swapped_lines()
 
-    time.sleep(sleep_time_for_fetch_thread)
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
@@ -97,7 +93,7 @@ def test_unique_lines_functionality(client, live_server):
     # Now set the content which contains the new text and re-ordered existing text
     set_modified_with_trigger_text_response()
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
