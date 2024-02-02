@@ -8,7 +8,7 @@ flask_expects_json~=1.7
 flask_restful
 flask_wtf~=1.2
 flask~=2.3
-inscriptis~=2.2
+inscriptis~=2.4
 pytz
 timeago~=1.0
 validators~=0.21

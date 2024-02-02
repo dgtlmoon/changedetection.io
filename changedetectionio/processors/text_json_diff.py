@@ -151,7 +151,6 @@ class perform_site_check(difference_detection_processor):
         if is_html or watch.is_source_type_url:
 
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-            self.fetcher.content = html_tools.workarounds_for_obfuscations(self.fetcher.content)
             html_content = self.fetcher.content
 
             # If not JSON,  and if it's not text/plain..
