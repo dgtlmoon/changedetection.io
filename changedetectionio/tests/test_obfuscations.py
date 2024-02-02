@@ -40,4 +40,4 @@ def test_obfuscations(client, live_server):
         follow_redirects=True
     )
     # whitespace appears but it renders https://github.com/weblyzard/inscriptis/issues/45#issuecomment-1923339265
-    assert b'$ 90.74' in res.data
+    assert b'$90.74' in res.data
