@@ -707,7 +707,7 @@ def changedetection_app(config=None, datastore_o=None):
             if request.args.get("next") and request.args.get("next") == 'diff':
                 return redirect(url_for('diff_history_page', uuid=uuid))
 
-            return redirect(url_for('index'))
+            return redirect(request.referrer)
 
         else:
             if request.method == 'POST' and not form.validate():
@@ -1358,7 +1358,7 @@ def changedetection_app(config=None, datastore_o=None):
                     i += 1
 
         flash("{} watches queued for rechecking.".format(i))
-        return redirect(url_for('index', tag=tag))
+        return redirect(request.referrer)
 
     @app.route("/form/checkbox-operations", methods=['POST'])
     @login_optionally_required
@@ -1448,7 +1448,7 @@ def changedetection_app(config=None, datastore_o=None):
 
             flash("{} watches assigned tag".format(len(uuids)))
 
-        return redirect(url_for('index'))
+        return redirect(request.referrer)
 
     @app.route("/api/share-url", methods=['GET'])
     @login_optionally_required
