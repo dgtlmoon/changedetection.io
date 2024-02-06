@@ -53,7 +53,7 @@ class BrowserStepsStepException(Exception):
 
 # @todo - make base Exception class that announces via logger()
 class PageUnloadable(Exception):
-    def __init__(self, status_code, url, message, screenshot=False):
+    def __init__(self, status_code=None, url='', message='', screenshot=False):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
         self.url = url
