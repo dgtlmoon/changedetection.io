@@ -30,10 +30,10 @@ jobs:
           
           # Selenium and sockpuppetbrowser
           docker run --network changedet-network -d --hostname selenium  -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome:4
-          docker run --network changedet-network -d --name sockpuppetbrowser --hostname sockpuppetbrowser -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g" dgtlmoon/sockpuppetbrowser:latest
+          docker run --network changedet-network -d --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g" dgtlmoon/sockpuppetbrowser:latest
           
           # For accessing custom browser tests
-          docker run --network changedet-network -d --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm --shm-size="2g" dgtlmoon/sockpuppetbrowser:latest
+          docker run --network changedet-network -d --cap-add=SYS_ADMIN --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm --shm-size="2g" dgtlmoon/sockpuppetbrowser:latest
 
       - name: Build changedetection.io container for testing
         run: |         
