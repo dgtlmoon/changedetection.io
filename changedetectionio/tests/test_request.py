@@ -14,7 +14,7 @@ def test_headers_in_request(client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_headers', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        # Because its no longer calling back to localhost but from browserless, set in test-only.yml
+        # Because its no longer calling back to localhost but from the browser container, set in test-only.yml
         test_url = test_url.replace('localhost', 'changedet')
 
     # Add the test URL twice, we will check
@@ -89,7 +89,7 @@ def test_body_in_request(client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_body', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        # Because its no longer calling back to localhost but from browserless, set in test-only.yml
+        # Because its no longer calling back to localhost but from the browser container, set in test-only.yml
         test_url = test_url.replace('localhost', 'cdio')
 
     res = client.post(
@@ -181,7 +181,7 @@ def test_method_in_request(client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_method', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        # Because its no longer calling back to localhost but from browserless, set in test-only.yml
+        # Because its no longer calling back to localhost but from the browser container, set in test-only.yml
         test_url = test_url.replace('localhost', 'cdio')
 
     # Add the test URL twice, we will check
@@ -258,7 +258,7 @@ def test_headers_textfile_in_request(client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_headers', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        # Because its no longer calling back to localhost but from browserless, set in test-only.yml
+        # Because its no longer calling back to localhost but from the browser container, set in test-only.yml
         test_url = test_url.replace('localhost', 'cdio')
 
     print ("TEST URL IS ",test_url)

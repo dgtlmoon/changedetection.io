@@ -332,7 +332,7 @@ class base_html_playwright(Fetcher):
         code = code.replace('%instock_scrape_code%', self.instock_data_js)
 
         from requests.exceptions import ConnectTimeout, ReadTimeout
-        wait_browserless_seconds = 240
+        wait_browser_seconds = 240
 
         browserless_function_url = os.getenv('BROWSERLESS_FUNCTION_URL')
         from urllib.parse import urlparse
@@ -386,14 +386,14 @@ class base_html_playwright(Fetcher):
                 },
                 # @todo /function needs adding ws:// to http:// rebuild this
                 url=browserless_function_url+f"{amp}--disable-features=AudioServiceOutOfProcess&dumpio=true&--disable-remote-fonts",
-                timeout=wait_browserless_seconds)
+                timeout=wait_browser_seconds)
 
         except ReadTimeout:
-            raise PageUnloadable(url=url, status_code=None, message=f"No response from browserless in {wait_browserless_seconds}s")
+            raise PageUnloadable(url=url, status_code=None, message=f"No response from browser in {wait_browser_seconds}s")
         except ConnectTimeout:
-            raise PageUnloadable(url=url, status_code=None, message=f"Timed out connecting to browserless, retrying..")
+            raise PageUnloadable(url=url, status_code=None, message=f"Timed out connecting to browser, retrying..")
         else:
-            # 200 Here means that the communication to browserless worked only, not the page state
+            # 200 Here means that the communication to the browser worked only, not the page state
             try:
                 x = response.json()
             except Exception as e:
@@ -528,7 +528,7 @@ class base_html_playwright(Fetcher):
                 self.status_code = response.status
             except Exception as e:
                 # https://github.com/dgtlmoon/changedetection.io/discussions/2122#discussioncomment-8241962
-                logger.critical(f"Response from browserless/playwright did not have a status_code! Response follows.")
+                logger.critical(f"Response from the browser/Playwright did not have a status_code! Response follows.")
                 logger.critical(response)
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
 

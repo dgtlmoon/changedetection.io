@@ -35,7 +35,7 @@ docker run --network changedet-network \
 docker run --network changedet-network \
   -e "SOCKSTEST=manual-playwright" \
   -v `pwd`/tests/proxy_socks5/proxies.json-example-noauth:/app/changedetectionio/test-datastore/proxies.json \
-  -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" \
+  -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" \
   --rm \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest tests/proxy_socks5/test_socks5_proxy_sources.py'

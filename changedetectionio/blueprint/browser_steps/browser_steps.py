@@ -169,7 +169,7 @@ class steppable_browser_interface():
         self.page.locator(selector, timeout=1000).uncheck(timeout=1000)
 
 
-# Responsible for maintaining a live 'context' with browserless
+# Responsible for maintaining a live 'context' with the chrome CDP
 # @todo - how long do contexts live for anyway?
 class browsersteps_live_ui(steppable_browser_interface):
     context = None

@@ -19,9 +19,8 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
         data={"application-empty_pages_are_a_change": "",
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_webdriver",
-              # browserless-custom-url is setup in  .github/workflows/test-only.yml
               # the test script run_custom_browser_url_test.sh will look for 'custom-browser-search-string' in the container logs
-              'requests-extra_browsers-0-browser_connection_url': 'ws://browserless-custom-url:3000?stealth=1&--disable-web-security=true&custom-browser-search-string=1',
+              'requests-extra_browsers-0-browser_connection_url': 'ws://sockpuppetbrowser-custom-url:3000?stealth=1&--disable-web-security=true&custom-browser-search-string=1',
               'requests-extra_browsers-0-browser_name': custom_browser_name
               },
         follow_redirects=True

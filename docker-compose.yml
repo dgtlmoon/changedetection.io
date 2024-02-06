@@ -71,32 +71,20 @@ services:
 #            condition: service_started
 
      # Used for fetching pages via Playwright+Chrome where you need Javascript support.
-     # Note: Playwright/browserless not supported on ARM type devices (rPi etc)
      # RECOMMENDED FOR FETCHING PAGES WITH CHROME
 #    playwright-chrome:
 #        hostname: playwright-chrome
-#        image: browserless/chrome:1.60-chrome-stable
+#        image: dgtlmoon/sockpuppetbrowser:latest
 #        restart: unless-stopped
 #        environment:
 #            - SCREEN_WIDTH=1920
 #            - SCREEN_HEIGHT=1024
 #            - SCREEN_DEPTH=16
-#            - ENABLE_DEBUGGER=false
-#            - PREBOOT_CHROME=true
-#            - CONNECTION_TIMEOUT=300000
-#            - MAX_CONCURRENT_SESSIONS=10
-#            - CHROME_REFRESH_TIME=600000
-#            - DEFAULT_BLOCK_ADS=true
-#            - DEFAULT_STEALTH=true
-#
-#             Ignore HTTPS errors, like for self-signed certs
-#            - DEFAULT_IGNORE_HTTPS_ERRORS=true
-#
+#            - MAX_CONCURRENT_CHROME_PROCESSES=10
 
      # Used for fetching pages via Playwright+Chrome where you need Javascript support.
      # Note: Works well but is deprecated, does not fetch full page screenshots (doesnt work with Visual Selector)
      #       Does not report status codes (200, 404, 403) and other issues
-     # More information about the advantages of playwright/browserless https://www.browserless.io/blog/2023/12/13/migrating-selenium-to-playwright/
 #    browser-chrome:
 #        hostname: browser-chrome
 #        image: selenium/standalone-chrome:4

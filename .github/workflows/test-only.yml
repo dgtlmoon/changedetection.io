@@ -28,12 +28,12 @@ jobs:
           
           docker network create changedet-network
           
-          # Selenium+browserless
+          # Selenium and sockpuppetbrowser
           docker run --network changedet-network -d --hostname selenium  -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome:4
-          docker run --network changedet-network -d --name browserless --hostname browserless -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  browserless/chrome:1.60-chrome-stable
+          docker run --network changedet-network -d --name sockpuppetbrowser --hostname sockpuppetbrowser -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  dgtlmoon/sockpuppetbrowser
           
           # For accessing custom browser tests
-          docker run --network changedet-network -d --name browserless-custom-url --hostname browserless-custom-url -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm --shm-size="2g"  browserless/chrome:1.60-chrome-stable
+          docker run --network changedet-network -d --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm --shm-size="2g" dgtlmoon/sockpuppetbrowser
 
       - name: Build changedetection.io container for testing
         run: |         
@@ -69,13 +69,13 @@ jobs:
 
       - name: Specific tests in built container for Playwright
         run: |         
-          # Playwright/Browserless fetch
-          docker run --rm -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
+          # Playwright via Sockpuppetbrowser fetch
+          docker run --rm -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
 
       - name: Specific tests in built container for headers and requests checks with Playwright
         run: |                  
-          # Settings headers playwright tests - Call back in from Browserless, check headers
-          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
+          # Settings headers playwright tests - Call back in from Sockpuppetbrowser, check headers
+          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
 
       - name: Specific tests in built container for headers and requests checks with Selenium
         run: |                  
@@ -83,12 +83,12 @@ jobs:
 
       - name: Specific tests in built container with Playwright as Puppeteer experimental fetcher
         run: |                  
-          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "USE_EXPERIMENTAL_PUPPETEER_FETCH=yes" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'          
+          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "USE_EXPERIMENTAL_PUPPETEER_FETCH=yes" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'          
 
       - name: Test built container restock detection via Playwright
         run: |                            
-          # restock detection via playwright - added name=changedet here so that playwright/browserless can connect to it
-          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+          # restock detection via playwright - added name=changedet here so that playwright and sockpuppetbrowser can connect to it
+          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
 
       - name: Test SMTP notification mime types
         run: |
@@ -97,8 +97,8 @@ jobs:
 
       - name: Test with puppeteer fetcher and disk cache
         run: |
-          docker run --rm -e "PUPPETEER_DISK_CACHE=/tmp/data/" -e "USE_EXPERIMENTAL_PUPPETEER_FETCH=yes" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
-          # Browserless would have had -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" added above
+          docker run --rm -e "PUPPETEER_DISK_CACHE=/tmp/data/" -e "USE_EXPERIMENTAL_PUPPETEER_FETCH=yes" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
+          # Required the browser having FS and CRYPTO enabled
 
       - name: Test proxy interaction
         run: |
