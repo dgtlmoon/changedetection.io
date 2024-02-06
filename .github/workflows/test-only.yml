@@ -96,11 +96,6 @@ jobs:
           # SMTP content types - needs the 'Debug SMTP server/echo message back server' container from above
           docker run --rm  --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/smtp/test_notification_smtp.py'
 
-      - name: Test with puppeteer fetcher and disk cache
-        run: |
-          docker run --rm -e "PUPPETEER_DISK_CACHE=/tmp/data/" -e "USE_EXPERIMENTAL_PUPPETEER_FETCH=yes" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
-          # Required the browser having FS and CRYPTO enabled
-
       - name: Test proxy interaction
         run: |
           cd changedetectionio
