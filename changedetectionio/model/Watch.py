@@ -58,6 +58,7 @@ base_config = {
     'previous_md5_before_filters': False,  # Used for skipping changedetection entirely
     'proxy': None,  # Preferred proxy connection
     'remote_server_reply': None, # From 'server' reply header
+    'sort_text_alphabetically': False,
     'subtractive_selectors': [],
     'tag': '', # Old system of text name for a tag, to be removed
     'tags': [], # list of UUIDs to App.Tags

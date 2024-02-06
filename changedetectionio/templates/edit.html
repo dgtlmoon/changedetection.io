@@ -340,6 +340,10 @@ nav
                 </fieldset>
 
                 <fieldset class="pure-control-group">
+                    {{ render_checkbox_field(form.sort_text_alphabetically) }}
+                    <span class="pure-form-message-inline">Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below.</span>
+                </fieldset>
+                <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.check_unique_lines) }}
                     <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
                 </fieldset>

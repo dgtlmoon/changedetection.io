@@ -204,6 +204,12 @@ class perform_site_check(difference_detection_processor):
                             is_rss=is_rss # #1874 activate the <title workaround hack
                         )
 
+        if watch.get('sort_text_alphabetically') and stripped_text_from_html:
+            # Note: Because a <p>something</p> will add an extra line feed to signify the paragraph gap
+            # we end up with 'Some text\n\n', sorting will add all those extra \n at the start, so we remove them here.
+            stripped_text_from_html = stripped_text_from_html.replace('\n\n', '\n')
+            stripped_text_from_html = '\n'.join( sorted(stripped_text_from_html.splitlines(), key=lambda x: x.lower() ))
+
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 
