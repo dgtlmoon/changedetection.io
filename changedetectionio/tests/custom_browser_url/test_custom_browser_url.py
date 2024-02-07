@@ -19,8 +19,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
         data={"application-empty_pages_are_a_change": "",
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_webdriver",
-              # the test script run_custom_browser_url_test.sh will look for 'custom-browser-search-string' in the container logs
-              'requests-extra_browsers-0-browser_connection_url': 'ws://sockpuppetbrowser-custom-url:3000?custom-browser-search-string=1',
+              'requests-extra_browsers-0-browser_connection_url': 'ws://sockpuppetbrowser-custom-url:3000',
               'requests-extra_browsers-0-browser_name': custom_browser_name
               },
         follow_redirects=True
@@ -50,7 +49,8 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
         res = client.post(
             url_for("edit_page", uuid="first"),
             data={
-                  "url": test_url,
+                # 'run_customer_browser_url_tests.sh' will search for this string to know if we hit the right browser container or not
+                  "url": test_url+"?custom-browser-search-string=1",
                   "tags": "",
                   "headers": "",
                   'fetch_backend': f"extra_browser_{custom_browser_name}",
