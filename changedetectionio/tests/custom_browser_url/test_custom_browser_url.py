@@ -7,7 +7,8 @@ from ..util import live_server_setup, wait_for_all_checks
 def do_test(client, live_server, make_test_use_extra_browser=False):
 
     # Grep for this string in the logs?
-    test_url = f"https://changedetection.io/ci-test.html"
+    test_url = f"https://changedetection.io/ci-test.html?non-custom-default=true"
+    # "non-custom-default" should not appear in the custom browser connection
     custom_browser_name = 'custom browser URL'
 
     # needs to be set and something like 'ws://127.0.0.1:3000'
@@ -50,7 +51,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
             url_for("edit_page", uuid="first"),
             data={
                 # 'run_customer_browser_url_tests.sh' will search for this string to know if we hit the right browser container or not
-                  "url": test_url+"?custom-browser-search-string=1",
+                  "url": f"https://changedetection.io/ci-test.html?custom-browser-search-string=1",
                   "tags": "",
                   "headers": "",
                   'fetch_backend': f"extra_browser_{custom_browser_name}",
