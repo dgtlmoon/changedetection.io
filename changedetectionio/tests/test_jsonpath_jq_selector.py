@@ -456,7 +456,7 @@ def test_ignore_json_order(client, live_server):
 
 def test_correct_header_detect(client, live_server):
     # Like in https://github.com/dgtlmoon/changedetection.io/pull/1593
-    # Specify extra html that JSON is sometimes wrapped in - when using Browserless/Puppeteer etc
+    # Specify extra html that JSON is sometimes wrapped in - when using SockpuppetBrowser / Puppeteer / Playwrightetc
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write('<html><body>{"hello" : 123, "world": 123}')
 
