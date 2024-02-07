@@ -1,0 +1,399 @@
+# Translations template for PROJECT.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-01-28 22:26+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.14.0\n"
+
+#: blueprint/tags/templates/edit-tag.html:27 templates/edit.html:40
+#: templates/settings.html:19
+msgid "General"
+msgstr ""
+
+#: blueprint/tags/templates/edit-tag.html:29 templates/edit.html:54
+#: templates/settings.html:20
+msgid "Notifications"
+msgstr ""
+
+#: templates/base.html:52
+msgid "A new version is available"
+msgstr ""
+
+#: templates/base.html:62
+msgid "GROUPS"
+msgstr ""
+
+#: templates/base.html:65
+msgid "SETTINGS"
+msgstr ""
+
+#: templates/base.html:68
+msgid "IMPORT"
+msgstr ""
+
+#: templates/base.html:71
+msgid "BACKUP"
+msgstr ""
+
+#: templates/base.html:75
+msgid "EDIT"
+msgstr ""
+
+#: templates/base.html:85
+msgid "LOG OUT"
+msgstr ""
+
+#: templates/diff.html:19
+msgid "Compare"
+msgstr ""
+
+#: templates/diff.html:20
+msgid "from"
+msgstr ""
+
+#: templates/diff.html:28
+msgid "to"
+msgstr ""
+
+#: templates/diff.html:36
+msgid "Go"
+msgstr ""
+
+#: templates/diff.html:42
+msgid "Words"
+msgstr ""
+
+#: templates/diff.html:44
+msgid "Lines"
+msgstr ""
+
+#: templates/diff.html:47
+msgid "Chars"
+msgstr ""
+
+#: templates/diff.html:55
+msgid " Ignore Whitespace"
+msgstr ""
+
+#: templates/diff.html:63
+msgid "Jump"
+msgstr ""
+
+#: templates/diff.html:69 templates/preview.html:16
+msgid "Error Text"
+msgstr ""
+
+#: templates/diff.html:70
+msgid "Error Screenshot"
+msgstr ""
+
+#: templates/diff.html:71 templates/preview.html:19
+msgid "Text"
+msgstr ""
+
+#: templates/diff.html:72 templates/preview.html:20
+msgid "Screenshot"
+msgstr ""
+
+#: templates/diff.html:73
+msgid "Extract Data"
+msgstr ""
+
+#: templates/diff.html:92
+msgid ""
+"Pro-tip: You can enable <strong>\"share access when password is "
+"enabled\"</strong> from settings"
+msgstr ""
+
+#: templates/diff.html:113 templates/preview.html:57
+msgid ""
+"For now, Differences are performed on text, not graphically, only the "
+"latest screenshot is available."
+msgstr ""
+
+#: templates/diff.html:120 templates/preview.html:65
+msgid "No screenshot available just yet! Try rechecking the page."
+msgstr ""
+
+#: templates/diff.html:123 templates/preview.html:68
+msgid "Screenshot requires Playwright/WebDriver enabled"
+msgstr ""
+
+#: templates/diff.html:132
+msgid "This tool will extract text data from all of the watch history."
+msgstr ""
+
+#: templates/edit.html:41
+msgid "Request"
+msgstr ""
+
+#: templates/edit.html:43
+msgid "Browser Steps"
+msgstr ""
+
+#: templates/edit.html:47
+msgid "Visual Filter Selector"
+msgstr ""
+
+#: templates/edit.html:48
+msgid "Filters &amp; Triggers"
+msgstr ""
+
+#: templates/edit.html:52
+msgid "Restock Detection"
+msgstr ""
+
+#: templates/edit.html:55
+msgid "Stats"
+msgstr ""
+
+#: templates/edit.html:72
+msgid "Current mode: <strong>Webpage Text/HTML, JSON and PDF changes.</strong>"
+msgstr ""
+
+#: templates/edit.html:73
+msgid "Switch to re-stock detection mode."
+msgstr ""
+
+#: templates/edit.html:75
+msgid "Current mode: <strong>Re-stock detection.</strong>"
+msgstr ""
+
+#: templates/edit.html:76
+msgid "Switch to Webpage Text/HTML, JSON and PDF changes mode."
+msgstr ""
+
+#: templates/edit.html:86
+msgid "Organisational tag/group name used in the main listing page"
+msgstr ""
+
+#: templates/edit.html:104
+msgid ""
+"Sends a notification when the filter can no longer be seen on the page, "
+"good for knowing when the page changed and your filter will not work "
+"anymore."
+msgstr ""
+
+#: templates/edit.html:121
+msgid "Check/Scan all"
+msgstr ""
+
+#: templates/edit.html:134
+msgid ""
+"If you're having trouble waiting for the page to be fully rendered (text "
+"missing etc), try increasing the 'wait' time here."
+msgstr ""
+
+#: templates/edit.html:136
+msgid "This will wait <i>n</i> seconds before extracting the text."
+msgstr ""
+
+#: templates/edit.html:138
+msgid "Using the current global default settings"
+msgstr ""
+
+#: templates/edit.html:143 templates/edit.html:157
+msgid "Show advanced options"
+msgstr ""
+
+#: templates/edit.html:148
+msgid ""
+"Run this code before performing change detection, handy for filling in "
+"fields and other\n"
+"                            actions"
+msgstr ""
+
+#: templates/edit.html:149
+msgid ""
+"More\n"
+"                            help and examples here"
+msgstr ""
+
+#: templates/edit.html:181
+msgid "Alert! Extra headers file found and will be added to this watch!"
+msgstr ""
+
+#: templates/edit.html:183
+msgid "Read more here"
+msgstr ""
+
+#: templates/edit.html:208
+msgid "Turn on text finder"
+msgstr ""
+
+#: templates/edit.html:211
+msgid "Please wait, first browser step can take a little time to load.."
+msgstr ""
+
+#: templates/edit.html:219
+msgid "Click here to Start"
+msgstr ""
+
+#: templates/edit.html:221
+msgid "Please allow 10-15 seconds for the browser to connect."
+msgstr ""
+
+#: templates/edit.html:230
+msgid "Loading"
+msgstr ""
+
+#: templates/edit.html:248
+msgid "Use with caution!"
+msgstr ""
+
+#: templates/edit.html:248
+msgid "This will easily fill up your email storage quota or flood other storages."
+msgstr ""
+
+#: templates/login.html:10
+msgid "Password"
+msgstr ""
+
+#: templates/login.html:16
+msgid "Login"
+msgstr ""
+
+#: templates/preview.html:40
+msgid "Grey lines are ignored"
+msgstr ""
+
+#: templates/preview.html:40
+msgid "Blue lines are triggers"
+msgstr ""
+
+#: templates/preview.html:40
+msgid "Pro-tip</strong>: Highlight text to add to ignore filters"
+msgstr ""
+
+#: templates/settings.html:21
+msgid "Fetching"
+msgstr ""
+
+#: templates/settings.html:22
+msgid "Global Filters"
+msgstr ""
+
+#: templates/watch-overview.html:12
+msgid "Add a new change detection watch"
+msgstr ""
+
+#: templates/watch-overview.html:25
+msgid "Tip: You can also add 'shared' watches."
+msgstr ""
+
+#: templates/watch-overview.html:25
+msgid "More info"
+msgstr ""
+
+#: templates/watch-overview.html:32
+msgid "Pause"
+msgstr ""
+
+#: templates/watch-overview.html:33
+msgid "UnPause"
+msgstr ""
+
+#: templates/watch-overview.html:34
+msgid "Mute"
+msgstr ""
+
+#: templates/watch-overview.html:35
+msgid "UnMute"
+msgstr ""
+
+#: templates/watch-overview.html:36 templates/watch-overview.html:167
+msgid "Recheck"
+msgstr ""
+
+#: templates/watch-overview.html:37
+msgid "Tag"
+msgstr ""
+
+#: templates/watch-overview.html:38
+msgid "Mark viewed"
+msgstr ""
+
+#: templates/watch-overview.html:39
+msgid "Use default notification"
+msgstr ""
+
+#: templates/watch-overview.html:40
+msgid "Clear/reset history"
+msgstr ""
+
+#: templates/watch-overview.html:41
+msgid "Delete"
+msgstr ""
+
+#: templates/watch-overview.html:48
+msgid "All"
+msgstr ""
+
+#: templates/watch-overview.html:69
+msgid "Website"
+msgstr ""
+
+#: templates/watch-overview.html:70
+msgid "Last Checked "
+msgstr ""
+
+#: templates/watch-overview.html:71
+msgid "Last Changed"
+msgstr ""
+
+#: templates/watch-overview.html:118
+msgid "Try other proxies/location"
+msgstr ""
+
+#: templates/watch-overview.html:120
+msgid "Try adding external proxies/locations"
+msgstr ""
+
+#: templates/watch-overview.html:124
+msgid "more help here"
+msgstr ""
+
+#: templates/watch-overview.html:134
+msgid "Embedded price data detected, follow only price data?"
+msgstr ""
+
+#: templates/watch-overview.html:137
+msgid "Price"
+msgstr ""
+
+#: templates/watch-overview.html:168
+msgid "Edit"
+msgstr ""
+
+#: templates/watch-overview.html:172 templates/watch-overview.html:174
+msgid "Diff"
+msgstr ""
+
+#: templates/watch-overview.html:179
+msgid "Preview"
+msgstr ""
+
+#: templates/watch-overview.html:190
+msgid "With errors"
+msgstr ""
+
+#: templates/watch-overview.html:195
+msgid "Mark all viewed"
+msgstr ""
+
+#: templates/watch-overview.html:199
+msgid "Recheck all"
+msgstr ""
+

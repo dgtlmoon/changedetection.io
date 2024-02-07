@@ -21,6 +21,7 @@ from wtforms.fields import FieldList
 from wtforms.validators import ValidationError
 
 from validators.url import url as url_validator
+from flask_babel import _
 
 
 # default
@@ -181,19 +182,19 @@ class ValidateContentFetcherIsReady(object):
 
             except urllib3.exceptions.MaxRetryError as e:
                 driver_url = some_object.command_executor
-                message = field.gettext('Content fetcher \'%s\' did not respond.' % (field.data))
-                message += '<br>' + field.gettext(
+                message = _("Content fetcher '{}' did not respond.".format(field.data))
+                message += '<br>' + _(
                     'Be sure that the selenium/webdriver runner is running and accessible via network from this container/host.')
-                message += '<br>' + field.gettext('Did you follow the instructions in the wiki?')
-                message += '<br><br>' + field.gettext('WebDriver Host: %s' % (driver_url))
+                message += '<br>' + _('Did you follow the instructions in the wiki?')
+                message += '<br><br>' + _('WebDriver Host: {}'.format(driver_url))
                 message += '<br><a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">Go here for more information</a>'
-                message += '<br>'+field.gettext('Content fetcher did not respond properly, unable to use it.\n %s' % (str(e)))
+                message += '<br>'+_('Content fetcher did not respond properly, unable to use it.\n {}'.format(str(e)))
 
                 raise ValidationError(message)
 
             except Exception as e:
-                message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.\n %s')
-                raise ValidationError(message % (field.data, e))
+                message = _("Content fetcher '{}' did not respond properly, unable to use it.\n {}")
+                raise ValidationError(message.format(field.data, e))
 
 
 class ValidateNotificationBodyAndTitleWhenURLisSet(object):
@@ -208,7 +209,7 @@ class ValidateNotificationBodyAndTitleWhenURLisSet(object):
     def __call__(self, form, field):
         if len(field.data):
             if not len(form.notification_title.data) or not len(form.notification_body.data):
-                message = field.gettext('Notification Body and Title is required when a Notification URL is used')
+                message = _('Notification Body and Title is required when a Notification URL is used')
                 raise ValidationError(message)
 
 class ValidateAppRiseServers(object):
@@ -225,7 +226,7 @@ class ValidateAppRiseServers(object):
 
         for server_url in field.data:
             if not apobj.add(server_url):
-                message = field.gettext('\'%s\' is not a valid AppRise URL.' % (server_url))
+                message = _("'{}' is not a valid AppRise URL.".format(server_url))
                 raise ValidationError(message)
 
 class ValidateJinja2Template(object):
@@ -302,8 +303,8 @@ class ValidateListRegex(object):
                     regex = html_tools.perl_style_slash_enclosed_regex_to_options(line)
                     re.compile(regex)
                 except re.error:
-                    message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
-                    raise ValidationError(message % (line))
+                    message = _("RegEx '{}' is not a valid regular expression.")
+                    raise ValidationError(message.format(line))
 
 class ValidateCSSJSONXPATHInput(object):
     """
@@ -342,8 +343,8 @@ class ValidateCSSJSONXPATHInput(object):
                 try:
                     elementpath.select(tree, line.strip(), parser=XPath3Parser)
                 except elementpath.ElementPathError as e:
-                    message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
-                    raise ValidationError(message % (line, str(e)))
+                    message = _("'{}' is not a valid XPath expression. ({})")
+                    raise ValidationError(message.format(line, str(e)))
                 except:
                     raise ValidationError("A system-error occurred when validating your XPath expression")
 
@@ -357,8 +358,8 @@ class ValidateCSSJSONXPATHInput(object):
                 try:
                     tree.xpath(line.strip())
                 except etree.XPathEvalError as e:
-                    message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
-                    raise ValidationError(message % (line, str(e)))
+                    message = _("'{}' is not a valid XPath expression. ({})")
+                    raise ValidationError(message.format(line, str(e)))
                 except:
                     raise ValidationError("A system-error occurred when validating your XPath expression")
 
@@ -377,8 +378,8 @@ class ValidateCSSJSONXPATHInput(object):
                 try:
                     parse(input)
                 except (JsonPathParserError, JsonPathLexerError) as e:
-                    message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
-                    raise ValidationError(message % (input, str(e)))
+                    message = _("'{}' is not a valid JSONPath expression. ({})")
+                    raise ValidationError(message.format(input, str(e)))
                 except:
                     raise ValidationError("A system-error occurred when validating your JSONPath expression")
 
@@ -399,8 +400,8 @@ class ValidateCSSJSONXPATHInput(object):
                 try:
                     jq.compile(input)
                 except (ValueError) as e:
-                    message = field.gettext('\'%s\' is not a valid jq expression. (%s)')
-                    raise ValidationError(message % (input, str(e)))
+                    message = _("'{}' is not a valid jq expression. ({})")
+                    raise ValidationError(message.format(input, str(e)))
                 except:
                     raise ValidationError("A system-error occurred when validating your jq expression")
 
@@ -409,9 +410,9 @@ class quickWatchForm(Form):
 
     url = fields.URLField('URL', validators=[validateURL()])
     tags = StringTagUUID('Group tag', [validators.Optional()])
-    watch_submit_button = SubmitField('Watch', render_kw={"class": "pure-button pure-button-primary"})
+    watch_submit_button = SubmitField(_('Watch'), render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
-    edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
+    edit_and_watch_submit_button = SubmitField(_('Edit > Watch'), render_kw={"class": "pure-button pure-button-primary"})
 
 
 # Common to a single watch and the global settings

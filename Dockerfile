@@ -64,6 +64,7 @@ ARG LOGGER_LEVEL=''
 ENV LOGGER_LEVEL "$LOGGER_LEVEL"
 
 WORKDIR /app
+RUN pybabel compile -d changedetectionio/translations
 CMD ["python", "./changedetection.py", "-d", "/datastore"]
 
 

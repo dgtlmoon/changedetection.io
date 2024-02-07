@@ -49,7 +49,7 @@
         {% else %}
           {% if new_version_available and not(has_password and not current_user.is_authenticated) %}
             <span id="new-version-text" class="pure-menu-heading">
-              <a href="https://changedetection.io">A new version is available</a>
+	      <a href="https://changedetection.io">{{ _('A new version is available') }}</a>
             </span>
           {% endif %}
         {% endif %}
@@ -59,20 +59,20 @@
             {% if not
             current_diff_url %}
               <li class="pure-menu-item">
-                <a href="{{ url_for('tags.tags_overview_page')}}" class="pure-menu-link">GROUPS</a>
+	        <a href="{{ url_for('tags.tags_overview_page')}}" class="pure-menu-link">{{ _('GROUPS') }}</a>
               </li>
               <li class="pure-menu-item">
-                <a href="{{ url_for('settings_page')}}" class="pure-menu-link">SETTINGS</a>
+	        <a href="{{ url_for('settings_page')}}" class="pure-menu-link">{{ _('SETTINGS') }}</a>
               </li>
               <li class="pure-menu-item">
-                <a href="{{ url_for('import_page')}}" class="pure-menu-link">IMPORT</a>
+	        <a href="{{ url_for('import_page')}}" class="pure-menu-link">{{ _('IMPORT') }}</a>
               </li>
               <li class="pure-menu-item">
-                <a href="{{ url_for('get_backup')}}" class="pure-menu-link">BACKUP</a>
+	        <a href="{{ url_for('get_backup')}}" class="pure-menu-link">{{ _('BACKUP') }}</a>
               </li>
             {% else %}
               <li class="pure-menu-item">
-                <a href="{{ url_for('edit_page', uuid=uuid, next='diff') }}" class="pure-menu-link">EDIT</a>
+	        <a href="{{ url_for('edit_page', uuid=uuid, next='diff') }}" class="pure-menu-link">{{ _('EDIT') }}</a>
               </li>
             {% endif %}
           {% else %}
@@ -82,7 +82,7 @@
           {% endif %}
           {% if current_user.is_authenticated %}
             <li class="pure-menu-item">
-              <a href="{{url_for('logout')}}" class="pure-menu-link">LOG OUT</a>
+	      <a href="{{url_for('logout')}}" class="pure-menu-link">{{ _('LOG OUT') }}</a>
             </li>
           {% endif %}
           {% if current_user.is_authenticated or not has_password %}
