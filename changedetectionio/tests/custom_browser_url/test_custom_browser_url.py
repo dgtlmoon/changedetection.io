@@ -10,7 +10,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
     test_url = f"https://changedetection.io/ci-test.html"
     custom_browser_name = 'custom browser URL'
 
-    # needs to be set and something like 'ws://127.0.0.1:3000?stealth=1&--disable-web-security=true'
+    # needs to be set and something like 'ws://127.0.0.1:3000'
     assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
 
     #####################
@@ -20,7 +20,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_webdriver",
               # the test script run_custom_browser_url_test.sh will look for 'custom-browser-search-string' in the container logs
-              'requests-extra_browsers-0-browser_connection_url': 'ws://sockpuppetbrowser-custom-url:3000?stealth=1&--disable-web-security=true&custom-browser-search-string=1',
+              'requests-extra_browsers-0-browser_connection_url': 'ws://sockpuppetbrowser-custom-url:3000?custom-browser-search-string=1',
               'requests-extra_browsers-0-browser_name': custom_browser_name
               },
         follow_redirects=True
