@@ -1,5 +1,5 @@
 # Used by Pyppeteer
-pyee
+pyee==9.0.4
 
 eventlet>=0.33.3 # related to dnspython fixes
 feedgen~=0.9
