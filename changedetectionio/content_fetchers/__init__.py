@@ -5,7 +5,8 @@ import os
 visualselector_xpath_selectors = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
 
 # available_fetchers() will scan this implementation looking for anything starting with html_
-from changedetectionio.content_fetchers.html_requests import fetcher as html_requests
+# this information is used in the form selections
+from changedetectionio.content_fetchers.requests import fetcher as html_requests
 
 def available_fetchers():
     # See the if statement at the bottom of this file for how we switch between playwright and webdriver
