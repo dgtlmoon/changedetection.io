@@ -2,7 +2,6 @@ from abc import abstractmethod
 import os
 import hashlib
 import re
-from changedetectionio import content_fetcher
 from copy import deepcopy
 from distutils.util import strtobool
 from loguru import logger
@@ -60,12 +59,12 @@ class difference_detection_processor():
            prefer_fetch_backend = "html_requests"
 
         # Grab the right kind of 'fetcher', (playwright, requests, etc)
-        if hasattr(content_fetcher, prefer_fetch_backend):
-            fetcher_obj = getattr(content_fetcher, prefer_fetch_backend)
+        from changedetectionio import content_fetchers
+        if hasattr(content_fetchers, prefer_fetch_backend):
+            fetcher_obj = getattr(content_fetchers, prefer_fetch_backend)
         else:
-            # If the klass doesnt exist, just use a default
-            fetcher_obj = getattr(content_fetcher, "html_requests")
-
+            # What it referenced doesnt exist, Just use a default
+            fetcher_obj = getattr(content_fetchers, "html_requests")
 
         proxy_url = None
         if preferred_proxy_id:
