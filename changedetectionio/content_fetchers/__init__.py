@@ -1,4 +1,6 @@
 import sys
+from distutils.util import strtobool
+
 from changedetectionio.content_fetchers.exceptions import BrowserStepsStepException
 import os
 
@@ -27,7 +29,10 @@ def available_fetchers():
 # rather than site-specific.
 use_playwright_as_chrome_fetcher = os.getenv('PLAYWRIGHT_DRIVER_URL', False)
 if use_playwright_as_chrome_fetcher:
-    from .playwright import fetcher as html_webdriver
+    if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', '')):
+        from .playwright import fetcher as html_webdriver
+    else:
+        from .puppeteer import fetcher as html_webdriver
 
 else:
     from .webdriver_selenium import fetcher as html_webdriver

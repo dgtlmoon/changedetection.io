@@ -282,6 +282,6 @@ class browsersteps_live_ui(steppable_browser_interface):
         from changedetectionio.content_fetchers import visualselector_xpath_selectors
         xpath_element_js = xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
         xpath_data = self.page.evaluate("async () => {" + xpath_element_js + "}")
-        screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
+        screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
 
         return (screenshot, xpath_data)
