@@ -3,8 +3,7 @@ import os
 from urllib.parse import urlparse
 
 from loguru import logger
-
-from changedetectionio.content_fetchers import Fetcher
+from changedetectionio.content_fetchers.base import Fetcher
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
 
 class fetcher(Fetcher):

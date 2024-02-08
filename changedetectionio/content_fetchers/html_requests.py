@@ -5,7 +5,7 @@ import chardet
 import requests
 
 from changedetectionio.content_fetchers.exceptions import BrowserStepsInUnsupportedFetcher, EmptyReply, Non200ErrorCodeReceived
-from changedetectionio.content_fetchers import Fetcher
+from changedetectionio.content_fetchers.base import Fetcher
 
 
 # "html_requests" is listed as the default fetcher in store.py!

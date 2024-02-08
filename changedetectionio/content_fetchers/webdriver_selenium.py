@@ -2,9 +2,7 @@ import os
 import time
 
 from loguru import logger
-
-from changedetectionio.content_fetchers import Fetcher
-
+from changedetectionio.content_fetchers.base import Fetcher
 
 class fetcher(Fetcher):
     if os.getenv("WEBDRIVER_URL"):
