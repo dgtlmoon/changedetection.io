@@ -29,7 +29,7 @@ def available_fetchers():
 # rather than site-specific.
 use_playwright_as_chrome_fetcher = os.getenv('PLAYWRIGHT_DRIVER_URL', False)
 if use_playwright_as_chrome_fetcher:
-    if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', '')):
+    if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
         from .playwright import fetcher as html_webdriver
     else:
         from .puppeteer import fetcher as html_webdriver
