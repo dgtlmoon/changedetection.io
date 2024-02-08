@@ -2,8 +2,8 @@ import os
 import threading
 import queue
 import time
-
-from changedetectionio import content_fetchers, html_tools
+from . import content_fetchers
+from changedetectionio import html_tools
 from .processors.text_json_diff import FilterNotFoundInResponse
 from .processors.restock_diff import UnableToExtractRestockData
 

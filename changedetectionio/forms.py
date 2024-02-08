@@ -26,8 +26,8 @@ from validators.url import url as url_validator
 # default
 # each select <option data-enabled="enabled-0-0"
 from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
-
-from changedetectionio import html_tools, content_fetchers
+from . import content_fetchers
+from changedetectionio import html_tools
 
 from changedetectionio.notification import (
     valid_notification_formats,
