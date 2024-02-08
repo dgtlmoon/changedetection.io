@@ -411,7 +411,7 @@ class update_worker(threading.Thread):
                                                                            'last_check_status': e.status_code})
                         process_changedetection_results = False
                     except content_fetcher.ScreenshotUnavailable as e:
-                        err_text = "Screenshot unavailable, page did not render fully in the expected time - try increasing 'Wait seconds before extracting text'"
+                        err_text = "Screenshot unavailable, page did not render fully in the expected time or page was too long - try increasing 'Wait seconds before extracting text'"
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                         process_changedetection_results = False
