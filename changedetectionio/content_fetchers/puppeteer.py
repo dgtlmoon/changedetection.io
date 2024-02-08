@@ -28,7 +28,7 @@ class fetcher(Fetcher):
     def __init__(self, proxy_override=None, custom_browser_connection_url=None):
         super().__init__()
         import asyncio
-        self.loop = asyncio.get_event_loop()
+        self.loop = asyncio.new_event_loop()
 
         if custom_browser_connection_url:
             self.browser_connection_is_custom = True
@@ -59,21 +59,21 @@ class fetcher(Fetcher):
                 self.proxy['username'] = parsed.username
                 self.proxy['password'] = parsed.password
 
-    def screenshot_step(self, step_n=''):
-        screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=85)
-
-        if self.browser_steps_screenshot_path is not None:
-            destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.jpeg'.format(step_n))
-            logger.debug(f"Saving step screenshot to {destination}")
-            with open(destination, 'wb') as f:
-                f.write(screenshot)
-
-    def save_step_html(self, step_n):
-        content = self.page.content()
-        destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.html'.format(step_n))
-        logger.debug(f"Saving step HTML to {destination}")
-        with open(destination, 'w') as f:
-            f.write(content)
+    # def screenshot_step(self, step_n=''):
+    #     screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=85)
+    #
+    #     if self.browser_steps_screenshot_path is not None:
+    #         destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.jpeg'.format(step_n))
+    #         logger.debug(f"Saving step screenshot to {destination}")
+    #         with open(destination, 'wb') as f:
+    #             f.write(screenshot)
+    #
+    # def save_step_html(self, step_n):
+    #     content = self.page.content()
+    #     destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.html'.format(step_n))
+    #     logger.debug(f"Saving step HTML to {destination}")
+    #     with open(destination, 'w') as f:
+    #         f.write(content)
 
     def run(self,
             url,
@@ -223,9 +223,7 @@ class fetcher(Fetcher):
                 await self.page.close()
                 await browser.close()
 
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(
+        self.loop.run_until_complete(
             fetch_page(url,
                        timeout,
                        request_headers,
@@ -235,4 +233,4 @@ class fetcher(Fetcher):
                        current_include_filters,
                        is_binary)
         )
-        loop.close()
+        self.loop.close()
