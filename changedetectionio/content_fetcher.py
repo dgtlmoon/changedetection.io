@@ -396,6 +396,8 @@ class base_html_playwright(Fetcher):
                 # https://github.com/dgtlmoon/changedetection.io/discussions/2122#discussioncomment-8241962
                 logger.critical(f"Response from the browser/Playwright did not have a status_code! Response follows.")
                 logger.critical(response)
+                context.close()
+                browser.close()
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
 
             if self.status_code != 200 and not ignore_status_codes:
@@ -436,16 +438,17 @@ class base_html_playwright(Fetcher):
             # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
             # acceptable screenshot quality here
             try:
-                # The actual screenshot
-                self.screenshot = self.page.screenshot(type='jpeg', full_page=True,
-                                                       quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)))
+                # The actual screenshot - this always base64 and needs decoding! horrible! huge CPU usage
+                self.screenshot = self.page.screenshot(type='jpeg',
+                                                       full_page=True,
+                                                       quality=int(os.getenv("PLAYWRIGHT_SCREENSHOT_QUALITY", 72)),
+                                                       )
             except Exception as e:
+                # It's likely the screenshot was too long/big and something crashed
+                raise ScreenshotUnavailable(url=url, status_code=self.status_code)
+            finally:
                 context.close()
                 browser.close()
-                raise ScreenshotUnavailable(url=url, status_code=response.status_code)
-
-            context.close()
-            browser.close()
 
 
 class base_html_webdriver(Fetcher):
