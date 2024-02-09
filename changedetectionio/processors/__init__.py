@@ -61,7 +61,14 @@ class difference_detection_processor():
         # Grab the right kind of 'fetcher', (playwright, requests, etc)
         from changedetectionio import content_fetchers
         if hasattr(content_fetchers, prefer_fetch_backend):
-            fetcher_obj = getattr(content_fetchers, prefer_fetch_backend)
+            # @todo TEMPORARY HACK - SWITCH BACK TO PLAYWRIGHT FOR BROWSERSTEPS
+            if prefer_fetch_backend == 'html_webdriver' and self.watch.has_browser_steps:
+                # This is never supported in selenium anyway
+                logger.warning("Using playwright fetcher override for possible puppeteer request in browsersteps, because puppetteer:browser steps is incomplete.")
+                from changedetectionio.content_fetchers.playwright import fetcher as playwright_fetcher
+                fetcher_obj = playwright_fetcher
+            else:
+                fetcher_obj = getattr(content_fetchers, prefer_fetch_backend)
         else:
             # What it referenced doesnt exist, Just use a default
             fetcher_obj = getattr(content_fetchers, "html_requests")
