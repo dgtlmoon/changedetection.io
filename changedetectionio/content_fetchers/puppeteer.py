@@ -27,8 +27,6 @@ class fetcher(Fetcher):
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None):
         super().__init__()
-        import asyncio
-
 
         if custom_browser_connection_url:
             self.browser_connection_is_custom = True
