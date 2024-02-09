@@ -28,6 +28,8 @@ class PDFToHTMLToolNotFound(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
 
+def merge_filters(include_filters, include_filters_from_tags):
+    return list({*include_filters, *include_filters_from_tags})
 
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
@@ -118,7 +120,7 @@ class perform_site_check(difference_detection_processor):
         include_filters_from_tags = self.datastore.get_tag_overrides_for_watch(uuid=uuid, attr='include_filters')
 
         # 1845 - remove duplicated filters in both group and watch include filter
-        include_filters_rule = list({*watch.get('include_filters', []), *include_filters_from_tags})
+        include_filters_rule = merge_filters(watch.get('include_filters', []), include_filters_from_tags)
 
         subtractive_selectors = [*self.datastore.get_tag_overrides_for_watch(uuid=uuid, attr='subtractive_selectors'),
                                  *watch.get("subtractive_selectors", []),
