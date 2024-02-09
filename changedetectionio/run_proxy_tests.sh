@@ -10,10 +10,12 @@ set -x
 docker run --network changedet-network -d --name squid-one --hostname squid-one --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf ubuntu/squid:4.13-21.10_edge
 docker run --network changedet-network -d --name squid-two --hostname squid-two --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf ubuntu/squid:4.13-21.10_edge
 
+docker run --network changedet-network -d --name squid-two --hostname squid-two --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf ubuntu/squid:4.13-21.10_edge
+
 # SOCKS5 related - start simple Socks5 proxy server
 # SOCKSTEST=xyz should show in the logs of this service to confirm it fetched
 docker run --network changedet-network -d --hostname socks5proxy --rm  --name socks5proxy -p 1080:1080 -e PROXY_USER=proxy_user123 -e PROXY_PASSWORD=proxy_pass123 serjs/go-socks5-proxy
-docker run --network changedet-network -d --hostname socks5proxy --rm -noauth -p 1081:1080 --name socks5proxy-noauth  serjs/go-socks5-proxy
+docker run --network changedet-network -d --hostname socks5proxy-noauth --rm  -p 1081:1080 --name socks5proxy-noauth  serjs/go-socks5-proxy
 
 echo "---------------------------------- SOCKS5 -------------------"
 # SOCKS5 related - test from proxies.json
@@ -61,6 +63,7 @@ docker run --network changedet-network \
   bash -c 'cd changedetectionio && pytest tests/proxy_list/test_multiple_proxy.py'
 
 
+
 ## Should be a request in the default "first" squid
 docker logs squid-one 2>/dev/null|grep chosen.changedetection.io
 if [ $? -ne 0 ]
@@ -76,7 +79,6 @@ then
   echo "Did not see a request to chosen.changedetection.io in the squid logs (while checking preferred proxy - squid two)"
   exit 1
 fi
-
 
 # Test the UI configurable proxies
 docker run --network changedet-network \
