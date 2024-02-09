@@ -29,7 +29,7 @@ class PDFToHTMLToolNotFound(ValueError):
         ValueError.__init__(self, msg)
 
 def merge_filters(include_filters, include_filters_from_tags):
-    return list({*include_filters, *include_filters_from_tags})
+    return list(dict.fromkeys(include_filters + include_filters_from_tags))
 
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
