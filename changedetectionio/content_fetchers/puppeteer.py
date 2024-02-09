@@ -28,7 +28,7 @@ class fetcher(Fetcher):
     def __init__(self, proxy_override=None, custom_browser_connection_url=None):
         super().__init__()
         import asyncio
-        self.loop = asyncio.new_event_loop()
+
 
         if custom_browser_connection_url:
             self.browser_connection_is_custom = True
@@ -99,7 +99,6 @@ class fetcher(Fetcher):
             self.delete_browser_steps_screenshots()
 
             browser = await pyppeteer.launcher.connect(
-                loop=self.loop,
                 browserWSEndpoint=self.browser_connection_url,
                 width=1024,
                 height=768
@@ -223,14 +222,27 @@ class fetcher(Fetcher):
                 await self.page.close()
                 await browser.close()
 
-        self.loop.run_until_complete(
-            fetch_page(url,
-                       timeout,
-                       request_headers,
-                       request_body,
-                       request_method,
-                       ignore_status_codes,
-                       current_include_filters,
-                       is_binary)
-        )
-        self.loop.close()
+        async def main(**kwargs):
+            kwargs = locals()
+            kwargs.pop("self", None)  # Remove 'self' if this is inside a class method
+            task1 = asyncio.create_task(fetch_page(url=url,
+                                                   timeout=timeout,
+                                                   request_headers=request_headers,
+                                                   request_body=request_body,
+                                                   request_method=request_method,
+                                                   ignore_status_codes=ignore_status_codes,
+                                                   current_include_filters=current_include_filters,
+                                                   is_binary=is_binary))
+            await task1
+
+        # launch as asyncio processor
+        asyncio.run(main(
+            url=url,
+            timeout=timeout,
+            request_headers=request_headers,
+            request_body=request_body,
+            request_method=request_method,
+            ignore_status_codes=ignore_status_codes,
+            current_include_filters=current_include_filters,
+            is_binary=is_binary,
+        ))
