@@ -4,6 +4,9 @@ import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, get_UUID_for_tag_name, extract_UUID_from_client
 import os
+from ..processors.text_json_diff import merge_filters
+from multiprocessing import Process
+import multiprocessing
 
 
 def test_setup(client, live_server):
@@ -321,3 +324,28 @@ def test_clone_tag_on_quickwatchform_add(client, live_server):
 
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
+
+def task(include_filters: list, include_filters_from_tags: list, i: int, return_dict: dict):
+    return_dict[i] =  merge_filters(include_filters, include_filters_from_tags)
+
+def test_merge_filters_function_unit():
+    include_filters = ['#only-meaningless1', '#only-meaningless2', '#only-this']
+    include_filters_from_tags = ['//body/b[1]', '/html/body/b[2]']
+    try:
+        # when you check by hand.
+        # It won't work in github CICD.
+        multiprocessing.set_start_method('spawn')
+    except RuntimeError:
+        pass
+    manager = multiprocessing.Manager()
+    return_dict = manager.dict()
+    # if spawn works,
+    # from math import fractorial
+    # 1 - (1/(factorial(5)) ** 5)
+    # 0.9999999999598123
+    processes = [Process(target=task, args=(include_filters, include_filters_from_tags, i, return_dict)) for i in range(5)]
+    [process.start() for process in processes]
+    [process.join() for process in processes]
+    res = { '_'.join(i) for i in return_dict.values()}
+    assert len(res) == 1
+    assert res.pop() == '#only-meaningless1_#only-meaningless2_#only-this_//body/b[1]_/html/body/b[2]'
