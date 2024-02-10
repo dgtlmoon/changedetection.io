@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import time
@@ -66,171 +67,153 @@ class fetcher(Fetcher):
     #     with open(destination, 'w') as f:
     #         f.write(content)
 
-    def run(self,
-            url,
-            timeout,
-            request_headers,
-            request_body,
-            request_method,
-            ignore_status_codes=False,
-            current_include_filters=None,
-            is_binary=False):
-        import asyncio
-        async def fetch_page(url,
-                             timeout,
-                             request_headers,
-                             request_body,
-                             request_method,
-                             ignore_status_codes,
-                             current_include_filters,
-                             is_binary
-                             ):
+    async def fetch_page(self,
+                         url,
+                         timeout,
+                         request_headers,
+                         request_body,
+                         request_method,
+                         ignore_status_codes,
+                         current_include_filters,
+                         is_binary
+                         ):
 
-            from changedetectionio.content_fetchers import visualselector_xpath_selectors
-            self.delete_browser_steps_screenshots()
+        from changedetectionio.content_fetchers import visualselector_xpath_selectors
+        self.delete_browser_steps_screenshots()
 
-            from pyppeteer import Pyppeteer
-            pyppeteer_instance = Pyppeteer()
+        from pyppeteer import Pyppeteer
+        pyppeteer_instance = Pyppeteer()
 
-            # Connect directly using the specified browser_ws_endpoint
-            #@todo timeout
-            browser = await pyppeteer_instance.connect(browserWSEndpoint=self.browser_connection_url,
-                                                       defaultViewport={"width": 1024, "height": 768}
-                                                       )
+        # Connect directly using the specified browser_ws_endpoint
+        #@todo timeout
+        browser = await pyppeteer_instance.connect(browserWSEndpoint=self.browser_connection_url,
+                                                   defaultViewport={"width": 1024, "height": 768}
+                                                   )
 
-            self.page = await browser.newPage()
+        self.page = await browser.newPage()
 
-            await self.page.setBypassCSP(True)
-            if request_headers:
-                await self.page.setExtraHTTPHeaders(request_headers)
-                # @todo check user-agent worked
+        await self.page.setBypassCSP(True)
+        if request_headers:
+            await self.page.setExtraHTTPHeaders(request_headers)
+            # @todo check user-agent worked
 
-            # SOCKS5 with authentication is not supported (yet)
-            # https://github.com/microsoft/playwright/issues/10567
-            self.page.setDefaultNavigationTimeout(0)
+        # SOCKS5 with authentication is not supported (yet)
+        # https://github.com/microsoft/playwright/issues/10567
+        #self.page.setDefaultNavigationTimeout(0)
 
-            if self.proxy:
-                 # Setting Proxy-Authentication header is deprecated, and doing so can trigger header change errors from Puppeteer
-                 # https://github.com/puppeteer/puppeteer/issues/676 ?
-                 # https://help.brightdata.com/hc/en-us/articles/12632549957649-Proxy-Manager-How-to-Guides#h_01HAKWR4Q0AFS8RZTNYWRDFJC2
-                 # https://cri.dev/posts/2020-03-30-How-to-solve-Puppeteer-Chrome-Error-ERR_INVALID_ARGUMENT/
-                 await self.page.authenticate(self.proxy)
+        if self.proxy:
+             # Setting Proxy-Authentication header is deprecated, and doing so can trigger header change errors from Puppeteer
+             # https://github.com/puppeteer/puppeteer/issues/676 ?
+             # https://help.brightdata.com/hc/en-us/articles/12632549957649-Proxy-Manager-How-to-Guides#h_01HAKWR4Q0AFS8RZTNYWRDFJC2
+             # https://cri.dev/posts/2020-03-30-How-to-solve-Puppeteer-Chrome-Error-ERR_INVALID_ARGUMENT/
+             await self.page.authenticate(self.proxy)
 
-            # Re-use as much code from browser steps as possible so its the same
-            #from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
+        # Re-use as much code from browser steps as possible so its the same
+        #from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
 
 # not yet used here, we fallback to playwright when browsersteps is required
 #            browsersteps_interface = steppable_browser_interface()
 #            browsersteps_interface.page = self.page
 
-            response = await self.page.goto(url, waitUntil="load")
-            self.headers = response.headers
+        response = await self.page.goto(url, waitUntil="load")
+        self.headers = response.headers
 
-            if response is None:
-                await self.page.close()
-                await browser.close()
-                logger.warning("Content Fetcher > Response object was none")
-                raise EmptyReply(url=url, status_code=None)
+        if response is None:
+            await self.page.close()
+            await browser.close()
+            logger.warning("Content Fetcher > Response object was none")
+            raise EmptyReply(url=url, status_code=None)
 
-            try:
-                if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
-                    await self.page.evaluate(self.webdriver_js_execute_code)
-            except Exception as e:
-                logger.warning("Got exception when running evaluate on custom JS code")
-                logger.error(str(e))
-                await self.page.close()
-                await browser.close()
-                # This can be ok, we will try to grab what we could retrieve
-                raise PageUnloadable(url=url, status_code=None, message=str(e))
+        try:
+            if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
+                await self.page.evaluate(self.webdriver_js_execute_code)
+        except Exception as e:
+            logger.warning("Got exception when running evaluate on custom JS code")
+            logger.error(str(e))
+            await self.page.close()
+            await browser.close()
+            # This can be ok, we will try to grab what we could retrieve
+            raise PageUnloadable(url=url, status_code=None, message=str(e))
 
-            extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
-            await asyncio.sleep(1 + extra_wait)
+        extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
+        await asyncio.sleep(1 + extra_wait)
 
-            try:
-                self.status_code = response.status
-            except Exception as e:
-                # https://github.com/dgtlmoon/changedetection.io/discussions/2122#discussioncomment-8241962
-                logger.critical(f"Response from the browser/Playwright did not have a status_code! Response follows.")
-                logger.critical(response)
-                await self.page.close()
-                await browser.close()
-                raise PageUnloadable(url=url, status_code=None, message=str(e))
+        try:
+            self.status_code = response.status
+        except Exception as e:
+            # https://github.com/dgtlmoon/changedetection.io/discussions/2122#discussioncomment-8241962
+            logger.critical(f"Response from the browser/Playwright did not have a status_code! Response follows.")
+            logger.critical(response)
+            await self.page.close()
+            await browser.close()
+            raise PageUnloadable(url=url, status_code=None, message=str(e))
 
-            if self.status_code != 200 and not ignore_status_codes:
-                screenshot = await self.page.screenshot(type_='jpeg',
-                                                        fullPage=True,
-                                                        quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
+        if self.status_code != 200 and not ignore_status_codes:
+            screenshot = await self.page.screenshot(type_='jpeg',
+                                                    fullPage=True,
+                                                    quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
 
-                raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
-            content = await self.page.content
-            if len(content.strip()) == 0:
-                await self.page.close()
-                await browser.close()
-                logger.error("Content Fetcher > Content was empty")
-                raise EmptyReply(url=url, status_code=response.status)
+            raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
+        content = await self.page.content
+        if len(content.strip()) == 0:
+            await self.page.close()
+            await browser.close()
+            logger.error("Content Fetcher > Content was empty")
+            raise EmptyReply(url=url, status_code=response.status)
 
-            # Run Browser Steps here
+        # Run Browser Steps here
 # @todo not yet supported, we switch to playwright in this case
 #            if self.browser_steps_get_valid_steps():
 #                self.iterate_browser_steps()
 
-            await asyncio.sleep(1 + extra_wait)
+        await asyncio.sleep(1 + extra_wait)
 
-            # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
-            # Setup the xPath/VisualSelector scraper
-            if current_include_filters is not None:
-                js = json.dumps(current_include_filters)
-                await self.page.evaluate(f"var include_filters={js}")
-            else:
-                await self.page.evaluate(f"var include_filters=''")
+        # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
+        # Setup the xPath/VisualSelector scraper
+        if current_include_filters is not None:
+            js = json.dumps(current_include_filters)
+            await self.page.evaluate(f"var include_filters={js}")
+        else:
+            await self.page.evaluate(f"var include_filters=''")
 
-            self.xpath_data = await self.page.evaluate(
-                "async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}")
-            self.instock_data = await self.page.evaluate("async () => {" + self.instock_data_js + "}")
+        self.xpath_data = await self.page.evaluate(
+            "async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}")
+        self.instock_data = await self.page.evaluate("async () => {" + self.instock_data_js + "}")
 
-            self.content = await self.page.content
-            # Bug 3 in Playwright screenshot handling
-            # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
-            # JPEG is better here because the screenshots can be very very large
+        self.content = await self.page.content
+        # Bug 3 in Playwright screenshot handling
+        # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
+        # JPEG is better here because the screenshots can be very very large
 
-            # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
-            # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
-            # acceptable screenshot quality here
+        # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
+        # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
+        # acceptable screenshot quality here
+        try:
+            self.screenshot = await self.page.screenshot(type_='jpeg',
+                                                         fullPage=True,
+                                                         quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
+        except Exception as e:
+            logger.error("Error fetching screenshot")
+            # // May fail on very large pages with 'WARNING: tile memory limits exceeded, some content may not draw'
+            # // @ todo after text extract, we can place some overlay text with red background to say 'croppped'
+            logger.error('ERROR: content-fetcher page was maybe too large for a screenshot, reverting to viewport only screenshot')
             try:
                 self.screenshot = await self.page.screenshot(type_='jpeg',
-                                                             fullPage=True,
+                                                             fullPage=False,
                                                              quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
             except Exception as e:
-                logger.error("Error fetching screenshot")
-                # // May fail on very large pages with 'WARNING: tile memory limits exceeded, some content may not draw'
-                # // @ todo after text extract, we can place some overlay text with red background to say 'croppped'
-                logger.error('ERROR: content-fetcher page was maybe too large for a screenshot, reverting to viewport only screenshot')
-                try:
-                    self.screenshot = await self.page.screenshot(type_='jpeg',
-                                                                 fullPage=False,
-                                                                 quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
-                except Exception as e:
-                    logger.error('ERROR: Failed to get viewport-only reduced screenshot :(')
-                    pass
-            finally:
-                await self.page.close()
-                await browser.close()
+                logger.error('ERROR: Failed to get viewport-only reduced screenshot :(')
+                pass
+        finally:
+            await self.page.close()
+            await browser.close()
 
-        async def main(**kwargs):
-            kwargs = locals()
-            kwargs.pop("self", None)  # Remove 'self' if this is inside a class method
-            task1 = asyncio.create_task(fetch_page(url=url,
-                                                   timeout=timeout,
-                                                   request_headers=request_headers,
-                                                   request_body=request_body,
-                                                   request_method=request_method,
-                                                   ignore_status_codes=ignore_status_codes,
-                                                   current_include_filters=current_include_filters,
-                                                   is_binary=is_binary))
-            await task1
+    async def main(self, **kwargs):
+        await self.fetch_page(**kwargs)
 
-        # launch as asyncio processor
-        asyncio.run(main(
+    def run(self, url, timeout, request_headers, request_body, request_method, ignore_status_codes=False,
+            current_include_filters=None, is_binary=False):
+        asyncio.run(self.main(
             url=url,
             timeout=timeout,
             request_headers=request_headers,
@@ -238,5 +221,5 @@ class fetcher(Fetcher):
             request_method=request_method,
             ignore_status_codes=ignore_status_codes,
             current_include_filters=current_include_filters,
-            is_binary=is_binary,
+            is_binary=is_binary
         ))
