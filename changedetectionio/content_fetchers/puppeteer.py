@@ -1,12 +1,12 @@
 import asyncio
 import json
 import os
-import time
+import websockets.exceptions
 from urllib.parse import urlparse
 
 from loguru import logger
 from changedetectionio.content_fetchers.base import Fetcher
-from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
+from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable, BrowserConnectError
 
 
 class fetcher(Fetcher):
@@ -42,11 +42,11 @@ class fetcher(Fetcher):
                 # Add the proxy server chrome start option, the username and password never gets added here
                 # (It always goes in via await self.page.authenticate(self.proxy))
                 import urllib.parse
-                #@todo filter some injection attack?
+                # @todo filter some injection attack?
                 # check /somepath?thisandthat
                 # check scheme when no scheme
-                h=urllib.parse.quote(parsed.scheme+"://") if parsed.scheme else ''
-                h+=urllib.parse.quote(f"{parsed.hostname}:{parsed.port}{parsed.path}?{parsed.query}", safe='')
+                h = urllib.parse.quote(parsed.scheme + "://") if parsed.scheme else ''
+                h += urllib.parse.quote(f"{parsed.hostname}:{parsed.port}{parsed.path}?{parsed.query}", safe='')
 
                 r = "?" if not '?' in self.browser_connection_url else '&'
                 self.browser_connection_url += f"{r}--proxy-server={h}"
@@ -85,12 +85,19 @@ class fetcher(Fetcher):
         pyppeteer_instance = Pyppeteer()
 
         # Connect directly using the specified browser_ws_endpoint
-        #@todo timeout
-        browser = await pyppeteer_instance.connect(browserWSEndpoint=self.browser_connection_url,
-                                                   defaultViewport={"width": 1024, "height": 768}
-                                                   )
-
-        self.page = await browser.newPage()
+        # @todo timeout
+        try:
+            browser = await pyppeteer_instance.connect(browserWSEndpoint=self.browser_connection_url,
+                                                       defaultViewport={"width": 1024, "height": 768}
+                                                       )
+        except websockets.exceptions.InvalidStatusCode as e:
+            raise BrowserConnectError(msg=f"Error while trying to connect the browser, Code {e.status_code} (check your access)")
+        except websockets.exceptions.InvalidURI:
+            raise BrowserConnectError(msg=f"Error connecting to the browser, check your browser connection address (should be ws:// or wss://")
+        except Exception as e:
+            raise BrowserConnectError(msg=f"Error connecting to the browser {str(e)}")
+        else:
+            self.page = await browser.newPage()
 
         await self.page.setBypassCSP(True)
         if request_headers:
@@ -99,21 +106,21 @@ class fetcher(Fetcher):
 
         # SOCKS5 with authentication is not supported (yet)
         # https://github.com/microsoft/playwright/issues/10567
-        #self.page.setDefaultNavigationTimeout(0)
+        self.page.setDefaultNavigationTimeout(0)
 
         if self.proxy:
-             # Setting Proxy-Authentication header is deprecated, and doing so can trigger header change errors from Puppeteer
-             # https://github.com/puppeteer/puppeteer/issues/676 ?
-             # https://help.brightdata.com/hc/en-us/articles/12632549957649-Proxy-Manager-How-to-Guides#h_01HAKWR4Q0AFS8RZTNYWRDFJC2
-             # https://cri.dev/posts/2020-03-30-How-to-solve-Puppeteer-Chrome-Error-ERR_INVALID_ARGUMENT/
-             await self.page.authenticate(self.proxy)
+            # Setting Proxy-Authentication header is deprecated, and doing so can trigger header change errors from Puppeteer
+            # https://github.com/puppeteer/puppeteer/issues/676 ?
+            # https://help.brightdata.com/hc/en-us/articles/12632549957649-Proxy-Manager-How-to-Guides#h_01HAKWR4Q0AFS8RZTNYWRDFJC2
+            # https://cri.dev/posts/2020-03-30-How-to-solve-Puppeteer-Chrome-Error-ERR_INVALID_ARGUMENT/
+            await self.page.authenticate(self.proxy)
 
         # Re-use as much code from browser steps as possible so its the same
-        #from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
+        # from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
 
-# not yet used here, we fallback to playwright when browsersteps is required
-#            browsersteps_interface = steppable_browser_interface()
-#            browsersteps_interface.page = self.page
+        # not yet used here, we fallback to playwright when browsersteps is required
+        #            browsersteps_interface = steppable_browser_interface()
+        #            browsersteps_interface.page = self.page
 
         response = await self.page.goto(url, waitUntil="load")
         self.headers = response.headers
@@ -162,9 +169,9 @@ class fetcher(Fetcher):
             raise EmptyReply(url=url, status_code=response.status)
 
         # Run Browser Steps here
-# @todo not yet supported, we switch to playwright in this case
-#            if self.browser_steps_get_valid_steps():
-#                self.iterate_browser_steps()
+        # @todo not yet supported, we switch to playwright in this case
+        #            if self.browser_steps_get_valid_steps():
+        #                self.iterate_browser_steps()
 
         await asyncio.sleep(1 + extra_wait)
 
