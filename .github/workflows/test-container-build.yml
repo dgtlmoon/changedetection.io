@@ -11,12 +11,14 @@ on:
       - requirements.txt
       - Dockerfile
       - .github/workflows/*
+      - .github/test/Dockerfile*
 
   pull_request:
     paths:
       - requirements.txt
       - Dockerfile
       - .github/workflows/*
+      - .github/test/Dockerfile*
 
   # Changes to requirements.txt packages and Dockerfile may or may not always be compatible with arm etc, so worth testing
   # @todo: some kind of path filter for requirements.txt and Dockerfile
