@@ -57,7 +57,7 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text):
 def test_http_error_handler(client, live_server):
     _runner_test_http_errors(client, live_server, 403, 'Access denied')
     _runner_test_http_errors(client, live_server, 404, 'Page not found')
-    _runner_test_http_errors(client, live_server, 500, '(Internal server Error) received')
+    _runner_test_http_errors(client, live_server, 500, '(Internal server error) received')
     _runner_test_http_errors(client, live_server, 400, 'Error - Request returned a HTTP error code 400')
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
