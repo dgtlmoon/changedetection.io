@@ -65,7 +65,7 @@ jobs:
           # The default pytest logger_level is TRACE
           # To change logger_level for pytest(test/conftest.py),
           # append the docker option. e.g. '-e LOGGER_LEVEL=DEBUG'
-          docker run --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio && ./run_basic_tests.sh'
+          docker run --name test-cdio-basic-tests --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
 # PLAYWRIGHT/NODE-> CDP
       - name: Playwright and SocketPuppetBrowser - Specific tests in built container
@@ -201,6 +201,16 @@ jobs:
           # @todo - scan the container log to see the right "graceful shutdown" text exists           
           docker rm sig-test
 
-#export WEBDRIVER_URL=http://localhost:4444/wd/hub
-#pytest tests/fetchers/test_content.py
-#pytest tests/test_errorhandling.py
+      - name: Dump container log
+        if: always()
+        run: |
+          mkdir output-logs
+          docker logs test-cdio-basic-tests > output-logs/test-cdio-basic-tests-stdout.txt
+          docker logs test-cdio-basic-tests 2> output-logs/test-cdio-basic-tests-stderr.txt
+
+      - name: Store container log
+        if: always()
+        uses: actions/upload-artifact@v1
+        with:
+          name: test-cdio-basic-tests-output
+          path: output-logs
