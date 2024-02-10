@@ -213,6 +213,8 @@ class fetcher(Fetcher):
 
     def run(self, url, timeout, request_headers, request_body, request_method, ignore_status_codes=False,
             current_include_filters=None, is_binary=False):
+
+        # This will work in 3.10 but not >= 3.11 because 3.11 wants tasks only
         asyncio.run(self.main(
             url=url,
             timeout=timeout,
