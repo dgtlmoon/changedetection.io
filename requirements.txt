@@ -47,7 +47,7 @@ beautifulsoup4
 lxml
 
 # XPath 2.0-3.1 support - 4.2.0 broke something?
-elementpath==4.1.5
+elementpath!=4.2
 
 selenium~=4.14.0
 
