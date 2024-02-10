@@ -317,8 +317,10 @@ class update_worker(threading.Thread):
                             err_text = "Error - 403 (Access denied) received"
                         elif e.status_code == 404:
                             err_text = "Error - 404 (Page not found) received"
+                        elif e.status_code == 407:
+                            err_text = "Error - 407 (Proxy authentication required) received, did you need a username and password for the proxy?"
                         elif e.status_code == 500:
-                            err_text = "Error - 500 (Internal server Error) received"
+                            err_text = "Error - 500 (Internal server error) received from the web site"
                         else:
                             err_text = "Error - Request returned a HTTP error code {}".format(str(e.status_code))
 
