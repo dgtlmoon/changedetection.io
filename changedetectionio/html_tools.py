@@ -125,7 +125,12 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
     html_block = ""
 
-    r = elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser)
+    # https://github.com/sissaschool/elementpath/issues/71
+    r = elementpath.select(tree,
+            xpath_filter.strip(),
+            namespaces={'re': 'http://exslt.org/regular-expressions'},
+            fragment=False,
+            parser=XPath3Parser)
     #@note: //title/text() wont work where <title>CDATA..
 
     if type(r) != list:
