@@ -18,12 +18,7 @@ class fetcher(Fetcher):
     browser_type = ''
     command_executor = ''
 
-    # Configs for Proxy setup
-    # In the ENV vars, is prefixed with "playwright_proxy_", so it is for example "playwright_proxy_server"
-    playwright_proxy_settings_mappings = ['bypass', 'server', 'username', 'password']
-
     proxy = None
-    loop = None
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None):
         super().__init__()
@@ -36,26 +31,24 @@ class fetcher(Fetcher):
             # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
             self.browser_connection_url = os.getenv("PLAYWRIGHT_DRIVER_URL", 'ws://playwright-chrome:3000').strip('"')
 
-        # If any proxy settings are enabled, then we should setup the proxy object
-        proxy_args = {}
-        for k in self.playwright_proxy_settings_mappings:
-            v = os.getenv('playwright_proxy_' + k, False)
-            if v:
-                proxy_args[k] = v.strip('"')
-
-        if proxy_args:
-            self.proxy = proxy_args
-
         # allow per-watch proxy selection override
+        # @todo check global too?
         if proxy_override:
-            self.proxy = {'server': proxy_override}
-
-        if self.proxy:
             # Playwright needs separate username and password values
-            parsed = urlparse(self.proxy.get('server'))
-            if parsed.username:
-                self.proxy['username'] = parsed.username
-                self.proxy['password'] = parsed.password
+            parsed = urlparse(proxy_override)
+            if parsed:
+                self.proxy = {'username': parsed.username, 'password': parsed.password}
+                # Add the proxy server chrome start option, the username and password never gets added here
+                # (It always goes in via await self.page.authenticate(self.proxy))
+                import urllib.parse
+                #@todo filter some injection attack?
+                # check /somepath?thisandthat
+                # check scheme when no scheme
+                h=urllib.parse.quote(parsed.scheme+"://") if parsed.scheme else ''
+                h+=urllib.parse.quote(f"{parsed.hostname}:{parsed.port}{parsed.path}?{parsed.query}", safe='')
+
+                r = "?" if not '?' in self.browser_connection_url else '&'
+                self.browser_connection_url += f"{r}--proxy-server={h}"
 
     # def screenshot_step(self, step_n=''):
     #     screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=85)
@@ -92,17 +85,21 @@ class fetcher(Fetcher):
                              current_include_filters,
                              is_binary
                              ):
-            import pyppeteer
+
             from changedetectionio.content_fetchers import visualselector_xpath_selectors
             self.delete_browser_steps_screenshots()
 
-            browser = await pyppeteer.launcher.connect(
-                browserWSEndpoint=self.browser_connection_url,
-                width=1024,
-                height=768
-            )
+            from pyppeteer import Pyppeteer
+            pyppeteer_instance = Pyppeteer()
+
+            # Connect directly using the specified browser_ws_endpoint
+            #@todo timeout
+            browser = await pyppeteer_instance.connect(browserWSEndpoint=self.browser_connection_url,
+                                                       defaultViewport={"width": 1024, "height": 768}
+                                                       )
 
             self.page = await browser.newPage()
+
             await self.page.setBypassCSP(True)
             if request_headers:
                 await self.page.setExtraHTTPHeaders(request_headers)
@@ -112,23 +109,21 @@ class fetcher(Fetcher):
             # https://github.com/microsoft/playwright/issues/10567
             self.page.setDefaultNavigationTimeout(0)
 
-            # @todo proxy auth
-            # if proxy_username:
-            #     # Setting Proxy-Authentication header is deprecated, and doing so can trigger header change errors from Puppeteer
-            #     # https://github.com/puppeteer/puppeteer/issues/676 ?
-            #     # https://help.brightdata.com/hc/en-us/articles/12632549957649-Proxy-Manager-How-to-Guides#h_01HAKWR4Q0AFS8RZTNYWRDFJC2
-            #     # https://cri.dev/posts/2020-03-30-How-to-solve-Puppeteer-Chrome-Error-ERR_INVALID_ARGUMENT/
-            #     await page.authenticate({
-            #         'username': proxy_username,
-            #         'password': proxy_password
-            #     })
+            if self.proxy:
+                 # Setting Proxy-Authentication header is deprecated, and doing so can trigger header change errors from Puppeteer
+                 # https://github.com/puppeteer/puppeteer/issues/676 ?
+                 # https://help.brightdata.com/hc/en-us/articles/12632549957649-Proxy-Manager-How-to-Guides#h_01HAKWR4Q0AFS8RZTNYWRDFJC2
+                 # https://cri.dev/posts/2020-03-30-How-to-solve-Puppeteer-Chrome-Error-ERR_INVALID_ARGUMENT/
+                 await self.page.authenticate(self.proxy)
 
             # Re-use as much code from browser steps as possible so its the same
-            from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
-            browsersteps_interface = steppable_browser_interface()
-            browsersteps_interface.page = self.page
+            #from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
 
-            response = await self.page.goto(url, {"waitUntil": "load"})
+# not yet used here, we fallback to playwright when browsersteps is required
+#            browsersteps_interface = steppable_browser_interface()
+#            browsersteps_interface.page = self.page
+
+            response = await self.page.goto(url, waitUntil="load")
             self.headers = response.headers
 
             if response is None:
@@ -162,11 +157,12 @@ class fetcher(Fetcher):
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
 
             if self.status_code != 200 and not ignore_status_codes:
-                screenshot = self.page.screenshot(type='jpeg', full_page=True,
-                                                  quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
+                screenshot = await self.page.screenshot(type_='jpeg',
+                                                        fullPage=True,
+                                                        quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
 
                 raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
-            content = await self.page.content()
+            content = await self.page.content
             if len(content.strip()) == 0:
                 await self.page.close()
                 await browser.close()
@@ -174,8 +170,9 @@ class fetcher(Fetcher):
                 raise EmptyReply(url=url, status_code=response.status)
 
             # Run Browser Steps here
-            if self.browser_steps_get_valid_steps():
-                self.iterate_browser_steps()
+# @todo not yet supported, we switch to playwright in this case
+#            if self.browser_steps_get_valid_steps():
+#                self.iterate_browser_steps()
 
             await asyncio.sleep(1 + extra_wait)
 
@@ -191,7 +188,7 @@ class fetcher(Fetcher):
                 "async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}")
             self.instock_data = await self.page.evaluate("async () => {" + self.instock_data_js + "}")
 
-            self.content = await self.page.content()
+            self.content = await self.page.content
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
@@ -200,19 +197,18 @@ class fetcher(Fetcher):
             # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
             # acceptable screenshot quality here
             try:
-                self.screenshot = await self.page.screenshot({"encoding": "binary",
-                                                              "fullPage": True,
-                                                              "quality": int(os.getenv("SCREENSHOT_QUALITY", 72)), "type": 'jpeg'})
+                self.screenshot = await self.page.screenshot(type_='jpeg',
+                                                             fullPage=True,
+                                                             quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
             except Exception as e:
                 logger.error("Error fetching screenshot")
                 # // May fail on very large pages with 'WARNING: tile memory limits exceeded, some content may not draw'
                 # // @ todo after text extract, we can place some overlay text with red background to say 'croppped'
                 logger.error('ERROR: content-fetcher page was maybe too large for a screenshot, reverting to viewport only screenshot')
                 try:
-                    self.screenshot = await self.page.screenshot({"encoding": "binary",
-                                                                  "quality": int(os.getenv("SCREENSHOT_QUALITY", 72)),
-                                                                  "fullPage": False,
-                                                                  "type": 'jpeg'})
+                    self.screenshot = await self.page.screenshot(type_='jpeg',
+                                                                 fullPage=False,
+                                                                 quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
                 except Exception as e:
                     logger.error('ERROR: Failed to get viewport-only reduced screenshot :(')
                     pass
