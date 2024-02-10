@@ -2,7 +2,6 @@ from abc import abstractmethod
 import os
 import hashlib
 import re
-from changedetectionio import content_fetcher
 from copy import deepcopy
 from distutils.util import strtobool
 from loguru import logger
@@ -50,7 +49,7 @@ class difference_detection_processor():
             connection = list(
                 filter(lambda s: (s['browser_name'] == key), self.datastore.data['settings']['requests'].get('extra_browsers', [])))
             if connection:
-                prefer_fetch_backend = 'base_html_playwright'
+                prefer_fetch_backend = 'html_webdriver'
                 custom_browser_connection_url = connection[0].get('browser_connection_url')
 
         # PDF should be html_requests because playwright will serve it up (so far) in a embedded page
@@ -60,12 +59,19 @@ class difference_detection_processor():
            prefer_fetch_backend = "html_requests"
 
         # Grab the right kind of 'fetcher', (playwright, requests, etc)
-        if hasattr(content_fetcher, prefer_fetch_backend):
-            fetcher_obj = getattr(content_fetcher, prefer_fetch_backend)
+        from changedetectionio import content_fetchers
+        if hasattr(content_fetchers, prefer_fetch_backend):
+            # @todo TEMPORARY HACK - SWITCH BACK TO PLAYWRIGHT FOR BROWSERSTEPS
+            if prefer_fetch_backend == 'html_webdriver' and self.watch.has_browser_steps:
+                # This is never supported in selenium anyway
+                logger.warning("Using playwright fetcher override for possible puppeteer request in browsersteps, because puppetteer:browser steps is incomplete.")
+                from changedetectionio.content_fetchers.playwright import fetcher as playwright_fetcher
+                fetcher_obj = playwright_fetcher
+            else:
+                fetcher_obj = getattr(content_fetchers, prefer_fetch_backend)
         else:
-            # If the klass doesnt exist, just use a default
-            fetcher_obj = getattr(content_fetcher, "html_requests")
-
+            # What it referenced doesnt exist, Just use a default
+            fetcher_obj = getattr(content_fetchers, "html_requests")
 
         proxy_url = None
         if preferred_proxy_id:

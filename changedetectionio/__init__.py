@@ -6,11 +6,11 @@ __version__ = '0.45.14'
 
 from distutils.util import strtobool
 from json.decoder import JSONDecodeError
-
+import os
+#os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
 import eventlet
 import eventlet.wsgi
 import getopt
-import os
 import signal
 import socket
 import sys

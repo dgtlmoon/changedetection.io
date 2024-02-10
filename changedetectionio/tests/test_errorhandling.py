@@ -3,7 +3,7 @@
 import time
 
 from flask import url_for
-from . util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 from ..html_tools import *
 
@@ -30,7 +30,7 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text):
     assert b"1 Imported" in res.data
 
     # Give the thread time to pick it up
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     res = client.get(url_for("index"))
     # no change
@@ -57,7 +57,7 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text):
 def test_http_error_handler(client, live_server):
     _runner_test_http_errors(client, live_server, 403, 'Access denied')
     _runner_test_http_errors(client, live_server, 404, 'Page not found')
-    _runner_test_http_errors(client, live_server, 500, '(Internal server Error) received')
+    _runner_test_http_errors(client, live_server, 500, '(Internal server error) received')
     _runner_test_http_errors(client, live_server, 400, 'Error - Request returned a HTTP error code 400')
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
@@ -76,7 +76,7 @@ def test_DNS_errors(client, live_server):
     assert b"1 Imported" in res.data
 
     # Give the thread time to pick it up
-    time.sleep(3)
+    wait_for_all_checks(client)
 
     res = client.get(url_for("index"))
     found_name_resolution_error = b"Temporary failure in name resolution" in res.data or b"Name or service not known" in res.data
@@ -104,7 +104,7 @@ def test_low_level_errors_clear_correctly(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     # We should see the DNS error
     res = client.get(url_for("index"))
@@ -121,7 +121,7 @@ def test_low_level_errors_clear_correctly(client, live_server):
     )
 
     # Now the error should be gone
-    time.sleep(2)
+    wait_for_all_checks(client)
     res = client.get(url_for("index"))
     found_name_resolution_error = b"Temporary failure in name resolution" in res.data or b"Name or service not known" in res.data
     assert not found_name_resolution_error
