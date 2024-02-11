@@ -363,7 +363,7 @@ class update_worker(threading.Thread):
                         process_changedetection_results = False
                         changed_detected = False
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': False})
-                    except content_fetchers.exceptions.BrowserStepsStepException as e:
+                    except content_fetchers.exceptions.BrowserConnectError as e:
                         self.datastore.update_watch(uuid=uuid,
                                                     update_obj={'last_error': e.msg
                                                                 }
