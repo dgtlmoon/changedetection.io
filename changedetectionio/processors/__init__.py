@@ -75,8 +75,12 @@ class difference_detection_processor():
 
         proxy_url = None
         if preferred_proxy_id:
-            proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
-            logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{proxy_url}' for {url}")
+            # Custom browser endpoints should not have a proxy added
+            if not preferred_proxy_id.startswith('ui-'):
+                proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
+                logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{proxy_url}' for {url}")
+            else:
+                logger.debug(f"Skipping adding proxy data when custom Browser endpoint is specified.")
 
         # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
         # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)

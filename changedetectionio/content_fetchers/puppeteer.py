@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 
 from loguru import logger
 from changedetectionio.content_fetchers.base import Fetcher
-from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable, BrowserConnectError
+from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, BrowserConnectError
 
 
 class fetcher(Fetcher):
@@ -221,14 +221,21 @@ class fetcher(Fetcher):
     def run(self, url, timeout, request_headers, request_body, request_method, ignore_status_codes=False,
             current_include_filters=None, is_binary=False):
 
+        #@todo make update_worker async which could run any of these content_fetchers within memory and time constraints
+        max_time = os.getenv('PUPPETEER_MAX_PROCESSING_TIMEOUT_SECONDS', 180)
+
         # This will work in 3.10 but not >= 3.11 because 3.11 wants tasks only
-        asyncio.run(self.main(
-            url=url,
-            timeout=timeout,
-            request_headers=request_headers,
-            request_body=request_body,
-            request_method=request_method,
-            ignore_status_codes=ignore_status_codes,
-            current_include_filters=current_include_filters,
-            is_binary=is_binary
-        ))
+        try:
+            asyncio.run(asyncio.wait_for(self.main(
+                url=url,
+                timeout=timeout,
+                request_headers=request_headers,
+                request_body=request_body,
+                request_method=request_method,
+                ignore_status_codes=ignore_status_codes,
+                current_include_filters=current_include_filters,
+                is_binary=is_binary
+            ), timeout=max_time))
+        except asyncio.TimeoutError:
+            raise(BrowserFetchTimedOut(msg=f"Browser connected but was unable to process the page in {max_time} seconds."))
+
