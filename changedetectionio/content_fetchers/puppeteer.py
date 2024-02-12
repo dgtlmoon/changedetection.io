@@ -80,6 +80,7 @@ class fetcher(Fetcher):
 
         from changedetectionio.content_fetchers import visualselector_xpath_selectors
         self.delete_browser_steps_screenshots()
+        extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
 
         from pyppeteer import Pyppeteer
         pyppeteer_instance = Pyppeteer()
