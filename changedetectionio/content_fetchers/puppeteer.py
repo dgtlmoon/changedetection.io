@@ -41,15 +41,13 @@ class fetcher(Fetcher):
                 self.proxy = {'username': parsed.username, 'password': parsed.password}
                 # Add the proxy server chrome start option, the username and password never gets added here
                 # (It always goes in via await self.page.authenticate(self.proxy))
-                import urllib.parse
-                # @todo filter some injection attack?
-                # check /somepath?thisandthat
-                # check scheme when no scheme
-                h = urllib.parse.quote(parsed.scheme + "://") if parsed.scheme else ''
-                h += urllib.parse.quote(f"{parsed.hostname}:{parsed.port}{parsed.path}?{parsed.query}", safe='')
 
+                # @todo filter some injection attack?
+                # check scheme when no scheme
+                proxy_url = parsed.scheme + "://" if parsed.scheme else ''
+                proxy_url += f"{parsed.hostname}:{parsed.port}{parsed.path}?{parsed.query}"
                 r = "?" if not '?' in self.browser_connection_url else '&'
-                self.browser_connection_url += f"{r}--proxy-server={h}"
+                self.browser_connection_url += f"{r}--proxy-server={proxy_override}"
 
     # def screenshot_step(self, step_n=''):
     #     screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=85)
@@ -88,7 +86,7 @@ class fetcher(Fetcher):
         # @todo timeout
         try:
             browser = await pyppeteer_instance.connect(browserWSEndpoint=self.browser_connection_url,
-                                                       defaultViewport={"width": 1024, "height": 768}
+                                                       ignoreHTTPSErrors=True
                                                        )
         except websockets.exceptions.InvalidStatusCode as e:
             raise BrowserConnectError(msg=f"Error while trying to connect the browser, Code {e.status_code} (check your access)")
@@ -107,7 +105,7 @@ class fetcher(Fetcher):
         # SOCKS5 with authentication is not supported (yet)
         # https://github.com/microsoft/playwright/issues/10567
         self.page.setDefaultNavigationTimeout(0)
-
+        self.page.setCacheEnabled(True)
         if self.proxy:
             # Setting Proxy-Authentication header is deprecated, and doing so can trigger header change errors from Puppeteer
             # https://github.com/puppeteer/puppeteer/issues/676 ?
