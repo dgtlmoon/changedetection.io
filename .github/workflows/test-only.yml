@@ -210,7 +210,7 @@ jobs:
 
       - name: Store container log
         if: always()
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: test-cdio-basic-tests-output
           path: output-logs
