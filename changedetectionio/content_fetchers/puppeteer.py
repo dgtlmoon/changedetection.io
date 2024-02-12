@@ -44,10 +44,12 @@ class fetcher(Fetcher):
 
                 # @todo filter some injection attack?
                 # check scheme when no scheme
-                proxy_url = parsed.scheme + "://" if parsed.scheme else ''
-                proxy_url += f"{parsed.hostname}:{parsed.port}{parsed.path}?{parsed.query}"
+                proxy_url = parsed.scheme + "://" if parsed.scheme else 'http://'
                 r = "?" if not '?' in self.browser_connection_url else '&'
-                self.browser_connection_url += f"{r}--proxy-server={proxy_override}"
+                port = ":"+str(parsed.port) if parsed.port else ''
+                q = "?"+parsed.query if parsed.query else ''
+                proxy_url += f"{parsed.hostname}{port}{parsed.path}{q}"
+                self.browser_connection_url += f"{r}--proxy-server={proxy_url}"
 
     # def screenshot_step(self, step_n=''):
     #     screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=85)
@@ -105,8 +107,8 @@ class fetcher(Fetcher):
         # SOCKS5 with authentication is not supported (yet)
         # https://github.com/microsoft/playwright/issues/10567
         self.page.setDefaultNavigationTimeout(0)
-        self.page.setCacheEnabled(True)
-        if self.proxy:
+        await self.page.setCacheEnabled(True)
+        if self.proxy and self.proxy.get('username'):
             # Setting Proxy-Authentication header is deprecated, and doing so can trigger header change errors from Puppeteer
             # https://github.com/puppeteer/puppeteer/issues/676 ?
             # https://help.brightdata.com/hc/en-us/articles/12632549957649-Proxy-Manager-How-to-Guides#h_01HAKWR4Q0AFS8RZTNYWRDFJC2
@@ -121,13 +123,15 @@ class fetcher(Fetcher):
         #            browsersteps_interface.page = self.page
 
         response = await self.page.goto(url, waitUntil="load")
-        self.headers = response.headers
+
 
         if response is None:
             await self.page.close()
             await browser.close()
             logger.warning("Content Fetcher > Response object was none")
             raise EmptyReply(url=url, status_code=None)
+
+        self.headers = response.headers
 
         try:
             if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
@@ -139,9 +143,6 @@ class fetcher(Fetcher):
             await browser.close()
             # This can be ok, we will try to grab what we could retrieve
             raise PageUnloadable(url=url, status_code=None, message=str(e))
-
-        extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
-        await asyncio.sleep(1 + extra_wait)
 
         try:
             self.status_code = response.status
