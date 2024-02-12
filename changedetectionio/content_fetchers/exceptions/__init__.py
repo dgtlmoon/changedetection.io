@@ -36,6 +36,13 @@ class BrowserConnectError(Exception):
         logger.error(f"Browser connection error {msg}")
         return
 
+class BrowserFetchTimedOut(Exception):
+    msg = ''
+    def __init__(self, msg):
+        self.msg = msg
+        logger.error(f"Browser processing took too long - {msg}")
+        return
+
 class BrowserStepsStepException(Exception):
     def __init__(self, step_n, original_e):
         self.step_n = step_n

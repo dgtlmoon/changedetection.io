@@ -369,6 +369,12 @@ class update_worker(threading.Thread):
                                                                 }
                                                     )
                         process_changedetection_results = False
+                    except content_fetchers.exceptions.BrowserFetchTimedOut as e:
+                        self.datastore.update_watch(uuid=uuid,
+                                                    update_obj={'last_error': e.msg
+                                                                }
+                                                    )
+                        process_changedetection_results = False
                     except content_fetchers.exceptions.BrowserStepsStepException as e:
 
                         if not self.datastore.data['watching'].get(uuid):
