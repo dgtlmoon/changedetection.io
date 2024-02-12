@@ -105,7 +105,7 @@ class fetcher(Fetcher):
         # SOCKS5 with authentication is not supported (yet)
         # https://github.com/microsoft/playwright/issues/10567
         self.page.setDefaultNavigationTimeout(0)
-        self.page.setCacheEnabled(True)
+        await self.page.setCacheEnabled(True)
         if self.proxy:
             # Setting Proxy-Authentication header is deprecated, and doing so can trigger header change errors from Puppeteer
             # https://github.com/puppeteer/puppeteer/issues/676 ?
