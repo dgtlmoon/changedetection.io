@@ -107,9 +107,9 @@ def main():
     try:
         log_level_for_stdout = { 'DEBUG', 'SUCCESS' }
         logger.configure(handlers=[
-            {"sink": sys.stdout, "level": logger_level,
+            {"sink": sys.stdout, "level": logger_level, "backtrace": True, "diagnose" :True,
              "filter" : lambda record: record['level'].name in log_level_for_stdout},
-            {"sink": sys.stderr, "level": logger_level,
+            {"sink": sys.stderr, "level": logger_level, "backtrace": True, "diagnose" :True,
              "filter": lambda record: record['level'].name not in log_level_for_stdout},
             ])
     # Catch negative number or wrong log level name

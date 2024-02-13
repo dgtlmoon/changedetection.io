@@ -460,7 +460,7 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Unable to extract restock data for this page unfortunately. (Got code {e.status_code} from server)"})
                         process_changedetection_results = False
                     except Exception as e:
-                        logger.error(f"Exception reached processing watch UUID: {uuid}")
+                        logger.exception(f"Exception reached processing watch UUID: {uuid}")
                         logger.error(str(e))
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
                         # Other serious error
