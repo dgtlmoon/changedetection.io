@@ -136,6 +136,7 @@ function isItemInStock() {
         const element = elementsToScan[i];
 
         // outside the 'fold' or some weird text in the heading area
+        // .getBoundingClientRect() was causing a crash in chrome 119, can only be run on contentVisibility != hidden
         if (element.getBoundingClientRect().top + window.scrollY >= vh || element.getBoundingClientRect().top + window.scrollY <= 100) {
             continue
         }
@@ -160,7 +161,7 @@ function isItemInStock() {
     for (let i = elementsToScan.length - 1; i >= 0; i--) {
         const element = elementsToScan[i];
         // outside the 'fold' or some weird text in the heading area
-
+        // .getBoundingClientRect() was causing a crash in chrome 119, can only be run on contentVisibility != hidden
         if (element.getBoundingClientRect().top + window.scrollY >= vh || element.getBoundingClientRect().top + window.scrollY <= 100) {
             continue
         }
