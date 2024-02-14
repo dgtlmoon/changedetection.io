@@ -18,6 +18,7 @@ module.exports = async ({page, context}) => {
 
     await page.setBypassCSP(true)
     await page.setExtraHTTPHeaders(req_headers);
+    var total_size = 0;
 
     if (user_agent) {
         await page.setUserAgent(user_agent);
@@ -42,101 +43,88 @@ module.exports = async ({page, context}) => {
         height: 768,
         deviceScaleFactor: 1,
     });
-
     await page.setRequestInterception(true);
-    if (disk_cache_dir) {
-        console.log(">>>>>>>>>>>>>>> LOCAL DISK CACHE ENABLED <<<<<<<<<<<<<<<<<<<<<");
+    await page.setCacheEnabled(false);
+
+
+    await page.evaluateOnNewDocument('navigator.serviceWorker.register = () => { console.warn("Service Worker registration blocked by Playwright")}');
+
+    await page.evaluateOnNewDocument(`
+   
+  const toBlob = HTMLCanvasElement.prototype.toBlob;
+  const toDataURL = HTMLCanvasElement.prototype.toDataURL;
+
+    HTMLCanvasElement.prototype.manipulate = function() {
+    console.warn("ma");
+    const {width, height} = this;
+    const context = this.getContext('2d');
+    var dt = new Date();
+    
+    const shift = {
+      'r': dt.getDay()-3,
+      'g': dt.getDay()-3,
+      'b': dt.getDay()-3
+    };
+    console.log(shift);
+    const matt = context.getImageData(0, 0, width, height);
+    for (let i = 0; i < height; i += Math.max(1, parseInt(height / 10))) {
+      for (let j = 0; j < width; j += Math.max(1, parseInt(width / 10))) {
+        const n = ((i * (width * 4)) + (j * 4));
+        matt.data[n + 0] = matt.data[n + 0] + shift.r;
+        matt.data[n + 1] = matt.data[n + 1] + shift.g;
+        matt.data[n + 2] = matt.data[n + 2] + shift.b;
+      }
     }
-    const fs = require('fs');
-    const crypto = require('crypto');
+    context.putImageData(matt, 0, 0);
+  };
 
-    function file_is_expired(file_path) {
-        if (!fs.existsSync(file_path)) {
-            return true;
+  Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+    value: function() {
+    console.warn("toblob");
+      if (true) {
+        try {
+          this.manipulate();
         }
-        var stats = fs.statSync(file_path);
-        const now_date = new Date();
-        const expire_seconds = 300;
-        if ((now_date / 1000) - (stats.mtime.getTime() / 1000) > expire_seconds) {
-            console.log("CACHE EXPIRED: " + file_path);
-            return true;
+        catch(e) {
+          console.warn('manipulation failed', e);
         }
-        return false;
-
+      }
+      return toBlob.apply(this, arguments);
     }
-
-    page.on('request', async (request) => {
-        // General blocking of requests that waste traffic
-        if (block_url_list.some(substring => request.url().toLowerCase().includes(substring))) return request.abort();
-
-        if (disk_cache_dir) {
-            const url = request.url();
-            const key = crypto.createHash('md5').update(url).digest("hex");
-            const dir_path = disk_cache_dir + key.slice(0, 1) + '/' + key.slice(1, 2) + '/' + key.slice(2, 3) + '/';
-
-            // https://stackoverflow.com/questions/4482686/check-synchronously-if-file-directory-exists-in-node-js
-
-            if (fs.existsSync(dir_path + key)) {
-                console.log("* CACHE HIT , using - " + dir_path + key + " - " + url);
-                const cached_data = fs.readFileSync(dir_path + key);
-                // @todo headers can come from dir_path+key+".meta" json file
-                request.respond({
-                    status: 200,
-                    //contentType: 'text/html', //@todo
-                    body: cached_data
-                });
-                return;
-            }
+  });
+  Object.defineProperty(HTMLCanvasElement.prototype, 'toDataURL', {
+    value: function() {
+        console.warn("todata");
+      if (true) {
+        try {
+          this.manipulate();
         }
-        request.continue();
+        catch(e) {
+          console.warn('manipulation failed', e);
+        }
+      }
+      return toDataURL.apply(this, arguments);
+    }
+  });
+
+
+  Object.defineProperty(navigator, 'webdriver', {get: () => false});
+`)
+
+    await page.emulateTimezone('America/Chicago');
+
+    var r = await page.goto(url, {
+        waitUntil: 'load', timeout: 0
     });
 
-
-    if (disk_cache_dir) {
-        page.on('response', async (response) => {
-            const url = response.url();
-            // Basic filtering for sane responses
-            if (response.request().method() != 'GET' || response.request().resourceType() == 'xhr' || response.request().resourceType() == 'document' || response.status() != 200) {
-                console.log("Skipping (not useful) - Status:" + response.status() + " Method:" + response.request().method() + " ResourceType:" + response.request().resourceType() + " " + url);
-                return;
-            }
-            if (no_cache_list.some(substring => url.toLowerCase().includes(substring))) {
-                console.log("Skipping (no_cache_list) - " + url);
-                return;
-            }
-            if (url.toLowerCase().includes('data:')) {
-                console.log("Skipping (embedded-data) - " + url);
-                return;
-            }
-            response.buffer().then(buffer => {
-                if (buffer.length > 100) {
-                    console.log("Cache - Saving " + response.request().method() + " - " + url + " - " + response.request().resourceType());
-
-                    const key = crypto.createHash('md5').update(url).digest("hex");
-                    const dir_path = disk_cache_dir + key.slice(0, 1) + '/' + key.slice(1, 2) + '/' + key.slice(2, 3) + '/';
-
-                    if (!fs.existsSync(dir_path)) {
-                        fs.mkdirSync(dir_path, {recursive: true})
-                    }
-
-                    if (fs.existsSync(dir_path + key)) {
-                        if (file_is_expired(dir_path + key)) {
-                            fs.writeFileSync(dir_path + key, buffer);
-                        }
-                    } else {
-                        fs.writeFileSync(dir_path + key, buffer);
-                    }
-                }
-            });
-        });
+// https://github.com/puppeteer/puppeteer/issues/2479#issuecomment-408263504
+    if (r === null) {
+        r = await page.waitForResponse(() => true);
     }
 
-    const r = await page.goto(url, {
-        waitUntil: 'load'
-    });
-
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(4000);
     await page.waitForTimeout(extra_wait_ms);
+
 
     if (execute_js) {
         await page.evaluate(execute_js);
@@ -176,6 +164,8 @@ module.exports = async ({page, context}) => {
     }
 
     var html = await page.content();
+    page.close();
+
     return {
         data: {
             'content': html,
@@ -183,7 +173,8 @@ module.exports = async ({page, context}) => {
             'instock_data': instock_data,
             'screenshot': b64s,
             'status_code': r.status(),
-            'xpath_data': xpath_data
+            'xpath_data': xpath_data,
+            'total_size': total_size
         },
         type: 'application/json',
     };

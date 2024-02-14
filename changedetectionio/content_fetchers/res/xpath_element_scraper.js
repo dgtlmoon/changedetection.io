@@ -91,17 +91,6 @@ console.log("Scanning %ELEMENTS%");
 function collectVisibleElements(parent, visibleElements) {
     if (!parent) return; // Base case: if parent is null or undefined, return
 
-    // Check if the parent itself is visible
-    const parentComputedStyle = window.getComputedStyle(parent);
-    if (
-        parentComputedStyle.display === 'none' ||
-        parentComputedStyle.visibility === 'hidden' ||
-        parent.offsetWidth <= 0 ||
-        parent.offsetHeight <= 0 ||
-        parentComputedStyle.contentVisibility === 'hidden'
-    ) {
-        return; // If parent is not visible, stop iteration
-    }
 
     // Add the parent itself to the visible elements array if it's of the specified types
     const tagName = parent.tagName.toLowerCase();
@@ -184,7 +173,7 @@ visibleElementsArray.forEach(function (element) {
         top: Math.floor(bbox['top']) + scroll_y,
         tagName: (element.tagName) ? element.tagName.toLowerCase() : '',
         tagtype: (element.tagName.toLowerCase() === 'input' && element.type) ? element.type.toLowerCase() : '',
-        isClickable: false
+        isClickable: window.getComputedStyle(element).cursor == "pointer"
     });
 
 });

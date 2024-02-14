@@ -57,13 +57,16 @@ function isItemInStock() {
         'tickets unavailable',
         'tijdelijk uitverkocht',
         'unavailable tickets',
+        'vorbestellung ist bald möglich',
         'we do not currently have an estimate of when this product will be back in stock.',
         'we don\'t know when or if this item will be back in stock.',
         'zur zeit nicht an lager',
         '品切れ',
         '已售完',
+        '已售',
         '품절'
     ];
+
 
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
 
@@ -77,7 +80,7 @@ function isItemInStock() {
         return text.toLowerCase().trim();
     }
 
-    const negateOutOfStockRegex = new RegExp('([0-9] in stock|add to cart)', 'ig');
+    const negateOutOfStockRegex = new RegExp('^([0-9] in stock|add to cart|in stock)', 'ig');
 
     // The out-of-stock or in-stock-text is generally always above-the-fold
     // and often below-the-fold is a list of related products that may or may not contain trigger text
@@ -92,18 +95,6 @@ function isItemInStock() {
 
     function collectVisibleElements(parent, visibleElements) {
         if (!parent) return; // Base case: if parent is null or undefined, return
-
-        // Check if the parent itself is visible
-        const parentComputedStyle = window.getComputedStyle(parent);
-        if (
-            parentComputedStyle.display === 'none' ||
-            parentComputedStyle.visibility === 'hidden' ||
-            parent.offsetWidth <= 0 ||
-            parent.offsetHeight <= 0 ||
-            parentComputedStyle.contentVisibility === 'hidden'
-        ) {
-            return; // If parent is not visible, stop iteration
-        }
 
         // Add the parent itself to the visible elements array if it's of the specified types
         visibleElements.push(parent);
@@ -143,7 +134,7 @@ function isItemInStock() {
 
         elementText = "";
         if (element.tagName.toLowerCase() === "input") {
-            elementText = element.value.toLowerCase();
+            elementText = element.value.toLowerCase().trim();
         } else {
             elementText = getElementBaseText(element);
         }
@@ -167,7 +158,7 @@ function isItemInStock() {
         }
         elementText = "";
         if (element.tagName.toLowerCase() === "input") {
-            elementText = element.value.toLowerCase();
+            elementText = element.value.toLowerCase().trim();
         } else {
             elementText = getElementBaseText(element);
         }
@@ -176,7 +167,7 @@ function isItemInStock() {
             // and these mean its out of stock
             for (const outOfStockText of outOfStockTexts) {
                 if (elementText.includes(outOfStockText)) {
-                    console.log(`Selected 'Out of Stock' - found text "${outOfStockText}"`)
+                    console.log(`Selected 'Out of Stock' - found text "${outOfStockText}" - "${elementText}"`)
                     return outOfStockText; // item is out of stock
                 }
             }
@@ -189,4 +180,5 @@ function isItemInStock() {
 
 // returns the element text that makes it think it's out of stock
 return isItemInStock().trim()
+
 
