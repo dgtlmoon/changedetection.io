@@ -4,7 +4,7 @@ from distutils.util import strtobool
 from changedetectionio.content_fetchers.exceptions import BrowserStepsStepException
 import os
 
-visualselector_xpath_selectors = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
+visualselector_xpath_selectors = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4,header,footer,section,article,aside,details,main,nav,section,summary'
 
 # available_fetchers() will scan this implementation looking for anything starting with html_
 # this information is used in the form selections

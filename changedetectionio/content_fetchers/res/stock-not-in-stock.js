@@ -42,9 +42,9 @@ function isItemInStock() {
         'no tickets available',
         'not available',
         'not currently available',
-        'not in stock',        
+        'not in stock',
         'notify me when available',
-        'notify when available',            
+        'notify when available',
         'não estamos a aceitar encomendas',
         'out of stock',
         'out-of-stock',
@@ -66,6 +66,7 @@ function isItemInStock() {
     ];
 
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+
     function getElementBaseText(element) {
         // .textContent can include text from children which may give the wrong results
         // scan only immediate TEXT_NODEs, which will be a child of the element
@@ -82,13 +83,67 @@ function isItemInStock() {
     // and often below-the-fold is a list of related products that may or may not contain trigger text
     // so it's good to filter to just the 'above the fold' elements
     // and it should be atleast 100px from the top to ignore items in the toolbar, sometimes menu items like "Coming soon" exist
-    const elementsToScan = Array.from(document.getElementsByTagName('*')).filter(element => element.getBoundingClientRect().top + window.scrollY <= vh && element.getBoundingClientRect().top + window.scrollY >= 100);
+
+
+// @todo - if it's SVG or IMG, go into image diff mode
+// %ELEMENTS% replaced at injection time because different interfaces use it with different settings
+
+    console.log("Scanning %ELEMENTS%");
+
+    function collectVisibleElements(parent, visibleElements) {
+        if (!parent) return; // Base case: if parent is null or undefined, return
+
+        // Check if the parent itself is visible
+        const parentComputedStyle = window.getComputedStyle(parent);
+        if (
+            parentComputedStyle.display === 'none' ||
+            parentComputedStyle.visibility === 'hidden' ||
+            parent.offsetWidth <= 0 ||
+            parent.offsetHeight <= 0 ||
+            parentComputedStyle.contentVisibility === 'hidden'
+        ) {
+            return; // If parent is not visible, stop iteration
+        }
+
+        // Add the parent itself to the visible elements array if it's of the specified types
+        visibleElements.push(parent);
+
+        // Iterate over the parent's children
+        const children = parent.children;
+        for (let i = 0; i < children.length; i++) {
+            const child = children[i];
+            if (
+                child.nodeType === Node.ELEMENT_NODE &&
+                window.getComputedStyle(child).display !== 'none' &&
+                window.getComputedStyle(child).visibility !== 'hidden' &&
+                child.offsetWidth >= 0 &&
+                child.offsetHeight >= 0 &&
+                window.getComputedStyle(child).contentVisibility !== 'hidden'
+            ) {
+                // If the child is an element and is visible, recursively collect visible elements
+                collectVisibleElements(child, visibleElements);
+            }
+        }
+    }
+
+// Create an array to hold the visible elements
+    const elementsToScan = [];
+
+// Call collectVisibleElements with the starting parent element
+    collectVisibleElements(document.body, elementsToScan);
 
     var elementText = "";
 
     // REGEXS THAT REALLY MEAN IT'S IN STOCK
     for (let i = elementsToScan.length - 1; i >= 0; i--) {
         const element = elementsToScan[i];
+
+        // outside the 'fold' or some weird text in the heading area
+        if (element.getBoundingClientRect().top + window.scrollY >= vh || element.getBoundingClientRect().top + window.scrollY <= 100) {
+            continue
+        }
+
+
         elementText = "";
         if (element.tagName.toLowerCase() === "input") {
             elementText = element.value.toLowerCase();
@@ -107,6 +162,11 @@ function isItemInStock() {
     // OTHER STUFF THAT COULD BE THAT IT'S OUT OF STOCK
     for (let i = elementsToScan.length - 1; i >= 0; i--) {
         const element = elementsToScan[i];
+        // outside the 'fold' or some weird text in the heading area
+
+        if (element.getBoundingClientRect().top + window.scrollY >= vh || element.getBoundingClientRect().top + window.scrollY <= 100) {
+            continue
+        }
         if (element.offsetWidth > 0 || element.offsetHeight > 0 || element.getClientRects().length > 0) {
             elementText = "";
             if (element.tagName.toLowerCase() === "input") {
