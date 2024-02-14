@@ -126,10 +126,7 @@ function isItemInStock() {
         }
     }
 
-// Create an array to hold the visible elements
     const elementsToScan = [];
-
-// Call collectVisibleElements with the starting parent element
     collectVisibleElements(document.body, elementsToScan);
 
     var elementText = "";
@@ -143,7 +140,6 @@ function isItemInStock() {
             continue
         }
 
-
         elementText = "";
         if (element.tagName.toLowerCase() === "input") {
             elementText = element.value.toLowerCase();
@@ -154,6 +150,7 @@ function isItemInStock() {
         if (elementText.length) {
             // try which ones could mean its in stock
             if (negateOutOfStockRegex.test(elementText)) {
+                console.log(`Negating/overriding 'Out of Stock' back to "Possibly in stock" found "${elementText}"`)
                 return 'Possibly in stock';
             }
         }
@@ -167,25 +164,25 @@ function isItemInStock() {
         if (element.getBoundingClientRect().top + window.scrollY >= vh || element.getBoundingClientRect().top + window.scrollY <= 100) {
             continue
         }
-        if (element.offsetWidth > 0 || element.offsetHeight > 0 || element.getClientRects().length > 0) {
-            elementText = "";
-            if (element.tagName.toLowerCase() === "input") {
-                elementText = element.value.toLowerCase();
-            } else {
-                elementText = getElementBaseText(element);
-            }
+        elementText = "";
+        if (element.tagName.toLowerCase() === "input") {
+            elementText = element.value.toLowerCase();
+        } else {
+            elementText = getElementBaseText(element);
+        }
 
-            if (elementText.length) {
-                // and these mean its out of stock
-                for (const outOfStockText of outOfStockTexts) {
-                    if (elementText.includes(outOfStockText)) {
-                        return outOfStockText; // item is out of stock
-                    }
+        if (elementText.length) {
+            // and these mean its out of stock
+            for (const outOfStockText of outOfStockTexts) {
+                if (elementText.includes(outOfStockText)) {
+                    console.log(`Selected 'Out of Stock' - found text "${outOfStockText}"`)
+                    return outOfStockText; // item is out of stock
                 }
             }
         }
     }
 
+    console.log(`Returning 'Possibly in stock' - cant' find any useful matching text`)
     return 'Possibly in stock'; // possibly in stock, cant decide otherwise.
 }
 

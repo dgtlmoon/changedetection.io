@@ -139,7 +139,7 @@ visibleElementsArray.forEach(function (element) {
     bbox = element.getBoundingClientRect();
 
     // Skip really small ones, and where width or height ==0
-    if (bbox['width'] * bbox['height'] < 100) {
+    if (bbox['width'] * bbox['height'] < 10) {
         return
     }
 
