@@ -255,6 +255,7 @@ class ChangeDetectionStore:
                 'last_viewed': 0,
                 'previous_md5': False,
                 'previous_md5_before_filters': False,
+                'remote_server_reply': None,
                 'track_ldjson_price_data': None,
             })
 

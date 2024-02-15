@@ -1,26 +1,19 @@
 #!/usr/bin/python3
 
-from changedetectionio import queuedWatchMetaData
-from copy import deepcopy
-from distutils.util import strtobool
-from feedgen.feed import FeedGenerator
-from flask_compress import Compress as FlaskCompress
-from flask_login import current_user
-from flask_restful import abort, Api
-from flask_wtf import CSRFProtect
-from functools import wraps
-from threading import Event
 import datetime
-import flask_login
-from loguru import logger
-import sys
 import os
-import pytz
 import queue
 import threading
 import time
-import timeago
+from copy import deepcopy
+from distutils.util import strtobool
+from functools import wraps
+from threading import Event
 
+import flask_login
+import pytz
+import timeago
+from feedgen.feed import FeedGenerator
 from flask import (
     Flask,
     abort,
@@ -33,10 +26,15 @@ from flask import (
     session,
     url_for,
 )
-
+from flask_compress import Compress as FlaskCompress
+from flask_login import current_user
 from flask_paginate import Pagination, get_page_parameter
+from flask_restful import abort, Api
+from flask_wtf import CSRFProtect
+from loguru import logger
 
 from changedetectionio import html_tools, __version__
+from changedetectionio import queuedWatchMetaData
 from changedetectionio.api import api_v1
 
 datastore = None
@@ -317,6 +315,9 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/rss", methods=['GET'])
     def rss():
+        from jinja2 import Environment, BaseLoader
+        jinja2_env = Environment(loader=BaseLoader)
+        now = time.time()
         # Always requires token set
         app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
         rss_url_token = request.args.get('token')
@@ -380,8 +381,12 @@ def changedetection_app(config=None, datastore_o=None):
                                              include_equal=False,
                                              line_feed_sep="<br>")
 
-                fe.content(content="<html><body><h4>{}</h4>{}</body></html>".format(watch_title, html_diff),
-                           type='CDATA')
+                # @todo Make this configurable and also consider html-colored markup
+                # @todo User could decide if <link> goes to the diff page, or to the watch link
+                rss_template = "<html><body>\n<h4><a href=\"{{watch_url}}\">{{watch_title}}</a></h4>\n<p>{{html_diff}}</p>\n</body></html>\n"
+                content = jinja2_env.from_string(rss_template).render(watch_title=watch_title, html_diff=html_diff, watch_url=watch.link)
+
+                fe.content(content=content, type='CDATA')
 
                 fe.guid(guid, permalink=False)
                 dt = datetime.datetime.fromtimestamp(int(watch.newest_history_key))
@@ -390,6 +395,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         response = make_response(fg.rss_str())
         response.headers.set('Content-Type', 'application/rss+xml;charset=utf-8')
+        logger.trace(f"RSS generated in {time.time() - now:.3f}s")
         return response
 
     @app.route("/", methods=['GET'])
@@ -756,7 +762,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/settings", methods=['GET', "POST"])
     @login_optionally_required
     def settings_page():
-        from changedetectionio import content_fetcher, forms
+        from changedetectionio import forms
 
         default = deepcopy(datastore.data['settings'])
         if datastore.proxy_list is not None:
@@ -1603,7 +1609,7 @@ def notification_runner():
                     n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
 
                 if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
-                    n_object['notification_title'] = datastore.data['settings']['application'].get('notification_format')
+                    n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
 
                 sent_obj = notification.process_notification(n_object, datastore)
 

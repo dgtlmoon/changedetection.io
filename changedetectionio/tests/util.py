@@ -175,12 +175,16 @@ def live_server_setup(live_server):
     @live_server.app.route('/test-headers')
     def test_headers():
 
-        output= []
+        output = []
 
         for header in request.headers:
-             output.append("{}:{}".format(str(header[0]),str(header[1])   ))
+            output.append("{}:{}".format(str(header[0]), str(header[1])))
 
-        return "\n".join(output)
+        content = "\n".join(output)
+
+        resp = make_response(content, 200)
+        resp.headers['server'] = 'custom'
+        return resp
 
     # Just return the body in the request
     @live_server.app.route('/test-body', methods=['POST', 'GET'])

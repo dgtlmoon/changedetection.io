@@ -228,7 +228,7 @@ User-Agent: wonderbra 1.0") }}
                                 </div>
                             </div>
                             <div id="browser-steps-fieldlist" style="padding-left: 1em;  width: 350px; font-size: 80%;" >
-                                <span id="browserless-seconds-remaining">Loading</span> <span style="font-size: 80%;"> (<a target=_new href="https://github.com/dgtlmoon/changedetection.io/pull/478/files#diff-1a79d924d1840c485238e66772391268a89c95b781d69091384cf1ea1ac146c9R4">?</a>) </span>
+                                <span id="browser-seconds-remaining">Loading</span> <span style="font-size: 80%;"> (<a target=_new href="https://github.com/dgtlmoon/changedetection.io/pull/478/files#diff-1a79d924d1840c485238e66772391268a89c95b781d69091384cf1ea1ac146c9R4">?</a>) </span>
                                 {{ render_field(form.browser_steps) }}
                             </div>
                         </div>
@@ -340,6 +340,10 @@ nav
                 </fieldset>
 
                 <fieldset class="pure-control-group">
+                    {{ render_checkbox_field(form.sort_text_alphabetically) }}
+                    <span class="pure-form-message-inline">Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below.</span>
+                </fieldset>
+                <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.check_unique_lines) }}
                     <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
                 </fieldset>
@@ -401,6 +405,7 @@ Unavailable") }}
                                 <li>Use <code>//(?aiLmsux))</code> type flags (more <a href="https://docs.python.org/3/library/re.html#index-15">information here</a>)<br></li>
                                 <li>Keyword example &dash; example <code>Out of stock</code></li>
                                 <li>Use groups to extract just that text &dash; example <code>/reports.+?(\d+)/i</code> returns a list of years only</li>
+                                <li>Example - match lines containing a keyword <code>/.*icecream.*/</code></li>
                             </ul>
                         </li>
                         <li>One line per regular-expression/string match</li>
@@ -481,6 +486,10 @@ Unavailable") }}
                         <tr>
                             <td>Last fetch time</td>
                             <td>{{ watch.fetch_time }}s</td>
+                        </tr>
+                        <tr>
+                            <td>Notification alert count</td>
+                            <td>{{ watch.notification_alert_count }}</td>
                         </tr>
                         </tbody>
                     </table>

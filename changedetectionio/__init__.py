@@ -2,14 +2,14 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.45.13'
+__version__ = '0.45.14'
 
 from gevent.pywsgi import WSGIServer
 from distutils.util import strtobool
 from json.decoder import JSONDecodeError
 
-import getopt
 import os
+import getopt
 import signal
 import socket
 import sys

@@ -1,4 +1,6 @@
 gevent
+# Used by Pyppeteer
+pyee
 feedgen~=0.9
 flask-compress
 # 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)
@@ -46,8 +48,8 @@ beautifulsoup4
 # XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
 lxml
 
-# XPath 2.0-3.1 support
-elementpath
+# XPath 2.0-3.1 support - 4.2.0 broke something?
+elementpath==4.1.5
 
 selenium~=4.14.0
 
@@ -65,6 +67,9 @@ jq~=1.3; python_version >= "3.8" and sys_platform == "linux"
 # Any current modern version, required so far for screenshot PNG->JPEG conversion but will be used more in the future
 pillow
 # playwright is installed at Dockerfile build time because it's not available on all platforms
+
+# experimental release
+pyppeteer-ng==2.0.0rc2
 
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup
 pytest ~=7.2

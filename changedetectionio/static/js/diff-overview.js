@@ -90,5 +90,10 @@ $(document).ready(function () {
         }
     }
 
-
+    $('#diff-form').on('submit', function (e) {
+        if ($('select[name=from_version]').val() === $('select[name=to_version]').val()) {
+            e.preventDefault();
+            alert('Error - You are trying to compare the same version.');
+        }
+    });
 });

@@ -116,6 +116,9 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
 
 def process_notification(n_object, datastore):
 
+    now = time.time()
+    if n_object.get('notification_timestamp'):
+        logger.trace(f"Time since queued {now-n_object['notification_timestamp']:.3f}s")
     # Insert variables into the notification content
     notification_parameters = create_notification_parameters(n_object, datastore)
 
@@ -133,6 +136,8 @@ def process_notification(n_object, datastore):
         # Initially text or whatever
         n_format = datastore.data['settings']['application'].get('notification_format', valid_notification_formats[default_notification_format])
 
+    logger.trace(f"Complete notification body including Jinja and placeholders calculated in  {time.time() - now:.3f}s")
+
     # https://github.com/caronc/apprise/wiki/Development_LogCapture
     # Anything higher than or equal to WARNING (which covers things like Connection errors)
     # raise it as an exception
@@ -147,6 +152,10 @@ def process_notification(n_object, datastore):
     with apprise.LogCapture(level=apprise.logging.DEBUG) as logs:
         for url in n_object['notification_urls']:
             url = url.strip()
+            if not url:
+                logger.warning(f"Process Notification: skipping empty notification URL.")
+                continue
+
             logger.info(">> Process Notification: AppRise notifying {}".format(url))
             url = jinja2_env.from_string(url).render(**notification_parameters)
 

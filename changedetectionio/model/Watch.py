@@ -45,6 +45,7 @@ base_config = {
     'last_error': False,
     'last_viewed': 0,  # history key value of the last viewed via the [diff] link
     'method': 'GET',
+    'notification_alert_count': 0,
     # Custom notification content
     'notification_body': None,
     'notification_format': default_notification_format_for_watch,
@@ -56,6 +57,8 @@ base_config = {
     'previous_md5': False,
     'previous_md5_before_filters': False,  # Used for skipping changedetection entirely
     'proxy': None,  # Preferred proxy connection
+    'remote_server_reply': None, # From 'server' reply header
+    'sort_text_alphabetically': False,
     'subtractive_selectors': [],
     'tag': '', # Old system of text name for a tag, to be removed
     'tags': [], # list of UUIDs to App.Tags
@@ -246,10 +249,10 @@ class model(dict):
     @property
     def has_browser_steps(self):
         has_browser_steps = self.get('browser_steps') and list(filter(
-                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
-                self.get('browser_steps')))
+            lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
+            self.get('browser_steps')))
 
-        return  has_browser_steps
+        return has_browser_steps
 
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
     @property

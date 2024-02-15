@@ -13,7 +13,7 @@
 <script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
 <div id="settings">
-    <form class="pure-form " action="" method="GET">
+    <form class="pure-form " action="" method="GET" id="diff-form">
         <fieldset>
             {% if versions|length >= 1 %}
                 <strong>Compare</strong>

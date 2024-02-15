@@ -9,9 +9,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: "3.x"
+        python-version: "3.11"
     - name: Install pypa/build
       run: >-
         python3 -m
@@ -21,7 +21,7 @@ jobs:
     - name: Build a binary wheel and a source tarball
       run: python3 -m build
     - name: Store the distribution packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: python-package-distributions
         path: dist/
@@ -34,18 +34,23 @@ jobs:
     - build
     steps:
     - name: Download all the dists
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: python-package-distributions
         path: dist/
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
     - name: Test that the basic pip built package runs without error
       run: |
-        set -e
+        set -ex
+        sudo pip3 install --upgrade pip 
         pip3 install dist/changedetection.io*.whl
         changedetection.io -d /tmp -p 10000 &
         sleep 3
-        curl http://127.0.0.1:10000/static/styles/pure-min.css >/dev/null
-        curl http://127.0.0.1:10000/ >/dev/null
+        curl --retry-connrefused --retry 6 http://127.0.0.1:10000/static/styles/pure-min.css >/dev/null
+        curl --retry-connrefused --retry 6 http://127.0.0.1:10000/ >/dev/null
         killall changedetection.io
 
 
@@ -64,7 +69,7 @@ jobs:
 
     steps:
     - name: Download all the dists
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: python-package-distributions
         path: dist/
