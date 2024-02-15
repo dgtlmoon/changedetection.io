@@ -182,13 +182,23 @@ def main():
 
     s_type = socket.AF_INET6 if ipv6_enabled else socket.AF_INET
 
-    if ssl_mode:
-        # @todo finalise SSL config, but this should get you in the right direction if you need it.
-        eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen((host, port), s_type),
-                                               certfile='cert.pem',
-                                               keyfile='privkey.pem',
-                                               server_side=True), app)
+    try:
+        if ssl_mode:
+            # @todo finalise SSL config, but this should get you in the right direction if you need it.
+            eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen((host, port), s_type),
+                                                   certfile='cert.pem',
+                                                   keyfile='privkey.pem',
+                                                   server_side=True), app)
 
-    else:
-        eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
+        else:
+            eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
 
+    except Exception as e:
+        import threading
+        import time
+        app.config.exit.set()
+        datastore.stop_thread = True
+        while len(threading.enumerate()) > 1:
+            time.sleep(1)
+        logger.critical(e)
+        sys.exit(2)
