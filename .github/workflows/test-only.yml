@@ -201,6 +201,30 @@ jobs:
           # @todo - scan the container log to see the right "graceful shutdown" text exists           
           docker rm sig-test
 
+      - name: Test changedetection.io wsgi fail case
+        run: |
+
+          echo "wsgi fail case: Address already in use"
+          docker run --name sig-test test-changedetectionio bash -c '
+          # just occupy external port 5000
+          python -m http.server 5000 --bind 0.0.0.0 &
+          # just a second.
+          sleep 1
+          # port conflicts and shutdown.
+          PORT=5000 python changedetection.py -d /datastore' || true &
+          sleep 7
+          docker ps -a
+          docker logs sig-test 2>&1 | grep 'Address already in use' || exit 1
+          docker logs sig-test 2>&1 | grep 'Shutting down datastore thread' || exit 1
+          test -z "`docker ps|grep sig-test`"
+          if [ $? -ne 0 ]
+          then
+            echo "Looks like container was running when it shouldnt be"
+            docker ps
+            exit 1
+          fi
+          docker rm sig-test
+
       - name: Dump container log
         if: always()
         run: |
