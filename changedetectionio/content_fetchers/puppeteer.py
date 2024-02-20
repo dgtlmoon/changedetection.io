@@ -8,6 +8,7 @@ from loguru import logger
 from changedetectionio.content_fetchers.base import Fetcher
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, BrowserConnectError
 
+DEFAULT_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
 
 class fetcher(Fetcher):
     fetcher_description = "Puppeteer/direct {}/Javascript".format(
@@ -97,8 +98,25 @@ class fetcher(Fetcher):
             raise BrowserConnectError(msg=f"Error connecting to the browser, check your browser connection address (should be ws:// or wss://")
         except Exception as e:
             raise BrowserConnectError(msg=f"Error connecting to the browser {str(e)}")
+
+        # Better is to launch chrome with the URL as arg
+        # non-headless - newPage() will launch an extra tab/window, .browser should already contain 1 page/tab
+        # headless - ask a new page
+        self.page = (pages := await browser.pages) and len(pages) or await browser.newPage()
+
+        # This user agent is similar to what was used when tweaking the evasions in inject_evasions_into_page(..)
+        user_agent = next((value for key, value in request_headers.items() if key.lower().strip() == 'user-agent'), DEFAULT_USER_AGENT)
+        await self.page.setUserAgent(user_agent)
+
+        try:
+            from pyppeteerstealth import inject_evasions_into_page
+        except ImportError:
+            logger.debug("pyppeteerstealth module not available, skipping")
+            pass
         else:
-            self.page = await browser.newPage()
+            # I tried hooking events via self.page.on(Events.Page.DOMContentLoaded, inject_evasions_requiring_obj_to_page)
+            # But I could never get it to fire reliably, so we just inject it straight after
+            await inject_evasions_into_page(self.page)
 
         await self.page.setBypassCSP(True)
         if request_headers:
