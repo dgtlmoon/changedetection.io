@@ -4,12 +4,11 @@
 
 __version__ = '0.45.14'
 
+from gevent.pywsgi import WSGIServer
 from distutils.util import strtobool
 from json.decoder import JSONDecodeError
+
 import os
-#os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
-import eventlet
-import eventlet.wsgi
 import getopt
 import signal
 import socket
@@ -23,11 +22,14 @@ from loguru import logger
 # Only global so we can access it in the signal handler
 app = None
 datastore = None
+# Using global only for shutdown.
+cd_server = None
 
 # Parent wrapper or OS sends us a SIGTERM/SIGINT, do everything required for a clean shutdown
 def sigshutdown_handler(_signo, _stack_frame):
     global app
     global datastore
+    global cd_server
     name = signal.Signals(_signo).name
     logger.critical(f'Shutdown: Got Signal - {name} ({_signo}), Saving DB to disk and calling shutdown')
     datastore.sync_to_json()
@@ -36,11 +38,14 @@ def sigshutdown_handler(_signo, _stack_frame):
     # Solution: move to gevent or other server in the future (#2014)
     datastore.stop_thread = True
     app.config.exit.set()
-    sys.exit()
+    cd_server.stop()
+    cd_server.close()
+    print('Shutdown Success', file=sys.stderr)
 
 def main():
     global datastore
     global app
+    global cd_server
 
     datastore_path = None
     do_cleanup = False
@@ -184,11 +189,17 @@ def main():
 
     if ssl_mode:
         # @todo finalise SSL config, but this should get you in the right direction if you need it.
-        eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen((host, port), s_type),
-                                               certfile='cert.pem',
-                                               keyfile='privkey.pem',
-                                               server_side=True), app)
-
+        ssl_args = {
+                'certfile' : 'cert.pem',
+                'keyfile' : 'privkey.pem',
+                'server_side' : True,
+               }
     else:
-        eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
+        ssl_args = {}
+    sock = WSGIServer.get_listener((host, port), family=s_type)
+    # changedetection.io is actually a singled threaded application and stores all
+    # data in the datastore dictionary, we will upgrade this in the future somehow.
 
+    cd_server = WSGIServer(sock, app, **ssl_args, environ={'wsgi.multithread': False,'wsgi.multiprocess': False,})
+
+    cd_server.serve_forever()
