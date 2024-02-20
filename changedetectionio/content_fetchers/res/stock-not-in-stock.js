@@ -10,6 +10,7 @@ function isItemInStock() {
     const outOfStockTexts = [
         ' أخبرني عندما يتوفر',
         '0 in stock',
+        'actuellement indisponible',        
         'agotado',
         'article épuisé',
         'artikel zurzeit vergriffen',
@@ -17,6 +18,7 @@ function isItemInStock() {
         'ausverkauft', // sold out
         'available for back order',
         'back-order or out of stock',
+        'back in stock soon',
         'backordered',
         'benachrichtigt mich', // notify me
         'brak na stanie',
@@ -24,6 +26,7 @@ function isItemInStock() {
         'coming soon',
         'currently have any tickets for this',
         'currently unavailable',
+        'dieser artikel ist bald wieder verfügbar',
         'dostępne wkrótce',
         'en rupture de stock',
         'ist derzeit nicht auf lager',
