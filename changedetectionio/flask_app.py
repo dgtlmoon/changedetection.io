@@ -404,17 +404,21 @@ def changedetection_app(config=None, datastore_o=None):
         global datastore
         from changedetectionio import forms
 
-        limit_tag = request.args.get('tag', '').lower().strip()
+        active_tag_req = request.args.get('tag', '').lower().strip()
+        active_tag_uuid = active_tag = None
 
         # Be sure limit_tag is a uuid
-        for uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
-            if limit_tag == tag.get('title', '').lower().strip():
-                limit_tag = uuid
+        if active_tag_req:
+            for uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
+                if active_tag_req == tag.get('title', '').lower().strip() or active_tag_req == uuid:
+                    active_tag = tag
+                    active_tag_uuid = uuid
+                    break
 
 
         # Redirect for the old rss path which used the /?rss=true
         if request.args.get('rss'):
-            return redirect(url_for('rss', tag=limit_tag))
+            return redirect(url_for('rss', tag=active_tag_uuid))
 
         op = request.args.get('op')
         if op:
@@ -425,7 +429,7 @@ def changedetection_app(config=None, datastore_o=None):
                 datastore.data['watching'][uuid].toggle_mute()
 
             datastore.needs_write = True
-            return redirect(url_for('index', tag = limit_tag))
+            return redirect(url_for('index', tag = active_tag_uuid))
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
@@ -436,7 +440,7 @@ def changedetection_app(config=None, datastore_o=None):
             if with_errors and not watch.get('last_error'):
                 continue
 
-            if limit_tag and not limit_tag in watch['tags']:
+            if active_tag_uuid and not active_tag_uuid in watch['tags']:
                     continue
             if watch.get('last_error'):
                 errored_count += 1
@@ -455,11 +459,12 @@ def changedetection_app(config=None, datastore_o=None):
                                 total=total_count,
                                 per_page=datastore.data['settings']['application'].get('pager_size', 50), css_framework="semantic")
 
-
+        sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
         output = render_template(
             "watch-overview.html",
                                  # Don't link to hosting when we're on the hosting environment
-                                 active_tag=limit_tag,
+                                 active_tag=active_tag,
+                                 active_tag_uuid=active_tag_uuid,
                                  app_rss_token=datastore.data['settings']['application']['rss_access_token'],
                                  datastore=datastore,
                                  errored_count=errored_count,
@@ -474,7 +479,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
                                  sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
                                  system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),
-                                 tags=datastore.data['settings']['application'].get('tags'),
+                                 tags=sorted_tags,
                                  watches=sorted_watches
                                  )
 
