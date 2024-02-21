@@ -455,7 +455,7 @@ def changedetection_app(config=None, datastore_o=None):
                                 total=total_count,
                                 per_page=datastore.data['settings']['application'].get('pager_size', 50), css_framework="semantic")
 
-
+        sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
         output = render_template(
             "watch-overview.html",
                                  # Don't link to hosting when we're on the hosting environment
@@ -474,7 +474,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
                                  sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
                                  system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),
-                                 tags=datastore.data['settings']['application'].get('tags'),
+                                 tags=sorted_tags,
                                  watches=sorted_watches
                                  )
 

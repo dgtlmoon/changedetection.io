@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.jinja' import render_simple_field, render_field, render_nolabel_field %}
+{% from '_helpers.jinja' import render_simple_field, render_field, render_nolabel_field, sort_by_title %}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 
@@ -46,11 +46,12 @@
     {% if search_q %}<div id="search-result-info">Searching "<strong><i>{{search_q}}</i></strong>"</div>{% endif %}
     <div>
         <a href="{{url_for('index')}}" class="pure-button button-tag {{'active' if not active_tag }}">All</a>
-        {% for uuid, tag in tags.items() %}
-            {% if tag != "" %}
-                <a href="{{url_for('index', tag=uuid) }}" class="pure-button button-tag {{'active' if active_tag == uuid }}">{{ tag.title }}</a>
-            {% endif %}
-        {% endfor %}
+
+    {% for uuid, tag in tags %}
+        {% if tag != "" %}
+            <a href="{{url_for('index', tag=uuid) }}" class="pure-button button-tag {{'active' if active_tag == tag.uuid }}">{{ tag.title }}</a>
+        {% endif %}
+    {% endfor %}
     </div>
 
     {% set sort_order = sort_order or 'asc' %}
