@@ -212,8 +212,12 @@ class fetcher(Fetcher):
                 logger.error('ERROR: Failed to get viewport-only reduced screenshot :(')
                 pass
         finally:
+            # It's good to log here in the case that the browser crashes on shutting down but we still get the data we need
+            logger.success(f"Fetching '{url}' complete, closing page")
             await self.page.close()
+            logger.success(f"Fetching '{url}' complete, closing browser")
             await browser.close()
+        logger.success(f"Fetching '{url}' complete, exiting puppeteer fetch.")
 
     async def main(self, **kwargs):
         await self.fetch_page(**kwargs)
