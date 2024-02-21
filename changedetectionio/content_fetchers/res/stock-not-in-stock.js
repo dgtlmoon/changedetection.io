@@ -60,11 +60,13 @@ function isItemInStock() {
         'tickets unavailable',
         'tijdelijk uitverkocht',
         'unavailable tickets',
+        'vorbestellung ist bald möglich',
         'we do not currently have an estimate of when this product will be back in stock.',
         'we don\'t know when or if this item will be back in stock.',
         'zur zeit nicht an lager',
         '品切れ',
         '已售完',
+        '已售',
         '품절'
     ];
 
