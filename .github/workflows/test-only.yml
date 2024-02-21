@@ -212,7 +212,7 @@ jobs:
           sleep 1
           # port conflicts and shutdown.
           PORT=5000 python changedetection.py -d /datastore' || true &
-          sleep 7
+          sleep 5
           docker ps -a
           docker logs sig-test 2>&1 | grep 'Address already in use' || exit 1
           docker logs sig-test 2>&1 | grep 'Shutting down datastore thread' || exit 1
