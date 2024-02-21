@@ -16,24 +16,23 @@ try {
 }
 
 
-
 // Include the getXpath script directly, easier than fetching
 function getxpath(e) {
-        var n = e;
-        if (n && n.id) return '//*[@id="' + n.id + '"]';
-        for (var o = []; n && Node.ELEMENT_NODE === n.nodeType;) {
-            for (var i = 0, r = !1, d = n.previousSibling; d;) d.nodeType !== Node.DOCUMENT_TYPE_NODE && d.nodeName === n.nodeName && i++, d = d.previousSibling;
-            for (d = n.nextSibling; d;) {
-                if (d.nodeName === n.nodeName) {
-                    r = !0;
-                    break
-                }
-                d = d.nextSibling
+    var n = e;
+    if (n && n.id) return '//*[@id="' + n.id + '"]';
+    for (var o = []; n && Node.ELEMENT_NODE === n.nodeType;) {
+        for (var i = 0, r = !1, d = n.previousSibling; d;) d.nodeType !== Node.DOCUMENT_TYPE_NODE && d.nodeName === n.nodeName && i++, d = d.previousSibling;
+        for (d = n.nextSibling; d;) {
+            if (d.nodeName === n.nodeName) {
+                r = !0;
+                break
             }
-            o.push((n.prefix ? n.prefix + ":" : "") + n.localName + (i || r ? "[" + (i + 1) + "]" : "")), n = n.parentNode
+            d = d.nextSibling
         }
-        return o.length ? "/" + o.reverse().join("/") : ""
+        o.push((n.prefix ? n.prefix + ":" : "") + n.localName + (i || r ? "[" + (i + 1) + "]" : "")), n = n.parentNode
     }
+    return o.length ? "/" + o.reverse().join("/") : ""
+}
 
 const findUpTag = (el) => {
     let r = el
@@ -59,14 +58,14 @@ const findUpTag = (el) => {
 
     // Strategy 2: Keep going up until we hit an ID tag, imagine it's like  #list-widget div h4
     while (r.parentNode) {
-        if (depth == 5) {
+        if (depth === 5) {
             break;
         }
         if ('' !== r.id) {
             chained_css.unshift("#" + CSS.escape(r.id));
             final_selector = chained_css.join(' > ');
             // Be sure theres only one, some sites have multiples of the same ID tag :-(
-            if (window.document.querySelectorAll(final_selector).length == 1) {
+            if (window.document.querySelectorAll(final_selector).length === 1) {
                 return final_selector;
             }
             return null;
@@ -82,30 +81,60 @@ const findUpTag = (el) => {
 
 // @todo - if it's SVG or IMG, go into image diff mode
 // %ELEMENTS% replaced at injection time because different interfaces use it with different settings
-var elements = window.document.querySelectorAll("%ELEMENTS%");
+
 var size_pos = [];
 // after page fetch, inject this JS
 // build a map of all elements and their positions (maybe that only include text?)
 var bbox;
-for (var i = 0; i < elements.length; i++) {
-    bbox = elements[i].getBoundingClientRect();
+console.log("Scanning %ELEMENTS%");
 
-    // Exclude items that are not interactable or visible
-    if(elements[i].style.opacity === "0") {
-        continue
+function collectVisibleElements(parent, visibleElements) {
+    if (!parent) return; // Base case: if parent is null or undefined, return
+
+
+    // Add the parent itself to the visible elements array if it's of the specified types
+    const tagName = parent.tagName.toLowerCase();
+    if ("%ELEMENTS%".split(',').includes(tagName)) {
+        visibleElements.push(parent);
     }
-    if(elements[i].style.display === "none" || elements[i].style.pointerEvents === "none" ) {
-        continue
+
+    // Iterate over the parent's children
+    const children = parent.children;
+    for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (
+            child.nodeType === Node.ELEMENT_NODE &&
+            window.getComputedStyle(child).display !== 'none' &&
+            window.getComputedStyle(child).visibility !== 'hidden' &&
+            child.offsetWidth >= 0 &&
+            child.offsetHeight >= 0 &&
+            window.getComputedStyle(child).contentVisibility !== 'hidden'
+        ) {
+            // If the child is an element and is visible, recursively collect visible elements
+            collectVisibleElements(child, visibleElements);
+        }
     }
+}
+
+// Create an array to hold the visible elements
+const visibleElementsArray = [];
+
+// Call collectVisibleElements with the starting parent element
+collectVisibleElements(document.body, visibleElementsArray);
+
+
+visibleElementsArray.forEach(function (element) {
+
+    bbox = element.getBoundingClientRect();
 
     // Skip really small ones, and where width or height ==0
-    if (bbox['width'] * bbox['height'] < 100) {
-        continue;
+    if (bbox['width'] * bbox['height'] < 10) {
+        return
     }
 
     // Don't include elements that are offset from canvas
-    if (bbox['top']+scroll_y < 0 || bbox['left'] < 0) {
-        continue;
+    if (bbox['top'] + scroll_y < 0 || bbox['left'] < 0) {
+        return
     }
 
     // @todo the getXpath kind of sucks, it doesnt know when there is for example just one ID sometimes
@@ -114,46 +143,41 @@ for (var i = 0; i < elements.length; i++) {
 
     // 1st primitive - if it has class, try joining it all and select, if theres only one.. well thats us.
     xpath_result = false;
-
     try {
-        var d = findUpTag(elements[i]);
+        var d = findUpTag(element);
         if (d) {
             xpath_result = d;
         }
     } catch (e) {
         console.log(e);
     }
-
     // You could swap it and default to getXpath and then try the smarter one
     // default back to the less intelligent one
     if (!xpath_result) {
         try {
             // I've seen on FB and eBay that this doesnt work
             // ReferenceError: getXPath is not defined at eval (eval at evaluate (:152:29), <anonymous>:67:20) at UtilityScript.evaluate (<anonymous>:159:18) at UtilityScript.<anonymous> (<anonymous>:1:44)
-            xpath_result = getxpath(elements[i]);
+            xpath_result = getxpath(element);
         } catch (e) {
             console.log(e);
-            continue;
+            return
         }
     }
 
-    if (window.getComputedStyle(elements[i]).visibility === "hidden") {
-        continue;
-    }
 
-    // @todo Possible to ONLY list where it's clickable to save JSON xfer size
     size_pos.push({
         xpath: xpath_result,
         width: Math.round(bbox['width']),
         height: Math.round(bbox['height']),
         left: Math.floor(bbox['left']),
-        top: Math.floor(bbox['top'])+scroll_y,
-        tagName: (elements[i].tagName) ? elements[i].tagName.toLowerCase() : '',
-        tagtype: (elements[i].tagName == 'INPUT' && elements[i].type) ? elements[i].type.toLowerCase() : '',
-        isClickable: (elements[i].onclick) || window.getComputedStyle(elements[i]).cursor == "pointer"
+        top: Math.floor(bbox['top']) + scroll_y,
+        tagName: (element.tagName) ? element.tagName.toLowerCase() : '',
+        tagtype: (element.tagName.toLowerCase() === 'input' && element.type) ? element.type.toLowerCase() : '',
+        isClickable: window.getComputedStyle(element).cursor == "pointer"
     });
 
-}
+});
+
 
 // Inject the current one set in the include_filters, which may be a CSS rule
 // used for displaying the current one in VisualSelector, where its not one we generated.
@@ -180,7 +204,7 @@ if (include_filters.length) {
             }
         } catch (e) {
             // Maybe catch DOMException and alert?
-            console.log("xpath_element_scraper: Exception selecting element from filter "+f);
+            console.log("xpath_element_scraper: Exception selecting element from filter " + f);
             console.log(e);
         }
 
@@ -210,8 +234,8 @@ if (include_filters.length) {
                 }
             }
         }
-        
-        if(!q) {
+
+        if (!q) {
             console.log("xpath_element_scraper: filter element " + f + " was not found");
         }
 
@@ -221,7 +245,7 @@ if (include_filters.length) {
                 width: parseInt(bbox['width']),
                 height: parseInt(bbox['height']),
                 left: parseInt(bbox['left']),
-                top: parseInt(bbox['top'])+scroll_y
+                top: parseInt(bbox['top']) + scroll_y
             });
         }
     }
@@ -229,7 +253,7 @@ if (include_filters.length) {
 
 // Sort the elements so we find the smallest one first, in other words, we find the smallest one matching in that area
 // so that we dont select the wrapping element by mistake and be unable to select what we want
-size_pos.sort((a, b) => (a.width*a.height > b.width*b.height) ? 1 : -1)
+size_pos.sort((a, b) => (a.width * a.height > b.width * b.height) ? 1 : -1)
 
 // Window.width required for proper scaling in the frontend
 return {'size_pos': size_pos, 'browser_width': window.innerWidth};
