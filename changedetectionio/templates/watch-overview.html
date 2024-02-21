@@ -13,7 +13,7 @@
             <div id="watch-add-wrapper-zone">
 
                     {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
-                    {{ render_nolabel_field(form.tags, value=tags[active_tag].title if active_tag else '', placeholder="watch label / tag") }}
+                    {{ render_nolabel_field(form.tags, value=active_tag.title if active_tag else '', placeholder="watch label / tag") }}
                     {{ render_nolabel_field(form.watch_submit_button, title="Watch this URL!" ) }}
                     {{ render_nolabel_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
             </div>
@@ -47,9 +47,10 @@
     <div>
         <a href="{{url_for('index')}}" class="pure-button button-tag {{'active' if not active_tag }}">All</a>
 
+    <!-- tag list -->
     {% for uuid, tag in tags %}
         {% if tag != "" %}
-            <a href="{{url_for('index', tag=uuid) }}" class="pure-button button-tag {{'active' if active_tag == tag.uuid }}">{{ tag.title }}</a>
+            <a href="{{url_for('index', tag=uuid) }}" class="pure-button button-tag {{'active' if active_tag_uuid == uuid }}">{{ tag.title }}</a>
         {% endif %}
     {% endfor %}
     </div>
@@ -198,8 +199,8 @@
             </li>
             {% endif %}
             <li>
-               <a href="{{ url_for('form_watch_checknow', tag=active_tag, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Recheck
-                all {% if active_tag%} in "{{tags[active_tag].title}}"{%endif%}</a>
+               <a href="{{ url_for('form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Recheck
+                all {% if active_tag_uuid %} in "{{active_tag.title}}"{%endif%}</a>
             </li>
             <li>
                 <a href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>
