@@ -11,9 +11,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def tags_overview_page():
         from .form import SingleTag
         add_form = SingleTag(request.form)
+        sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
         output = render_template("groups-overview.html",
                                  form=add_form,
-                                 available_tags=datastore.data['settings']['application'].get('tags', {}),
+                                 available_tags=sorted_tags,
                                  )
 
         return output
