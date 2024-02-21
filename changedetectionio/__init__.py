@@ -194,11 +194,7 @@ def main():
             eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
 
     except Exception as e:
-        import threading
-        import time
         app.config.exit.set()
         datastore.stop_thread = True
-        while len(threading.enumerate()) > 1:
-            time.sleep(1)
         logger.critical(e)
         sys.exit(2)
