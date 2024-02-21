@@ -429,7 +429,7 @@ def changedetection_app(config=None, datastore_o=None):
                 datastore.data['watching'][uuid].toggle_mute()
 
             datastore.needs_write = True
-            return redirect(url_for('index', tag = limit_tag))
+            return redirect(url_for('index', tag = active_tag_uuid))
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
