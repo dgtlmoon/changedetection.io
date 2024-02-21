@@ -8,8 +8,9 @@ import urllib3
 
 from . import difference_detection_processor
 from ..html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
-from changedetectionio import content_fetcher, html_tools
+from changedetectionio import html_tools, content_fetchers
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
+import changedetectionio.content_fetchers
 from copy import deepcopy
 from loguru import logger
 
@@ -60,7 +61,7 @@ class perform_site_check(difference_detection_processor):
         update_obj['previous_md5_before_filters'] = hashlib.md5(self.fetcher.content.encode('utf-8')).hexdigest()
         if skip_when_checksum_same:
             if update_obj['previous_md5_before_filters'] == watch.get('previous_md5_before_filters'):
-                raise content_fetcher.checksumFromPreviousCheckWasTheSame()
+                raise content_fetchers.exceptions.checksumFromPreviousCheckWasTheSame()
 
         # Fetching complete, now filters
 
@@ -243,7 +244,7 @@ class perform_site_check(difference_detection_processor):
         # Treat pages with no renderable text content as a change? No by default
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
         if not is_json and not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
-            raise content_fetcher.ReplyWithContentButNoText(url=url,
+            raise content_fetchers.exceptions.ReplyWithContentButNoText(url=url,
                                                             status_code=self.fetcher.get_last_status_code(),
                                                             screenshot=screenshot,
                                                             has_filters=has_filter_rule,

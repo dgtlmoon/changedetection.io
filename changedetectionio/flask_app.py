@@ -1,25 +1,19 @@
 #!/usr/bin/python3
 
-from changedetectionio import queuedWatchMetaData
-from copy import deepcopy
-from distutils.util import strtobool
-from feedgen.feed import FeedGenerator
-from flask_compress import Compress as FlaskCompress
-from flask_login import current_user
-from flask_restful import abort, Api
-from flask_wtf import CSRFProtect
-from functools import wraps
-from threading import Event
 import datetime
-import flask_login
-from loguru import logger
 import os
-import pytz
 import queue
 import threading
 import time
-import timeago
+from copy import deepcopy
+from distutils.util import strtobool
+from functools import wraps
+from threading import Event
 
+import flask_login
+import pytz
+import timeago
+from feedgen.feed import FeedGenerator
 from flask import (
     Flask,
     abort,
@@ -32,10 +26,15 @@ from flask import (
     session,
     url_for,
 )
-
+from flask_compress import Compress as FlaskCompress
+from flask_login import current_user
 from flask_paginate import Pagination, get_page_parameter
+from flask_restful import abort, Api
+from flask_wtf import CSRFProtect
+from loguru import logger
 
 from changedetectionio import html_tools, __version__
+from changedetectionio import queuedWatchMetaData
 from changedetectionio.api import api_v1
 
 datastore = None
@@ -763,7 +762,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/settings", methods=['GET', "POST"])
     @login_optionally_required
     def settings_page():
-        from changedetectionio import content_fetcher, forms
+        from changedetectionio import forms
 
         default = deepcopy(datastore.data['settings'])
         if datastore.proxy_list is not None:

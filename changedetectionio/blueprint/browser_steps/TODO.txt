@@ -1,0 +1,7 @@
+- This needs an abstraction to directly handle the puppeteer connection methods
+- Then remove the playwright stuff
+- Remove hack redirect at line 65 changedetectionio/processors/__init__.py
+
+The screenshots are base64 encoded/decoded which is very CPU intensive for large screenshots (in playwright) but not
+in the direct puppeteer connection (they are binary end to end)
+

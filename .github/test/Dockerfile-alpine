@@ -12,8 +12,10 @@ RUN \
     cargo \
     g++ \
     gcc \
+    jpeg-dev \
     libc-dev \
     libffi-dev \
+    libjpeg \
     libxslt-dev \
     make \
     openssl-dev \

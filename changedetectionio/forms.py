@@ -27,7 +27,7 @@ from validators.url import url as url_validator
 # each select <option data-enabled="enabled-0-0"
 from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
 
-from changedetectionio import content_fetcher, html_tools
+from changedetectionio import html_tools, content_fetchers
 
 from changedetectionio.notification import (
     valid_notification_formats,
@@ -167,33 +167,31 @@ class ValidateContentFetcherIsReady(object):
         self.message = message
 
     def __call__(self, form, field):
-        import urllib3.exceptions
-        from changedetectionio import content_fetcher
         return
 
 # AttributeError: module 'changedetectionio.content_fetcher' has no attribute 'extra_browser_unlocked<>ASDF213r123r'
         # Better would be a radiohandler that keeps a reference to each class
-        if field.data is not None and field.data != 'system':
-            klass = getattr(content_fetcher, field.data)
-            some_object = klass()
-            try:
-                ready = some_object.is_ready()
-
-            except urllib3.exceptions.MaxRetryError as e:
-                driver_url = some_object.command_executor
-                message = field.gettext('Content fetcher \'%s\' did not respond.' % (field.data))
-                message += '<br>' + field.gettext(
-                    'Be sure that the selenium/webdriver runner is running and accessible via network from this container/host.')
-                message += '<br>' + field.gettext('Did you follow the instructions in the wiki?')
-                message += '<br><br>' + field.gettext('WebDriver Host: %s' % (driver_url))
-                message += '<br><a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">Go here for more information</a>'
-                message += '<br>'+field.gettext('Content fetcher did not respond properly, unable to use it.\n %s' % (str(e)))
-
-                raise ValidationError(message)
-
-            except Exception as e:
-                message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.\n %s')
-                raise ValidationError(message % (field.data, e))
+        # if field.data is not None and field.data != 'system':
+        #     klass = getattr(content_fetcher, field.data)
+        #     some_object = klass()
+        #     try:
+        #         ready = some_object.is_ready()
+        #
+        #     except urllib3.exceptions.MaxRetryError as e:
+        #         driver_url = some_object.command_executor
+        #         message = field.gettext('Content fetcher \'%s\' did not respond.' % (field.data))
+        #         message += '<br>' + field.gettext(
+        #             'Be sure that the selenium/webdriver runner is running and accessible via network from this container/host.')
+        #         message += '<br>' + field.gettext('Did you follow the instructions in the wiki?')
+        #         message += '<br><br>' + field.gettext('WebDriver Host: %s' % (driver_url))
+        #         message += '<br><a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">Go here for more information</a>'
+        #         message += '<br>'+field.gettext('Content fetcher did not respond properly, unable to use it.\n %s' % (str(e)))
+        #
+        #         raise ValidationError(message)
+        #
+        #     except Exception as e:
+        #         message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.\n %s')
+        #         raise ValidationError(message % (field.data, e))
 
 
 class ValidateNotificationBodyAndTitleWhenURLisSet(object):
@@ -421,7 +419,7 @@ class commonSettingsForm(Form):
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
-    fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    fetch_backend = RadioField(u'Fetch Method', choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1,
                                                                                                                                     message="Should contain one or more seconds")])
@@ -552,7 +550,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
                            render_kw={"placeholder": os.getenv('BASE_URL', 'Not set')}
                            )
     empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
-    fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     ignore_whitespace = BooleanField('Ignore whitespace')
