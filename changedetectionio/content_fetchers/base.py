@@ -99,7 +99,7 @@ class Fetcher():
         :return:
         """
         # Ask it what the user agent is, if its obviously ChromeHeadless, switch it to the default
-        ua_in_custom_headers = next((k for k in headers.keys() if k.lower() == "user-agent"), None)
+        ua_in_custom_headers = next((v for k, v in headers.items() if k.lower() == "user-agent"), None)
         if ua_in_custom_headers:
             return ua_in_custom_headers
 
