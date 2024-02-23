@@ -92,12 +92,12 @@ def test_basic_browserstep(client, live_server):
         data={
               "url": test_url,
               "tags": "",
-              "headers": "",
               'fetch_backend': "html_webdriver",
               'browser_steps-0-operation': 'Goto site',
               'browser_steps-1-operation': 'Click element',
               'browser_steps-1-selector': 'button[name=test-button]',
-              'browser_steps-1-optional_value': ''
+              'browser_steps-1-optional_value': '',
+              'headers': "cOoKiE: notice-apa=1; test-value=1; "
         },
         follow_redirects=True
     )
@@ -113,6 +113,8 @@ def test_basic_browserstep(client, live_server):
     )
     assert b"This text should be removed" not in res.data
     assert b"I smell JavaScript because the button was pressed" in res.data
+    # The JS on the page will set this if the cookie (and thus headers) was handled
+    assert b"test-value in headers found" in res.data
 
     # now test for 404 errors
     res = client.post(
