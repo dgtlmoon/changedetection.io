@@ -206,24 +206,23 @@ class browsersteps_live_ui(steppable_browser_interface):
         keep_open = 1000 * 60 * 5
         now = time.time()
 
+        # Ask it what the user agent is, if its obviously ChromeHeadless, switch it to the default
+        from changedetectionio.content_fetchers import manage_user_agent
+        manage_user_agent(headers=self.headers)
+
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
         self.context = self.playwright_browser.new_context(
-            # This is needed to enable JavaScript execution on GitHub and others
-            bypass_csp=True,
-            # Should never be needed
-            accept_downloads=False,
-            proxy=proxy
+            accept_downloads=False, # Should never be needed
+            bypass_csp=True, # This is needed to enable JavaScript execution on GitHub and others
+            proxy=proxy,
+            service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'), # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
+            user_agent=manage_user_agent(headers=self.headers)
         )
-
-        self.page = self.context.new_page()
-
-        # Ask it what the user agent is, if its obviously ChromeHeadless, switch it to the default
-        from changedetectionio.content_fetchers.playwright import manage_user_agent
-        manage_user_agent(page=self.page, headers=self.headers)
 
         if self.headers:
             self.context.set_extra_http_headers(self.headers)
 
+        self.page = self.context.new_page()
 
         # self.page.set_default_navigation_timeout(keep_open)
         self.page.set_default_timeout(keep_open)

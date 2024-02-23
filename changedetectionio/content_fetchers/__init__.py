@@ -39,3 +39,4 @@ if use_playwright_as_chrome_fetcher:
 else:
     logger.debug("Falling back to selenium as fetcher")
     from .webdriver_selenium import fetcher as html_webdriver
+
