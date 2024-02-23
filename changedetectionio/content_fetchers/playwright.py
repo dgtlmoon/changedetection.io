@@ -6,6 +6,38 @@ from loguru import logger
 from changedetectionio.content_fetchers.base import Fetcher
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
 
+
+def manage_user_agent(page, headers):
+    """
+    Basic setting of user-agent
+
+    NOTE!!!!!! The service that does the actual Chrome fetching should handle any anti-robot techniques
+    THERE ARE MANY WAYS THAT IT CAN BE DETECTED AS A ROBOT!!
+    This does not take care of
+    - Scraping of 'navigator' (platform, productSub, vendor, oscpu etc etc) browser object (navigator.appVersion) etc
+    - TCP/IP fingerprint JA3 etc
+    - Graphic rendering fingerprinting
+    - Your IP being obviously in a pool of bad actors
+    - Too many requests
+    - Scraping of SCH-UA browser replies (thanks google!!)
+    - Scraping of ServiceWorker, new window calls etc
+
+    See https://filipvitas.medium.com/how-to-set-user-agent-header-with-puppeteer-js-and-not-fail-28c7a02165da
+    Puppeteer requests https://github.com/dgtlmoon/pyppeteerstealth
+
+    :param page:
+    :param headers:
+    :return:
+    """
+    # Ask it what the user agent is, if its obviously ChromeHeadless, switch it to the default
+    ua_in_custom_headers = next((k for k in headers.keys() if k.lower() == "user-agent"), None)
+    if not ua_in_custom_headers:
+        current_ua = page.evaluate('navigator.userAgent').replace('HeadlesssChrome', 'Chrome')
+        page.set_user_agent(current_ua)
+
+
+
+
 class fetcher(Fetcher):
     fetcher_description = "Playwright {}/Javascript".format(
         os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
@@ -102,7 +134,6 @@ class fetcher(Fetcher):
             # Set user agent to prevent Cloudflare from blocking the browser
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
             context = browser.new_context(
-                user_agent={k.lower(): v for k, v in request_headers.items()}.get('user-agent', None),
                 proxy=self.proxy,
                 # This is needed to enable JavaScript execution on GitHub and others
                 bypass_csp=True,
@@ -113,6 +144,8 @@ class fetcher(Fetcher):
             )
 
             self.page = context.new_page()
+            manage_user_agent(page=self.page, headers=request_headers)
+
             if len(request_headers):
                 context.set_extra_http_headers(request_headers)
 

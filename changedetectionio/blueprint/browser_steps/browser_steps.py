@@ -178,6 +178,7 @@ class browsersteps_live_ui(steppable_browser_interface):
     stale = False
     # bump and kill this if idle after X sec
     age_start = 0
+    headers = {}
 
     # use a special driver, maybe locally etc
     command_executor = os.getenv(
@@ -192,7 +193,8 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
-    def __init__(self, playwright_browser, proxy=None):
+    def __init__(self, playwright_browser, proxy=None, headers=None):
+        self.headers = headers or {}
         self.age_start = time.time()
         self.playwright_browser = playwright_browser
         if self.context is None:
@@ -206,9 +208,6 @@ class browsersteps_live_ui(steppable_browser_interface):
 
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
         self.context = self.playwright_browser.new_context(
-            # @todo
-            #                user_agent=request_headers['User-Agent'] if request_headers.get('User-Agent') else 'Mozilla/5.0',
-            #               proxy=self.proxy,
             # This is needed to enable JavaScript execution on GitHub and others
             bypass_csp=True,
             # Should never be needed
@@ -217,6 +216,14 @@ class browsersteps_live_ui(steppable_browser_interface):
         )
 
         self.page = self.context.new_page()
+
+        # Ask it what the user agent is, if its obviously ChromeHeadless, switch it to the default
+        from changedetectionio.content_fetchers.playwright import manage_user_agent
+        manage_user_agent(page=self.page, headers=self.headers)
+
+        if self.headers:
+            self.context.set_extra_http_headers(self.headers)
+
 
         # self.page.set_default_navigation_timeout(keep_open)
         self.page.set_default_timeout(keep_open)
