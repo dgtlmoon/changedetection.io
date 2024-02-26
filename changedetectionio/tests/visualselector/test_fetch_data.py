@@ -8,9 +8,6 @@ def test_setup(client, live_server):
     live_server_setup(live_server)
 
 
-#@todo add explicit run JS code " 'webdriver_js_execute_code': 'document.querySelector("button[name=test-button]").click();'"
-
-
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready
 def test_visual_selector_content_ready(client, live_server):
 
