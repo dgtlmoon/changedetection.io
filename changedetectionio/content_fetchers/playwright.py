@@ -3,7 +3,8 @@ import os
 from urllib.parse import urlparse
 
 from loguru import logger
-from changedetectionio.content_fetchers.base import Fetcher
+
+from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
 
 class fetcher(Fetcher):
@@ -102,19 +103,16 @@ class fetcher(Fetcher):
             # Set user agent to prevent Cloudflare from blocking the browser
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
             context = browser.new_context(
-                user_agent={k.lower(): v for k, v in request_headers.items()}.get('user-agent', None),
+                accept_downloads=False,  # Should never be needed
+                bypass_csp=True,  # This is needed to enable JavaScript execution on GitHub and others
+                extra_http_headers=request_headers,
+                ignore_https_errors=True,
                 proxy=self.proxy,
-                # This is needed to enable JavaScript execution on GitHub and others
-                bypass_csp=True,
-                # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
-                service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'),
-                # Should never be needed
-                accept_downloads=False
+                service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'), # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
+                user_agent=manage_user_agent(headers=request_headers),
             )
 
             self.page = context.new_page()
-            if len(request_headers):
-                context.set_extra_http_headers(request_headers)
 
             # Listen for all console events and handle errors
             self.page.on("console", lambda msg: print(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))

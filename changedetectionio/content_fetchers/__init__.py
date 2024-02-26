@@ -1,6 +1,6 @@
 import sys
 from distutils.util import strtobool
-
+from loguru import logger
 from changedetectionio.content_fetchers.exceptions import BrowserStepsStepException
 import os
 
@@ -29,10 +29,15 @@ def available_fetchers():
 # rather than site-specific.
 use_playwright_as_chrome_fetcher = os.getenv('PLAYWRIGHT_DRIVER_URL', False)
 if use_playwright_as_chrome_fetcher:
+    # @note - For now, browser steps always uses playwright
     if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
+        logger.debug('Using Playwright library as fetcher')
         from .playwright import fetcher as html_webdriver
     else:
+        logger.debug('Using direct Python Puppeteer library as fetcher')
         from .puppeteer import fetcher as html_webdriver
 
 else:
+    logger.debug("Falling back to selenium as fetcher")
     from .webdriver_selenium import fetcher as html_webdriver
+

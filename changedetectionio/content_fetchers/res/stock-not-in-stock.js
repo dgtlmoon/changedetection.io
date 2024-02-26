@@ -10,7 +10,7 @@ function isItemInStock() {
     const outOfStockTexts = [
         ' أخبرني عندما يتوفر',
         '0 in stock',
-        'actuellement indisponible',        
+        'actuellement indisponible',
         'agotado',
         'article épuisé',
         'artikel zurzeit vergriffen',
@@ -144,7 +144,7 @@ function isItemInStock() {
 
         if (elementText.length) {
             // try which ones could mean its in stock
-            if (negateOutOfStockRegex.test(elementText)) {
+            if (negateOutOfStockRegex.test(elementText) && !elementText.includes('(0 products)')) {
                 console.log(`Negating/overriding 'Out of Stock' back to "Possibly in stock" found "${elementText}"`)
                 return 'Possibly in stock';
             }
@@ -156,7 +156,9 @@ function isItemInStock() {
         const element = elementsToScan[i];
         // outside the 'fold' or some weird text in the heading area
         // .getBoundingClientRect() was causing a crash in chrome 119, can only be run on contentVisibility != hidden
-        if (element.getBoundingClientRect().top + window.scrollY >= vh || element.getBoundingClientRect().top + window.scrollY <= 100) {
+
+         // Should be in the "above the fold" plus about 150px
+        if (element.getBoundingClientRect().top + window.scrollY >= vh + 150 || element.getBoundingClientRect().top + window.scrollY <= 100) {
             continue
         }
         elementText = "";

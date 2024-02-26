@@ -160,6 +160,12 @@ $(document).ready(function () {
                     e.offsetX > item.left * y_scale && e.offsetX < item.left * y_scale + item.width * y_scale
 
                 ) {
+                    // Ignore really large ones, because we are scraping 'div' also from xpath_element_scraper but
+                    // that div or whatever could be some wrapper and would generally make you select the whole page
+                    if (item.width > 800 && item.height > 400) {
+                        return
+                    }
+
                     // There could be many elements here, record them all and then we'll find out which is the most 'useful'
                     // (input, textarea, button, A etc)
                     if (item.width < xpath_data['browser_width']) {

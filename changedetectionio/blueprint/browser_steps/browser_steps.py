@@ -6,6 +6,8 @@ import re
 from random import randint
 from loguru import logger
 
+from changedetectionio.content_fetchers.base import manage_user_agent
+
 # Two flags, tell the JS which of the "Selector" or "Value" field should be enabled in the front end
 # 0- off, 1- on
 browser_step_ui_config = {'Choose one': '0 0',
@@ -178,6 +180,7 @@ class browsersteps_live_ui(steppable_browser_interface):
     stale = False
     # bump and kill this if idle after X sec
     age_start = 0
+    headers = {}
 
     # use a special driver, maybe locally etc
     command_executor = os.getenv(
@@ -192,7 +195,8 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
-    def __init__(self, playwright_browser, proxy=None):
+    def __init__(self, playwright_browser, proxy=None, headers=None):
+        self.headers = headers or {}
         self.age_start = time.time()
         self.playwright_browser = playwright_browser
         if self.context is None:
@@ -206,15 +210,16 @@ class browsersteps_live_ui(steppable_browser_interface):
 
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
         self.context = self.playwright_browser.new_context(
-            # @todo
-            #                user_agent=request_headers['User-Agent'] if request_headers.get('User-Agent') else 'Mozilla/5.0',
-            #               proxy=self.proxy,
-            # This is needed to enable JavaScript execution on GitHub and others
-            bypass_csp=True,
-            # Should never be needed
-            accept_downloads=False,
-            proxy=proxy
+            accept_downloads=False,  # Should never be needed
+            bypass_csp=True,  # This is needed to enable JavaScript execution on GitHub and others
+            extra_http_headers=self.headers,
+            ignore_https_errors=True,
+            proxy=proxy,
+            service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'),
+            # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
+            user_agent=manage_user_agent(headers=self.headers),
         )
+
 
         self.page = self.context.new_page()
 
