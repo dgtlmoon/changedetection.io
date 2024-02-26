@@ -1,5 +1,4 @@
 from playwright.sync_api import PlaywrightContextManager
-import asyncio
 
 # So playwright wants to run as a context manager, but we do something horrible and hacky
 # we are holding the session open for as long as possible, then shutting it down, and opening a new one

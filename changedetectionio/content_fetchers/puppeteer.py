@@ -5,7 +5,8 @@ import websockets.exceptions
 from urllib.parse import urlparse
 
 from loguru import logger
-from changedetectionio.content_fetchers.base import Fetcher
+
+from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, BrowserConnectError
 
 
@@ -100,10 +101,11 @@ class fetcher(Fetcher):
         else:
             self.page = await browser.newPage()
 
+        await self.page.setUserAgent(manage_user_agent(headers=request_headers, current_ua=await self.page.evaluate('navigator.userAgent')))
+
         await self.page.setBypassCSP(True)
         if request_headers:
             await self.page.setExtraHTTPHeaders(request_headers)
-            # @todo check user-agent worked
 
         # SOCKS5 with authentication is not supported (yet)
         # https://github.com/microsoft/playwright/issues/10567

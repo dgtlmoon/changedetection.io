@@ -72,7 +72,11 @@ jobs:
         run: |
           # Playwright via Sockpuppetbrowser fetch
           # tests/visualselector/test_fetch_data.py will do browser steps  
-          docker run --rm -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_content.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_errorhandling.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/visualselector/test_fetch_data.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_custom_js_before_content.py'
+
 
       - name: Playwright and SocketPuppetBrowser - Headers and requests
         run: |       
@@ -87,8 +91,11 @@ jobs:
 # STRAIGHT TO CDP
       - name: Pyppeteer and SocketPuppetBrowser - Specific tests in built container
         run: |
-          # Playwright via Sockpuppetbrowser fetch
-          docker run --rm -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" -e "FAST_PUPPETEER_CHROME_FETCHER=True" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
+          # Playwright via Sockpuppetbrowser fetch 
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_content.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_errorhandling.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/visualselector/test_fetch_data.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_custom_js_before_content.py'
 
       - name: Pyppeteer and SocketPuppetBrowser - Headers and requests checks
         run: |       
