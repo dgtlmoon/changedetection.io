@@ -244,7 +244,6 @@ def live_server_setup(live_server):
 
     @live_server.app.route('/test-interactive-html-endpoint')
     def test_interactive_html_endpoint():
-        import json
         header_text=""
         for k,v in request.headers.items():
             header_text += f"{k}: {v}<br>"

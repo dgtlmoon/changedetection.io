@@ -7,8 +7,13 @@ from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_cli
 def test_setup(client, live_server):
     live_server_setup(live_server)
 
+
+#@todo add explicit run JS code " 'webdriver_js_execute_code': 'document.querySelector("button[name=test-button]").click();'"
+
+
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready
 def test_visual_selector_content_ready(client, live_server):
+
     import os
     import json
 
@@ -25,30 +30,31 @@ def test_visual_selector_content_ready(client, live_server):
         follow_redirects=True
     )
     assert b"Watch added in Paused state, saving will unpause" in res.data
-
+    uuid = extract_UUID_from_client(client)
     res = client.post(
-        url_for("edit_page", uuid="first", unpause_on_save=1),
+        url_for("edit_page", uuid=uuid, unpause_on_save=1),
         data={
-              "url": test_url,
-              "tags": "",
-              "headers": "",
-              'fetch_backend': "html_webdriver",
-              'webdriver_js_execute_code': 'document.querySelector("button[name=test-button]").click();'
+            "url": test_url,
+            "tags": "",
+            # For now, cookies doesnt work in headers because it must be a full cookiejar object
+            'headers': "testheader: yes\buser-agent: MyCustomAgent",
+            'fetch_backend': "html_webdriver",
         },
         follow_redirects=True
     )
     assert b"unpaused" in res.data
     wait_for_all_checks(client)
 
-    uuid = extract_UUID_from_client(client)
+
     assert live_server.app.config['DATASTORE'].data['watching'][uuid].history_n >= 1, "Watch history had atleast 1 (everything fetched OK)"
 
-    # Check the JS execute code before extract worked
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("preview_page", uuid=uuid),
         follow_redirects=True
     )
-    assert b'I smell JavaScript' in res.data
+    assert b"testheader: yes" in res.data
+    assert b"user-agent: mycustomagent" in res.data
+
 
     assert os.path.isfile(os.path.join('test-datastore', uuid, 'last-screenshot.png')), "last-screenshot.png should exist"
     assert os.path.isfile(os.path.join('test-datastore', uuid, 'elements.json')), "xpath elements.json data should exist"
@@ -79,7 +85,6 @@ def test_visual_selector_content_ready(client, live_server):
 def test_basic_browserstep(client, live_server):
 
     #live_server_setup(live_server)
-
     assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
 
     test_url = url_for('test_interactive_html_endpoint', _external=True)
@@ -91,6 +96,7 @@ def test_basic_browserstep(client, live_server):
         data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
         follow_redirects=True
     )
+
     assert b"Watch added in Paused state, saving will unpause" in res.data
 
     res = client.post(
