@@ -30,7 +30,7 @@ def available_fetchers():
 use_playwright_as_chrome_fetcher = os.getenv('PLAYWRIGHT_DRIVER_URL', False)
 if use_playwright_as_chrome_fetcher:
     # @note - For now, browser steps always uses playwright
-    if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')) or False:
+    if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
         logger.debug('Using Playwright library as fetcher')
         from .playwright import fetcher as html_webdriver
     else:
