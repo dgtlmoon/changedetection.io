@@ -6,6 +6,8 @@ import re
 from random import randint
 from loguru import logger
 
+from changedetectionio.content_fetchers.base import manage_user_agent
+
 # Two flags, tell the JS which of the "Selector" or "Value" field should be enabled in the front end
 # 0- off, 1- on
 browser_step_ui_config = {'Choose one': '0 0',
@@ -206,21 +208,18 @@ class browsersteps_live_ui(steppable_browser_interface):
         keep_open = 1000 * 60 * 5
         now = time.time()
 
-        # Ask it what the user agent is, if its obviously ChromeHeadless, switch it to the default
-        from changedetectionio.content_fetchers import manage_user_agent
-        manage_user_agent(headers=self.headers)
-
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
         self.context = self.playwright_browser.new_context(
-            accept_downloads=False, # Should never be needed
-            bypass_csp=True, # This is needed to enable JavaScript execution on GitHub and others
+            accept_downloads=False,  # Should never be needed
+            bypass_csp=True,  # This is needed to enable JavaScript execution on GitHub and others
+            extra_http_headers=self.headers,
+            ignore_https_errors=True,
             proxy=proxy,
-            service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'), # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
-            user_agent=manage_user_agent(headers=self.headers)
+            service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'),
+            # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
+            user_agent=manage_user_agent(headers=self.headers),
         )
 
-        if self.headers:
-            self.context.set_extra_http_headers(self.headers)
 
         self.page = self.context.new_page()
 

@@ -15,7 +15,9 @@ def test_visual_selector_content_ready(client, live_server):
     assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
 
     # Add our URL to the import page, because the docker container (playwright/selenium) wont be able to connect to our usual test url
-    test_url = "https://changedetection.io/ci-test/test-runjs.html"
+    test_url = url_for('test_interactive_html_endpoint', _external=True)
+    test_url = test_url.replace('localhost.localdomain', 'cdio')
+    test_url = test_url.replace('localhost', 'cdio')
 
     res = client.post(
         url_for("form_quick_watch_add"),
@@ -37,7 +39,9 @@ def test_visual_selector_content_ready(client, live_server):
     )
     assert b"unpaused" in res.data
     wait_for_all_checks(client)
+
     uuid = extract_UUID_from_client(client)
+    assert live_server.app.config['DATASTORE'].data['watching'][uuid].history_n >= 1, "Watch history had atleast 1 (everything fetched OK)"
 
     # Check the JS execute code before extract worked
     res = client.get(
@@ -74,11 +78,13 @@ def test_visual_selector_content_ready(client, live_server):
 
 def test_basic_browserstep(client, live_server):
 
-    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
     #live_server_setup(live_server)
 
-    # Add our URL to the import page, because the docker container (playwright/selenium) wont be able to connect to our usual test url
-    test_url = "https://changedetection.io/ci-test/test-runjs.html"
+    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
+
+    test_url = url_for('test_interactive_html_endpoint', _external=True)
+    test_url = test_url.replace('localhost.localdomain', 'cdio')
+    test_url = test_url.replace('localhost', 'cdio')
 
     res = client.post(
         url_for("form_quick_watch_add"),
@@ -90,14 +96,15 @@ def test_basic_browserstep(client, live_server):
     res = client.post(
         url_for("edit_page", uuid="first", unpause_on_save=1),
         data={
-              "url": test_url,
-              "tags": "",
-              'fetch_backend': "html_webdriver",
-              'browser_steps-0-operation': 'Goto site',
-              'browser_steps-1-operation': 'Click element',
-              'browser_steps-1-selector': 'button[name=test-button]',
-              'browser_steps-1-optional_value': '',
-              'headers': "cOoKiE: notice-apa=1; test-value=1; "
+            "url": test_url,
+            "tags": "",
+            'fetch_backend': "html_webdriver",
+            'browser_steps-0-operation': 'Goto site',
+            'browser_steps-1-operation': 'Click element',
+            'browser_steps-1-selector': 'button[name=test-button]',
+            'browser_steps-1-optional_value': '',
+            # For now, cookies doesnt work in headers because it must be a full cookiejar object
+            'headers': "testheader: yes\buser-agent: MyCustomAgent",
         },
         follow_redirects=True
     )
@@ -105,6 +112,9 @@ def test_basic_browserstep(client, live_server):
     wait_for_all_checks(client)
 
     uuid = extract_UUID_from_client(client)
+    assert live_server.app.config['DATASTORE'].data['watching'][uuid].history_n >= 1, "Watch history had atleast 1 (everything fetched OK)"
+
+    assert b"This text should be removed" not in res.data
 
     # Check HTML conversion detected and workd
     res = client.get(
@@ -113,16 +123,20 @@ def test_basic_browserstep(client, live_server):
     )
     assert b"This text should be removed" not in res.data
     assert b"I smell JavaScript because the button was pressed" in res.data
-    # The JS on the page will set this if the cookie (and thus headers) was handled
-    assert b"test-value in headers found" in res.data
+
+    assert b"testheader: yes" in res.data
+    assert b"user-agent: mycustomagent" in res.data
+
+    four_o_four_url =  url_for('test_endpoint', status_code=404, _external=True)
+    four_o_four_url = four_o_four_url.replace('localhost.localdomain', 'cdio')
+    four_o_four_url = four_o_four_url.replace('localhost', 'cdio')
 
     # now test for 404 errors
     res = client.post(
         url_for("edit_page", uuid=uuid, unpause_on_save=1),
         data={
-              "url": "https://changedetection.io/404",
+              "url": four_o_four_url,
               "tags": "",
-              "headers": "",
               'fetch_backend': "html_webdriver",
               'browser_steps-0-operation': 'Goto site',
               'browser_steps-1-operation': 'Click element',
