@@ -95,7 +95,7 @@ def test_restock_detection(client, live_server):
 
     # We should have a notification
     time.sleep(2)
-    assert os.path.isfile("test-datastore/notification.txt")
+    assert os.path.isfile("test-datastore/notification.txt"), "Notification received"
     os.unlink("test-datastore/notification.txt")
 
     # Default behaviour is to only fire notification when it goes OUT OF STOCK -> IN STOCK
@@ -103,4 +103,9 @@ def test_restock_detection(client, live_server):
     set_original_response()
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    assert not os.path.isfile("test-datastore/notification.txt")
+    assert not os.path.isfile("test-datastore/notification.txt"), "No notification should have fired when it went OUT OF STOCK by default"
+
+    # BUT we should see that it correctly shows "not in stock"
+    res = client.get(url_for("index"))
+    assert b'not-in-stock' in res.data, "Correctly showing NOT IN STOCK in the list after it changed from IN STOCK"
+
