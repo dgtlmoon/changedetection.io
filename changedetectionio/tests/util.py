@@ -242,5 +242,28 @@ def live_server_setup(live_server):
             resp.headers['Content-Type'] = 'application/pdf'
             return resp
 
+    @live_server.app.route('/test-interactive-html-endpoint')
+    def test_interactive_html_endpoint():
+        header_text=""
+        for k,v in request.headers.items():
+            header_text += f"{k}: {v}<br>"
+
+        resp = make_response(f"""
+        <html>
+          <body>
+          Primitive JS check for <pre>changedetectionio/tests/visualselector/test_fetch_data.py</pre>
+            <p id="remove">This text should be removed</p>
+              <form onsubmit="event.preventDefault();">
+            <!-- obfuscated text so that we dont accidentally get a false positive due to conversion of the source :) --->
+                <button name="test-button" onclick="getElementById('remove').remove();getElementById('some-content').innerHTML = atob('SSBzbWVsbCBKYXZhU2NyaXB0IGJlY2F1c2UgdGhlIGJ1dHRvbiB3YXMgcHJlc3NlZCE=')">Click here</button>
+                <div id=some-content></div>
+                <pre>
+                {header_text.lower()}
+                </pre>
+              </body>
+         </html>""", 200)
+        resp.headers['Content-Type'] = 'text/html'
+        return resp
+
     live_server.start()
 

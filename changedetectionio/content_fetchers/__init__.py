@@ -1,10 +1,10 @@
 import sys
 from distutils.util import strtobool
-
+from loguru import logger
 from changedetectionio.content_fetchers.exceptions import BrowserStepsStepException
 import os
 
-visualselector_xpath_selectors = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4, header, footer, section, article, aside, details, main, nav, section, summary'
+visualselector_xpath_selectors = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4,header,footer,section,article,aside,details,main,nav,section,summary'
 
 # available_fetchers() will scan this implementation looking for anything starting with html_
 # this information is used in the form selections
@@ -29,10 +29,15 @@ def available_fetchers():
 # rather than site-specific.
 use_playwright_as_chrome_fetcher = os.getenv('PLAYWRIGHT_DRIVER_URL', False)
 if use_playwright_as_chrome_fetcher:
+    # @note - For now, browser steps always uses playwright
     if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
+        logger.debug('Using Playwright library as fetcher')
         from .playwright import fetcher as html_webdriver
     else:
+        logger.debug('Using direct Python Puppeteer library as fetcher')
         from .puppeteer import fetcher as html_webdriver
 
 else:
+    logger.debug("Falling back to selenium as fetcher")
     from .webdriver_selenium import fetcher as html_webdriver
+

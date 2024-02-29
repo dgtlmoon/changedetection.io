@@ -5,7 +5,8 @@ import websockets.exceptions
 from urllib.parse import urlparse
 
 from loguru import logger
-from changedetectionio.content_fetchers.base import Fetcher
+
+from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, BrowserConnectError
 
 DEFAULT_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
@@ -118,10 +119,11 @@ class fetcher(Fetcher):
             # But I could never get it to fire reliably, so we just inject it straight after
             await inject_evasions_into_page(self.page)
 
+        await self.page.setUserAgent(manage_user_agent(headers=request_headers, current_ua=await self.page.evaluate('navigator.userAgent')))
+
         await self.page.setBypassCSP(True)
         if request_headers:
             await self.page.setExtraHTTPHeaders(request_headers)
-            # @todo check user-agent worked
 
         # SOCKS5 with authentication is not supported (yet)
         # https://github.com/microsoft/playwright/issues/10567
@@ -230,8 +232,12 @@ class fetcher(Fetcher):
                 logger.error('ERROR: Failed to get viewport-only reduced screenshot :(')
                 pass
         finally:
+            # It's good to log here in the case that the browser crashes on shutting down but we still get the data we need
+            logger.success(f"Fetching '{url}' complete, closing page")
             await self.page.close()
+            logger.success(f"Fetching '{url}' complete, closing browser")
             await browser.close()
+        logger.success(f"Fetching '{url}' complete, exiting puppeteer fetch.")
 
     async def main(self, **kwargs):
         await self.fetch_page(**kwargs)
