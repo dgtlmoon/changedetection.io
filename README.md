@@ -91,6 +91,14 @@ We [recommend and use Bright Data](https://brightdata.grsm.io/n0r16zf7eivq) glob
 
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
 
+### We have a Chrome extension!
+
+Easily add the current web page to your changedetection.io tool, simply install the extension and click "Sync" to connect it to your existing changedetection.io install.
+
+[<img src="./docs/chrome-extension-screenshot.png" style="max-width:80%;" alt="Chrome Extension to easily add the current web-page to detect a change."  title="Chrome Extension to easily add the current web-page to detect a change."  />](https://chromewebstore.google.com/detail/changedetectionio-website/kefcfmgmlhmankjmnbijimhofdjekbop)
+
+[Goto the Chrome Webstore to download the extension.](https://chromewebstore.google.com/detail/changedetectionio-website/kefcfmgmlhmankjmnbijimhofdjekbop)
+
 ## Installation
 
 ### Docker
