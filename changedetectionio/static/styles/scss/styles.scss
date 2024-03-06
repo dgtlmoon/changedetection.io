@@ -1096,3 +1096,16 @@ ul {
   white-space: nowrap;
 }
 
+#chrome-extension-link {
+  img {
+    height: 21px;
+    padding: 2px;
+    vertical-align: middle;
+  }
+
+  padding: 9px;
+  border: 1px solid var(--color-grey-800);
+  border-radius: 10px;
+  vertical-align: middle;
+}
+

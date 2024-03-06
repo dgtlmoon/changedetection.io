@@ -1180,3 +1180,13 @@ ul {
   .restock-label.not-in-stock {
     background-color: var(--color-background-button-cancel);
     color: #777; }
+
+#chrome-extension-link {
+  padding: 9px;
+  border: 1px solid var(--color-grey-800);
+  border-radius: 10px;
+  vertical-align: middle; }
+  #chrome-extension-link img {
+    height: 21px;
+    padding: 2px;
+    vertical-align: middle; }
