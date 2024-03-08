@@ -30,6 +30,7 @@ from flask_compress import Compress as FlaskCompress
 from flask_login import current_user
 from flask_paginate import Pagination, get_page_parameter
 from flask_restful import abort, Api
+from flask_cors import CORS
 from flask_wtf import CSRFProtect
 from loguru import logger
 
@@ -52,6 +53,9 @@ app = Flask(__name__,
             static_url_path="",
             static_folder="static",
             template_folder="templates")
+
+# Enable CORS, especially useful for the Chrome extension to operate from anywhere
+CORS(app)
 
 # Super handy for compressing large BrowserSteps responses and others
 FlaskCompress(app)
