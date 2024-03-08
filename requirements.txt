@@ -9,6 +9,7 @@ flask-login>=0.6.3
 flask-paginate
 flask_expects_json~=1.7
 flask_restful
+flask_cors # For the Chrome extension to operate
 flask_wtf~=1.2
 flask~=2.3
 inscriptis~=2.2
