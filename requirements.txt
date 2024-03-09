@@ -36,10 +36,11 @@ dnspython==2.3.0 # related to eventlet fixes
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise~=1.7.1
+apprise~=1.7.3
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
-paho-mqtt
+# and 2.0.0 https://github.com/dgtlmoon/changedetection.io/issues/2241 not yet compatible
+paho-mqtt ~= 1.6
 
 # This mainly affects some ARM builds, which unlike the other builds ignores "ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1"
 # so without this pinning, the newer versions on ARM will forcefully try to build rust, which results in "rust compiler not found"
