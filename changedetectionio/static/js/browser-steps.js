@@ -454,7 +454,7 @@ $(document).ready(function () {
         w = window.open(this.href, "_blank", "width=640,height=480");
         const t = $(event.currentTarget).data('type');
 
-        const url = window.origin + browser_steps_fetch_screenshot_image_url + `&step_n=${step_n}&type=${t}`;
+        const url = window.location.href.split('/').slice(0, self.length-2).join('/') +  browser_steps_fetch_screenshot_image_url + `&step_n=${step_n}&type=${t}`;
         w.document.body.innerHTML = `<!DOCTYPE html>
             <html lang="en">
                 <body>
