@@ -75,7 +75,7 @@ pillow
 # playwright is installed at Dockerfile build time because it's not available on all platforms
 
 # experimental release
-pyppeteer-ng==2.0.0rc2
+pyppeteer-ng==2.0.0rc5
 
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup
 pytest ~=7.2
