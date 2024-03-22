@@ -185,10 +185,12 @@ def main():
     if ssl_mode:
         # @todo finalise SSL config, but this should get you in the right direction if you need it.
         eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen((host, port), s_type),
+                                               log=logger,
                                                certfile='cert.pem',
                                                keyfile='privkey.pem',
                                                server_side=True), app)
 
     else:
-        eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
+        eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app,
+                             log=logger)
 
