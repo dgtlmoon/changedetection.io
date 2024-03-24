@@ -161,6 +161,8 @@ function isItemInStock() {
         const element = elementsToScan[i];
         // outside the 'fold' or some weird text in the heading area
         // .getBoundingClientRect() was causing a crash in chrome 119, can only be run on contentVisibility != hidden
+
+         // Should be in the "above the fold" plus about 150px
         if (element.getBoundingClientRect().top + window.scrollY >= vh + 150 || element.getBoundingClientRect().top + window.scrollY <= 100) {
             continue
         }
