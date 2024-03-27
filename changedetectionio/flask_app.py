@@ -30,6 +30,7 @@ from flask_compress import Compress as FlaskCompress
 from flask_login import current_user
 from flask_paginate import Pagination, get_page_parameter
 from flask_restful import abort, Api
+from flask_cors import CORS
 from flask_wtf import CSRFProtect
 from loguru import logger
 
@@ -52,6 +53,9 @@ app = Flask(__name__,
             static_url_path="",
             static_folder="static",
             template_folder="templates")
+
+# Enable CORS, especially useful for the Chrome extension to operate from anywhere
+CORS(app)
 
 # Super handy for compressing large BrowserSteps responses and others
 FlaskCompress(app)
@@ -1426,6 +1430,13 @@ def changedetection_app(config=None, datastore_o=None):
                     # Recheck and require a full reprocessing
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
             flash("{} watches queued for rechecking".format(len(uuids)))
+
+        elif (op == 'clear-errors'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid]["last_error"] = False
+            flash(f"{len(uuids)} watches errors cleared")
 
         elif (op == 'clear-history'):
             for uuid in uuids:
