@@ -11,7 +11,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
+        python-version: "3.12"
     - name: Install pypa/build
       run: >-
         python3 -m
@@ -38,10 +38,10 @@ jobs:
       with:
         name: python-package-distributions
         path: dist/
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     - name: Test that the basic pip built package runs without error
       run: |
         set -ex
