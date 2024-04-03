@@ -6,7 +6,7 @@ import queue
 import threading
 import time
 from copy import deepcopy
-from distutils.util import strtobool
+from changedetectionio.strtobool import strtobool
 from functools import wraps
 from threading import Event
 

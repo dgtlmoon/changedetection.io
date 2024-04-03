@@ -1,5 +1,5 @@
 
-from distutils.util import strtobool
+from changedetectionio.strtobool import strtobool
 from flask import Blueprint, flash, redirect, url_for
 from flask_login import login_required
 from changedetectionio.store import ChangeDetectionStore

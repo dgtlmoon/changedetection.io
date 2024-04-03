@@ -1,4 +1,4 @@
-from distutils.util import strtobool
+from changedetectionio.strtobool import strtobool
 
 from flask import (
     flash

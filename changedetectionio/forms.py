@@ -1,6 +1,6 @@
 import os
 import re
-from distutils.util import strtobool
+from changedetectionio.strtobool import strtobool
 
 from wtforms import (
     BooleanField,
