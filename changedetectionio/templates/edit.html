@@ -7,7 +7,8 @@
 <script>
     const browser_steps_available_screenshots=JSON.parse('{{ watch.get_browsersteps_available_screenshots|tojson }}');
     const browser_steps_config=JSON.parse('{{ browser_steps_config|tojson }}');
-    const browser_steps_fetch_screenshot_image_url="{{url_for('browser_steps.browser_steps_fetch_screenshot_image', uuid=uuid)}}";
+    <!-- Should be _external so that firefox and others load it more reliably -->
+    const browser_steps_fetch_screenshot_image_url="{{url_for('browser_steps.browser_steps_fetch_screenshot_image', uuid=uuid, _external=True)}}";
     const browser_steps_last_error_step={{ watch.browser_steps_last_error_step|tojson }};
     const browser_steps_start_url="{{url_for('browser_steps.browsersteps_start_session', uuid=uuid)}}";
     const browser_steps_sync_url="{{url_for('browser_steps.browsersteps_ui_update', uuid=uuid)}}";
