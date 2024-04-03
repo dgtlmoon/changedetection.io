@@ -12,7 +12,7 @@
 #
 #
 
-from distutils.util import strtobool
+from changedetectionio.strtobool import strtobool
 from flask import Blueprint, request, make_response
 import os
 
