@@ -1,7 +1,10 @@
 # Used by Pyppeteer
 pyee
 
-eventlet==0.33.3 # related to dnspython fixes
+# eventlet 0.33.3 was related to dnspython fixes
+# 0.34.1 - fixes python 3.12 "AttributeError: module 'ssl' has no attribute 'wrap_socket'"
+eventlet==0.34.1
+
 feedgen~=0.9
 flask-compress
 # 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)
