@@ -45,7 +45,7 @@ $(document).ready(function() {
       }
     }).done(function(data){
       console.log(data);
-      alert('Sent');
+      alert(data);
     }).fail(function(data){
       console.log(data);
       alert('There was an error communicating with the server.');

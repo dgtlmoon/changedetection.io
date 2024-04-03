@@ -519,26 +519,28 @@ def changedetection_app(config=None, datastore_o=None):
         notification_urls = request.form['notification_urls'].strip().splitlines()
 
         if not notification_urls:
-            logger.debug("Test notification - Trying by group/tag")
-            if request.form['tags'].strip():
+            logger.debug("Test notification - Trying by group/tag in the edit form if available")
+            # On an edit page, we should also fire off to the tags if they have notifications
+            if request.form.get('tags') and request.form['tags'].strip():
                 for k in request.form['tags'].split(','):
                     tag = datastore.tag_exists_by_name(k.strip())
                     notification_urls = tag.get('notifications_urls') if tag and tag.get('notifications_urls') else None
 
-        if not notification_urls:
+        is_global_settings_form = request.args.get('mode', '') == 'global-settings'
+        if not notification_urls and not is_global_settings_form:
+            # In the global settings, use only what is typed currently in the text box
             logger.debug("Test notification - Trying by global system settings notifications")
             if datastore.data['settings']['application'].get('notification_urls'):
                 notification_urls = datastore.data['settings']['application']['notification_urls']
 
 
         if not notification_urls:
-            return make_response({'error': 'No Notification URLs set'}, 400)
+            return 'No Notification URLs set/found'
 
         for n_url in notification_urls:
             if len(n_url.strip()):
                 if not apobj.add(n_url):
-                    message = '{} is not a valid AppRise URL.'.format(n_url)
-                    return make_response({'error': message}, 400)
+                    return f'Error - {n_url} is not a valid AppRise URL.'
 
         try:
             # use the same as when it is triggered, but then override it with the form test values
@@ -563,7 +565,7 @@ def changedetection_app(config=None, datastore_o=None):
         except Exception as e:
             return make_response({'error': str(e)}, 400)
 
-        return 'OK'
+        return 'OK - Sent test notifications'
 
 
     @app.route("/clear_history/<string:uuid>", methods=['GET'])
