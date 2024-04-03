@@ -527,7 +527,8 @@ def changedetection_app(config=None, datastore_o=None):
                     notification_urls = tag.get('notifications_urls') if tag and tag.get('notifications_urls') else None
 
         is_global_settings_form = request.args.get('mode', '') == 'global-settings'
-        if not notification_urls and not is_global_settings_form:
+        is_group_settings_form = request.args.get('mode', '') == 'group-settings'
+        if not notification_urls and not is_global_settings_form and not is_group_settings_form:
             # In the global settings, use only what is typed currently in the text box
             logger.debug("Test notification - Trying by global system settings notifications")
             if datastore.data['settings']['application'].get('notification_urls'):
