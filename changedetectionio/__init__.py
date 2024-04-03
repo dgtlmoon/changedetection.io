@@ -182,7 +182,7 @@ def main():
 
     s_type = socket.AF_INET6 if ipv6_enabled else socket.AF_INET
 
-    wsgi_enable_access_log = logger_level in { 'TRACE', 'DEBUG' }
+    wsgi_enable_access_log = not strtobool(os.getenv('SILENT_WSGI', 'false'))
 
     if ssl_mode:
         # @todo finalise SSL config, but this should get you in the right direction if you need it.
