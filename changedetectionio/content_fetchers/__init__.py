@@ -1,5 +1,5 @@
 import sys
-from distutils.util import strtobool
+from changedetectionio.strtobool import strtobool
 from loguru import logger
 from changedetectionio.content_fetchers.exceptions import BrowserStepsStepException
 import os
