@@ -12,9 +12,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from .form import SingleTag
         add_form = SingleTag(request.form)
         sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
+
+        from collections import Counter
+
+        tag_count = Counter(tag for watch in datastore.data['watching'].values() if watch.get('tags') for tag in watch['tags'])
+
         output = render_template("groups-overview.html",
-                                 form=add_form,
                                  available_tags=sorted_tags,
+                                 form=add_form,
+                                 tag_count=tag_count
                                  )
 
         return output
