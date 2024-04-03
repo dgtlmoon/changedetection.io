@@ -657,7 +657,10 @@ class ChangeDetectionStore:
         return res
 
     def tag_exists_by_name(self, tag_name):
-        return any(v.get('title', '').lower() == tag_name.lower() for k, v in self.__data['settings']['application']['tags'].items())
+        # Check if any tag dictionary has a 'title' attribute matching the provided tag_name
+        tags = self.__data['settings']['application']['tags'].values()
+        return next((v for v in tags if v.get('title', '').lower() == tag_name.lower()),
+                    None)
 
     def get_updates_available(self):
         import inspect

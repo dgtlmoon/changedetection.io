@@ -28,14 +28,10 @@ $(document).ready(function() {
       notification_format: $('#notification_format').val(),
       notification_title: $('#notification_title').val(),
       notification_urls: $('.notification-urls').val(),
+      tags: $('#tags').val(),
       window_url: window.location.href,
     }
 
-
-    if (!data['notification_urls'].length) {
-      alert("Notification URL list is empty, cannot send test.")
-      return;
-    }
 
     $.ajax({
       type: "POST",

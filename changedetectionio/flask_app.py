@@ -516,21 +516,35 @@ def changedetection_app(config=None, datastore_o=None):
 
         watch = datastore.data['watching'].get(watch_uuid) if watch_uuid else None
 
-        # validate URLS
-        if not len(request.form['notification_urls'].strip()):
+        notification_urls = request.form['notification_urls'].strip().splitlines()
+
+        if not notification_urls:
+            logger.debug("Test notification - Trying by group/tag")
+            if request.form['tags'].strip():
+                for k in request.form['tags'].split(','):
+                    tag = datastore.tag_exists_by_name(k.strip())
+                    notification_urls = tag.get('notifications_urls') if tag and tag.get('notifications_urls') else None
+
+        if not notification_urls:
+            logger.debug("Test notification - Trying by global system settings notifications")
+            if datastore.data['settings']['application'].get('notification_urls'):
+                notification_urls = datastore.data['settings']['application']['notification_urls']
+
+
+        if not notification_urls:
             return make_response({'error': 'No Notification URLs set'}, 400)
 
-        for server_url in request.form['notification_urls'].splitlines():
-            if len(server_url.strip()):
-                if not apobj.add(server_url):
-                    message = '{} is not a valid AppRise URL.'.format(server_url)
+        for n_url in notification_urls:
+            if len(n_url.strip()):
+                if not apobj.add(n_url):
+                    message = '{} is not a valid AppRise URL.'.format(n_url)
                     return make_response({'error': message}, 400)
 
         try:
             # use the same as when it is triggered, but then override it with the form test values
             n_object = {
                 'watch_url': request.form['window_url'],
-                'notification_urls': request.form['notification_urls'].splitlines()
+                'notification_urls': notification_urls
             }
 
             # Only use if present, if not set in n_object it should use the default system value
