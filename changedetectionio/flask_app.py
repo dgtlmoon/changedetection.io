@@ -1293,9 +1293,8 @@ def changedetection_app(config=None, datastore_o=None):
 
         url = request.form.get('url').strip()
         if datastore.url_exists(url):
-            flash('The URL {} already exists'.format(url), "error")
-            return redirect(url_for('index'))
-
+            flash(f'Warning, URL {url} already exists', "notice")
+            
         add_paused = request.form.get('edit_and_watch_submit_button') != None
         processor = request.form.get('processor', 'text_json_diff')
         new_uuid = datastore.add_watch(url=url, tag=request.form.get('tags').strip(), extras={'paused': add_paused, 'processor': processor})
