@@ -31,7 +31,7 @@ jsonpath-ng~=1.5.3
 
 # Pinned: module 'eventlet.green.select' has no attribute 'epoll'
 # https://github.com/eventlet/eventlet/issues/805#issuecomment-1640463482
-dnspython==2.3.0 # related to eventlet fixes
+dnspython==2.6.1 # related to eventlet fixes
 
 # jq not available on Windows so must be installed manually
 
