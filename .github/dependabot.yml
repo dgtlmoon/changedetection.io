@@ -4,6 +4,10 @@ updates:
     directory: /
     schedule:
       interval: "weekly"
+    "caronc/apprise":
+      versioning-strategy: "increase"
+      schedule:
+        interval: "daily"
     groups:
       all:
         patterns:
