@@ -32,6 +32,7 @@
 <script src="{{url_for('static_content', group='js', filename='browser-steps.js')}}" defer></script>
 {% endif %}
 
+{% set has_tag_filters_extra="WARNING: Watch has tag/groups set with special filters\n" if has_special_tag_options else '' %}
 <script src="{{url_for('static_content', group='js', filename='recheck-proxy.js')}}" defer></script>
 
 <div class="edit-form monospaced-textarea">
@@ -281,7 +282,7 @@ User-Agent: wonderbra 1.0") }}
                     <div class="pure-control-group">
                         {% set field = render_field(form.include_filters,
                             rows=5,
-                            placeholder="#example
+                            placeholder=has_tag_filters_extra+"#example
 xpath://body/div/span[contains(@class, 'example-class')]",
                             class="m-d")
                         %}
@@ -317,7 +318,7 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                 </span>
                     </div>
                 <fieldset class="pure-control-group">
-                    {{ render_field(form.subtractive_selectors, rows=5, placeholder="header
+                    {{ render_field(form.subtractive_selectors, rows=5, placeholder=has_tag_filters_extra+"header
 footer
 nav
 .stockticker") }}

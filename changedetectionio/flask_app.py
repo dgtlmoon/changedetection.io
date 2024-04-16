@@ -603,6 +603,12 @@ def changedetection_app(config=None, datastore_o=None):
         output = render_template("clear_all_history.html")
         return output
 
+    def _watch_has_tag_options_set(watch):
+        """This should be fixed better so that Tag is some proper Model, a tag is just a Watch also"""
+        for tag_uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
+            if tag_uuid in watch.get('tags', []) and (tag.get('include_filters') or tag.get('subtractive_selectors')):
+                return True
+
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     @login_optionally_required
     # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
@@ -773,6 +779,7 @@ def changedetection_app(config=None, datastore_o=None):
                                      has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
                                      has_empty_checktime=using_default_check_time,
                                      has_extra_headers_file=len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
+                                     has_special_tag_options=_watch_has_tag_options_set(watch=watch),
                                      is_html_webdriver=is_html_webdriver,
                                      jq_support=jq_support,
                                      playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False),
