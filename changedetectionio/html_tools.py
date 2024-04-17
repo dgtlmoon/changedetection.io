@@ -169,15 +169,13 @@ def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=Fals
         # And where the matched result doesn't include something that will cause Inscriptis to add a newline
         # (This way each 'match' reliably has a new-line in the diff)
         # Divs are converted to 4 whitespaces by inscriptis
-        if append_pretty_line_formatting and len(html_block) and (not hasattr( element, 'tag' ) or not element.tag in (['br', 'hr', 'div', 'p'])):
+        if append_pretty_line_formatting and len(html_block) and (not hasattr(element, 'tag') or not element.tag in (['br', 'hr', 'div', 'p'])):
             html_block += TEXT_FILTER_LIST_LINE_SUFFIX
 
-        if type(element) == etree._ElementStringResult:
-            html_block += str(element)
-        elif type(element) == etree._ElementUnicodeResult:
-            html_block += str(element)
+        if isinstance(element, str):
+            html_block += element
         else:
-            html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
+            html_block += etree.tostring(element, pretty_print=True, encoding='utf-8')
 
     return html_block
 
