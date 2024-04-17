@@ -306,7 +306,7 @@ def test_xpath1_lxml(client, live_server):
     ##### #2312
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
-    assert b'_ElementStringResult' not in res.data
+    assert b'_ElementStringResult' not in res.data # tested with 5.1.1 when it was removed and 5.1.0
     assert b'Exception' not in res.data
     res = client.get(
         url_for("preview_page", uuid="first"),
