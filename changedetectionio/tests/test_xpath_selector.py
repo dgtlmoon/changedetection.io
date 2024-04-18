@@ -256,7 +256,7 @@ def test_xpath23_prefix_validation(client, live_server):
     assert b'Deleted' in res.data
 
 def test_xpath1_lxml(client, live_server):
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
 
     d = '''<?xml version="1.0" encoding="UTF-8"?>
     <rss xmlns:taxo="http://purl.org/rss/1.0/modules/taxonomy/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
