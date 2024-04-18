@@ -172,10 +172,12 @@ def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=Fals
         if append_pretty_line_formatting and len(html_block) and (not hasattr(element, 'tag') or not element.tag in (['br', 'hr', 'div', 'p'])):
             html_block += TEXT_FILTER_LIST_LINE_SUFFIX
 
-        if isinstance(element, str):
+        # Some kind of text, UTF-8 or other
+        if isinstance(element, (str, bytes)):
             html_block += element
         else:
-            html_block += etree.tostring(element, pretty_print=True, encoding='utf-8')
+            # Return the HTML which will get parsed as text
+            html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
 
     return html_block
 
