@@ -52,8 +52,7 @@ cryptography~=3.4
 beautifulsoup4
 
 # XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
-# #2312 - In 5.1.1 _ElementStringResult was removed -  ImportError: cannot import name '_ElementStringResult' from 'lxml.etree'
-lxml
+lxml >=4.8.0,<6
 
 # XPath 2.0-3.1 support - 4.2.0 broke something?
 elementpath==4.1.5
