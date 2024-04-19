@@ -462,7 +462,7 @@ class update_worker(threading.Thread):
                     except Exception as e:
                         logger.error(f"Exception reached processing watch UUID: {uuid}")
                         logger.error(str(e))
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Exception: " + str(e)})
                         # Other serious error
                         process_changedetection_results = False
 #                        import traceback
