@@ -1,4 +1,6 @@
 from changedetectionio.strtobool import strtobool
+from changedetectionio.safe_jinja import render as jinja_render
+
 import os
 import re
 import time
@@ -137,12 +139,11 @@ class model(dict):
 
         ready_url = url
         if '{%' in url or '{{' in url:
-            from jinja2 import Environment
             # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
-            jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
             try:
-                ready_url = str(jinja2_env.from_string(url).render())
+                ready_url = jinja_render(template_str=url)
             except Exception as e:
+                logger.critical(f"Invalid URL template for: '{url}' - {str(e)}")
                 from flask import (
                     flash, Markup, url_for
                 )

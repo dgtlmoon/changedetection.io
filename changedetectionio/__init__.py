@@ -7,7 +7,7 @@ __version__ = '0.45.20'
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
 import os
-#os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
+os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
 import eventlet
 import eventlet.wsgi
 import getopt

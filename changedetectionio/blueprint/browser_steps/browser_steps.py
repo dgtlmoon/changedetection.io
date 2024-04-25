@@ -7,6 +7,7 @@ from random import randint
 from loguru import logger
 
 from changedetectionio.content_fetchers.base import manage_user_agent
+from changedetectionio.safe_jinja import render as jinja_render
 
 # Two flags, tell the JS which of the "Selector" or "Value" field should be enabled in the front end
 # 0- off, 1- on
@@ -64,14 +65,12 @@ class steppable_browser_interface():
         action_handler = getattr(self, "action_" + call_action_name)
 
         # Support for Jinja2 variables in the value and selector
-        from jinja2 import Environment
-        jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
 
         if selector and ('{%' in selector or '{{' in selector):
-            selector = str(jinja2_env.from_string(selector).render())
+            selector = jinja_render(template_str=selector)
 
         if optional_value and ('{%' in optional_value or '{{' in optional_value):
-            optional_value = str(jinja2_env.from_string(optional_value).render())
+            optional_value = jinja_render(template_str=optional_value)
 
         action_handler(selector, optional_value)
         self.page.wait_for_timeout(1.5 * 1000)
