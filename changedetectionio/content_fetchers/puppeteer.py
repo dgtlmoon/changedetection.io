@@ -173,7 +173,7 @@ class fetcher(Fetcher):
         # Run Browser Steps here
         # @todo not yet supported, we switch to playwright in this case
         #            if self.browser_steps_get_valid_steps():
-        #                self.iterate_browser_steps()
+        #                self.iterate_browser_steps(url)
 
         await asyncio.sleep(1 + extra_wait)
 
@@ -244,4 +244,3 @@ class fetcher(Fetcher):
             ), timeout=max_time))
         except asyncio.TimeoutError:
             raise(BrowserFetchTimedOut(msg=f"Browser connected but was unable to process the page in {max_time} seconds."))
-

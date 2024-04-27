@@ -113,14 +113,14 @@ class Fetcher():
     def browser_steps_get_valid_steps(self):
         if self.browser_steps is not None and len(self.browser_steps):
             valid_steps = filter(
-                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
-                self.browser_steps)
+                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one'),
+                self.browser_steps[1:]) # Skip the first one, it is already handled before the browser steps are run
 
             return valid_steps
 
         return None
 
-    def iterate_browser_steps(self):
+    def iterate_browser_steps(self, url):
         from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
         from playwright._impl._errors import TimeoutError, Error
         from changedetectionio.safe_jinja import render as jinja_render
@@ -145,6 +145,11 @@ class Fetcher():
                         optional_value = jinja_render(template_str=step['optional_value'])
                     if '{%' in step['selector'] or '{{' in step['selector']:
                         selector = jinja_render(template_str=step['selector'])
+
+                    # If the operation is Goto site, change it to Goto URL and use the url as the optional value
+                    if step['operation'] == 'Goto site':
+                        step['operation'] = 'Goto URL'
+                        optional_value = url
 
                     getattr(interface, "call_action")(action_name=step['operation'],
                                                       selector=selector,
