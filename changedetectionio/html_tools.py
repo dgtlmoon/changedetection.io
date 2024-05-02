@@ -144,7 +144,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     tree = forest_transplanting(tree)
     html_block = ""
 
-    r = elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser, fragment=True)
+    r = elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser, fragment=True, item=tree[0])
     #@note: //title/text() wont work where <title>CDATA..
 
     if type(r) != list:
