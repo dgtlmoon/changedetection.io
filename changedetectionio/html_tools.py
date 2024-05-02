@@ -110,6 +110,24 @@ def elementpath_tostring(obj):
 
     return str(obj)
 
+def forest_transplanting(root):
+    """
+    libxml2 violates DOM rules. it means there can be multiple root element
+    nodes. So I choose just transplating them to a new root by default.
+    See also, https://gitlab.gnome.org/GNOME/libxml2/-/issues/716
+    This will emulate xpath1 of html of libxml2 like '/html[2]/*'.
+    To make this function work, 'fragment=True' in elementpath.select is required.
+    """
+    from lxml import etree
+    from itertools import chain
+    root_siblings_preceding = [ s for s in root.itersiblings(preceding=True)]
+    root_siblings_preceding.reverse()
+    root_siblings = [s for s in root.itersiblings()]
+    new_root = etree.Element("new_root")
+    for node in chain(root_siblings_preceding, [root], root_siblings):
+        new_root.append(node)
+    return new_root
+
 # Return str Utf-8 of matched rules
 def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
     from lxml import etree, html
@@ -123,9 +141,10 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
         parser = etree.XMLParser(strip_cdata=False)
 
     tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
+    tree = forest_transplanting(tree)
     html_block = ""
 
-    r = elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser)
+    r = elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser, fragment=True)
     #@note: //title/text() wont work where <title>CDATA..
 
     if type(r) != list:
