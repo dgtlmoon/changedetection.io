@@ -5,8 +5,11 @@ from .util import live_server_setup, wait_for_all_checks, extract_UUID_from_clie
 
 
 instock_props = [
+    # LD JSON
     '<script type=\'application/ld+json\'>[{"@context":"http://schema.org","@type":"WebSite","name":"Velkoobchod České Díly.cz","description":"Velkoobchodní a maloobchodní prodej originálních a náhradních dílů pro širokou škálu osobních a užitkových vozidel. Jsme největší obchod s náhradními díly v Čechách. Kamenná prodejna v Praze. Široký výběr značek za nejnižší ceny na trhu. MANN-FILTER, Bosch, LUK, VALEO, KYB, NGK, TRW, Brembo, SACHS, FEBI BILSTENI, ATE, INA, CONTIT.VlastnímeECH, PIERBURG, CASTROL , MOTUL, MOBIL, SHELL ,TOTAL ,elf ,LIQUI MOLY , wynn`s a další. Autodoplňky. Autokosmetika. Vybavení pro dílny. Nabídka olejů všech druhů a značek. Nejlevnější autodlíly.","url":"https://ceskedily.cz/autodily/dodge/challenger-kupe/5.7-280kw/filtr?productId=3038915","potentialAction":{"@type":"SearchAction","target":"https://ceskedily.cz/vyhledavani?search={query}","query-input":{"@type":"PropertyValueSpecification","valueRequired":"http://schema.org/True","valueName":"query"}},"publisher":{"@context":"http://schema.org","@type":"Organization","name":"Velkoobchod České Díly.cz","url":"https://ceskedily.cz/","logo":"https://data.kvikymart.space/ceskedily.cz/images/0m/77k/77026/77026_3195959275.png","sameAs":["https://twitter.com/CeskeD","https://www.instagram.com/ceskedily/?hl=cs"]},"sameAs":["https://twitter.com/CeskeD","https://www.instagram.com/ceskedily/?hl=cs"]},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":0,"item":{"@id":"/autodily","name":"Autodíly pro osobní vozy"}},{"@type":"ListItem","position":1,"item":{"@id":"/autodily/dodge","name":"DODGE"}},{"@type":"ListItem","position":2,"item":{"@id":"https://ceskedily.cz/autodily/dodge/challenger-kupe/5.7-280kw","name":"CHALLENGER kupé • 5.7 • 280 kW"}}]},{"@context":"http://schema.org","@type":"Product","name":"Olejový filtr K&N Filters HP-2010","description":"","mpn":"HP-2010","brand":"K&N Filters","image":"https://digital-assets.tecalliance.services/images/1600/c8fe1f1428021f4fe17a39297686178b04cba885.jpg","offers":{"@context":"http://schema.org","@type":"Offer","price":294.0,"priceCurrency":"CZK","url":"https://ceskedily.cz/olejovy-filtr-k-n-filters-hp-2010","availability":"http://schema.org/InStock"}}]</script>',
     '<script id="product-jsonld" type="application/ld+json">{"@context":"https://schema.org","@type":"Product","brand":{"@type":"Brand","name":"Ubiquiti"},"name":"UniFi Express","sku":"UX","description":"Impressively compact UniFi Cloud Gateway and WiFi 6 access point that runs UniFi Network. Powers an entire network or simply meshes as an access point.","url":"https://store.ui.com/us/en/products/ux","image":{"@type":"ImageObject","url":"https://cdn.ecomm.ui.com/products/4ed25b4c-db92-4b98-bbf3-b0989f007c0e/123417a2-895e-49c7-ba04-b6cd8f6acc03.png","width":"1500","height":"1500"},"offers":{"@type":"Offer","availability":"https://schema.org/InStock","priceSpecification":{"@type":"PriceSpecification","price":149,"priceCurrency":"USD","valueAddedTaxIncluded":false}}}</script>',
+    # Microdata
+    '<div itemscope itemtype="https://schema.org/Product"><h1 itemprop="name">Example Product</h1><p itemprop="description">This is a sample product description.</p><div itemprop="offers" itemscope itemtype="https://schema.org/Offer"><p>Price: <span itemprop="price">$19.99</span></p><link itemprop="availability" href="https://schema.org/InStock" /></div></div>'
 ]
 
 out_of_stock_props = [
@@ -43,7 +46,7 @@ def test_restock_itemprop_basic(client, live_server):
         set_original_response(props_markup=p)
         client.post(
             url_for("form_quick_watch_add"),
-            data={"url": test_url, "tags": '', 'processor': 'restock_diff'},
+            data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
             follow_redirects=True
         )
         wait_for_all_checks(client)

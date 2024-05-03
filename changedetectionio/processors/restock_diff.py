@@ -37,30 +37,43 @@ def get_itemprop_availability(html_content):
     # Try/prefer the structured data first if it exists
     # https://schema.org/ItemAvailability Which strings mean we should consider it in stock?
 
+    # Chewing on random content could throw any kind of exception, best to catch it and move on if possible.
+
+    #LD-JSON type
     value = None
     try:
         if has_ldjson_product_info(html_content):
             value = extract_json_as_string(html_content.lower(), "json:$..offers.availability", ensure_is_ldjson_info_type=True)
-
-#            value = xpath_filter("//*[@itemtype='https://schema.org/Offer']//*[@itemprop='availability']/@href", ldjson)
-
-
-        if value:
-            value = re.sub(r'(?i)^(https|http)://schema.org/', '', value.strip(' "\''))
+            if value:
+                value = re.sub(r'(?i)^(https|http)://schema.org/', '', value.strip(' "\''))
 
     except Exception as e:
-        print("Exception getting get_itemprop_availability (itemprop='availability')", str(e))
+        # This should be OK, we will attempt the scraped version instead
+        logger.warning(f"Exception getting get_itemprop_availability 'LD-JSON' - {str(e)}")
 
-    # Try RDFa style
+    # Microdata style
+    if not value:
+        try:
+            value = xpath_filter("//*[@itemtype='https://schema.org/Offer']//*[@itemprop='availability']/@href", html_content)
+            if value:
+                value = re.sub(r'(?i)^(https|http)://schema.org/', '', value.strip(' "\'').lower())
+
+        except Exception as e:
+            # This should be OK, we will attempt the scraped version instead
+            logger.warning(f"Exception getting get_itemprop_availability 'Microdata' - {str(e)}")
+
+    # RDFa style
     if not value:
         try:
             value = xpath_filter("//*[@property='schema:availability']/@content", html_content)
             if value:
-                value = re.sub(r'(?i)^http(s)+://schema.org/', '', value.strip())
+                value = re.sub(r'(?i)^(https|http)://schema.org/', '', value.strip(' "\'').lower())
 
         except Exception as e:
-            print("Exception getting get_itemprop_availability ('schema:availability')", str(e))
+            # This should be OK, we will attempt the scraped version instead
+            logger.warning(f"Exception getting get_itemprop_availability 'RDFa' - {str(e)}")
 
+    # @todo this should return dict/tuple of instock + price
     return value
 
 class perform_site_check(difference_detection_processor):
