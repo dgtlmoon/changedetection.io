@@ -1,5 +1,8 @@
 from . import difference_detection_processor
-from ..html_tools import xpath1_filter as xpath_filter # xpath1 is a lot faster and is sufficient here
+from ..html_tools import xpath1_filter as xpath_filter
+# xpath1 is a lot faster and is sufficient here
+from ..html_tools import extract_json_as_string, has_ldjson_product_info
+
 from copy import deepcopy
 from loguru import logger
 import hashlib
@@ -36,9 +39,14 @@ def get_itemprop_availability(html_content):
 
     value = None
     try:
-        value = xpath_filter("//*[@itemtype='https://schema.org/Offer']//*[@itemprop='availability']/@href", html_content)
+        if has_ldjson_product_info(html_content):
+            value = extract_json_as_string(html_content.lower(), "json:$..offers.availability", ensure_is_ldjson_info_type=True)
+
+#            value = xpath_filter("//*[@itemtype='https://schema.org/Offer']//*[@itemprop='availability']/@href", ldjson)
+
+
         if value:
-            value = re.sub(r'(?i)^http(s)+://schema.org/', '', value.strip())
+            value = re.sub(r'(?i)^(https|http)://schema.org/', '', value.strip(' "\''))
 
     except Exception as e:
         print("Exception getting get_itemprop_availability (itemprop='availability')", str(e))
@@ -82,13 +90,14 @@ class perform_site_check(difference_detection_processor):
 
         if availability:
             self.fetcher.instock_data = availability # Stored as the text snapshot
+            # @todo: Configurable?
             if any(availability in s for s in
                    [
-                       'InStock',
-                       'InStoreOnly',
-                       'LimitedAvailability',
-                       'OnlineOnly',
-                       'PreSale'  # Debatable?
+                       'instock',
+                       'Instoreonly',
+                       'limitedavailability',
+                       'onlineonly',
+                       'presale'  # Debatable?
                    ]):
                 update_obj['in_stock'] = True
             else:
@@ -99,13 +108,14 @@ class perform_site_check(difference_detection_processor):
             # 'Possibly in stock' comes from stock-not-in-stock.js when no string found above the fold.
             update_obj['in_stock'] = True if self.fetcher.instock_data == 'Possibly in stock' else False
             logger.debug(f"Watch UUID {uuid} restock check returned '{self.fetcher.instock_data}' from JS scraper.")
-        else:
+
+        if not self.fetcher.instock_data:
             raise UnableToExtractRestockData(status_code=self.fetcher.status_code)
 
         # Main detection method
         fetched_md5 = None
-        if self.fetcher.instock_data:
-            fetched_md5 = hashlib.md5(self.fetcher.instock_data.encode('utf-8')).hexdigest()
+
+        fetched_md5 = hashlib.md5(self.fetcher.instock_data.encode('utf-8')).hexdigest()
 
         # The main thing that all this at the moment comes down to :)
         changed_detected = False
