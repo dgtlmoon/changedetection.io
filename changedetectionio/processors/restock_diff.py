@@ -46,6 +46,7 @@ def get_itemprop_availability(html_content):
             value = extract_json_as_string(html_content.lower(), "json:$..offers.availability", ensure_is_ldjson_info_type=True)
             if value:
                 value = re.sub(r'(?i)^(https|http)://schema.org/', '', value.strip(' "\''))
+                logger.debug(f"Has 'LD-JSON' - '{value}'")
 
     except Exception as e:
         # This should be OK, we will attempt the scraped version instead
@@ -57,6 +58,7 @@ def get_itemprop_availability(html_content):
             value = xpath_filter("//*[@itemtype='https://schema.org/Offer']//*[@itemprop='availability']/@href", html_content)
             if value:
                 value = re.sub(r'(?i)^(https|http)://schema.org/', '', value.strip(' "\'').lower())
+                logger.debug(f"Has 'Microdata' - '{value}'")
 
         except Exception as e:
             # This should be OK, we will attempt the scraped version instead
@@ -68,6 +70,7 @@ def get_itemprop_availability(html_content):
             value = xpath_filter("//*[@property='schema:availability']/@content", html_content)
             if value:
                 value = re.sub(r'(?i)^(https|http)://schema.org/', '', value.strip(' "\'').lower())
+                logger.debug(f"Has 'RDFa' - '{value}'")
 
         except Exception as e:
             # This should be OK, we will attempt the scraped version instead
