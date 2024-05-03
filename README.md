@@ -17,7 +17,7 @@ _Live your data-life pro-actively._
 - Nothing to install, access via browser login after signup.
 - Super fast, no registration needed setup.
 - Get started watching and receiving website change notifications straight away.
-
+- See our [tutorials and how-to page for more inspiration](https://changedetection.io/tutorials) 
 
 ### Target specific parts of the webpage using the Visual Selector tool.
 
@@ -91,6 +91,14 @@ We [recommend and use Bright Data](https://brightdata.grsm.io/n0r16zf7eivq) glob
 
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
 
+### We have a Chrome extension!
+
+Easily add the current web page to your changedetection.io tool, simply install the extension and click "Sync" to connect it to your existing changedetection.io install.
+
+[<img src="./docs/chrome-extension-screenshot.png" style="max-width:80%;" alt="Chrome Extension to easily add the current web-page to detect a change."  title="Chrome Extension to easily add the current web-page to detect a change."  />](https://chromewebstore.google.com/detail/changedetectionio-website/kefcfmgmlhmankjmnbijimhofdjekbop)
+
+[Goto the Chrome Webstore to download the extension.](https://chromewebstore.google.com/detail/changedetectionio-website/kefcfmgmlhmankjmnbijimhofdjekbop)
+
 ## Installation
 
 ### Docker
@@ -98,7 +106,7 @@ Please :star: star :star: this project and help it grow! https://github.com/dgtl
 With Docker composer, just clone this repository and..
 
 ```bash
-$ docker-compose up -d
+$ docker compose up -d
 ```
 
 Docker standalone
@@ -137,10 +145,10 @@ docker rm $(docker ps -a -f name=changedetection.io -q)
 docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
 ```
 
-### docker-compose
+### docker compose
 
 ```bash
-docker-compose pull && docker-compose up -d
+docker compose pull && docker compose up -d
 ```
 
 See the wiki for more information https://github.com/dgtlmoon/changedetection.io/wiki
@@ -249,7 +257,7 @@ Supports managing the website watch list [via our API](https://changedetection.i
 Do you use changedetection.io to make money? does it save you time or money? Does it make your life easier? less stressful? Remember, we write this software when we should be doing actual paid work, we have to buy food and pay rent just like you.
 
 
-Firstly, consider taking out a [change detection monthly subscription - unlimited checks and watches](https://changedetection.io?src=github) , even if you don't use it, you still get the warm fuzzy feeling of helping out the project. (And who knows, you might just use it!)
+Firstly, consider taking out an officially supported [website change detection subscription](https://changedetection.io?src=github) , even if you don't use it, you still get the warm fuzzy feeling of helping out the project. (And who knows, you might just use it!)
 
 Or directly donate an amount PayPal [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?hosted_button_id=7CP6HR9ZCNDYJ)
 
@@ -273,3 +281,9 @@ I offer commercial support, this software is depended on by network security, ae
 ## Third-party licenses
 
 changedetectionio.html_tools.elementpath_tostring: Copyright (c), 2018-2021, SISSA (Scuola Internazionale Superiore di Studi Avanzati), Licensed under [MIT license](https://github.com/sissaschool/elementpath/blob/master/LICENSE)
+
+## Contributors
+
+Recognition of fantastic contributors to the project
+
+- Constantin Hong https://github.com/Constantin1489

@@ -1,4 +1,7 @@
-eventlet>=0.33.3 # related to dnspython fixes
+# Used by Pyppeteer
+pyee
+
+eventlet==0.33.3 # related to dnspython fixes
 feedgen~=0.9
 flask-compress
 # 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)
@@ -6,6 +9,7 @@ flask-login>=0.6.3
 flask-paginate
 flask_expects_json~=1.7
 flask_restful
+flask_cors # For the Chrome extension to operate
 flask_wtf~=1.2
 flask~=2.3
 inscriptis~=2.2
@@ -19,21 +23,25 @@ validators~=0.21
 brotli~=1.0
 requests[socks]
 
-urllib3>1.26
+urllib3==1.26.18
 chardet>2.3.0
 
 wtforms~=3.0
 jsonpath-ng~=1.5.3
 
-dnspython~=2.4 # related to eventlet fixes
+# Pinned: module 'eventlet.green.select' has no attribute 'epoll'
+# https://github.com/eventlet/eventlet/issues/805#issuecomment-1640463482
+dnspython==2.3.0 # related to eventlet fixes
 
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise~=1.6.0
+apprise~=1.7.4
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
-paho-mqtt
+# and 2.0.0 https://github.com/dgtlmoon/changedetection.io/issues/2241 not yet compatible
+# use v1.x due to https://github.com/eclipse/paho.mqtt.python/issues/814
+paho-mqtt>=1.6.1,<2.0.0
 
 # This mainly affects some ARM builds, which unlike the other builds ignores "ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1"
 # so without this pinning, the newer versions on ARM will forcefully try to build rust, which results in "rust compiler not found"
@@ -44,10 +52,10 @@ cryptography~=3.4
 beautifulsoup4
 
 # XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
-lxml
+lxml >=4.8.0,<6
 
-# XPath 2.0-3.1 support
-elementpath
+# XPath 2.0-3.1 support - 4.2.0 broke something?
+elementpath==4.1.5
 
 selenium~=4.14.0
 
@@ -66,9 +74,14 @@ jq~=1.3; python_version >= "3.8" and sys_platform == "linux"
 pillow
 # playwright is installed at Dockerfile build time because it's not available on all platforms
 
+# experimental release
+pyppeteer-ng==2.0.0rc5
+
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup
 pytest ~=7.2
 pytest-flask ~=1.2
 
 # Pin jsonschema version to prevent build errors on armv6 while rpds-py wheels aren't available (1708)
 jsonschema==4.17.3
+
+loguru

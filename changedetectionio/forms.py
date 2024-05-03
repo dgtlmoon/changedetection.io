@@ -1,6 +1,6 @@
 import os
 import re
-from distutils.util import strtobool
+from changedetectionio.strtobool import strtobool
 
 from wtforms import (
     BooleanField,
@@ -27,7 +27,7 @@ from validators.url import url as url_validator
 # each select <option data-enabled="enabled-0-0"
 from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
 
-from changedetectionio import content_fetcher, html_tools
+from changedetectionio import html_tools, content_fetchers
 
 from changedetectionio.notification import (
     valid_notification_formats,
@@ -43,6 +43,7 @@ valid_method = {
     'PUT',
     'PATCH',
     'DELETE',
+    'OPTIONS',
 }
 
 default_method = 'GET'
@@ -166,33 +167,31 @@ class ValidateContentFetcherIsReady(object):
         self.message = message
 
     def __call__(self, form, field):
-        import urllib3.exceptions
-        from changedetectionio import content_fetcher
         return
 
 # AttributeError: module 'changedetectionio.content_fetcher' has no attribute 'extra_browser_unlocked<>ASDF213r123r'
         # Better would be a radiohandler that keeps a reference to each class
-        if field.data is not None and field.data != 'system':
-            klass = getattr(content_fetcher, field.data)
-            some_object = klass()
-            try:
-                ready = some_object.is_ready()
-
-            except urllib3.exceptions.MaxRetryError as e:
-                driver_url = some_object.command_executor
-                message = field.gettext('Content fetcher \'%s\' did not respond.' % (field.data))
-                message += '<br>' + field.gettext(
-                    'Be sure that the selenium/webdriver runner is running and accessible via network from this container/host.')
-                message += '<br>' + field.gettext('Did you follow the instructions in the wiki?')
-                message += '<br><br>' + field.gettext('WebDriver Host: %s' % (driver_url))
-                message += '<br><a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">Go here for more information</a>'
-                message += '<br>'+field.gettext('Content fetcher did not respond properly, unable to use it.\n %s' % (str(e)))
-
-                raise ValidationError(message)
-
-            except Exception as e:
-                message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.\n %s')
-                raise ValidationError(message % (field.data, e))
+        # if field.data is not None and field.data != 'system':
+        #     klass = getattr(content_fetcher, field.data)
+        #     some_object = klass()
+        #     try:
+        #         ready = some_object.is_ready()
+        #
+        #     except urllib3.exceptions.MaxRetryError as e:
+        #         driver_url = some_object.command_executor
+        #         message = field.gettext('Content fetcher \'%s\' did not respond.' % (field.data))
+        #         message += '<br>' + field.gettext(
+        #             'Be sure that the selenium/webdriver runner is running and accessible via network from this container/host.')
+        #         message += '<br>' + field.gettext('Did you follow the instructions in the wiki?')
+        #         message += '<br><br>' + field.gettext('WebDriver Host: %s' % (driver_url))
+        #         message += '<br><a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">Go here for more information</a>'
+        #         message += '<br>'+field.gettext('Content fetcher did not respond properly, unable to use it.\n %s' % (str(e)))
+        #
+        #         raise ValidationError(message)
+        #
+        #     except Exception as e:
+        #         message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.\n %s')
+        #         raise ValidationError(message % (field.data, e))
 
 
 class ValidateNotificationBodyAndTitleWhenURLisSet(object):
@@ -237,21 +236,26 @@ class ValidateJinja2Template(object):
     def __call__(self, form, field):
         from changedetectionio import notification
 
-        from jinja2 import Environment, BaseLoader, TemplateSyntaxError, UndefinedError
+        from jinja2 import BaseLoader, TemplateSyntaxError, UndefinedError
+        from jinja2.sandbox import ImmutableSandboxedEnvironment
         from jinja2.meta import find_undeclared_variables
+        import jinja2.exceptions
 
+        # Might be a list of text, or might be just text (like from the apprise url list)
+        joined_data = ' '.join(map(str, field.data)) if isinstance(field.data, list) else f"{field.data}"
 
         try:
-            jinja2_env = Environment(loader=BaseLoader)
+            jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader)
             jinja2_env.globals.update(notification.valid_tokens)
-
-            rendered = jinja2_env.from_string(field.data).render()
+            jinja2_env.from_string(joined_data).render()
         except TemplateSyntaxError as e:
             raise ValidationError(f"This is not a valid Jinja2 template: {e}") from e
         except UndefinedError as e:
             raise ValidationError(f"A variable or function is not defined: {e}") from e
+        except jinja2.exceptions.SecurityError as e:
+            raise ValidationError(f"This is not a valid Jinja2 template: {e}") from e
 
-        ast = jinja2_env.parse(field.data)
+        ast = jinja2_env.parse(joined_data)
         undefined = ", ".join(find_undeclared_variables(ast))
         if undefined:
             raise ValidationError(
@@ -416,11 +420,11 @@ class quickWatchForm(Form):
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
 
-    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers()])
+    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
-    fetch_backend = RadioField(u'Fetch Method', choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    fetch_backend = RadioField(u'Fetch Method', choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1,
                                                                                                                                     message="Should contain one or more seconds")])
@@ -464,6 +468,7 @@ class watchForm(commonSettingsForm):
     method = SelectField('Request method', choices=valid_method, default=default_method)
     ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
     check_unique_lines = BooleanField('Only trigger when unique lines appear', default=False)
+    sort_text_alphabetically =  BooleanField('Sort text alphabetically', default=False)
 
     filter_text_added = BooleanField('Added lines', default=True)
     filter_text_replaced = BooleanField('Replaced/changed lines', default=True)
@@ -499,11 +504,9 @@ class watchForm(commonSettingsForm):
             result = False
 
         # Attempt to validate jinja2 templates in the URL
-        from jinja2 import Environment
-        # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
-        jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
         try:
-            ready_url = str(jinja2_env.from_string(self.url.data).render())
+            from changedetectionio.safe_jinja import render as jinja_render
+            jinja_render(template_str=self.url.data)
         except Exception as e:
             self.url.errors.append('Invalid template syntax')
             result = False
@@ -550,7 +553,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
                            render_kw={"placeholder": os.getenv('BASE_URL', 'Not set')}
                            )
     empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
-    fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetcher.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
     ignore_whitespace = BooleanField('Ignore whitespace')

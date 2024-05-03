@@ -1,25 +1,19 @@
 #!/usr/bin/python3
 
-from changedetectionio import queuedWatchMetaData
-from copy import deepcopy
-from distutils.util import strtobool
-from feedgen.feed import FeedGenerator
-from flask_compress import Compress as FlaskCompress
-from flask_login import current_user
-from flask_restful import abort, Api
-from flask_wtf import CSRFProtect
-from functools import wraps
-from threading import Event
 import datetime
-import flask_login
-import logging
 import os
-import pytz
 import queue
 import threading
 import time
+from .safe_jinja import render as jinja_render
+from changedetectionio.strtobool import strtobool
+from copy import deepcopy
+from functools import wraps
+from threading import Event
+import flask_login
+import pytz
 import timeago
-
+from feedgen.feed import FeedGenerator
 from flask import (
     Flask,
     abort,
@@ -32,10 +26,16 @@ from flask import (
     session,
     url_for,
 )
-
+from flask_compress import Compress as FlaskCompress
+from flask_login import current_user
 from flask_paginate import Pagination, get_page_parameter
+from flask_restful import abort, Api
+from flask_cors import CORS
+from flask_wtf import CSRFProtect
+from loguru import logger
 
 from changedetectionio import html_tools, __version__
+from changedetectionio import queuedWatchMetaData
 from changedetectionio.api import api_v1
 
 datastore = None
@@ -53,6 +53,9 @@ app = Flask(__name__,
             static_url_path="",
             static_folder="static",
             template_folder="templates")
+
+# Enable CORS, especially useful for the Chrome extension to operate from anywhere
+CORS(app)
 
 # Super handy for compressing large BrowserSteps responses and others
 FlaskCompress(app)
@@ -210,6 +213,8 @@ def login_optionally_required(func):
     return decorated_view
 
 def changedetection_app(config=None, datastore_o=None):
+    logger.trace("TRACE log is enabled")
+
     global datastore
     datastore = datastore_o
 
@@ -314,6 +319,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route("/rss", methods=['GET'])
     def rss():
+        now = time.time()
         # Always requires token set
         app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
         rss_url_token = request.args.get('token')
@@ -377,8 +383,12 @@ def changedetection_app(config=None, datastore_o=None):
                                              include_equal=False,
                                              line_feed_sep="<br>")
 
-                fe.content(content="<html><body><h4>{}</h4>{}</body></html>".format(watch_title, html_diff),
-                           type='CDATA')
+                # @todo Make this configurable and also consider html-colored markup
+                # @todo User could decide if <link> goes to the diff page, or to the watch link
+                rss_template = "<html><body>\n<h4><a href=\"{{watch_url}}\">{{watch_title}}</a></h4>\n<p>{{html_diff}}</p>\n</body></html>\n"
+                content = jinja_render(template_str=rss_template, watch_title=watch_title, html_diff=html_diff, watch_url=watch.link)
+
+                fe.content(content=content, type='CDATA')
 
                 fe.guid(guid, permalink=False)
                 dt = datetime.datetime.fromtimestamp(int(watch.newest_history_key))
@@ -387,6 +397,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         response = make_response(fg.rss_str())
         response.headers.set('Content-Type', 'application/rss+xml;charset=utf-8')
+        logger.trace(f"RSS generated in {time.time() - now:.3f}s")
         return response
 
     @app.route("/", methods=['GET'])
@@ -395,17 +406,21 @@ def changedetection_app(config=None, datastore_o=None):
         global datastore
         from changedetectionio import forms
 
-        limit_tag = request.args.get('tag', '').lower().strip()
+        active_tag_req = request.args.get('tag', '').lower().strip()
+        active_tag_uuid = active_tag = None
 
         # Be sure limit_tag is a uuid
-        for uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
-            if limit_tag == tag.get('title', '').lower().strip():
-                limit_tag = uuid
+        if active_tag_req:
+            for uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
+                if active_tag_req == tag.get('title', '').lower().strip() or active_tag_req == uuid:
+                    active_tag = tag
+                    active_tag_uuid = uuid
+                    break
 
 
         # Redirect for the old rss path which used the /?rss=true
         if request.args.get('rss'):
-            return redirect(url_for('rss', tag=limit_tag))
+            return redirect(url_for('rss', tag=active_tag_uuid))
 
         op = request.args.get('op')
         if op:
@@ -416,7 +431,7 @@ def changedetection_app(config=None, datastore_o=None):
                 datastore.data['watching'][uuid].toggle_mute()
 
             datastore.needs_write = True
-            return redirect(url_for('index', tag = limit_tag))
+            return redirect(url_for('index', tag = active_tag_uuid))
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
@@ -427,7 +442,7 @@ def changedetection_app(config=None, datastore_o=None):
             if with_errors and not watch.get('last_error'):
                 continue
 
-            if limit_tag and not limit_tag in watch['tags']:
+            if active_tag_uuid and not active_tag_uuid in watch['tags']:
                     continue
             if watch.get('last_error'):
                 errored_count += 1
@@ -446,11 +461,12 @@ def changedetection_app(config=None, datastore_o=None):
                                 total=total_count,
                                 per_page=datastore.data['settings']['application'].get('pager_size', 50), css_framework="semantic")
 
-
+        sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
         output = render_template(
             "watch-overview.html",
                                  # Don't link to hosting when we're on the hosting environment
-                                 active_tag=limit_tag,
+                                 active_tag=active_tag,
+                                 active_tag_uuid=active_tag_uuid,
                                  app_rss_token=datastore.data['settings']['application']['rss_access_token'],
                                  datastore=datastore,
                                  errored_count=errored_count,
@@ -465,7 +481,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
                                  sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
                                  system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),
-                                 tags=datastore.data['settings']['application'].get('tags'),
+                                 tags=sorted_tags,
                                  watches=sorted_watches
                                  )
 
@@ -485,29 +501,52 @@ def changedetection_app(config=None, datastore_o=None):
 
 
     # AJAX endpoint for sending a test
+    @app.route("/notification/send-test/<string:watch_uuid>", methods=['POST'])
     @app.route("/notification/send-test", methods=['POST'])
+    @app.route("/notification/send-test/", methods=['POST'])
     @login_optionally_required
-    def ajax_callback_send_notification_test():
+    def ajax_callback_send_notification_test(watch_uuid=None):
 
+        # Watch_uuid could be unsuet in the case its used in tag editor, global setings
         import apprise
         from .apprise_asset import asset
         apobj = apprise.Apprise(asset=asset)
 
+        watch = datastore.data['watching'].get(watch_uuid) if watch_uuid else None
 
-        # validate URLS
-        if not len(request.form['notification_urls'].strip()):
-            return make_response({'error': 'No Notification URLs set'}, 400)
+        notification_urls = request.form['notification_urls'].strip().splitlines()
 
-        for server_url in request.form['notification_urls'].splitlines():
-            if len(server_url.strip()):
-                if not apobj.add(server_url):
-                    message = '{} is not a valid AppRise URL.'.format(server_url)
-                    return make_response({'error': message}, 400)
+        if not notification_urls:
+            logger.debug("Test notification - Trying by group/tag in the edit form if available")
+            # On an edit page, we should also fire off to the tags if they have notifications
+            if request.form.get('tags') and request.form['tags'].strip():
+                for k in request.form['tags'].split(','):
+                    tag = datastore.tag_exists_by_name(k.strip())
+                    notification_urls = tag.get('notifications_urls') if tag and tag.get('notifications_urls') else None
+
+        is_global_settings_form = request.args.get('mode', '') == 'global-settings'
+        is_group_settings_form = request.args.get('mode', '') == 'group-settings'
+        if not notification_urls and not is_global_settings_form and not is_group_settings_form:
+            # In the global settings, use only what is typed currently in the text box
+            logger.debug("Test notification - Trying by global system settings notifications")
+            if datastore.data['settings']['application'].get('notification_urls'):
+                notification_urls = datastore.data['settings']['application']['notification_urls']
+
+
+        if not notification_urls:
+            return 'No Notification URLs set/found'
+
+        for n_url in notification_urls:
+            if len(n_url.strip()):
+                if not apobj.add(n_url):
+                    return f'Error - {n_url} is not a valid AppRise URL.'
 
         try:
-            n_object = {'watch_url': request.form['window_url'],
-                        'notification_urls': request.form['notification_urls'].splitlines()
-                        }
+            # use the same as when it is triggered, but then override it with the form test values
+            n_object = {
+                'watch_url': request.form['window_url'],
+                'notification_urls': notification_urls
+            }
 
             # Only use if present, if not set in n_object it should use the default system value
             if 'notification_format' in request.form and request.form['notification_format'].strip():
@@ -519,11 +558,13 @@ def changedetection_app(config=None, datastore_o=None):
             if 'notification_body' in request.form and request.form['notification_body'].strip():
                 n_object['notification_body'] = request.form.get('notification_body', '').strip()
 
-            notification_q.put(n_object)
+            from . import update_worker
+            new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
+            new_worker.queue_notification_for_watch(notification_q=notification_q, n_object=n_object, watch=watch)
         except Exception as e:
             return make_response({'error': str(e)}, 400)
 
-        return 'OK'
+        return 'OK - Sent test notifications'
 
 
     @app.route("/clear_history/<string:uuid>", methods=['GET'])
@@ -559,6 +600,12 @@ def changedetection_app(config=None, datastore_o=None):
 
         output = render_template("clear_all_history.html")
         return output
+
+    def _watch_has_tag_options_set(watch):
+        """This should be fixed better so that Tag is some proper Model, a tag is just a Watch also"""
+        for tag_uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
+            if tag_uuid in watch.get('tags', []) and (tag.get('include_filters') or tag.get('subtractive_selectors')):
+                return True
 
     @app.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     @login_optionally_required
@@ -730,6 +777,7 @@ def changedetection_app(config=None, datastore_o=None):
                                      has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
                                      has_empty_checktime=using_default_check_time,
                                      has_extra_headers_file=len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
+                                     has_special_tag_options=_watch_has_tag_options_set(watch=watch),
                                      is_html_webdriver=is_html_webdriver,
                                      jq_support=jq_support,
                                      playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False),
@@ -745,7 +793,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/settings", methods=['GET', "POST"])
     @login_optionally_required
     def settings_page():
-        from changedetectionio import content_fetcher, forms
+        from changedetectionio import forms
 
         default = deepcopy(datastore.data['settings'])
         if datastore.proxy_list is not None:
@@ -1253,9 +1301,8 @@ def changedetection_app(config=None, datastore_o=None):
 
         url = request.form.get('url').strip()
         if datastore.url_exists(url):
-            flash('The URL {} already exists'.format(url), "error")
-            return redirect(url_for('index'))
-
+            flash(f'Warning, URL {url} already exists', "notice")
+            
         add_paused = request.form.get('edit_and_watch_submit_button') != None
         processor = request.form.get('processor', 'text_json_diff')
         new_uuid = datastore.add_watch(url=url, tag=request.form.get('tags').strip(), extras={'paused': add_paused, 'processor': processor})
@@ -1405,6 +1452,13 @@ def changedetection_app(config=None, datastore_o=None):
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
             flash("{} watches queued for rechecking".format(len(uuids)))
 
+        elif (op == 'clear-errors'):
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid]["last_error"] = False
+            flash(f"{len(uuids)} watches errors cleared")
+
         elif (op == 'clear-history'):
             for uuid in uuids:
                 uuid = uuid.strip()
@@ -1484,7 +1538,7 @@ def changedetection_app(config=None, datastore_o=None):
 
 
         except Exception as e:
-            logging.error("Error sharing -{}".format(str(e)))
+            logger.error(f"Error sharing -{str(e)}")
             flash("Could not share, something went wrong while communicating with the share server - {}".format(str(e)), 'error')
 
         # https://changedetection.io/share/VrMv05wpXyQa
@@ -1584,11 +1638,20 @@ def notification_runner():
 
             try:
                 from changedetectionio import notification
+                # Fallback to system config if not set
+                if not n_object.get('notification_body') and datastore.data['settings']['application'].get('notification_body'):
+                    n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
+
+                if not n_object.get('notification_title') and datastore.data['settings']['application'].get('notification_title'):
+                    n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
+
+                if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
+                    n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
 
                 sent_obj = notification.process_notification(n_object, datastore)
 
             except Exception as e:
-                logging.error("Watch URL: {}  Error {}".format(n_object['watch_url'], str(e)))
+                logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
 
                 # UUID wont be present when we submit a 'test' from the global settings
                 if 'uuid' in n_object:
@@ -1611,7 +1674,7 @@ def ticker_thread_check_time_launch_checks():
     proxy_last_called_time = {}
 
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 20))
-    print("System env MINIMUM_SECONDS_RECHECK_TIME", recheck_time_minimum_seconds)
+    logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
 
     # Spin up Workers that do the fetching
     # Can be overriden by ENV or use the default settings
@@ -1656,7 +1719,7 @@ def ticker_thread_check_time_launch_checks():
             now = time.time()
             watch = datastore.data['watching'].get(uuid)
             if not watch:
-                logging.error("Watch: {} no longer present.".format(uuid))
+                logger.error(f"Watch: {uuid} no longer present.")
                 continue
 
             # No need todo further processing if it's paused
@@ -1689,10 +1752,10 @@ def ticker_thread_check_time_launch_checks():
                             time_since_proxy_used = int(time.time() - proxy_last_used_time)
                             if time_since_proxy_used < proxy_list_reuse_time_minimum:
                                 # Not enough time difference reached, skip this watch
-                                print("> Skipped UUID {} using proxy '{}', not enough time between proxy requests {}s/{}s".format(uuid,
-                                                                                                                         watch_proxy,
-                                                                                                                         time_since_proxy_used,
-                                                                                                                         proxy_list_reuse_time_minimum))
+                                logger.debug(f"> Skipped UUID {uuid} "
+                                        f"using proxy '{watch_proxy}', not "
+                                        f"enough time between proxy requests "
+                                        f"{time_since_proxy_used}s/{proxy_list_reuse_time_minimum}s")
                                 continue
                             else:
                                 # Record the last used time
@@ -1700,14 +1763,12 @@ def ticker_thread_check_time_launch_checks():
 
                     # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
                     priority = int(time.time())
-                    print(
-                        "> Queued watch UUID {} last checked at {} queued at {:0.2f} priority {} jitter {:0.2f}s, {:0.2f}s since last checked".format(
-                            uuid,
-                            watch['last_checked'],
-                            now,
-                            priority,
-                            watch.jitter_seconds,
-                            now - watch['last_checked']))
+                    logger.debug(
+                        f"> Queued watch UUID {uuid} "
+                        f"last checked at {watch['last_checked']} "
+                        f"queued at {now:0.2f} priority {priority} "
+                        f"jitter {watch.jitter_seconds:0.2f}s, "
+                        f"{now - watch['last_checked']:0.2f}s since last checked")
 
                     # Into the queue with you
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid, 'skip_when_checksum_same': True}))

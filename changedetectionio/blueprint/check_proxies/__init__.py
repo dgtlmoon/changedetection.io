@@ -1,13 +1,10 @@
 from concurrent.futures import ThreadPoolExecutor
+from changedetectionio.store import ChangeDetectionStore
 
 from functools import wraps
 
 from flask import Blueprint
 from flask_login import login_required
-
-from changedetectionio.processors import text_json_diff
-from changedetectionio.store import ChangeDetectionStore
-
 
 STATUS_CHECKING = 0
 STATUS_FAILED = 1
@@ -32,10 +29,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @threadpool
     def long_task(uuid, preferred_proxy):
         import time
-        from changedetectionio import content_fetcher
+        from changedetectionio.content_fetchers import exceptions as content_fetcher_exceptions
+        from changedetectionio.processors import text_json_diff
+        from changedetectionio.safe_jinja import render as jinja_render
 
         status = {'status': '', 'length': 0, 'text': ''}
-        from jinja2 import Environment, BaseLoader
 
         contents = ''
         now = time.time()
@@ -43,7 +41,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             update_handler = text_json_diff.perform_site_check(datastore=datastore, watch_uuid=uuid)
             update_handler.call_browser()
         # title, size is len contents not len xfer
-        except content_fetcher.Non200ErrorCodeReceived as e:
+        except content_fetcher_exceptions.Non200ErrorCodeReceived as e:
             if e.status_code == 404:
                 status.update({'status': 'OK', 'length': len(contents), 'text': f"OK but 404 (page not found)"})
             elif e.status_code == 403 or e.status_code == 401:
@@ -52,12 +50,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 status.update({'status': 'ERROR', 'length': len(contents), 'text': f"Status code: {e.status_code}"})
         except text_json_diff.FilterNotFoundInResponse:
             status.update({'status': 'OK', 'length': len(contents), 'text': f"OK but CSS/xPath filter not found (page changed layout?)"})
-        except content_fetcher.EmptyReply as e:
+        except content_fetcher_exceptions.EmptyReply as e:
             if e.status_code == 403 or e.status_code == 401:
                 status.update({'status': 'ERROR OTHER', 'length': len(contents), 'text': f"Got empty reply with code {e.status_code} - Access denied"})
             else:
                 status.update({'status': 'ERROR OTHER', 'length': len(contents) if contents else 0, 'text': f"Empty reply with code {e.status_code}, needs chrome?"})
-        except content_fetcher.ReplyWithContentButNoText as e:
+        except content_fetcher_exceptions.ReplyWithContentButNoText as e:
             txt = f"Got reply but with no content - Status code {e.status_code} - It's possible that the filters were found, but contained no usable text (or contained only an image)."
             status.update({'status': 'ERROR', 'text': txt})
         except Exception as e:
@@ -66,7 +64,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             status.update({'status': 'OK', 'length': len(contents), 'text': ''})
 
         if status.get('text'):
-            status['text'] = Environment(loader=BaseLoader()).from_string('{{text|e}}').render({'text': status['text']})
+            # parse 'text' as text for safety
+            v = {'text': status['text']}
+            status['text'] = jinja_render(template_str='{{text|e}}', **v)
 
         status['time'] = "{:.2f}s".format(time.time() - now)
 

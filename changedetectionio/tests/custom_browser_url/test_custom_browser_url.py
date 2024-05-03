@@ -7,10 +7,11 @@ from ..util import live_server_setup, wait_for_all_checks
 def do_test(client, live_server, make_test_use_extra_browser=False):
 
     # Grep for this string in the logs?
-    test_url = f"https://changedetection.io/ci-test.html"
+    test_url = f"https://changedetection.io/ci-test.html?non-custom-default=true"
+    # "non-custom-default" should not appear in the custom browser connection
     custom_browser_name = 'custom browser URL'
 
-    # needs to be set and something like 'ws://127.0.0.1:3000?stealth=1&--disable-web-security=true'
+    # needs to be set and something like 'ws://127.0.0.1:3000'
     assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
 
     #####################
@@ -19,9 +20,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
         data={"application-empty_pages_are_a_change": "",
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_webdriver",
-              # browserless-custom-url is setup in  .github/workflows/test-only.yml
-              # the test script run_custom_browser_url_test.sh will look for 'custom-browser-search-string' in the container logs
-              'requests-extra_browsers-0-browser_connection_url': 'ws://browserless-custom-url:3000?stealth=1&--disable-web-security=true&custom-browser-search-string=1',
+              'requests-extra_browsers-0-browser_connection_url': 'ws://sockpuppetbrowser-custom-url:3000',
               'requests-extra_browsers-0-browser_name': custom_browser_name
               },
         follow_redirects=True
@@ -51,7 +50,8 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
         res = client.post(
             url_for("edit_page", uuid="first"),
             data={
-                  "url": test_url,
+                # 'run_customer_browser_url_tests.sh' will search for this string to know if we hit the right browser container or not
+                  "url": f"https://changedetection.io/ci-test.html?custom-browser-search-string=1",
                   "tags": "",
                   "headers": "",
                   'fetch_backend': f"extra_browser_{custom_browser_name}",

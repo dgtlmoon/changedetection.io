@@ -4,30 +4,21 @@
 # Why?
 # `browsersteps_playwright_browser_interface.chromium.connect_over_cdp()` will only run once without async()
 # - this flask app is not async()
-# - browserless has a single timeout/keepalive which applies to the session made at .connect_over_cdp()
+# - A single timeout/keepalive which applies to the session made at .connect_over_cdp()
 #
 # So it means that we must unfortunately for now just keep a single timer since .connect_over_cdp() was run
 # and know when that reaches timeout/keepalive :( when that time is up, restart the connection and tell the user
 # that their time is up, insert another coin. (reload)
 #
-# Bigger picture
-# - It's horrible that we have this click+wait deal, some nice socket.io solution using something similar
-# to what the browserless debug UI already gives us would be smarter..
 #
-# OR
-# - Some API call that should be hacked into browserless or playwright that we can "/api/bump-keepalive/{session_id}/60"
-# So we can tell it that we need more time (run this on each action)
-#
-# OR
-# - use multiprocessing to bump this over to its own process and add some transport layer (queue/pipes)
 
-from distutils.util import strtobool
+from changedetectionio.strtobool import strtobool
 from flask import Blueprint, request, make_response
-import logging
 import os
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.flask_app import login_optionally_required
+from loguru import logger
 
 browsersteps_sessions = {}
 io_interface_context = None
@@ -58,7 +49,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             io_interface_context = io_interface_context.start()
 
         keepalive_ms = ((keepalive_seconds + 3) * 1000)
-        base_url = os.getenv('PLAYWRIGHT_DRIVER_URL', '')
+        base_url = os.getenv('PLAYWRIGHT_DRIVER_URL', '').strip('"')
         a = "?" if not '?' in base_url else '&'
         base_url += a + f"timeout={keepalive_ms}"
 
@@ -88,7 +79,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 if parsed.password:
                     proxy['password'] = parsed.password
 
-                print("Browser Steps: UUID {} selected proxy {}".format(watch_uuid, proxy_url))
+                logger.debug(f"Browser Steps: UUID {watch_uuid} selected proxy {proxy_url}")
 
         # Tell Playwright to connect to Chrome and setup a new session via our stepper interface
         browsersteps_start_session['browserstepper'] = browser_steps.browsersteps_live_ui(
@@ -115,10 +106,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if not watch_uuid:
             return make_response('No Watch UUID specified', 500)
 
-        print("Starting connection with playwright")
-        logging.debug("browser_steps.py connecting")
+        logger.debug("Starting connection with playwright")
+        logger.debug("browser_steps.py connecting")
         browsersteps_sessions[browsersteps_session_id] = start_browsersteps_session(watch_uuid)
-        print("Starting connection with playwright - done")
+        logger.debug("Starting connection with playwright - done")
         return {'browsersteps_session_id': browsersteps_session_id}
 
     @login_optionally_required
@@ -189,7 +180,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                          optional_value=step_optional_value)
 
             except Exception as e:
-                print("Exception when calling step operation", step_operation, str(e))
+                logger.error(f"Exception when calling step operation {step_operation} {str(e)}")
                 # Try to find something of value to give back to the user
                 return make_response(str(e).splitlines()[0], 401)
 

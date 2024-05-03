@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.jinja' import render_simple_field, render_field, render_nolabel_field %}
+{% from '_helpers.html' import render_simple_field, render_field, render_nolabel_field, sort_by_title %}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 
@@ -13,7 +13,7 @@
             <div id="watch-add-wrapper-zone">
 
                     {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
-                    {{ render_nolabel_field(form.tags, value=tags[active_tag].title if active_tag else '', placeholder="watch label / tag") }}
+                    {{ render_nolabel_field(form.tags, value=active_tag.title if active_tag else '', placeholder="watch label / tag") }}
                     {{ render_nolabel_field(form.watch_submit_button, title="Watch this URL!" ) }}
                     {{ render_nolabel_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
             </div>
@@ -37,6 +37,7 @@
         <button class="pure-button button-secondary button-xsmall" name="op" value="assign-tag" id="checkbox-assign-tag">Tag</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="mark-viewed">Mark viewed</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default">Use default notification</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="clear-errors">Clear errors</button>
         <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="clear-history">Clear/reset history</button>
         <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="delete">Delete</button>
     </div>
@@ -46,11 +47,13 @@
     {% if search_q %}<div id="search-result-info">Searching "<strong><i>{{search_q}}</i></strong>"</div>{% endif %}
     <div>
         <a href="{{url_for('index')}}" class="pure-button button-tag {{'active' if not active_tag }}">All</a>
-        {% for uuid, tag in tags.items() %}
-            {% if tag != "" %}
-                <a href="{{url_for('index', tag=uuid) }}" class="pure-button button-tag {{'active' if active_tag == uuid }}">{{ tag.title }}</a>
-            {% endif %}
-        {% endfor %}
+
+    <!-- tag list -->
+    {% for uuid, tag in tags %}
+        {% if tag != "" %}
+            <a href="{{url_for('index', tag=uuid) }}" class="pure-button button-tag {{'active' if active_tag_uuid == uuid }}">{{ tag.title }}</a>
+        {% endif %}
+    {% endfor %}
     </div>
 
     {% set sort_order = sort_order or 'asc' %}
@@ -110,6 +113,7 @@
                     {% endif %}
 
                     {%if watch.is_pdf  %}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" title="Converting PDF to text" >{% endif %}
+                    {% if watch.has_browser_steps %}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" title="Browser Steps is enabled" >{% endif %}
                     {% if watch.last_error is defined and watch.last_error != False %}
                     <div class="fetch-error">{{ watch.last_error }}
 
@@ -165,7 +169,7 @@
                 <td>
                     <a {% if watch.uuid in queued_uuids %}disabled="true"{% endif %} href="{{ url_for('form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
                        class="recheck pure-button pure-button-primary">{% if watch.uuid in queued_uuids %}Queued{% else %}Recheck{% endif %}</a>
-                    <a href="{{ url_for('edit_page', uuid=watch.uuid)}}" class="pure-button pure-button-primary">Edit</a>
+                    <a href="{{ url_for('edit_page', uuid=watch.uuid)}}#general" class="pure-button pure-button-primary">Edit</a>
                     {% if watch.history_n >= 2 %}
 
                         {%  if is_unviewed %}
@@ -196,8 +200,8 @@
             </li>
             {% endif %}
             <li>
-               <a href="{{ url_for('form_watch_checknow', tag=active_tag, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Recheck
-                all {% if active_tag%} in "{{tags[active_tag].title}}"{%endif%}</a>
+               <a href="{{ url_for('form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Recheck
+                all {% if active_tag_uuid %} in "{{active_tag.title}}"{%endif%}</a>
             </li>
             <li>
                 <a href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>

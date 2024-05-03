@@ -1,6 +1,8 @@
 from . import difference_detection_processor
 from ..html_tools import xpath1_filter as xpath_filter # xpath1 is a lot faster and is sufficient here
 from copy import deepcopy
+from loguru import logger
+import hashlib
 import re
 import urllib3
 
@@ -93,12 +95,18 @@ class perform_site_check(difference_detection_processor):
         if update_obj['in_stock'] == None and self.fetcher.instock_data:
             # 'Possibly in stock' comes from stock-not-in-stock.js when no string found above the fold.
             update_obj['in_stock'] = True if self.fetcher.instock_data == 'Possibly in stock' else False
-
-        if update_obj['in_stock'] == None:
+            logger.debug(f"Watch UUID {uuid} restock check returned '{self.fetcher.instock_data}' from JS scraper.")
+        else:
             raise UnableToExtractRestockData(status_code=self.fetcher.status_code)
+
+        # Main detection method
+        fetched_md5 = None
+        if self.fetcher.instock_data:
+            fetched_md5 = hashlib.md5(self.fetcher.instock_data.encode('utf-8')).hexdigest()
 
         # The main thing that all this at the moment comes down to :)
         changed_detected = False
+        logger.debug(f"Watch UUID {uuid} restock check - Previous MD5: {watch.get('previous_md5')}, Fetched MD5 {fetched_md5}")
 
         if watch.get('in_stock') != update_obj.get('in_stock'):
             # Yes if we only care about it going to instock, AND we are in stock
@@ -109,4 +117,6 @@ class perform_site_check(difference_detection_processor):
                 # All cases
                 changed_detected = True
 
-        return changed_detected, update_obj, self.fetcher.instock_data.encode('utf-8')
+        # Always record the new checksum
+        update_obj["previous_md5"] = fetched_md5
+        return changed_detected, update_obj, self.fetcher.instock_data.encode('utf-8').strip()

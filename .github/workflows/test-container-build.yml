@@ -11,12 +11,14 @@ on:
       - requirements.txt
       - Dockerfile
       - .github/workflows/*
+      - .github/test/Dockerfile*
 
   pull_request:
     paths:
       - requirements.txt
       - Dockerfile
       - .github/workflows/*
+      - .github/test/Dockerfile*
 
   # Changes to requirements.txt packages and Dockerfile may or may not always be compatible with arm etc, so worth testing
   # @todo: some kind of path filter for requirements.txt and Dockerfile
@@ -26,7 +28,7 @@ jobs:
     steps:
         - uses: actions/checkout@v4
         - name: Set up Python 3.11
-          uses: actions/setup-python@v4
+          uses: actions/setup-python@v5
           with:
             python-version: 3.11
 

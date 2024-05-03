@@ -1,5 +1,5 @@
 
-{% from '_helpers.jinja' import render_field %}
+{% from '_helpers.html' import render_field %}
 
 {% macro render_common_settings_form(form, emailprefix, settings_application) %}
                         <div class="pure-control-group">
@@ -114,6 +114,12 @@
                                     <p>
 									Warning: Contents of <code>{{ '{{diff}}' }}</code>, <code>{{ '{{diff_removed}}' }}</code>, and <code>{{ '{{diff_added}}' }}</code> depend on how the difference algorithm perceives the change. <br>
                                     For example, an addition or removal could be perceived as a change in some cases. <a target="_new" href="https://github.com/dgtlmoon/changedetection.io/wiki/Using-the-%7B%7Bdiff%7D%7D,-%7B%7Bdiff_added%7D%7D,-and-%7B%7Bdiff_removed%7D%7D-notification-tokens">More Here</a> <br>
+                                    </p>
+                                    <p>
+                                        For JSON payloads, use <strong>|tojson</strong> without quotes for automatic escaping, for example - <code>{ "name": {{ '{{ watch_title|tojson }}' }} }</code>
+                                    </p>
+                                    <p>
+                                        URL encoding, use <strong>|urlencode</strong>, for example - <code>gets://hook-website.com/test.php?title={{ '{{ watch_title|urlencode }}' }}</code>
                                     </p>
                                 </div>
                             </div>

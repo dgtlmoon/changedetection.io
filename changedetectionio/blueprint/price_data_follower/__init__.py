@@ -1,5 +1,5 @@
 
-from distutils.util import strtobool
+from changedetectionio.strtobool import strtobool
 from flask import Blueprint, flash, redirect, url_for
 from flask_login import login_required
 from changedetectionio.store import ChangeDetectionStore
@@ -18,8 +18,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q: PriorityQueue
     def accept(uuid):
         datastore.data['watching'][uuid]['track_ldjson_price_data'] = PRICE_DATA_TRACK_ACCEPT
         update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
-        return redirect(url_for("form_watch_checknow", uuid=uuid))
-
+        return redirect(url_for("index"))
 
     @login_required
     @price_data_follower_blueprint.route("/<string:uuid>/reject", methods=['GET'])

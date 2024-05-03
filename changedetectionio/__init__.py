@@ -2,21 +2,22 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.45.8.1'
+__version__ = '0.45.22'
 
-from distutils.util import strtobool
+from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
-
+import os
+os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
 import eventlet
 import eventlet.wsgi
 import getopt
-import os
 import signal
 import socket
 import sys
 
 from changedetectionio import store
 from changedetectionio.flask_app import changedetection_app
+from loguru import logger
 
 
 # Only global so we can access it in the signal handler
@@ -28,9 +29,9 @@ def sigshutdown_handler(_signo, _stack_frame):
     global app
     global datastore
     name = signal.Signals(_signo).name
-    print(f'Shutdown: Got Signal - {name} ({_signo}), Saving DB to disk and calling shutdown')
+    logger.critical(f'Shutdown: Got Signal - {name} ({_signo}), Saving DB to disk and calling shutdown')
     datastore.sync_to_json()
-    print(f'Sync JSON to disk complete.')
+    logger.success('Sync JSON to disk complete.')
     # This will throw a SystemExit exception, because eventlet.wsgi.server doesn't know how to deal with it.
     # Solution: move to gevent or other server in the future (#2014)
     datastore.stop_thread = True
@@ -57,12 +58,21 @@ def main():
         datastore_path = os.path.join(os.getcwd(), "../datastore")
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "6Ccsd:h:p:", "port")
+        opts, args = getopt.getopt(sys.argv[1:], "6Ccsd:h:p:l:", "port")
     except getopt.GetoptError:
-        print('backend.py -s SSL enable -h [host] -p [port] -d [datastore path]')
+        print('backend.py -s SSL enable -h [host] -p [port] -d [datastore path] -l [debug level - TRACE, DEBUG(default), INFO, SUCCESS, WARNING, ERROR, CRITICAL]')
         sys.exit(2)
 
     create_datastore_dir = False
+
+    # Set a default logger level
+    logger_level = 'DEBUG'
+    # Set a logger level via shell env variable
+    # Used: Dockerfile for CICD
+    # To set logger level for pytest, see the app function in tests/conftest.py
+    if os.getenv("LOGGER_LEVEL"):
+        level = os.getenv("LOGGER_LEVEL")
+        logger_level = int(level) if level.isdigit() else level.upper()
 
     for opt, arg in opts:
         if opt == '-s':
@@ -78,7 +88,7 @@ def main():
             datastore_path = arg
 
         if opt == '-6':
-            print ("Enabling IPv6 listen support")
+            logger.success("Enabling IPv6 listen support")
             ipv6_enabled = True
 
         # Cleanup (remove text files that arent in the index)
@@ -89,6 +99,25 @@ def main():
         if opt == '-C':
             create_datastore_dir = True
 
+        if opt == '-l':
+            logger_level = int(arg) if arg.isdigit() else arg.upper()
+
+    # Without this, a logger will be duplicated
+    logger.remove()
+    try:
+        log_level_for_stdout = { 'DEBUG', 'SUCCESS' }
+        logger.configure(handlers=[
+            {"sink": sys.stdout, "level": logger_level,
+             "filter" : lambda record: record['level'].name in log_level_for_stdout},
+            {"sink": sys.stderr, "level": logger_level,
+             "filter": lambda record: record['level'].name not in log_level_for_stdout},
+            ])
+    # Catch negative number or wrong log level name
+    except ValueError:
+        print("Available log level names: TRACE, DEBUG(default), INFO, SUCCESS,"
+              " WARNING, ERROR, CRITICAL")
+        sys.exit(2)
+
     # isnt there some @thingy to attach to each route to tell it, that this route needs a datastore
     app_config = {'datastore_path': datastore_path}
 
@@ -96,17 +125,19 @@ def main():
         if create_datastore_dir:
             os.mkdir(app_config['datastore_path'])
         else:
-            print(
-                "ERROR: Directory path for the datastore '{}' does not exist, cannot start, please make sure the directory exists or specify a directory with the -d option.\n"
-                "Or use the -C parameter to create the directory.".format(app_config['datastore_path']), file=sys.stderr)
+            logger.critical(
+                f"ERROR: Directory path for the datastore '{app_config['datastore_path']}'"
+                f" does not exist, cannot start, please make sure the"
+                f" directory exists or specify a directory with the -d option.\n"
+                f"Or use the -C parameter to create the directory.")
             sys.exit(2)
 
     try:
         datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=__version__)
     except JSONDecodeError as e:
         # Dont' start if the JSON DB looks corrupt
-        print ("ERROR: JSON DB or Proxy List JSON at '{}' appears to be corrupt, aborting".format(app_config['datastore_path']))
-        print(str(e))
+        logger.critical(f"ERROR: JSON DB or Proxy List JSON at '{app_config['datastore_path']}' appears to be corrupt, aborting.")
+        logger.critical(str(e))
         return
 
     app = changedetection_app(app_config, datastore)
@@ -145,7 +176,7 @@ def main():
     #         proxy_set_header X-Forwarded-Prefix /app;
 
     if os.getenv('USE_X_SETTINGS'):
-        print ("USE_X_SETTINGS is ENABLED\n")
+        logger.info("USE_X_SETTINGS is ENABLED")
         from werkzeug.middleware.proxy_fix import ProxyFix
         app.wsgi_app = ProxyFix(app.wsgi_app, x_prefix=1, x_host=1)
 

@@ -187,8 +187,11 @@ code {
 }
 
 .watch-tag-list {
-  color: var(--color-text-watch-tag-list);
+  color: var(--color-white);
   white-space: nowrap;
+  background: var(--color-text-watch-tag-list);
+  border-radius: 5px;
+  padding: 2px 5px;
 }
 
 .box {
@@ -1094,5 +1097,18 @@ ul {
   padding: 3px;
   border-radius: 3px;
   white-space: nowrap;
+}
+
+#chrome-extension-link {
+  img {
+    height: 21px;
+    padding: 2px;
+    vertical-align: middle;
+  }
+
+  padding: 9px;
+  border: 1px solid var(--color-grey-800);
+  border-radius: 10px;
+  vertical-align: middle;
 }
 

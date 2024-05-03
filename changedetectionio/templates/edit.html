@@ -1,20 +1,21 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.jinja' import render_field, render_checkbox_field, render_button %}
-{% from '_common_fields.jinja' import render_common_settings_form %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
+{% from '_common_fields.html' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
 <script>
     const browser_steps_available_screenshots=JSON.parse('{{ watch.get_browsersteps_available_screenshots|tojson }}');
     const browser_steps_config=JSON.parse('{{ browser_steps_config|tojson }}');
-    const browser_steps_fetch_screenshot_image_url="{{url_for('browser_steps.browser_steps_fetch_screenshot_image', uuid=uuid)}}";
+    <!-- Should be _external so that firefox and others load it more reliably -->
+    const browser_steps_fetch_screenshot_image_url="{{url_for('browser_steps.browser_steps_fetch_screenshot_image', uuid=uuid, _external=True)}}";
     const browser_steps_last_error_step={{ watch.browser_steps_last_error_step|tojson }};
     const browser_steps_start_url="{{url_for('browser_steps.browsersteps_start_session', uuid=uuid)}}";
     const browser_steps_sync_url="{{url_for('browser_steps.browsersteps_ui_update', uuid=uuid)}}";
 {% if emailprefix %}
     const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
 {% endif %}
-    const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
+    const notification_base_url="{{url_for('ajax_callback_send_notification_test', watch_uuid=uuid)}}";
     const playwright_enabled={% if playwright_enabled %} true {% else %} false {% endif %};
     const recheck_proxy_start_url="{{url_for('check_proxies.start_check', uuid=uuid)}}";
     const proxy_recheck_status_url="{{url_for('check_proxies.get_recheck_status', uuid=uuid)}}";
@@ -31,6 +32,7 @@
 <script src="{{url_for('static_content', group='js', filename='browser-steps.js')}}" defer></script>
 {% endif %}
 
+{% set has_tag_filters_extra="WARNING: Watch has tag/groups set with special filters\n" if has_special_tag_options else '' %}
 <script src="{{url_for('static_content', group='js', filename='recheck-proxy.js')}}" defer></script>
 
 <div class="edit-form monospaced-textarea">
@@ -228,7 +230,7 @@ User-Agent: wonderbra 1.0") }}
                                 </div>
                             </div>
                             <div id="browser-steps-fieldlist" style="padding-left: 1em;  width: 350px; font-size: 80%;" >
-                                <span id="browserless-seconds-remaining">Loading</span> <span style="font-size: 80%;"> (<a target=_new href="https://github.com/dgtlmoon/changedetection.io/pull/478/files#diff-1a79d924d1840c485238e66772391268a89c95b781d69091384cf1ea1ac146c9R4">?</a>) </span>
+                                <span id="browser-seconds-remaining">Loading</span> <span style="font-size: 80%;"> (<a target=_new href="https://github.com/dgtlmoon/changedetection.io/pull/478/files#diff-1a79d924d1840c485238e66772391268a89c95b781d69091384cf1ea1ac146c9R4">?</a>) </span>
                                 {{ render_field(form.browser_steps) }}
                             </div>
                         </div>
@@ -280,7 +282,7 @@ User-Agent: wonderbra 1.0") }}
                     <div class="pure-control-group">
                         {% set field = render_field(form.include_filters,
                             rows=5,
-                            placeholder="#example
+                            placeholder=has_tag_filters_extra+"#example
 xpath://body/div/span[contains(@class, 'example-class')]",
                             class="m-d")
                         %}
@@ -316,13 +318,14 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                 </span>
                     </div>
                 <fieldset class="pure-control-group">
-                    {{ render_field(form.subtractive_selectors, rows=5, placeholder="header
+                    {{ render_field(form.subtractive_selectors, rows=5, placeholder=has_tag_filters_extra+"header
 footer
 nav
 .stockticker") }}
                     <span class="pure-form-message-inline">
                         <ul>
                           <li> Remove HTML element(s) by CSS selector before text conversion. </li>
+                          <li> Don't paste HTML here, use only CSS selectors </li>
                           <li> Add multiple elements or CSS selectors per line to ignore multiple parts of the HTML. </li>
                         </ul>
                       </span>
@@ -339,6 +342,10 @@ nav
                     <span class="pure-form-message-inline">When content is merely moved in a list, it will also trigger an <strong>addition</strong>, consider enabling <code><strong>Only trigger when unique lines appear</strong></code></span>
                 </fieldset>
 
+                <fieldset class="pure-control-group">
+                    {{ render_checkbox_field(form.sort_text_alphabetically) }}
+                    <span class="pure-form-message-inline">Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below.</span>
+                </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.check_unique_lines) }}
                     <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
@@ -401,6 +408,7 @@ Unavailable") }}
                                 <li>Use <code>//(?aiLmsux))</code> type flags (more <a href="https://docs.python.org/3/library/re.html#index-15">information here</a>)<br></li>
                                 <li>Keyword example &dash; example <code>Out of stock</code></li>
                                 <li>Use groups to extract just that text &dash; example <code>/reports.+?(\d+)/i</code> returns a list of years only</li>
+                                <li>Example - match lines containing a keyword <code>/.*icecream.*/</code></li>
                             </ul>
                         </li>
                         <li>One line per regular-expression/string match</li>
@@ -431,7 +439,7 @@ Unavailable") }}
                     <div class="pure-control-group">
                         {% if visualselector_enabled %}
                             <span class="pure-form-message-inline">
-                                The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection &dash; after the <i>Browser Steps</i> has completed.<br><br>
+                                The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection &dash; after the <i>Browser Steps</i> has completed, this tool is a helper to manage filters in the  "CSS/JSONPath/JQ/XPath Filters" box of the <a href="#filters-and-triggers">Filters & Triggers</a> tab.
                             </span>
 
                             <div id="selector-header">
@@ -481,6 +489,10 @@ Unavailable") }}
                         <tr>
                             <td>Last fetch time</td>
                             <td>{{ watch.fetch_time }}s</td>
+                        </tr>
+                        <tr>
+                            <td>Notification alert count</td>
+                            <td>{{ watch.notification_alert_count }}</td>
                         </tr>
                         </tbody>
                     </table>

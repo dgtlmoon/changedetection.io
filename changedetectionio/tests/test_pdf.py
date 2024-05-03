@@ -29,7 +29,8 @@ def test_fetch_pdf(client, live_server):
         follow_redirects=True
     )
 
-    assert b'PDF-1.5' not in res.data
+    # PDF header should not be there (it was converted to text)
+    assert b'PDF' not in res.data[:10]
     assert b'hello world' in res.data
 
     # So we know if the file changes in other ways

@@ -29,7 +29,7 @@ def test_check_basic_change_detection_functionality(client, live_server):
 
     assert b"1 Imported" in res.data
 
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # Do this a few times.. ensures we dont accidently set the status
     for n in range(3):

@@ -1,4 +1,4 @@
-from distutils.util import strtobool
+from changedetectionio.strtobool import strtobool
 
 from flask import (
     flash
@@ -9,7 +9,6 @@ from copy import deepcopy, copy
 from os import path, unlink
 from threading import Lock
 import json
-import logging
 import os
 import re
 import requests
@@ -17,6 +16,7 @@ import secrets
 import threading
 import time
 import uuid as uuid_builder
+from loguru import logger
 
 # Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
 BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
@@ -42,7 +42,7 @@ class ChangeDetectionStore:
         self.__data = App.model()
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
-        print(">>> Datastore path is ", self.json_store_path)
+        logger.info(f"Datastore path is '{self.json_store_path}'")
         self.needs_write = False
         self.start_time = time.time()
         self.stop_thread = False
@@ -83,12 +83,12 @@ class ChangeDetectionStore:
                 for uuid, watch in self.__data['watching'].items():
                     watch['uuid']=uuid
                     self.__data['watching'][uuid] = Watch.model(datastore_path=self.datastore_path, default=watch)
-                    print("Watching:", uuid, self.__data['watching'][uuid]['url'])
+                    logger.info(f"Watching: {uuid} {self.__data['watching'][uuid]['url']}")
 
         # First time ran, Create the datastore.
         except (FileNotFoundError):
             if include_default_watches:
-                print("No JSON DB found at {}, creating JSON store at {}".format(self.json_store_path, self.datastore_path))
+                logger.critical(f"No JSON DB found at {self.json_store_path}, creating JSON store at {self.datastore_path}")
                 self.add_watch(url='https://news.ycombinator.com/',
                                tag='Tech news',
                                extras={'fetch_backend': 'html_requests'})
@@ -139,7 +139,7 @@ class ChangeDetectionStore:
         save_data_thread = threading.Thread(target=self.save_datastore).start()
 
     def set_last_viewed(self, uuid, timestamp):
-        logging.debug("Setting watch UUID: {} last viewed to {}".format(uuid, int(timestamp)))
+        logger.debug(f"Setting watch UUID: {uuid} last viewed to {int(timestamp)}")
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
         self.needs_write = True
 
@@ -248,12 +248,14 @@ class ChangeDetectionStore:
                 'check_count': 0,
                 'fetch_time' : 0.0,
                 'has_ldjson_price_data': None,
+                'in_stock': None,
                 'last_checked': 0,
                 'last_error': False,
                 'last_notification_error': False,
                 'last_viewed': 0,
                 'previous_md5': False,
                 'previous_md5_before_filters': False,
+                'remote_server_reply': None,
                 'track_ldjson_price_data': None,
             })
 
@@ -315,7 +317,7 @@ class ChangeDetectionStore:
                             apply_extras['include_filters'] = [res['css_filter']]
 
             except Exception as e:
-                logging.error("Error fetching metadata for shared watch link", url, str(e))
+                logger.error(f"Error fetching metadata for shared watch link {url} {str(e)}")
                 flash("Error fetching metadata for {}".format(url), 'error')
                 return False
         from .model.Watch import is_safe_url
@@ -344,7 +346,7 @@ class ChangeDetectionStore:
 
         new_uuid = new_watch.get('uuid')
 
-        logging.debug("Added URL {} - {}".format(url, new_uuid))
+        logger.debug(f"Adding URL {url} - {new_uuid}")
 
         for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
             if k in apply_extras:
@@ -361,7 +363,7 @@ class ChangeDetectionStore:
         if write_to_disk_now:
             self.sync_to_json()
 
-        print("added ", url)
+        logger.debug(f"Added '{url}'")
 
         return new_uuid
 
@@ -415,14 +417,13 @@ class ChangeDetectionStore:
 
 
     def sync_to_json(self):
-        logging.info("Saving JSON..")
-        print("Saving JSON..")
+        logger.info("Saving JSON..")
         try:
             data = deepcopy(self.__data)
         except RuntimeError as e:
             # Try again in 15 seconds
             time.sleep(15)
-            logging.error ("! Data changed when writing to JSON, trying again.. %s", str(e))
+            logger.error(f"! Data changed when writing to JSON, trying again.. {str(e)}")
             self.sync_to_json()
             return
         else:
@@ -435,7 +436,7 @@ class ChangeDetectionStore:
                     json.dump(data, json_file, indent=4)
                 os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
-                logging.error("Error writing JSON!! (Main JSON file save was skipped) : %s", str(e))
+                logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")
 
             self.needs_write = False
             self.needs_write_urgent = False
@@ -446,7 +447,16 @@ class ChangeDetectionStore:
 
         while True:
             if self.stop_thread:
-                print("Shutting down datastore thread")
+                # Suppressing "Logging error in Loguru Handler #0" during CICD.
+                # Not a meaningful difference for a real use-case just for CICD.
+                # the side effect is a "Shutting down datastore thread" message
+                # at the end of each test.
+                # But still more looking better.
+                import sys
+                logger.remove()
+                logger.add(sys.stderr)
+
+                logger.critical("Shutting down datastore thread")
                 return
 
             if self.needs_write or self.needs_write_urgent:
@@ -462,7 +472,7 @@ class ChangeDetectionStore:
     # Go through the datastore path and remove any snapshots that are not mentioned in the index
     # This usually is not used, but can be handy.
     def remove_unused_snapshots(self):
-        print ("Removing snapshots from datastore that are not in the index..")
+        logger.info("Removing snapshots from datastore that are not in the index..")
 
         index=[]
         for uuid in self.data['watching']:
@@ -475,7 +485,7 @@ class ChangeDetectionStore:
         for uuid in self.data['watching']:
             for item in pathlib.Path(self.datastore_path).rglob(uuid+"/*.txt"):
                 if not str(item) in index:
-                    print ("Removing",item)
+                    logger.info(f"Removing {item}")
                     unlink(item)
 
     @property
@@ -561,7 +571,7 @@ class ChangeDetectionStore:
             if os.path.isfile(filepath):
                 headers.update(parse_headers_from_text_file(filepath))
         except Exception as e:
-            print(f"ERROR reading headers.txt at {filepath}", str(e))
+            logger.error(f"ERROR reading headers.txt at {filepath} {str(e)}")
 
         watch = self.data['watching'].get(uuid)
         if watch:
@@ -572,7 +582,7 @@ class ChangeDetectionStore:
                 if os.path.isfile(filepath):
                     headers.update(parse_headers_from_text_file(filepath))
             except Exception as e:
-                print(f"ERROR reading headers.txt at {filepath}", str(e))
+                logger.error(f"ERROR reading headers.txt at {filepath} {str(e)}")
 
             # In /datastore/tag-name.txt
             tags = self.get_all_tags_for_watch(uuid=uuid)
@@ -583,7 +593,7 @@ class ChangeDetectionStore:
                     if os.path.isfile(filepath):
                         headers.update(parse_headers_from_text_file(filepath))
                 except Exception as e:
-                    print(f"ERROR reading headers.txt at {filepath}", str(e))
+                    logger.error(f"ERROR reading headers.txt at {filepath} {str(e)}")
 
         return headers
 
@@ -601,13 +611,13 @@ class ChangeDetectionStore:
     def add_tag(self, name):
         # If name exists, return that
         n = name.strip().lower()
-        print (f">>> Adding new tag - '{n}'")
+        logger.debug(f">>> Adding new tag - '{n}'")
         if not n:
             return False
 
         for uuid, tag in self.__data['settings']['application'].get('tags', {}).items():
             if n == tag.get('title', '').lower().strip():
-                print (f">>> Tag {name} already exists")
+                logger.warning(f"Tag '{name}' already exists, skipping creation.")
                 return uuid
 
         # Eventually almost everything todo with a watch will apply as a Tag
@@ -647,7 +657,10 @@ class ChangeDetectionStore:
         return res
 
     def tag_exists_by_name(self, tag_name):
-        return any(v.get('title', '').lower() == tag_name.lower() for k, v in self.__data['settings']['application']['tags'].items())
+        # Check if any tag dictionary has a 'title' attribute matching the provided tag_name
+        tags = self.__data['settings']['application']['tags'].values()
+        return next((v for v in tags if v.get('title', '').lower() == tag_name.lower()),
+                    None)
 
     def get_updates_available(self):
         import inspect
@@ -669,7 +682,7 @@ class ChangeDetectionStore:
         updates_available = self.get_updates_available()
         for update_n in updates_available:
             if update_n > self.__data['settings']['application']['schema_version']:
-                print ("Applying update_{}".format((update_n)))
+                logger.critical(f"Applying update_{update_n}")
                 # Wont exist on fresh installs
                 if os.path.exists(self.json_store_path):
                     shutil.copyfile(self.json_store_path, self.datastore_path+"/url-watches-before-{}.json".format(update_n))
@@ -677,8 +690,8 @@ class ChangeDetectionStore:
                 try:
                     update_method = getattr(self, "update_{}".format(update_n))()
                 except Exception as e:
-                    print("Error while trying update_{}".format((update_n)))
-                    print(e)
+                    logger.error(f"Error while trying update_{update_n}")
+                    logger.error(e)
                     # Don't run any more updates
                     return
                 else:
@@ -716,7 +729,7 @@ class ChangeDetectionStore:
                         with open(os.path.join(target_path, "history.txt"), "w") as f:
                             f.writelines(history)
                     else:
-                        logging.warning("Datastore history directory {} does not exist, skipping history import.".format(target_path))
+                        logger.warning(f"Datastore history directory {target_path} does not exist, skipping history import.")
 
                 # No longer needed, dynamically pulled from the disk when needed.
                 # But we should set it back to a empty dict so we don't break if this schema runs on an earlier version.
