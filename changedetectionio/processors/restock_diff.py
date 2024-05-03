@@ -19,42 +19,46 @@ class UnableToExtractRestockData(Exception):
         return
 
 
-class perform_site_check(difference_detection_processor):
-    screenshot = None
-    xpath_data = None
+def get_itemprop_availability(html_content):
+    """
+    `itemprop` is a global attribute
+    https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/itemprop
+    https://schema.org/ItemAvailability
 
-    def get_itemprop_availability(self):
-        """
-        `itemprop` is a global attribute
-        https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/itemprop
-        https://schema.org/ItemAvailability
+    <div class="product-offer" itemprop="offers" itemscope="" itemtype="https://schema.org/Offer">
+      ...
+      <link itemprop="availability" href="https://schema.org/OutOfStock" />
 
-        <div class="product-offer" itemprop="offers" itemscope="" itemtype="https://schema.org/Offer">
-          ...
-          <link itemprop="availability" href="https://schema.org/OutOfStock" />
+    :return:
+    """
+    # Try/prefer the structured data first if it exists
+    # https://schema.org/ItemAvailability Which strings mean we should consider it in stock?
 
-        :return:
-        """
-        value = None
+    value = None
+    try:
+        value = xpath_filter("//*[@itemtype='https://schema.org/Offer']//*[@itemprop='availability']/@href", html_content)
+        if value:
+            value = re.sub(r'(?i)^http(s)+://schema.org/', '', value.strip())
+
+    except Exception as e:
+        print("Exception getting get_itemprop_availability (itemprop='availability')", str(e))
+
+    # Try RDFa style
+    if not value:
         try:
-            value = xpath_filter("//*[@itemtype='https://schema.org/Offer']//*[@itemprop='availability']/@href", self.fetcher.content)
+            value = xpath_filter("//*[@property='schema:availability']/@content", html_content)
             if value:
                 value = re.sub(r'(?i)^http(s)+://schema.org/', '', value.strip())
 
         except Exception as e:
-            print("Exception getting get_itemprop_availability (itemprop='availability')", str(e))
+            print("Exception getting get_itemprop_availability ('schema:availability')", str(e))
 
-        # Try RDFa style
-        if not value:
-            try:
-                value = xpath_filter("//*[@property='schema:availability']/@content", self.fetcher.content)
-                if value:
-                    value = re.sub(r'(?i)^http(s)+://schema.org/', '', value.strip())
+    return value
 
-            except Exception as e:
-                print("Exception getting get_itemprop_availability ('schema:availability')", str(e))
+class perform_site_check(difference_detection_processor):
+    screenshot = None
+    xpath_data = None
 
-        return value
 
     def run_changedetection(self, uuid, skip_when_checksum_same=True):
 
@@ -74,9 +78,8 @@ class perform_site_check(difference_detection_processor):
         update_obj['content_type'] = self.fetcher.headers.get('Content-Type', '')
         update_obj["last_check_status"] = self.fetcher.get_last_status_code()
 
-        # Try/prefer the structured data first if it exists
-        # https://schema.org/ItemAvailability Which strings mean we should consider it in stock?
-        availability = self.get_itemprop_availability()
+        availability = get_itemprop_availability(html_content=self.fetcher.content)
+
         if availability:
             self.fetcher.instock_data = availability # Stored as the text snapshot
             if any(availability in s for s in
