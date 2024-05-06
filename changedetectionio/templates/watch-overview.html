@@ -70,6 +70,7 @@
                 <th><input style="vertical-align: middle" type="checkbox" id="check-all" > <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}"  href="{{url_for('index', sort='date_created', order=link_order, tag=active_tag)}}"># <span class='arrow {{link_order}}'></span></a></th>
                 <th></th>
                 <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('index', sort='label', order=link_order, tag=active_tag)}}">Website <span class='arrow {{link_order}}'></span></a></th>
+                <th></th>
                 <th><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('index', sort='last_checked', order=link_order, tag=active_tag)}}">Last Checked <span class='arrow {{link_order}}'></span></a></th>
                 <th><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('index', sort='last_changed', order=link_order, tag=active_tag)}}">Last Changed <span class='arrow {{link_order}}'></span></a></th>
                 <th></th>
@@ -135,30 +136,33 @@
 
                     {% if watch['processor'] == 'text_json_diff'  %}
                         {% if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  %}
-                        <div class="ldjson-price-track-offer">Embedded price data detected, follow only price data? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
-                        {% endif %}
-                        {% if watch['track_ldjson_price_data'] == 'accepted' %}
-                        <span class="tracking-ldjson-price-data" title="Automatically following embedded price information"><img src="{{url_for('static_content', group='images', filename='price-tag-icon.svg')}}"  class="status-icon price-follow-tag-icon" > Price</span>
+                        <div class="ldjson-price-track-offer">Switch to Restock & Price watch mode? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
                         {% endif %}
                     {% endif %}
-
-                    {% if watch['processor'] == 'restock_diff'  %}
-                    <span class="restock-label {{'in-stock' if watch['in_stock'] else 'not-in-stock' }}" title="detecting restock conditions">
-                        <!-- maybe some object watch['processor'][restock_diff] or.. -->
-                        {% if watch['last_checked'] and watch['in_stock'] != None %}
-                            {% if watch['in_stock'] %} In stock {% else %} Not in stock {% endif %}
-                        {% else %}
-                            Not yet checked
-                        {% endif %}
-                    </span>
-                    {% endif %}
-
-
                     {% for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() %}
                       <span class="watch-tag-list">{{ watch_tag.title }}</span>
                     {% endfor %}
-
                 </td>
+
+                <td class="restock-and-price">
+                    {% if watch['processor'] == 'restock_diff'  %}
+                        {% if watch['restock']['in_stock'] != None %}
+                            <span class="restock-label {{'in-stock' if watch['restock']['in_stock'] else 'not-in-stock' }}" title="detecting restock and price">
+                                <!-- maybe some object watch['processor'][restock_diff] or.. -->
+                                 {% if watch['restock']['in_stock'] %} In stock {% else %} Not in stock {% endif %}
+                            </span>
+                        {% else %}
+                            <span class="restock-label">Not yet checked</span>
+                        {% endif %}
+
+                        {% if watch['restock']['price'] != None %}
+                            <span class="restock-label price {{'in-stock' if watch['restock']['in_stock'] else 'not-in-stock' }}" title="price">
+                            {{ watch['restock']['price'] }} {{ watch['restock']['currency'] }}
+                            </span>
+                        {% endif %}
+                    {% endif %}
+                </td>
+
                 <td class="last-checked" data-timestamp="{{ watch.last_checked }}">{{watch|format_last_checked_time|safe}}</td>
                 <td class="last-changed" data-timestamp="{{ watch.last_changed }}">{% if watch.history_n >=2 and watch.last_changed >0 %}
                     {{watch.last_changed|format_timestamp_timeago}}

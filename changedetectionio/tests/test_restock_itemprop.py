@@ -71,3 +71,6 @@ def test_restock_itemprop_basic(client, live_server):
 
         res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
         assert b'Deleted' in res.data
+
+
+    # @todo check restock and price change conditions

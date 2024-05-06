@@ -40,7 +40,6 @@ base_config = {
     'track_ldjson_price_data': None,
     'headers': {},  # Extra headers to send
     'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
-    'in_stock' : None,
     'in_stock_only' : True, # Only trigger change on going to instock from out-of-stock
     'include_filters': [],
     'last_checked': 0,
@@ -59,6 +58,7 @@ base_config = {
     'previous_md5': False,
     'previous_md5_before_filters': False,  # Used for skipping changedetection entirely
     'proxy': None,  # Preferred proxy connection
+    'restock': {'in_stock': None, 'price': None, 'currency': None}, # Restock/price storage
     'remote_server_reply': None, # From 'server' reply header
     'sort_text_alphabetically': False,
     'subtractive_selectors': [],

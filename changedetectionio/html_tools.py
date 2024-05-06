@@ -240,7 +240,7 @@ def _get_stripped_text_from_json_match(match):
 # ensure_is_ldjson_info_type - str "product", optional, "@type == product" (I dont know how to do that as a json selector)
 def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None):
     stripped_text_from_html = False
-
+# https://github.com/dgtlmoon/changedetection.io/pull/2041#issuecomment-1848397161w
     # Try to parse/filter out the JSON, if we get some parser error, then maybe it's embedded within HTML tags
     try:
         stripped_text_from_html = _parse_json(json.loads(content), json_filter)
