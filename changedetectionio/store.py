@@ -662,6 +662,12 @@ class ChangeDetectionStore:
         return next((v for v in tags if v.get('title', '').lower() == tag_name.lower()),
                     None)
 
+    def any_watches_have_processor_by_name(self, processor_name):
+        for watch in self.data['watching'].values():
+            if watch.get('processor') == processor_name:
+                return True
+        return False
+
     def get_updates_available(self):
         import inspect
         updates_available = []

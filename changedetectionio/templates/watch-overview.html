@@ -59,6 +59,11 @@
     {% set sort_order = sort_order or 'asc' %}
     {% set sort_attribute = sort_attribute or 'last_changed'  %}
     {% set pagination_page = request.args.get('page', 0) %}
+    {% set cols_required = 6 %}
+    {% set any_has_restock_price_processor = datastore.any_watches_have_processor_by_name("restock_diff") %}
+    {% if any_has_restock_price_processor %}
+        {% set cols_required = cols_required + 1 %}
+    {% endif %}
 
     <div id="watch-table-wrapper">
 
@@ -70,7 +75,9 @@
                 <th><input style="vertical-align: middle" type="checkbox" id="check-all" > <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}"  href="{{url_for('index', sort='date_created', order=link_order, tag=active_tag)}}"># <span class='arrow {{link_order}}'></span></a></th>
                 <th></th>
                 <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('index', sort='label', order=link_order, tag=active_tag)}}">Website <span class='arrow {{link_order}}'></span></a></th>
-                <th></th>
+             {% if any_has_restock_price_processor %}
+                <th>Restock &amp; Price</th>
+             {% endif %}
                 <th><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('index', sort='last_checked', order=link_order, tag=active_tag)}}">Last Checked <span class='arrow {{link_order}}'></span></a></th>
                 <th><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('index', sort='last_changed', order=link_order, tag=active_tag)}}">Last Changed <span class='arrow {{link_order}}'></span></a></th>
                 <th></th>
@@ -79,7 +86,7 @@
             <tbody>
             {% if not watches|length %}
             <tr>
-                <td colspan="6">No website watches configured, please add a URL in the box above, or <a href="{{ url_for('import_page')}}" >import a list</a>.</td>
+                <td colspan="{{ cols_required }}">No website watches configured, please add a URL in the box above, or <a href="{{ url_for('import_page')}}" >import a list</a>.</td>
             </tr>
             {% endif %}
             {% for watch in (watches|sort(attribute=sort_attribute, reverse=sort_order == 'asc'))|pagination_slice(skip=pagination.skip) %}
@@ -139,11 +146,14 @@
                         <div class="ldjson-price-track-offer">Switch to Restock & Price watch mode? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
                         {% endif %}
                     {% endif %}
+                    {% if watch['processor'] == 'restock_diff' %}
+                        <span class="tracking-ldjson-price-data" title="Automatically following embedded price information"><img src="{{url_for('static_content', group='images', filename='price-tag-icon.svg')}}"  class="status-icon price-follow-tag-icon" > Price</span>
+                    {% endif %}
                     {% for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() %}
                       <span class="watch-tag-list">{{ watch_tag.title }}</span>
                     {% endfor %}
                 </td>
-
+{% if any_has_restock_price_processor %}
                 <td class="restock-and-price">
                     {% if watch['processor'] == 'restock_diff'  %}
                         {% if watch['restock']['in_stock'] != None %}
@@ -162,7 +172,7 @@
                         {% endif %}
                     {% endif %}
                 </td>
-
+{% endif %}
                 <td class="last-checked" data-timestamp="{{ watch.last_checked }}">{{watch|format_last_checked_time|safe}}</td>
                 <td class="last-changed" data-timestamp="{{ watch.last_changed }}">{% if watch.history_n >=2 and watch.last_changed >0 %}
                     {{watch.last_changed|format_timestamp_timeago}}
