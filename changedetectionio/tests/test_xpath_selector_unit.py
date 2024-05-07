@@ -275,4 +275,4 @@ def test_Broken_DOM_03(html_content, xpath, answer):
     tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
 
     # test xpath 1
-    assert len(tree.xpath(xpath)) == 2
+    assert len(tree.xpath(xpath)) == answer
