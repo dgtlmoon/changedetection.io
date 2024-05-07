@@ -254,8 +254,7 @@ def test_trips(html_content, xpath, answer):
                           ])
 def test_trips(html_content, xpath, answer):
     # In normal situation, DOM's root element node is only one. So when DOM violation happens, Exception occurs.
-
     html_content = html_tools.xpath_filter(xpath, html_content, append_pretty_line_formatting=True)
     assert type(html_content) == str
-    # check the answer is not in the html_content
+    # check the answer is *not in* the html_content
     assert answer not in html_content
