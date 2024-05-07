@@ -269,8 +269,7 @@ def test_Broken_DOM_02(html_content, xpath, answer):
     ("/html/body", 2),
                           ])
 def test_Broken_DOM_03(html_content, xpath, answer):
-    # In normal situation, DOM's root element node is only one. So when DOM violation happens, Exception occurs.
-
+    """just test for xpath1"""
     from lxml import etree, html
     parser = etree.HTMLParser()
     tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
