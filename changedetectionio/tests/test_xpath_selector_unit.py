@@ -229,7 +229,7 @@ DOM_violation_two_html_root_element = """<!DOCTYPE html>
     ("//html[2]/body/p[1]", "First paragraph."),
     ("//html[2]/body/p[1]", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
                           ])
-def test_trips(html_content, xpath, answer):
+def test_broken_DOM_01(html_content, xpath, answer):
     # In normal situation, DOM's root element node is only one. So when DOM violation happens, Exception occurs.
     with pytest.raises(Exception):
         from lxml import etree, html
@@ -250,7 +250,7 @@ def test_trips(html_content, xpath, answer):
     ("/html[2]/body/p[1]", "First paragraph."),
     ("//html[2]/body/p[1]", "First paragraph."),
                           ])
-def test_trips(html_content, xpath, answer):
+def test_Broken_DOM_02(html_content, xpath, answer):
     # In normal situation, DOM's root element node is only one. So when DOM violation happens, Exception occurs.
     html_content = html_tools.xpath_filter(xpath, html_content, append_pretty_line_formatting=True)
     assert type(html_content) == str
