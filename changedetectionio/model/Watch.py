@@ -19,6 +19,8 @@ from changedetectionio.notification import (
     default_notification_format_for_watch
 )
 
+Restock = {'in_stock': None, 'price': None, 'currency': None}
+
 base_config = {
     'body': None,
     'browser_steps': [],
@@ -58,7 +60,7 @@ base_config = {
     'previous_md5': False,
     'previous_md5_before_filters': False,  # Used for skipping changedetection entirely
     'proxy': None,  # Preferred proxy connection
-    'restock': {'in_stock': None, 'price': None, 'currency': None}, # Restock/price storage
+    'restock': Restock, # Restock/price storage
     'remote_server_reply': None, # From 'server' reply header
     'sort_text_alphabetically': False,
     'subtractive_selectors': [],

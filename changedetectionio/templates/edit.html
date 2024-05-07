@@ -72,7 +72,7 @@
                         <span class="pure-form-message-inline">
                         {% if watch['processor'] == 'text_json_diff' %}
                             Current mode: <strong>Webpage Text/HTML, JSON and PDF changes.</strong><br>
-                          <a href="{{url_for('edit_page', uuid=uuid)}}?switch_processor=restock_diff" class="pure-button button-xsmall">Switch to re-stock detection mode.</a>
+                          <a href="{{url_for('edit_page', uuid=uuid)}}?switch_processor=restock_diff" class="pure-button button-xsmall">Switch to re-stock & Price detection mode for single product pages</a>
                         {% else %}
                         Current mode: <strong>Re-stock detection.</strong><br>
                           <a href="{{url_for('edit_page', uuid=uuid)}}?switch_processor=text_json_diff" class="pure-button button-xsmall">Switch to Webpage Text/HTML, JSON and PDF changes mode.</a>

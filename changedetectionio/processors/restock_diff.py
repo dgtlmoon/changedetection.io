@@ -6,6 +6,7 @@ from ..html_tools import extract_json_as_string, has_ldjson_product_info
 from copy import deepcopy
 from loguru import logger
 import hashlib
+import json
 import re
 import urllib3
 
@@ -38,8 +39,6 @@ def get_itemprop_availability(html_content):
     # https://schema.org/ItemAvailability Which strings mean we should consider it in stock?
 
     # Chewing on random content could throw any kind of exception, best to catch it and move on if possible.
-    import json
-
     # LD-JSON type
     value = {'price': None, 'availability': None, 'currency': None}
     try:
@@ -51,9 +50,13 @@ def get_itemprop_availability(html_content):
                 if ld_obj and isinstance(ld_obj, list):
                     ld_obj = ld_obj[0]
 
-
-                value['price'] = ld_obj.get('price')
-                value['currency'] = ld_obj['pricecurrency'].upper() if ld_obj.get('pricecurrency') else None
+                # DOnt know why but it happens..
+                if ld_obj.get('pricespecification'):
+                    value['price'] = ld_obj['pricespecification'].get('price')
+                    value['currency'] = ld_obj['pricespecification']['pricecurrency'].upper() if ld_obj['pricespecification'].get('pricecurrency') else None
+                else:
+                    value['price'] = ld_obj.get('price')
+                    value['currency'] = ld_obj['pricecurrency'].upper() if ld_obj.get('pricecurrency') else None
                 value['availability'] = ld_obj['availability'] if ld_obj.get('availability') else None
 
     except Exception as e:
@@ -103,7 +106,8 @@ class perform_site_check(difference_detection_processor):
             raise Exception("Watch no longer exists.")
 
         # Unset any existing notification error
-        update_obj = {'last_notification_error': False, 'last_error': False, 'in_stock': None, 'restock': None}
+        from changedetectionio.model.Watch import Restock
+        update_obj = {'last_notification_error': False, 'last_error': False, 'restock': Restock}
 
         self.screenshot = self.fetcher.screenshot
         self.xpath_data = self.fetcher.xpath_data

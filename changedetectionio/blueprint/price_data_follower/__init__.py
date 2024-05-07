@@ -17,6 +17,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q: PriorityQueue
     @price_data_follower_blueprint.route("/<string:uuid>/accept", methods=['GET'])
     def accept(uuid):
         datastore.data['watching'][uuid]['track_ldjson_price_data'] = PRICE_DATA_TRACK_ACCEPT
+        datastore.data['watching'][uuid]['processor'] = 'restock_diff'
         update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
         return redirect(url_for("index"))
 
