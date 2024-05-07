@@ -135,10 +135,8 @@ def forest_transplanting(root):
     if Is_fragment:
         new_root = etree.Element("new_root")
         root_siblings_preceding.reverse()
-        #tree = etree.ElementTree(new_root)
         for node in chain(root_siblings_preceding, [root], root_siblings):
             new_root.append(node)
-        #print(new_root.getchildren())
         return new_root, True
 
     return root, False
