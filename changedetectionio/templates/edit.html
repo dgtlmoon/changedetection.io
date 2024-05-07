@@ -485,12 +485,16 @@ Unavailable") }}
                             <td>{{ "{:,}".format(watch.history|length) }}</td>
                         </tr>
                         <tr>
-                            <td>Last fetch time</td>
+                            <td>Last fetch duration</td>
                             <td>{{ watch.fetch_time }}s</td>
                         </tr>
                         <tr>
                             <td>Notification alert count</td>
                             <td>{{ watch.notification_alert_count }}</td>
+                        </tr>
+                        <tr>
+                            <td>Server type reply</td>
+                            <td>{{ watch.get('remote_server_reply') }}</td>
                         </tr>
                         </tbody>
                     </table>
