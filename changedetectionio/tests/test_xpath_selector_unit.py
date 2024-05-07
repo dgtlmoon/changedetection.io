@@ -202,7 +202,7 @@ def test_trips(html_content, xpath, answer):
     assert type(html_content) == str
     assert answer in html_content
 
-DOM_violation_two_html_root_element = ="""<!DOCTYPE html>
+DOM_violation_two_html_root_element = """<!DOCTYPE html>
 <html>
   <body>
     <h1>Hello absurd world</h1>
@@ -216,7 +216,6 @@ DOM_violation_two_html_root_element = ="""<!DOCTYPE html>
     <p>Therefore, if the path is /html/body/p[1], lxml(libxml2) returns two element nodes not one.</p>
   </body>
 </html>"""
-
 @pytest.mark.parametrize("html_content", [DOM_violation_two_html_root_element])
 @pytest.mark.parametrize("xpath, answer", [
     ("/html/body/p[1]", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
