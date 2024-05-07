@@ -186,12 +186,17 @@ code {
   }
 }
 
-.watch-tag-list {
-  color: var(--color-white);
+.inline-tag {
   white-space: nowrap;
-  background: var(--color-text-watch-tag-list);
   border-radius: 5px;
   padding: 2px 5px;
+  margin-right: 4px;
+}
+
+.watch-tag-list {
+  color: var(--color-white);
+  background: var(--color-text-watch-tag-list);
+  @extend .inline-tag;
 }
 
 .box {
@@ -1049,9 +1054,8 @@ ul {
 .tracking-ldjson-price-data {
   background-color: var(--color-background-button-green);
   color: #000;
-  padding: 3px;
-  border-radius: 3px;
-  white-space: nowrap;
+  opacity: 0.6;
+  @extend .inline-tag;
 }
 
 .ldjson-price-track-offer {
@@ -1094,9 +1098,7 @@ ul {
     background-color: var(--color-background-button-cancel);
     color: #777;
   }
-  padding: 3px;
-  border-radius: 3px;
-  white-space: nowrap;
+  @extend .inline-tag;
 }
 
 #chrome-extension-link {

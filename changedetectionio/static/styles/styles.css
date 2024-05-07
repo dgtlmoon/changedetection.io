@@ -531,12 +531,15 @@ code {
     content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
     margin: 0 3px 0 5px; }
 
+.inline-tag, .watch-tag-list, .tracking-ldjson-price-data, .restock-label {
+  white-space: nowrap;
+  border-radius: 5px;
+  padding: 2px 5px;
+  margin-right: 4px; }
+
 .watch-tag-list {
   color: var(--color-white);
-  white-space: nowrap;
-  background: var(--color-text-watch-tag-list);
-  border-radius: 5px;
-  padding: 2px 5px; }
+  background: var(--color-text-watch-tag-list); }
 
 .box {
   max-width: 80%;
@@ -1148,9 +1151,7 @@ ul {
 .tracking-ldjson-price-data {
   background-color: var(--color-background-button-green);
   color: #000;
-  padding: 3px;
-  border-radius: 3px;
-  white-space: nowrap; }
+  opacity: 0.6; }
 
 .ldjson-price-track-offer {
   font-weight: bold;
@@ -1173,16 +1174,13 @@ ul {
       list-style: none;
       font-size: 0.8rem; }
 
-.restock-label {
-  padding: 3px;
-  border-radius: 3px;
-  white-space: nowrap; }
-  .restock-label.in-stock {
-    background-color: var(--color-background-button-green);
-    color: #fff; }
-  .restock-label.not-in-stock {
-    background-color: var(--color-background-button-cancel);
-    color: #777; }
+.restock-label.in-stock {
+  background-color: var(--color-background-button-green);
+  color: #fff; }
+
+.restock-label.not-in-stock {
+  background-color: var(--color-background-button-cancel);
+  color: #777; }
 
 #chrome-extension-link {
   padding: 9px;
