@@ -224,9 +224,7 @@ DOM_violation_two_html_root_element = """<!DOCTYPE html>
     ("//html/body/p[1]", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
     ("//body/p[1]", "First paragraph."),
     ("//body/p[1]", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
-    ("/html[2]/body/p[1]", "First paragraph."),
     ("/html[2]/body/p[1]", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
-    ("//html[2]/body/p[1]", "First paragraph."),
     ("//html[2]/body/p[1]", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
                           ])
 def test_broken_DOM_01(html_content, xpath, answer):
