@@ -121,12 +121,28 @@ def forest_transplanting(root):
     from lxml import etree
     from itertools import chain
     root_siblings_preceding = [ s for s in root.itersiblings(preceding=True)]
-    root_siblings_preceding.reverse()
     root_siblings = [s for s in root.itersiblings()]
-    new_root = etree.Element("new_root")
-    for node in chain(root_siblings_preceding, [root], root_siblings):
-        new_root.append(node)
-    return new_root
+
+    Is_fragment=False
+    # If element node exsits in root element node's sibilings, it is fragment.
+    for node in chain(root_siblings_preceding, root_siblings):
+        if not hasattr(node.tag, '__name__'):
+            Is_fragment=True
+            # early exit. because the root is already root element.
+            # So, two root element nodes are detected. DOM violation.
+            break
+
+    if Is_fragment:
+        new_root = etree.Element("new_root")
+        root_siblings_preceding.reverse()
+        #tree = etree.ElementTree(new_root)
+        for node in chain(root_siblings_preceding, [root], root_siblings):
+            new_root.append(node)
+        #print(new_root.getchildren())
+        return new_root, True
+
+    return root, False
+
 
 # Return str Utf-8 of matched rules
 def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
@@ -141,10 +157,10 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
         parser = etree.XMLParser(strip_cdata=False)
 
     tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
-    tree = forest_transplanting(tree)
+    tree, is_fragment = forest_transplanting(tree)
     html_block = ""
 
-    r = elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser, fragment=True, item=tree)
+    r = elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser, fragment=is_fragment)
     #@note: //title/text() wont work where <title>CDATA..
 
     if type(r) != list:
