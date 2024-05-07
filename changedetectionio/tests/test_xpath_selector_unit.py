@@ -259,3 +259,21 @@ def test_Broken_DOM_02(html_content, xpath, answer):
     assert type(html_content) == str
     # Check the answer is *not in* the html_content
     assert answer not in html_content
+
+@pytest.mark.parametrize("html_content", [DOM_violation_two_html_root_element])
+@pytest.mark.parametrize("xpath, answer", [
+    ("/html/body/p[1]", 2),
+    ("/html", 2),
+    ("//html", 2),
+    ("//body", 2),
+    ("/html/body", 2),
+                          ])
+def test_Broken_DOM_03(html_content, xpath, answer):
+    # In normal situation, DOM's root element node is only one. So when DOM violation happens, Exception occurs.
+
+    from lxml import etree, html
+    parser = etree.HTMLParser()
+    tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
+
+    # test xpath 1
+    assert len(tree.xpath(xpath)) == 2
