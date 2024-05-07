@@ -226,6 +226,18 @@ DOM_violation_two_html_root_element = """<!DOCTYPE html>
     ("//body/p[1]", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
                           ])
 def test_trips(html_content, xpath, answer):
+
+
+    # In normal situation, DOM's root element node is only one. So Exception occurs.
+    with pytest.raises(Exception):
+        from lxml import etree, html
+        import elementpath
+        from elementpath.xpath3 import XPath3Parser
+        parser = etree.HTMLParser()
+        tree = html.fromstring(bytes(doc, encoding='utf-8'), parser=parser)
+        # Error will occur.
+        r = elementpath.select(tree, path.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser)
+
     html_content = html_tools.xpath_filter(xpath, html_content, append_pretty_line_formatting=True)
     assert type(html_content) == str
     assert answer in html_content
