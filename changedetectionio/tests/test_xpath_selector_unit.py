@@ -218,6 +218,9 @@ DOM_violation_two_html_root_element = """<!DOCTYPE html>
 </html>"""
 @pytest.mark.parametrize("html_content", [DOM_violation_two_html_root_element])
 @pytest.mark.parametrize("xpath, answer", [
+    (".", "First paragraph."),
+    ("/*", "First paragraph."),
+    ("/html", "First paragraph."),
     ("/html/body/p[1]", "First paragraph."),
     ("/html/body/p[1]", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
     ("count(/html/body/p[1])", "2"),
