@@ -205,22 +205,39 @@ def test_trips(html_content, xpath, answer):
 DOM_violation_two_html_root_element = """<!DOCTYPE html>
 <html>
   <body>
-    <h1>Hello world</h1>
+    <h1>Hello world1</h1>
     <p>First paragraph.</p>
   </body>
 </html>
 <html>
   <body>
-    <h1>Hello world</h1>
+    <h1>Hello world2</h1>
     <p>Browsers parse this part by fixing it but lxml doesn't and returns two root element node</p>
     <p>Therefore, if the path is /html/body/p[1], lxml(libxml2) returns two element nodes not one.</p>
   </body>
 </html>"""
 @pytest.mark.parametrize("html_content", [DOM_violation_two_html_root_element])
 @pytest.mark.parametrize("xpath, answer", [
+    (".", "Hello world1"),
     (".", "First paragraph."),
+    (".", "Hello world2"),
+    (".", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
+    (".", "Therefore, if the path is /html/body/p[1], lxml(libxml2) returns two element nodes not one."),
+    ("/*", "Hello world1"),
     ("/*", "First paragraph."),
+    ("/*", "Hello world2"),
+    ("/*", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
+    ("/*", "Therefore, if the path is /html/body/p[1], lxml(libxml2) returns two element nodes not one."),
+    ("html", "Hello world1"),
+    ("html", "First paragraph."),
+    ("html", "Hello world2"),
+    ("html", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
+    ("html", "Therefore, if the path is /html/body/p[1], lxml(libxml2) returns two element nodes not one."),
+    ("/html", "Hello world1"),
     ("/html", "First paragraph."),
+    ("/html", "Hello world2"),
+    ("/html", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
+    ("/html", "Therefore, if the path is /html/body/p[1], lxml(libxml2) returns two element nodes not one."),
     ("/html/body/p[1]", "First paragraph."),
     ("/html/body/p[1]", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
     ("count(/html/body/p[1])", "2"),
