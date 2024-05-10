@@ -2,13 +2,14 @@ from . import difference_detection_processor
 from ..html_tools import xpath1_filter as xpath_filter
 # xpath1 is a lot faster and is sufficient here
 from ..html_tools import extract_json_as_string, has_ldjson_product_info
-
+from ..model import Restock
 from copy import deepcopy
 from loguru import logger
 import hashlib
-import json
 import re
 import urllib3
+import extruct
+import time
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -22,75 +23,65 @@ class UnableToExtractRestockData(Exception):
         self.status_code = status_code
         return
 
+def _search_prop_by_value(matches, value):
+    for properties in matches:
+        for prop in properties:
+            if value in prop[0]:
+                return prop[1]  # Yield the desired value and exit the function
 
-def get_itemprop_availability(html_content):
+# should return Restock()
+# add casting?
+def get_itemprop_availability(html_content) -> Restock:
     """
-    `itemprop` is a global attribute
-    https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/itemprop
-    https://schema.org/ItemAvailability
-
-    <div class="product-offer" itemprop="offers" itemscope="" itemtype="https://schema.org/Offer">
-      ...
-      <link itemprop="availability" href="https://schema.org/OutOfStock" />
-
-    :return:
+    Kind of funny/cool way to find price/availability in one many different possibilities.
+    Use 'extruct' to find any possible RDFa/microdata/json-ld data, make a JSON string from the output then search it.
     """
-    # Try/prefer the structured data first if it exists
-    # https://schema.org/ItemAvailability Which strings mean we should consider it in stock?
+    from jsonpath_ng import parse
 
-    # Chewing on random content could throw any kind of exception, best to catch it and move on if possible.
-    # LD-JSON type
-    value = {'price': None, 'availability': None, 'currency': None}
-    try:
-        if has_ldjson_product_info(html_content):
-            res = extract_json_as_string(html_content.lower(), "json:$..offers", ensure_is_ldjson_info_type=True)
-            if res:
-                logger.debug(f"Has 'LD-JSON' - '{value}'")
-                ld_obj = json.loads(res)
-                if ld_obj and isinstance(ld_obj, list):
-                    ld_obj = ld_obj[0]
+    value={}
 
-                # DOnt know why but it happens..
-                if ld_obj.get('pricespecification'):
-                    value['price'] = ld_obj['pricespecification'].get('price')
-                    value['currency'] = ld_obj['pricespecification']['pricecurrency'].upper() if ld_obj['pricespecification'].get('pricecurrency') else None
-                else:
-                    value['price'] = ld_obj.get('price')
-                    value['currency'] = ld_obj['pricecurrency'].upper() if ld_obj.get('pricecurrency') else None
-                value['availability'] = ld_obj['availability'] if ld_obj.get('availability') else None
+    now = time.time()
+    data = extruct.extract(html_content)
 
-    except Exception as e:
-        # This should be OK, we will attempt the scraped version instead
-        logger.warning(f"Exception getting get_itemprop_availability 'LD-JSON' - {str(e)}")
+    # First phase, dead simple scanning of anything that looks useful
+    if data:
+        logger.debug(f"Using jsonpath to find price/availability/etc")
+        price_parse = parse('$..(price|Price)')
+        pricecurrency_parse = parse('$..(pricecurrency|currency| priceCurrency )')
+        availability_parse = parse('$..(availability|Availability)')
 
-    # Microdata style
-    if not value.get('price'):
-        try:
-            res = xpath_filter("//*[@itemtype='https://schema.org/Offer']//*[@itemprop='availability']/@href", html_content)
-            if res:
-                #@todo
-                logger.debug(f"Has 'Microdata' - '{value}'")
+        price_result = price_parse.find(data)
+        if price_result:
+            value['price'] = price_result[0].value
 
-        except Exception as e:
-            # This should be OK, we will attempt the scraped version instead
-            logger.warning(f"Exception getting get_itemprop_availability 'Microdata' - {str(e)}")
+        pricecurrency_result = pricecurrency_parse.find(data)
+        if pricecurrency_result:
+            value['currency'] = pricecurrency_result[0].value
 
-    # RDFa style
-    if not value.get('price'):
-        try:
-            res = xpath_filter("//*[@property='schema:availability']/@content", html_content)
-            # @todo
-            if res:
-                logger.debug(f"Has 'RDFa' - '{value}'")
+        availability_result = availability_parse.find(data)
+        if availability_result:
+            value['availability'] = availability_result[0].value
 
-        except Exception as e:
-            # This should be OK, we will attempt the scraped version instead
-            logger.warning(f"Exception getting get_itemprop_availability 'RDFa' - {str(e)}")
+        if value.get('availability'):
+            value['availability'] = re.sub(r'(?i)^(https|http)://schema.org/', '',
+                                           value.get('availability').strip(' "\'').lower()) if value.get('availability') else None
 
-    value['availability'] = re.sub(r'(?i)^(https|http)://schema.org/', '', value.get('availability').strip(' "\'').lower()) if value.get('availability') else None
+        # Second, go dig OpenGraph which is something that jsonpath_ng cant do because of the tuples and double-dots (:)
+        if not value.get('price') or value.get('availability'):
+            logger.debug(f"Alternatively digging through OpenGraph properties for restock/price info..")
+            jsonpath_expr = parse('$..properties')
 
-    # @todo this should return dict/tuple of instock + price
-    return value
+            for match in jsonpath_expr.find(data):
+                if not value.get('price'):
+                    value['price'] = _search_prop_by_value([match.value], "price:amount")
+                if not value.get('availability'):
+                    value['availability'] = _search_prop_by_value([match.value], "product:availability")
+                if not value.get('currency'):
+                    value['currency'] = _search_prop_by_value([match.value], "price:currency")
+
+    logger.trace(f"Processed with Extruct in {time.time()-now:.3f}s")
+
+    return Restock(value)
 
 class perform_site_check(difference_detection_processor):
     screenshot = None
@@ -106,8 +97,7 @@ class perform_site_check(difference_detection_processor):
             raise Exception("Watch no longer exists.")
 
         # Unset any existing notification error
-        from changedetectionio.model.Watch import Restock
-        update_obj = {'last_notification_error': False, 'last_error': False, 'restock': Restock}
+        update_obj = {'last_notification_error': False, 'last_error': False, 'restock':  None}
 
         self.screenshot = self.fetcher.screenshot
         self.xpath_data = self.fetcher.xpath_data
@@ -121,17 +111,18 @@ class perform_site_check(difference_detection_processor):
             # Store for other usage
             update_obj['restock'] = itemprop_availability
 
-            # @todo: Configurable?
-            if any(substring.lower() in itemprop_availability['availability'].lower() for substring in [
-                'instock',
-                'instoreonly',
-                'limitedavailability',
-                'onlineonly',
-                'presale']
-                ):
-                update_obj['restock']['in_stock'] = True
-            else:
-                update_obj['restock']['in_stock'] = False
+            if itemprop_availability.get('availability'):
+                # @todo: Configurable?
+                if any(substring.lower() in itemprop_availability['availability'].lower() for substring in [
+                    'instock',
+                    'instoreonly',
+                    'limitedavailability',
+                    'onlineonly',
+                    'presale']
+                       ):
+                    update_obj['restock']['in_stock'] = True
+                else:
+                    update_obj['restock']['in_stock'] = False
 
             # Used for the change detection, we store the real data separately, in the future this can implement some min,max threshold
             # @todo if price is None?

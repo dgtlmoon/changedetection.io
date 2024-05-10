@@ -99,6 +99,7 @@
                 {% if watch.last_notification_error is defined and watch.last_notification_error != False %}error{% endif %}
                 {% if watch.paused is defined and watch.paused != False %}paused{% endif %}
                 {% if is_unviewed %}unviewed{% endif %}
+                {% if watch.has_restock_info %}has-restock-info {% if watch['restock']['in_stock'] %}in-stock{% else %}not-in-stock{% endif %}{% endif %}
                 {% if watch.uuid in queued_uuids %}queued{% endif %}">
                 <td class="inline checkbox-uuid" ><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " > <span>{{ loop.index+pagination.skip }}</span></td>
                 <td class="inline watch-controls">
@@ -156,20 +157,24 @@
 {% if any_has_restock_price_processor %}
                 <td class="restock-and-price">
                     {% if watch['processor'] == 'restock_diff'  %}
-                        {% if watch['restock']['in_stock'] != None %}
+                        {% if watch.get('restock') and watch['restock']['in_stock'] != None %}
                             <span class="restock-label {{'in-stock' if watch['restock']['in_stock'] else 'not-in-stock' }}" title="Detecting restock and price">
                                 <!-- maybe some object watch['processor'][restock_diff] or.. -->
                                  {% if watch['restock']['in_stock'] %} In stock {% else %} Not in stock {% endif %}
                             </span>
-                        {% else %}
-                            <span class="restock-label">Not yet checked</span>
                         {% endif %}
 
-                        {% if watch['restock']['price'] != None %}
-                            <span class="restock-label price {{'in-stock' if watch['restock']['in_stock'] else 'not-in-stock' }}" title="Price">
-                            {{ watch['restock']['price'] }} {{ watch['restock']['currency'] }}
-                            </span>
+                        {% if watch.get('restock') and watch['restock']['price'] != None %}
+                            {% if watch['restock']['price'] != None %}
+                                <span class="restock-label price {{'in-stock' if watch['restock']['in_stock'] else 'not-in-stock' }}" title="Price">
+                                {{ watch['restock']['price'] }} {{ watch['restock']['currency'] }}
+                                </span>
+                            {% endif %}
+                        {% elif not watch.has_restock_info %}
+                            <span class="restock-label">No information</span>
                         {% endif %}
+
+
                     {% endif %}
                 </td>
 {% endif %}

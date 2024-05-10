@@ -242,7 +242,7 @@ class ChangeDetectionStore:
     # Remove a watchs data but keep the entry (URL etc)
     def clear_watch_history(self, uuid):
         import pathlib
-
+        from .model import Restock
         self.__data['watching'][uuid].update({
                 'browser_steps_last_error_step' : None,
                 'check_count': 0,
@@ -257,6 +257,7 @@ class ChangeDetectionStore:
                 'previous_md5_before_filters': False,
                 'remote_server_reply': None,
                 'track_ldjson_price_data': None,
+                'restock': Restock()
             })
 
         # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
@@ -623,7 +624,8 @@ class ChangeDetectionStore:
         # Eventually almost everything todo with a watch will apply as a Tag
         # So we use the same model as a Watch
         with self.lock:
-            new_tag = Watch.model(datastore_path=self.datastore_path, default={
+            from .model import Tag
+            new_tag = Tag.model(datastore_path=self.datastore_path, default={
                 'title': name.strip(),
                 'date_created': int(time.time())
             })

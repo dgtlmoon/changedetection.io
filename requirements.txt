@@ -85,3 +85,6 @@ pytest-flask ~=1.2
 jsonschema==4.17.3
 
 loguru
+
+# For scraping all possible metadata relating to products so we can do better restock detection
+extruct
