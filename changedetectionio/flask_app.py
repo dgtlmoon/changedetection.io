@@ -450,6 +450,8 @@ def changedetection_app(config=None, datastore_o=None):
             if search_q:
                 if (watch.get('title') and search_q in watch.get('title').lower()) or search_q in watch.get('url', '').lower():
                     sorted_watches.append(watch)
+                elif watch.get('last_error') and search_q in watch.get('last_error').lower():
+                    sorted_watches.append(watch)
             else:
                 sorted_watches.append(watch)
 
