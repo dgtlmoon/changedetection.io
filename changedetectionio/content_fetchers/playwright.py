@@ -172,7 +172,7 @@ class fetcher(Fetcher):
 
             # Run Browser Steps here
             if self.browser_steps_get_valid_steps():
-                self.iterate_browser_steps(url)
+                self.iterate_browser_steps(start_url = url)
 
             self.page.wait_for_timeout(extra_wait * 1000)
 

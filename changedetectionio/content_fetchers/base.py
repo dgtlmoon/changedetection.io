@@ -120,7 +120,7 @@ class Fetcher():
 
         return None
 
-    def iterate_browser_steps(self, url):
+    def iterate_browser_steps(self, start_url):
         from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
         from playwright._impl._errors import TimeoutError, Error
         from changedetectionio.safe_jinja import render as jinja_render
@@ -149,7 +149,7 @@ class Fetcher():
                     # If the operation is Goto site, change it to Goto URL and use the url as the optional value
                     if step['operation'] == 'Goto site':
                         step['operation'] = 'Goto URL'
-                        optional_value = url
+                        optional_value = start_url
 
                     getattr(interface, "call_action")(action_name=step['operation'],
                                                       selector=selector,
