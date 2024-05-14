@@ -619,7 +619,6 @@ def changedetection_app(config=None, datastore_o=None):
         from .blueprint.browser_steps.browser_steps import browser_step_ui_config
         from . import processors
 
-        using_default_check_time = True
         # More for testing, possible to return the first/only
         if not datastore.data['watching'].keys():
             flash("No watches to edit", "error")
