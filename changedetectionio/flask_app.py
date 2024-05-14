@@ -855,7 +855,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                  form=form,
                                  hide_remove_pass=os.getenv("SALTED_PASS", False),
-                                 min_system_recheck_seconds=int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 20)),
+                                 min_system_recheck_seconds=int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3)),
                                  settings_application=datastore.data['settings']['application']
                                  )
 
@@ -1665,7 +1665,7 @@ def ticker_thread_check_time_launch_checks():
 
     proxy_last_called_time = {}
 
-    recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 20))
+    recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
     logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
 
     # Spin up Workers that do the fetching
