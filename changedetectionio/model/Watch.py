@@ -12,7 +12,7 @@ from loguru import logger
 # file:// is further checked by ALLOW_FILE_URI
 SAFE_PROTOCOL_REGEX='^(http|https|ftp|file):'
 
-minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
+minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
 
 from changedetectionio.notification import (
@@ -69,6 +69,7 @@ base_config = {
     # Requires setting to None on submit if it's the same as the default
     # Should be all None by default, so we use the system default in this case.
     'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
+    'time_between_check_use_default': True,
     'title': None,
     'trigger_text': [],  # List of text or regex to wait for until a change is detected
     'url': '',

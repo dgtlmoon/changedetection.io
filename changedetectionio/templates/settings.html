@@ -31,7 +31,7 @@
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.requests.form.time_between_check, class="time-check-widget") }}
-                        <span class="pure-form-message-inline">Default time for all watches, when the watch does not have a specific time setting.</span>
+                        <span class="pure-form-message-inline">Default recheck time for all watches, current system minimum is <i>{{min_system_recheck_seconds}}</i> seconds (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Misc-system-settings#enviroment-variables">more info</a>).</span>
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.requests.form.jitter_seconds, class="jitter_seconds") }}

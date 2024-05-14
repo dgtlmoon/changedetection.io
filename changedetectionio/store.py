@@ -872,3 +872,16 @@ class ChangeDetectionStore:
                         self.__data["watching"][awatch]['include_filters'][num] = 'xpath1:' + selector
                     if selector.startswith('xpath:'):
                         self.__data["watching"][awatch]['include_filters'][num] = selector.replace('xpath:', 'xpath1:', 1)
+
+    # Use more obvious default time setting
+    def update_15(self):
+        for uuid in self.__data["watching"]:
+            if self.__data["watching"][uuid]['time_between_check'] == self.__data['settings']['requests']['time_between_check']:
+                # What the old logic was, which was pretty confusing
+                self.__data["watching"][uuid]['time_between_check_use_default'] = True
+            elif all(value is None or value == 0 for value in self.__data["watching"][uuid]['time_between_check'].values()):
+                self.__data["watching"][uuid]['time_between_check_use_default'] = True
+            else:
+                # Something custom here
+                self.__data["watching"][uuid]['time_between_check_use_default'] = False
+
