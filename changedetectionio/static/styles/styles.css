@@ -1041,17 +1041,18 @@ body.full-width .edit-form {
     color: var(--color-text-input-description); }
     .edit-form .pure-form-message-inline code {
       font-size: .875em; }
-  .edit-form .text-filtering {
-    border: 1px solid #ccc;
-    padding: 1rem;
-    border-radius: 5px;
-    margin-bottom: 1rem; }
-    .edit-form .text-filtering h3 {
-      margin-top: 0; }
-    .edit-form .text-filtering fieldset:last-of-type {
+
+.border-fieldset {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 5px;
+  margin-bottom: 1rem; }
+  .border-fieldset h3 {
+    margin-top: 0; }
+  .border-fieldset fieldset:last-of-type {
+    padding-bottom: 0; }
+    .border-fieldset fieldset:last-of-type .pure-control-group {
       padding-bottom: 0; }
-      .edit-form .text-filtering fieldset:last-of-type .pure-control-group {
-        padding-bottom: 0; }
 
 ul {
   padding-left: 1em;

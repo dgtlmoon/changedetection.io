@@ -685,18 +685,8 @@ def changedetection_app(config=None, datastore_o=None):
 
             if request.args.get('unpause_on_save'):
                 extra_update_obj['paused'] = False
-            # Re #110, if they submit the same as the default value, set it to None, so we continue to follow the default
-            # Assume we use the default value, unless something relevant is different, then use the form value
-            # values could be None, 0 etc.
-            # Set to None unless the next for: says that something is different
-            extra_update_obj['time_between_check'] = dict.fromkeys(form.time_between_check.data)
-            for k, v in form.time_between_check.data.items():
-                if v and v != datastore.data['settings']['requests']['time_between_check'][k]:
-                    extra_update_obj['time_between_check'] = form.time_between_check.data
-                    using_default_check_time = False
-                    break
 
-
+            extra_update_obj['time_between_check'] = form.time_between_check.data
 
              # Ignore text
             form_ignore_text = form.ignore_text.data
@@ -777,7 +767,6 @@ def changedetection_app(config=None, datastore_o=None):
                                      extra_title=f" - Edit - {watch.label}",
                                      form=form,
                                      has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
-                                     has_empty_checktime=using_default_check_time,
                                      has_extra_headers_file=len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
                                      has_special_tag_options=_watch_has_tag_options_set(watch=watch),
                                      is_html_webdriver=is_html_webdriver,
@@ -1668,7 +1657,7 @@ def notification_runner():
             # Trim the log length
             notification_debug_log = notification_debug_log[-100:]
 
-# Thread runner to check every minute, look for new watches to feed into the Queue.
+# Threaded runner, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     import random
     from changedetectionio import update_worker
@@ -1729,9 +1718,9 @@ def ticker_thread_check_time_launch_checks():
                 continue
 
             # If they supplied an individual entry minutes to threshold.
-
             watch_threshold_seconds = watch.threshold_seconds()
             threshold = watch_threshold_seconds if watch_threshold_seconds > 0 else recheck_time_system_seconds
+            threshold = recheck_time_system_seconds if watch.get('time_between_check_use_default') else threshold
 
             # #580 - Jitter plus/minus amount of time to make the check seem more random to the server
             jitter = datastore.data['settings']['requests'].get('jitter_seconds', 0)

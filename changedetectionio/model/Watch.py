@@ -69,6 +69,7 @@ base_config = {
     # Requires setting to None on submit if it's the same as the default
     # Should be all None by default, so we use the system default in this case.
     'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
+    'time_between_check_use_default': True,
     'title': None,
     'trigger_text': [],  # List of text or regex to wait for until a change is detected
     'url': '',

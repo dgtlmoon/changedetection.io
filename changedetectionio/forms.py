@@ -453,6 +453,7 @@ class watchForm(commonSettingsForm):
     tags = StringTagUUID('Group tag', [validators.Optional()], default='')
 
     time_between_check = FormField(TimeBetweenCheckForm)
+    time_between_check_use_default = BooleanField('Use global settings for time between check', default=False)
 
     include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
 
