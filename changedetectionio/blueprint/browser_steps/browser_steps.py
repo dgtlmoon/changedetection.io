@@ -49,6 +49,10 @@ browser_step_ui_config = {'Choose one': '0 0',
 # ONLY Works in Playwright because we need the fullscreen screenshot
 class steppable_browser_interface():
     page = None
+    start_url = None
+
+    def __init__(self, start_url):
+        self.start_url = start_url
 
     # Convert and perform "Click Button" for example
     def call_action(self, action_name, selector=None, optional_value=None):
@@ -86,6 +90,10 @@ class steppable_browser_interface():
         #await page.waitForTimeout(extra_wait_ms);
         logger.debug(f"Time to goto URL {time.time()-now:.2f}s")
         return response
+
+    # Incase they request to go back to the start
+    def action_goto_site(self, selector=None, value=None):
+        return self.action_goto_url(value=self.start_url)
 
     def action_click_element_containing_text(self, selector=None, value=''):
         if not len(value.strip()):

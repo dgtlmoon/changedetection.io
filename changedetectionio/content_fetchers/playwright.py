@@ -119,7 +119,7 @@ class fetcher(Fetcher):
 
             # Re-use as much code from browser steps as possible so its the same
             from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
-            browsersteps_interface = steppable_browser_interface()
+            browsersteps_interface = steppable_browser_interface(start_url=url)
             browsersteps_interface.page = self.page
 
             response = browsersteps_interface.action_goto_url(value=url)
@@ -172,7 +172,7 @@ class fetcher(Fetcher):
 
             # Run Browser Steps here
             if self.browser_steps_get_valid_steps():
-                self.iterate_browser_steps()
+                self.iterate_browser_steps(start_url=url)
 
             self.page.wait_for_timeout(extra_wait * 1000)
 
