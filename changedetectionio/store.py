@@ -879,7 +879,7 @@ class ChangeDetectionStore:
             if self.__data["watching"][uuid]['time_between_check'] == self.__data['settings']['requests']['time_between_check']:
                 # What the old logic was, which was pretty confusing
                 self.__data["watching"][uuid]['time_between_check_use_default'] = True
-            elif all(value is None for value in self.__data["watching"][uuid]['time_between_check'].values()):
+            elif all(value is None or value == 0 for value in self.__data["watching"][uuid]['time_between_check'].values()):
                 self.__data["watching"][uuid]['time_between_check_use_default'] = True
             else:
                 # Something custom here
