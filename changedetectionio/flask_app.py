@@ -643,10 +643,6 @@ def changedetection_app(config=None, datastore_o=None):
         # be sure we update with a copy instead of accidently editing the live object by reference
         default = deepcopy(datastore.data['watching'][uuid])
 
-        # Show system wide default if nothing configured
-        if all(value == 0 or value == None for value in datastore.data['watching'][uuid]['time_between_check'].values()):
-            default['time_between_check'] = deepcopy(datastore.data['settings']['requests']['time_between_check'])
-
         # Defaults for proxy choice
         if datastore.proxy_list is not None:  # When enabled
             # @todo
