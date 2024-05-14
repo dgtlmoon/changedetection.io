@@ -102,10 +102,9 @@ def test_basic_browserstep(client, live_server):
             "url": test_url,
             "tags": "",
             'fetch_backend': "html_webdriver",
-            'browser_steps-0-operation': 'Goto site',
-            'browser_steps-1-operation': 'Click element',
-            'browser_steps-1-selector': 'button[name=test-button]',
-            'browser_steps-1-optional_value': '',
+            'browser_steps-0-operation': 'Click element',
+            'browser_steps-0-selector': 'button[name=test-button]',
+            'browser_steps-0-optional_value': '',
             # For now, cookies doesnt work in headers because it must be a full cookiejar object
             'headers': "testheader: yes\buser-agent: MyCustomAgent",
         },
@@ -141,10 +140,9 @@ def test_basic_browserstep(client, live_server):
               "url": four_o_four_url,
               "tags": "",
               'fetch_backend': "html_webdriver",
-              'browser_steps-0-operation': 'Goto site',
-              'browser_steps-1-operation': 'Click element',
-              'browser_steps-1-selector': 'button[name=test-button]',
-              'browser_steps-1-optional_value': ''
+              'browser_steps-0-operation': 'Click element',
+              'browser_steps-0-selector': 'button[name=test-button]',
+              'browser_steps-0-optional_value': ''
         },
         follow_redirects=True
     )

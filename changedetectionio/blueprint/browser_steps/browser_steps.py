@@ -202,10 +202,11 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
-    def __init__(self, playwright_browser, proxy=None, headers=None):
+    def __init__(self, playwright_browser, proxy=None, headers=None, start_url=None):
         self.headers = headers or {}
         self.age_start = time.time()
         self.playwright_browser = playwright_browser
+        self.start_url = start_url
         if self.context is None:
             self.connect(proxy=proxy)
 

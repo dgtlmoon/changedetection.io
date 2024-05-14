@@ -112,9 +112,13 @@ class Fetcher():
 
     def browser_steps_get_valid_steps(self):
         if self.browser_steps is not None and len(self.browser_steps):
-            valid_steps = filter(
+            valid_steps = list(filter(
                 lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one'),
-                self.browser_steps)
+                self.browser_steps))
+
+            # Just incase they selected Goto site by accident with older JS
+            if valid_steps and valid_steps[0]['operation'] == 'Goto site':
+                del(valid_steps[0])
 
             return valid_steps
 
