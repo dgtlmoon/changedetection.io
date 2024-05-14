@@ -48,7 +48,7 @@ from apprise.decorators import notify
 def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     import requests
     from apprise.utils import parse_url as apprise_parse_url
-    from apprise.URLBase import URLBase
+    from apprise import URLBase
 
     url = kwargs['meta'].get('url')
 
