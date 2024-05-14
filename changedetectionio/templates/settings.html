@@ -31,7 +31,7 @@
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.requests.form.time_between_check, class="time-check-widget") }}
-                        <span class="pure-form-message-inline">Default recheck time for all watches</span>
+                        <span class="pure-form-message-inline">Default recheck time for all watches, system minimum is {{min_system_recheck_seconds}} seconds.</span>
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.requests.form.jitter_seconds, class="jitter_seconds") }}
