@@ -1717,9 +1717,7 @@ def ticker_thread_check_time_launch_checks():
                 continue
 
             # If they supplied an individual entry minutes to threshold.
-            watch_threshold_seconds = watch.threshold_seconds()
-            threshold = watch_threshold_seconds if watch_threshold_seconds > 0 else recheck_time_system_seconds
-            threshold = recheck_time_system_seconds if watch.get('time_between_check_use_default') else threshold
+            threshold = recheck_time_system_seconds if watch.get('time_between_check_use_default') else watch.threshold_seconds()
 
             # #580 - Jitter plus/minus amount of time to make the check seem more random to the server
             jitter = datastore.data['settings']['requests'].get('jitter_seconds', 0)
