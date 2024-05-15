@@ -236,21 +236,26 @@ class ValidateJinja2Template(object):
     def __call__(self, form, field):
         from changedetectionio import notification
 
-        from jinja2 import Environment, BaseLoader, TemplateSyntaxError, UndefinedError
+        from jinja2 import BaseLoader, TemplateSyntaxError, UndefinedError
+        from jinja2.sandbox import ImmutableSandboxedEnvironment
         from jinja2.meta import find_undeclared_variables
+        import jinja2.exceptions
 
+        # Might be a list of text, or might be just text (like from the apprise url list)
+        joined_data = ' '.join(map(str, field.data)) if isinstance(field.data, list) else f"{field.data}"
 
         try:
-            jinja2_env = Environment(loader=BaseLoader)
+            jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader)
             jinja2_env.globals.update(notification.valid_tokens)
-
-            rendered = jinja2_env.from_string(field.data).render()
+            jinja2_env.from_string(joined_data).render()
         except TemplateSyntaxError as e:
             raise ValidationError(f"This is not a valid Jinja2 template: {e}") from e
         except UndefinedError as e:
             raise ValidationError(f"A variable or function is not defined: {e}") from e
+        except jinja2.exceptions.SecurityError as e:
+            raise ValidationError(f"This is not a valid Jinja2 template: {e}") from e
 
-        ast = jinja2_env.parse(field.data)
+        ast = jinja2_env.parse(joined_data)
         undefined = ", ".join(find_undeclared_variables(ast))
         if undefined:
             raise ValidationError(
@@ -415,7 +420,7 @@ class quickWatchForm(Form):
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
 
-    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers()])
+    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
@@ -448,6 +453,7 @@ class watchForm(commonSettingsForm):
     tags = StringTagUUID('Group tag', [validators.Optional()], default='')
 
     time_between_check = FormField(TimeBetweenCheckForm)
+    time_between_check_use_default = BooleanField('Use global settings for time between check', default=False)
 
     include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
 
@@ -499,11 +505,9 @@ class watchForm(commonSettingsForm):
             result = False
 
         # Attempt to validate jinja2 templates in the URL
-        from jinja2 import Environment
-        # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
-        jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
         try:
-            ready_url = str(jinja2_env.from_string(self.url.data).render())
+            from changedetectionio.safe_jinja import render as jinja_render
+            jinja_render(template_str=self.url.data)
         except Exception as e:
             self.url.errors.append('Invalid template syntax')
             result = False

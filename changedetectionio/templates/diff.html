@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% from '_helpers.jinja' import render_field, render_checkbox_field, render_button %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
 {% block content %}
 <script>
     const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";

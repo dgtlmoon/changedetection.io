@@ -100,6 +100,12 @@ def test_setup_group_tag(client, live_server):
     assert b'Should be only this' in res.data
     assert b'And never this' not in res.data
 
+    res = client.get(
+        url_for("edit_page", uuid="first"),
+        follow_redirects=True
+    )
+    # 2307 the UI notice should appear in the placeholder
+    assert b'WARNING: Watch has tag/groups set with special filters' in res.data
 
     # RSS Group tag filter
     # An extra one that should be excluded

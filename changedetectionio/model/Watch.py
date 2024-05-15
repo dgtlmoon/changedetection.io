@@ -1,4 +1,5 @@
 from changedetectionio.strtobool import strtobool
+from changedetectionio.safe_jinja import render as jinja_render
 import os
 import re
 import time
@@ -10,7 +11,7 @@ from loguru import logger
 # file:// is further checked by ALLOW_FILE_URI
 SAFE_PROTOCOL_REGEX='^(http|https|ftp|file):'
 
-minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
+minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
 
 from changedetectionio.notification import (
@@ -67,6 +68,7 @@ base_config = {
     # Requires setting to None on submit if it's the same as the default
     # Should be all None by default, so we use the system default in this case.
     'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
+    'time_between_check_use_default': True,
     'title': None,
     'trigger_text': [],  # List of text or regex to wait for until a change is detected
     'url': '',
@@ -137,12 +139,11 @@ class model(dict):
 
         ready_url = url
         if '{%' in url or '{{' in url:
-            from jinja2 import Environment
             # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
-            jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
             try:
-                ready_url = str(jinja2_env.from_string(url).render())
+                ready_url = jinja_render(template_str=url)
             except Exception as e:
+                logger.critical(f"Invalid URL template for: '{url}' - {str(e)}")
                 from flask import (
                     flash, Markup, url_for
                 )
@@ -362,6 +363,7 @@ class model(dict):
         # @todo bump static cache of the last timestamp so we dont need to examine the file to set a proper ''viewed'' status
         return snapshot_fname
 
+    @property
     @property
     def has_empty_checktime(self):
         # using all() + dictionary comprehension

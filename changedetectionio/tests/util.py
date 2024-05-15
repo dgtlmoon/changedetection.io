@@ -116,7 +116,7 @@ def extract_UUID_from_client(client):
     )
     # <span id="api-key">{{api_key}}</span>
 
-    m = re.search('edit/(.+?)"', str(res.data))
+    m = re.search('edit/(.+?)[#"]', str(res.data))
     uuid = m.group(1)
     return uuid.strip()
 

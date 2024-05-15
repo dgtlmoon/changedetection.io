@@ -37,12 +37,12 @@ dnspython==2.3.0 # related to eventlet fixes
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise~=1.7.4
+apprise~=1.8.0
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 # and 2.0.0 https://github.com/dgtlmoon/changedetection.io/issues/2241 not yet compatible
 # use v1.x due to https://github.com/eclipse/paho.mqtt.python/issues/814
-paho-mqtt < 2.0.0
+paho-mqtt>=1.6.1,<2.0.0
 
 # This mainly affects some ARM builds, which unlike the other builds ignores "ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1"
 # so without this pinning, the newer versions on ARM will forcefully try to build rust, which results in "rust compiler not found"
@@ -53,7 +53,10 @@ cryptography~=3.4
 beautifulsoup4
 
 # XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
-lxml
+# #2328 - 5.2.0 and 5.2.1 had extra CPU flag CFLAGS set which was not compatible on older hardware
+#         It could be advantageous to run its own pypi package here with those performance flags set
+#         https://bugs.launchpad.net/lxml/+bug/2059910/comments/16
+lxml >=4.8.0,<6,!=5.2.0,!=5.2.1
 
 # XPath 2.0-3.1 support - 4.2.0 broke something?
 elementpath==4.1.5

@@ -1,6 +1,5 @@
 import apprise
 import time
-from jinja2 import Environment, BaseLoader
 from apprise import NotifyFormat
 import json
 from loguru import logger
@@ -49,7 +48,7 @@ from apprise.decorators import notify
 def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     import requests
     from apprise.utils import parse_url as apprise_parse_url
-    from apprise.URLBase import URLBase
+    from apprise import URLBase
 
     url = kwargs['meta'].get('url')
 
@@ -116,6 +115,7 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
 
 def process_notification(n_object, datastore):
 
+    from .safe_jinja import render as jinja_render
     now = time.time()
     if n_object.get('notification_timestamp'):
         logger.trace(f"Time since queued {now-n_object['notification_timestamp']:.3f}s")
@@ -123,9 +123,9 @@ def process_notification(n_object, datastore):
     notification_parameters = create_notification_parameters(n_object, datastore)
 
     # Get the notification body from datastore
-    jinja2_env = Environment(loader=BaseLoader)
-    n_body = jinja2_env.from_string(n_object.get('notification_body', '')).render(**notification_parameters)
-    n_title = jinja2_env.from_string(n_object.get('notification_title', '')).render(**notification_parameters)
+    n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
+    n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
+
     n_format = valid_notification_formats.get(
         n_object.get('notification_format', default_notification_format),
         valid_notification_formats[default_notification_format],
@@ -157,7 +157,7 @@ def process_notification(n_object, datastore):
                 continue
 
             logger.info(">> Process Notification: AppRise notifying {}".format(url))
-            url = jinja2_env.from_string(url).render(**notification_parameters)
+            url = jinja_render(template_str=url, **notification_parameters)
 
             # Re 323 - Limit discord length to their 2000 char limit total or it wont send.
             # Because different notifications may require different pre-processing, run each sequentially :(
