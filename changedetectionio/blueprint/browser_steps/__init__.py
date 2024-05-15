@@ -84,7 +84,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Tell Playwright to connect to Chrome and setup a new session via our stepper interface
         browsersteps_start_session['browserstepper'] = browser_steps.browsersteps_live_ui(
             playwright_browser=browsersteps_start_session['browser'],
-            proxy=proxy)
+            proxy=proxy,
+            start_url=datastore.data['watching'][watch_uuid].get('url')
+        )
 
         # For test
         #browsersteps_start_session['browserstepper'].action_goto_url(value="http://example.com?time="+str(time.time()))
@@ -166,11 +168,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             step_optional_value = request.form.get('optional_value')
             step_n = int(request.form.get('step_n'))
             is_last_step = strtobool(request.form.get('is_last_step'))
-
-            if step_operation == 'Goto site':
-                step_operation = 'goto_url'
-                step_optional_value = datastore.data['watching'][uuid].get('url')
-                step_selector = None
 
             # @todo try.. accept.. nice errors not popups..
             try:

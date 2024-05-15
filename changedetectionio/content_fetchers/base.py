@@ -112,23 +112,26 @@ class Fetcher():
 
     def browser_steps_get_valid_steps(self):
         if self.browser_steps is not None and len(self.browser_steps):
-            valid_steps = filter(
-                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
-                self.browser_steps)
+            valid_steps = list(filter(
+                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one'),
+                self.browser_steps))
+
+            # Just incase they selected Goto site by accident with older JS
+            if valid_steps and valid_steps[0]['operation'] == 'Goto site':
+                del(valid_steps[0])
 
             return valid_steps
 
         return None
 
-    def iterate_browser_steps(self):
+    def iterate_browser_steps(self, start_url=None):
         from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
         from playwright._impl._errors import TimeoutError, Error
         from changedetectionio.safe_jinja import render as jinja_render
-
         step_n = 0
 
         if self.browser_steps is not None and len(self.browser_steps):
-            interface = steppable_browser_interface()
+            interface = steppable_browser_interface(start_url=start_url)
             interface.page = self.page
             valid_steps = self.browser_steps_get_valid_steps()
 
