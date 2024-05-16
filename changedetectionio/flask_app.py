@@ -1064,6 +1064,7 @@ def changedetection_app(config=None, datastore_o=None):
         ignored_line_numbers = []
         trigger_line_numbers = []
         versions = []
+        timestamp = None
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
