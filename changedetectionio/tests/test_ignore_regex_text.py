@@ -33,8 +33,6 @@ def test_strip_regex_text_func():
         "/not"
     ]
 
-
-    fetcher = fetch_site_status.perform_site_check(datastore=False)
     stripped_content = html_tools.strip_ignore_text(test_content, ignore_lines)
 
     assert b"but 1 lines" in stripped_content

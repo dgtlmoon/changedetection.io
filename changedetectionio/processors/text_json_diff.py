@@ -1,17 +1,18 @@
-# HTML to TEXT/JSON DIFFERENCE FETCHER
+# HTML to TEXT/JSON DIFFERENCE self.fetcher
 
 import hashlib
 import json
-import logging
 import os
 import re
 import urllib3
 
-from changedetectionio import content_fetcher, html_tools
-from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
-from copy import deepcopy
 from . import difference_detection_processor
 from ..html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
+from changedetectionio import html_tools, content_fetchers
+from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
+import changedetectionio.content_fetchers
+from copy import deepcopy
+from loguru import logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -32,15 +33,10 @@ class PDFToHTMLToolNotFound(ValueError):
 # Some common stuff here that can be moved to a base class
 # (set_proxy_from_list)
 class perform_site_check(difference_detection_processor):
-    screenshot = None
-    xpath_data = None
 
-    def __init__(self, *args, datastore, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.datastore = datastore
-
-    def run(self, uuid, skip_when_checksum_same=True, preferred_proxy=None):
+    def run_changedetection(self, uuid, skip_when_checksum_same=True):
         changed_detected = False
+        html_content = ""
         screenshot = False  # as bytes
         stripped_text_from_html = ""
 
@@ -49,100 +45,25 @@ class perform_site_check(difference_detection_processor):
         if not watch:
             raise Exception("Watch no longer exists.")
 
-        # Protect against file:// access
-        if re.search(r'^file', watch.get('url', ''), re.IGNORECASE) and not os.getenv('ALLOW_FILE_URI', False):
-            raise Exception(
-                "file:// type access is denied for security reasons."
-            )
-
         # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False}
 
-        # Tweak the base config with the per-watch ones
-        request_headers = watch.get('headers', [])
-        request_headers.update(self.datastore.get_all_base_headers())
-        request_headers.update(self.datastore.get_all_headers_in_textfile_for_watch(uuid=uuid))
-
-        # https://github.com/psf/requests/issues/4525
-        # Requests doesnt yet support brotli encoding, so don't put 'br' here, be totally sure that the user cannot
-        # do this by accident.
-        if 'Accept-Encoding' in request_headers and "br" in request_headers['Accept-Encoding']:
-            request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
-
-        timeout = self.datastore.data['settings']['requests'].get('timeout')
-
         url = watch.link
 
-        request_body = self.datastore.data['watching'][uuid].get('body')
-        request_method = self.datastore.data['watching'][uuid].get('method')
-        ignore_status_codes = self.datastore.data['watching'][uuid].get('ignore_status_codes', False)
-
-        # source: support
-        is_source = False
-        if url.startswith('source:'):
-            url = url.replace('source:', '')
-            is_source = True
-
-        # Pluggable content fetcher
-        prefer_backend = watch.get_fetch_backend
-        if not prefer_backend or prefer_backend == 'system':
-            prefer_backend = self.datastore.data['settings']['application']['fetch_backend']
-
-        if hasattr(content_fetcher, prefer_backend):
-            klass = getattr(content_fetcher, prefer_backend)
-        else:
-            # If the klass doesnt exist, just use a default
-            klass = getattr(content_fetcher, "html_requests")
-
-        if preferred_proxy:
-            proxy_id = preferred_proxy
-        else:
-            proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=uuid)
-
-        proxy_url = None
-        if proxy_id:
-            proxy_url = self.datastore.proxy_list.get(proxy_id).get('url')
-            print("UUID {} Using proxy {}".format(uuid, proxy_url))
-
-        fetcher = klass(proxy_override=proxy_url)
-
-        # Configurable per-watch or global extra delay before extracting text (for webDriver types)
-        system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
-        if watch['webdriver_delay'] is not None:
-            fetcher.render_extract_delay = watch.get('webdriver_delay')
-        elif system_webdriver_delay is not None:
-            fetcher.render_extract_delay = system_webdriver_delay
-
-        # Possible conflict
-        if prefer_backend == 'html_webdriver':
-            fetcher.browser_steps = watch.get('browser_steps', None)
-            fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, uuid)
-
-        if watch.get('webdriver_js_execute_code') is not None and watch.get('webdriver_js_execute_code').strip():
-            fetcher.webdriver_js_execute_code = watch.get('webdriver_js_execute_code')
-
-        # requests for PDF's, images etc should be passwd the is_binary flag
-        is_binary = watch.is_pdf
-
-        fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, watch.get('include_filters'),
-                    is_binary=is_binary)
-        fetcher.quit()
-
-        self.screenshot = fetcher.screenshot
-        self.xpath_data = fetcher.xpath_data
+        self.screenshot = self.fetcher.screenshot
+        self.xpath_data = self.fetcher.xpath_data
 
         # Track the content type
-        update_obj['content_type'] = fetcher.get_all_headers().get('content-type', '').lower()
+        update_obj['content_type'] = self.fetcher.get_all_headers().get('content-type', '').lower()
 
         # Watches added automatically in the queue manager will skip if its the same checksum as the previous run
         # Saves a lot of CPU
-        update_obj['previous_md5_before_filters'] = hashlib.md5(fetcher.content.encode('utf-8')).hexdigest()
+        update_obj['previous_md5_before_filters'] = hashlib.md5(self.fetcher.content.encode('utf-8')).hexdigest()
         if skip_when_checksum_same:
             if update_obj['previous_md5_before_filters'] == watch.get('previous_md5_before_filters'):
-                raise content_fetcher.checksumFromPreviousCheckWasTheSame()
+                raise content_fetchers.exceptions.checksumFromPreviousCheckWasTheSame()
 
         # Fetching complete, now filters
-        # @todo move to class / maybe inside of fetcher abstract base?
 
         # @note: I feel like the following should be in a more obvious chain system
         #  - Check filter text
@@ -151,24 +72,24 @@ class perform_site_check(difference_detection_processor):
         # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
         # return content().textfilter().jsonextract().checksumcompare() ?
 
-        is_json = 'application/json' in fetcher.get_all_headers().get('content-type', '').lower()
+        is_json = 'application/json' in self.fetcher.get_all_headers().get('content-type', '').lower()
         is_html = not is_json
         is_rss = False
 
-        ctype_header = fetcher.get_all_headers().get('content-type', '').lower()
+        ctype_header = self.fetcher.get_all_headers().get('content-type', '').lower()
         # Go into RSS preprocess for converting CDATA/comment to usable text
         if any(substring in ctype_header for substring in ['application/xml', 'application/rss', 'text/xml']):
-            if '<rss' in fetcher.content[:100].lower():
-                fetcher.content = cdata_in_document_to_text(html_content=fetcher.content)
+            if '<rss' in self.fetcher.content[:100].lower():
+                self.fetcher.content = cdata_in_document_to_text(html_content=self.fetcher.content)
                 is_rss = True
 
         # source: support, basically treat it as plaintext
-        if is_source:
+        if watch.is_source_type_url:
             is_html = False
             is_json = False
 
-        inline_pdf = fetcher.get_all_headers().get('content-disposition', '') and '%PDF-1' in fetcher.content[:10]
-        if watch.is_pdf or 'application/pdf' in fetcher.get_all_headers().get('content-type', '').lower() or inline_pdf:
+        inline_pdf = self.fetcher.get_all_headers().get('content-disposition', '') and '%PDF-1' in self.fetcher.content[:10]
+        if watch.is_pdf or 'application/pdf' in self.fetcher.get_all_headers().get('content-type', '').lower() or inline_pdf:
             from shutil import which
             tool = os.getenv("PDF_TO_HTML_TOOL", "pdftohtml")
             if not which(tool):
@@ -179,24 +100,26 @@ class perform_site_check(difference_detection_processor):
                 [tool, '-stdout', '-', '-s', 'out.pdf', '-i'],
                 stdout=subprocess.PIPE,
                 stdin=subprocess.PIPE)
-            proc.stdin.write(fetcher.raw_content)
+            proc.stdin.write(self.fetcher.raw_content)
             proc.stdin.close()
-            fetcher.content = proc.stdout.read().decode('utf-8')
+            self.fetcher.content = proc.stdout.read().decode('utf-8')
             proc.wait(timeout=60)
 
             # Add a little metadata so we know if the file changes (like if an image changes, but the text is the same
             # @todo may cause problems with non-UTF8?
             metadata = "<p>Added by changedetection.io: Document checksum - {} Filesize - {} bytes</p>".format(
-                hashlib.md5(fetcher.raw_content).hexdigest().upper(),
-                len(fetcher.content))
+                hashlib.md5(self.fetcher.raw_content).hexdigest().upper(),
+                len(self.fetcher.content))
 
-            fetcher.content = fetcher.content.replace('</body>', metadata + '</body>')
+            self.fetcher.content = self.fetcher.content.replace('</body>', metadata + '</body>')
 
         # Better would be if Watch.model could access the global data also
         # and then use getattr https://docs.python.org/3/reference/datamodel.html#object.__getitem__
         # https://realpython.com/inherit-python-dict/ instead of doing it procedurely
         include_filters_from_tags = self.datastore.get_tag_overrides_for_watch(uuid=uuid, attr='include_filters')
-        include_filters_rule = [*watch.get('include_filters', []), *include_filters_from_tags]
+
+        # 1845 - remove duplicated filters in both group and watch include filter
+        include_filters_rule = list(dict.fromkeys(watch.get('include_filters', []) + include_filters_from_tags))
 
         subtractive_selectors = [*self.datastore.get_tag_overrides_for_watch(uuid=uuid, attr='subtractive_selectors'),
                                  *watch.get("subtractive_selectors", []),
@@ -217,7 +140,7 @@ class perform_site_check(difference_detection_processor):
         if is_json:
             # Sort the JSON so we dont get false alerts when the content is just re-ordered
             try:
-                fetcher.content = json.dumps(json.loads(fetcher.content), sort_keys=True)
+                self.fetcher.content = json.dumps(json.loads(self.fetcher.content), sort_keys=True)
             except Exception as e:
                 # Might have just been a snippet, or otherwise bad JSON, continue
                 pass
@@ -225,22 +148,22 @@ class perform_site_check(difference_detection_processor):
         if has_filter_rule:
             for filter in include_filters_rule:
                 if any(prefix in filter for prefix in json_filter_prefixes):
-                    stripped_text_from_html += html_tools.extract_json_as_string(content=fetcher.content, json_filter=filter)
+                    stripped_text_from_html += html_tools.extract_json_as_string(content=self.fetcher.content, json_filter=filter)
                     is_html = False
 
-        if is_html or is_source:
+        if is_html or watch.is_source_type_url:
 
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-            fetcher.content = html_tools.workarounds_for_obfuscations(fetcher.content)
-            html_content = fetcher.content
+            self.fetcher.content = html_tools.workarounds_for_obfuscations(self.fetcher.content)
+            html_content = self.fetcher.content
 
             # If not JSON,  and if it's not text/plain..
-            if 'text/plain' in fetcher.get_all_headers().get('content-type', '').lower():
+            if 'text/plain' in self.fetcher.get_all_headers().get('content-type', '').lower():
                 # Don't run get_text or xpath/css filters on plaintext
                 stripped_text_from_html = html_content
             else:
                 # Does it have some ld+json price data? used for easier monitoring
-                update_obj['has_ldjson_price_data'] = html_tools.has_ldjson_product_info(fetcher.content)
+                update_obj['has_ldjson_price_data'] = html_tools.has_ldjson_product_info(self.fetcher.content)
 
                 # Then we assume HTML
                 if has_filter_rule:
@@ -250,14 +173,19 @@ class perform_site_check(difference_detection_processor):
                         # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
                         if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
                             html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
-                                                                    html_content=fetcher.content,
-                                                                    append_pretty_line_formatting=not is_source,
+                                                                    html_content=self.fetcher.content,
+                                                                    append_pretty_line_formatting=not watch.is_source_type_url,
+                                                                    is_rss=is_rss)
+                        elif filter_rule.startswith('xpath1:'):
+                            html_content += html_tools.xpath1_filter(xpath_filter=filter_rule.replace('xpath1:', ''),
+                                                                    html_content=self.fetcher.content,
+                                                                    append_pretty_line_formatting=not watch.is_source_type_url,
                                                                     is_rss=is_rss)
                         else:
                             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                             html_content += html_tools.include_filters(include_filters=filter_rule,
-                                                                       html_content=fetcher.content,
-                                                                       append_pretty_line_formatting=not is_source)
+                                                                       html_content=self.fetcher.content,
+                                                                       append_pretty_line_formatting=not watch.is_source_type_url)
 
                     if not html_content.strip():
                         raise FilterNotFoundInResponse(include_filters_rule)
@@ -265,7 +193,7 @@ class perform_site_check(difference_detection_processor):
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)
 
-                if is_source:
+                if watch.is_source_type_url:
                     stripped_text_from_html = html_content
                 else:
                     # extract text
@@ -276,6 +204,12 @@ class perform_site_check(difference_detection_processor):
                             render_anchor_tag_content=do_anchor,
                             is_rss=is_rss # #1874 activate the <title workaround hack
                         )
+
+        if watch.get('sort_text_alphabetically') and stripped_text_from_html:
+            # Note: Because a <p>something</p> will add an extra line feed to signify the paragraph gap
+            # we end up with 'Some text\n\n', sorting will add all those extra \n at the start, so we remove them here.
+            stripped_text_from_html = stripped_text_from_html.replace('\n\n', '\n')
+            stripped_text_from_html = '\n'.join( sorted(stripped_text_from_html.splitlines(), key=lambda x: x.lower() ))
 
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
@@ -310,8 +244,8 @@ class perform_site_check(difference_detection_processor):
         # Treat pages with no renderable text content as a change? No by default
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
         if not is_json and not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
-            raise content_fetcher.ReplyWithContentButNoText(url=url,
-                                                            status_code=fetcher.get_last_status_code(),
+            raise content_fetchers.exceptions.ReplyWithContentButNoText(url=url,
+                                                            status_code=self.fetcher.get_last_status_code(),
                                                             screenshot=screenshot,
                                                             has_filters=has_filter_rule,
                                                             html_content=html_content
@@ -320,7 +254,7 @@ class perform_site_check(difference_detection_processor):
         # We rely on the actual text in the html output.. many sites have random script vars etc,
         # in the future we'll implement other mechanisms.
 
-        update_obj["last_check_status"] = fetcher.get_last_status_code()
+        update_obj["last_check_status"] = self.fetcher.get_last_status_code()
 
         # If there's text to skip
         # @todo we could abstract out the get_text() to handle this cleaner
@@ -408,17 +342,19 @@ class perform_site_check(difference_detection_processor):
         if is_html:
             if self.datastore.data['settings']['application'].get('extract_title_as_title') or watch['extract_title_as_title']:
                 if not watch['title'] or not len(watch['title']):
-                    update_obj['title'] = html_tools.extract_element(find='title', html_content=fetcher.content)
+                    update_obj['title'] = html_tools.extract_element(find='title', html_content=self.fetcher.content)
+
+        logger.debug(f"Watch UUID {uuid} content check - Previous MD5: {watch.get('previous_md5')}, Fetched MD5 {fetched_md5}")
 
         if changed_detected:
             if watch.get('check_unique_lines', False):
                 has_unique_lines = watch.lines_contain_something_unique_compared_to_history(lines=stripped_text_from_html.splitlines())
                 # One or more lines? unsure?
                 if not has_unique_lines:
-                    logging.debug("check_unique_lines: UUID {} didnt have anything new setting change_detected=False".format(uuid))
+                    logger.debug(f"check_unique_lines: UUID {uuid} didnt have anything new setting change_detected=False")
                     changed_detected = False
                 else:
-                    logging.debug("check_unique_lines: UUID {} had unique content".format(uuid))
+                    logger.debug(f"check_unique_lines: UUID {uuid} had unique content")
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5

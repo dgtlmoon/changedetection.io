@@ -96,7 +96,9 @@ def test_api_simple(client, live_server):
     )
     assert watch_uuid in res.json.keys()
     before_recheck_info = res.json[watch_uuid]
+
     assert before_recheck_info['last_checked'] != 0
+
     #705 `last_changed` should be zero on the first check
     assert before_recheck_info['last_changed'] == 0
     assert before_recheck_info['title'] == 'My test URL'
@@ -156,6 +158,19 @@ def test_api_simple(client, live_server):
     watch = res.json
     # @todo how to handle None/default global values?
     assert watch['history_n'] == 2, "Found replacement history section, which is in its own API"
+
+    assert watch.get('viewed') == False
+    # Loading the most recent snapshot should force viewed to become true
+    client.get(url_for("diff_history_page", uuid="first"), follow_redirects=True)
+
+    time.sleep(3)
+    # Fetch the whole watch again, viewed should be true
+    res = client.get(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key}
+    )
+    watch = res.json
+    assert watch.get('viewed') == True
 
     # basic systeminfo check
     res = client.get(
@@ -343,3 +358,25 @@ def test_api_watch_PUT_update(client, live_server):
     # Cleanup everything
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
+
+
+def test_api_import(client, live_server):
+    api_key = extract_api_key_from_UI(client)
+
+    res = client.post(
+        url_for("import") + "?tag=import-test",
+        data='https://website1.com\r\nhttps://website2.com',
+        headers={'x-api-key': api_key},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+    assert len(res.json) == 2
+    res = client.get(url_for("index"))
+    assert b"https://website1.com" in res.data
+    assert b"https://website2.com" in res.data
+
+    # Should see the new tag in the tag/groups list
+    res = client.get(url_for('tags.tags_overview_page'))
+    assert b'import-test' in res.data
+    

@@ -1,17 +1,17 @@
 {% extends 'base.html' %}
 
 {% block content %}
-{% from '_helpers.jinja' import render_field, render_checkbox_field, render_button %}
-{% from '_common_fields.jinja' import render_common_settings_form %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
+{% from '_common_fields.html' import render_common_settings_form %}
 <script>
-    const notification_base_url="{{url_for('ajax_callback_send_notification_test')}}";
+    const notification_base_url="{{url_for('ajax_callback_send_notification_test', mode="global-settings")}}";
 {% if emailprefix %}
     const email_notification_prefix=JSON.parse('{{emailprefix|tojson}}');
 {% endif %}
 </script>
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
-
+<script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <div class="edit-form">
     <div class="tabs collapsable">
@@ -31,7 +31,7 @@
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.requests.form.time_between_check, class="time-check-widget") }}
-                        <span class="pure-form-message-inline">Default time for all watches, when the watch does not have a specific time setting.</span>
+                        <span class="pure-form-message-inline">Default recheck time for all watches, current system minimum is <i>{{min_system_recheck_seconds}}</i> seconds (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Misc-system-settings#enviroment-variables">more info</a>).</span>
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.requests.form.jitter_seconds, class="jitter_seconds") }}
@@ -111,7 +111,7 @@
                     <br>
                     Tip: <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">Connect using Bright Data and Oxylabs Proxies, find out more here.</a>
                 </div>
-                <fieldset class="pure-group" id="webdriver-override-options">
+                <fieldset class="pure-group" id="webdriver-override-options" data-visible-for="application-fetch_backend=html_webdriver">
                     <div class="pure-form-message-inline">
                         <strong>If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here.</strong>
                         <br>
@@ -168,15 +168,32 @@ nav
            </div>
 
             <div class="tab-pane-inner" id="api">
-
+                <h4>API Access</h4>
                 <p>Drive your changedetection.io via API, More about <a href="https://github.com/dgtlmoon/changedetection.io/wiki/API-Reference">API access here</a></p>
 
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.api_access_token_enabled) }}
-                    <div class="pure-form-message-inline">Restrict API access limit by using <code>x-api-key</code> header</div><br>
+                    <div class="pure-form-message-inline">Restrict API access limit by using <code>x-api-key</code> header - required for the Chrome Extension to work</div><br>
                     <div class="pure-form-message-inline"><br>API Key <span id="api-key">{{api_key}}</span>
                         <span style="display:none;" id="api-key-copy" >copy</span>
                     </div>
+                </div>
+                <div class="pure-control-group">
+                    <a href="{{url_for('settings_reset_api_key')}}" class="pure-button button-small button-cancel">Regenerate API key</a>
+                </div>
+                <div class="pure-control-group">
+                    <h4>Chrome Extension</h4>
+                    <p>Easily add any web-page to your changedetection.io installation from within Chrome.</p>
+                    <strong>Step 1</strong> Install the extension, <strong>Step 2</strong> Navigate to this page,
+                    <strong>Step 3</strong> Open the extension from the toolbar and click "<i>Sync API Access</i>"
+                    <p>
+                        <a id="chrome-extension-link"
+                           title="Try our new Chrome Extension!"
+                           href="https://chromewebstore.google.com/detail/changedetectionio-website/kefcfmgmlhmankjmnbijimhofdjekbop">
+                            <img src="{{ url_for('static_content', group='images', filename='Google-Chrome-icon.png') }}">
+                            Chrome Webstore
+                        </a>
+                    </p>
                 </div>
             </div>
             <div class="tab-pane-inner" id="proxies">
@@ -227,10 +244,17 @@ nav
                 </p>
                <p><strong>Tip</strong>: "Residential" and "Mobile" proxy type can be more successfull than "Data Center" for blocked websites.
 
-                <div class="pure-control-group">
+                <div class="pure-control-group" id="extra-proxies-setting">
                 {{ render_field(form.requests.form.extra_proxies) }}
                 <span class="pure-form-message-inline">"Name" will be used for selecting the proxy in the Watch Edit settings</span><br>
                 <span class="pure-form-message-inline">SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should whitelist the IP access instead</span>
+                </div>
+                <div class="pure-control-group" id="extra-browsers-setting">
+                    <p>
+                    <span class="pure-form-message-inline"><i>Extra Browsers</i> can be attached to further defeat CAPTCHA's on websites that are particularly hard to scrape.</span><br>
+                    <span class="pure-form-message-inline">Simply paste the connection address into the box, <a href="https://changedetection.io/tutorial/using-bright-datas-scraping-browser-pass-captchas-and-other-protection-when-monitoring">More instructions and examples here</a> </span>
+                    </p>
+                    {{ render_field(form.requests.form.extra_browsers) }}
                 </div>
             </div>
             <div id="actions">

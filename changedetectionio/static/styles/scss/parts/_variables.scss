@@ -75,7 +75,7 @@
   --color-text-footer: #444;
   --color-border-watch-table-cell: #eee;
 
-  --color-text-watch-tag-list: #e70069;
+  --color-text-watch-tag-list: rgba(231, 0, 105, 0.4);
   --color-background-new-watch-form: rgba(0, 0, 0, 0.05);
   --color-background-new-watch-input: var(--color-white);
   --color-text-new-watch-input: var(--color-text);
@@ -127,7 +127,7 @@ html[data-darkmode="true"] {
   --color-background-input: var(--color-grey-350);
   --color-text-input-description: var(--color-grey-600);
   --color-text-input-placeholder: var(--color-grey-600);
-  --color-text-watch-tag-list: #fa3e92;
+  --color-text-watch-tag-list: rgba(250, 62, 146, 0.4);
   --color-background-code: var(--color-grey-200);
 
   --color-background-tab: rgba(0, 0, 0, 0.2);
@@ -150,6 +150,10 @@ html[data-darkmode="true"] {
     .title-col a[target="_blank"]::after,
     .current-diff-url::after {
       filter: invert(.5) hue-rotate(10deg) brightness(2);
+    }
+
+    .status-browsersteps {
+      filter: invert(.5) hue-rotate(10deg) brightness(1.5);
     }
 
     .watch-controls {

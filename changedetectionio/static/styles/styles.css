@@ -128,6 +128,27 @@ body.proxy-check-active #request .proxy-timing {
     border-radius: 4px;
     padding: 1em; }
 
+#extra-proxies-setting {
+  border: 1px solid var(--color-grey-800);
+  border-radius: 4px;
+  margin: 1em;
+  padding: 1em; }
+
+ul#requests-extra_browsers {
+  list-style: none;
+  /* tidy up the table to look more "inline" */
+  /* each proxy entry is a `table` */ }
+  ul#requests-extra_browsers li > label {
+    display: none; }
+  ul#requests-extra_browsers table tr {
+    display: inline; }
+
+#extra-browsers-setting {
+  border: 1px solid var(--color-grey-800);
+  border-radius: 4px;
+  margin: 1em;
+  padding: 1em; }
+
 .pagination-page-info {
   color: #fff;
   font-size: 0.85rem;
@@ -263,7 +284,7 @@ body.proxy-check-active #request .proxy-timing {
   --color-last-checked: #bbb;
   --color-text-footer: #444;
   --color-border-watch-table-cell: #eee;
-  --color-text-watch-tag-list: #e70069;
+  --color-text-watch-tag-list: rgba(231, 0, 105, 0.4);
   --color-background-new-watch-form: rgba(0, 0, 0, 0.05);
   --color-background-new-watch-input: var(--color-white);
   --color-text-new-watch-input: var(--color-text);
@@ -306,7 +327,7 @@ html[data-darkmode="true"] {
   --color-background-input: var(--color-grey-350);
   --color-text-input-description: var(--color-grey-600);
   --color-text-input-placeholder: var(--color-grey-600);
-  --color-text-watch-tag-list: #fa3e92;
+  --color-text-watch-tag-list: rgba(250, 62, 146, 0.4);
   --color-background-code: var(--color-grey-200);
   --color-background-tab: rgba(0, 0, 0, 0.2);
   --color-background-tab-hover: rgba(0, 0, 0, 0.5);
@@ -321,6 +342,8 @@ html[data-darkmode="true"] {
   html[data-darkmode="true"] .watch-table .title-col a[target="_blank"]::after,
   html[data-darkmode="true"] .watch-table .current-diff-url::after {
     filter: invert(0.5) hue-rotate(10deg) brightness(2); }
+  html[data-darkmode="true"] .watch-table .status-browsersteps {
+    filter: invert(0.5) hue-rotate(10deg) brightness(1.5); }
   html[data-darkmode="true"] .watch-table .watch-controls .state-off img {
     opacity: 0.3; }
   html[data-darkmode="true"] .watch-table .watch-controls .state-on img {
@@ -331,7 +354,7 @@ html[data-darkmode="true"] {
       color: var(--color-watch-table-error); }
 
 #toggle-light-mode {
-  width: 3rem;
+  /*  width: 3rem;*/
   /* default */ }
   #toggle-light-mode .icon-dark {
     display: none; }
@@ -342,9 +365,56 @@ html[data-darkmode="true"] #toggle-light-mode .icon-light {
 html[data-darkmode="true"] #toggle-light-mode .icon-dark {
   display: block; }
 
+.pure-menu-link {
+  padding: 0.5rem 1em;
+  line-height: 1.2rem; }
+
+.pure-menu-item svg {
+  height: 1.2rem; }
+
+.pure-menu-item * {
+  vertical-align: middle; }
+
+.pure-menu-item .github-link {
+  height: 1.8rem;
+  display: block; }
+  .pure-menu-item .github-link svg {
+    height: 100%; }
+
+.pure-menu-item .bi-heart:hover {
+  cursor: pointer; }
+
+#overlay {
+  opacity: 0.95;
+  position: fixed;
+  width: 350px;
+  max-width: 100%;
+  height: 100%;
+  top: 0;
+  right: -350px;
+  background-color: var(--color-table-stripe);
+  z-index: 2;
+  transform: translateX(0);
+  transition: transform .5s ease; }
+  #overlay.visible {
+    transform: translateX(-100%); }
+  #overlay .content {
+    font-size: 0.875rem;
+    padding: 1rem;
+    margin-top: 5rem;
+    max-width: 400px;
+    color: var(--color-watch-table-row-text); }
+
+#heartpath {
+  transition: all ease 0.3s !important; }
+  #heartpath:hover {
+    fill: #ff0000 !important;
+    transition: all ease 0.3s !important; }
+
 body {
   color: var(--color-text);
-  background: var(--color-background-page); }
+  background: var(--color-background-page);
+  font-family: Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif; }
 
 .visually-hidden {
   clip: rect(0 0 0 0);
@@ -375,9 +445,6 @@ a.github-link {
     fill: currentColor; }
   a.github-link:hover {
     color: var(--color-icon-github-hover); }
-
-#toggle-search {
-  width: 2rem; }
 
 #search-q {
   opacity: 0;
@@ -465,8 +532,11 @@ code {
     margin: 0 3px 0 5px; }
 
 .watch-tag-list {
-  color: var(--color-text-watch-tag-list);
-  white-space: nowrap; }
+  color: var(--color-white);
+  white-space: nowrap;
+  background: var(--color-text-watch-tag-list);
+  border-radius: 5px;
+  padding: 2px 5px; }
 
 .box {
   max-width: 80%;
@@ -618,11 +688,23 @@ label:hover {
   #new-watch-form legend {
     color: var(--color-text-legend);
     font-weight: bold; }
-  #new-watch-form #watch-add-wrapper-zone > div {
-    display: inline-block; }
-  @media only screen and (max-width: 760px) {
-    #new-watch-form #watch-add-wrapper-zone #url {
-      width: 100%; } }
+  #new-watch-form #watch-add-wrapper-zone {
+    /* URL field grows always, other stay static in width */ }
+    @media only screen and (min-width: 760px) {
+      #new-watch-form #watch-add-wrapper-zone {
+        display: flex;
+        gap: 0.3rem;
+        flex-direction: row; } }
+    #new-watch-form #watch-add-wrapper-zone > span {
+      flex-grow: 0; }
+      #new-watch-form #watch-add-wrapper-zone > span input {
+        width: 100%;
+        padding-right: 1em; }
+      #new-watch-form #watch-add-wrapper-zone > span:first-child {
+        flex-grow: 1; }
+    @media only screen and (max-width: 760px) {
+      #new-watch-form #watch-add-wrapper-zone #url {
+        width: 100%; } }
 
 #diff-col {
   padding-left: 40px; }
@@ -959,17 +1041,18 @@ body.full-width .edit-form {
     color: var(--color-text-input-description); }
     .edit-form .pure-form-message-inline code {
       font-size: .875em; }
-  .edit-form .text-filtering {
-    border: 1px solid #ccc;
-    padding: 1rem;
-    border-radius: 5px;
-    margin-bottom: 1rem; }
-    .edit-form .text-filtering h3 {
-      margin-top: 0; }
-    .edit-form .text-filtering fieldset:last-of-type {
+
+.border-fieldset {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 5px;
+  margin-bottom: 1rem; }
+  .border-fieldset h3 {
+    margin-top: 0; }
+  .border-fieldset fieldset:last-of-type {
+    padding-bottom: 0; }
+    .border-fieldset fieldset:last-of-type .pure-control-group {
       padding-bottom: 0; }
-      .edit-form .text-filtering fieldset:last-of-type .pure-control-group {
-        padding-bottom: 0; }
 
 ul {
   padding-left: 1em;
@@ -1000,7 +1083,7 @@ ul {
 #selector-current-xpath {
   font-size: 80%; }
 
-#webdriver-override-options input[type="number"] {
+#webdriver_delay {
   width: 5em; }
 
 #api-key:hover {
@@ -1101,3 +1184,13 @@ ul {
   .restock-label.not-in-stock {
     background-color: var(--color-background-button-cancel);
     color: #777; }
+
+#chrome-extension-link {
+  padding: 9px;
+  border: 1px solid var(--color-grey-800);
+  border-radius: 10px;
+  vertical-align: middle; }
+  #chrome-extension-link img {
+    height: 21px;
+    padding: 2px;
+    vertical-align: middle; }

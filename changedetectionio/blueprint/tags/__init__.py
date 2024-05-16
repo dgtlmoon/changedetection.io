@@ -1,6 +1,6 @@
 from flask import Blueprint, request, make_response, render_template, flash, url_for, redirect
 from changedetectionio.store import ChangeDetectionStore
-from changedetectionio import login_optionally_required
+from changedetectionio.flask_app import login_optionally_required
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
@@ -11,9 +11,16 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def tags_overview_page():
         from .form import SingleTag
         add_form = SingleTag(request.form)
+        sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
+
+        from collections import Counter
+
+        tag_count = Counter(tag for watch in datastore.data['watching'].values() if watch.get('tags') for tag in watch['tags'])
+
         output = render_template("groups-overview.html",
+                                 available_tags=sorted_tags,
                                  form=add_form,
-                                 available_tags=datastore.data['settings']['application'].get('tags', {}),
+                                 tag_count=tag_count
                                  )
 
         return output

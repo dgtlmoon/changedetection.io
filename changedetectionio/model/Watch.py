@@ -1,16 +1,18 @@
-from distutils.util import strtobool
-import logging
+from changedetectionio.strtobool import strtobool
+from changedetectionio.safe_jinja import render as jinja_render
+
 import os
 import re
 import time
 import uuid
 from pathlib import Path
+from loguru import logger
 
 # Allowable protocols, protects against javascript: etc
 # file:// is further checked by ALLOW_FILE_URI
 SAFE_PROTOCOL_REGEX='^(http|https|ftp|file):'
 
-minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 60))
+minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
 
 from changedetectionio.notification import (
@@ -19,6 +21,7 @@ from changedetectionio.notification import (
 
 base_config = {
     'body': None,
+    'browser_steps': [],
     'browser_steps_last_error_step': None,
     'check_unique_lines': False,  # On change-detected, compare against all history if its something new
     'check_count': 0,
@@ -37,12 +40,14 @@ base_config = {
     'track_ldjson_price_data': None,
     'headers': {},  # Extra headers to send
     'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
+    'in_stock' : None,
     'in_stock_only' : True, # Only trigger change on going to instock from out-of-stock
     'include_filters': [],
     'last_checked': 0,
     'last_error': False,
     'last_viewed': 0,  # history key value of the last viewed via the [diff] link
     'method': 'GET',
+    'notification_alert_count': 0,
     # Custom notification content
     'notification_body': None,
     'notification_format': default_notification_format_for_watch,
@@ -54,6 +59,8 @@ base_config = {
     'previous_md5': False,
     'previous_md5_before_filters': False,  # Used for skipping changedetection entirely
     'proxy': None,  # Preferred proxy connection
+    'remote_server_reply': None, # From 'server' reply header
+    'sort_text_alphabetically': False,
     'subtractive_selectors': [],
     'tag': '', # Old system of text name for a tag, to be removed
     'tags': [], # list of UUIDs to App.Tags
@@ -62,6 +69,7 @@ base_config = {
     # Requires setting to None on submit if it's the same as the default
     # Should be all None by default, so we use the system default in this case.
     'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
+    'time_between_check_use_default': True,
     'title': None,
     'trigger_text': [],  # List of text or regex to wait for until a change is detected
     'url': '',
@@ -112,14 +120,15 @@ class model(dict):
 
     @property
     def viewed(self):
-        if int(self['last_viewed']) >= int(self.newest_history_key) :
+        # Don't return viewed when last_viewed is 0 and newest_key is 0
+        if int(self['last_viewed']) and int(self['last_viewed']) >= int(self.newest_history_key) :
             return True
 
         return False
 
     def ensure_data_dir_exists(self):
         if not os.path.isdir(self.watch_data_dir):
-            print ("> Creating data dir {}".format(self.watch_data_dir))
+            logger.debug(f"> Creating data dir {self.watch_data_dir}")
             os.mkdir(self.watch_data_dir)
 
     @property
@@ -131,12 +140,11 @@ class model(dict):
 
         ready_url = url
         if '{%' in url or '{{' in url:
-            from jinja2 import Environment
             # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
-            jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
             try:
-                ready_url = str(jinja2_env.from_string(url).render())
+                ready_url = jinja_render(template_str=url)
             except Exception as e:
+                logger.critical(f"Invalid URL template for: '{url}' - {str(e)}")
                 from flask import (
                     flash, Markup, url_for
                 )
@@ -145,7 +153,13 @@ class model(dict):
                 flash(message, 'error')
                 return ''
 
+        if ready_url.startswith('source:'):
+            ready_url=ready_url.replace('source:', '')
         return ready_url
+
+    @property
+    def is_source_type_url(self):
+        return self.get('url', '').startswith('source:')
 
     @property
     def get_fetch_backend(self):
@@ -202,7 +216,7 @@ class model(dict):
         # Read the history file as a dict
         fname = os.path.join(self.watch_data_dir, "history.txt")
         if os.path.isfile(fname):
-            logging.debug("Reading history index " + str(time.time()))
+            logger.debug(f"Reading watch history index for {self.get('uuid')}")
             with open(fname, "r") as f:
                 for i in f.readlines():
                     if ',' in i:
@@ -234,6 +248,14 @@ class model(dict):
         fname = os.path.join(self.watch_data_dir, "history.txt")
         return os.path.isfile(fname)
 
+    @property
+    def has_browser_steps(self):
+        has_browser_steps = self.get('browser_steps') and list(filter(
+            lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
+            self.get('browser_steps')))
+
+        return has_browser_steps
+
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
     @property
     def newest_history_key(self):
@@ -246,6 +268,38 @@ class model(dict):
 
         bump = self.history
         return self.__newest_history_key
+
+    # Given an arbitrary timestamp, find the closest next key
+    # For example, last_viewed = 1000 so it should return the next 1001 timestamp
+    #
+    # used for the [diff] button so it can preset a smarter from_version
+    @property
+    def get_next_snapshot_key_to_last_viewed(self):
+
+        """Unfortunately for now timestamp is stored as string key"""
+        keys = list(self.history.keys())
+        if not keys:
+            return None
+
+        last_viewed = int(self.get('last_viewed'))
+        prev_k = keys[0]
+        sorted_keys = sorted(keys, key=lambda x: int(x))
+        sorted_keys.reverse()
+
+        # When the 'last viewed' timestamp is greater than the newest snapshot, return second last
+        if last_viewed > int(sorted_keys[0]):
+            return sorted_keys[1]
+
+        for k in sorted_keys:
+            if int(k) < last_viewed:
+                if prev_k == sorted_keys[0]:
+                    # Return the second last one so we dont recommend the same version compares itself
+                    return sorted_keys[1]
+
+                return prev_k
+            prev_k = k
+
+        return keys[0]
 
     def get_history_snapshot(self, timestamp):
         import brotli
@@ -310,6 +364,7 @@ class model(dict):
         # @todo bump static cache of the last timestamp so we dont need to examine the file to set a proper ''viewed'' status
         return snapshot_fname
 
+    @property
     @property
     def has_empty_checktime(self):
         # using all() + dictionary comprehension

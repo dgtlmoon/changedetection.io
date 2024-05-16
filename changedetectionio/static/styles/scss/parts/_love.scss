@@ -1,0 +1,38 @@
+#overlay {
+
+  opacity: 0.95;
+  position: fixed;
+
+  width: 350px;
+  max-width: 100%;
+  height: 100%;
+  top: 0;
+  right: -350px;
+  background-color: var(--color-table-stripe);
+  z-index: 2;
+
+  transform: translateX(0);
+  transition: transform .5s ease;
+
+
+  &.visible {
+    transform: translateX(-100%);
+
+  }
+
+  .content {
+    font-size: 0.875rem;
+    padding: 1rem;
+    margin-top: 5rem;
+    max-width: 400px;
+    color: var(--color-watch-table-row-text);
+  }
+}
+
+#heartpath {
+  &:hover {
+    fill: #ff0000 !important;
+    transition: all ease 0.3s !important;
+  }
+  transition: all ease 0.3s !important;
+}

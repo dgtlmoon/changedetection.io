@@ -1,40 +1,18 @@
-$(document).ready(function () {
-    function toggle() {
-        if ($('input[name="fetch_backend"]:checked').val() == 'html_webdriver') {
-            if (playwright_enabled) {
-                // playwright supports headers, so hide everything else
-                // See #664
-                $('#requests-override-options #request-method').hide();
-                $('#requests-override-options #request-body').hide();
-
-                // @todo connect this one up
-                $('#ignore-status-codes-option').hide();
-            } else {
-                // selenium/webdriver doesnt support anything afaik, hide it all
-                $('#requests-override-options').hide();
-            }
-
-            $('#webdriver-override-options').show();
-
-        } else if ($('input[name="fetch_backend"]:checked').val() == 'system') {
-            $('#requests-override-options #request-method').hide();
-            $('#requests-override-options #request-body').hide();
-            $('#ignore-status-codes-option').hide();
-            $('#requests-override-options').hide();
-            $('#webdriver-override-options').hide();
-        } else {
-
-            $('#requests-override-options').show();
-            $('#requests-override-options *:hidden').show();
-            $('#webdriver-override-options').hide();
-        }
+function toggleOpacity(checkboxSelector, fieldSelector) {
+    const checkbox = document.querySelector(checkboxSelector);
+    const fields = document.querySelectorAll(fieldSelector);
+    function updateOpacity() {
+        const opacityValue = checkbox.checked ? 0.6 : 1;
+        fields.forEach(field => {
+            field.style.opacity = opacityValue;
+        });
     }
+    // Initial setup
+    updateOpacity();
+    checkbox.addEventListener('change', updateOpacity);
+}
 
-    $('input[name="fetch_backend"]').click(function (e) {
-        toggle();
-    });
-    toggle();
-
+$(document).ready(function () {
     $('#notification-setting-reset-to-default').click(function (e) {
         $('#notification_title').val('');
         $('#notification_body').val('');
@@ -46,4 +24,7 @@ $(document).ready(function () {
         e.preventDefault();
         $('#notification-tokens-info').toggle();
     });
+
+    toggleOpacity('#time_between_check_use_default', '#time_between_check');
 });
+

@@ -1,0 +1,25 @@
+.pure-menu-link {
+  padding: 0.5rem 1em;
+  line-height: 1.2rem;
+}
+
+.pure-menu-item {
+  svg {
+    height: 1.2rem;
+  }
+  * {
+    vertical-align: middle;
+  }
+  .github-link {
+    height: 1.8rem;
+    display: block;
+    svg {
+      height: 100%;
+    }
+  }
+  .bi-heart {
+    &:hover {
+      cursor: pointer;
+    }
+  }
+}
