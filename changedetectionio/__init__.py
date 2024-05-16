@@ -175,6 +175,7 @@ def main():
     #         proxy_set_header Host "localhost";
     #         proxy_set_header X-Forwarded-Prefix /app;
 
+
     if os.getenv('USE_X_SETTINGS'):
         logger.info("USE_X_SETTINGS is ENABLED")
         from werkzeug.middleware.proxy_fix import ProxyFix
