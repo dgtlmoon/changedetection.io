@@ -338,8 +338,11 @@ def changedetection_app(config=None, datastore_o=None):
 
         # @todo needs a .itemsWithTag() or something - then we can use that in Jinaj2 and throw this away
         for uuid, watch in datastore.data['watching'].items():
+            # @todo tag notification_muted skip also (improve Watch model)
+            if watch.get('notification_muted'):
+                continue
             if limit_tag and not limit_tag in watch['tags']:
-                    continue
+                continue
             watch['uuid'] = uuid
             sorted_watches.append(watch)
 
