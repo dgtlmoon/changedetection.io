@@ -108,8 +108,6 @@
                         <p>Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render.</p>
                         <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
                     </span>
-                    <br>
-                    Tip: <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">Connect using Bright Data and Oxylabs Proxies, find out more here.</a>
                 </div>
                 <fieldset class="pure-group" id="webdriver-override-options" data-visible-for="application-fetch_backend=html_webdriver">
                     <div class="pure-form-message-inline">
@@ -121,6 +119,18 @@
                         {{ render_field(form.application.form.webdriver_delay) }}
                     </div>
                 </fieldset>
+                <div class="pure-control-group inline-radio">
+                    {{ render_field(form.requests.form.default_ua) }}
+                    <span class="pure-form-message-inline">
+                        Applied to all requests.<br><br>
+                        Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider <a href="">all of the ways that the browser is detected</a>.
+                    </span>
+                </div>
+                <div class="pure-control-group">
+                                        <br>
+                    Tip: <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">Connect using Bright Data and Oxylabs Proxies, find out more here.</a>
+
+                </div>
             </div>
 
             <div class="tab-pane-inner" id="filters">
@@ -190,7 +200,7 @@ nav
                         <a id="chrome-extension-link"
                            title="Try our new Chrome Extension!"
                            href="https://chromewebstore.google.com/detail/changedetectionio-website/kefcfmgmlhmankjmnbijimhofdjekbop">
-                            <img src="{{ url_for('static_content', group='images', filename='Google-Chrome-icon.png') }}">
+                            <img src="{{ url_for('static_content', group='images', filename='Google-Chrome-icon.png') }}" alt="Chrome">
                             Chrome Webstore
                         </a>
                     </p>

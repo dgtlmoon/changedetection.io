@@ -554,7 +554,6 @@ class ChangeDetectionStore:
         return os.path.isfile(filepath)
 
     def get_all_base_headers(self):
-        from .model.App import parse_headers_from_text_file
         headers = {}
         # Global app settings
         headers.update(self.data['settings'].get('headers', {}))
