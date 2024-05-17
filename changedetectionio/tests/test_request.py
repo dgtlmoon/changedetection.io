@@ -281,7 +281,15 @@ def test_headers_textfile_in_request(client, live_server):
     )
     assert b'Settings updated' in res.data
 
-    print("TEST URL IS ", test_url)
+    res = client.get(url_for("settings_page"))
+
+    # Only when some kind of real browser is setup
+    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
+        assert b'requests-default_ua-html_webdriver' in res.data
+
+    # Field should always be there
+    assert b"requests-default_ua-html_requests" in res.data
+
     # Add the test URL twice, we will check
     res = client.post(
         url_for("import_page"),
