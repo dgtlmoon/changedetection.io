@@ -1,5 +1,5 @@
 import os
-from distutils.util import strtobool
+from changedetectionio.strtobool import strtobool
 
 from flask_expects_json import expects_json
 from changedetectionio import queuedWatchMetaData

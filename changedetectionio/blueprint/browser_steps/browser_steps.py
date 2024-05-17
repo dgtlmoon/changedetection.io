@@ -7,6 +7,7 @@ from random import randint
 from loguru import logger
 
 from changedetectionio.content_fetchers.base import manage_user_agent
+from changedetectionio.safe_jinja import render as jinja_render
 
 # Two flags, tell the JS which of the "Selector" or "Value" field should be enabled in the front end
 # 0- off, 1- on
@@ -48,6 +49,10 @@ browser_step_ui_config = {'Choose one': '0 0',
 # ONLY Works in Playwright because we need the fullscreen screenshot
 class steppable_browser_interface():
     page = None
+    start_url = None
+
+    def __init__(self, start_url):
+        self.start_url = start_url
 
     # Convert and perform "Click Button" for example
     def call_action(self, action_name, selector=None, optional_value=None):
@@ -64,14 +69,12 @@ class steppable_browser_interface():
         action_handler = getattr(self, "action_" + call_action_name)
 
         # Support for Jinja2 variables in the value and selector
-        from jinja2 import Environment
-        jinja2_env = Environment(extensions=['jinja2_time.TimeExtension'])
 
         if selector and ('{%' in selector or '{{' in selector):
-            selector = str(jinja2_env.from_string(selector).render())
+            selector = jinja_render(template_str=selector)
 
         if optional_value and ('{%' in optional_value or '{{' in optional_value):
-            optional_value = str(jinja2_env.from_string(optional_value).render())
+            optional_value = jinja_render(template_str=optional_value)
 
         action_handler(selector, optional_value)
         self.page.wait_for_timeout(1.5 * 1000)
@@ -87,6 +90,10 @@ class steppable_browser_interface():
         #await page.waitForTimeout(extra_wait_ms);
         logger.debug(f"Time to goto URL {time.time()-now:.2f}s")
         return response
+
+    # Incase they request to go back to the start
+    def action_goto_site(self, selector=None, value=None):
+        return self.action_goto_url(value=self.start_url)
 
     def action_click_element_containing_text(self, selector=None, value=''):
         if not len(value.strip()):
@@ -195,10 +202,11 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
-    def __init__(self, playwright_browser, proxy=None, headers=None):
+    def __init__(self, playwright_browser, proxy=None, headers=None, start_url=None):
         self.headers = headers or {}
         self.age_start = time.time()
         self.playwright_browser = playwright_browser
+        self.start_url = start_url
         if self.context is None:
             self.connect(proxy=proxy)
 

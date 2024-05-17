@@ -79,12 +79,7 @@ $(document).ready(function () {
         $('#jump-next-diff').click();
     }
 
-    $('.needs-localtime').each(function () {
-        for (var option of this.options) {
-            var dateObject = new Date(option.value * 1000);
-            option.label = dateObject.toLocaleString(undefined, {dateStyle: "full", timeStyle: "medium"});
-        }
-    })
+
     onDiffTypeChange(
         document.querySelector('#settings [name="diff_type"]:checked'),
     );

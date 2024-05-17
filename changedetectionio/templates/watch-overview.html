@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.jinja' import render_simple_field, render_field, render_nolabel_field, sort_by_title %}
+{% from '_helpers.html' import render_simple_field, render_field, render_nolabel_field, sort_by_title %}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 
@@ -169,7 +169,7 @@
                 <td>
                     <a {% if watch.uuid in queued_uuids %}disabled="true"{% endif %} href="{{ url_for('form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
                        class="recheck pure-button pure-button-primary">{% if watch.uuid in queued_uuids %}Queued{% else %}Recheck{% endif %}</a>
-                    <a href="{{ url_for('edit_page', uuid=watch.uuid)}}" class="pure-button pure-button-primary">Edit</a>
+                    <a href="{{ url_for('edit_page', uuid=watch.uuid)}}#general" class="pure-button pure-button-primary">Edit</a>
                     {% if watch.history_n >= 2 %}
 
                         {%  if is_unviewed %}

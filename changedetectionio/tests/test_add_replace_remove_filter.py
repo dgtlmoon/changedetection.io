@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+import os.path
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
@@ -107,7 +107,6 @@ def test_check_add_line_contains_trigger(client, live_server):
     #live_server_setup(live_server)
 
     # Give the endpoint time to spin up
-    time.sleep(1)
     test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://') + "?xxx={{ watch_url }}"
 
     res = client.post(
@@ -166,6 +165,7 @@ def test_check_add_line_contains_trigger(client, live_server):
 
     # Takes a moment for apprise to fire
     time.sleep(3)
+    assert os.path.isfile("test-datastore/notification.txt"), "Notification fired because I can see the output file"
     with open("test-datastore/notification.txt", 'r') as f:
         response= f.read()
         assert '-Oh yes please-' in response
