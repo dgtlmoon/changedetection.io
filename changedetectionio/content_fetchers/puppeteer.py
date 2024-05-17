@@ -9,8 +9,6 @@ from loguru import logger
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, BrowserConnectError
 
-DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
-
 class fetcher(Fetcher):
     fetcher_description = "Puppeteer/direct {}/Javascript".format(
         os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
@@ -106,8 +104,9 @@ class fetcher(Fetcher):
         self.page = (pages := await browser.pages) and len(pages) or await browser.newPage()
 
         # This user agent is similar to what was used when tweaking the evasions in inject_evasions_into_page(..)
-        user_agent = next((value for key, value in request_headers.items() if key.lower().strip() == 'user-agent'), DEFAULT_USER_AGENT)
-        await self.page.setUserAgent(user_agent)
+        user_agent = next((value for key, value in request_headers.items() if key.lower().strip() == 'user-agent'))
+        if user_agent:
+            await self.page.setUserAgent(user_agent)
 
         try:
             from pyppeteerstealth import inject_evasions_into_page

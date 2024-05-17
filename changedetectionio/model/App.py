@@ -22,6 +22,10 @@ class model(dict):
                     'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
                     'timeout': int(getenv("DEFAULT_SETTINGS_REQUESTS_TIMEOUT", "45")),  # Default 45 seconds
                     'workers': int(getenv("DEFAULT_SETTINGS_REQUESTS_WORKERS", "10")),  # Number of threads, lower is better for slow connections
+                    'default_ua': {
+                        'html_requests': None,
+                        'html_webdriver': None,
+                    }
                 },
                 'application': {
                     # Custom notification content
