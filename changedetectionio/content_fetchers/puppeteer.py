@@ -9,10 +9,6 @@ from loguru import logger
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, BrowserConnectError
 
-<<<<<<< HEAD
-
-=======
->>>>>>> db8f2d3b (Ability to set default UA for either fetching types)
 class fetcher(Fetcher):
     fetcher_description = "Puppeteer/direct {}/Javascript".format(
         os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
