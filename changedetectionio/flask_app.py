@@ -356,8 +356,8 @@ def changedetection_app(config=None, datastore_o=None):
             # Re #521 - Don't bother processing this one if theres less than 2 snapshots, means we never had a change detected.
             if len(dates) < 2:
                 continue
-
-            if not watch.viewed:
+            # @todo tag notification_muted skip also (improve Watch model)
+            if not watch.viewed and not watch.get('notification_muted'):
                 # Re #239 - GUID needs to be individual for each event
                 # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
                 guid = "{}/{}".format(watch['uuid'], watch.last_changed)
