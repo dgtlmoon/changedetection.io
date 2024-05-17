@@ -9,6 +9,10 @@ from inscriptis.model.config import ParserConfig
 from xml.sax.saxutils import escape as xml_escape
 import json
 import re
+from itertools import chain
+from elementpath import select as elementpath_select
+# xpath 2.0-3.1
+from elementpath.xpath3 import XPath3Parser
 
 
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
@@ -119,7 +123,7 @@ def forest_transplanting(root):
     To make this function work, 'fragment=True' in elementpath.select is required.
     """
     from lxml import etree
-    from itertools import chain
+
     root_siblings_preceding = [ s for s in root.itersiblings(preceding=True)]
     root_siblings = [s for s in root.itersiblings()]
 
@@ -133,9 +137,6 @@ def forest_transplanting(root):
 # Return str Utf-8 of matched rules
 def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
     from lxml import etree, html
-    import elementpath
-    # xpath 2.0-3.1
-    from elementpath.xpath3 import XPath3Parser
 
     parser = etree.HTMLParser()
     if is_rss:
@@ -146,7 +147,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     tree, is_fragment = forest_transplanting(tree)
     html_block = ""
 
-    r = elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser, fragment=is_fragment)
+    r = elementpath_select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser, fragment=is_fragment)
     #@note: //title/text() wont work where <title>CDATA..
 
     if type(r) != list:
