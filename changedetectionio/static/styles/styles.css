@@ -574,8 +574,7 @@ body::after {
   opacity: 0.91; }
 
 body::before {
-  content: "";
-  background-size: cover; }
+  content: ""; }
 
 body:after,
 body:before {
