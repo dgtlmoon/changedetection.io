@@ -1082,6 +1082,9 @@ ul {
     li {
       list-style: none;
       font-size: 0.8rem;
+      > * {
+        display: inline-block;
+      }
     }
   }
 
