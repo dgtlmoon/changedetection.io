@@ -479,8 +479,9 @@ def test_correct_header_detect(client, live_server):
         url_for("preview_page", uuid="first"),
         follow_redirects=True
     )
-    assert b'&#34;world&#34;:' in res.data
-    assert res.data.count(b'{') >= 2
+
+    assert b'&#34;hello&#34;: 123,' in res.data
+    assert b'&#34;world&#34;: 123</div>' in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
