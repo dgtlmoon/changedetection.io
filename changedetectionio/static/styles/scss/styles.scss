@@ -243,7 +243,6 @@ body::after {
 body::before {
   // background-image set in base.html so it works with reverse proxies etc
   content: "";
-  background-size: cover
 }
 
 body:after,
@@ -1083,6 +1082,9 @@ ul {
     li {
       list-style: none;
       font-size: 0.8rem;
+      > * {
+        display: inline-block;
+      }
     }
   }
 
