@@ -771,7 +771,7 @@ def changedetection_app(config=None, datastore_o=None):
                                      jq_support=jq_support,
                                      playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False),
                                      settings_application=datastore.data['settings']['application'],
-                                     using_global_webdriver_wait=default['webdriver_delay'] is None,
+                                     using_global_webdriver_wait=not default['webdriver_delay'],
                                      uuid=uuid,
                                      visualselector_enabled=visualselector_enabled,
                                      watch=watch
