@@ -92,7 +92,7 @@ class fetcher(Fetcher):
                                                        ignoreHTTPSErrors=True
                                                        )
         except websockets.exceptions.InvalidStatusCode as e:
-            raise BrowserConnectError(msg=f"Error while trying to connect the browser, Code {e.status_code} (check your access)")
+            raise BrowserConnectError(msg=f"Error while trying to connect the browser, Code {e.status_code} (check your access, whitelist IP, password etc)")
         except websockets.exceptions.InvalidURI:
             raise BrowserConnectError(msg=f"Error connecting to the browser, check your browser connection address (should be ws:// or wss://")
         except Exception as e:
@@ -102,11 +102,6 @@ class fetcher(Fetcher):
         # non-headless - newPage() will launch an extra tab/window, .browser should already contain 1 page/tab
         # headless - ask a new page
         self.page = (pages := await browser.pages) and len(pages) or await browser.newPage()
-
-        # This user agent is similar to what was used when tweaking the evasions in inject_evasions_into_page(..)
-        user_agent = next((value for key, value in request_headers.items() if key.lower().strip() == 'user-agent'))
-        if user_agent:
-            await self.page.setUserAgent(user_agent)
 
         try:
             from pyppeteerstealth import inject_evasions_into_page
@@ -118,7 +113,18 @@ class fetcher(Fetcher):
             # But I could never get it to fire reliably, so we just inject it straight after
             await inject_evasions_into_page(self.page)
 
-        await self.page.setUserAgent(manage_user_agent(headers=request_headers, current_ua=await self.page.evaluate('navigator.userAgent')))
+        # This user agent is similar to what was used when tweaking the evasions in inject_evasions_into_page(..)
+        user_agent = None
+        if request_headers:
+            user_agent = next((value for key, value in request_headers.items() if key.lower().strip() == 'user-agent'))
+            if user_agent:
+                await self.page.setUserAgent(user_agent)
+                # Remove it so it's not sent again with headers after
+                [request_headers.pop(key) for key in list(request_headers) if key.lower().strip() == 'user-agent'.lower().strip()]
+
+        if not user_agent:
+            # Attempt to strip 'HeadlessChrome' etc
+            await self.page.setUserAgent(manage_user_agent(headers=request_headers, current_ua=await self.page.evaluate('navigator.userAgent')))
 
         await self.page.setBypassCSP(True)
         if request_headers:
