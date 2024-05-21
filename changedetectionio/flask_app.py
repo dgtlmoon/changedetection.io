@@ -338,8 +338,11 @@ def changedetection_app(config=None, datastore_o=None):
 
         # @todo needs a .itemsWithTag() or something - then we can use that in Jinaj2 and throw this away
         for uuid, watch in datastore.data['watching'].items():
+            # @todo tag notification_muted skip also (improve Watch model)
+            if watch.get('notification_muted'):
+                continue
             if limit_tag and not limit_tag in watch['tags']:
-                    continue
+                continue
             watch['uuid'] = uuid
             sorted_watches.append(watch)
 
@@ -768,7 +771,7 @@ def changedetection_app(config=None, datastore_o=None):
                                      jq_support=jq_support,
                                      playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False),
                                      settings_application=datastore.data['settings']['application'],
-                                     using_global_webdriver_wait=default['webdriver_delay'] is None,
+                                     using_global_webdriver_wait=not default['webdriver_delay'],
                                      uuid=uuid,
                                      visualselector_enabled=visualselector_enabled,
                                      watch=watch
@@ -1063,6 +1066,8 @@ def changedetection_app(config=None, datastore_o=None):
         content = []
         ignored_line_numbers = []
         trigger_line_numbers = []
+        versions = []
+        timestamp = None
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
@@ -1082,57 +1087,53 @@ def changedetection_app(config=None, datastore_o=None):
         if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
             is_html_webdriver = True
 
-        # Never requested successfully, but we detected a fetch error
         if datastore.data['watching'][uuid].history_n == 0 and (watch.get_error_text() or watch.get_error_snapshot()):
             flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
-            output = render_template("preview.html",
-                                     content=content,
-                                     history_n=watch.history_n,
-                                     extra_stylesheets=extra_stylesheets,
-#                                     current_diff_url=watch['url'],
-                                     watch=watch,
-                                     uuid=uuid,
-                                     is_html_webdriver=is_html_webdriver,
-                                     last_error=watch['last_error'],
-                                     last_error_text=watch.get_error_text(),
-                                     last_error_screenshot=watch.get_error_snapshot())
-            return output
+        else:
+            # So prepare the latest preview or not
+            preferred_version = request.args.get('version')
+            versions = list(watch.history.keys())
+            timestamp = versions[-1]
+            if preferred_version and preferred_version in versions:
+                timestamp = preferred_version
 
-        timestamp = list(watch.history.keys())[-1]
-        try:
-            tmp = watch.get_history_snapshot(timestamp).splitlines()
+            try:
+                versions = list(watch.history.keys())
+                tmp = watch.get_history_snapshot(timestamp).splitlines()
 
-            # Get what needs to be highlighted
-            ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
+                # Get what needs to be highlighted
+                ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
 
-            # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
-            ignored_line_numbers = html_tools.strip_ignore_text(content="\n".join(tmp),
-                                                                wordlist=ignore_rules,
-                                                                mode='line numbers'
-                                                                )
+                # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
+                ignored_line_numbers = html_tools.strip_ignore_text(content="\n".join(tmp),
+                                                                    wordlist=ignore_rules,
+                                                                    mode='line numbers'
+                                                                    )
 
-            trigger_line_numbers = html_tools.strip_ignore_text(content="\n".join(tmp),
-                                                                wordlist=watch['trigger_text'],
-                                                                mode='line numbers'
-                                                                )
-            # Prepare the classes and lines used in the template
-            i=0
-            for l in tmp:
-                classes=[]
-                i+=1
-                if i in ignored_line_numbers:
-                    classes.append('ignored')
-                if i in trigger_line_numbers:
-                    classes.append('triggered')
-                content.append({'line': l, 'classes': ' '.join(classes)})
+                trigger_line_numbers = html_tools.strip_ignore_text(content="\n".join(tmp),
+                                                                    wordlist=watch['trigger_text'],
+                                                                    mode='line numbers'
+                                                                    )
+                # Prepare the classes and lines used in the template
+                i=0
+                for l in tmp:
+                    classes=[]
+                    i+=1
+                    if i in ignored_line_numbers:
+                        classes.append('ignored')
+                    if i in trigger_line_numbers:
+                        classes.append('triggered')
+                    content.append({'line': l, 'classes': ' '.join(classes)})
 
-        except Exception as e:
-            content.append({'line': f"File doesnt exist or unable to read timestamp {timestamp}", 'classes': ''})
+            except Exception as e:
+                content.append({'line': f"File doesnt exist or unable to read timestamp {timestamp}", 'classes': ''})
 
         output = render_template("preview.html",
                                  content=content,
+                                 current_version=timestamp,
                                  history_n=watch.history_n,
                                  extra_stylesheets=extra_stylesheets,
+                                 extra_title=f" - Diff - {watch.label} @ {timestamp}",
                                  ignored_line_numbers=ignored_line_numbers,
                                  triggered_line_numbers=trigger_line_numbers,
                                  current_diff_url=watch['url'],
@@ -1142,7 +1143,10 @@ def changedetection_app(config=None, datastore_o=None):
                                  is_html_webdriver=is_html_webdriver,
                                  last_error=watch['last_error'],
                                  last_error_text=watch.get_error_text(),
-                                 last_error_screenshot=watch.get_error_snapshot())
+                                 last_error_screenshot=watch.get_error_snapshot(),
+                                 versions=versions
+                                )
+
 
         return output
 

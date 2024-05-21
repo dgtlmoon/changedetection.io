@@ -122,10 +122,6 @@ def process_notification(n_object, datastore):
     # Insert variables into the notification content
     notification_parameters = create_notification_parameters(n_object, datastore)
 
-    # Get the notification body from datastore
-    n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
-    n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
-
     n_format = valid_notification_formats.get(
         n_object.get('notification_format', default_notification_format),
         valid_notification_formats[default_notification_format],
@@ -151,6 +147,11 @@ def process_notification(n_object, datastore):
 
     with apprise.LogCapture(level=apprise.logging.DEBUG) as logs:
         for url in n_object['notification_urls']:
+
+            # Get the notification body from datastore
+            n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
+            n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
+
             url = url.strip()
             if not url:
                 logger.warning(f"Process Notification: skipping empty notification URL.")
