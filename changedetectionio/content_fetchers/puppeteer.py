@@ -116,7 +116,7 @@ class fetcher(Fetcher):
         # This user agent is similar to what was used when tweaking the evasions in inject_evasions_into_page(..)
         user_agent = None
         if request_headers:
-            user_agent = next((value for key, value in request_headers.items() if key.lower().strip() == 'user-agent'))
+            user_agent = next((value for key, value in request_headers.items() if key.lower().strip() == 'user-agent'), None)
             if user_agent:
                 await self.page.setUserAgent(user_agent)
                 # Remove it so it's not sent again with headers after
