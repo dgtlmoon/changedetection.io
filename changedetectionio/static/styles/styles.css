@@ -574,8 +574,7 @@ body::after {
   opacity: 0.91; }
 
 body::before {
-  content: "";
-  background-size: cover; }
+  content: ""; }
 
 body:after,
 body:before {
@@ -1173,6 +1172,8 @@ ul {
     #quick-watch-processor-type ul li {
       list-style: none;
       font-size: 0.8rem; }
+      #quick-watch-processor-type ul li > * {
+        display: inline-block; }
 
 .restock-label {
   padding: 3px;
