@@ -1,14 +1,11 @@
 from . import difference_detection_processor
-from ..html_tools import xpath1_filter as xpath_filter
-# xpath1 is a lot faster and is sufficient here
-from ..html_tools import extract_json_as_string, has_ldjson_product_info
 from ..model import Restock
 from copy import deepcopy
 from loguru import logger
 import hashlib
 import re
 import urllib3
-import extruct
+
 import time
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -89,7 +86,7 @@ class perform_site_check(difference_detection_processor):
 
 
     def run_changedetection(self, uuid, skip_when_checksum_same=True):
-
+        import extruct
         # DeepCopy so we can be sure we don't accidently change anything by reference
         watch = deepcopy(self.datastore.data['watching'].get(uuid))
 
