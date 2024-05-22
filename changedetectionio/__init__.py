@@ -2,7 +2,7 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.45.22'
+__version__ = '0.45.23'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
@@ -174,6 +174,7 @@ def main():
     #
     #         proxy_set_header Host "localhost";
     #         proxy_set_header X-Forwarded-Prefix /app;
+
 
     if os.getenv('USE_X_SETTINGS'):
         logger.info("USE_X_SETTINGS is ENABLED")

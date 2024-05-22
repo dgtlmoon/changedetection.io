@@ -453,6 +453,7 @@ class watchForm(commonSettingsForm):
     tags = StringTagUUID('Group tag', [validators.Optional()], default='')
 
     time_between_check = FormField(TimeBetweenCheckForm)
+    time_between_check_use_default = BooleanField('Use global settings for time between check', default=False)
 
     include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
 
@@ -525,6 +526,10 @@ class SingleExtraBrowser(Form):
     browser_connection_url = StringField('Browser connection URL', [validators.Optional()], render_kw={"placeholder": "wss://brightdata... wss://oxylabs etc", "size":50})
     # @todo do the validation here instead
 
+class DefaultUAInputForm(Form):
+    html_requests = StringField('Plaintext requests', validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
+    if os.getenv("PLAYWRIGHT_DRIVER_URL") or os.getenv("WEBDRIVER_URL"):
+        html_webdriver = StringField('Chrome requests', validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
 
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
@@ -535,6 +540,8 @@ class globalSettingsRequestForm(Form):
                                   validators=[validators.NumberRange(min=0, message="Should contain zero or more seconds")])
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
     extra_browsers = FieldList(FormField(SingleExtraBrowser), min_entries=5)
+
+    default_ua = FormField(DefaultUAInputForm, label="Default User-Agent overrides")
 
     def validate_extra_proxies(self, extra_validators=None):
         for e in self.data['extra_proxies']:

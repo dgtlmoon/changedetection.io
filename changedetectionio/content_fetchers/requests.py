@@ -30,11 +30,6 @@ class fetcher(Fetcher):
         if self.browser_steps_get_valid_steps():
             raise BrowserStepsInUnsupportedFetcher(url=url)
 
-        # Make requests use a more modern looking user-agent
-        if not {k.lower(): v for k, v in request_headers.items()}.get('user-agent', None):
-            request_headers['User-Agent'] = os.getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT",
-                                                      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36')
-
         proxies = {}
 
         # Allows override the proxy on a per-request basis

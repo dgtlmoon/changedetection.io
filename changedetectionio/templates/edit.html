@@ -85,15 +85,9 @@
                         {{ render_field(form.tags) }}
                         <span class="pure-form-message-inline">Organisational tag/group name used in the main listing page</span>
                     </div>
-                    <div class="pure-control-group">
+                    <div class="pure-control-group time-between-check border-fieldset">
                         {{ render_field(form.time_between_check, class="time-check-widget") }}
-                        {% if has_empty_checktime %}
-                        <span class="pure-form-message-inline">Currently using the <a
-                                href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>, change to another value if you want to be specific.</span>
-                        {% else %}
-                        <span class="pure-form-message-inline">Set to blank to use the <a
-                                href="{{ url_for('settings_page', uuid=uuid) }}">default global settings</a>.</span>
-                        {% endif %}
+                        {{ render_checkbox_field(form.time_between_check_use_default, class="use-default-timecheck") }}
                     </div>
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.extract_title_as_title) }}
@@ -328,7 +322,7 @@ nav
                         </ul>
                       </span>
                 </fieldset>
-                <div class="text-filtering">
+                <div class="text-filtering border-fieldset">
                 <fieldset class="pure-group" id="text-filtering-type-options">
                     <h3>Text filtering</h3>
                         Limit trigger/ignore/block/extract to;<br>
@@ -437,7 +431,8 @@ Unavailable") }}
                     <div class="pure-control-group">
                         {% if visualselector_enabled %}
                             <span class="pure-form-message-inline">
-                                The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection &dash; after the <i>Browser Steps</i> has completed, this tool is a helper to manage filters in the  "CSS/JSONPath/JQ/XPath Filters" box of the <a href="#filters-and-triggers">Filters & Triggers</a> tab.
+                                The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection &dash; after the <i>Browser Steps</i> has completed.<br>
+                                This tool is a helper to manage filters in the  "CSS/JSONPath/JQ/XPath Filters" box of the <a href="#filters-and-triggers">Filters & Triggers</a> tab.
                             </span>
 
                             <div id="selector-header">

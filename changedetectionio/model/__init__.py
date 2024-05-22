@@ -12,7 +12,6 @@ class Restock(dict):
         default_values.update(dict(*args, **kwargs))
         super().__init__(default_values.copy())
 
-
 class watch_base(dict):
 
     def __init__(self, *arg, **kw):
@@ -37,6 +36,7 @@ class watch_base(dict):
             'track_ldjson_price_data': None,
             'headers': {},  # Extra headers to send
             'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
+            'in_stock': None,
             'in_stock_only': True,  # Only trigger change on going to instock from out-of-stock
             'include_filters': [],
             'last_checked': 0,
@@ -55,7 +55,6 @@ class watch_base(dict):
             'previous_md5': False,
             'previous_md5_before_filters': False,  # Used for skipping changedetection entirely
             'proxy': None,  # Preferred proxy connection
-            'restock': {},  # Restock/price storage
             'remote_server_reply': None,  # From 'server' reply header
             'sort_text_alphabetically': False,
             'subtractive_selectors': [],
@@ -66,6 +65,7 @@ class watch_base(dict):
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
+            'time_between_check_use_default': True,
             'title': None,
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'url': '',

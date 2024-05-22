@@ -248,7 +248,6 @@ body::after {
 body::before {
   // background-image set in base.html so it works with reverse proxies etc
   content: "";
-  background-size: cover
 }
 
 body:after,
@@ -933,22 +932,25 @@ body.full-width {
       font-size: .875em;
     }
   }
-  .text-filtering {
-    h3 {
-      margin-top: 0;
-    }
-    border: 1px solid #ccc;
-    padding: 1rem;
-    border-radius: 5px;
-    margin-bottom: 1rem;
-    fieldset:last-of-type {
+}
+
+.border-fieldset {
+  h3 {
+    margin-top: 0;
+  }
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+  fieldset:last-of-type {
+    padding-bottom: 0;
+    .pure-control-group {
       padding-bottom: 0;
-      .pure-control-group {
-        padding-bottom: 0;
-      }
     }
   }
 }
+
+
 
 ul {
   padding-left: 1em;
@@ -1084,6 +1086,9 @@ ul {
     li {
       list-style: none;
       font-size: 0.8rem;
+      > * {
+        display: inline-block;
+      }
     }
   }
 

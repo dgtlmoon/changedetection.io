@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" >
     <meta name="description" content="Self hosted website change detection." >
     <title>Change Detection{{extra_title}}</title>
-    <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag %}- {{active_tag}}{% endif %}" href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}" >
+    {% if app_rss_token %}
+      <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag_uuid %}- {{active_tag.title}}{% endif %}" href="{{ url_for('rss', tag=active_tag_uuid , token=app_rss_token)}}" >
+    {% endif %}
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}" >
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}?v={{ get_css_version() }}" >
     {% if extra_stylesheets %}
@@ -24,12 +26,6 @@
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="msapplication-config" content="favicons/browserconfig.xml">
     <meta name="theme-color" content="#ffffff">
-
-    <style>
-      body::before {
-        background-image: url({{url_for('static_content', group='images', filename='gradient-border.png') }});
-      }
-    </style>
     <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
   </head>
 
@@ -89,8 +85,8 @@
           <li class="pure-menu-item pure-form" id="search-menu-item">
             <!-- We use GET here so it offers people a chance to set bookmarks etc -->
             <form name="searchForm" action="" method="GET">
-              <input id="search-q" class="" name="q" placeholder="URL or Title {% if active_tag %}in '{{ active_tag }}'{% endif %}" required="" type="text" value="">
-              <input name="tags" type="hidden" value="{% if active_tag %}{{active_tag}}{% endif %}">
+              <input id="search-q" class="" name="q" placeholder="URL or Title {% if active_tag_uuid %}in '{{ active_tag.title }}'{% endif %}" required="" type="text" value="">
+              <input name="tags" type="hidden" value="{% if active_tag_uuid %}{{active_tag_uuid}}{% endif %}">
               <button class="toggle-button " id="toggle-search" type="button" title="Search, or Use Alt+S Key" >
                 {% include "svgs/search-icon.svg" %}
               </button>
