@@ -13,7 +13,7 @@
             <div id="watch-add-wrapper-zone">
 
                     {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
-                    {{ render_nolabel_field(form.tags, value=active_tag.title if active_tag else '', placeholder="watch label / tag") }}
+                    {{ render_nolabel_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder="watch label / tag") }}
                     {{ render_nolabel_field(form.watch_submit_button, title="Watch this URL!" ) }}
                     {{ render_nolabel_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
             </div>
@@ -46,7 +46,7 @@
     {% endif %}
     {% if search_q %}<div id="search-result-info">Searching "<strong><i>{{search_q}}</i></strong>"</div>{% endif %}
     <div>
-        <a href="{{url_for('index')}}" class="pure-button button-tag {{'active' if not active_tag }}">All</a>
+        <a href="{{url_for('index')}}" class="pure-button button-tag {{'active' if not active_tag_uuid }}">All</a>
 
     <!-- tag list -->
     {% for uuid, tag in tags %}
@@ -67,11 +67,11 @@
             <tr>
                 {% set link_order = "desc" if sort_order  == 'asc' else "asc" %}
                 {% set arrow_span = "" %}
-                <th><input style="vertical-align: middle" type="checkbox" id="check-all" > <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}"  href="{{url_for('index', sort='date_created', order=link_order, tag=active_tag)}}"># <span class='arrow {{link_order}}'></span></a></th>
+                <th><input style="vertical-align: middle" type="checkbox" id="check-all" > <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}"  href="{{url_for('index', sort='date_created', order=link_order, tag=active_tag_uuid)}}"># <span class='arrow {{link_order}}'></span></a></th>
                 <th></th>
-                <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('index', sort='label', order=link_order, tag=active_tag)}}">Website <span class='arrow {{link_order}}'></span></a></th>
-                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('index', sort='last_checked', order=link_order, tag=active_tag)}}">Last Checked <span class='arrow {{link_order}}'></span></a></th>
-                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('index', sort='last_changed', order=link_order, tag=active_tag)}}">Last Changed <span class='arrow {{link_order}}'></span></a></th>
+                <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('index', sort='label', order=link_order, tag=active_tag_uuid)}}">Website <span class='arrow {{link_order}}'></span></a></th>
+                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('index', sort='last_checked', order=link_order, tag=active_tag_uuid)}}">Last Checked <span class='arrow {{link_order}}'></span></a></th>
+                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('index', sort='last_changed', order=link_order, tag=active_tag_uuid)}}">Last Changed <span class='arrow {{link_order}}'></span></a></th>
                 <th></th>
             </tr>
             </thead>
@@ -95,11 +95,11 @@
                 <td class="inline checkbox-uuid" ><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " > <span>{{ loop.index+pagination.skip }}</span></td>
                 <td class="inline watch-controls">
                     {% if not watch.paused %}
-                    <a class="state-off" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause checks" title="Pause checks" class="icon icon-pause" ></a>
+                    <a class="state-off" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause checks" title="Pause checks" class="icon icon-pause" ></a>
                     {% else %}
-                    <a class="state-on" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="UnPause checks" title="UnPause checks" class="icon icon-unpause" ></a>
+                    <a class="state-on" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="UnPause checks" title="UnPause checks" class="icon icon-unpause" ></a>
                     {% endif %}
-                    <a class="link-mute state-{{'on' if watch.notification_muted else 'off'}}" href="{{url_for('index', op='mute', uuid=watch.uuid, tag=active_tag)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="Mute notifications" title="Mute notifications" class="icon icon-mute" ></a>
+                    <a class="link-mute state-{{'on' if watch.notification_muted else 'off'}}" href="{{url_for('index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="Mute notifications" title="Mute notifications" class="icon icon-mute" ></a>
                 </td>
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
                     <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}"></a>
@@ -204,7 +204,7 @@
                 all {% if active_tag_uuid %} in "{{active_tag.title}}"{%endif%}</a>
             </li>
             <li>
-                <a href="{{ url_for('rss', tag=active_tag , token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>
+                <a href="{{ url_for('rss', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>
             </li>
         </ul>
         {{ pagination.links }}

@@ -97,6 +97,10 @@ class difference_detection_processor():
         request_headers.update(self.datastore.get_all_base_headers())
         request_headers.update(self.datastore.get_all_headers_in_textfile_for_watch(uuid=self.watch.get('uuid')))
 
+        ua = self.datastore.data['settings']['requests'].get('default_ua')
+        if ua and ua.get(prefer_fetch_backend):
+            request_headers.update({'User-Agent': ua.get(prefer_fetch_backend)})
+
         # https://github.com/psf/requests/issues/4525
         # Requests doesnt yet support brotli encoding, so don't put 'br' here, be totally sure that the user cannot
         # do this by accident.
