@@ -5,7 +5,6 @@ from loguru import logger
 import hashlib
 import re
 import urllib3
-
 import time
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -35,10 +34,16 @@ def get_itemprop_availability(html_content) -> Restock:
     """
     from jsonpath_ng import parse
 
-    value={}
-
     now = time.time()
+    import extruct
+    logger.trace(f"Imported extruct module in {time.time() - now:.3f}s")
+
+
+    value = {}
+    now = time.time()
+    # Extruct is very slow, I'm wondering if some ML is going to be faster (800ms on my i7)
     data = extruct.extract(html_content)
+    logger.trace(f"Extruct basic extract of all metadata done in {time.time() - now:.3f}s")
 
     # First phase, dead simple scanning of anything that looks useful
     if data:
@@ -86,7 +91,7 @@ class perform_site_check(difference_detection_processor):
 
 
     def run_changedetection(self, uuid, skip_when_checksum_same=True):
-        import extruct
+
         # DeepCopy so we can be sure we don't accidently change anything by reference
         watch = deepcopy(self.datastore.data['watching'].get(uuid))
 
@@ -140,7 +145,7 @@ class perform_site_check(difference_detection_processor):
         changed_detected = False
         logger.debug(f"Watch UUID {uuid} restock check - Previous MD5: {watch.get('previous_md5')}, Fetched MD5 {fetched_md5}")
 
-        if watch['restock'].get('in_stock') != update_obj['restock'].get('in_stock'):
+        if watch.get('restock') and watch['restock'].get('in_stock') != update_obj['restock'].get('in_stock'):
             # Yes if we only care about it going to instock, AND we are in stock
             if watch.get('in_stock_only') and update_obj['restock']['in_stock']:
                 changed_detected = True
