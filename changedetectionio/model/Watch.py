@@ -197,6 +197,7 @@ class model(watch_base):
                 return True
 
         return False
+    
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
     @property
     def newest_history_key(self):
