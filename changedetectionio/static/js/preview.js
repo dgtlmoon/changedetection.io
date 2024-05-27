@@ -40,9 +40,13 @@ if (selectElement) {
     if (selectedOption) {
         if (selectedOption.previousElementSibling) {
             document.getElementById('btn-previous').href = "?version=" + selectedOption.previousElementSibling.value;
+        } else {
+            document.getElementById('btn-previous').remove()
         }
         if (selectedOption.nextElementSibling) {
             document.getElementById('btn-next').href = "?version=" + selectedOption.nextElementSibling.value;
+        } else {
+            document.getElementById('btn-next').remove()
         }
 
     }
