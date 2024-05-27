@@ -127,7 +127,7 @@ def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     if timestamp == False:
         return 'Not yet'
 
-    return timeago.format(timestamp, time.time())
+    return timeago.format(int(timestamp), time.time())
 
 
 @app.template_filter('pagination_slice')
