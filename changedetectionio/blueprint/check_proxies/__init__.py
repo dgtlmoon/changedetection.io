@@ -31,9 +31,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         import time
         from changedetectionio.content_fetchers import exceptions as content_fetcher_exceptions
         from changedetectionio.processors import text_json_diff
+        from changedetectionio.safe_jinja import render as jinja_render
 
         status = {'status': '', 'length': 0, 'text': ''}
-        from jinja2 import Environment, BaseLoader
 
         contents = ''
         now = time.time()
@@ -64,7 +64,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             status.update({'status': 'OK', 'length': len(contents), 'text': ''})
 
         if status.get('text'):
-            status['text'] = Environment(loader=BaseLoader()).from_string('{{text|e}}').render({'text': status['text']})
+            # parse 'text' as text for safety
+            v = {'text': status['text']}
+            status['text'] = jinja_render(template_str='{{text|e}}', **v)
 
         status['time'] = "{:.2f}s".format(time.time() - now)
 

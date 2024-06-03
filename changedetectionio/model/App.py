@@ -6,6 +6,7 @@ from changedetectionio.notification import (
 )
 
 _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT = 6
+DEFAULT_SETTINGS_HEADERS_USERAGENT='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36'
 
 class model(dict):
     base_config = {
@@ -22,6 +23,10 @@ class model(dict):
                     'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
                     'timeout': int(getenv("DEFAULT_SETTINGS_REQUESTS_TIMEOUT", "45")),  # Default 45 seconds
                     'workers': int(getenv("DEFAULT_SETTINGS_REQUESTS_WORKERS", "10")),  # Number of threads, lower is better for slow connections
+                    'default_ua': {
+                        'html_requests': getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT", DEFAULT_SETTINGS_HEADERS_USERAGENT),
+                        'html_webdriver': None,
+                    }
                 },
                 'application': {
                     # Custom notification content

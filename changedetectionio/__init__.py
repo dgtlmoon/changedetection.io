@@ -2,12 +2,12 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.45.17'
+__version__ = '0.45.23'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
 import os
-#os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
+os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
 import eventlet
 import eventlet.wsgi
 import getopt
@@ -174,6 +174,7 @@ def main():
     #
     #         proxy_set_header Host "localhost";
     #         proxy_set_header X-Forwarded-Prefix /app;
+
 
     if os.getenv('USE_X_SETTINGS'):
         logger.info("USE_X_SETTINGS is ENABLED")

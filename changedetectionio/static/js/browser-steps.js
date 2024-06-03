@@ -26,7 +26,8 @@ $(document).ready(function () {
         set_scale();
     });
     // Should always be disabled
-    $('#browser_steps >li:first-child select').val('Goto site').attr('disabled', 'disabled');
+    $('#browser_steps-0-operation option[value="Goto site"]').prop("selected", "selected");
+    $('#browser_steps-0-operation').attr('disabled', 'disabled');
 
     $('#browsersteps-click-start').click(function () {
         $("#browsersteps-click-start").fadeOut();
