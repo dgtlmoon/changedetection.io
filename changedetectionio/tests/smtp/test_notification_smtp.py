@@ -71,6 +71,8 @@ def test_check_notification_email_formats_default_HTML(client, live_server):
 
     wait_for_all_checks(client)
     set_longer_modified_response()
+    time.sleep(2)
+
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
@@ -135,6 +137,7 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
 
     wait_for_all_checks(client)
     set_longer_modified_response()
+    time.sleep(2)
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
