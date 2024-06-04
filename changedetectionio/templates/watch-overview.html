@@ -78,7 +78,7 @@
             <tbody>
             {% if not watches|length %}
             <tr>
-                <td colspan="6">No website watches configured, please add a URL in the box above, or <a href="{{ url_for('import_page')}}" >import a list</a>.</td>
+                <td colspan="6" style="text-wrap: wrap;">No website watches configured, please add a URL in the box above, or <a href="{{ url_for('import_page')}}" >import a list</a>.</td>
             </tr>
             {% endif %}
             {% for watch in (watches|sort(attribute=sort_attribute, reverse=sort_order == 'asc'))|pagination_slice(skip=pagination.skip) %}

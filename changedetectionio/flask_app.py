@@ -124,10 +124,10 @@ def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
 
 @app.template_filter('format_timestamp_timeago')
 def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
-    if timestamp == False:
+    if not timestamp:
         return 'Not yet'
 
-    return timeago.format(timestamp, time.time())
+    return timeago.format(int(timestamp), time.time())
 
 
 @app.template_filter('pagination_slice')
