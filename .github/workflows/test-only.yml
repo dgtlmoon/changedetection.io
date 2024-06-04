@@ -11,7 +11,7 @@ jobs:
 
       # Mainly just for link/flake8
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -27,18 +27,18 @@ jobs:
         run: |
           
           docker network create changedet-network
-
-          # Selenium+browserless
-          docker run --network changedet-network -d --hostname selenium  -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome:4
-          docker run --network changedet-network -d --name browserless --hostname browserless -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm  -p 3000:3000  --shm-size="2g"  browserless/chrome:1.60-chrome-stable
           
-          # For accessing custom browser tests
-          docker run --network changedet-network -d --name browserless-custom-url --hostname browserless-custom-url -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" -e "DEFAULT_LAUNCH_ARGS=[\"--window-size=1920,1080\"]" --rm --shm-size="2g"  browserless/chrome:1.60-chrome-stable
+          # Selenium
+          docker run --network changedet-network -d --hostname selenium  -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome:4
+          
+          # SocketPuppetBrowser + Extra for custom browser test
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm -p 3000:3000 dgtlmoon/sockpuppetbrowser:latest                    
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url  -p 3001:3000 --rm dgtlmoon/sockpuppetbrowser:latest
 
       - name: Build changedetection.io container for testing
         run: |         
           # Build a changedetection.io container and start testing inside
-          docker build . -t test-changedetectionio
+          docker build --build-arg LOGGER_LEVEL=TRACE -t test-changedetectionio .
           # Debug info
           docker run test-changedetectionio  bash -c 'pip list'
 
@@ -47,47 +47,95 @@ jobs:
           # Debug SMTP server/echo message back server
           docker run --network changedet-network -d -p 11025:11025 -p 11080:11080  --hostname mailserver test-changedetectionio  bash -c 'python changedetectionio/tests/smtp/smtp-test-server.py' 
 
-      - name: Test built container with pytest
+      - name: Show docker container state and other debug info
+        run: |
+          set -x
+          echo "Running processes in docker..."
+          docker ps
+
+      - name: Test built container with Pytest (generally as requests/plaintext fetching)
         run: |
           # Unit tests
+          echo "run test with unittest"
           docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_notification_diff'
           docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_watch_model'
+          docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_jinja2_security'
           
           # All tests
-          docker run --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio && ./run_basic_tests.sh'
+          echo "run test with pytest"
+          # The default pytest logger_level is TRACE
+          # To change logger_level for pytest(test/conftest.py),
+          # append the docker option. e.g. '-e LOGGER_LEVEL=DEBUG'
+          docker run --name test-cdio-basic-tests --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
-      - name: Test built container selenium+browserless/playwright
+# PLAYWRIGHT/NODE-> CDP
+      - name: Playwright and SocketPuppetBrowser - Specific tests in built container
         run: |
-          
+          # Playwright via Sockpuppetbrowser fetch
+          # tests/visualselector/test_fetch_data.py will do browser steps  
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_content.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_errorhandling.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/visualselector/test_fetch_data.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_custom_js_before_content.py'
+
+
+      - name: Playwright and SocketPuppetBrowser - Headers and requests
+        run: |       
+          # Settings headers playwright tests - Call back in from Sockpuppetbrowser, check headers
+          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
+
+      - name: Playwright and SocketPuppetBrowser - Restock detection
+        run: |                            
+          # restock detection via playwright - added name=changedet here so that playwright and sockpuppetbrowser can connect to it
+          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+
+# STRAIGHT TO CDP
+      - name: Pyppeteer and SocketPuppetBrowser - Specific tests in built container
+        run: |
+          # Playwright via Sockpuppetbrowser fetch 
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_content.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_errorhandling.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/visualselector/test_fetch_data.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_custom_js_before_content.py'
+
+      - name: Pyppeteer and SocketPuppetBrowser - Headers and requests checks
+        run: |       
+          # Settings headers playwright tests - Call back in from Sockpuppetbrowser, check headers
+          docker run --name "changedet" --hostname changedet --rm  -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
+
+      - name: Pyppeteer and SocketPuppetBrowser - Restock detection
+        run: |                            
+          # restock detection via playwright - added name=changedet here so that playwright and sockpuppetbrowser can connect to it
+          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet"  -e "FAST_PUPPETEER_CHROME_FETCHER=True"  -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+
+# SELENIUM
+      - name: Specific tests in built container for Selenium
+        run: |
           # Selenium fetch
           docker run --rm -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py'
-          
-          # Playwright/Browserless fetch
-          docker run --rm -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
-          
-          # Settings headers playwright tests - Call back in from Browserless, check headers
-          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
-          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
-          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "USE_EXPERIMENTAL_PUPPETEER_FETCH=yes" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'          
-          
-          # restock detection via playwright - added name=changedet here so that playwright/browserless can connect to it
-          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
 
+      - name: Specific tests in built container for headers and requests checks with Selenium
+        run: |
+          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
+
+# OTHER STUFF
       - name: Test SMTP notification mime types
         run: |
           # SMTP content types - needs the 'Debug SMTP server/echo message back server' container from above
           docker run --rm  --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/smtp/test_notification_smtp.py'
 
-      - name: Test with puppeteer fetcher and disk cache
-        run: |
-          docker run --rm -e "PUPPETEER_DISK_CACHE=/tmp/data/" -e "USE_EXPERIMENTAL_PUPPETEER_FETCH=yes" -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py && pytest tests/visualselector/test_fetch_data.py'
-          # Browserless would have had -e "FUNCTION_BUILT_INS=[\"fs\",\"crypto\"]" added above
-
-      - name: Test proxy interaction
+      # @todo Add a test via playwright/puppeteer
+      # squid with auth is tested in run_proxy_tests.sh -> tests/proxy_list/test_select_custom_proxy.py
+      - name: Test proxy squid style interaction
         run: |
           cd changedetectionio
           ./run_proxy_tests.sh
-          # And again with PLAYWRIGHT_DRIVER_URL=..
+          cd ..
+
+      - name: Test proxy SOCKS5 style interaction
+        run: |
+          cd changedetectionio
+          ./run_socks_proxy_tests.sh
           cd ..
 
       - name: Test custom browser URL
@@ -101,10 +149,17 @@ jobs:
           docker run --name test-changedetectionio -p 5556:5000  -d test-changedetectionio
           sleep 3
           # Should return 0 (no error) when grep finds it
-          curl -s http://localhost:5556 |grep -q checkbox-uuid
+          curl --retry-connrefused --retry 6  -s http://localhost:5556 |grep -q checkbox-uuid
           
           # and IPv6
-          curl -s -g -6 "http://[::1]:5556"|grep -q checkbox-uuid
+          curl --retry-connrefused --retry 6  -s -g -6 "http://[::1]:5556"|grep -q checkbox-uuid
+
+          # Check whether TRACE log is enabled.
+          # Also, check whether TRACE is came from STDERR
+          docker logs test-changedetectionio 2>&1 1>/dev/null | grep 'TRACE log is enabled' || exit 1
+          # Check whether DEBUG is came from STDOUT
+          docker logs test-changedetectionio 2>/dev/null | grep 'DEBUG' || exit 1
+
           docker kill test-changedetectionio
 
       - name: Test changedetection.io SIGTERM and SIGINT signal shutdown
@@ -118,7 +173,9 @@ jobs:
           sleep 3
           # invert the check (it should be not 0/not running)
           docker ps
-          docker logs sig-test
+          # check signal catch(STDERR) log. Because of
+          # changedetectionio/__init__.py: logger.add(sys.stderr, level=logger_level)
+          docker logs sig-test 2>&1 | grep 'Shutdown: Got Signal - SIGINT' || exit 1
           test -z "`docker ps|grep sig-test`"
           if [ $? -ne 0 ]
           then
@@ -138,7 +195,9 @@ jobs:
           sleep 3
           # invert the check (it should be not 0/not running)
           docker ps
-          docker logs sig-test
+          # check signal catch(STDERR) log. Because of
+          # changedetectionio/__init__.py: logger.add(sys.stderr, level=logger_level)
+          docker logs sig-test 2>&1 | grep 'Shutdown: Got Signal - SIGTERM' || exit 1
           test -z "`docker ps|grep sig-test`"
           if [ $? -ne 0 ]
           then
@@ -150,6 +209,16 @@ jobs:
           # @todo - scan the container log to see the right "graceful shutdown" text exists           
           docker rm sig-test
 
-#export WEBDRIVER_URL=http://localhost:4444/wd/hub
-#pytest tests/fetchers/test_content.py
-#pytest tests/test_errorhandling.py
+      - name: Dump container log
+        if: always()
+        run: |
+          mkdir output-logs
+          docker logs test-cdio-basic-tests > output-logs/test-cdio-basic-tests-stdout.txt
+          docker logs test-cdio-basic-tests 2> output-logs/test-cdio-basic-tests-stderr.txt
+
+      - name: Store container log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-cdio-basic-tests-output
+          path: output-logs

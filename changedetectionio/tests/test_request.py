@@ -10,11 +10,11 @@ def test_setup(live_server):
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
 def test_headers_in_request(client, live_server):
-    #live_server_setup(live_server)
+    #ve_server_setup(live_server)
     # Add our URL to the import page
     test_url = url_for('test_headers', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        # Because its no longer calling back to localhost but from browserless, set in test-only.yml
+        # Because its no longer calling back to localhost but from the browser container, set in test-only.yml
         test_url = test_url.replace('localhost', 'changedet')
 
     # Add the test URL twice, we will check
@@ -70,16 +70,17 @@ def test_headers_in_request(client, live_server):
 
     wait_for_all_checks(client)
 
-    # Re #137 -  Examine the JSON index file, it should have only one set of headers entered
+    # Re #137 -  It should have only one set of headers entered
     watches_with_headers = 0
-    with open('test-datastore/url-watches.json') as f:
-        app_struct = json.load(f)
-        for uuid in app_struct['watching']:
-            if (len(app_struct['watching'][uuid]['headers'])):
+    for k, watch in client.application.config.get('DATASTORE').data.get('watching').items():
+            if (len(watch['headers'])):
                 watches_with_headers += 1
+    assert watches_with_headers == 1
 
-    # Should be only one with headers set
-    assert watches_with_headers==1
+    # 'server' http header was automatically recorded
+    for k, watch in client.application.config.get('DATASTORE').data.get('watching').items():
+        assert 'custom' in watch.get('remote_server_reply') # added in util.py
+
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
@@ -88,7 +89,7 @@ def test_body_in_request(client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_body', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        # Because its no longer calling back to localhost but from browserless, set in test-only.yml
+        # Because its no longer calling back to localhost but from the browser container, set in test-only.yml
         test_url = test_url.replace('localhost', 'cdio')
 
     res = client.post(
@@ -180,7 +181,7 @@ def test_method_in_request(client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_method', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        # Because its no longer calling back to localhost but from browserless, set in test-only.yml
+        # Because its no longer calling back to localhost but from the browser container, set in test-only.yml
         test_url = test_url.replace('localhost', 'cdio')
 
     # Add the test URL twice, we will check
@@ -255,12 +256,40 @@ def test_method_in_request(client, live_server):
 def test_headers_textfile_in_request(client, live_server):
     #live_server_setup(live_server)
     # Add our URL to the import page
+
+    webdriver_ua = "Hello fancy webdriver UA 1.0"
+    requests_ua = "Hello basic requests UA 1.1"
+
     test_url = url_for('test_headers', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        # Because its no longer calling back to localhost but from browserless, set in test-only.yml
+        # Because its no longer calling back to localhost but from the browser container, set in test-only.yml
         test_url = test_url.replace('localhost', 'cdio')
 
-    print ("TEST URL IS ",test_url)
+    form_data = {
+        "application-fetch_backend": "html_requests",
+        "application-minutes_between_check": 180,
+        "requests-default_ua-html_requests": requests_ua
+    }
+
+    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
+        form_data["requests-default_ua-html_webdriver"] = webdriver_ua
+
+    res = client.post(
+        url_for("settings_page"),
+        data=form_data,
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+    res = client.get(url_for("settings_page"))
+
+    # Only when some kind of real browser is setup
+    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
+        assert b'requests-default_ua-html_webdriver' in res.data
+
+    # Field should always be there
+    assert b"requests-default_ua-html_requests" in res.data
+
     # Add the test URL twice, we will check
     res = client.post(
         url_for("import_page"),
@@ -271,15 +300,14 @@ def test_headers_textfile_in_request(client, live_server):
 
     wait_for_all_checks(client)
 
-
     # Add some headers to a request
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={
-              "url": test_url,
-              "tags": "testtag",
-              "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
-              "headers": "xxx:ooo\ncool:yeah\r\n"},
+            "url": test_url,
+            "tags": "testtag",
+            "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
+            "headers": "xxx:ooo\ncool:yeah\r\n"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -291,7 +319,7 @@ def test_headers_textfile_in_request(client, live_server):
     with open('test-datastore/headers.txt', 'w') as f:
         f.write("global-header: nice\r\nnext-global-header: nice")
 
-    with open('test-datastore/'+extract_UUID_from_client(client)+'/headers.txt', 'w') as f:
+    with open('test-datastore/' + extract_UUID_from_client(client) + '/headers.txt', 'w') as f:
         f.write("watch-header: nice")
 
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
@@ -305,7 +333,7 @@ def test_headers_textfile_in_request(client, live_server):
     # Not needed anymore
     os.unlink('test-datastore/headers.txt')
     os.unlink('test-datastore/headers-testtag.txt')
-    os.unlink('test-datastore/'+extract_UUID_from_client(client)+'/headers.txt')
+    os.unlink('test-datastore/' + extract_UUID_from_client(client) + '/headers.txt')
     # The service should echo back the request verb
     res = client.get(
         url_for("preview_page", uuid="first"),
@@ -318,7 +346,12 @@ def test_headers_textfile_in_request(client, live_server):
     assert b"Watch-Header:nice" in res.data
     assert b"Tag-Header:test" in res.data
 
+    # Check the custom UA from system settings page made it through
+    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
+        assert "User-Agent:".encode('utf-8') + webdriver_ua.encode('utf-8') in res.data
+    else:
+        assert "User-Agent:".encode('utf-8') + requests_ua.encode('utf-8') in res.data
 
-    #unlink headers.txt on start/stop
+    # unlink headers.txt on start/stop
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

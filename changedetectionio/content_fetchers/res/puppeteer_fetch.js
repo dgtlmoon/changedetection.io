@@ -146,7 +146,7 @@ module.exports = async ({page, context}) => {
     var xpath_data;
     var instock_data;
     try {
-        // Not sure the best way here, in the future this should be a new package added to npm then run in browserless
+        // Not sure the best way here, in the future this should be a new package added to npm then run in evaluatedCode
         // (Once the old playwright is removed)
         xpath_data = await page.evaluate((include_filters) => {%xpath_scrape_code%}, include_filters);
         instock_data = await page.evaluate(() => {%instock_scrape_code%});

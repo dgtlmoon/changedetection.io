@@ -1,8 +1,8 @@
 recursive-include changedetectionio/api *
 recursive-include changedetectionio/blueprint *
+recursive-include changedetectionio/content_fetchers *
 recursive-include changedetectionio/model *
 recursive-include changedetectionio/processors *
-recursive-include changedetectionio/res *
 recursive-include changedetectionio/static *
 recursive-include changedetectionio/templates *
 recursive-include changedetectionio/tests *
@@ -10,6 +10,8 @@ prune changedetectionio/static/package-lock.json
 prune changedetectionio/static/styles/node_modules
 prune changedetectionio/static/styles/package-lock.json
 include changedetection.py
+include requirements.txt
+include README-pip.md
 global-exclude *.pyc
 global-exclude node_modules
 global-exclude venv

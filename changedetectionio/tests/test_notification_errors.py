@@ -1,8 +1,7 @@
 import os
 import time
-import re
 from flask import url_for
-from . util import set_original_response, set_modified_response, live_server_setup
+from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 import logging
 
 def test_check_notification_error_handling(client, live_server):
@@ -11,7 +10,7 @@ def test_check_notification_error_handling(client, live_server):
     set_original_response()
 
     # Give the endpoint time to spin up
-    time.sleep(2)
+    time.sleep(1)
 
     # Set a URL and fetch it, then set a notification URL which is going to give errors
     test_url = url_for('test_endpoint', _external=True)
@@ -22,12 +21,16 @@ def test_check_notification_error_handling(client, live_server):
     )
     assert b"Watch added" in res.data
 
-    time.sleep(2)
+    wait_for_all_checks(client)
     set_modified_response()
+
+    working_notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
+    broken_notification_url = "jsons://broken-url-xxxxxxxx123/test"
 
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"notification_urls": "jsons://broken-url-xxxxxxxx123/test",
+        # A URL with errors should not block the one that is working
+        data={"notification_urls": f"{broken_notification_url}\r\n{working_notification_url}",
               "notification_title": "xxx",
               "notification_body": "xxxxx",
               "notification_format": "Text",
@@ -62,5 +65,11 @@ def test_check_notification_error_handling(client, live_server):
         url_for("notification_logs"))
     found_name_resolution_error = b"Temporary failure in name resolution" in res.data or b"Name or service not known" in res.data
     assert found_name_resolution_error
+
+    # And the working one, which is after the 'broken' one should still have fired
+    with open("test-datastore/notification.txt", "r") as f:
+        notification_submission = f.read()
+    os.unlink("test-datastore/notification.txt")
+    assert 'xxxxx' in notification_submission
 
     client.get(url_for("form_delete", uuid="all"), follow_redirects=True)

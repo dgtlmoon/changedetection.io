@@ -10,41 +10,7 @@ set -x
 docker run --network changedet-network -d --name squid-one --hostname squid-one --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf ubuntu/squid:4.13-21.10_edge
 docker run --network changedet-network -d --name squid-two --hostname squid-two --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf ubuntu/squid:4.13-21.10_edge
 
-# SOCKS5 related - start simple Socks5 proxy server
-# SOCKSTEST=xyz should show in the logs of this service to confirm it fetched
-docker run --network changedet-network -d --hostname socks5proxy --name socks5proxy -p 1080:1080 -e PROXY_USER=proxy_user123 -e PROXY_PASSWORD=proxy_pass123 serjs/go-socks5-proxy
-docker run --network changedet-network -d --hostname socks5proxy-noauth -p 1081:1080 --name socks5proxy-noauth  serjs/go-socks5-proxy
-
-echo "---------------------------------- SOCKS5 -------------------"
-# SOCKS5 related - test from proxies.json
-docker run --network changedet-network \
-  -v `pwd`/tests/proxy_socks5/proxies.json-example:/app/changedetectionio/test-datastore/proxies.json \
-  --rm \
-  -e "SOCKSTEST=proxiesjson" \
-  test-changedetectionio \
-  bash -c 'cd changedetectionio && pytest tests/proxy_socks5/test_socks5_proxy_sources.py'
-
-# SOCKS5 related - by manually entering in UI
-docker run --network changedet-network \
-  --rm \
-  -e "SOCKSTEST=manual" \
-  test-changedetectionio \
-  bash -c 'cd changedetectionio && pytest tests/proxy_socks5/test_socks5_proxy.py'
-
-# SOCKS5 related - test from proxies.json via playwright - NOTE- PLAYWRIGHT DOESNT SUPPORT AUTHENTICATING PROXY
-docker run --network changedet-network \
-  -e "SOCKSTEST=manual-playwright" \
-  -v `pwd`/tests/proxy_socks5/proxies.json-example-noauth:/app/changedetectionio/test-datastore/proxies.json \
-  -e "PLAYWRIGHT_DRIVER_URL=ws://browserless:3000" \
-  --rm \
-  test-changedetectionio \
-  bash -c 'cd changedetectionio && pytest tests/proxy_socks5/test_socks5_proxy_sources.py'
-
-echo "socks5 server logs"
-docker logs socks5proxy
-echo "----------------------------------"
-
-# Used for configuring a custom proxy URL via the UI
+# Used for configuring a custom proxy URL via the UI - with username+password auth
 docker run --network changedet-network -d \
   --name squid-custom \
   --hostname squid-custom \
@@ -60,15 +26,17 @@ docker run --network changedet-network \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest tests/proxy_list/test_multiple_proxy.py'
 
-
-## Should be a request in the default "first" squid
+set +e
+echo "- Looking for chosen.changedetection.io request in squid-one - it should NOT be here"
 docker logs squid-one 2>/dev/null|grep chosen.changedetection.io
-if [ $? -ne 0 ]
+if [ $? -ne 1 ]
 then
-  echo "Did not see a request to chosen.changedetection.io in the squid logs (while checking preferred proxy - squid one)"
+  echo "Saw a request to chosen.changedetection.io in the squid logs (while checking preferred proxy - squid one) WHEN I SHOULD NOT"
   exit 1
 fi
 
+set -e
+echo "- Looking for chosen.changedetection.io request in squid-two"
 # And one in the 'second' squid (user selects this as preferred)
 docker logs squid-two 2>/dev/null|grep chosen.changedetection.io
 if [ $? -ne 0 ]
@@ -77,7 +45,6 @@ then
   exit 1
 fi
 
-
 # Test the UI configurable proxies
 docker run --network changedet-network \
   test-changedetectionio \
@@ -85,6 +52,7 @@ docker run --network changedet-network \
 
 
 # Should see a request for one.changedetection.io in there
+echo "- Looking for .changedetection.io request in squid-custom"
 docker logs squid-custom 2>/dev/null|grep "TCP_TUNNEL.200.*changedetection.io"
 if [ $? -ne 0 ]
 then
@@ -101,7 +69,7 @@ docker run --network changedet-network \
 set +e
 # Check request was never seen in any container
 for c in $(echo "squid-one squid-two squid-custom"); do
-  echo Checking $c
+  echo ....Checking $c
   docker logs $c &> $c.txt
   grep noproxy $c.txt
   if [ $? -ne 1 ]

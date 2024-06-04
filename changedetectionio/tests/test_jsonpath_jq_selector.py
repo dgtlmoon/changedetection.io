@@ -456,7 +456,7 @@ def test_ignore_json_order(client, live_server):
 
 def test_correct_header_detect(client, live_server):
     # Like in https://github.com/dgtlmoon/changedetection.io/pull/1593
-    # Specify extra html that JSON is sometimes wrapped in - when using Browserless/Puppeteer etc
+    # Specify extra html that JSON is sometimes wrapped in - when using SockpuppetBrowser / Puppeteer / Playwrightetc
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write('<html><body>{"hello" : 123, "world": 123}')
 
@@ -479,8 +479,9 @@ def test_correct_header_detect(client, live_server):
         url_for("preview_page", uuid="first"),
         follow_redirects=True
     )
-    assert b'&#34;world&#34;:' in res.data
-    assert res.data.count(b'{') >= 2
+
+    assert b'&#34;hello&#34;: 123,' in res.data
+    assert b'&#34;world&#34;: 123</div>' in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

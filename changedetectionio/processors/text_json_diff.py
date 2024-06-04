@@ -2,16 +2,17 @@
 
 import hashlib
 import json
-import logging
 import os
 import re
 import urllib3
 
-from changedetectionio import content_fetcher, html_tools
-from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
-from copy import deepcopy
 from . import difference_detection_processor
 from ..html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
+from changedetectionio import html_tools, content_fetchers
+from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
+import changedetectionio.content_fetchers
+from copy import deepcopy
+from loguru import logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -60,7 +61,7 @@ class perform_site_check(difference_detection_processor):
         update_obj['previous_md5_before_filters'] = hashlib.md5(self.fetcher.content.encode('utf-8')).hexdigest()
         if skip_when_checksum_same:
             if update_obj['previous_md5_before_filters'] == watch.get('previous_md5_before_filters'):
-                raise content_fetcher.checksumFromPreviousCheckWasTheSame()
+                raise content_fetchers.exceptions.checksumFromPreviousCheckWasTheSame()
 
         # Fetching complete, now filters
 
@@ -116,7 +117,9 @@ class perform_site_check(difference_detection_processor):
         # and then use getattr https://docs.python.org/3/reference/datamodel.html#object.__getitem__
         # https://realpython.com/inherit-python-dict/ instead of doing it procedurely
         include_filters_from_tags = self.datastore.get_tag_overrides_for_watch(uuid=uuid, attr='include_filters')
-        include_filters_rule = [*watch.get('include_filters', []), *include_filters_from_tags]
+
+        # 1845 - remove duplicated filters in both group and watch include filter
+        include_filters_rule = list(dict.fromkeys(watch.get('include_filters', []) + include_filters_from_tags))
 
         subtractive_selectors = [*self.datastore.get_tag_overrides_for_watch(uuid=uuid, attr='subtractive_selectors'),
                                  *watch.get("subtractive_selectors", []),
@@ -202,6 +205,12 @@ class perform_site_check(difference_detection_processor):
                             is_rss=is_rss # #1874 activate the <title workaround hack
                         )
 
+        if watch.get('sort_text_alphabetically') and stripped_text_from_html:
+            # Note: Because a <p>something</p> will add an extra line feed to signify the paragraph gap
+            # we end up with 'Some text\n\n', sorting will add all those extra \n at the start, so we remove them here.
+            stripped_text_from_html = stripped_text_from_html.replace('\n\n', '\n')
+            stripped_text_from_html = '\n'.join( sorted(stripped_text_from_html.splitlines(), key=lambda x: x.lower() ))
+
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 
@@ -235,7 +244,7 @@ class perform_site_check(difference_detection_processor):
         # Treat pages with no renderable text content as a change? No by default
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
         if not is_json and not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
-            raise content_fetcher.ReplyWithContentButNoText(url=url,
+            raise content_fetchers.exceptions.ReplyWithContentButNoText(url=url,
                                                             status_code=self.fetcher.get_last_status_code(),
                                                             screenshot=screenshot,
                                                             has_filters=has_filter_rule,
@@ -335,15 +344,17 @@ class perform_site_check(difference_detection_processor):
                 if not watch['title'] or not len(watch['title']):
                     update_obj['title'] = html_tools.extract_element(find='title', html_content=self.fetcher.content)
 
+        logger.debug(f"Watch UUID {uuid} content check - Previous MD5: {watch.get('previous_md5')}, Fetched MD5 {fetched_md5}")
+
         if changed_detected:
             if watch.get('check_unique_lines', False):
                 has_unique_lines = watch.lines_contain_something_unique_compared_to_history(lines=stripped_text_from_html.splitlines())
                 # One or more lines? unsure?
                 if not has_unique_lines:
-                    logging.debug("check_unique_lines: UUID {} didnt have anything new setting change_detected=False".format(uuid))
+                    logger.debug(f"check_unique_lines: UUID {uuid} didnt have anything new setting change_detected=False")
                     changed_detected = False
                 else:
-                    logging.debug("check_unique_lines: UUID {} had unique content".format(uuid))
+                    logger.debug(f"check_unique_lines: UUID {uuid} had unique content")
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5
