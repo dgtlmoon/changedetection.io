@@ -330,6 +330,10 @@ class model(dict):
 
         self.ensure_data_dir_exists()
 
+        # Because our history.txt is very primitive, we cant have repeating timestamps, so add a delay here.
+        # @todo something smarter
+        time.sleep(1)
+
         # Small hack so that we sleep just enough to allow 1 second  between history snapshots
         # this is because history.txt indexes/keys snapshots by epoch seconds and we dont want dupe keys
         if self.__newest_history_key and int(timestamp) == int(self.__newest_history_key):
