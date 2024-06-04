@@ -100,7 +100,7 @@ def test_check_ldjson_price_autodetect(client, live_server):
 
     # Accept it
     uuid = extract_UUID_from_client(client)
-
+    time.sleep(1)
     client.get(url_for('price_data_follower.accept', uuid=uuid, follow_redirects=True))
     wait_for_all_checks(client)
 
