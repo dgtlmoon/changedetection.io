@@ -111,6 +111,7 @@ class perform_site_check(difference_detection_processor):
         update_obj["last_check_status"] = self.fetcher.get_last_status_code()
 
         itemprop_availability = get_itemprop_availability(html_content=self.fetcher.content)
+        # Something valid in get_itemprop_availability() by scraping metadata ?
         if itemprop_availability.get('price') or itemprop_availability.get('availability'):
             # Store for other usage
             update_obj['restock'] = itemprop_availability
@@ -134,8 +135,11 @@ class perform_site_check(difference_detection_processor):
 
         elif self.fetcher.instock_data:
             # 'Possibly in stock' comes from stock-not-in-stock.js when no string found above in the metadata of the HTML
-            update_obj['restock']['in_stock'] = True if self.fetcher.instock_data == 'Possibly in stock' else False
-            logger.debug(f"Restock - using scraped browserdata - Watch UUID {uuid} restock check returned '{self.fetcher.instock_data}' from JS scraper.")
+            update_obj['restock'] = Restock({'in_stock': True if self.fetcher.instock_data == 'Possibly in stock' else False})
+
+            # @todo scrape price somehow
+            logger.debug(
+                f"Restock - using scraped browserdata - Watch UUID {uuid} restock check returned '{self.fetcher.instock_data}' from JS scraper.")
 
         if not self.fetcher.instock_data:
             raise UnableToExtractRestockData(status_code=self.fetcher.status_code)
