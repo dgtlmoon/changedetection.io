@@ -135,6 +135,9 @@ def test_check_basic_change_detection_functionality(client, live_server):
     # It should have picked up the <title>
     assert b'head title' in res.data
 
+    # Be sure the last_viewed is going to be greater than the last snapshot
+    time.sleep(1)
+
     # hit the mark all viewed link
     res = client.get(url_for("mark_all_viewed"), follow_redirects=True)
 
