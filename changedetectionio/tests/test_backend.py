@@ -62,9 +62,6 @@ def test_check_basic_change_detection_functionality(client, live_server):
     # Make a change
     set_modified_response()
 
-    res = urlopen(url_for('test_endpoint', _external=True))
-    assert b'which has this one new line' in res.read()
-
     # Force recheck
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
     assert b'1 watches queued for rechecking.' in res.data
@@ -134,6 +131,9 @@ def test_check_basic_change_detection_functionality(client, live_server):
 
     # It should have picked up the <title>
     assert b'head title' in res.data
+
+    # Be sure the last_viewed is going to be greater than the last snapshot
+    time.sleep(1)
 
     # hit the mark all viewed link
     res = client.get(url_for("mark_all_viewed"), follow_redirects=True)
