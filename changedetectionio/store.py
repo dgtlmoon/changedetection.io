@@ -178,7 +178,7 @@ class ChangeDetectionStore:
     @property
     def has_unviewed(self):
         for uuid, watch in self.__data['watching'].items():
-            if watch.viewed == False:
+            if watch.history_n >= 2 and watch.viewed == False:
                 return True
         return False
 
