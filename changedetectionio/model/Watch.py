@@ -334,6 +334,7 @@ class model(dict):
         # this is because history.txt indexes/keys snapshots by epoch seconds and we dont want dupe keys
         if self.__newest_history_key and int(timestamp) == int(self.__newest_history_key):
             logger.warning(f"Timestamp {timestamp} already exists, waiting 1 seconds so we have a unique key in history.txt")
+            timestamp = str(int(timestamp) + 1)
             time.sleep(1)
 
         threshold = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024))
