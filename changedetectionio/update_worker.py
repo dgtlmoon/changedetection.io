@@ -543,4 +543,4 @@ class update_worker(threading.Thread):
                 # Give the CPU time to interrupt
                 time.sleep(0.1)
 
-            self.app.config.exit.wait(1)
+            self.app.config.exit.wait(0.5)

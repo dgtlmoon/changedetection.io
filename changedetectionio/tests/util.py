@@ -126,6 +126,7 @@ def wait_for_all_checks(client):
     attempt = 0
     while attempt < 60:
         time.sleep(1)
+        # should be greater than update_worker.py:            self.app.config.exit.wait(0.5)
         res = client.get(url_for("index"))
         if not b'Checking now' in res.data:
             break
