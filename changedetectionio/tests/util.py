@@ -122,16 +122,16 @@ def extract_UUID_from_client(client):
 
 
 def wait_for_all_checks(client):
-    # Loop waiting until done..
-    attempt = 0
-    while attempt < 60:
-        time.sleep(1)
-        # should be greater than update_worker.py:            self.app.config.exit.wait(0.5)
-        res = client.get(url_for("index"))
-        if not b'Checking now' in res.data:
+    now = time.time()
+    while time.time() - now <= 30:
+        time.sleep(0.1)
+        p = client.application.view_functions['get_queue_size']()
+        if not p:
             break
-        logging.getLogger().info("Waiting for watch-list to not say 'Checking now'.. {}".format(attempt))
-        attempt += 1
+        logging.getLogger().info(f"Waiting for queue to be empty, queue size {p}  - {time.time() - now}")
+
+    # Empty queue still means that one could be processing, give time for the processing to complete
+    time.sleep(0.2)
 
 def live_server_setup(live_server):
 

@@ -45,7 +45,6 @@ running_update_threads = []
 ticker_thread = None
 
 extra_stylesheets = []
-
 update_q = queue.PriorityQueue()
 notification_q = queue.Queue()
 
@@ -1537,6 +1536,11 @@ def changedetection_app(config=None, datastore_o=None):
         # in the browser - should give you a nice info page - wtf
         # paste in etc
         return redirect(url_for('index'))
+
+    @app.route("/queue_size", methods=['GET'])
+    @login_optionally_required
+    def get_queue_size():
+        return update_q.qsize()
 
     @app.route("/highlight_submit_ignore_url", methods=['POST'])
     @login_optionally_required

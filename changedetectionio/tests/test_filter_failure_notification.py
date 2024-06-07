@@ -22,8 +22,7 @@ def set_response_with_filter():
     return None
 
 def run_filter_test(client, content_filter):
-    time.sleep(1)
-    
+
     # cleanup for the next
     client.get(
         url_for("form_delete", uuid="all"),
@@ -104,6 +103,10 @@ def run_filter_test(client, content_filter):
     wait_for_all_checks(client)
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
+
+    # Give apprise time to fire
+    time.sleep(3)
+
     # Now it should exist and contain our "filter not found" alert
     assert os.path.isfile("test-datastore/notification.txt")
 
@@ -122,6 +125,9 @@ def run_filter_test(client, content_filter):
     for i in range(0, App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT):
         client.get(url_for("form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
+
+    # Give apprise time to fire
+    time.sleep(3)
 
     # It should have sent a notification, but..
     assert os.path.isfile("test-datastore/notification.txt")
@@ -148,11 +154,13 @@ def test_setup(live_server):
     live_server_setup(live_server)
 
 def test_check_include_filters_failure_notification(client, live_server):
+    #live_server_setup(live_server)
     set_original_response()
     wait_for_all_checks(client)
     run_filter_test(client, '#nope-doesnt-exist')
 
 def test_check_xpath_filter_failure_notification(client, live_server):
+    # live_server_setup(live_server)
     set_original_response()
     time.sleep(1)
     run_filter_test(client, '//*[@id="nope-doesnt-exist"]')

@@ -160,8 +160,8 @@ class update_worker(threading.Thread):
 
 
     def send_filter_failure_notification(self, watch_uuid):
-
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
+        logger.trace(f"Watch UUID: {watch_uuid} - Sending filter failure notification - threshold attempts {threshold}")
         watch = self.datastore.data['watching'].get(watch_uuid)
         if not watch:
             return
@@ -335,6 +335,7 @@ class update_worker(threading.Thread):
                         process_changedetection_results = False
 
                     except FilterNotFoundInResponse as e:
+                        logger.debug(f"Watch UUID: {uuid} - Got FilterNotFoundInResponse exception, Consecutive failures - {self.datastore.data['watching'][uuid].get('consecutive_filter_failures', 5)} - handling..")
                         if not self.datastore.data['watching'].get(uuid):
                             continue
 
