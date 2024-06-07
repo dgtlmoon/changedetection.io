@@ -23,7 +23,7 @@ def set_response_with_filter():
 
 def run_filter_test(client, content_filter):
     time.sleep(1)
-    wait_for_all_checks(client)
+    
     # cleanup for the next
     client.get(
         url_for("form_delete", uuid="all"),
