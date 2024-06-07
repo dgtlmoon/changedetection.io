@@ -217,6 +217,8 @@ class model(dict):
         fname = os.path.join(self.watch_data_dir, "history.txt")
         if os.path.isfile(fname):
             logger.debug(f"Reading watch history index for {self.get('uuid')}")
+
+
             with open(fname, "r") as f:
                 for i in f.readlines():
                     if ',' in i:

@@ -81,7 +81,7 @@ def test_setup(client, live_server):
 
 # actually only really used by the distll.io importer, but could be handy too
 def test_check_ldjson_price_autodetect(client, live_server):
-
+    #live_server_setup(live_server)
     set_response_with_ldjson()
 
     # Add our URL to the import page
@@ -113,6 +113,9 @@ def test_check_ldjson_price_autodetect(client, live_server):
 
     # and last snapshop (via API) should be just the price
     api_key = extract_api_key_from_UI(client)
+    # Time for writes to happen to history text
+    time.sleep(0.5)
+
     res = client.get(
         url_for("watchsinglehistory", uuid=uuid, timestamp='latest'),
         headers={'x-api-key': api_key},
