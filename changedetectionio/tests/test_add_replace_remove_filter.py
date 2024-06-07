@@ -40,8 +40,6 @@ def test_setup(client, live_server):
 
 def test_check_removed_line_contains_trigger(client, live_server):
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
     set_original()
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)

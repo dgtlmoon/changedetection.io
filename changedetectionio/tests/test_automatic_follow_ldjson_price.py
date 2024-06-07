@@ -104,8 +104,6 @@ def test_check_ldjson_price_autodetect(client, live_server):
     client.get(url_for('price_data_follower.accept', uuid=uuid, follow_redirects=True))
     wait_for_all_checks(client)
 
-    # Trigger a check
-    time.sleep(1)
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     # Offer should be gone

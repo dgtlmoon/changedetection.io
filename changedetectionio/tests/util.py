@@ -125,12 +125,11 @@ def wait_for_all_checks(client):
     attempt=0
     time.sleep(0.1)
     while attempt < 60:
-        time.sleep(1)
         res = client.get(url_for("index"))
         if not b'Checking now' in res.data:
             break
         logging.getLogger().info("Waiting for watch-list to not say 'Checking now'.. {}".format(attempt))
-
+        time.sleep(1)
         attempt += 1
 
 def live_server_setup(live_server):

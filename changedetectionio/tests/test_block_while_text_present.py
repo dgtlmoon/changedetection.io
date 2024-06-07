@@ -68,8 +68,6 @@ def test_check_block_changedetection_text_NOT_present(client, live_server):
 
     set_original_ignore_response()
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)

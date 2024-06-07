@@ -53,7 +53,6 @@ def test_restock_detection(client, live_server):
     set_original_response()
     #assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
 
-    time.sleep(1)
     live_server_setup(live_server)
     #####################
     notification_url = url_for('test_notification_endpoint', _external=True).replace('http://localhost', 'http://changedet').replace('http', 'json')

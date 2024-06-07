@@ -64,8 +64,6 @@ def test_http_error_handler(client, live_server):
 
 # Just to be sure error text is properly handled
 def test_DNS_errors(client, live_server):
-    # Give the endpoint time to spin up
-    time.sleep(1)
 
     # Add our URL to the import page
     res = client.post(
@@ -89,8 +87,6 @@ def test_DNS_errors(client, live_server):
 # Re 1513
 def test_low_level_errors_clear_correctly(client, live_server):
     #live_server_setup(live_server)
-    # Give the endpoint time to spin up
-    time.sleep(1)
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("<html><body><div id=here>Hello world</div></body></html>")

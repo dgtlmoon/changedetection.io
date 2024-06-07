@@ -48,8 +48,6 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
 
     live_server_setup(live_server)
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
     set_response_without_filter()
 
     # Add our URL to the import page

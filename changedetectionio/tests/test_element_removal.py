@@ -5,7 +5,7 @@ import time
 from flask import url_for
 
 from ..html_tools import *
-from .util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 
 def test_setup(live_server):
@@ -111,16 +111,13 @@ def test_element_removal_full(client, live_server):
 
     set_original_response()
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
-
     # Add our URL to the import page
     test_url = url_for("test_endpoint", _external=True)
     res = client.post(
         url_for("import_page"), data={"urls": test_url}, follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(1)
+    wait_for_all_checks(client)
     # Goto the edit page, add the filter data
     # Not sure why \r needs to be added - absent of the #changetext this is not necessary
     subtractive_selectors_data = "header\r\nfooter\r\nnav\r\n#changetext"

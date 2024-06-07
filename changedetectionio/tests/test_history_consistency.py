@@ -11,8 +11,6 @@ from urllib.parse import urlparse, parse_qs
 def test_consistent_history(client, live_server):
     live_server_setup(live_server)
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
     r = range(1, 50)
 
     for one in r:

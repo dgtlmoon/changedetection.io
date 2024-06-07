@@ -45,9 +45,6 @@ def test_render_anchor_tag_content_true(client, live_server):
     render_anchor_tag_content setting is set to true"""
     sleep_time_for_fetch_thread = 3
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
-
     # set original html text
     set_original_ignore_response()
 

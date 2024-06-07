@@ -27,9 +27,6 @@ def set_html_response():
 def test_check_encoding_detection(client, live_server):
     set_html_response()
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
-
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="text/html", _external=True)
     client.post(
@@ -55,9 +52,6 @@ def test_check_encoding_detection(client, live_server):
 # In the case the server does not issue a charset= or doesnt have content_type header set
 def test_check_encoding_detection_missing_content_type_header(client, live_server):
     set_html_response()
-
-    # Give the endpoint time to spin up
-    time.sleep(1)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
