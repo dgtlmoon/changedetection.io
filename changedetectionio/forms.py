@@ -447,7 +447,7 @@ class SingleBrowserStep(Form):
 #    remove_button = SubmitField('-', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
 #    add_button = SubmitField('+', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
 
-class watchForm(commonSettingsForm):
+class processor_text_json_diff_form(commonSettingsForm):
 
     url = fields.URLField('URL', validators=[validateURL()])
     tags = StringTagUUID('Group tag', [validators.Optional()], default='')
@@ -474,9 +474,6 @@ class watchForm(commonSettingsForm):
     filter_text_added = BooleanField('Added lines', default=True)
     filter_text_replaced = BooleanField('Replaced/changed lines', default=True)
     filter_text_removed = BooleanField('Removed lines', default=True)
-
-    # @todo this class could be moved to its own text_json_diff_watchForm and this goes to restock_diff_Watchform perhaps
-    in_stock_only = BooleanField('Only trigger when product goes BACK to in-stock', default=True)
 
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
@@ -513,6 +510,12 @@ class watchForm(commonSettingsForm):
             result = False
         return result
 
+class processor_restock_diff_form(processor_text_json_diff_form):
+    in_stock_only = BooleanField('Only trigger when product goes BACK to in-stock', default=True)
+
+    def extra_tab_content(self):
+        #return tuple of heading/button and jinja output?
+        x=1
 
 class SingleExtraProxy(Form):
 

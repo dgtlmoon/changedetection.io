@@ -652,9 +652,17 @@ def changedetection_app(config=None, datastore_o=None):
             # Radio needs '' not None, or incase that the chosen one no longer exists
             if default['proxy'] is None or not any(default['proxy'] in tup for tup in datastore.proxy_list):
                 default['proxy'] = ''
-
         # proxy_override set to the json/text list of the items
-        form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
+
+        processor = datastore.data['watching'][uuid].get('processor', '')
+        form_class_name = f"processor_{processor}_form"
+        try:
+            form_class = getattr(forms, form_class_name)
+        except AttributeError:
+            flash(f"Cannot load the edit form for processor/plugin '{processor}', plugin missing?", 'error')
+            return redirect(url_for('index'))
+
+        form = form_class(formdata=request.form if request.method == 'POST' else None,
                                data=default
                                )
 
