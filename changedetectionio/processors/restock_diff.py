@@ -161,7 +161,7 @@ class perform_site_check(difference_detection_processor):
                 # All cases
                 changed_detected = True
 
-        if watch.get('follow_price_changes') and watch.get('restock'):
+        if watch.get('follow_price_changes') and watch.get('restock') and update_obj['restock'].get('price'):
             price = float(update_obj['restock'].get('price'))
             previous_price = float(watch['restock'].get('price'))
 
