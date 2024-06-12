@@ -1,12 +1,11 @@
 from abc import abstractmethod
-import os
-import hashlib
-import re
-from copy import deepcopy
 from changedetectionio.strtobool import strtobool
+from copy import deepcopy
 from loguru import logger
-
 from requests.structures import CaseInsensitiveDict
+import hashlib
+import os
+import re
 
 class difference_detection_processor():
 
