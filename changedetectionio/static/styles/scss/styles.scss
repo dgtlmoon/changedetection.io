@@ -1103,6 +1103,11 @@ ul {
     background-color: var(--color-background-button-cancel);
     color: #777;
   }
+  &.error {
+    background-color: var(--color-background-button-error);
+    color: #fff;
+    opacity: 0.7;
+  }
   @extend .inline-tag;
 }
 

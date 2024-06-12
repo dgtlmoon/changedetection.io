@@ -1184,6 +1184,11 @@ ul {
   background-color: var(--color-background-button-cancel);
   color: #777; }
 
+.restock-label.error {
+  background-color: var(--color-background-button-error);
+  color: #fff;
+  opacity: 0.7; }
+
 #chrome-extension-link {
   padding: 9px;
   border: 1px solid var(--color-grey-800);
