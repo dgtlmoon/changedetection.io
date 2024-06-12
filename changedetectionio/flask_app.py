@@ -5,6 +5,9 @@ import os
 import queue
 import threading
 import time
+
+from jinja2 import Template
+
 from .safe_jinja import render as jinja_render
 from changedetectionio.strtobool import strtobool
 from copy import deepcopy
@@ -616,7 +619,6 @@ def changedetection_app(config=None, datastore_o=None):
     @login_optionally_required
     # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
     # https://wtforms.readthedocs.io/en/3.0.x/forms/#wtforms.form.Form.populate_obj ?
-
     def edit_page(uuid):
         from . import forms
         from .blueprint.browser_steps.browser_steps import browser_step_ui_config
@@ -766,23 +768,38 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and is_html_webdriver
+            template_args = {
+                'available_processors': processors.available_processors(),
+                'browser_steps_config': browser_step_ui_config,
+                'emailprefix': os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                'extra_title': f" - Edit - {watch.label}",
+                'extra_processor_config': form.extra_tab_content(),
+                'form': form,
+                'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,
+                'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
+                'has_special_tag_options': _watch_has_tag_options_set(watch=watch),
+                'is_html_webdriver': is_html_webdriver,
+                'jq_support': jq_support,
+                'playwright_enabled': os.getenv('PLAYWRIGHT_DRIVER_URL', False),
+                'settings_application': datastore.data['settings']['application'],
+                'using_global_webdriver_wait': not default['webdriver_delay'],
+                'uuid': uuid,
+                'visualselector_enabled': visualselector_enabled,
+                'watch': watch
+            }
+
+            included_content = None
+            if form.extra_form_content():
+                # So that the extra panels can access _helpers.html etc
+                from jinja2 import Environment, FileSystemLoader
+                env = Environment(loader=FileSystemLoader('changedetectionio/templates'))
+                template = env.from_string(form.extra_form_content())
+                included_content = template.render(**template_args)
+
             output = render_template("edit.html",
-                                     available_processors=processors.available_processors(),
-                                     browser_steps_config=browser_step_ui_config,
-                                     emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
-                                     extra_title=f" - Edit - {watch.label}",
-                                     form=form,
-                                     has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
-                                     has_extra_headers_file=len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
-                                     has_special_tag_options=_watch_has_tag_options_set(watch=watch),
-                                     is_html_webdriver=is_html_webdriver,
-                                     jq_support=jq_support,
-                                     playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False),
-                                     settings_application=datastore.data['settings']['application'],
-                                     using_global_webdriver_wait=not default['webdriver_delay'],
-                                     uuid=uuid,
-                                     visualselector_enabled=visualselector_enabled,
-                                     watch=watch
+                                     extra_tab_content=form.extra_tab_content() if form.extra_tab_content() else None,
+                                     extra_form_content=included_content,
+                                     **template_args
                                      )
 
         return output

@@ -16,7 +16,7 @@
     const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
 {% endif %}
     const notification_base_url="{{url_for('ajax_callback_send_notification_test', watch_uuid=uuid)}}";
-    const playwright_enabled={% if playwright_enabled %} true {% else %} false {% endif %};
+    const playwright_enabled={% if playwright_enabled %}true{% else %}false{% endif %};
     const recheck_proxy_start_url="{{url_for('check_proxies.start_check', uuid=uuid)}}";
     const proxy_recheck_status_url="{{url_for('check_proxies.get_recheck_status', uuid=uuid)}}";
     const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
@@ -41,8 +41,8 @@
         <ul>
             <li class="tab" id=""><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
-            {% if watch['processor'] == 'restock_diff' %}
-            <li class="tab"><a href="#restock">Restock & Price Detection</a></li>
+            {% if extra_tab_content %}
+            <li class="tab"><a href="#extras_tab">{{ extra_tab_content }}</a></li>
             {% endif %}
             {% if playwright_enabled %}
             <li class="tab"><a id="browsersteps-tab" href="#browser-steps">Browser Steps</a></li>
@@ -411,18 +411,12 @@ Unavailable") }}
                 </div>
             </div>
             {% endif %}
-
-            {% if watch['processor'] == 'restock_diff' %}
-            <div class="tab-pane-inner" id="restock">
-                    <fieldset>
-                        <div class="pure-control-group">
-                            {{ render_checkbox_field(form.in_stock_only) }}
-                            <span class="pure-form-message-inline">Only trigger notifications when page changes from <strong>out of stock</strong> to <strong>back in stock</strong></span>
-                        </div>
-                    </fieldset>
+        {# rendered sub Template #}
+        {% if extra_form_content %}
+            <div class="tab-pane-inner" id="extras_tab">
+            {{ extra_form_content|safe }}
             </div>
-            {% endif %}
-
+        {% endif %}
             {% if watch['processor'] == 'text_json_diff' %}
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
                 <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}" alt="New beta functionality">

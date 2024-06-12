@@ -490,6 +490,12 @@ class processor_text_json_diff_form(commonSettingsForm):
     notification_muted = BooleanField('Notifications Muted / Off', default=False)
     notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
 
+    def extra_tab_content(self):
+        return None
+
+    def extra_form_content(self):
+        return None
+
     def validate(self, **kwargs):
         if not super().validate():
             return False
@@ -514,8 +520,17 @@ class processor_restock_diff_form(processor_text_json_diff_form):
     in_stock_only = BooleanField('Only trigger when product goes BACK to in-stock', default=True)
 
     def extra_tab_content(self):
-        #return tuple of heading/button and jinja output?
-        x=1
+        return 'Restock & Price Detection'
+
+    def extra_form_content(self):
+        return """
+        {% from '_helpers.html' import render_field, render_checkbox_field, render_button %}        
+        <fieldset>
+            <div class="pure-control-group">
+                {{ render_checkbox_field(form.in_stock_only) }}
+                <span class="pure-form-message-inline">Only trigger notifications when page changes from <strong>out of stock</strong> to <strong>back in stock</strong></span>
+            </div>
+        </fieldset>"""
 
 class SingleExtraProxy(Form):
 
