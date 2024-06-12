@@ -115,12 +115,11 @@ class fetcher(Fetcher):
 
         # This user agent is similar to what was used when tweaking the evasions in inject_evasions_into_page(..)
         user_agent = None
-        if request_headers:
-            user_agent = next((value for key, value in request_headers.items() if key.lower().strip() == 'user-agent'), None)
-            if user_agent:
-                await self.page.setUserAgent(user_agent)
-                # Remove it so it's not sent again with headers after
-                [request_headers.pop(key) for key in list(request_headers) if key.lower().strip() == 'user-agent'.lower().strip()]
+        if request_headers and request_headers.get('User-Agent'):
+            # Request_headers should now be CaaseInsensitiveDict
+            # Remove it so it's not sent again with headers after
+            user_agent = request_headers.pop('User-Agent').strip()
+            await self.page.setUserAgent(user_agent)
 
         if not user_agent:
             # Attempt to strip 'HeadlessChrome' etc
