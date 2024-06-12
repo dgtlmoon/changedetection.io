@@ -122,3 +122,55 @@ def test_itemprop_price_change(client, live_server):
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
+
+
+def test_itemprop_price_minmax_limit(client, live_server):
+    #live_server_setup(live_server)
+
+    test_url = url_for('test_endpoint', _external=True)
+
+    set_original_response(props_markup=instock_props[0], price="950.95")
+    client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
+        follow_redirects=True
+    )
+
+    # A change in price, should trigger a change by default
+    wait_for_all_checks(client)
+
+
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"follow_price_changes": "y",
+              "price_change_min": 900.0,
+              "price_change_max": 1100.10,
+              "url": test_url,
+              "tags": "",
+              "headers": "",
+              'fetch_backend': "html_requests"
+              },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    wait_for_all_checks(client)
+
+    client.get(url_for("mark_all_viewed"))
+
+    # price changed to something greater than min (900), and less than max (1100).. should be no change
+    set_original_response(props_markup=instock_props[0], price='1000.45')
+    client.get(url_for("form_watch_checknow"))
+    wait_for_all_checks(client)
+    res = client.get(url_for("index"))
+    assert b'1000.45' in res.data
+    assert b'unviewed' not in res.data
+
+
+    # price changed to something LESS than min (900), SHOULD be a change
+    set_original_response(props_markup=instock_props[0], price='890.45')
+    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    assert b'1 watches queued for rechecking.' in res.data
+    wait_for_all_checks(client)
+    res = client.get(url_for("index"))
+    assert b'890.45' in res.data
+    assert b'unviewed' in res.data

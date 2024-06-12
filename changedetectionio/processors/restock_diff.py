@@ -164,30 +164,26 @@ class perform_site_check(difference_detection_processor):
         if watch.get('follow_price_changes') and watch.get('restock'):
             price = float(update_obj['restock'].get('price'))
             previous_price = float(watch['restock'].get('price'))
+
+            # It was different, but negate it further down
             if price != previous_price:
                 changed_detected = True
 
-            # Minimum price limit
+            # Minimum/maximum price limit
             if update_obj.get('restock') and update_obj['restock'].get('price') and watch.get('price_change_min'):
                 logger.debug(
-                    f"{uuid} - Change was detected, Has minimum price limit - 'price_change_min' is '{watch.get('price_change_min')}', price from website is '{update_obj['restock'].get('price', '')}'.")
+                    f"{uuid} - Change was detected, Has minimum price limit - 'price_change_max' is '{watch.get('price_change_max', '')}' 'price_change_min' is '{watch.get('price_change_min', '')}', price from website is '{update_obj['restock'].get('price', '')}'.")
                 if update_obj['restock'].get('price'):
-                    min_limit = float(watch.get('price_change_min'))
-                    price = float(update_obj['restock'].get('price'))
-                    logger.debug(f"{uuid} after float conversion - Min limit: '{min_limit}' Price: '{price}'")
-                    if price > min_limit:
-                        changed_detected = False
+                    min_limit = float(watch.get('price_change_min', 0))
+                    max_limit = float(watch.get('price_change_max', float('inf')))  # Set to infinity if not provided
 
-            # Maximum price limit
-            if update_obj.get('restock') and update_obj['restock'].get('price') and watch.get('price_change_max'):
-                logger.debug(
-                    f"{uuid} - Change was detected, Has maximum price limit - 'price_change_max' is '{watch.get('price_change_max')}', price from website is '{update_obj['restock'].get('price', '')}'.")
-                if update_obj['restock'].get('price'):
-                    max_limit = float(watch.get('price_change_max'))
                     price = float(update_obj['restock'].get('price'))
-                    logger.debug(f"{uuid} after float conversion - Max limit: '{max_limit}' Price: '{price}'")
-                    if price < max_limit:
-                        changed_detected = False
+                    logger.debug(f"{uuid} after float conversion - Min limit: '{min_limit}' Max limit: '{max_limit}' Price: '{price}'")
+                    if changed_detected:
+                        if price < max_limit and price > min_limit:
+                            changed_detected = False
+
+
 
 
         # Always record the new checksum

@@ -549,15 +549,16 @@ class processor_restock_diff_form(processor_text_json_diff_form):
                 </fieldset>
                 <fieldset class="pure-group">
                     {{ render_checkbox_field(form.follow_price_changes) }}
-                    <span class="pure-form-message-inline">Changes in price should trigger a notification.</span>
+                    <span class="pure-form-message-inline">Changes in price should trigger a notification</span>
+                    <span class="pure-form-message-inline">When OFF - only care about restock detection</span>
                 </fieldset>                                  
                 <fieldset class="pure-group price-change-minmax">               
                     {{ render_field(form.price_change_min) }}
-                    <span class="pure-form-message-inline">Minimum amount, when the price is below this amount, then a change is triggered.</span>
+                    <span class="pure-form-message-inline">Minimum amount, only trigger a change when the price is less than this amount.</span>
                 </fieldset>                
                 <fieldset class="pure-group price-change-minmax">
                     {{ render_field(form.price_change_max) }}
-                    <span class="pure-form-message-inline">Maximum amount, when the price is above this amount, then a change is triggered.</span>
+                    <span class="pure-form-message-inline">Maximum amount, only trigger a change when the price is more than this amount.</span>
                 </fieldset>                
             </div>
         </fieldset>"""
