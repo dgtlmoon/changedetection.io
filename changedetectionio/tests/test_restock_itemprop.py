@@ -174,3 +174,13 @@ def test_itemprop_price_minmax_limit(client, live_server):
     res = client.get(url_for("index"))
     assert b'890.45' in res.data
     assert b'unviewed' in res.data
+
+    client.get(url_for("mark_all_viewed"))
+
+    # price changed to something MORE than max (1100.10), SHOULD be a change
+    set_original_response(props_markup=instock_props[0], price='1890.45')
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("index"))
+    assert b'1890.45' in res.data
+    assert b'unviewed' in res.data
