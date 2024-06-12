@@ -172,7 +172,7 @@ class perform_site_check(difference_detection_processor):
             # Minimum/maximum price limit
             if update_obj.get('restock') and update_obj['restock'].get('price') and watch.get('price_change_min'):
                 logger.debug(
-                    f"{uuid} - Change was detected, Has minimum price limit - 'price_change_max' is '{watch.get('price_change_max', '')}' 'price_change_min' is '{watch.get('price_change_min', '')}', price from website is '{update_obj['restock'].get('price', '')}'.")
+                    f"{uuid} - Change was detected, 'price_change_max' is '{watch.get('price_change_max', '')}' 'price_change_min' is '{watch.get('price_change_min', '')}', price from website is '{update_obj['restock'].get('price', '')}'.")
                 if update_obj['restock'].get('price'):
                     min_limit = float(watch.get('price_change_min', 0))
                     max_limit = float(watch.get('price_change_max', float('inf')))  # Set to infinity if not provided
