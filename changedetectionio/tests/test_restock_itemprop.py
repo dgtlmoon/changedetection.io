@@ -39,9 +39,14 @@ def set_original_response(props_markup='', price="121.95"):
 
 
 
-def test_restock_itemprop_basic(client, live_server):
+
+def test_setup(client, live_server):
 
     live_server_setup(live_server)
+
+def test_restock_itemprop_basic(client, live_server):
+
+    #live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
 
@@ -75,7 +80,7 @@ def test_restock_itemprop_basic(client, live_server):
         assert b'Deleted' in res.data
 
 def test_itemprop_price_change(client, live_server):
-    live_server_setup(live_server)
+#    live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
 
