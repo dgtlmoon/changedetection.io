@@ -198,9 +198,17 @@ class perform_site_check(difference_detection_processor):
                     if min_limit or max_limit:
                         if is_between(number=price, lower=min_limit, upper=max_limit):
                             if changed_detected:
-                                logger.debug(
-                                    f"{uuid} Override change-detected to FALSE because price was inside threshold")
+                                logger.debug(f"{uuid} Override change-detected to FALSE because price was inside threshold")
                                 changed_detected = False
+
+                    if changed_detected and watch.get('price_change_threshold_percent'):
+                        pc = float(watch.get('price_change_threshold_percent'))
+                        change = abs((price - previous_price) / previous_price * 100)
+                        if change and change <= pc:
+                            logger.debug(f"{uuid} Override change-detected to FALSE because % threshold ({pc}%) was {change:.3f}%")
+                            changed_detected = False
+                        else:
+                            logger.debug(f"{uuid} Price change was {change:.3f}% , (threshold {pc}%)")
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5

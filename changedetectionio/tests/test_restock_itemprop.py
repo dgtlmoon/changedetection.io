@@ -189,3 +189,69 @@ def test_itemprop_price_minmax_limit(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
+
+def test_itemprop_percent_threshold(client, live_server):
+    #live_server_setup(live_server)
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+    test_url = url_for('test_endpoint', _external=True)
+
+    set_original_response(props_markup=instock_props[0], price="950.95")
+    client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
+        follow_redirects=True
+    )
+
+    # A change in price, should trigger a change by default
+    wait_for_all_checks(client)
+
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"follow_price_changes": "y",
+              "price_change_threshold_percent": 5.0,
+              "url": test_url,
+              "tags": "",
+              "headers": "",
+              'fetch_backend': "html_requests"
+              },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    wait_for_all_checks(client)
+
+
+    # Basic change should not trigger
+    set_original_response(props_markup=instock_props[0], price='960.45')
+    client.get(url_for("form_watch_checknow"))
+    wait_for_all_checks(client)
+    res = client.get(url_for("index"))
+    assert b'960.45' in res.data
+    assert b'unviewed' not in res.data
+
+    # Bigger INCREASE change than the threshold should trigger
+    set_original_response(props_markup=instock_props[0], price='1960.45')
+    client.get(url_for("form_watch_checknow"))
+    wait_for_all_checks(client)
+    res = client.get(url_for("index"))
+    assert b'1960.45' in res.data
+    assert b'unviewed' in res.data
+
+
+    # Small decrease should NOT trigger
+    client.get(url_for("mark_all_viewed"))
+    set_original_response(props_markup=instock_props[0], price='1950.45')
+    client.get(url_for("form_watch_checknow"))
+    wait_for_all_checks(client)
+    res = client.get(url_for("index"))
+    assert b'1950.45' in res.data
+    assert b'unviewed' not in res.data
+
+
+
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
