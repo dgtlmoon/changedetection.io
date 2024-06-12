@@ -1,5 +1,8 @@
 import os
 import re
+
+from wtforms.fields.numeric import FloatField
+
 from changedetectionio.strtobool import strtobool
 
 from wtforms import (
@@ -517,18 +520,45 @@ class processor_text_json_diff_form(commonSettingsForm):
         return result
 
 class processor_restock_diff_form(processor_text_json_diff_form):
+
+    #@todo - add "Any increase" and "Any decrease" options
+
     in_stock_only = BooleanField('Only trigger when product goes BACK to in-stock', default=True)
+    price_change_min = FloatField('Minimum amount to trigger notification',[validators.Optional()], render_kw={"placeholder": "No limit"} )
+    price_change_max = FloatField('Maximum amount to trigger notification',[validators.Optional()], render_kw={"placeholder": "No limit"} )
+    follow_price_changes = BooleanField('Follow price changes', default=False)
 
     def extra_tab_content(self):
         return 'Restock & Price Detection'
 
     def extra_form_content(self):
         return """
-        {% from '_helpers.html' import render_field, render_checkbox_field, render_button %}        
+        {% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
+        <script>        
+            $(document).ready(function () {
+                toggleOpacity('#follow_price_changes', '.price-change-minmax', true);
+            });
+        </script>
+        
+                
         <fieldset>
             <div class="pure-control-group">
-                {{ render_checkbox_field(form.in_stock_only) }}
-                <span class="pure-form-message-inline">Only trigger notifications when page changes from <strong>out of stock</strong> to <strong>back in stock</strong></span>
+                <fieldset class="pure-group">
+                    {{ render_checkbox_field(form.in_stock_only) }}
+                    <span class="pure-form-message-inline">Only trigger notifications when page changes from <strong>out of stock</strong> to <strong>back in stock</strong></span>
+                </fieldset>
+                <fieldset class="pure-group">
+                    {{ render_checkbox_field(form.follow_price_changes) }}
+                    <span class="pure-form-message-inline">Changes in price should trigger a notification.</span>
+                </fieldset>                                  
+                <fieldset class="pure-group price-change-minmax">               
+                    {{ render_field(form.price_change_min) }}
+                    <span class="pure-form-message-inline">Minimum amount, when the price is below this amount, then a change is triggered.</span>
+                </fieldset>                
+                <fieldset class="pure-group price-change-minmax">
+                    {{ render_field(form.price_change_max) }}
+                    <span class="pure-form-message-inline">Maximum amount, when the price is above this amount, then a change is triggered.</span>
+                </fieldset>                
             </div>
         </fieldset>"""
 
