@@ -87,6 +87,22 @@ def get_itemprop_availability(html_content) -> Restock:
 
     return Restock(value)
 
+
+def is_between(number, lower=None, upper=None):
+    """
+    Check if a number is between two values.
+
+    Parameters:
+    number (float): The number to check.
+    lower (float or None): The lower bound (inclusive). If None, no lower bound.
+    upper (float or None): The upper bound (inclusive). If None, no upper bound.
+
+    Returns:
+    bool: True if the number is between the lower and upper bounds, False otherwise.
+    """
+    return (lower is None or lower <= number) and (upper is None or number <= upper)
+
+
 class perform_site_check(difference_detection_processor):
     screenshot = None
     xpath_data = None
@@ -161,7 +177,7 @@ class perform_site_check(difference_detection_processor):
                 # All cases
                 changed_detected = True
 
-        if watch.get('follow_price_changes') and watch.get('restock') and update_obj['restock'].get('price'):
+        if watch.get('follow_price_changes') and watch.get('restock') and update_obj.get('restock') and update_obj['restock'].get('price'):
             price = float(update_obj['restock'].get('price'))
             previous_price = float(watch['restock'].get('price'))
 
@@ -170,18 +186,21 @@ class perform_site_check(difference_detection_processor):
                 changed_detected = True
 
             # Minimum/maximum price limit
-            if update_obj.get('restock') and update_obj['restock'].get('price') and watch.get('price_change_min'):
+            if update_obj.get('restock') and update_obj['restock'].get('price'):
                 logger.debug(
                     f"{uuid} - Change was detected, 'price_change_max' is '{watch.get('price_change_max', '')}' 'price_change_min' is '{watch.get('price_change_min', '')}', price from website is '{update_obj['restock'].get('price', '')}'.")
                 if update_obj['restock'].get('price'):
-                    min_limit = float(watch.get('price_change_min', 0))
-                    max_limit = float(watch.get('price_change_max', float('inf')))  # Set to infinity if not provided
+                    min_limit = float(watch.get('price_change_min')) if watch.get('price_change_min') else None
+                    max_limit = float(watch.get('price_change_max')) if watch.get('price_change_max') else None
 
                     price = float(update_obj['restock'].get('price'))
                     logger.debug(f"{uuid} after float conversion - Min limit: '{min_limit}' Max limit: '{max_limit}' Price: '{price}'")
-                    if changed_detected:
-                        if price < max_limit and price > min_limit:
-                            changed_detected = False
+                    if min_limit or max_limit:
+                        if is_between(number=price, lower=min_limit, upper=max_limit):
+                            if changed_detected:
+                                logger.debug(
+                                    f"{uuid} Override change-detected to FALSE because price was inside threshold")
+                                changed_detected = False
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5

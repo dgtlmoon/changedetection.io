@@ -519,13 +519,17 @@ class processor_text_json_diff_form(commonSettingsForm):
             result = False
         return result
 
+
 class processor_restock_diff_form(processor_text_json_diff_form):
-
-    #@todo - add "Any increase" and "Any decrease" options
-
     in_stock_only = BooleanField('Only trigger when product goes BACK to in-stock', default=True)
-    price_change_min = FloatField('Minimum amount to trigger notification',[validators.Optional()], render_kw={"placeholder": "No limit"} )
-    price_change_max = FloatField('Maximum amount to trigger notification',[validators.Optional()], render_kw={"placeholder": "No limit"} )
+    price_change_min = FloatField('Minimum amount to trigger notification', [validators.Optional()], render_kw={"placeholder": "No limit", "size": "10"})
+    price_change_max = FloatField('Maximum amount to trigger notification', [validators.Optional()], render_kw={"placeholder": "No limit", "size": "10"})
+    price_change_threshold_percent = FloatField('Threshold in % for price changes', validators=[
+        validators.Optional(),
+        validators.NumberRange(min=0, max=100, message="Should be between 0 and 100"),
+    ], render_kw={"placeholder": "0%", "size": "5"})
+
+
     follow_price_changes = BooleanField('Follow price changes', default=False)
 
     def extra_tab_content(self):
@@ -551,14 +555,19 @@ class processor_restock_diff_form(processor_text_json_diff_form):
                     {{ render_checkbox_field(form.follow_price_changes) }}
                     <span class="pure-form-message-inline">Changes in price should trigger a notification</span>
                     <span class="pure-form-message-inline">When OFF - only care about restock detection</span>
-                </fieldset>                                  
+                </fieldset>
                 <fieldset class="pure-group price-change-minmax">               
                     {{ render_field(form.price_change_min) }}
                     <span class="pure-form-message-inline">Minimum amount, only trigger a change when the price is less than this amount.</span>
-                </fieldset>                
+                </fieldset>
                 <fieldset class="pure-group price-change-minmax">
                     {{ render_field(form.price_change_max) }}
                     <span class="pure-form-message-inline">Maximum amount, only trigger a change when the price is more than this amount.</span>
+                </fieldset>
+                <fieldset class="pure-group price-change-minmax">
+                    {{ render_field(form.price_change_threshold_percent) }}
+                    <span class="pure-form-message-inline">Price must change more than this % to trigger a change.</span><br>
+                    <span class="pure-form-message-inline">For example, If the product is $1,000 USD, <strong>2%</strong> would mean it has to change more than $20 since the last check.</span><br>
                 </fieldset>                
             </div>
         </fieldset>"""

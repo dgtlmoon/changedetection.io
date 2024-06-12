@@ -80,7 +80,7 @@ def test_restock_itemprop_basic(client, live_server):
         assert b'Deleted' in res.data
 
 def test_itemprop_price_change(client, live_server):
-#    live_server_setup(live_server)
+    #live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
 
@@ -123,9 +123,11 @@ def test_itemprop_price_change(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-
 def test_itemprop_price_minmax_limit(client, live_server):
     #live_server_setup(live_server)
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
     test_url = url_for('test_endpoint', _external=True)
 
@@ -184,3 +186,6 @@ def test_itemprop_price_minmax_limit(client, live_server):
     res = client.get(url_for("index"))
     assert b'1890.45' in res.data
     assert b'unviewed' in res.data
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
