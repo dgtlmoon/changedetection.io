@@ -2,7 +2,6 @@ from abc import abstractmethod
 from changedetectionio.strtobool import strtobool
 from copy import deepcopy
 from loguru import logger
-from requests.structures import CaseInsensitiveDict
 import hashlib
 import os
 import re
@@ -22,7 +21,7 @@ class difference_detection_processor():
         self.watch = deepcopy(self.datastore.data['watching'].get(watch_uuid))
 
     def call_browser(self):
-
+        from requests.structures import CaseInsensitiveDict
         # Protect against file:// access
         if re.search(r'^file://', self.watch.get('url', '').strip(), re.IGNORECASE):
             if not strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
