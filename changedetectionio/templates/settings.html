@@ -63,6 +63,9 @@
                         </span>
                     </div>
                     <div class="pure-control-group">
+                        {{ render_checkbox_field(form.application.form.rss_hide_muted_watches) }}
+                    </div>
+                    <div class="pure-control-group">
                         {{ render_field(form.application.form.pager_size) }}
                         <span class="pure-form-message-inline">Number of items per page in the watch overview list, 0 to disable.</span>
                     </div>
