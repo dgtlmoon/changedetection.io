@@ -253,6 +253,65 @@ def test_method_in_request(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
+
+def test_ua_global_override(client, live_server):
+    #live_server_setup(live_server)
+    test_url = url_for('test_headers', _external=True)
+
+    form_data = {
+        "application-fetch_backend": "html_requests",
+        "application-minutes_between_check": 180,
+        "requests-default_ua-html_requests": "html-requests-user-agent"
+    }
+
+    res = client.post(
+        url_for("settings_page"),
+        data=form_data,
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+
+    # Add the test URL twice, we will check
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+
+    wait_for_all_checks(client)
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    assert b"html-requests-user-agent" in res.data
+    # default user-agent should have shown by now
+    # now add a custom one in the headers
+
+
+    # Add some headers to a request
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={
+            "url": test_url,
+            "tags": "testtag",
+            "fetch_backend": 'html_requests',
+            # Important - also test case-insensitive
+            "headers": "User-AGent: agent-from-watch"},
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    wait_for_all_checks(client)
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+    assert b"agent-from-watch" in res.data
+    assert b"html-requests-user-agent" not in res.data
+
+
 def test_headers_textfile_in_request(client, live_server):
     #live_server_setup(live_server)
     # Add our URL to the import page
