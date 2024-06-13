@@ -47,6 +47,7 @@ class model(dict):
                     'password': False,
                     'render_anchor_tag_content': False,
                     'rss_access_token': None,
+                    'rss_hide_muted_watches': True,
                     'schema_version' : 0,
                     'shared_diff_access': False,
                     'webdriver_delay': None , # Extra delay in seconds before extracting text

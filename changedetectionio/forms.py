@@ -572,6 +572,8 @@ class globalSettingsApplicationForm(commonSettingsForm):
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
     shared_diff_access = BooleanField('Allow access to view diff page when password is enabled', default=False, validators=[validators.Optional()])
+    rss_hide_muted_watches = BooleanField('Hide muted watches from RSS feed', default=True,
+                                      validators=[validators.Optional()])
     filter_failure_notification_threshold_attempts = IntegerField('Number of times the filter can be missing before sending a notification',
                                                                   render_kw={"style": "width: 5em;"},
                                                                   validators=[validators.NumberRange(min=0,
