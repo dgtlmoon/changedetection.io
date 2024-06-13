@@ -342,7 +342,7 @@ def changedetection_app(config=None, datastore_o=None):
         # @todo needs a .itemsWithTag() or something - then we can use that in Jinaj2 and throw this away
         for uuid, watch in datastore.data['watching'].items():
             # @todo tag notification_muted skip also (improve Watch model)
-            if watch.get('notification_muted'):
+            if datastore.data['settings']['application'].get('rss_hide_muted_watches') and watch.get('notification_muted'):
                 continue
             if limit_tag and not limit_tag in watch['tags']:
                 continue
@@ -475,7 +475,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  # Don't link to hosting when we're on the hosting environment
                                  active_tag=active_tag,
                                  active_tag_uuid=active_tag_uuid,
-                                 app_rss_token=datastore.data['settings']['application']['rss_access_token'],
+                                 app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
                                  datastore=datastore,
                                  errored_count=errored_count,
                                  form=form,

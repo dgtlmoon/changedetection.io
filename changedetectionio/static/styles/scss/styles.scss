@@ -1026,6 +1026,11 @@ ul {
   border-radius: 10px;
   margin-bottom: 1em;
   display: none;
+  button {
+    /* some space if they wrap the page */
+    margin-bottom: 3px;
+    margin-top: 3px;
+  }
 }
 
 .checkbox-uuid {

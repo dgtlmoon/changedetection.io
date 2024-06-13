@@ -124,12 +124,12 @@ class ChangeDetectionStore:
                 self.__data['app_guid'] = str(uuid_builder.uuid4())
 
         # Generate the URL access token for RSS feeds
-        if not 'rss_access_token' in self.__data['settings']['application']:
+        if not self.__data['settings']['application'].get('rss_access_token'):
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['rss_access_token'] = secret
 
         # Generate the API access token
-        if not 'api_access_token' in self.__data['settings']['application']:
+        if not self.__data['settings']['application'].get('api_access_token'):
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['api_access_token'] = secret
 
