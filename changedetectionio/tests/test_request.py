@@ -306,7 +306,8 @@ def test_ua_global_override(client, live_server):
     )
     assert b"agent-from-watch" in res.data
     assert b"html-requests-user-agent" not in res.data
-
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
 def test_headers_textfile_in_request(client, live_server):
     #live_server_setup(live_server)
@@ -388,7 +389,7 @@ def test_headers_textfile_in_request(client, live_server):
     # Not needed anymore
     os.unlink('test-datastore/headers.txt')
     os.unlink('test-datastore/headers-testtag.txt')
-    os.unlink('test-datastore/' + extract_UUID_from_client(client) + '/headers.txt')
+
     # The service should echo back the request verb
     res = client.get(
         url_for("preview_page", uuid="first"),
