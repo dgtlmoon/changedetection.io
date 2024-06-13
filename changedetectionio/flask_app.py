@@ -472,7 +472,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  # Don't link to hosting when we're on the hosting environment
                                  active_tag=active_tag,
                                  active_tag_uuid=active_tag_uuid,
-                                 app_rss_token=datastore.data['settings']['application']['rss_access_token'],
+                                 app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
                                  datastore=datastore,
                                  errored_count=errored_count,
                                  form=form,
