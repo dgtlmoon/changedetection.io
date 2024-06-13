@@ -186,6 +186,7 @@ def test_itemprop_price_minmax_limit(client, live_server):
     res = client.get(url_for("index"))
     assert b'1890.45' in res.data
     assert b'unviewed' in res.data
+
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
