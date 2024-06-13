@@ -253,26 +253,22 @@ def test_method_in_request(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-
+# Re #2408 - user-agent override test, also should handle case-insensitive header deduplication
 def test_ua_global_override(client, live_server):
-    #live_server_setup(live_server)
+    # live_server_setup(live_server)
     test_url = url_for('test_headers', _external=True)
-
-    form_data = {
-        "application-fetch_backend": "html_requests",
-        "application-minutes_between_check": 180,
-        "requests-default_ua-html_requests": "html-requests-user-agent"
-    }
 
     res = client.post(
         url_for("settings_page"),
-        data=form_data,
+        data={
+            "application-fetch_backend": "html_requests",
+            "application-minutes_between_check": 180,
+            "requests-default_ua-html_requests": "html-requests-user-agent"
+        },
         follow_redirects=True
     )
     assert b'Settings updated' in res.data
 
-
-    # Add the test URL twice, we will check
     res = client.post(
         url_for("import_page"),
         data={"urls": test_url},
