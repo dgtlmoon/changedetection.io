@@ -95,7 +95,7 @@ def run_filter_test(client, content_filter):
         client.get(url_for("form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
         time.sleep(2) # delay for apprise to fire
-        assert not os.path.isfile("test-datastore/notification.txt"), f"test-datastore/notification.txt should not exist - Attempt {i}"
+        assert not os.path.isfile("test-datastore/notification.txt"), f"test-datastore/notification.txt should not exist - Attempt {i} when threshold is {App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT}"
 
     # We should see something in the frontend
     res = client.get(url_for("index"))
