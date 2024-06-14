@@ -23,8 +23,6 @@ def set_response_with_filter():
 
 def run_filter_test(client, content_filter):
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
     # cleanup for the next
     client.get(
         url_for("form_delete", uuid="all"),
@@ -79,6 +77,7 @@ def run_filter_test(client, content_filter):
         "include_filters": content_filter,
         "fetch_backend": "html_requests"})
 
+    # A POST here will also reset the filter failure counter (filter_failure_notification_threshold_attempts)
     res = client.post(
         url_for("edit_page", uuid="first"),
         data=notification_form_data,
@@ -91,20 +90,21 @@ def run_filter_test(client, content_filter):
     # Now the notification should not exist, because we didnt reach the threshold
     assert not os.path.isfile("test-datastore/notification.txt")
 
-    # -2 because we would have checked twice above (on adding and on edit)
-    for i in range(0, App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT-2):
-        res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    # recheck it up to just before the threshold
+    for i in range(0, App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT-1):
+        client.get(url_for("form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
+        time.sleep(2) # delay for apprise to fire
         assert not os.path.isfile("test-datastore/notification.txt"), f"test-datastore/notification.txt should not exist - Attempt {i}"
 
     # We should see something in the frontend
+    res = client.get(url_for("index"))
     assert b'Warning, no filters were found' in res.data
 
-    # One more check should trigger it (see -2 above)
+    # One more check should trigger the _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT threshold
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    wait_for_all_checks(client)
+    time.sleep(2)  # delay for apprise to fire
     # Now it should exist and contain our "filter not found" alert
     assert os.path.isfile("test-datastore/notification.txt")
 
@@ -150,12 +150,10 @@ def test_setup(live_server):
 
 def test_check_include_filters_failure_notification(client, live_server):
     set_original_response()
-    wait_for_all_checks(client)
     run_filter_test(client, '#nope-doesnt-exist')
 
 def test_check_xpath_filter_failure_notification(client, live_server):
     set_original_response()
-    time.sleep(1)
     run_filter_test(client, '//*[@id="nope-doesnt-exist"]')
 
 # Test that notification is never sent
