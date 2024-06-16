@@ -16,10 +16,10 @@ jobs:
       - uses: actions/checkout@v4
 
       # Mainly just for link/flake8
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
+      - name: Set up Python ${{ inputs.PYTHON_VERSION }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ inputs.PYTHON_VERSION }}
 
       - name: Spin up ancillary testable services
         run: |
@@ -35,11 +35,13 @@ jobs:
 
       - name: Build changedetection.io container for testing
         run: |
-          echo "---- Building for Python ${{ env.PYTHON_VERSION }} -----"
+          echo "---- Building for Python ${{ inputs.PYTHON_VERSION }} -----"
           # Build a changedetection.io container and start testing inside
-          docker build --build-arg PYTHON_VERSION=${{ env.PYTHON_VERSION }} --build-arg LOGGER_LEVEL=TRACE -t test-changedetectionio .
+          docker build --build-arg PYTHON_VERSION=${{ inputs.PYTHON_VERSION }} --build-arg LOGGER_LEVEL=TRACE -t test-changedetectionio .
           # Debug info
           docker run test-changedetectionio  bash -c 'pip list'
+        with:
+          python-version: ${{ inputs.python-version }}
 
       - name: Spin up ancillary SMTP+Echo message test server
         run: |
@@ -212,12 +214,15 @@ jobs:
         if: always()
         run: |
           mkdir output-logs
-          docker logs test-cdio-basic-tests > output-logs/test-cdio-basic-tests-stdout-${{ env.PYTHON_VERSION }}.txt
-          docker logs test-cdio-basic-tests 2> output-logs/test-cdio-basic-tests-stderr-${{ env.PYTHON_VERSION }}.txt
+          docker logs test-cdio-basic-tests > output-logs/test-cdio-basic-tests-stdout-${{ inputs.PYTHON_VERSION }}.txt
+          docker logs test-cdio-basic-tests 2> output-logs/test-cdio-basic-tests-stderr-${{ inputs.PYTHON_VERSION }}.txt
+        with:
+          python-version: ${{ inputs.python-version }}
 
       - name: Store container log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-cdio-basic-tests-output-py${{ env.PYTHON_VERSION }}
+          name: test-cdio-basic-tests-output-py${{ inputs.PYTHON_VERSION }}
           path: output-logs
+          python-version: ${{ inputs.python-version }}
