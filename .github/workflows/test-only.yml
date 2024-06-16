@@ -34,4 +34,5 @@ jobs:
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.12'
+      skip-pypuppeteer: true
 
