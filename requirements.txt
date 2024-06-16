@@ -86,5 +86,5 @@ pytest-flask ~=1.2
 jsonschema==4.17.3
 
 loguru
-# Needed for > 3.10
-greenlet
+# Needed for > 3.10, https://github.com/microsoft/playwright-python/issues/2096
+greenlet >= 3.0.3
