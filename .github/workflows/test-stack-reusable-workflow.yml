@@ -29,9 +29,11 @@ jobs:
           # Build a changedetection.io container and start testing inside
           docker build --build-arg PYTHON_VERSION=${{ env.PYTHON_VERSION }} --build-arg LOGGER_LEVEL=TRACE -t test-changedetectionio .
           # Debug info
-          docker run test-changedetectionio  bash -c 'pip list'
-          
-          docker run test-changedetectionio  bash -c 'python -v'
+          docker run test-changedetectionio  bash -c 'pip list'         
+
+      - name: We should be Python ${{ env.PYTHON_VERSION }} ...
+        run: |         
+          docker run test-changedetectionio  bash -c 'python3 --version'
 
       - name: Spin up ancillary testable services
         run: |
@@ -60,7 +62,6 @@ jobs:
         run: |
           # Unit tests
           echo "run test with unittest"
-          docker run test-changedetectionio  bash -c 'python3 -v'
           docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_notification_diff'
           docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_watch_model'
           docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_jinja2_security'
