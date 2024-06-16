@@ -35,13 +35,15 @@ jobs:
           docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm -p 3000:3000 dgtlmoon/sockpuppetbrowser:latest                    
           docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url  -p 3001:3000 --rm dgtlmoon/sockpuppetbrowser:latest
 
-      - name: Build changedetection.io container for testing
+      - name: Build changedetection.io container for testing under Python ${{ env.PYTHON_VERSION }}
         run: |
           echo "---- Building for Python ${{ env.PYTHON_VERSION }} -----"
           # Build a changedetection.io container and start testing inside
           docker build --build-arg PYTHON_VERSION=${{ env.PYTHON_VERSION }} --build-arg LOGGER_LEVEL=TRACE -t test-changedetectionio .
           # Debug info
           docker run test-changedetectionio  bash -c 'pip list'
+          
+          docker run test-changedetectionio  bash -c 'python -v'
 
       - name: Spin up ancillary SMTP+Echo message test server
         run: |
