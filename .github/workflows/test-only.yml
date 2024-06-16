@@ -20,7 +20,7 @@ jobs:
     needs: lint-code
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
-      python-version: '3.11'
+      python-version: '3.10'
 
 
   test-application-3-11:
