@@ -135,7 +135,8 @@ jobs:
       - name: Test SMTP notification mime types
         run: |
           # SMTP content types - needs the 'Debug SMTP server/echo message back server' container from above
-          docker run --rm  --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/smtp/test_notification_smtp.py'
+          # "mailserver" hostname defined above
+          docker run --rm --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/smtp/test_notification_smtp.py'
 
       # @todo Add a test via playwright/puppeteer
       # squid with auth is tested in run_proxy_tests.sh -> tests/proxy_list/test_select_custom_proxy.py
