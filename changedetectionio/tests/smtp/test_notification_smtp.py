@@ -32,6 +32,8 @@ def get_last_message_from_smtp_server():
     client_socket.connect((smtp_test_server, port))  # connect to the server
 
     data = client_socket.recv(50024).decode()  # receive response
+    logging.info("get_last_message_from_smtp_server..")
+    logging.info(data)
     client_socket.close()  # close the connection
     return data
 

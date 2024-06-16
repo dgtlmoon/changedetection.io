@@ -1,42 +1,51 @@
 #!/usr/bin/python3
-import smtpd
-import asyncore
+import asyncio
+from aiosmtpd.controller import Controller
+from aiosmtpd.smtp import SMTP
 
 # Accept a SMTP message and offer a way to retrieve the last message via TCP Socket
 
 last_received_message = b"Nothing"
 
 
-class CustomSMTPServer(smtpd.SMTPServer):
-
-    def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
+class CustomSMTPHandler:
+    async def handle_DATA(self, server, session, envelope):
         global last_received_message
-        last_received_message = data
-        print('Receiving message from:', peer)
-        print('Message addressed from:', mailfrom)
-        print('Message addressed to  :', rcpttos)
-        print('Message length        :', len(data))
-        print(data.decode('utf8'))
-        return
+        last_received_message = envelope.content
+        print('Receiving message from:', session.peer)
+        print('Message addressed from:', envelope.mail_from)
+        print('Message addressed to  :', envelope.rcpt_tos)
+        print('Message length        :', len(envelope.content))
+        print(envelope.content.decode('utf8'))
+        return '250 Message accepted for delivery'
 
 
-# Just print out the last message received on plain TCP socket server
-class EchoServer(asyncore.dispatcher):
-
-    def __init__(self, host, port):
-        asyncore.dispatcher.__init__(self)
-        self.create_socket()
-        self.set_reuse_addr()
-        self.bind((host, port))
-        self.listen(5)
-
-    def handle_accepted(self, sock, addr):
+class EchoServerProtocol(asyncio.Protocol):
+    def connection_made(self, transport):
         global last_received_message
-        print('Incoming connection from %s' % repr(addr))
-        sock.send(last_received_message)
+        self.transport = transport
+        peername = transport.get_extra_info('peername')
+        print('Incoming connection from {}'.format(peername))
+        self.transport.write(last_received_message)
+
         last_received_message = b''
+        self.transport.close()
 
 
-server = CustomSMTPServer(('0.0.0.0', 11025), None)  # SMTP mail goes here
-server2 = EchoServer('0.0.0.0', 11080)  # Echo back last message received
-asyncore.loop()
+async def main():
+    # Start the SMTP server
+    controller = Controller(CustomSMTPHandler(), hostname='0.0.0.0', port=11025)
+    controller.start()
+
+    # Start the TCP Echo server
+    loop = asyncio.get_running_loop()
+    server = await loop.create_server(
+        lambda: EchoServerProtocol(),
+        '0.0.0.0', 11080
+    )
+    async with server:
+        await server.serve_forever()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
