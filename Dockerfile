@@ -35,7 +35,7 @@ RUN pip install --target=/dependencies playwright~=1.41.2 \
     || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
 
 # Final image stage
-FROM python:3.10-slim-bookworm
+FROM python:${PYTHON_VERSION}-slim-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libxslt1.1 \
