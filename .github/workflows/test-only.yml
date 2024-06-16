@@ -18,20 +18,20 @@ jobs:
 
   test-application-3-10:
     needs: lint-code
-    uses: ./.github/workflows/reusable-workflow.yml
+    uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.11'
 
 
   test-application-3-11:
     needs: lint-code
-    uses: ./.github/workflows/reusable-workflow.yml
+    uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.11'
 
   test-application-3-12:
     needs: lint-code
-    uses: ./.github/workflows/reusable-workflow.yml
+    uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.12'
 
