@@ -231,9 +231,9 @@ jobs:
           docker logs test-cdio-basic-tests > output-logs/test-cdio-basic-tests-stdout-${{ env.PYTHON_VERSION }}.txt
           docker logs test-cdio-basic-tests 2> output-logs/test-cdio-basic-tests-stderr-${{ env.PYTHON_VERSION }}.txt
 
-      - name: Store container log
+      - name: Store everything including test-datastore
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-cdio-basic-tests-output-py${{ env.PYTHON_VERSION }}
-          path: output-logs
+          path: .
