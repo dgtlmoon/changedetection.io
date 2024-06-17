@@ -69,6 +69,7 @@ def test_rss_and_token(client, live_server):
 
     wait_for_all_checks(client)
     set_modified_response()
+    time.sleep(1)
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
@@ -87,7 +88,7 @@ def test_rss_and_token(client, live_server):
     assert b"Access denied, bad token" not in res.data
     assert b"Random content" in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
 
 def test_basic_cdata_rss_markup(client, live_server):
     #live_server_setup(live_server)

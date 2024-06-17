@@ -2,13 +2,12 @@
 
 import time
 from flask import url_for
-from . util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
+
 
 def test_basic_auth(client, live_server):
 
     live_server_setup(live_server)
-    # Give the endpoint time to spin up
-    time.sleep(1)
 
     # Add our URL to the import page
     test_url = url_for('test_basicauth_method', _external=True).replace("//","//myuser:mypass@")
@@ -19,8 +18,8 @@ def test_basic_auth(client, live_server):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
+    wait_for_all_checks(client)
     time.sleep(1)
-
     # Check form validation
     res = client.post(
         url_for("edit_page", uuid="first"),
@@ -29,7 +28,7 @@ def test_basic_auth(client, live_server):
     )
     assert b"Updated watch." in res.data
 
-    time.sleep(1)
+    wait_for_all_checks(client)
     res = client.get(
         url_for("preview_page", uuid="first"),
         follow_redirects=True
