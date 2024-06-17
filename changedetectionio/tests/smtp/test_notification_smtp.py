@@ -85,7 +85,7 @@ def test_check_notification_email_formats_default_HTML(client, live_server):
 
     # The email should have two bodies, and the text/html part should be <br>
     assert 'Content-Type: text/plain' in msg
-    assert '(added) So let\'s see what happens.\n' in msg  # The plaintext part with \n
+    assert '(added) So let\'s see what happens.\r\n' in msg  # The plaintext part with \r\n
     assert 'Content-Type: text/html' in msg
     assert '(added) So let\'s see what happens.<br>' in msg  # the html part
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
@@ -152,7 +152,7 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
     # The email should not have two bodies, should be TEXT only
 
     assert 'Content-Type: text/plain' in msg
-    assert '(added) So let\'s see what happens.\n' in msg  # The plaintext part with \n
+    assert '(added) So let\'s see what happens.\r\n' in msg  # The plaintext part with \r\n
 
     set_original_response()
     # Now override as HTML format
@@ -173,7 +173,7 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
 
     # The email should have two bodies, and the text/html part should be <br>
     assert 'Content-Type: text/plain' in msg
-    assert '(removed) So let\'s see what happens.\n' in msg  # The plaintext part with \n
+    assert '(removed) So let\'s see what happens.\r\n' in msg  # The plaintext part with \n
     assert 'Content-Type: text/html' in msg
     assert '(removed) So let\'s see what happens.<br>' in msg  # the html part
 
