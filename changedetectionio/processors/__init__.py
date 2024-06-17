@@ -1,10 +1,10 @@
 from abc import abstractmethod
-import os
-import hashlib
-import re
-from copy import deepcopy
 from changedetectionio.strtobool import strtobool
+from copy import deepcopy
 from loguru import logger
+import hashlib
+import os
+import re
 
 class difference_detection_processor():
 
@@ -21,7 +21,7 @@ class difference_detection_processor():
         self.watch = deepcopy(self.datastore.data['watching'].get(watch_uuid))
 
     def call_browser(self):
-
+        from requests.structures import CaseInsensitiveDict
         # Protect against file:// access
         if re.search(r'^file://', self.watch.get('url', '').strip(), re.IGNORECASE):
             if not strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
@@ -93,13 +93,15 @@ class difference_detection_processor():
             self.fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, self.watch.get('uuid'))
 
         # Tweak the base config with the per-watch ones
-        request_headers = self.watch.get('headers', [])
-        request_headers.update(self.datastore.get_all_base_headers())
-        request_headers.update(self.datastore.get_all_headers_in_textfile_for_watch(uuid=self.watch.get('uuid')))
+        request_headers = CaseInsensitiveDict()
 
         ua = self.datastore.data['settings']['requests'].get('default_ua')
         if ua and ua.get(prefer_fetch_backend):
             request_headers.update({'User-Agent': ua.get(prefer_fetch_backend)})
+
+        request_headers.update(self.watch.get('headers', {}))
+        request_headers.update(self.datastore.get_all_base_headers())
+        request_headers.update(self.datastore.get_all_headers_in_textfile_for_watch(uuid=self.watch.get('uuid')))
 
         # https://github.com/psf/requests/issues/4525
         # Requests doesnt yet support brotli encoding, so don't put 'br' here, be totally sure that the user cannot
