@@ -2,7 +2,10 @@
 
 # @NOTE! I would love to move to 3.11 but it breaks the async handler in changedetectionio/content_fetchers/puppeteer.py
 #        If you know how to fix it, please do! and test it for both 3.10 and 3.11
-FROM python:3.10-slim-bookworm as builder
+
+ARG PYTHON_VERSION=3.10
+
+FROM python:${PYTHON_VERSION}-slim-bookworm as builder
 
 # See `cryptography` pin comment in requirements.txt
 ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
@@ -32,7 +35,7 @@ RUN pip install --target=/dependencies playwright~=1.41.2 \
     || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
 
 # Final image stage
-FROM python:3.10-slim-bookworm
+FROM python:${PYTHON_VERSION}-slim-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libxslt1.1 \

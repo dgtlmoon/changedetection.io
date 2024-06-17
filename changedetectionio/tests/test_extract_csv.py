@@ -29,6 +29,7 @@ def test_check_extract_text_from_diff(client, live_server):
     # Load in 5 different numbers/changes
     last_date=""
     for n in range(5):
+        time.sleep(1)
         # Give the thread time to pick it up
         print("Bumping snapshot and checking.. ", n)
         last_date = str(time.time())

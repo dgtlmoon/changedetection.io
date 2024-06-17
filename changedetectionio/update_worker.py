@@ -348,7 +348,7 @@ class update_worker(threading.Thread):
                             # Send notification if we reached the threshold?
                             threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts',
                                                                                            0)
-                            logger.error(f"Filter for {uuid} not found, consecutive_filter_failures: {c}")
+                            logger.warning(f"Filter for {uuid} not found, consecutive_filter_failures: {c}")
                             if threshold > 0 and c >= threshold:
                                 if not self.datastore.data['watching'][uuid].get('notification_muted'):
                                     self.send_filter_failure_notification(uuid)
@@ -362,7 +362,6 @@ class update_worker(threading.Thread):
                         # Yes fine, so nothing todo, don't continue to process.
                         process_changedetection_results = False
                         changed_detected = False
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': False})
                     except content_fetchers.exceptions.BrowserConnectError as e:
                         self.datastore.update_watch(uuid=uuid,
                                                     update_obj={'last_error': e.msg
