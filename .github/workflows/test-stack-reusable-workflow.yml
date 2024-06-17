@@ -63,7 +63,12 @@ jobs:
           set -x
           echo "Running processes in docker..."
           docker ps
-
+#  temporary!!
+      - name: Playwright and SocketPuppetBrowser - Headers and requests
+        run: |       
+          # Settings headers playwright tests - Call back in from Sockpuppetbrowser, check headers
+          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py; pwd;find .'
+####
       - name: Test built container with Pytest (generally as requests/plaintext fetching)
         run: |
           # Unit tests
@@ -93,7 +98,7 @@ jobs:
       - name: Playwright and SocketPuppetBrowser - Headers and requests
         run: |       
           # Settings headers playwright tests - Call back in from Sockpuppetbrowser, check headers
-          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
+          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py; pwd;find .'
 
       - name: Playwright and SocketPuppetBrowser - Restock detection
         run: |                            
