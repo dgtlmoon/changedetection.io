@@ -21,7 +21,10 @@ def set_response_with_filter():
         f.write(test_return_data)
     return None
 
-def run_filter_test(client, content_filter):
+def run_filter_test(client, live_server, content_filter):
+
+    # Response WITHOUT the filter ID element
+    set_original_response()
 
     # cleanup for the next
     client.get(
@@ -90,8 +93,8 @@ def run_filter_test(client, content_filter):
     # Now the notification should not exist, because we didnt reach the threshold
     assert not os.path.isfile("test-datastore/notification.txt")
 
-    # recheck it up to just before the threshold
-    for i in range(0, App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT-1):
+    # recheck it up to just before the threshold, including the fact that in the previous POST it would have rechecked (and incremented)
+    for i in range(0, App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT-2):
         client.get(url_for("form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
         time.sleep(2) # delay for apprise to fire
@@ -149,11 +152,9 @@ def test_setup(live_server):
     live_server_setup(live_server)
 
 def test_check_include_filters_failure_notification(client, live_server):
-    set_original_response()
-    run_filter_test(client, '#nope-doesnt-exist')
+    run_filter_test(client, live_server,'#nope-doesnt-exist')
 
 def test_check_xpath_filter_failure_notification(client, live_server):
-    set_original_response()
-    run_filter_test(client, '//*[@id="nope-doesnt-exist"]')
+    run_filter_test(client, live_server, '//*[@id="nope-doesnt-exist"]')
 
 # Test that notification is never sent
