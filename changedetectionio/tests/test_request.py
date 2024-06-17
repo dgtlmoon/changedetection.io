@@ -378,6 +378,8 @@ def test_headers_textfile_in_request(client, live_server):
     with open('test-datastore/' + extract_UUID_from_client(client) + '/headers.txt', 'w') as f:
         f.write("watch-header: nice")
 
+    # seems to weird when run on github
+    time.sleep(2)
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
