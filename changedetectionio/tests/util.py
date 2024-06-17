@@ -121,6 +121,7 @@ def extract_UUID_from_client(client):
     return uuid.strip()
 
 def wait_for_all_checks(client):
+    # actually this is not entirely true, it can still be 'processing' but not in the queue
     # Loop waiting until done..
     attempt=0
     # because sub-second rechecks are problematic in testing, use lots of delays
