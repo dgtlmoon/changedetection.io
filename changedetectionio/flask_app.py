@@ -679,7 +679,10 @@ def changedetection_app(config=None, datastore_o=None):
 
         if request.method == 'POST' and form.validate():
 
-            extra_update_obj = {}
+            extra_update_obj = {
+                'consecutive_filter_failures': 0,
+                'last_error' : False
+            }
 
             if request.args.get('unpause_on_save'):
                 extra_update_obj['paused'] = False

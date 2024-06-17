@@ -29,7 +29,7 @@ chardet>2.3.0
 wtforms~=3.0
 jsonpath-ng~=1.5.3
 
-dnspython==2.6.1
+dnspython==2.6.1 # related to eventlet fixes
 
 # jq not available on Windows so must be installed manually
 
