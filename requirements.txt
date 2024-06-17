@@ -29,9 +29,7 @@ chardet>2.3.0
 wtforms~=3.0
 jsonpath-ng~=1.5.3
 
-# Pinned: module 'eventlet.green.select' has no attribute 'epoll'
-# https://github.com/eventlet/eventlet/issues/805#issuecomment-1640463482
-dnspython==2.3.0 # related to eventlet fixes
+dnspython==2.6.1
 
 # jq not available on Windows so must be installed manually
 
@@ -86,3 +84,5 @@ pytest-flask ~=1.2
 jsonschema==4.17.3
 
 loguru
+# Needed for > 3.10, https://github.com/microsoft/playwright-python/issues/2096
+greenlet >= 3.0.3
