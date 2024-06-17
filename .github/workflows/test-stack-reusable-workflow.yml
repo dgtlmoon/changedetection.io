@@ -55,7 +55,8 @@ jobs:
       - name: Spin up ancillary SMTP+Echo message test server
         run: |
           # Debug SMTP server/echo message back server
-          docker run --network changedet-network -d -p 11025:11025 -p 11080:11080  --hostname mailserver test-changedetectionio  bash -c 'python changedetectionio/tests/smtp/smtp-test-server.py' 
+          docker run --network changedet-network -d -p 11025:11025 -p 11080:11080  --hostname mailserver test-changedetectionio  bash -c 'pip3 install aiosmtpd && python changedetectionio/tests/smtp/smtp-test-server.py'
+          docker ps
 
       - name: Show docker container state and other debug info
         run: |
