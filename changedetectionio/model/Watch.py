@@ -189,15 +189,11 @@ class model(watch_base):
 
     @property
     def has_restock_info(self):
-        # has either price or availability
-        if self.get('restock'):
-            if self['restock'].get('price') != None:
-                return True
-            if self['restock'].get('availability') != None:
+        if self.get('restock') and self['restock'].get('in_stock') != None:
                 return True
 
         return False
-    
+
     # Returns the newest key, but if theres only 1 record, then it's counted as not being new, so return 0.
     @property
     def newest_history_key(self):

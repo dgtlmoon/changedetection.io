@@ -50,8 +50,8 @@ def get_itemprop_availability(html_content) -> Restock:
     # First phase, dead simple scanning of anything that looks useful
     if data:
         logger.debug(f"Using jsonpath to find price/availability/etc")
-        price_parse = parse('$..(price|Price)')
-        pricecurrency_parse = parse('$..(pricecurrency|currency| priceCurrency )')
+        price_parse = parse('$..(price|Price|highPrice)')
+        pricecurrency_parse = parse('$..(pricecurrency|currency|priceCurrency )')
         availability_parse = parse('$..(availability|Availability)')
 
         price_result = price_parse.find(data)
