@@ -180,11 +180,11 @@ class perform_site_check(difference_detection_processor):
         if watch.get('follow_price_changes') and watch.get('restock') and update_obj.get('restock') and update_obj['restock'].get('price'):
             price = float(update_obj['restock'].get('price'))
             # Default to current price if no previous price found
-            previous_price = float(watch['restock'].get('price', price))
-
-            # It was different, but negate it further down
-            if price != previous_price:
-                changed_detected = True
+            if watch['restock'].get('original_price'):
+                previous_price = float(watch['restock'].get('original_price'))
+                # It was different, but negate it further down
+                if price != previous_price:
+                    changed_detected = True
 
             # Minimum/maximum price limit
             if update_obj.get('restock') and update_obj['restock'].get('price'):
@@ -202,7 +202,9 @@ class perform_site_check(difference_detection_processor):
                                 logger.debug(f"{uuid} Override change-detected to FALSE because price was inside threshold")
                                 changed_detected = False
 
-                    if changed_detected and watch.get('price_change_threshold_percent'):
+                    # Price comparison by %
+                    if watch['restock'].get('original_price') and changed_detected and watch.get('price_change_threshold_percent'):
+                        previous_price = float(watch['restock'].get('original_price'))
                         pc = float(watch.get('price_change_threshold_percent'))
                         change = abs((price - previous_price) / previous_price * 100)
                         if change and change <= pc:

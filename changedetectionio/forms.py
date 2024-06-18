@@ -567,7 +567,7 @@ class processor_restock_diff_form(processor_text_json_diff_form):
                 <fieldset class="pure-group price-change-minmax">
                     {{ render_field(form.price_change_threshold_percent) }}
                     <span class="pure-form-message-inline">Price must change more than this % to trigger a change.</span><br>
-                    <span class="pure-form-message-inline">For example, If the product is $1,000 USD, <strong>2%</strong> would mean it has to change more than $20 since the last check.</span><br>
+                    <span class="pure-form-message-inline">For example, If the product is $1,000 USD, <strong>2%</strong> would mean it has to change more than $20 since the first check.</span><br>
                 </fieldset>                
             </div>
         </fieldset>"""

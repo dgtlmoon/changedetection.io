@@ -7,11 +7,16 @@ from changedetectionio.notification import default_notification_format_for_watch
 
 class Restock(dict):
     # @todo some setter to handle weird prices like "00,01" etc?
+    default_values = {'in_stock': None, 'price': None, 'currency': None, 'original_price': None}
+
     def __init__(self, *args, **kwargs):
 
-        default_values = {'in_stock': None, 'price': None, 'currency': None}
-        default_values.update(dict(*args, **kwargs))
-        super().__init__(default_values.copy())
+        self.default_values.update(dict(*args, **kwargs))
+        super().__init__(self.default_values.copy())
+
+        if not self.get('original_price'):
+            self['original_price'] = self.get('price')
+
 
 class watch_base(dict):
 
