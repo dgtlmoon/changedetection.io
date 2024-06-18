@@ -23,7 +23,7 @@ validators~=0.21
 brotli~=1.0
 requests[socks]
 
-urllib3==1.26.18
+urllib3==1.26.19
 chardet>2.3.0
 
 wtforms~=3.0
