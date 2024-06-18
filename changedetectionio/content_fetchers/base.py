@@ -64,10 +64,9 @@ class Fetcher():
     render_extract_delay = 0
 
     def __init__(self):
-        from pkg_resources import resource_string
-        # The code that scrapes elements and makes a list of elements/size/position to click on in the VisualSelector
-        self.xpath_element_js = resource_string(__name__, "res/xpath_element_scraper.js").decode('utf-8')
-        self.instock_data_js = resource_string(__name__, "res/stock-not-in-stock.js").decode('utf-8')
+        import importlib.resources
+        self.xpath_element_js = importlib.resources.read_text("changedetectionio.content_fetchers.res", 'xpath_element_scraper.js')
+        self.instock_data_js = importlib.resources.read_text("changedetectionio.content_fetchers.res", 'stock-not-in-stock.js')
 
     @abstractmethod
     def get_error(self):
