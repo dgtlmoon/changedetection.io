@@ -3,7 +3,7 @@
 # @NOTE! I would love to move to 3.11 but it breaks the async handler in changedetectionio/content_fetchers/puppeteer.py
 #        If you know how to fix it, please do! and test it for both 3.10 and 3.11
 
-ARG PYTHON_VERSION=3.10
+ARG PYTHON_VERSION=3.11
 
 FROM python:${PYTHON_VERSION}-slim-bookworm as builder
 
@@ -26,7 +26,8 @@ WORKDIR /install
 
 COPY requirements.txt /requirements.txt
 
-RUN pip install --target=/dependencies -r /requirements.txt
+# --extra-index-url https://www.piwheels.org/simple  is for cryptography module to be prebuilt (or rustc etc needs to be installed)
+RUN pip install --extra-index-url https://www.piwheels.org/simple  --target=/dependencies -r /requirements.txt
 
 # Playwright is an alternative to Selenium
 # Excluded this package from requirements.txt to prevent arm/v6 and arm/v7 builds from failing
