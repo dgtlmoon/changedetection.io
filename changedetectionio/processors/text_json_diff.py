@@ -222,7 +222,7 @@ class perform_site_check(difference_detection_processor):
             from .. import diff
             # needs to not include (added) etc or it may get used twice
             # Replace the processed text with the preferred result
-            rendered_diff = diff.render_diff(previous_version_file_contents=watch.get_last_fetched_before_filters(),
+            rendered_diff = diff.render_diff(previous_version_file_contents=watch.get_last_fetched_text_before_filters(),
                                              newest_version_file_contents=stripped_text_from_html,
                                              include_equal=False,  # not the same lines
                                              include_added=watch.get('filter_text_added', True),
@@ -231,7 +231,7 @@ class perform_site_check(difference_detection_processor):
                                              line_feed_sep="\n",
                                              include_change_type_prefix=False)
 
-            watch.save_last_fetched_before_filters(text_content_before_ignored_filter)
+            watch.save_last_text_fetched_before_filters(text_content_before_ignored_filter)
 
             if not rendered_diff and stripped_text_from_html:
                 # We had some content, but no differences were found

@@ -163,7 +163,6 @@ class ChangeDetectionStore:
                         del (update_obj[dict_key])
 
             self.__data['watching'][uuid].update(update_obj)
-
         self.needs_write = True
 
     @property

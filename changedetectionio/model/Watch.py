@@ -529,7 +529,7 @@ class model(dict):
         return False
 
 
-    def get_last_fetched_before_filters(self):
+    def get_last_fetched_text_before_filters(self):
         import brotli
         filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
 
@@ -544,7 +544,7 @@ class model(dict):
         with open(filepath, 'rb') as f:
             return(brotli.decompress(f.read()).decode('utf-8'))
 
-    def save_last_fetched_before_filters(self, contents):
+    def save_last_text_fetched_before_filters(self, contents):
         import brotli
         filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
         with open(filepath, 'wb') as f:
