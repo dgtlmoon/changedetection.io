@@ -5,7 +5,7 @@
 
 ARG PYTHON_VERSION=3.11
 
-FROM python:${PYTHON_VERSION}-slim-bookworm as builder
+FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
 
 # See `cryptography` pin comment in requirements.txt
 ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
