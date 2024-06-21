@@ -1,11 +1,12 @@
-import os
-import threading
-import queue
-import time
 from . import content_fetchers
-from changedetectionio import html_tools
-from .processors.text_json_diff import FilterNotFoundInResponse
 from .processors.restock_diff import UnableToExtractRestockData
+from .processors.text_json_diff import FilterNotFoundInResponse
+from changedetectionio import html_tools
+from copy import deepcopy
+import os
+import queue
+import threading
+import time
 
 # A single update worker
 #
@@ -277,9 +278,13 @@ class update_worker(threading.Thread):
 
                         update_handler.call_browser()
 
-                        changed_detected, update_obj, contents = update_handler.run_changedetection(uuid,
-                                                                                    skip_when_checksum_same=skip_when_same_checksum,
-                                                                                    )
+                        # DeepCopy so we can be sure we don't accidently change anything by reference
+                        watch = deepcopy(self.datastore.data['watching'].get(uuid))
+
+                        changed_detected, update_obj, contents = update_handler.run_changedetection(
+                            watch=watch,
+                            skip_when_checksum_same=skip_when_same_checksum,
+                        )
 
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
@@ -485,7 +490,6 @@ class update_worker(threading.Thread):
                     # Different exceptions mean that we may or may not want to bump the snapshot, trigger notifications etc
                     if process_changedetection_results:
                         try:
-                            watch = self.datastore.data['watching'].get(uuid)
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
                             # Also save the snapshot on the first time checked
@@ -530,9 +534,13 @@ class update_worker(threading.Thread):
 
                         # Always save the screenshot if it's available
                         if update_handler.screenshot:
-                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=update_handler.screenshot)
+                            watch.save_screenshot(screenshot=update_handler.screenshot)
+
                         if update_handler.xpath_data:
-                            self.datastore.save_xpath_data(watch_uuid=uuid, data=update_handler.xpath_data)
+                            watch.save_xpath_data(data=update_handler.xpath_data)
+
+                        if update_handler.fetcher.content:
+                            watch.save_last_fetched_html(contents=update_handler.fetcher.content)
 
 
                 self.current_uuid = None  # Done

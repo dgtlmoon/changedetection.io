@@ -528,6 +528,34 @@ class model(dict):
         # None is set
         return False
 
+    def save_xpath_data(self, data, as_error=False):
+        import json
+
+        if as_error:
+            target_path = os.path.join(self.watch_data_dir, "elements-error.json")
+        else:
+            target_path = os.path.join(self.watch_data_dir, "elements.json")
+
+        self.ensure_data_dir_exists()
+
+        with open(target_path, 'w') as f:
+            f.write(json.dumps(data))
+            f.close()
+
+    # Save as PNG, PNG is larger but better for doing visual diff in the future
+    def save_screenshot(self, screenshot: bytes, as_error=False):
+
+        if as_error:
+            target_path = os.path.join(self.watch_data_dir, "last-error-screenshot.png")
+        else:
+            target_path = os.path.join(self.watch_data_dir, "last-screenshot.png")
+
+        self.ensure_data_dir_exists()
+
+        with open(target_path, 'wb') as f:
+            f.write(screenshot)
+            f.close()
+
 
     def get_last_fetched_text_before_filters(self):
         import brotli
@@ -549,6 +577,36 @@ class model(dict):
         filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
         with open(filepath, 'wb') as f:
             f.write(brotli.compress(contents, mode=brotli.MODE_TEXT))
+
+
+    def get_last_fetched_html(self):
+        import brotli
+        filepath = os.path.join(self.watch_data_dir, 'last-fetched-html.br')
+
+        if not os.path.isfile(filepath):
+            return ''
+
+        with open(filepath, 'rb') as f:
+            return(brotli.decompress(f.read()).decode('utf-8'))
+
+    def save_last_fetched_html(self, contents):
+        import brotli
+        # 2039
+        filepath = os.path.join(self.watch_data_dir, 'last-fetched-html.br')
+        filepath_prev = os.path.join(self.watch_data_dir, 'last-fetched-html-prev.br')
+
+        # move the existing on to the previous
+        if os.path.isfile(filepath):
+            os.rename(filepath, filepath_prev)
+
+        with open(filepath, 'wb') as f:
+            contents = contents.encode('utf-8') if isinstance(contents, str) else contents
+            try:
+                f.write(brotli.compress(contents))
+            except Exception as e:
+                logger.warning(f"{self.get('uuid')} - Unable to compress snapshot, saving as raw data to {filepath}")
+                logger.warning(e)
+                f.write(contents)
 
     @property
     def get_browsersteps_available_screenshots(self):

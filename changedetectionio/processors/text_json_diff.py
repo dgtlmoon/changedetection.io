@@ -10,8 +10,6 @@ from . import difference_detection_processor
 from ..html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
 from changedetectionio import html_tools, content_fetchers
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
-import changedetectionio.content_fetchers
-from copy import deepcopy
 from loguru import logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -34,14 +32,12 @@ class PDFToHTMLToolNotFound(ValueError):
 # (set_proxy_from_list)
 class perform_site_check(difference_detection_processor):
 
-    def run_changedetection(self, uuid, skip_when_checksum_same=True):
+    def run_changedetection(self, watch, skip_when_checksum_same=True):
         changed_detected = False
         html_content = ""
         screenshot = False  # as bytes
         stripped_text_from_html = ""
 
-        # DeepCopy so we can be sure we don't accidently change anything by reference
-        watch = deepcopy(self.datastore.data['watching'].get(uuid))
         if not watch:
             raise Exception("Watch no longer exists.")
 
@@ -116,12 +112,12 @@ class perform_site_check(difference_detection_processor):
         # Better would be if Watch.model could access the global data also
         # and then use getattr https://docs.python.org/3/reference/datamodel.html#object.__getitem__
         # https://realpython.com/inherit-python-dict/ instead of doing it procedurely
-        include_filters_from_tags = self.datastore.get_tag_overrides_for_watch(uuid=uuid, attr='include_filters')
+        include_filters_from_tags = self.datastore.get_tag_overrides_for_watch(uuid=watch.get('uuid'), attr='include_filters')
 
         # 1845 - remove duplicated filters in both group and watch include filter
         include_filters_rule = list(dict.fromkeys(watch.get('include_filters', []) + include_filters_from_tags))
 
-        subtractive_selectors = [*self.datastore.get_tag_overrides_for_watch(uuid=uuid, attr='subtractive_selectors'),
+        subtractive_selectors = [*self.datastore.get_tag_overrides_for_watch(uuid=watch.get('uuid'), attr='subtractive_selectors'),
                                  *watch.get("subtractive_selectors", []),
                                  *self.datastore.data["settings"]["application"].get("global_subtractive_selectors", [])
                                  ]
@@ -344,17 +340,17 @@ class perform_site_check(difference_detection_processor):
                 if not watch['title'] or not len(watch['title']):
                     update_obj['title'] = html_tools.extract_element(find='title', html_content=self.fetcher.content)
 
-        logger.debug(f"Watch UUID {uuid} content check - Previous MD5: {watch.get('previous_md5')}, Fetched MD5 {fetched_md5}")
+        logger.debug(f"Watch UUID {watch.get('uuid')} content check - Previous MD5: {watch.get('previous_md5')}, Fetched MD5 {fetched_md5}")
 
         if changed_detected:
             if watch.get('check_unique_lines', False):
                 has_unique_lines = watch.lines_contain_something_unique_compared_to_history(lines=stripped_text_from_html.splitlines())
                 # One or more lines? unsure?
                 if not has_unique_lines:
-                    logger.debug(f"check_unique_lines: UUID {uuid} didnt have anything new setting change_detected=False")
+                    logger.debug(f"check_unique_lines: UUID {watch.get('uuid')} didnt have anything new setting change_detected=False")
                     changed_detected = False
                 else:
-                    logger.debug(f"check_unique_lines: UUID {uuid} had unique content")
+                    logger.debug(f"check_unique_lines: UUID {watch.get('uuid')} had unique content")
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5
