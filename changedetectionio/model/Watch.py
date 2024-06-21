@@ -597,6 +597,18 @@ class model(dict):
 
         self._prune_last_fetched_html_snapshots()
 
+    def get_fetched_html(self, timestamp):
+        import brotli
+
+        snapshot_fname = f"{timestamp}.html.br"
+        filepath = os.path.join(self.watch_data_dir, snapshot_fname)
+        if os.path.isfile(filepath):
+            with open(filepath, 'rb') as f:
+                return (brotli.decompress(f.read()).decode('utf-8'))
+
+        return False
+
+
     def _prune_last_fetched_html_snapshots(self):
 
         dates = list(self.history.keys())

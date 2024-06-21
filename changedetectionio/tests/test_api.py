@@ -149,6 +149,15 @@ def test_api_simple(client, live_server):
         headers={'x-api-key': api_key},
     )
     assert b'which has this one new line' in res.data
+    assert b'<div id' not in res.data
+
+    # Fetch the HTML of the latest one
+    res = client.get(
+        url_for("watchsinglehistory", uuid=watch_uuid, timestamp='latest')+"?html=1",
+        headers={'x-api-key': api_key},
+    )
+    assert b'which has this one new line' in res.data
+    assert b'<div id' in res.data
 
     # Fetch the whole watch
     res = client.get(
