@@ -251,6 +251,9 @@ class update_worker(threading.Thread):
                             f"URL {self.datastore.data['watching'][uuid]['url']}")
                     now = time.time()
 
+                    # DeepCopy so we can be sure we don't accidently change anything by reference
+                    watch = deepcopy(self.datastore.data['watching'].get(uuid))
+
                     try:
                         # Processor is what we are using for detecting the "Change"
                         processor = self.datastore.data['watching'][uuid].get('processor', 'text_json_diff')
@@ -277,9 +280,6 @@ class update_worker(threading.Thread):
                         self.datastore.data['watching'][uuid]['browser_steps_last_error_step'] = None
 
                         update_handler.call_browser()
-
-                        # DeepCopy so we can be sure we don't accidently change anything by reference
-                        watch = deepcopy(self.datastore.data['watching'].get(uuid))
 
                         changed_detected, update_obj, contents = update_handler.run_changedetection(
                             watch=watch,
@@ -314,7 +314,8 @@ class update_worker(threading.Thread):
                         })
 
                         if e.screenshot:
-                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot)
+                            watch.save_screenshot(screenshot=e.screenshot, as_error=True)
+
                         process_changedetection_results = False
 
                     except content_fetchers.exceptions.Non200ErrorCodeReceived as e:
@@ -330,11 +331,11 @@ class update_worker(threading.Thread):
                             err_text = "Error - Request returned a HTTP error code {}".format(str(e.status_code))
 
                         if e.screenshot:
-                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot, as_error=True)
+                            watch.save_screenshot(screenshot=e.screenshot, as_error=True)
                         if e.xpath_data:
-                            self.datastore.save_xpath_data(watch_uuid=uuid, data=e.xpath_data, as_error=True)
+                            watch.save_xpath_data(data=e.xpath_data, as_error=True)
                         if e.page_text:
-                            self.datastore.save_error_text(watch_uuid=uuid, contents=e.page_text)
+                            watch.save_error_text(contents=e.page_text)
 
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
                         process_changedetection_results = False
@@ -435,7 +436,7 @@ class update_worker(threading.Thread):
                     except content_fetchers.exceptions.JSActionExceptions as e:
                         err_text = "Error running JS Actions - Page request - "+e.message
                         if e.screenshot:
-                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot, as_error=True)
+                            watch.save_screenshot(screenshot=e.screenshot, as_error=True)
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                         process_changedetection_results = False
@@ -445,7 +446,7 @@ class update_worker(threading.Thread):
                             err_text = "{} - {}".format(err_text, e.message)
 
                         if e.screenshot:
-                            self.datastore.save_screenshot(watch_uuid=uuid, screenshot=e.screenshot, as_error=True)
+                            watch.save_screenshot(screenshot=e.screenshot, as_error=True)
 
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code,

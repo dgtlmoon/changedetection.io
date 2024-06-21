@@ -375,15 +375,6 @@ class ChangeDetectionStore:
 
         return False
 
-    def save_error_text(self, watch_uuid, contents):
-        if not self.data['watching'].get(watch_uuid):
-            return
-
-        self.data['watching'][watch_uuid].ensure_data_dir_exists()
-        target_path = os.path.join(self.datastore_path, watch_uuid, "last-error.txt")
-        with open(target_path, 'w') as f:
-            f.write(contents)
-
     def sync_to_json(self):
         logger.info("Saving JSON..")
         try:
