@@ -21,7 +21,8 @@ description = 'Detects all text changes where possible'
 json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
 
 class FilterNotFoundInResponse(ValueError):
-    def __init__(self, msg):
+    def __init__(self, msg, screenshot=None):
+        self.screenshot = screenshot
         ValueError.__init__(self, msg)
 
 
@@ -188,7 +189,7 @@ class perform_site_check(difference_detection_processor):
                                                                        append_pretty_line_formatting=not watch.is_source_type_url)
 
                     if not html_content.strip():
-                        raise FilterNotFoundInResponse(include_filters_rule)
+                        raise FilterNotFoundInResponse(msg=include_filters_rule, screenshot=self.fetcher.screenshot)
 
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)
