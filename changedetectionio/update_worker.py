@@ -246,17 +246,19 @@ class update_worker(threading.Thread):
                     contents = b''
                     process_changedetection_results = True
                     update_obj = {}
-                    logger.info(f"Processing watch UUID {uuid} "
-                            f"Priority {queued_item_data.priority} "
-                            f"URL {self.datastore.data['watching'][uuid]['url']}")
-                    now = time.time()
+
+                    # Clear last errors (move to preflight func?)
+                    self.datastore.data['watching'][uuid]['browser_steps_last_error_step'] = None
 
                     # DeepCopy so we can be sure we don't accidently change anything by reference
                     watch = deepcopy(self.datastore.data['watching'].get(uuid))
 
+                    logger.info(f"Processing watch UUID {uuid} Priority {queued_item_data.priority} URL {watch['url']}")
+                    now = time.time()
+
                     try:
                         # Processor is what we are using for detecting the "Change"
-                        processor = self.datastore.data['watching'][uuid].get('processor', 'text_json_diff')
+                        processor = watch.get('processor', 'text_json_diff')
                         # if system...
 
                         # Abort processing when the content was the same as the last fetch
@@ -275,9 +277,6 @@ class update_worker(threading.Thread):
                             update_handler = text_json_diff.perform_site_check(datastore=self.datastore,
                                                                                watch_uuid=uuid
                                                                                )
-
-                        # Clear last errors (move to preflight func?)
-                        self.datastore.data['watching'][uuid]['browser_steps_last_error_step'] = None
 
                         update_handler.call_browser()
 
@@ -348,15 +347,15 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
 
                         # Only when enabled, send the notification
-                        if self.datastore.data['watching'][uuid].get('filter_failure_notification_send', False):
-                            c = self.datastore.data['watching'][uuid].get('consecutive_filter_failures', 5)
+                        if watch.get('filter_failure_notification_send', False):
+                            c = watch.get('consecutive_filter_failures', 5)
                             c += 1
                             # Send notification if we reached the threshold?
                             threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts',
                                                                                            0)
                             logger.warning(f"Filter for {uuid} not found, consecutive_filter_failures: {c}")
                             if threshold > 0 and c >= threshold:
-                                if not self.datastore.data['watching'][uuid].get('notification_muted'):
+                                if not watch.get('notification_muted'):
                                     self.send_filter_failure_notification(uuid)
                                 c = 0
 
@@ -406,15 +405,15 @@ class update_worker(threading.Thread):
                                                                 }
                                                     )
 
-                        if self.datastore.data['watching'][uuid].get('filter_failure_notification_send', False):
-                            c = self.datastore.data['watching'][uuid].get('consecutive_filter_failures', 5)
+                        if watch.get('filter_failure_notification_send', False):
+                            c = watch.get('consecutive_filter_failures', 5)
                             c += 1
                             # Send notification if we reached the threshold?
                             threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts',
                                                                                            0)
                             logger.error(f"Step for {uuid} not found, consecutive_filter_failures: {c}")
                             if threshold > 0 and c >= threshold:
-                                if not self.datastore.data['watching'][uuid].get('notification_muted'):
+                                if not watch.get('notification_muted'):
                                     self.send_step_failure_notification(watch_uuid=uuid, step_n=e.step_n)
                                 c = 0
 
@@ -470,8 +469,6 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': "Exception: " + str(e)})
                         # Other serious error
                         process_changedetection_results = False
-#                        import traceback
-#                        print(traceback.format_exc())
 
                     else:
                         # Crash protection, the watch entry could have been removed by this point (during a slow chrome fetch etc)
@@ -479,7 +476,7 @@ class update_worker(threading.Thread):
                             continue
 
                         # Mark that we never had any failures
-                        if not self.datastore.data['watching'][uuid].get('ignore_status_codes'):
+                        if not watch.get('ignore_status_codes'):
                             update_obj['consecutive_filter_failures'] = 0
 
                         # Everything ran OK, clean off any previous error
@@ -528,7 +525,7 @@ class update_worker(threading.Thread):
                                 # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
                                 if watch.history_n >= 2:
                                     logger.info(f"Change detected in UUID {uuid} - {watch['url']}")
-                                    if not self.datastore.data['watching'][uuid].get('notification_muted'):
+                                    if not watch.get('notification_muted'):
                                         self.send_content_changed_notification(watch_uuid=uuid)
                                 else:
                                     logger.info(f"Change triggered in UUID {uuid} due to first history saving (no notifications sent) - {watch['url']}")
@@ -541,7 +538,7 @@ class update_worker(threading.Thread):
 
 
                     # Always record that we atleast tried
-                    count = self.datastore.data['watching'][uuid].get('check_count', 0) + 1
+                    count = watch.get('check_count', 0) + 1
 
                     # Record the 'server' header reply, can be used for actions in the future like cloudflare/akamai workarounds
                     try:
