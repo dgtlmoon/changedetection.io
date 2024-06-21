@@ -487,9 +487,19 @@ class update_worker(threading.Thread):
 
                         self.cleanup_error_artifacts(uuid)
 
+                    if not self.datastore.data['watching'].get(uuid):
+                        continue
                     #
                     # Different exceptions mean that we may or may not want to bump the snapshot, trigger notifications etc
                     if process_changedetection_results:
+                        # Always save the screenshot if it's available
+
+                        if update_handler.screenshot:
+                            watch.save_screenshot(screenshot=update_handler.screenshot)
+
+                        if update_handler.xpath_data:
+                            watch.save_xpath_data(data=update_handler.xpath_data)
+
                         try:
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
@@ -529,30 +539,24 @@ class update_worker(threading.Thread):
                             logger.critical(str(e))
                             self.datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
 
-                    if self.datastore.data['watching'].get(uuid):
-                        # Always record that we atleast tried
-                        count = self.datastore.data['watching'][uuid].get('check_count', 0) + 1
 
-                        # Record the 'server' header reply, can be used for actions in the future like cloudflare/akamai workarounds
-                        try:
-                            server_header = update_handler.fetcher.headers.get('server', '').strip().lower()[:255]
-                            self.datastore.update_watch(uuid=uuid,
-                                                        update_obj={'remote_server_reply': server_header}
-                                                        )
-                        except Exception as e:
-                            pass
+                    # Always record that we atleast tried
+                    count = self.datastore.data['watching'][uuid].get('check_count', 0) + 1
 
-                        self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
-                                                                           'last_checked': round(time.time()),
-                                                                           'check_count': count
-                                                                           })
+                    # Record the 'server' header reply, can be used for actions in the future like cloudflare/akamai workarounds
+                    try:
+                        server_header = update_handler.fetcher.headers.get('server', '').strip().lower()[:255]
+                        self.datastore.update_watch(uuid=uuid,
+                                                    update_obj={'remote_server_reply': server_header}
+                                                    )
+                    except Exception as e:
+                        pass
 
-                        # Always save the screenshot if it's available
-                        if update_handler.screenshot:
-                            watch.save_screenshot(screenshot=update_handler.screenshot)
+                    self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
+                                                                       'last_checked': round(time.time()),
+                                                                       'check_count': count
+                                                                       })
 
-                        if update_handler.xpath_data:
-                            watch.save_xpath_data(data=update_handler.xpath_data)
 
                 self.current_uuid = None  # Done
                 self.q.task_done()
