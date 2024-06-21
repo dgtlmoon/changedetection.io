@@ -18,7 +18,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 name = 'Webpage Text/HTML, JSON and PDF changes'
 description = 'Detects all text changes where possible'
-json_filter_prefixes = ['json:', 'jq:']
+json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
 
 class FilterNotFoundInResponse(ValueError):
     def __init__(self, msg):
