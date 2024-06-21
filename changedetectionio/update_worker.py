@@ -345,6 +345,7 @@ class update_worker(threading.Thread):
 
                         err_text = "Warning, no filters were found, no change detection ran - Did the page change layout? update your Visual Filter if necessary."
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
+                        watch.save_screenshot(screenshot=e.screenshot, as_error=True)
 
                         # Only when enabled, send the notification
                         if watch.get('filter_failure_notification_send', False):
