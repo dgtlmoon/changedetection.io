@@ -493,10 +493,24 @@ class update_worker(threading.Thread):
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
                             # Also save the snapshot on the first time checked
-                            if changed_detected or not watch['last_checked']:
+                            if changed_detected or not watch.get('last_checked'):
+                                timestamp = round(time.time())
+
+                                # Small hack so that we sleep just enough to allow 1 second  between history snapshots
+                                # this is because history.txt indexes/keys snapshots by epoch seconds and we dont want dupe keys
+
+                                if watch.newest_history_key and int(timestamp) == int(watch.newest_history_key):
+                                    logger.warning(
+                                        f"Timestamp {timestamp} already exists, waiting 1 seconds so we have a unique key in history.txt")
+                                    timestamp = str(int(timestamp) + 1)
+                                    time.sleep(1)
+
                                 watch.save_history_text(contents=contents,
-                                                        timestamp=str(round(time.time())),
+                                                        timestamp=timestamp,
                                                         snapshot_id=update_obj.get('previous_md5', 'none'))
+
+                                if update_handler.fetcher.content:
+                                    watch.save_last_fetched_html(contents=update_handler.fetcher.content, timestamp=timestamp)
 
                             # A change was detected
                             if changed_detected:
@@ -538,10 +552,6 @@ class update_worker(threading.Thread):
 
                         if update_handler.xpath_data:
                             watch.save_xpath_data(data=update_handler.xpath_data)
-
-                        if update_handler.fetcher.content:
-                            watch.save_last_fetched_html(contents=update_handler.fetcher.content)
-
 
                 self.current_uuid = None  # Done
                 self.q.task_done()
