@@ -18,7 +18,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 name = 'Webpage Text/HTML, JSON and PDF changes'
 description = 'Detects all text changes where possible'
-json_filter_prefixes = ['json:', 'jq:']
+json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
 
 class FilterNotFoundInResponse(ValueError):
     def __init__(self, msg):
@@ -146,7 +146,6 @@ class perform_site_check(difference_detection_processor):
                 pass
 
         if has_filter_rule:
-            json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
             for filter in include_filters_rule:
                 if any(prefix in filter for prefix in json_filter_prefixes):
                     stripped_text_from_html += html_tools.extract_json_as_string(content=self.fetcher.content, json_filter=filter)
