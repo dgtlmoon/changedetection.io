@@ -243,7 +243,7 @@ def _get_stripped_text_from_json_match(match):
 # ensure_is_ldjson_info_type - str "product", optional, "@type == product" (I dont know how to do that as a json selector)
 def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None):
     stripped_text_from_html = False
-
+# https://github.com/dgtlmoon/changedetection.io/pull/2041#issuecomment-1848397161w
     # Try to parse/filter out the JSON, if we get some parser error, then maybe it's embedded within HTML tags
     try:
         stripped_text_from_html = _parse_json(json.loads(content), json_filter)
@@ -282,17 +282,19 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
                 if isinstance(json_data, dict):
                     # If it has LD JSON 'key' @type, and @type is 'product', and something was found for the search
                     # (Some sites have multiple of the same ld+json @type='product', but some have the review part, some have the 'price' part)
-                    # @type could also be a list (Product, SubType)
+                    # @type could also be a list although non-standard ("@type": ["Product", "SubType"],)
                     # LD_JSON auto-extract also requires some content PLUS the ldjson to be present
                     # 1833 - could be either str or dict, should not be anything else
-                    if json_data.get('@type') and stripped_text_from_html:
-                        try:
-                            if json_data.get('@type') == str or json_data.get('@type') == dict:
-                                types = [json_data.get('@type')] if isinstance(json_data.get('@type'), str) else json_data.get('@type')
-                                if ensure_is_ldjson_info_type.lower() in [x.lower().strip() for x in types]:
-                                    break
-                        except:
-                            continue
+
+                    t = json_data.get('@type')
+                    if t and stripped_text_from_html:
+
+                        if isinstance(t, str) and t.lower() == ensure_is_ldjson_info_type.lower():
+                            break
+                        # The non-standard part, some have a list
+                        elif isinstance(t, list):
+                            if ensure_is_ldjson_info_type.lower() in [x.lower().strip() for x in t]:
+                                break
 
             elif stripped_text_from_html:
                 break

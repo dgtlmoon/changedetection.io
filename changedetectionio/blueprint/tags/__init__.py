@@ -103,7 +103,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         default = datastore.data['settings']['application']['tags'].get(uuid)
 
-        form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
+        form = forms.processor_text_json_diff_form(formdata=request.form if request.method == 'POST' else None,
                                data=default,
                                )
         form.datastore=datastore # needed?
@@ -126,7 +126,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         default = datastore.data['settings']['application']['tags'].get(uuid)
 
-        form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
+        form = forms.processor_text_json_diff_form(formdata=request.form if request.method == 'POST' else None,
                                data=default,
                                )
         # @todo subclass form so validation works
