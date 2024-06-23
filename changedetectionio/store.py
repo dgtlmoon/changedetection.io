@@ -163,7 +163,6 @@ class ChangeDetectionStore:
                         del (update_obj[dict_key])
 
             self.__data['watching'][uuid].update(update_obj)
-
         self.needs_write = True
 
     @property
@@ -375,46 +374,6 @@ class ChangeDetectionStore:
             return True
 
         return False
-
-    # Save as PNG, PNG is larger but better for doing visual diff in the future
-    def save_screenshot(self, watch_uuid, screenshot: bytes, as_error=False):
-        if not self.data['watching'].get(watch_uuid):
-            return
-
-        if as_error:
-            target_path = os.path.join(self.datastore_path, watch_uuid, "last-error-screenshot.png")
-        else:
-            target_path = os.path.join(self.datastore_path, watch_uuid, "last-screenshot.png")
-
-        self.data['watching'][watch_uuid].ensure_data_dir_exists()
-
-        with open(target_path, 'wb') as f:
-            f.write(screenshot)
-            f.close()
-
-
-    def save_error_text(self, watch_uuid, contents):
-        if not self.data['watching'].get(watch_uuid):
-            return
-
-        self.data['watching'][watch_uuid].ensure_data_dir_exists()
-        target_path = os.path.join(self.datastore_path, watch_uuid, "last-error.txt")
-        with open(target_path, 'w') as f:
-            f.write(contents)
-
-    def save_xpath_data(self, watch_uuid, data, as_error=False):
-
-        if not self.data['watching'].get(watch_uuid):
-            return
-        if as_error:
-            target_path = os.path.join(self.datastore_path, watch_uuid, "elements-error.json")
-        else:
-            target_path = os.path.join(self.datastore_path, watch_uuid, "elements.json")
-        self.data['watching'][watch_uuid].ensure_data_dir_exists()
-        with open(target_path, 'w') as f:
-            f.write(json.dumps(data))
-            f.close()
-
 
     def sync_to_json(self):
         logger.info("Saving JSON..")

@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from changedetectionio.strtobool import strtobool
+from changedetectionio.model import Watch
 from copy import deepcopy
 from loguru import logger
 import hashlib
@@ -138,7 +139,7 @@ class difference_detection_processor():
         # After init, call run_changedetection() which will do the actual change-detection
 
     @abstractmethod
-    def run_changedetection(self, uuid, skip_when_checksum_same=True):
+    def run_changedetection(self, watch: Watch, skip_when_checksum_same=True):
         update_obj = {'last_notification_error': False, 'last_error': False}
         some_data = 'xxxxx'
         update_obj["previous_md5"] = hashlib.md5(some_data.encode('utf-8')).hexdigest()

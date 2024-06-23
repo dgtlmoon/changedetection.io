@@ -170,23 +170,33 @@ class WatchSingleHistory(Resource):
             curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/history/1677092977 -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json"
         @apiName Get single snapshot content
         @apiGroup Watch History
+        @apiParam {String} [html]       Optional Set to =1 to return the last HTML (only stores last 2 snapshots, use `latest` as timestamp)
         @apiSuccess (200) {String} OK
         @apiSuccess (404) {String} ERR Not found
         """
         watch = self.datastore.data['watching'].get(uuid)
         if not watch:
-            abort(404, message='No watch exists with the UUID of {}'.format(uuid))
+            abort(404, message=f"No watch exists with the UUID of {uuid}")
 
         if not len(watch.history):
-            abort(404, message='Watch found but no history exists for the UUID {}'.format(uuid))
+            abort(404, message=f"Watch found but no history exists for the UUID {uuid}")
 
         if timestamp == 'latest':
             timestamp = list(watch.history.keys())[-1]
 
-        content = watch.get_history_snapshot(timestamp)
+        if request.args.get('html'):
+            content = watch.get_fetched_html(timestamp)
+            if content:
+                response = make_response(content, 200)
+                response.mimetype = "text/html"
+            else:
+                response = make_response("No content found", 404)
+                response.mimetype = "text/plain"
+        else:
+            content = watch.get_history_snapshot(timestamp)
+            response = make_response(content, 200)
+            response.mimetype = "text/plain"
 
-        response = make_response(content, 200)
-        response.mimetype = "text/plain"
         return response
 
 

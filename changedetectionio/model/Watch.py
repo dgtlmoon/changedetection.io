@@ -328,14 +328,9 @@ class model(dict):
     def save_history_text(self, contents, timestamp, snapshot_id):
         import brotli
 
-        self.ensure_data_dir_exists()
+        logger.trace(f"{self.get('uuid')} - Updating history.txt with timestamp {timestamp}")
 
-        # Small hack so that we sleep just enough to allow 1 second  between history snapshots
-        # this is because history.txt indexes/keys snapshots by epoch seconds and we dont want dupe keys
-        if self.__newest_history_key and int(timestamp) == int(self.__newest_history_key):
-            logger.warning(f"Timestamp {timestamp} already exists, waiting 1 seconds so we have a unique key in history.txt")
-            timestamp = str(int(timestamp) + 1)
-            time.sleep(1)
+        self.ensure_data_dir_exists()
 
         threshold = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024))
         skip_brotli = strtobool(os.getenv('DISABLE_BROTLI_TEXT_SNAPSHOT', 'False'))
@@ -528,8 +523,42 @@ class model(dict):
         # None is set
         return False
 
+    def save_error_text(self, contents):
+        self.ensure_data_dir_exists()
+        target_path = os.path.join(self.watch_data_dir, "last-error.txt")
+        with open(target_path, 'w') as f:
+            f.write(contents)
 
-    def get_last_fetched_before_filters(self):
+    def save_xpath_data(self, data, as_error=False):
+        import json
+
+        if as_error:
+            target_path = os.path.join(self.watch_data_dir, "elements-error.json")
+        else:
+            target_path = os.path.join(self.watch_data_dir, "elements.json")
+
+        self.ensure_data_dir_exists()
+
+        with open(target_path, 'w') as f:
+            f.write(json.dumps(data))
+            f.close()
+
+    # Save as PNG, PNG is larger but better for doing visual diff in the future
+    def save_screenshot(self, screenshot: bytes, as_error=False):
+
+        if as_error:
+            target_path = os.path.join(self.watch_data_dir, "last-error-screenshot.png")
+        else:
+            target_path = os.path.join(self.watch_data_dir, "last-screenshot.png")
+
+        self.ensure_data_dir_exists()
+
+        with open(target_path, 'wb') as f:
+            f.write(screenshot)
+            f.close()
+
+
+    def get_last_fetched_text_before_filters(self):
         import brotli
         filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
 
@@ -544,11 +573,55 @@ class model(dict):
         with open(filepath, 'rb') as f:
             return(brotli.decompress(f.read()).decode('utf-8'))
 
-    def save_last_fetched_before_filters(self, contents):
+    def save_last_text_fetched_before_filters(self, contents):
         import brotli
         filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
         with open(filepath, 'wb') as f:
             f.write(brotli.compress(contents, mode=brotli.MODE_TEXT))
+
+    def save_last_fetched_html(self, timestamp, contents):
+        import brotli
+
+        self.ensure_data_dir_exists()
+        snapshot_fname = f"{timestamp}.html.br"
+        filepath = os.path.join(self.watch_data_dir, snapshot_fname)
+
+        with open(filepath, 'wb') as f:
+            contents = contents.encode('utf-8') if isinstance(contents, str) else contents
+            try:
+                f.write(brotli.compress(contents))
+            except Exception as e:
+                logger.warning(f"{self.get('uuid')} - Unable to compress snapshot, saving as raw data to {filepath}")
+                logger.warning(e)
+                f.write(contents)
+
+        self._prune_last_fetched_html_snapshots()
+
+    def get_fetched_html(self, timestamp):
+        import brotli
+
+        snapshot_fname = f"{timestamp}.html.br"
+        filepath = os.path.join(self.watch_data_dir, snapshot_fname)
+        if os.path.isfile(filepath):
+            with open(filepath, 'rb') as f:
+                return (brotli.decompress(f.read()).decode('utf-8'))
+
+        return False
+
+
+    def _prune_last_fetched_html_snapshots(self):
+
+        dates = list(self.history.keys())
+        dates.reverse()
+
+        for index, timestamp in enumerate(dates):
+            snapshot_fname = f"{timestamp}.html.br"
+            filepath = os.path.join(self.watch_data_dir, snapshot_fname)
+
+            # Keep only the first 2
+            if index > 1 and os.path.isfile(filepath):
+                os.remove(filepath)
+
 
     @property
     def get_browsersteps_available_screenshots(self):

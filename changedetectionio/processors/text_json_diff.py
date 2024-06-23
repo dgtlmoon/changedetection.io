@@ -10,8 +10,6 @@ from . import difference_detection_processor
 from ..html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
 from changedetectionio import html_tools, content_fetchers
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
-import changedetectionio.content_fetchers
-from copy import deepcopy
 from loguru import logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -21,7 +19,8 @@ description = 'Detects all text changes where possible'
 json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
 
 class FilterNotFoundInResponse(ValueError):
-    def __init__(self, msg):
+    def __init__(self, msg, screenshot=None):
+        self.screenshot = screenshot
         ValueError.__init__(self, msg)
 
 
@@ -34,14 +33,12 @@ class PDFToHTMLToolNotFound(ValueError):
 # (set_proxy_from_list)
 class perform_site_check(difference_detection_processor):
 
-    def run_changedetection(self, uuid, skip_when_checksum_same=True):
+    def run_changedetection(self, watch, skip_when_checksum_same=True):
         changed_detected = False
         html_content = ""
         screenshot = False  # as bytes
         stripped_text_from_html = ""
 
-        # DeepCopy so we can be sure we don't accidently change anything by reference
-        watch = deepcopy(self.datastore.data['watching'].get(uuid))
         if not watch:
             raise Exception("Watch no longer exists.")
 
@@ -116,12 +113,12 @@ class perform_site_check(difference_detection_processor):
         # Better would be if Watch.model could access the global data also
         # and then use getattr https://docs.python.org/3/reference/datamodel.html#object.__getitem__
         # https://realpython.com/inherit-python-dict/ instead of doing it procedurely
-        include_filters_from_tags = self.datastore.get_tag_overrides_for_watch(uuid=uuid, attr='include_filters')
+        include_filters_from_tags = self.datastore.get_tag_overrides_for_watch(uuid=watch.get('uuid'), attr='include_filters')
 
         # 1845 - remove duplicated filters in both group and watch include filter
         include_filters_rule = list(dict.fromkeys(watch.get('include_filters', []) + include_filters_from_tags))
 
-        subtractive_selectors = [*self.datastore.get_tag_overrides_for_watch(uuid=uuid, attr='subtractive_selectors'),
+        subtractive_selectors = [*self.datastore.get_tag_overrides_for_watch(uuid=watch.get('uuid'), attr='subtractive_selectors'),
                                  *watch.get("subtractive_selectors", []),
                                  *self.datastore.data["settings"]["application"].get("global_subtractive_selectors", [])
                                  ]
@@ -188,7 +185,7 @@ class perform_site_check(difference_detection_processor):
                                                                        append_pretty_line_formatting=not watch.is_source_type_url)
 
                     if not html_content.strip():
-                        raise FilterNotFoundInResponse(include_filters_rule)
+                        raise FilterNotFoundInResponse(msg=include_filters_rule, screenshot=self.fetcher.screenshot)
 
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)
@@ -222,7 +219,7 @@ class perform_site_check(difference_detection_processor):
             from .. import diff
             # needs to not include (added) etc or it may get used twice
             # Replace the processed text with the preferred result
-            rendered_diff = diff.render_diff(previous_version_file_contents=watch.get_last_fetched_before_filters(),
+            rendered_diff = diff.render_diff(previous_version_file_contents=watch.get_last_fetched_text_before_filters(),
                                              newest_version_file_contents=stripped_text_from_html,
                                              include_equal=False,  # not the same lines
                                              include_added=watch.get('filter_text_added', True),
@@ -231,7 +228,7 @@ class perform_site_check(difference_detection_processor):
                                              line_feed_sep="\n",
                                              include_change_type_prefix=False)
 
-            watch.save_last_fetched_before_filters(text_content_before_ignored_filter)
+            watch.save_last_text_fetched_before_filters(text_content_before_ignored_filter)
 
             if not rendered_diff and stripped_text_from_html:
                 # We had some content, but no differences were found
@@ -344,17 +341,17 @@ class perform_site_check(difference_detection_processor):
                 if not watch['title'] or not len(watch['title']):
                     update_obj['title'] = html_tools.extract_element(find='title', html_content=self.fetcher.content)
 
-        logger.debug(f"Watch UUID {uuid} content check - Previous MD5: {watch.get('previous_md5')}, Fetched MD5 {fetched_md5}")
+        logger.debug(f"Watch UUID {watch.get('uuid')} content check - Previous MD5: {watch.get('previous_md5')}, Fetched MD5 {fetched_md5}")
 
         if changed_detected:
             if watch.get('check_unique_lines', False):
                 has_unique_lines = watch.lines_contain_something_unique_compared_to_history(lines=stripped_text_from_html.splitlines())
                 # One or more lines? unsure?
                 if not has_unique_lines:
-                    logger.debug(f"check_unique_lines: UUID {uuid} didnt have anything new setting change_detected=False")
+                    logger.debug(f"check_unique_lines: UUID {watch.get('uuid')} didnt have anything new setting change_detected=False")
                     changed_detected = False
                 else:
-                    logger.debug(f"check_unique_lines: UUID {uuid} had unique content")
+                    logger.debug(f"check_unique_lines: UUID {watch.get('uuid')} had unique content")
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5
