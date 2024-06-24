@@ -721,7 +721,7 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['watching'][uuid].update(extra_update_obj)
 
             if request.args.get('unpause_on_save'):
-                flash("Updated watch - unpaused!.")
+                flash("Updated watch - unpaused!")
             else:
                 flash("Updated watch.")
 
