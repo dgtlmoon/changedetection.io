@@ -88,7 +88,7 @@ jobs:
       - name: Build and push :dev
         id: docker_build
         if: ${{ github.ref }} == "refs/heads/master"
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./
           file: ./Dockerfile
@@ -106,7 +106,7 @@ jobs:
       - name: Build and push :tag
         id: docker_build_tag_release
         if: github.event_name == 'release' && startsWith(github.event.release.tag_name, '0.')
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./
           file: ./Dockerfile
