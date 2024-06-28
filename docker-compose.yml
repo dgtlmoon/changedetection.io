@@ -68,9 +68,10 @@ services:
      
      # If WEBDRIVER or PLAYWRIGHT are enabled, changedetection container depends on that
      # and must wait before starting (substitute "browser-chrome" with "playwright-chrome" if last one is used)
-#    depends_on:
-#        browser-chrome:
-#            condition: service_started
+#      depends_on:
+#          playwright-chrome:
+#              condition: service_started
+
 
      # Used for fetching pages via Playwright+Chrome where you need Javascript support.
      # RECOMMENDED FOR FETCHING PAGES WITH CHROME
