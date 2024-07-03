@@ -39,6 +39,12 @@ $(document).ready(function () {
       $("#highlightSnippet").remove();
     }
 
+    // Listen for Escape key press
+    window.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            clean();
+        }
+    }, false);
 
     function dragTextHandler(event) {
         console.log('mouseupped');
