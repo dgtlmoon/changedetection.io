@@ -1,13 +1,4 @@
 $(document).ready(function () {
-    var csrftoken = $('input[name=csrf_token]').val();
-    $.ajaxSetup({
-        beforeSend: function (xhr, settings) {
-            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-                xhr.setRequestHeader("X-CSRFToken", csrftoken)
-            }
-        }
-    })
-
     $('.needs-localtime').each(function () {
         for (var option of this.options) {
             var dateObject = new Date(option.value * 1000);
