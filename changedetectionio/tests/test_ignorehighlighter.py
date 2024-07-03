@@ -45,7 +45,6 @@ def test_highlight_ignore(client, live_server):
     )
 
     res = client.get(url_for("edit_page", uuid=uuid))
-
     # should be a regex now
     assert b'/oh\ yeah\ \d+/' in res.data
 
@@ -55,3 +54,7 @@ def test_highlight_ignore(client, live_server):
     # And it should register in the preview page
     res = client.get(url_for("preview_page", uuid=uuid))
     assert b'<div class="ignored">oh yeah 456' in res.data
+
+    # Should be in base.html
+    assert b'csrftoken' in res.data
+
