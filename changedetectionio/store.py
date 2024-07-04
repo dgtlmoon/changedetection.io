@@ -843,3 +843,8 @@ class ChangeDetectionStore:
                 # Something custom here
                 self.__data["watching"][uuid]['time_between_check_use_default'] = False
 
+    # Correctly set datatype for older installs where 'tag' was string and update_12 did not catch it
+    def update_16(self):
+        for uuid, watch in self.data['watching'].items():
+            if isinstance(watch.get('tags'), str):
+                self.data['watching'][uuid]['tags'] = []
