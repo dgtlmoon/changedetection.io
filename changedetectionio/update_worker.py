@@ -249,7 +249,7 @@ class update_worker(threading.Thread):
 
                     # Clear last errors (move to preflight func?)
                     self.datastore.data['watching'][uuid]['browser_steps_last_error_step'] = None
-                                        
+
                     watch = self.datastore.data['watching'].get(uuid)
 
                     logger.info(f"Processing watch UUID {uuid} Priority {queued_item_data.priority} URL {watch['url']}")
