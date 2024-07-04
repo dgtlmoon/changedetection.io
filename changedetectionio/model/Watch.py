@@ -238,6 +238,8 @@ class model(dict):
 
         if len(tmp_history):
             self.__newest_history_key = list(tmp_history.keys())[-1]
+        else:
+            self.__newest_history_key = None
 
         self.__history_n = len(tmp_history)
 
