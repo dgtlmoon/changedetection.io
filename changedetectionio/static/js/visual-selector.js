@@ -28,13 +28,26 @@ $(document).ready(function () {
         bootstrap_visualselector();
     });
 
+    function clear_reset() {
+        state_clicked = false;
+        ctx.clearRect(0, 0, c.width, c.height);
+        if($("#include_filters").val().length) {
+            alert("Existing filters under the 'Filters & Triggers' tab were cleared.");
+        }
+        $("#include_filters").val('');
+    }
+
     $(document).on('keydown', function (event) {
         if ($("img#selector-background").is(":visible")) {
             if (event.key == "Escape") {
-                state_clicked = false;
-                ctx.clearRect(0, 0, c.width, c.height);
+                clear_reset();
             }
         }
+    });
+
+    // Handle clearing button/link
+    $('#clear-selector').on('click', function (event) {
+        clear_reset();
     });
 
     // For when the page loads
@@ -42,17 +55,6 @@ $(document).ready(function () {
         $("img#selector-background").attr('src', '');
         return;
     }
-
-    // Handle clearing button/link
-    $('#clear-selector').on('click', function (event) {
-        if (!state_clicked) {
-            alert('Oops, Nothing selected!');
-        }
-        state_clicked = false;
-        ctx.clearRect(0, 0, c.width, c.height);
-        xctx.clearRect(0, 0, c.width, c.height);
-        $("#include_filters").val('');
-    });
 
 
     bootstrap_visualselector();
@@ -117,12 +119,13 @@ $(document).ready(function () {
         selector_image = $("img#selector-background")[0];
         selector_image_rect = selector_image.getBoundingClientRect();
 
-        // make the canvas the same size as the image
-        $('#selector-canvas').attr('height', selector_image_rect.height);
-        $('#selector-canvas').attr('width', selector_image_rect.width);
+        // Make the overlayed canvas the same size as the image
+        $('#selector-canvas').attr('height', selector_image_rect.height).attr('width', selector_image_rect.width);
         $('#selector-wrapper').attr('width', selector_image_rect.width);
-        x_scale = selector_image_rect.width / selector_data['browser_width'];
+
+        x_scale = selector_image_rect.width / selector_image.naturalWidth;
         y_scale = selector_image_rect.height / selector_image.naturalHeight;
+
         ctx.strokeStyle = 'rgba(255,0,0, 0.9)';
         ctx.fillStyle = 'rgba(255,0,0, 0.1)';
         ctx.lineWidth = 3;
@@ -135,6 +138,7 @@ $(document).ready(function () {
             set_scale();
             highlight_current_selected_i();
         });
+        
         var selector_currnt_xpath_text = $("#selector-current-xpath span");
 
         set_scale();
@@ -164,6 +168,7 @@ $(document).ready(function () {
             if (!found) {
                 alert("Unfortunately your existing CSS/xPath Filter was no longer found!");
             }
+            highlight_matching_filters();
         }
 
 
@@ -242,6 +247,18 @@ $(document).ready(function () {
 
         }
 
+
+        function highlight_matching_filters() {
+            selector_data['size_pos'].forEach(sel => {
+                if (sel.highlight_as_custom_filter) {
+                    xctx.fillStyle = 'rgba(205,205,205,0.95)';
+                    xctx.strokeStyle = 'rgba(225,0,0,0.95)';
+                    xctx.lineWidth = 1;
+                    xctx.clearRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+                    xctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+                }
+            });
+        }
 
         $('#selector-canvas').bind('mousedown', function (e) {
             highlight_current_selected_i();
