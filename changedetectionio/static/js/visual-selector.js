@@ -45,15 +45,15 @@ $(document).ready(() => {
         return v.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     }
 
-    $(document).on('keydown', (event) => {
-        if ($selectorBackgroundElem.is(":visible") && event.key === "Escape") {
-            clearReset();
-        }
-    });
-
     $(document).on('keydown keyup', (event) => {
         if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
             appendToList = event.type === 'keydown';
+        }
+
+        if (event.type === 'keydown') {
+            if ($selectorBackgroundElem.is(":visible") && event.key === "Escape") {
+                clearReset();
+            }
         }
     });
 
@@ -149,6 +149,7 @@ $(document).ready(() => {
 
         $selectorCanvasElem.bind('mousemove', handleMouseMove.debounce(5));
         $selectorCanvasElem.bind('mousedown', handleMouseDown.debounce(5));
+        $selectorCanvasElem.bind('mouseleave', highlightCurrentSelected.debounce(5));
 
         function handleMouseMove(e) {
             if (!e.offsetX && !e.offsetY) {
@@ -184,6 +185,7 @@ $(document).ready(() => {
         }
 
         function handleMouseDown() {
+            // If we are in 'appendToList' mode, grow the list, if not, just 1
             currentSelections = appendToList ? [...currentSelections, currentSelection] : [currentSelection];
             highlightCurrentSelected();
             updateFiltersText();
