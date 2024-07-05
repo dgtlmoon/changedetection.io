@@ -75,7 +75,10 @@ $(document).ready(() => {
 
     $('#clear-selector').on('click', () => {
         clearReset();
-
+    });
+    // So if they start switching between visualSelector and manual filters, stop it from rendering old filters
+    $('li.tab a').on('click', () => {
+        runInClearMode = true;
     });
 
     if (!window.location.hash || window.location.hash !== '#visualselector') {
@@ -124,7 +127,12 @@ $(document).ready(() => {
     }
 
     function updateFiltersText() {
-        let textboxFilterText = currentSelections.map(sel => (sel[0] === '/' ? `xpath:${sel.xpath}` : sel.xpath)).join("\n");
+        // Assuming currentSelections is already defined and contains the selections
+        let uniqueSelections = new Set(currentSelections.map(sel => (sel[0] === '/' ? `xpath:${sel.xpath}` : sel.xpath)));
+
+        // Convert the Set back to an array and join with newline characters
+        let textboxFilterText = Array.from(uniqueSelections).join("\n");
+
         $includeFiltersElem.val(textboxFilterText);
     }
 
