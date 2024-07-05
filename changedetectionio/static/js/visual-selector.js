@@ -115,6 +115,11 @@ $(document).ready(() => {
         });
     }
 
+    function updateFiltersText() {
+        let textboxFilterText = currentSelections.map(sel => (sel[0] === '/' ? `xpath:${sel.xpath}` : sel.xpath)).join("\n");
+        $includeFiltersElem.val(textboxFilterText);
+    }
+
     function setScale() {
         $selectorWrapperElem.show();
         selectorImage = $selectorBackgroundElem[0];
@@ -155,7 +160,9 @@ $(document).ready(() => {
             }
         });
 
+
         highlightCurrentSelected();
+        updateFiltersText();
 
         $selectorCanvasElem.bind('mousemove', handleMouseMove.debounce(5));
         $selectorCanvasElem.bind('mousedown', handleMouseDown.debounce(5));
@@ -200,10 +207,6 @@ $(document).ready(() => {
             updateFiltersText();
         }
 
-        function updateFiltersText() {
-            let textboxFilterText = currentSelections.map(sel => (sel[0] === '/' ? `xpath:${sel.xpath}` : sel.xpath)).join("\n");
-            $includeFiltersElem.val(textboxFilterText);
-        }
     }
 
     function highlightCurrentSelected() {
