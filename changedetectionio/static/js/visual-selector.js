@@ -4,37 +4,46 @@
 
 $(document).ready(function () {
 
-    var current_selected_i;
+    var current_selections= [];
+    var current_selection = false;
+
     var state_clicked = false;
 
     var c;
 
     // greyed out fill context
     var xctx;
+
     // redline highlight context
     var ctx;
 
-    var current_default_xpath = [];
     var x_scale = 1;
     var y_scale = 1;
     var selector_image;
     var selector_image_rect;
     var selector_data;
+    var append_to_list = false;
 
     $('#visualselector-tab').click(function () {
         $("img#selector-background").off('load');
         state_clicked = false;
-        current_selected_i = false;
+        current_selections = [];
         bootstrap_visualselector();
     });
 
     function clear_reset() {
         state_clicked = false;
         ctx.clearRect(0, 0, c.width, c.height);
-        if($("#include_filters").val().length) {
+        if ($("#include_filters").val().length) {
             alert("Existing filters under the 'Filters & Triggers' tab were cleared.");
         }
         $("#include_filters").val('');
+        current_selections = [];
+        highlight_current_selected();
+    }
+
+    function splitToList(v) {
+        return v.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     }
 
     $(document).on('keydown', function (event) {
@@ -42,6 +51,14 @@ $(document).ready(function () {
             if (event.key == "Escape") {
                 clear_reset();
             }
+        }
+    });
+
+    $(document).on('keydown keyup', function (event) {
+        if (event.code === 'ShiftLeft') {
+            append_to_list = event.type === 'keydown';
+        } else if (event.code === 'ShiftRight') {
+            append_to_list = event.type === 'keydown';
         }
     });
 
@@ -75,11 +92,6 @@ $(document).ready(function () {
                 xctx = c.getContext("2d");
                 // redline highlight context
                 ctx = c.getContext("2d");
-                if ($("#include_filters").val().trim().length) {
-                    current_default_xpath = $("#include_filters").val().split(/\r?\n/g);
-                } else {
-                    current_default_xpath = [];
-                }
                 fetch_data();
                 $('#selector-canvas').off("mousemove mousedown");
                 // screenshot_url defined in the edit.html template
@@ -136,7 +148,7 @@ $(document).ready(function () {
     function reflow_selector() {
         $(window).resize(function () {
             set_scale();
-            highlight_current_selected_i();
+            highlight_current_selected();
         });
         
         var selector_currnt_xpath_text = $("#selector-current-xpath span");
@@ -145,39 +157,24 @@ $(document).ready(function () {
 
         console.log(selector_data['size_pos'].length + " selectors found");
 
-        // highlight the default one if we can find it in the xPath list
-        // or the xpath matches the default one
-        found = false;
-        if (current_default_xpath.length) {
-            // Find the first one that matches
-            // @todo In the future paint all that match
-            for (const c of current_default_xpath) {
-                for (var i = selector_data['size_pos'].length; i !== 0; i--) {
-                    if (selector_data['size_pos'][i - 1].xpath.trim() === c.trim()) {
-                        console.log("highlighting " + c);
-                        current_selected_i = i - 1;
-                        highlight_current_selected_i();
-                        found = true;
-                        break;
-                    }
-                }
-                if (found) {
-                    break;
-                }
+
+        existing_filters = splitToList($("#include_filters").val());
+
+        // Different list in the future ? some attrib to tag it as subtract?
+        //existing_filters.concat(splitToList($("#subtractive_selectors").val()));
+
+        selector_data['size_pos'].forEach(sel => {
+            // @todo || or sel.xpath is in the list split by line etc
+            if (sel.highlight_as_custom_filter || existing_filters.includes(sel.xpath)) {
+                console.log("highlighting " + c);
+                current_selections.push(sel);
             }
-            if (!found) {
-                alert("Unfortunately your existing CSS/xPath Filter was no longer found!");
-            }
-            highlight_matching_filters();
-        }
+        });
+        highlight_current_selected();
 
 
         $('#selector-canvas').bind('mousemove', function (e) {
-            if (state_clicked) {
-                return;
-            }
-            ctx.clearRect(0, 0, c.width, c.height);
-            current_selected_i = null;
+            // Keep the current ones
 
             // Add in offset
             if ((typeof e.offsetX === "undefined" || typeof e.offsetY === "undefined") || (e.offsetX === 0 && e.offsetY === 0)) {
@@ -186,9 +183,8 @@ $(document).ready(function () {
                 e.offsetY = e.pageY - targetOffset.top;
             }
 
-            // Reverse order - the most specific one should be deeper/"laster"
-            // Basically, find the most 'deepest'
-            var found = 0;
+            // Reverse order - the most specific one should be deeper/"laster", Basically, find the most 'deepest'
+
             ctx.fillStyle = 'rgba(205,0,0,0.35)';
             // Will be sorted by smallest width*height first
             for (var i = 0; i <= selector_data['size_pos'].length; i++) {
@@ -200,17 +196,15 @@ $(document).ready(function () {
                     e.offsetX > sel.left * y_scale && e.offsetX < sel.left * y_scale + sel.width * y_scale
 
                 ) {
-
                     // FOUND ONE
                     set_current_selected_text(sel.xpath);
                     ctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
                     ctx.fillRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-
-                    // no need to keep digging
-                    // @todo or, O to go out/up, I to go in
-                    // or double click to go up/out the selector?
-                    current_selected_i = i;
-                    found += 1;
+                    current_selections.push(sel);
+                    current_selection = sel;
+                    highlight_current_selected();
+                    // Can be removed since we are only using it to preview
+                    current_selections.pop();
                     break;
                 }
             }
@@ -221,47 +215,27 @@ $(document).ready(function () {
             selector_currnt_xpath_text[0].innerHTML = s;
         }
 
-        function highlight_current_selected_i() {
-            if (state_clicked) {
-                state_clicked = false;
-                xctx.clearRect(0, 0, c.width, c.height);
-                return;
-            }
-
-            var sel = selector_data['size_pos'][current_selected_i];
-            if (sel[0] == '/') {
-                // @todo - not sure just checking / is right
-                $("#include_filters").val('xpath:' + sel.xpath);
-            } else {
-                $("#include_filters").val(sel.xpath);
-            }
+        function highlight_current_selected() {
             xctx.fillStyle = 'rgba(205,205,205,0.95)';
             xctx.strokeStyle = 'rgba(225,0,0,0.9)';
             xctx.lineWidth = 3;
-            xctx.fillRect(0, 0, c.width, c.height);
-            // Clear out what only should be seen (make a clear/clean spot)
-            xctx.clearRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-            xctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-            state_clicked = true;
-            set_current_selected_text(sel.xpath);
-
-        }
-
-
-        function highlight_matching_filters() {
-            selector_data['size_pos'].forEach(sel => {
-                if (sel.highlight_as_custom_filter) {
-                    xctx.fillStyle = 'rgba(205,205,205,0.95)';
-                    xctx.strokeStyle = 'rgba(225,0,0,0.95)';
-                    xctx.lineWidth = 1;
-                    xctx.clearRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-                    xctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-                }
+            xctx.clearRect(0, 0, c.width, c.height);
+            current_selections.forEach(sel => {
+                xctx.clearRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+                xctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
             });
+
         }
 
-        $('#selector-canvas').bind('mousedown', function (e) {
-            highlight_current_selected_i();
+        $('#selector-canvas').bind('mousedown', function (event) {
+            current_selections = append_to_list ? [...current_selections, current_selection] : [current_selection];
+            highlight_current_selected();
+            // Update the filters text
+            var textbox_filter_text = "";
+            current_selections.forEach(sel => {
+                textbox_filter_text += (sel[0] === '/' ? 'xpath:' + sel.xpath : sel.xpath) + "\n";
+            });
+            $("#include_filters").val(textbox_filter_text);
         });
     }
 
