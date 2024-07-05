@@ -117,12 +117,13 @@ $(document).ready(function () {
         selector_image = $("img#selector-background")[0];
         selector_image_rect = selector_image.getBoundingClientRect();
 
-        // make the canvas the same size as the image
-        $('#selector-canvas').attr('height', selector_image_rect.height);
-        $('#selector-canvas').attr('width', selector_image_rect.width);
+        // Make the overlayed canvas the same size as the image
+        $('#selector-canvas').attr('height', selector_image_rect.height).attr('width', selector_image_rect.width);
         $('#selector-wrapper').attr('width', selector_image_rect.width);
-        x_scale = selector_image_rect.width / selector_data['browser_width'];
+
+        x_scale = selector_image_rect.width / selector_image.naturalWidth;
         y_scale = selector_image_rect.height / selector_image.naturalHeight;
+
         ctx.strokeStyle = 'rgba(255,0,0, 0.9)';
         ctx.fillStyle = 'rgba(255,0,0, 0.1)';
         ctx.lineWidth = 3;
@@ -245,42 +246,16 @@ $(document).ready(function () {
         }
 
 
-        function highlight_current_selected_i() {
-            if (state_clicked) {
-                state_clicked = false;
-                xctx.clearRect(0, 0, c.width, c.height);
-                return;
-            }
-
-            var sel = selector_data['size_pos'][current_selected_i];
-            if (sel[0] == '/') {
-                // @todo - not sure just checking / is right
-                $("#include_filters").val('xpath:' + sel.xpath);
-            } else {
-                $("#include_filters").val(sel.xpath);
-            }
-            xctx.fillStyle = 'rgba(205,205,205,0.95)';
-            xctx.strokeStyle = 'rgba(225,0,0,0.9)';
-            xctx.lineWidth = 3;
-            xctx.fillRect(0, 0, c.width, c.height);
-            // Clear out what only should be seen (make a clear/clean spot)
-            xctx.clearRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-            xctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
-            state_clicked = true;
-            set_current_selected_text(sel.xpath);
-
-        }
-
-
-
         function highlight_matching_filters() {
-
             selector_data['size_pos'].forEach(sel => {
                 if (sel.highlight_as_custom_filter) {
+                    xctx.fillStyle = 'rgba(205,205,205,0.95)';
+                    xctx.strokeStyle = 'rgba(225,0,0,0.95)';
+                    xctx.lineWidth = 1;
                     xctx.clearRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
+                    xctx.strokeRect(sel.left * x_scale, sel.top * y_scale, sel.width * x_scale, sel.height * y_scale);
                 }
             });
-
         }
 
         $('#selector-canvas').bind('mousedown', function (e) {
