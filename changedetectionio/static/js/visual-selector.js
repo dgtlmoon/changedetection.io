@@ -130,6 +130,7 @@ $(document).ready(() => {
             'width': selectorImageRect.width
         });
         $selectorWrapperElem.attr('width', selectorImageRect.width);
+        $('#visual-selector-heading').css('max-width', selectorImageRect.width + "px")
 
         xScale = selectorImageRect.width / selectorImage.naturalWidth;
         yScale = selectorImageRect.height / selectorImage.naturalHeight;
