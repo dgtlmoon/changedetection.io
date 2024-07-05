@@ -45,6 +45,15 @@ $(document).ready(() => {
         return v.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     }
 
+    function sortScrapedElementsBySize() {
+        // Sort the currentSelections array by area (width * height) in descending order
+        selectorData['size_pos'].sort((a, b) => {
+            const areaA = a.width * a.height;
+            const areaB = b.width * b.height;
+            return areaB - areaA;
+        });
+    }
+
     $(document).on('keydown keyup', (event) => {
         if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
             appendToList = event.type === 'keydown';
@@ -98,6 +107,7 @@ $(document).ready(() => {
         }).done((data) => {
             $fetchingUpdateNoticeElem.html("Rendering..");
             selectorData = data;
+            sortScrapedElementsBySize();
             console.log("Reported browser width from backend: " + data['browser_width']);
             setScale();
             reflowSelector();
@@ -160,8 +170,7 @@ $(document).ready(() => {
 
             ctx.fillStyle = FILL_STYLE_HIGHLIGHT;
 
-            for (let i = selectorData['size_pos'].length - 1; i >= 0; i--) {
-                const sel = selectorData['size_pos'][i];
+            selectorData['size_pos'].forEach(sel => {
                 if (e.offsetY > sel.top * yScale && e.offsetY < sel.top * yScale + sel.height * yScale &&
                     e.offsetX > sel.left * yScale && e.offsetX < sel.left * yScale + sel.width * yScale) {
                     setCurrentSelectedText(sel.xpath);
@@ -171,7 +180,7 @@ $(document).ready(() => {
                     highlightCurrentSelected();
                     currentSelections.pop();
                 }
-            }
+            })
         }
 
 
@@ -202,8 +211,9 @@ $(document).ready(() => {
         xctx.strokeStyle = STROKE_STYLE_REDLINE;
         xctx.lineWidth = 3;
         xctx.clearRect(0, 0, c.width, c.height);
+
         currentSelections.forEach(sel => {
-            xctx.clearRect(sel.left * xScale, sel.top * yScale, sel.width * xScale, sel.height * yScale);
+            //xctx.clearRect(sel.left * xScale, sel.top * yScale, sel.width * xScale, sel.height * yScale);
             xctx.strokeRect(sel.left * xScale, sel.top * yScale, sel.width * xScale, sel.height * yScale);
         });
     }
