@@ -28,13 +28,26 @@ $(document).ready(function () {
         bootstrap_visualselector();
     });
 
+    function clear_reset() {
+        state_clicked = false;
+        ctx.clearRect(0, 0, c.width, c.height);
+        if($("#include_filters").val().length) {
+            alert("Existing filters under the 'Filters & Triggers' tab were cleared.");
+        }
+        $("#include_filters").val('');
+    }
+
     $(document).on('keydown', function (event) {
         if ($("img#selector-background").is(":visible")) {
             if (event.key == "Escape") {
-                state_clicked = false;
-                ctx.clearRect(0, 0, c.width, c.height);
+                clear_reset();
             }
         }
+    });
+
+    // Handle clearing button/link
+    $('#clear-selector').on('click', function (event) {
+        clear_reset();
     });
 
     // For when the page loads
@@ -42,17 +55,6 @@ $(document).ready(function () {
         $("img#selector-background").attr('src', '');
         return;
     }
-
-    // Handle clearing button/link
-    $('#clear-selector').on('click', function (event) {
-        if (!state_clicked) {
-            alert('Oops, Nothing selected!');
-        }
-        state_clicked = false;
-        ctx.clearRect(0, 0, c.width, c.height);
-        xctx.clearRect(0, 0, c.width, c.height);
-        $("#include_filters").val('');
-    });
 
 
     bootstrap_visualselector();
