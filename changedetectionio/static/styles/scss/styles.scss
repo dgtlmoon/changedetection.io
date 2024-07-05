@@ -671,14 +671,25 @@ footer {
   and also iPads specifically.
   */
   .watch-table {
+    /* make headings work on mobile */
+    thead {
+      display: block;
+      tr {
+        th {
+          display: inline-block;
+        }
+      }
+      .empty-cell {
+        display: none;
+      }
+    }
 
     /* Force table to not be like tables anymore */
-    thead,
-    tbody,
-    th,
-    td,
-    tr {
-      display: block;
+    tbody {
+      td,
+      tr {
+        display: block;
+      }
     }
 
     .last-checked {
@@ -700,13 +711,6 @@ footer {
     /* Force table to not be like tables anymore */
     td.inline {
       display: inline-block;
-    }
-
-    /* Hide table headers (but not display: none;, for accessibility) */
-    thead tr {
-      position: absolute;
-      top: -9999px;
-      left: -9999px;
     }
 
     .pure-table td,
@@ -753,6 +757,7 @@ footer {
   thead {
     background-color: var(--color-background-table-thead);
     color: var(--color-text);
+    border-bottom: 1px solid var(--color-background-table-thead);
   }
 
   td,

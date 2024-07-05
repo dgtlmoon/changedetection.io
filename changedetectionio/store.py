@@ -242,6 +242,14 @@ class ChangeDetectionStore:
     def clear_watch_history(self, uuid):
         import pathlib
 
+        # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
+        for item in pathlib.Path(os.path.join(self.datastore_path, uuid)).rglob("*.*"):
+            unlink(item)
+
+        # Force the attr to recalculate
+        bump = self.__data['watching'][uuid].history
+
+        # Do this last because it will trigger a recheck due to last_checked being zero
         self.__data['watching'][uuid].update({
                 'browser_steps_last_error_step' : None,
                 'check_count': 0,
@@ -257,13 +265,6 @@ class ChangeDetectionStore:
                 'remote_server_reply': None,
                 'track_ldjson_price_data': None,
             })
-
-        # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
-        for item in pathlib.Path(os.path.join(self.datastore_path, uuid)).rglob("*.*"):
-            unlink(item)
-
-        # Force the attr to recalculate
-        bump = self.__data['watching'][uuid].history
 
         self.needs_write_urgent = True
 
@@ -843,3 +844,8 @@ class ChangeDetectionStore:
                 # Something custom here
                 self.__data["watching"][uuid]['time_between_check_use_default'] = False
 
+    # Correctly set datatype for older installs where 'tag' was string and update_12 did not catch it
+    def update_16(self):
+        for uuid, watch in self.data['watching'].items():
+            if isinstance(watch.get('tags'), str):
+                self.data['watching'][uuid]['tags'] = []

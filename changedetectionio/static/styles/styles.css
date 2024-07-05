@@ -863,14 +863,17 @@ footer {
   and also iPads specifically.
   */
   .watch-table {
+    /* make headings work on mobile */
     /* Force table to not be like tables anymore */
-    /* Force table to not be like tables anymore */
-    /* Hide table headers (but not display: none;, for accessibility) */ }
-    .watch-table thead,
-    .watch-table tbody,
-    .watch-table th,
-    .watch-table td,
-    .watch-table tr {
+    /* Force table to not be like tables anymore */ }
+    .watch-table thead {
+      display: block; }
+      .watch-table thead tr th {
+        display: inline-block; }
+      .watch-table thead .empty-cell {
+        display: none; }
+    .watch-table tbody td,
+    .watch-table tbody tr {
       display: block; }
     .watch-table .last-checked > span {
       vertical-align: middle; }
@@ -882,10 +885,6 @@ footer {
       content: "Last Changed "; }
     .watch-table td.inline {
       display: inline-block; }
-    .watch-table thead tr {
-      position: absolute;
-      top: -9999px;
-      left: -9999px; }
     .watch-table .pure-table td,
     .watch-table .pure-table th {
       border: none; }
@@ -912,7 +911,8 @@ footer {
   border-color: var(--color-border-table-cell); }
   .pure-table thead {
     background-color: var(--color-background-table-thead);
-    color: var(--color-text); }
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-background-table-thead); }
   .pure-table td,
   .pure-table th {
     border-left-color: var(--color-border-table-cell); }
