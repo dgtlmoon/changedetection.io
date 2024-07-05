@@ -2,6 +2,8 @@
 // All rights reserved.
 // yes - this is really a hack, if you are a front-ender and want to help, please get in touch!
 
+let runInClearMode = false;
+
 $(document).ready(() => {
     let currentSelections = [];
     let currentSelection = null;
@@ -9,6 +11,7 @@ $(document).ready(() => {
     let c, xctx, ctx;
     let xScale = 1, yScale = 1;
     let selectorImage, selectorImageRect, selectorData;
+
 
     // Global jQuery selectors with "Elem" appended
     const $selectorCanvasElem = $('#selector-canvas');
@@ -38,6 +41,10 @@ $(document).ready(() => {
         }
         $includeFiltersElem.val('');
         currentSelections = [];
+
+        // Means we ignore the xpaths from the scraper marked as sel.highlight_as_custom_filter (it matched a previous selector)
+        runInClearMode = true;
+
         highlightCurrentSelected();
     }
 
@@ -68,6 +75,7 @@ $(document).ready(() => {
 
     $('#clear-selector').on('click', () => {
         clearReset();
+
     });
 
     if (!window.location.hash || window.location.hash !== '#visualselector') {
@@ -155,7 +163,7 @@ $(document).ready(() => {
         let existingFilters = splitToList($includeFiltersElem.val());
 
         selectorData['size_pos'].forEach(sel => {
-            if (sel.highlight_as_custom_filter || existingFilters.includes(sel.xpath)) {
+            if ((!runInClearMode && sel.highlight_as_custom_filter) || existingFilters.includes(sel.xpath)) {
                 console.log("highlighting " + c);
                 currentSelections.push(sel);
             }
