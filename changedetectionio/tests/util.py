@@ -143,6 +143,9 @@ def live_server_setup(live_server):
         import secrets
         return "Random content - {}\n".format(secrets.token_hex(64))
 
+    @live_server.app.route('/test-endpoint2')
+    def test_endpoint2():
+        return "some basic content"
 
     @live_server.app.route('/test-endpoint')
     def test_endpoint():

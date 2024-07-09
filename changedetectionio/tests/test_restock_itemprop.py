@@ -256,3 +256,33 @@ def test_itemprop_percent_threshold(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
+def test_data_sanity(client, live_server):
+    #live_server_setup(live_server)
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+    test_url = url_for('test_endpoint', _external=True)
+    test_url2 = url_for('test_endpoint2', _external=True)
+    set_original_response(props_markup=instock_props[0], price="950.95")
+    client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
+        follow_redirects=True
+    )
+
+
+    wait_for_all_checks(client)
+    res = client.get(url_for("index"))
+    assert b'950.95' in res.data
+
+    # Check the restock model object doesnt store the value by mistake and used in a new one
+    client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url2, "tags": 'restock tests', 'processor': 'restock_diff'},
+        follow_redirects=True
+    )
+    wait_for_all_checks(client)
+    res = client.get(url_for("index"))
+    assert str(res.data.decode()).count("950.95") == 1, "Price should only show once (for the watch added, no other watches yet)"
+
