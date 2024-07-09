@@ -4,18 +4,28 @@ import uuid
 from changedetectionio import strtobool
 from changedetectionio.notification import default_notification_format_for_watch
 
-
 class Restock(dict):
-    # @todo some setter to handle weird prices like "00,01" etc?
-    default_values = {'in_stock': None, 'price': None, 'currency': None, 'original_price': None}
-
     def __init__(self, *args, **kwargs):
+        # Define default values
+        default_values = {
+            'in_stock': None,
+            'price': None,
+            'currency': None,
+            'original_price': None
+        }
 
-        self.default_values.update(dict(*args, **kwargs))
-        super().__init__(self.default_values.copy())
+        # Initialize the dictionary with default values
+        super().__init__(default_values)
 
-        if not self.get('original_price'):
-            self['original_price'] = self.get('price')
+        # Update with any provided positional arguments (dictionaries)
+        if args:
+            if len(args) == 1 and isinstance(args[0], dict):
+                self.update(args[0])
+            else:
+                raise ValueError("Only one positional argument of type 'dict' is allowed")
+
+        # Update with keyword arguments
+        self.update(kwargs)
 
 
 class watch_base(dict):

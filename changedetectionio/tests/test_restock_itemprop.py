@@ -286,3 +286,4 @@ def test_data_sanity(client, live_server):
     res = client.get(url_for("index"))
     assert str(res.data.decode()).count("950.95") == 1, "Price should only show once (for the watch added, no other watches yet)"
 
+

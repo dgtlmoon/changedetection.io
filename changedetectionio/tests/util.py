@@ -145,7 +145,7 @@ def live_server_setup(live_server):
 
     @live_server.app.route('/test-endpoint2')
     def test_endpoint2():
-        return "some basic content"
+        return "<html><body>some basic content</body></html>"
 
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
