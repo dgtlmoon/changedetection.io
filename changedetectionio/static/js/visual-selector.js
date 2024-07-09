@@ -36,10 +36,12 @@ $(document).ready(() => {
 
     function clearReset() {
         ctx.clearRect(0, 0, c.width, c.height);
+
         if ($includeFiltersElem.val().length) {
             alert("Existing filters under the 'Filters & Triggers' tab were cleared.");
         }
         $includeFiltersElem.val('');
+
         currentSelections = [];
 
         // Means we ignore the xpaths from the scraper marked as sel.highlight_as_custom_filter (it matched a previous selector)
@@ -109,6 +111,18 @@ $(document).ready(() => {
         $selectorBackgroundElem.attr('src', s);
     }
 
+    function alertIfFilterNotFound() {
+        let existingFilters = splitToList($includeFiltersElem.val());
+        let sizePosXpaths = selectorData['size_pos'].map(sel => sel.xpath);
+
+        for (let filter of existingFilters) {
+            if (!sizePosXpaths.includes(filter)) {
+                alert(`One or more of your existing filters was not found and will be removed when a new filter is selected.`);
+                break;
+            }
+        }
+    }
+
     function fetchData() {
         $fetchingUpdateNoticeElem.html("Fetching element data..");
 
@@ -119,7 +133,11 @@ $(document).ready(() => {
             $fetchingUpdateNoticeElem.html("Rendering..");
             selectorData = data;
             sortScrapedElementsBySize();
-            console.log("Reported browser width from backend: " + data['browser_width']);
+            console.log(`Reported browser width from backend: ${data['browser_width']}`);
+
+            // Little sanity check for the user, alert them if something missing
+            alertIfFilterNotFound();
+
             setScale();
             reflowSelector();
             $fetchingUpdateNoticeElem.fadeOut();
@@ -130,10 +148,11 @@ $(document).ready(() => {
         // Assuming currentSelections is already defined and contains the selections
         let uniqueSelections = new Set(currentSelections.map(sel => (sel[0] === '/' ? `xpath:${sel.xpath}` : sel.xpath)));
 
-        // Convert the Set back to an array and join with newline characters
-        let textboxFilterText = Array.from(uniqueSelections).join("\n");
-
-        $includeFiltersElem.val(textboxFilterText);
+        if (currentSelections.length > 0) {
+            // Convert the Set back to an array and join with newline characters
+            let textboxFilterText = Array.from(uniqueSelections).join("\n");
+            $includeFiltersElem.val(textboxFilterText);
+        }
     }
 
     function setScale() {
