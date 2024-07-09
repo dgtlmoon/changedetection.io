@@ -256,7 +256,8 @@ class browsersteps_live_ui(steppable_browser_interface):
     def get_current_state(self):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""
         import importlib.resources
-        xpath_element_js = importlib.resources.read_text("changedetectionio.content_fetchers.res", "xpath_element_scraper.js")
+        xpath_element_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text()
+
         now = time.time()
         self.page.wait_for_timeout(1 * 1000)
 
@@ -289,7 +290,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         """
         import importlib.resources
         self.page.evaluate("var include_filters=''")
-        xpath_element_js = importlib.resources.read_text("changedetectionio.content_fetchers.res", "xpath_element_scraper.js")
+        xpath_element_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text()
         from changedetectionio.content_fetchers import visualselector_xpath_selectors
         xpath_element_js = xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
         xpath_data = self.page.evaluate("async () => {" + xpath_element_js + "}")
