@@ -51,7 +51,7 @@ jobs:
         # Check we can still build under alpine/musl
         - name: Test that the docker containers can build (musl via alpine check)
           id: docker_build_musl
-          uses: docker/build-push-action@v5
+          uses: docker/build-push-action@v6
           with:
             context: ./
             file: ./.github/test/Dockerfile-alpine
@@ -59,7 +59,7 @@ jobs:
 
         - name: Test that the docker containers can build
           id: docker_build
-          uses: docker/build-push-action@v5
+          uses: docker/build-push-action@v6
           # https://github.com/docker/build-push-action#customizing
           with:
             context: ./

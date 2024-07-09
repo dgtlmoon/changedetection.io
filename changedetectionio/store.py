@@ -163,7 +163,6 @@ class ChangeDetectionStore:
                         del (update_obj[dict_key])
 
             self.__data['watching'][uuid].update(update_obj)
-
         self.needs_write = True
 
     @property
@@ -243,6 +242,15 @@ class ChangeDetectionStore:
     def clear_watch_history(self, uuid):
         import pathlib
         from .model import Restock
+
+        # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
+        for item in pathlib.Path(os.path.join(self.datastore_path, uuid)).rglob("*.*"):
+            unlink(item)
+
+        # Force the attr to recalculate
+        bump = self.__data['watching'][uuid].history
+
+        # Do this last because it will trigger a recheck due to last_checked being zero
         self.__data['watching'][uuid].update({
                 'browser_steps_last_error_step' : None,
                 'check_count': 0,
@@ -259,13 +267,6 @@ class ChangeDetectionStore:
                 'track_ldjson_price_data': None,
                 'restock': Restock()
             })
-
-        # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
-        for item in pathlib.Path(os.path.join(self.datastore_path, uuid)).rglob("*.*"):
-            unlink(item)
-
-        # Force the attr to recalculate
-        bump = self.__data['watching'][uuid].history
 
         self.needs_write_urgent = True
 
@@ -376,46 +377,6 @@ class ChangeDetectionStore:
             return True
 
         return False
-
-    # Save as PNG, PNG is larger but better for doing visual diff in the future
-    def save_screenshot(self, watch_uuid, screenshot: bytes, as_error=False):
-        if not self.data['watching'].get(watch_uuid):
-            return
-
-        if as_error:
-            target_path = os.path.join(self.datastore_path, watch_uuid, "last-error-screenshot.png")
-        else:
-            target_path = os.path.join(self.datastore_path, watch_uuid, "last-screenshot.png")
-
-        self.data['watching'][watch_uuid].ensure_data_dir_exists()
-
-        with open(target_path, 'wb') as f:
-            f.write(screenshot)
-            f.close()
-
-
-    def save_error_text(self, watch_uuid, contents):
-        if not self.data['watching'].get(watch_uuid):
-            return
-
-        self.data['watching'][watch_uuid].ensure_data_dir_exists()
-        target_path = os.path.join(self.datastore_path, watch_uuid, "last-error.txt")
-        with open(target_path, 'w') as f:
-            f.write(contents)
-
-    def save_xpath_data(self, watch_uuid, data, as_error=False):
-
-        if not self.data['watching'].get(watch_uuid):
-            return
-        if as_error:
-            target_path = os.path.join(self.datastore_path, watch_uuid, "elements-error.json")
-        else:
-            target_path = os.path.join(self.datastore_path, watch_uuid, "elements.json")
-        self.data['watching'][watch_uuid].ensure_data_dir_exists()
-        with open(target_path, 'w') as f:
-            f.write(json.dumps(data))
-            f.close()
-
 
     def sync_to_json(self):
         logger.info("Saving JSON..")
@@ -892,3 +853,8 @@ class ChangeDetectionStore:
                 # Something custom here
                 self.__data["watching"][uuid]['time_between_check_use_default'] = False
 
+    # Correctly set datatype for older installs where 'tag' was string and update_12 did not catch it
+    def update_16(self):
+        for uuid, watch in self.data['watching'].items():
+            if isinstance(watch.get('tags'), str):
+                self.data['watching'][uuid]['tags'] = []

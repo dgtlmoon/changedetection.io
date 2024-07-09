@@ -1,6 +1,5 @@
 from . import difference_detection_processor
 from ..model import Restock
-from copy import deepcopy
 from loguru import logger
 import hashlib
 import re
@@ -107,12 +106,7 @@ class perform_site_check(difference_detection_processor):
     screenshot = None
     xpath_data = None
 
-
-    def run_changedetection(self, uuid, skip_when_checksum_same=True):
-
-        # DeepCopy so we can be sure we don't accidently change anything by reference
-        watch = deepcopy(self.datastore.data['watching'].get(uuid))
-
+    def run_changedetection(self, watch, skip_when_checksum_same=True):
         if not watch:
             raise Exception("Watch no longer exists.")
 
@@ -157,7 +151,14 @@ class perform_site_check(difference_detection_processor):
             logger.debug(
                 f"Restock - using scraped browserdata - Watch UUID {uuid} restock check returned '{self.fetcher.instock_data}' from JS scraper.")
 
-        if not self.fetcher.instock_data:
+        # Main detection method
+        fetched_md5 = None
+        if self.fetcher.instock_data:
+            fetched_md5 = hashlib.md5(self.fetcher.instock_data.encode('utf-8')).hexdigest()
+            # 'Possibly in stock' comes from stock-not-in-stock.js when no string found above the fold.
+            update_obj["in_stock"] = True if self.fetcher.instock_data == 'Possibly in stock' else False
+            logger.debug(f"Watch UUID {watch.get('uuid')} restock check returned '{self.fetcher.instock_data}' from JS scraper.")
+        else:
             raise UnableToExtractRestockData(status_code=self.fetcher.status_code)
 
         # Main detection method
@@ -165,7 +166,7 @@ class perform_site_check(difference_detection_processor):
 
         # The main thing that all this at the moment comes down to :)
         changed_detected = False
-        logger.debug(f"Watch UUID {uuid} restock check - Previous MD5: {watch.get('previous_md5')}, Fetched MD5 {fetched_md5}")
+        logger.debug(f"Watch UUID {watch.get('uuid')} restock check - Previous MD5: {watch.get('previous_md5')}, Fetched MD5 {fetched_md5}")
 
         # out of stock -> back in stock only?
         if watch.get('restock') and watch['restock'].get('in_stock') != update_obj['restock'].get('in_stock'):

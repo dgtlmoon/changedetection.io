@@ -41,19 +41,26 @@ and it can also be repeated
     from .. import html_tools
 
     # See that we can find the second <script> one, which is not broken, and matches our filter
-    text = html_tools.extract_json_as_string(content, "json:$.offers.price")
-    assert text == "23.5"
+    text = html_tools.extract_json_as_string(content, "json:$.offers.priceCurrency")
+    assert text == '"AUD"'
+
+    text = html_tools.extract_json_as_string('{"id":5}', "json:$.id")
+    assert text == "5"
 
     # also check for jq
     if jq_support:
-        text = html_tools.extract_json_as_string(content, "jq:.offers.price")
-        assert text == "23.5"
+        text = html_tools.extract_json_as_string(content, "jq:.offers.priceCurrency")
+        assert text == '"AUD"'
 
         text = html_tools.extract_json_as_string('{"id":5}', "jq:.id")
         assert text == "5"
 
-    text = html_tools.extract_json_as_string('{"id":5}', "json:$.id")
-    assert text == "5"
+        text = html_tools.extract_json_as_string(content, "jqraw:.offers.priceCurrency")
+        assert text == "AUD"
+
+        text = html_tools.extract_json_as_string('{"id":5}', "jqraw:.id")
+        assert text == "5"
+
 
     # When nothing at all is found, it should throw JSONNOTFound
     # Which is caught and shown to the user in the watch-overview table
@@ -63,6 +70,9 @@ and it can also be repeated
     if jq_support:
         with pytest.raises(html_tools.JSONNotFound) as e_info:
             html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jq:.id")
+
+        with pytest.raises(html_tools.JSONNotFound) as e_info:
+            html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jqraw:.id")
 
 
 def test_unittest_inline_extract_body():
@@ -291,6 +301,10 @@ def test_check_jq_filter(client, live_server):
     if jq_support:
         check_json_filter('jq:.boss.name', client, live_server)
 
+def test_check_jqraw_filter(client, live_server):
+    if jq_support:
+        check_json_filter('jqraw:.boss.name', client, live_server)
+
 def check_json_filter_bool_val(json_filter, client, live_server):
     set_original_response()
 
@@ -342,6 +356,10 @@ def test_check_jsonpath_filter_bool_val(client, live_server):
     check_json_filter_bool_val("json:$['available']", client, live_server)
 
 def test_check_jq_filter_bool_val(client, live_server):
+    if jq_support:
+        check_json_filter_bool_val("jq:.available", client, live_server)
+
+def test_check_jqraw_filter_bool_val(client, live_server):
     if jq_support:
         check_json_filter_bool_val("jq:.available", client, live_server)
 
@@ -490,5 +508,9 @@ def test_check_jsonpath_ext_filter(client, live_server):
     check_json_ext_filter('json:$[?(@.status==Sold)]', client, live_server)
 
 def test_check_jq_ext_filter(client, live_server):
+    if jq_support:
+        check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server)
+
+def test_check_jqraw_ext_filter(client, live_server):
     if jq_support:
         check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server)

@@ -3,8 +3,6 @@ from bs4 import BeautifulSoup
 from inscriptis import get_text
 from jsonpath_ng.ext import parse
 from typing import List
-from inscriptis.css_profiles import CSS_PROFILES, HtmlElement
-from inscriptis.html_properties import Display
 from inscriptis.model.config import ParserConfig
 from xml.sax.saxutils import escape as xml_escape
 import json
@@ -196,12 +194,12 @@ def extract_element(find='title', html_content=''):
 
 #
 def _parse_json(json_data, json_filter):
-    if 'json:' in json_filter:
+    if json_filter.startswith("json:"):
         jsonpath_expression = parse(json_filter.replace('json:', ''))
         match = jsonpath_expression.find(json_data)
         return _get_stripped_text_from_json_match(match)
 
-    if 'jq:' in json_filter:
+    if json_filter.startswith("jq:") or json_filter.startswith("jqraw:"):
 
         try:
             import jq
@@ -209,10 +207,15 @@ def _parse_json(json_data, json_filter):
             # `jq` requires full compilation in windows and so isn't generally available
             raise Exception("jq not support not found")
 
-        jq_expression = jq.compile(json_filter.replace('jq:', ''))
-        match = jq_expression.input(json_data).all()
+        if json_filter.startswith("jq:"):
+            jq_expression = jq.compile(json_filter.removeprefix("jq:"))
+            match = jq_expression.input(json_data).all()
+            return _get_stripped_text_from_json_match(match)
 
-        return _get_stripped_text_from_json_match(match)
+        if json_filter.startswith("jqraw:"):
+            jq_expression = jq.compile(json_filter.removeprefix("jqraw:"))
+            match = jq_expression.input(json_data).all()
+            return '\n'.join(str(item) for item in match)
 
 def _get_stripped_text_from_json_match(match):
     s = []
