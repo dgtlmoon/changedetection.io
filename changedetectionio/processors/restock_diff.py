@@ -149,7 +149,7 @@ class perform_site_check(difference_detection_processor):
 
             # @todo scrape price somehow
             logger.debug(
-                f"Restock - using scraped browserdata - Watch UUID {uuid} restock check returned '{self.fetcher.instock_data}' from JS scraper.")
+                f"Restock - using scraped browserdata - Watch UUID {watch.get('uuid')} restock check returned '{self.fetcher.instock_data}' from JS scraper.")
 
         # Main detection method
         fetched_md5 = None
@@ -190,17 +190,17 @@ class perform_site_check(difference_detection_processor):
             # Minimum/maximum price limit
             if update_obj.get('restock') and update_obj['restock'].get('price'):
                 logger.debug(
-                    f"{uuid} - Change was detected, 'price_change_max' is '{watch.get('price_change_max', '')}' 'price_change_min' is '{watch.get('price_change_min', '')}', price from website is '{update_obj['restock'].get('price', '')}'.")
+                    f"{watch.get('uuid')} - Change was detected, 'price_change_max' is '{watch.get('price_change_max', '')}' 'price_change_min' is '{watch.get('price_change_min', '')}', price from website is '{update_obj['restock'].get('price', '')}'.")
                 if update_obj['restock'].get('price'):
                     min_limit = float(watch.get('price_change_min')) if watch.get('price_change_min') else None
                     max_limit = float(watch.get('price_change_max')) if watch.get('price_change_max') else None
 
                     price = float(update_obj['restock'].get('price'))
-                    logger.debug(f"{uuid} after float conversion - Min limit: '{min_limit}' Max limit: '{max_limit}' Price: '{price}'")
+                    logger.debug(f"{watch.get('uuid')} after float conversion - Min limit: '{min_limit}' Max limit: '{max_limit}' Price: '{price}'")
                     if min_limit or max_limit:
                         if is_between(number=price, lower=min_limit, upper=max_limit):
                             if changed_detected:
-                                logger.debug(f"{uuid} Override change-detected to FALSE because price was inside threshold")
+                                logger.debug(f"{watch.get('uuid')} Override change-detected to FALSE because price was inside threshold")
                                 changed_detected = False
 
                     # Price comparison by %
@@ -209,10 +209,10 @@ class perform_site_check(difference_detection_processor):
                         pc = float(watch.get('price_change_threshold_percent'))
                         change = abs((price - previous_price) / previous_price * 100)
                         if change and change <= pc:
-                            logger.debug(f"{uuid} Override change-detected to FALSE because % threshold ({pc}%) was {change:.3f}%")
+                            logger.debug(f"{watch.get('uuid')} Override change-detected to FALSE because % threshold ({pc}%) was {change:.3f}%")
                             changed_detected = False
                         else:
-                            logger.debug(f"{uuid} Price change was {change:.3f}% , (threshold {pc}%)")
+                            logger.debug(f"{watch.get('uuid')} Price change was {change:.3f}% , (threshold {pc}%)")
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5
