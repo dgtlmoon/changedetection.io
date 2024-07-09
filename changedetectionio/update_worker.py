@@ -314,6 +314,9 @@ class update_worker(threading.Thread):
                         if e.screenshot:
                             watch.save_screenshot(screenshot=e.screenshot, as_error=True)
 
+                        if e.xpath_data:
+                            watch.save_xpath_data(data=e.xpath_data)
+                            
                         process_changedetection_results = False
 
                     except content_fetchers.exceptions.Non200ErrorCodeReceived as e:
@@ -344,8 +347,13 @@ class update_worker(threading.Thread):
 
                         err_text = "Warning, no filters were found, no change detection ran - Did the page change layout? update your Visual Filter if necessary."
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
+
+                        # Filter wasnt found, but we should still update the visual selector so that they can have a chance to set it up again
                         if e.screenshot:
-                            watch.save_screenshot(screenshot=e.screenshot, as_error=True)
+                            watch.save_screenshot(screenshot=e.screenshot)
+
+                        if e.xpath_data:
+                            watch.save_xpath_data(data=e.xpath_data)
 
                         # Only when enabled, send the notification
                         if watch.get('filter_failure_notification_send', False):

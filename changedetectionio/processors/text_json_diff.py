@@ -19,8 +19,9 @@ description = 'Detects all text changes where possible'
 json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
 
 class FilterNotFoundInResponse(ValueError):
-    def __init__(self, msg, screenshot=None):
+    def __init__(self, msg, screenshot=None, xpath_data=None):
         self.screenshot = screenshot
+        self.xpath_data = xpath_data
         ValueError.__init__(self, msg)
 
 
@@ -185,7 +186,7 @@ class perform_site_check(difference_detection_processor):
                                                                        append_pretty_line_formatting=not watch.is_source_type_url)
 
                     if not html_content.strip():
-                        raise FilterNotFoundInResponse(msg=include_filters_rule, screenshot=self.fetcher.screenshot)
+                        raise FilterNotFoundInResponse(msg=include_filters_rule, screenshot=self.fetcher.screenshot, xpath_data=self.fetcher.xpath_data)
 
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)
@@ -243,9 +244,10 @@ class perform_site_check(difference_detection_processor):
         if not is_json and not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
             raise content_fetchers.exceptions.ReplyWithContentButNoText(url=url,
                                                             status_code=self.fetcher.get_last_status_code(),
-                                                            screenshot=screenshot,
+                                                            screenshot=self.fetcher.screenshot,
                                                             has_filters=has_filter_rule,
-                                                            html_content=html_content
+                                                            html_content=html_content,
+                                                            xpath_data=self.fetcher.xpath_data
                                                             )
 
         # We rely on the actual text in the html output.. many sites have random script vars etc,
