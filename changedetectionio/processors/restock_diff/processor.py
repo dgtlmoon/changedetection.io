@@ -1,5 +1,5 @@
-from . import difference_detection_processor
-from ..model import Restock
+from .. import difference_detection_processor
+from . import Restock
 from loguru import logger
 import hashlib
 import re
@@ -7,10 +7,8 @@ import urllib3
 import time
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 name = 'Re-stock & Price detection for single product pages'
 description = 'Detects if the product goes back to in-stock'
-
 
 class UnableToExtractRestockData(Exception):
     def __init__(self, status_code):
@@ -47,6 +45,7 @@ def get_itemprop_availability(html_content) -> Restock:
     logger.trace(f"Extruct basic extract of all metadata done in {time.time() - now:.3f}s")
 
     # First phase, dead simple scanning of anything that looks useful
+    value = Restock()
     if data:
         logger.debug(f"Using jsonpath to find price/availability/etc")
         price_parse = parse('$..(price|Price|highPrice)')
@@ -84,7 +83,7 @@ def get_itemprop_availability(html_content) -> Restock:
 
     logger.trace(f"Processed with Extruct in {time.time()-now:.3f}s")
 
-    return Restock(value)
+    return value
 
 
 def is_between(number, lower=None, upper=None):
@@ -154,7 +153,6 @@ class perform_site_check(difference_detection_processor):
         # Main detection method
         fetched_md5 = None
         if self.fetcher.instock_data:
-            fetched_md5 = hashlib.md5(self.fetcher.instock_data.encode('utf-8')).hexdigest()
             # 'Possibly in stock' comes from stock-not-in-stock.js when no string found above the fold.
             update_obj["in_stock"] = True if self.fetcher.instock_data == 'Possibly in stock' else False
             logger.debug(f"Watch UUID {watch.get('uuid')} restock check returned '{self.fetcher.instock_data}' from JS scraper.")

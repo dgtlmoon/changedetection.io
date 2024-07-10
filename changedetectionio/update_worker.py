@@ -1,8 +1,9 @@
 from . import content_fetchers
-from .processors.restock_diff import UnableToExtractRestockData
-from .processors.text_json_diff import FilterNotFoundInResponse
+from .processors.restock_diff.processor import UnableToExtractRestockData
+from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
 from changedetectionio import html_tools
-from copy import deepcopy
+
+import importlib
 import os
 import queue
 import threading
@@ -13,7 +14,6 @@ import time
 # Requests for checking on a single site(watch) from a queue of watches
 # (another process inserts watches into the queue that are time-ready for checking)
 
-import sys
 from loguru import logger
 
 class update_worker(threading.Thread):
@@ -226,8 +226,6 @@ class update_worker(threading.Thread):
                 os.unlink(full_path)
 
     def run(self):
-
-        from .processors import text_json_diff, restock_diff
         now = time.time()
         
         while not self.app.config.exit.is_set():
@@ -258,24 +256,21 @@ class update_worker(threading.Thread):
                     try:
                         # Processor is what we are using for detecting the "Change"
                         processor = watch.get('processor', 'text_json_diff')
-                        # if system...
-
                         # Abort processing when the content was the same as the last fetch
                         skip_when_same_checksum = queued_item_data.item.get('skip_when_checksum_same')
 
 
-                        # @todo some way to switch by name
-                        # Init a new 'difference_detection_processor'
+                        # Init a new 'difference_detection_processor', first look in processors
+                        processor_module_name = f"changedetectionio.processors.{processor}.processor"
+                        try:
+                            processor_module = importlib.import_module(processor_module_name)
+                        except ModuleNotFoundError as e:
+                            print(f"Processor module '{processor}' not found.")
+                            raise e
 
-                        if processor == 'restock_diff':
-                            update_handler = restock_diff.perform_site_check(datastore=self.datastore,
+                        update_handler = processor_module.perform_site_check(datastore=self.datastore,
                                                                              watch_uuid=uuid
                                                                              )
-                        else:
-                            # Used as a default and also by some tests
-                            update_handler = text_json_diff.perform_site_check(datastore=self.datastore,
-                                                                               watch_uuid=uuid
-                                                                               )
 
                         update_handler.call_browser()
 

@@ -8,4 +8,8 @@ The concept here is to be able to switch between different domain specific probl
 Some suggestions for the future
 
 - `graphical` 
-- `restock_and_price` - extract price AND stock text
+
+## Todo
+
+- Make each processor return a extra list of sub-processed (so you could configure a single processor in different ways)
+- move restock_diff to its own pip/github repo

@@ -4,30 +4,6 @@ import uuid
 from changedetectionio import strtobool
 from changedetectionio.notification import default_notification_format_for_watch
 
-class Restock(dict):
-    def __init__(self, *args, **kwargs):
-        # Define default values
-        default_values = {
-            'in_stock': None,
-            'price': None,
-            'currency': None,
-            'original_price': None
-        }
-
-        # Initialize the dictionary with default values
-        super().__init__(default_values)
-
-        # Update with any provided positional arguments (dictionaries)
-        if args:
-            if len(args) == 1 and isinstance(args[0], dict):
-                self.update(args[0])
-            else:
-                raise ValueError("Only one positional argument of type 'dict' is allowed")
-
-        # Update with keyword arguments
-        self.update(kwargs)
-
-
 class watch_base(dict):
 
     def __init__(self, *arg, **kw):

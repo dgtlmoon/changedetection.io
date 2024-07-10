@@ -6,8 +6,8 @@ import os
 import re
 import urllib3
 
-from . import difference_detection_processor
-from ..html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
+from changedetectionio.processors import difference_detection_processor
+from changedetectionio.html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
 from changedetectionio import html_tools, content_fetchers
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
 from loguru import logger
@@ -16,6 +16,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 name = 'Webpage Text/HTML, JSON and PDF changes'
 description = 'Detects all text changes where possible'
+
 json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
 
 class FilterNotFoundInResponse(ValueError):

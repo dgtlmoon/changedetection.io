@@ -286,4 +286,19 @@ def test_data_sanity(client, live_server):
     res = client.get(url_for("index"))
     assert str(res.data.decode()).count("950.95") == 1, "Price should only show once (for the watch added, no other watches yet)"
 
+    ## different test, check the edit page works on an empty request result
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
 
+    client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url2, "tags": 'restock tests', 'processor': 'restock_diff'},
+        follow_redirects=True
+    )
+    wait_for_all_checks(client)
+
+    res = client.get(
+        url_for("edit_page", uuid="first"))
+    assert test_url2.encode('utf-8') in res.data
+
+    # @todo look at the url-watches and make sure there is not key called "default" !!!

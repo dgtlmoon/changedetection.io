@@ -8,6 +8,7 @@ import time
 
 from jinja2 import Template
 
+from .processors import find_processors, get_parent_module
 from .safe_jinja import render as jinja_render
 from changedetectionio.strtobool import strtobool
 from copy import deepcopy
@@ -623,6 +624,7 @@ def changedetection_app(config=None, datastore_o=None):
         from . import forms
         from .blueprint.browser_steps.browser_steps import browser_step_ui_config
         from . import processors
+        import importlib
 
         # More for testing, possible to return the first/only
         if not datastore.data['watching'].keys():
@@ -656,13 +658,21 @@ def changedetection_app(config=None, datastore_o=None):
                 default['proxy'] = ''
         # proxy_override set to the json/text list of the items
 
-        processor = datastore.data['watching'][uuid].get('processor', '')
-        form_class_name = f"processor_{processor}_form"
-        try:
-            form_class = getattr(forms, form_class_name)
-        except AttributeError:
-            flash(f"Cannot load the edit form for processor/plugin '{processor}', plugin missing?", 'error')
-            return redirect(url_for('index'))
+        form_class = forms
+
+        # Does it use some custom form? does one exist?
+        processor_name = datastore.data['watching'][uuid].get('processor', '')
+        custom_processor_class = next((tpl for tpl in find_processors() if tpl[1] == processor_name), None)
+        if custom_processor_class:
+            try:
+                # Get the parent of the "processor.py" go up one, get the form (kinda spaghetti but its reusing existing code)
+                parent_module = get_parent_module(custom_processor_class[0])
+                forms_module = importlib.import_module(f"{parent_module.__name__}.forms")
+                # Access the 'processor_settings_form' class from the 'forms' module
+                form_class = getattr(forms_module, 'processor_settings_form')
+            except AttributeError as e:
+                flash(f"Cannot load the edit form for processor/plugin '{custom_processor_class[1]}', plugin missing?", 'error')
+                return redirect(url_for('index'))
 
         form = form_class(formdata=request.form if request.method == 'POST' else None,
                                data=default

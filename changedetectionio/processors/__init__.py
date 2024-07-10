@@ -6,6 +6,9 @@ from loguru import logger
 import hashlib
 import os
 import re
+import importlib
+import pkgutil
+import inspect
 
 class difference_detection_processor():
 
@@ -147,8 +150,75 @@ class difference_detection_processor():
         return changed_detected, update_obj, ''.encode('utf-8')
 
 
+def find_sub_packages(package_name):
+    """
+    Find all sub-packages within the given package.
+
+    :param package_name: The name of the base package to scan for sub-packages.
+    :return: A list of sub-package names.
+    """
+    package = importlib.import_module(package_name)
+    return [name for _, name, is_pkg in pkgutil.iter_modules(package.__path__) if is_pkg]
+
+
+def find_processors():
+    """
+    Find all subclasses of DifferenceDetectionProcessor in the specified package.
+
+    :param package_name: The name of the package to scan for processor modules.
+    :return: A list of (module, class) tuples.
+    """
+    package_name = "changedetectionio.processors"  # Name of the current package/module
+
+    processors = []
+    sub_packages = find_sub_packages(package_name)
+
+    for sub_package in sub_packages:
+        module_name = f"{package_name}.{sub_package}.processor"
+        try:
+            module = importlib.import_module(module_name)
+
+            # Iterate through all classes in the module
+            for name, obj in inspect.getmembers(module, inspect.isclass):
+                if issubclass(obj, difference_detection_processor) and obj is not difference_detection_processor:
+                    processors.append((module, sub_package))
+        except (ModuleNotFoundError, ImportError) as e:
+            print(f"Failed to import module {module_name}: {e}")
+
+    return processors
+
+
+def get_parent_module(module):
+    module_name = module.__name__
+    if '.' not in module_name:
+        return None  # Top-level module has no parent
+    parent_module_name = module_name.rsplit('.', 1)[0]
+    return importlib.import_module(parent_module_name)
+
+def get_custom_watch_obj_for_processor(processor_name):
+    watch_class = Watch.model
+    processor_classes = find_processors()
+    custom_watch_obj = next((tpl for tpl in processor_classes if tpl[1] == processor_name), None)
+    if custom_watch_obj:
+        # Parent of .processor.py COULD have its own Watch implementation
+        parent_module = get_parent_module(custom_watch_obj[0])
+        if hasattr(parent_module, 'Watch'):
+            watch_class = parent_module.Watch
+
+    return watch_class
+
+
 def available_processors():
-    from . import restock_diff, text_json_diff
-    x=[('text_json_diff', text_json_diff.name), ('restock_diff', restock_diff.name)]
-    # @todo Make this smarter with introspection of sorts.
-    return x
+    """
+    Get a list of processors by name and description for the UI elements
+    :return: A list :)
+    """
+
+    processor_classes = find_processors()
+
+    available = []
+    for package, processor_class in processor_classes:
+        available.append((processor_class, package.name))
+
+    return available
+

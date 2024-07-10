@@ -39,12 +39,14 @@ class model(watch_base):
 
     def __init__(self, *arg, **kw):
         self.__datastore_path = kw['datastore_path']
-
         del kw['datastore_path']
         super(model, self).__init__(*arg, **kw)
         if kw.get('default'):
             self.update(kw['default'])
             del kw['default']
+
+        if self.get('default'):
+            del self['default']
 
         # Be sure the cached timestamp is ready
         bump = self.history
@@ -87,6 +89,34 @@ class model(watch_base):
         if ready_url.startswith('source:'):
             ready_url=ready_url.replace('source:', '')
         return ready_url
+
+    def clear_watch(self):
+        import pathlib
+
+        # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
+        for item in pathlib.Path(str(self.watch_data_dir)).rglob("*.*"):
+            os.unlink(item)
+
+        # Force the attr to recalculate
+        bump = self.history
+
+        # Do this last because it will trigger a recheck due to last_checked being zero
+        self.update({
+            'browser_steps_last_error_step': None,
+            'check_count': 0,
+            'fetch_time': 0.0,
+            'has_ldjson_price_data': None,
+            'in_stock': None,
+            'last_checked': 0,
+            'last_error': False,
+            'last_notification_error': False,
+            'last_viewed': 0,
+            'previous_md5': False,
+            'previous_md5_before_filters': False,
+            'remote_server_reply': None,
+            'track_ldjson_price_data': None
+        })
+        return
 
     @property
     def is_source_type_url(self):
