@@ -1,7 +1,6 @@
 
 from changedetectionio.model.Watch import model as BaseWatch
 
-
 class Restock(dict):
     def __init__(self, *args, **kwargs):
         # Define default values
@@ -22,10 +21,6 @@ class Restock(dict):
             else:
                 raise ValueError("Only one positional argument of type 'dict' is allowed")
 
-        # Update with keyword arguments
-        self.update(kwargs)
-
-
     def __setitem__(self, key, value):
         # Custom logic to handle setting price and original_price
         if key == 'price':
@@ -36,7 +31,7 @@ class Restock(dict):
 class Watch(BaseWatch):
     def __init__(self, *arg, **kw):
         super().__init__(*arg, **kw)
-        self.update({'restock': Restock()})
+        self['restock'] = Restock(kw['default']['restock']) if kw.get('default') and kw['default'].get('restock') else Restock()
 
     def clear_watch(self):
         super().clear_watch()

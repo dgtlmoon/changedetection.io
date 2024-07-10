@@ -3,8 +3,6 @@ from changedetectionio.safe_jinja import render as jinja_render
 from . import watch_base
 import os
 import re
-import time
-import uuid
 from pathlib import Path
 from loguru import logger
 

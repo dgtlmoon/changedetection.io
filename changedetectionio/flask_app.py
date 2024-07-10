@@ -929,7 +929,7 @@ def changedetection_app(config=None, datastore_o=None):
             if request.values.get('urls') and len(request.values.get('urls').strip()):
                 # Import and push into the queue for immediate update check
                 importer = import_url_list()
-                importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor'))
+                importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor', 'text_json_diff'))
                 for uuid in importer.new_uuids:
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
@@ -1430,7 +1430,7 @@ def changedetection_app(config=None, datastore_o=None):
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False}))
                     i += 1
 
-        flash("{} watches queued for rechecking.".format(i))
+        flash(f"{i} watches queued for rechecking.")
         return redirect(url_for('index', tag=tag))
 
     @app.route("/form/checkbox-operations", methods=['POST'])

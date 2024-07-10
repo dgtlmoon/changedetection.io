@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from changedetectionio.strtobool import strtobool
-from changedetectionio.model import Watch
+
 from copy import deepcopy
 from loguru import logger
 import hashlib
@@ -142,7 +142,7 @@ class difference_detection_processor():
         # After init, call run_changedetection() which will do the actual change-detection
 
     @abstractmethod
-    def run_changedetection(self, watch: Watch, skip_when_checksum_same=True):
+    def run_changedetection(self, watch, skip_when_checksum_same=True):
         update_obj = {'last_notification_error': False, 'last_error': False}
         some_data = 'xxxxx'
         update_obj["previous_md5"] = hashlib.md5(some_data.encode('utf-8')).hexdigest()
@@ -183,7 +183,7 @@ def find_processors():
                 if issubclass(obj, difference_detection_processor) and obj is not difference_detection_processor:
                     processors.append((module, sub_package))
         except (ModuleNotFoundError, ImportError) as e:
-            print(f"Failed to import module {module_name}: {e}")
+            logger.warning(f"Failed to import module {module_name}: {e} (find_processors())")
 
     return processors
 
@@ -193,9 +193,17 @@ def get_parent_module(module):
     if '.' not in module_name:
         return None  # Top-level module has no parent
     parent_module_name = module_name.rsplit('.', 1)[0]
-    return importlib.import_module(parent_module_name)
+    try:
+        return importlib.import_module(parent_module_name)
+    except Exception as e:
+        pass
+
+    return False
+
+
 
 def get_custom_watch_obj_for_processor(processor_name):
+    from changedetectionio.model import Watch
     watch_class = Watch.model
     processor_classes = find_processors()
     custom_watch_obj = next((tpl for tpl in processor_classes if tpl[1] == processor_name), None)

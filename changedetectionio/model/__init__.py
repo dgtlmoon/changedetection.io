@@ -69,3 +69,6 @@ class watch_base(dict):
         })
 
         super(watch_base, self).__init__(*arg, **kw)
+
+        if self.get('default'):
+            del self['default']

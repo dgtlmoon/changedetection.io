@@ -27,7 +27,6 @@ class update_worker(threading.Thread):
         super().__init__(*args, **kwargs)
 
     def queue_notification_for_watch(self, notification_q, n_object, watch):
-
         from changedetectionio import diff
         dates = []
         trigger_text = ''
