@@ -1,5 +1,6 @@
 
 from changedetectionio.model.Watch import model as BaseWatch
+import re
 
 class Restock(dict):
     def __init__(self, *args, **kwargs):
@@ -24,6 +25,9 @@ class Restock(dict):
     def __setitem__(self, key, value):
         # Custom logic to handle setting price and original_price
         if key == 'price':
+            if isinstance(value, str):
+                value = re.sub(r'[^0-9.]', '', value.strip())
+
             if value and not self.get('original_price'):
                 self['original_price'] = value
         super().__setitem__(key, value)

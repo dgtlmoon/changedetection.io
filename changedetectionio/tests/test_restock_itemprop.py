@@ -300,5 +300,3 @@ def test_data_sanity(client, live_server):
     res = client.get(
         url_for("edit_page", uuid="first"))
     assert test_url2.encode('utf-8') in res.data
-
-    # @todo look at the url-watches and make sure there is not key called "default" !!!
