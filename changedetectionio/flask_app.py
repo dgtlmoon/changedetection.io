@@ -8,7 +8,7 @@ import time
 
 from jinja2 import Template
 
-from .processors import find_processors, get_parent_module
+from .processors import find_processors, get_parent_module, get_custom_watch_obj_for_processor
 from .safe_jinja import render as jinja_render
 from changedetectionio.strtobool import strtobool
 from copy import deepcopy
@@ -658,24 +658,26 @@ def changedetection_app(config=None, datastore_o=None):
                 default['proxy'] = ''
         # proxy_override set to the json/text list of the items
 
-        form_class = forms.processor_text_json_diff_form
-
         # Does it use some custom form? does one exist?
         processor_name = datastore.data['watching'][uuid].get('processor', '')
-        custom_processor_class = next((tpl for tpl in find_processors() if tpl[1] == processor_name), None)
-        if custom_processor_class:
-            try:
-                # Get the parent of the "processor.py" go up one, get the form (kinda spaghetti but its reusing existing code)
-                parent_module = get_parent_module(custom_processor_class[0])
-                forms_module = importlib.import_module(f"{parent_module.__name__}.forms")
-                # Access the 'processor_settings_form' class from the 'forms' module
-                form_class = getattr(forms_module, 'processor_settings_form')
-            except ModuleNotFoundError as e:
-                # Does not have a custom form, and that's quite alright too.
-                pass
-        else:
-            flash(f"Cannot load the edit form for processor/plugin '{custom_processor_class[1]}', plugin missing?", 'error')
+        processor_classes = next((tpl for tpl in find_processors() if tpl[1] == processor_name), None)
+        if not processor_classes:
+            flash(f"Cannot load the edit form for processor/plugin '{processor_classes[1]}', plugin missing?", 'error')
             return redirect(url_for('index'))
+
+        parent_module = get_parent_module(processor_classes[0])
+
+        try:
+            # Get the parent of the "processor.py" go up one, get the form (kinda spaghetti but its reusing existing code)
+            forms_module = importlib.import_module(f"{parent_module.__name__}.forms")
+            # Access the 'processor_settings_form' class from the 'forms' module
+            form_class = getattr(forms_module, 'processor_settings_form')
+        except ModuleNotFoundError as e:
+            # .forms didnt exist
+            form_class = forms.processor_text_json_diff_form
+        except AttributeError as e:
+            # .forms exists but no useful form
+            form_class = forms.processor_text_json_diff_form
 
         form = form_class(formdata=request.form if request.method == 'POST' else None,
                                data=default
@@ -743,10 +745,11 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)
 
-            if request.args.get('unpause_on_save'):
-                flash("Updated watch - unpaused!")
-            else:
-                flash("Updated watch.")
+            # Recast it if need be to right data Watch handler
+            watch_class = get_custom_watch_obj_for_processor(form.data.get('processor'))
+            datastore.data['watching'][uuid] = watch_class(datastore_path=datastore_o.datastore_path, default=datastore.data['watching'][uuid])
+
+            flash("Updated watch - unpaused!" if request.args.get('unpause_on_save') else "Updated watch.")
 
             # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
             # But in the case something is added we should save straight away
@@ -776,6 +779,7 @@ def changedetection_app(config=None, datastore_o=None):
                 jq_support = False
 
             watch = datastore.data['watching'].get(uuid)
+
             system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
 
             is_html_webdriver = False
