@@ -658,7 +658,7 @@ def changedetection_app(config=None, datastore_o=None):
                 default['proxy'] = ''
         # proxy_override set to the json/text list of the items
 
-        form_class = forms
+        form_class = forms.processor_text_json_diff_form
 
         # Does it use some custom form? does one exist?
         processor_name = datastore.data['watching'][uuid].get('processor', '')
@@ -670,9 +670,12 @@ def changedetection_app(config=None, datastore_o=None):
                 forms_module = importlib.import_module(f"{parent_module.__name__}.forms")
                 # Access the 'processor_settings_form' class from the 'forms' module
                 form_class = getattr(forms_module, 'processor_settings_form')
-            except AttributeError as e:
-                flash(f"Cannot load the edit form for processor/plugin '{custom_processor_class[1]}', plugin missing?", 'error')
-                return redirect(url_for('index'))
+            except ModuleNotFoundError as e:
+                # Does not have a custom form, and that's quite alright too.
+                pass
+        else:
+            flash(f"Cannot load the edit form for processor/plugin '{custom_processor_class[1]}', plugin missing?", 'error')
+            return redirect(url_for('index'))
 
         form = form_class(formdata=request.form if request.method == 'POST' else None,
                                data=default
