@@ -197,9 +197,12 @@ class perform_site_check(difference_detection_processor):
                     logger.debug(f"{watch.get('uuid')} after float conversion - Min limit: '{min_limit}' Max limit: '{max_limit}' Price: '{price}'")
                     if min_limit or max_limit:
                         if is_between(number=price, lower=min_limit, upper=max_limit):
+                            logger.trace(f"{watch.get('uuid')} {price} is between {min_limit} and {max_limit}")
                             if changed_detected:
                                 logger.debug(f"{watch.get('uuid')} Override change-detected to FALSE because price was inside threshold")
                                 changed_detected = False
+                        else:
+                            logger.trace(f"{watch.get('uuid')} {price} is NOT between {min_limit} and {max_limit}")
 
                     # Price comparison by %
                     if watch['restock'].get('original_price') and changed_detected and watch.get('price_change_threshold_percent'):
