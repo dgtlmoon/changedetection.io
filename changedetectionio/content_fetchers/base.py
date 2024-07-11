@@ -95,6 +95,9 @@ class Fetcher():
 
     @abstractmethod
     def screenshot_step(self, step_n):
+        if self.browser_steps_screenshot_path and not os.path.isdir(self.browser_steps_screenshot_path):
+            logger.debug(f"> Creating data dir {self.browser_steps_screenshot_path}")
+            os.mkdir(self.browser_steps_screenshot_path)
         return None
 
     @abstractmethod
@@ -168,5 +171,8 @@ class Fetcher():
                 if os.path.isfile(f):
                     os.unlink(f)
 
-    def save_step_html(self, param):
+    def save_step_html(self, step_n):
+        if self.browser_steps_screenshot_path and not os.path.isdir(self.browser_steps_screenshot_path):
+            logger.debug(f"> Creating data dir {self.browser_steps_screenshot_path}")
+            os.mkdir(self.browser_steps_screenshot_path)
         pass

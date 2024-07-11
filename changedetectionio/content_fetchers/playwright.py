@@ -58,6 +58,7 @@ class fetcher(Fetcher):
                 self.proxy['password'] = parsed.password
 
     def screenshot_step(self, step_n=''):
+        super().screenshot_step(step_n=step_n)
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
 
         if self.browser_steps_screenshot_path is not None:
@@ -67,6 +68,7 @@ class fetcher(Fetcher):
                 f.write(screenshot)
 
     def save_step_html(self, step_n):
+        super().save_step_html(step_n=step_n)
         content = self.page.content()
         destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.html'.format(step_n))
         logger.debug(f"Saving step HTML to {destination}")
