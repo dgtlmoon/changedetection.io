@@ -104,7 +104,6 @@ class model(watch_base):
             'check_count': 0,
             'fetch_time': 0.0,
             'has_ldjson_price_data': None,
-            'in_stock': None,
             'last_checked': 0,
             'last_error': False,
             'last_notification_error': False,

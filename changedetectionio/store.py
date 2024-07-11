@@ -19,6 +19,7 @@ import uuid as uuid_builder
 from loguru import logger
 
 from .processors import get_custom_watch_obj_for_processor
+from .processors.restock_diff import Restock
 
 # Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
 BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
@@ -841,3 +842,12 @@ class ChangeDetectionStore:
         for uuid, watch in self.data['watching'].items():
             if isinstance(watch.get('tags'), str):
                 self.data['watching'][uuid]['tags'] = []
+
+    # Migrate old 'in_stock' values to the new Restock
+    def update_17(self):
+        for uuid, watch in self.data['watching'].items():
+            if 'in_stock' in watch:
+                watch['restock'] = Restock({'in_stock': watch.get('in_stock')})
+                del watch['in_stock']
+
+
