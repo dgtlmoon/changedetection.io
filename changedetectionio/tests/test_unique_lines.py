@@ -66,10 +66,10 @@ def set_modified_with_trigger_text_response():
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
-def test_setup(client, live_server):
+def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
-def test_unique_lines_functionality(client, live_server):
+def test_unique_lines_functionality(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
 
@@ -118,7 +118,7 @@ def test_unique_lines_functionality(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_sort_lines_functionality(client, live_server):
+def test_sort_lines_functionality(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     set_modified_swapped_lines_with_extra_text_for_sorting()

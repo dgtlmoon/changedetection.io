@@ -6,7 +6,7 @@ from ..util import live_server_setup, wait_for_all_checks
 import os
 
 # just make a request, we will grep in the docker logs to see it actually got called
-def test_select_custom(client, live_server):
+def test_select_custom(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
     # Goto settings, add our custom one

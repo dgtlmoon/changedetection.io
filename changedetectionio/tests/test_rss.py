@@ -49,10 +49,10 @@ def set_original_cdata_xml():
         f.write(test_return_data)
 
 
-def test_setup(client, live_server):
+def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
-def test_rss_and_token(client, live_server):
+def test_rss_and_token(client, live_server, measure_memory_usage):
     #    live_server_setup(live_server)
 
     set_original_response()
@@ -90,7 +90,7 @@ def test_rss_and_token(client, live_server):
 
     client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
 
-def test_basic_cdata_rss_markup(client, live_server):
+def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     set_original_cdata_xml()
@@ -118,7 +118,7 @@ def test_basic_cdata_rss_markup(client, live_server):
     assert b'The days of Terminator' in res.data
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
 
-def test_rss_xpath_filtering(client, live_server):
+def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     set_original_cdata_xml()

@@ -106,7 +106,7 @@ across multiple lines
     )
 
 
-def test_element_removal_full(client, live_server):
+def test_element_removal_full(client, live_server, measure_memory_usage):
     sleep_time_for_fetch_thread = 3
 
     set_original_response()

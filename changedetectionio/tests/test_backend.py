@@ -17,7 +17,7 @@ def test_inscriptus():
     assert stripped_text_from_html == 'test!\nok man'
 
 
-def test_check_basic_change_detection_functionality(client, live_server):
+def test_check_basic_change_detection_functionality(client, live_server, measure_memory_usage):
     set_original_response()
     live_server_setup(live_server)
 

@@ -5,7 +5,7 @@ from flask import url_for
 from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
 
-def test_noproxy_option(client, live_server):
+def test_noproxy_option(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
     # Run by run_proxy_tests.sh
     # Call this URL then scan the containers that it never went through them

@@ -40,7 +40,7 @@ def set_modified_ignore_response():
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
-def test_render_anchor_tag_content_true(client, live_server):
+def test_render_anchor_tag_content_true(client, live_server, measure_memory_usage):
     """Testing that the link changes are detected when
     render_anchor_tag_content setting is set to true"""
     sleep_time_for_fetch_thread = 3

@@ -4,7 +4,7 @@ from urllib.request import urlopen
 from . util import set_original_response, set_modified_response, live_server_setup
 
 
-def test_check_watch_field_storage(client, live_server):
+def test_check_watch_field_storage(client, live_server, measure_memory_usage):
     set_original_response()
     live_server_setup(live_server)
 

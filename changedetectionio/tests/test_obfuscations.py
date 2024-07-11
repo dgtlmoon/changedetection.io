@@ -18,7 +18,7 @@ def set_original_ignore_response():
         f.write(test_return_data)
 
 
-def test_obfuscations(client, live_server):
+def test_obfuscations(client, live_server, measure_memory_usage):
     set_original_ignore_response()
     live_server_setup(live_server)
     time.sleep(1)

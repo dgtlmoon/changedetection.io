@@ -10,7 +10,7 @@ sleep_time_for_fetch_thread = 3
 def test_setup(live_server):
     live_server_setup(live_server)
 
-def test_check_basic_change_detection_functionality_source(client, live_server):
+def test_check_basic_change_detection_functionality_source(client, live_server, measure_memory_usage):
     set_original_response()
     test_url = 'source:'+url_for('test_endpoint', _external=True)
     # Add our URL to the import page
@@ -58,7 +58,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server):
 
 
 # `subtractive_selectors` should still work in `source:` type requests
-def test_check_ignore_elements(client, live_server):
+def test_check_ignore_elements(client, live_server, measure_memory_usage):
     set_original_response()
     time.sleep(1)
     test_url = 'source:'+url_for('test_endpoint', _external=True)

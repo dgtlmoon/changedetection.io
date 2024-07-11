@@ -48,7 +48,7 @@ def set_back_in_stock_response():
     return None
 
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready
-def test_restock_detection(client, live_server):
+def test_restock_detection(client, live_server, measure_memory_usage):
 
     set_original_response()
     #assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"

@@ -54,7 +54,7 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text):
     assert b'Deleted' in res.data
 
 
-def test_http_error_handler(client, live_server):
+def test_http_error_handler(client, live_server, measure_memory_usage):
     _runner_test_http_errors(client, live_server, 403, 'Access denied')
     _runner_test_http_errors(client, live_server, 404, 'Page not found')
     _runner_test_http_errors(client, live_server, 500, '(Internal server error) received')
@@ -63,7 +63,7 @@ def test_http_error_handler(client, live_server):
     assert b'Deleted' in res.data
 
 # Just to be sure error text is properly handled
-def test_DNS_errors(client, live_server):
+def test_DNS_errors(client, live_server, measure_memory_usage):
     # Give the endpoint time to spin up
     time.sleep(1)
 
@@ -87,7 +87,7 @@ def test_DNS_errors(client, live_server):
     assert b'Deleted' in res.data
 
 # Re 1513
-def test_low_level_errors_clear_correctly(client, live_server):
+def test_low_level_errors_clear_correctly(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     # Give the endpoint time to spin up
     time.sleep(1)
