@@ -85,6 +85,8 @@ notification_debug_log=[]
 
 # get locale ready
 default_locale = locale.getdefaultlocale()
+logger.info(f"System locale default is {default_locale}")
+
 locale.setlocale(locale.LC_ALL, default_locale)
 
 watch_api = Api(app, decorators=[csrf.exempt])
