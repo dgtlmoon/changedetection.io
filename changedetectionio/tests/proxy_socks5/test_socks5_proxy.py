@@ -5,7 +5,7 @@ from flask import url_for
 from changedetectionio.tests.util import live_server_setup, wait_for_all_checks
 
 
-def test_socks5(client, live_server):
+def test_socks5(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
     # Setup a proxy

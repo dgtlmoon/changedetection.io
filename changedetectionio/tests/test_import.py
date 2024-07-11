@@ -8,10 +8,10 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
 
-def test_setup(client, live_server):
+def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
-def test_import(client, live_server):
+def test_import(client, live_server, measure_memory_usage):
     # Give the endpoint time to spin up
     wait_for_all_checks(client)
 
@@ -34,7 +34,7 @@ https://example.com tag1, other tag"""
     res = client.get( url_for("index"))
     res = client.get( url_for("index"))
 
-def xtest_import_skip_url(client, live_server):
+def xtest_import_skip_url(client, live_server, measure_memory_usage):
 
 
     # Give the endpoint time to spin up
@@ -57,7 +57,7 @@ def xtest_import_skip_url(client, live_server):
     # Clear flask alerts
     res = client.get( url_for("index"))
 
-def test_import_distillio(client, live_server):
+def test_import_distillio(client, live_server, measure_memory_usage):
 
     distill_data='''
 {
@@ -123,7 +123,7 @@ def test_import_distillio(client, live_server):
     # Clear flask alerts
     res = client.get(url_for("index"))
 
-def test_import_custom_xlsx(client, live_server):
+def test_import_custom_xlsx(client, live_server, measure_memory_usage):
     """Test can upload a excel spreadsheet and the watches are created correctly"""
 
     #live_server_setup(live_server)
@@ -172,7 +172,7 @@ def test_import_custom_xlsx(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_import_watchete_xlsx(client, live_server):
+def test_import_watchete_xlsx(client, live_server, measure_memory_usage):
     """Test can upload a excel spreadsheet and the watches are created correctly"""
 
     #live_server_setup(live_server)

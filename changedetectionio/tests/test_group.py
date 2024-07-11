@@ -6,7 +6,7 @@ from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from
 import os
 
 
-def test_setup(client, live_server):
+def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
 def set_original_response():
@@ -39,7 +39,7 @@ def set_modified_response():
         f.write(test_return_data)
     return None
 
-def test_setup_group_tag(client, live_server):
+def test_setup_group_tag(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     set_original_response()
 
@@ -130,7 +130,7 @@ def test_setup_group_tag(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_tag_import_singular(client, live_server):
+def test_tag_import_singular(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
@@ -150,7 +150,7 @@ def test_tag_import_singular(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_tag_add_in_ui(client, live_server):
+def test_tag_add_in_ui(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 #
     res = client.post(
@@ -167,7 +167,7 @@ def test_tag_add_in_ui(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_group_tag_notification(client, live_server):
+def test_group_tag_notification(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     set_original_response()
 
@@ -235,7 +235,7 @@ def test_group_tag_notification(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_limit_tag_ui(client, live_server):
+def test_limit_tag_ui(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
@@ -273,7 +273,7 @@ def test_limit_tag_ui(client, live_server):
     assert b'Deleted' in res.data
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
-def test_clone_tag_on_import(client, live_server):
+def test_clone_tag_on_import(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -298,7 +298,7 @@ def test_clone_tag_on_import(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_clone_tag_on_quickwatchform_add(client, live_server):
+def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
@@ -328,7 +328,7 @@ def test_clone_tag_on_quickwatchform_add(client, live_server):
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
-def test_order_of_filters_tag_filter_and_watch_filter(client, live_server):
+def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measure_memory_usage):
 
     # Add a tag with some config, import a tag and it should roughly work
     res = client.post(

@@ -49,7 +49,7 @@ def set_original_ignore_response():
 
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
-def test_check_ignore_whitespace(client, live_server):
+def test_check_ignore_whitespace(client, live_server, measure_memory_usage):
     sleep_time_for_fetch_thread = 3
 
     # Give the endpoint time to spin up

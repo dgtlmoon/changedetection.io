@@ -4,12 +4,12 @@ import os
 from flask import url_for
 from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
-def test_setup(client, live_server):
+def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
 
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready
-def test_visual_selector_content_ready(client, live_server):
+def test_visual_selector_content_ready(client, live_server, measure_memory_usage):
 
     import os
     import json
@@ -79,7 +79,7 @@ def test_visual_selector_content_ready(client, live_server):
         follow_redirects=True
     )
 
-def test_basic_browserstep(client, live_server):
+def test_basic_browserstep(client, live_server, measure_memory_usage):
 
     #live_server_setup(live_server)
     assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"

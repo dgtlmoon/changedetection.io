@@ -24,7 +24,7 @@ def set_html_response():
 
 
 # In the case the server does not issue a charset= or doesnt have content_type header set
-def test_check_encoding_detection(client, live_server):
+def test_check_encoding_detection(client, live_server, measure_memory_usage):
     set_html_response()
 
     # Add our URL to the import page
@@ -50,7 +50,7 @@ def test_check_encoding_detection(client, live_server):
 
 
 # In the case the server does not issue a charset= or doesnt have content_type header set
-def test_check_encoding_detection_missing_content_type_header(client, live_server):
+def test_check_encoding_detection_missing_content_type_header(client, live_server, measure_memory_usage):
     set_html_response()
 
     # Add our URL to the import page

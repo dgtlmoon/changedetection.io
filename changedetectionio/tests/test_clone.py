@@ -6,7 +6,7 @@ from . util import live_server_setup
 
 
 
-def test_trigger_functionality(client, live_server):
+def test_trigger_functionality(client, live_server, measure_memory_usage):
 
     live_server_setup(live_server)
 

@@ -8,7 +8,7 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 from urllib.parse import urlparse, parse_qs
 
-def test_consistent_history(client, live_server):
+def test_consistent_history(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
     r = range(1, 30)

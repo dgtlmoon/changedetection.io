@@ -9,7 +9,7 @@ def test_setup(live_server):
 
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
-def test_headers_in_request(client, live_server):
+def test_headers_in_request(client, live_server, measure_memory_usage):
     #ve_server_setup(live_server)
     # Add our URL to the import page
     test_url = url_for('test_headers', _external=True)
@@ -84,7 +84,7 @@ def test_headers_in_request(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_body_in_request(client, live_server):
+def test_body_in_request(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     test_url = url_for('test_body', _external=True)
@@ -177,7 +177,7 @@ def test_body_in_request(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_method_in_request(client, live_server):
+def test_method_in_request(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_method', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
@@ -254,7 +254,7 @@ def test_method_in_request(client, live_server):
     assert b'Deleted' in res.data
 
 # Re #2408 - user-agent override test, also should handle case-insensitive header deduplication
-def test_ua_global_override(client, live_server):
+def test_ua_global_override(client, live_server, measure_memory_usage):
     # live_server_setup(live_server)
     test_url = url_for('test_headers', _external=True)
 
@@ -309,7 +309,7 @@ def test_ua_global_override(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_headers_textfile_in_request(client, live_server):
+def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     # Add our URL to the import page
 

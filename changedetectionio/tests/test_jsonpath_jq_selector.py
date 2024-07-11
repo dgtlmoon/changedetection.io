@@ -201,7 +201,7 @@ def set_modified_response():
 
     return None
 
-def test_check_json_without_filter(client, live_server):
+def test_check_json_without_filter(client, live_server, measure_memory_usage):
     # Request a JSON document from a application/json source containing HTML
     # and be sure it doesn't get chewed up by instriptis
     set_json_response_with_html()
@@ -294,14 +294,14 @@ def check_json_filter(json_filter, client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_check_jsonpath_filter(client, live_server):
+def test_check_jsonpath_filter(client, live_server, measure_memory_usage):
     check_json_filter('json:boss.name', client, live_server)
 
-def test_check_jq_filter(client, live_server):
+def test_check_jq_filter(client, live_server, measure_memory_usage):
     if jq_support:
         check_json_filter('jq:.boss.name', client, live_server)
 
-def test_check_jqraw_filter(client, live_server):
+def test_check_jqraw_filter(client, live_server, measure_memory_usage):
     if jq_support:
         check_json_filter('jqraw:.boss.name', client, live_server)
 
@@ -352,14 +352,14 @@ def check_json_filter_bool_val(json_filter, client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_check_jsonpath_filter_bool_val(client, live_server):
+def test_check_jsonpath_filter_bool_val(client, live_server, measure_memory_usage):
     check_json_filter_bool_val("json:$['available']", client, live_server)
 
-def test_check_jq_filter_bool_val(client, live_server):
+def test_check_jq_filter_bool_val(client, live_server, measure_memory_usage):
     if jq_support:
         check_json_filter_bool_val("jq:.available", client, live_server)
 
-def test_check_jqraw_filter_bool_val(client, live_server):
+def test_check_jqraw_filter_bool_val(client, live_server, measure_memory_usage):
     if jq_support:
         check_json_filter_bool_val("jq:.available", client, live_server)
 
@@ -430,7 +430,7 @@ def check_json_ext_filter(json_filter, client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_ignore_json_order(client, live_server):
+def test_ignore_json_order(client, live_server, measure_memory_usage):
     # A change in order shouldn't trigger a notification
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
@@ -472,7 +472,7 @@ def test_ignore_json_order(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_correct_header_detect(client, live_server):
+def test_correct_header_detect(client, live_server, measure_memory_usage):
     # Like in https://github.com/dgtlmoon/changedetection.io/pull/1593
     # Specify extra html that JSON is sometimes wrapped in - when using SockpuppetBrowser / Puppeteer / Playwrightetc
     with open("test-datastore/endpoint-content.txt", "w") as f:
@@ -504,13 +504,13 @@ def test_correct_header_detect(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_check_jsonpath_ext_filter(client, live_server):
+def test_check_jsonpath_ext_filter(client, live_server, measure_memory_usage):
     check_json_ext_filter('json:$[?(@.status==Sold)]', client, live_server)
 
-def test_check_jq_ext_filter(client, live_server):
+def test_check_jq_ext_filter(client, live_server, measure_memory_usage):
     if jq_support:
         check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server)
 
-def test_check_jqraw_ext_filter(client, live_server):
+def test_check_jqraw_ext_filter(client, live_server, measure_memory_usage):
     if jq_support:
         check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server)

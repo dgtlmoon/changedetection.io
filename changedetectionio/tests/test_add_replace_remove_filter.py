@@ -35,10 +35,10 @@ def set_original(excluding=None, add_line=None):
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
-def test_setup(client, live_server):
+def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
-def test_check_removed_line_contains_trigger(client, live_server):
+def test_check_removed_line_contains_trigger(client, live_server, measure_memory_usage):
 
     # Give the endpoint time to spin up
     time.sleep(1)
@@ -103,7 +103,7 @@ def test_check_removed_line_contains_trigger(client, live_server):
     assert b'Deleted' in res.data
 
 
-def test_check_add_line_contains_trigger(client, live_server):
+def test_check_add_line_contains_trigger(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     # Give the endpoint time to spin up

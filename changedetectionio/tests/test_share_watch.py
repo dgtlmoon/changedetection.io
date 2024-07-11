@@ -9,7 +9,7 @@ import re
 sleep_time_for_fetch_thread = 3
 
 
-def test_share_watch(client, live_server):
+def test_share_watch(client, live_server, measure_memory_usage):
     set_original_response()
     live_server_setup(live_server)
 
