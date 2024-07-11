@@ -6,7 +6,7 @@ from .util import set_original_response, set_modified_response, live_server_setu
 
 
 # `subtractive_selectors` should still work in `source:` type requests
-def test_fetch_pdf(client, live_server):
+def test_fetch_pdf(client, live_server, measure_memory_usage):
     import shutil
     shutil.copy("tests/test.pdf", "test-datastore/endpoint-test.pdf")
 

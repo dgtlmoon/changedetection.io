@@ -1,4 +1,7 @@
 #!/usr/bin/python3
+import resource
+import time
+from threading import Thread
 
 import pytest
 from changedetectionio import changedetection_app
@@ -22,6 +25,36 @@ def reportlog(pytestconfig):
     handler_id = logger.add(logging_plugin.report_handler, format="{message}")
     yield
     logger.remove(handler_id)
+
+
+def track_memory(memory_usage, ):
+    while not memory_usage["stop"]:
+        max_rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        memory_usage["peak"] = max(memory_usage["peak"], max_rss)
+        time.sleep(0.01)  # Adjust the sleep time as needed
+
+@pytest.fixture(scope='function')
+def measure_memory_usage(request):
+    memory_usage = {"peak": 0, "stop": False}
+    tracker_thread = Thread(target=track_memory, args=(memory_usage,))
+    tracker_thread.start()
+
+    yield
+
+    memory_usage["stop"] = True
+    tracker_thread.join()
+
+    # Note: ru_maxrss is in kilobytes on Unix-based systems
+    max_memory_used = memory_usage["peak"] / 1024  # Convert to MB
+    s = f"Peak memory used by the test {request.node.fspath} - '{request.node.name}': {max_memory_used:.2f} MB"
+    logger.debug(s)
+
+    with open("test-memory.log", 'a') as f:
+        f.write(f"{s}\n")
+
+    # Assert that the memory usage is less than 200MB
+    assert max_memory_used < 150, f"Memory usage exceeded 200MB: {max_memory_used:.2f} MB"
+
 
 def cleanup(datastore_path):
     import glob

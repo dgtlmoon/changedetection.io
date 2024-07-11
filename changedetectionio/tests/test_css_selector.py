@@ -70,7 +70,7 @@ def test_include_filters_output():
 
 
 # Tests the whole stack works with the CSS Filter
-def test_check_markup_include_filters_restriction(client, live_server):
+def test_check_markup_include_filters_restriction(client, live_server, measure_memory_usage):
     sleep_time_for_fetch_thread = 3
 
     include_filters = "#sametext"
@@ -124,7 +124,7 @@ def test_check_markup_include_filters_restriction(client, live_server):
 
 
 # Tests the whole stack works with the CSS Filter
-def test_check_multiple_filters(client, live_server):
+def test_check_multiple_filters(client, live_server, measure_memory_usage):
     sleep_time_for_fetch_thread = 3
 
     include_filters = "#blob-a\r\nxpath://*[contains(@id,'blob-b')]"
@@ -180,7 +180,7 @@ def test_check_multiple_filters(client, live_server):
 # The filter exists, but did not contain anything useful
 # Mainly used when the filter contains just an IMG, this can happen when someone selects an image in the visual-selector
 # Tests fetcher can throw a "ReplyWithContentButNoText" exception after applying filter and extracting text
-def test_filter_is_empty_help_suggestion(client, live_server):
+def test_filter_is_empty_help_suggestion(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     include_filters = "#blob-a"

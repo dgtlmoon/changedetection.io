@@ -21,7 +21,7 @@ def test_setup(live_server):
 
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
-def test_check_notification(client, live_server):
+def test_check_notification(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     set_original_response()
 
@@ -234,7 +234,7 @@ def test_check_notification(client, live_server):
         follow_redirects=True
     )
 
-def test_notification_validation(client, live_server):
+def test_notification_validation(client, live_server, measure_memory_usage):
 
     time.sleep(1)
 
@@ -273,7 +273,7 @@ def test_notification_validation(client, live_server):
 
 
 
-def test_notification_custom_endpoint_and_jinja2(client, live_server):
+def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     # test_endpoint - that sends the contents of a file

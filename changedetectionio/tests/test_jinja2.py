@@ -5,11 +5,11 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
 
-def test_setup(client, live_server):
+def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
-def test_jinja2_in_url_query(client, live_server):
+def test_jinja2_in_url_query(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     # Add our URL to the import page
@@ -34,7 +34,7 @@ def test_jinja2_in_url_query(client, live_server):
     assert b'date=2' in res.data
 
 # https://techtonics.medium.com/secure-templating-with-jinja2-understanding-ssti-and-jinja2-sandbox-environment-b956edd60456
-def test_jinja2_security_url_query(client, live_server):
+def test_jinja2_security_url_query(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     # Add our URL to the import page

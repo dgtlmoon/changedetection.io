@@ -53,10 +53,10 @@ def is_valid_uuid(val):
         return False
 
 
-def test_setup(client, live_server):
+def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
-def test_api_simple(client, live_server):
+def test_api_simple(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     api_key = extract_api_key_from_UI(client)
@@ -241,7 +241,7 @@ def test_api_simple(client, live_server):
     )
     assert len(res.json) == 0, "Watch list should be empty"
 
-def test_access_denied(client, live_server):
+def test_access_denied(client, live_server, measure_memory_usage):
     # `config_api_token_enabled` Should be On by default
     res = client.get(
         url_for("createwatch")
@@ -287,7 +287,7 @@ def test_access_denied(client, live_server):
     )
     assert b"Settings updated." in res.data
 
-def test_api_watch_PUT_update(client, live_server):
+def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
 
     #live_server_setup(live_server)
     api_key = extract_api_key_from_UI(client)
@@ -369,7 +369,7 @@ def test_api_watch_PUT_update(client, live_server):
     assert b'Deleted' in res.data
 
 
-def test_api_import(client, live_server):
+def test_api_import(client, live_server, measure_memory_usage):
     api_key = extract_api_key_from_UI(client)
 
     res = client.post(

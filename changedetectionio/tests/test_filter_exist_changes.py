@@ -41,7 +41,7 @@ def set_response_with_filter():
         f.write(test_return_data)
     return None
 
-def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_server):
+def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_server, measure_memory_usage):
 #  Filter knowingly doesn't exist, like someone setting up a known filter to see if some cinema tickets are on sale again
 #  And the page has that filter available
 #  Then I should get a notification

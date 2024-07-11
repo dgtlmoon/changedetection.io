@@ -60,7 +60,7 @@ def set_modified_response_minus_block_text():
         f.write(test_return_data)
 
 
-def test_check_block_changedetection_text_NOT_present(client, live_server):
+def test_check_block_changedetection_text_NOT_present(client, live_server, measure_memory_usage):
 
     live_server_setup(live_server)
     # Use a mix of case in ZzZ to prove it works case-insensitive.

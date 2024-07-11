@@ -2,10 +2,10 @@ from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 import time
 
-def test_setup(client, live_server):
+def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
-def test_bad_access(client, live_server):
+def test_bad_access(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     res = client.post(
         url_for("import_page"),
@@ -67,7 +67,7 @@ def test_bad_access(client, live_server):
 
     assert b'file:// type access is denied for security reasons.' in res.data
 
-def test_xss(client, live_server):
+def test_xss(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     from changedetectionio.notification import (
         default_notification_format

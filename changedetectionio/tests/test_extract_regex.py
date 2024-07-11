@@ -67,10 +67,10 @@ def set_multiline_response():
     return None
 
 
-def test_setup(client, live_server):
+def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
-def test_check_filter_multiline(client, live_server):
+def test_check_filter_multiline(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     set_multiline_response()
 
@@ -122,7 +122,7 @@ def test_check_filter_multiline(client, live_server):
     # but the last one, which also says 'lines' shouldnt be here (non-greedy match checking)
     assert b'aaand something lines' not in res.data
 
-def test_check_filter_and_regex_extract(client, live_server):
+def test_check_filter_and_regex_extract(client, live_server, measure_memory_usage):
     
     include_filters = ".changetext"
 
@@ -205,7 +205,7 @@ def test_check_filter_and_regex_extract(client, live_server):
 
 
 
-def test_regex_error_handling(client, live_server):
+def test_regex_error_handling(client, live_server, measure_memory_usage):
 
     #live_server_setup(live_server)
 

@@ -9,7 +9,7 @@ sleep_time_for_fetch_thread = 3
 
 
 
-def test_check_extract_text_from_diff(client, live_server):
+def test_check_extract_text_from_diff(client, live_server, measure_memory_usage):
     import time
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("Now it's {} seconds since epoch, time flies!".format(str(time.time())))

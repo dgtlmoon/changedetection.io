@@ -151,10 +151,10 @@ def run_filter_test(client, live_server, content_filter):
 def test_setup(live_server):
     live_server_setup(live_server)
 
-def test_check_include_filters_failure_notification(client, live_server):
+def test_check_include_filters_failure_notification(client, live_server, measure_memory_usage):
     run_filter_test(client, live_server,'#nope-doesnt-exist')
 
-def test_check_xpath_filter_failure_notification(client, live_server):
+def test_check_xpath_filter_failure_notification(client, live_server, measure_memory_usage):
     run_filter_test(client, live_server, '//*[@id="nope-doesnt-exist"]')
 
 # Test that notification is never sent

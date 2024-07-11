@@ -7,7 +7,7 @@ from changedetectionio.tests.util import live_server_setup, wait_for_all_checks
 
 # should be proxies.json mounted from run_proxy_tests.sh already
 # -v `pwd`/tests/proxy_socks5/proxies.json-example:/app/changedetectionio/test-datastore/proxies.json
-def test_socks5_from_proxiesjson_file(client, live_server):
+def test_socks5_from_proxiesjson_file(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
     test_url = "https://changedetection.io/CHANGELOG.txt?socks-test-tag=" + os.getenv('SOCKSTEST', '')

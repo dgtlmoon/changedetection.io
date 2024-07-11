@@ -39,7 +39,7 @@ def set_some_changed_response():
         f.write(test_return_data)
 
 
-def test_normal_page_check_works_with_ignore_status_code(client, live_server):
+def test_normal_page_check_works_with_ignore_status_code(client, live_server, measure_memory_usage):
 
 
     # Give the endpoint time to spin up
@@ -85,7 +85,7 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server):
 
 
 # Tests the whole stack works with staus codes ignored
-def test_403_page_check_works_with_ignore_status_code(client, live_server):
+def test_403_page_check_works_with_ignore_status_code(client, live_server, measure_memory_usage):
     sleep_time_for_fetch_thread = 3
 
     set_original_response()

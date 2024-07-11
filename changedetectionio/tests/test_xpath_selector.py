@@ -49,7 +49,7 @@ def set_modified_response():
 
 
 # Handle utf-8 charset replies https://github.com/dgtlmoon/changedetection.io/pull/613
-def test_check_xpath_filter_utf8(client, live_server):
+def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage):
     filter = '//item/*[self::description]'
 
     d = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -105,7 +105,7 @@ def test_check_xpath_filter_utf8(client, live_server):
 
 
 # Handle utf-8 charset replies https://github.com/dgtlmoon/changedetection.io/pull/613
-def test_check_xpath_text_function_utf8(client, live_server):
+def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usage):
     filter = '//item/title/text()'
 
     d = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -168,7 +168,7 @@ def test_check_xpath_text_function_utf8(client, live_server):
     assert b'Deleted' in res.data
 
 
-def test_check_markup_xpath_filter_restriction(client, live_server):
+def test_check_markup_xpath_filter_restriction(client, live_server, measure_memory_usage):
     xpath_filter = "//*[contains(@class, 'sametext')]"
 
     set_original_response()
@@ -214,7 +214,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server):
     assert b'Deleted' in res.data
 
 
-def test_xpath_validation(client, live_server):
+def test_xpath_validation(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -235,7 +235,7 @@ def test_xpath_validation(client, live_server):
     assert b'Deleted' in res.data
 
 
-def test_xpath23_prefix_validation(client, live_server):
+def test_xpath23_prefix_validation(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -255,7 +255,7 @@ def test_xpath23_prefix_validation(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_xpath1_lxml(client, live_server):
+def test_xpath1_lxml(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     d = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -319,7 +319,7 @@ def test_xpath1_lxml(client, live_server):
     #####
 
 
-def test_xpath1_validation(client, live_server):
+def test_xpath1_validation(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -341,7 +341,7 @@ def test_xpath1_validation(client, live_server):
 
 
 # actually only really used by the distll.io importer, but could be handy too
-def test_check_with_prefix_include_filters(client, live_server):
+def test_check_with_prefix_include_filters(client, live_server, measure_memory_usage):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
@@ -378,7 +378,7 @@ def test_check_with_prefix_include_filters(client, live_server):
     client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
 
 
-def test_various_rules(client, live_server):
+def test_various_rules(client, live_server, measure_memory_usage):
     # Just check these don't error
     # live_server_setup(live_server)
     with open("test-datastore/endpoint-content.txt", "w") as f:
@@ -426,7 +426,7 @@ def test_various_rules(client, live_server):
     assert b'Deleted' in res.data
 
 
-def test_xpath_20(client, live_server):
+def test_xpath_20(client, live_server, measure_memory_usage):
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("import_page"),
@@ -463,7 +463,7 @@ def test_xpath_20(client, live_server):
     client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
 
 
-def test_xpath_20_function_count(client, live_server):
+def test_xpath_20_function_count(client, live_server, measure_memory_usage):
     set_original_response()
 
     # Add our URL to the import page
@@ -499,7 +499,7 @@ def test_xpath_20_function_count(client, live_server):
     client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
 
 
-def test_xpath_20_function_count2(client, live_server):
+def test_xpath_20_function_count2(client, live_server, measure_memory_usage):
     set_original_response()
 
     # Add our URL to the import page
@@ -535,7 +535,7 @@ def test_xpath_20_function_count2(client, live_server):
     client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
 
 
-def test_xpath_20_function_string_join_matches(client, live_server):
+def test_xpath_20_function_string_join_matches(client, live_server, measure_memory_usage):
     set_original_response()
 
     # Add our URL to the import page
