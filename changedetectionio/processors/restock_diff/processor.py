@@ -151,8 +151,12 @@ class perform_site_check(difference_detection_processor):
             update_obj['restock']["in_stock"] = True if self.fetcher.instock_data == 'Possibly in stock' else False
             logger.debug(f"Watch UUID {watch.get('uuid')} restock check returned '{self.fetcher.instock_data}' from JS scraper.")
 
+        # What we store in the snapshot
+        price = update_obj.get('restock').get('price') if update_obj.get('restock').get('price') else ""
+        snapshot_content = f"{update_obj.get('restock').get('in_stock')} - {price}"
+
         # Main detection method
-        fetched_md5 = hashlib.md5(self.fetcher.instock_data.encode('utf-8')).hexdigest()
+        fetched_md5 = hashlib.md5(snapshot_content.encode('utf-8')).hexdigest()
 
         # The main thing that all this at the moment comes down to :)
         changed_detected = False
@@ -209,8 +213,5 @@ class perform_site_check(difference_detection_processor):
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5
-        price = update_obj.get('restock').get('price') if update_obj.get('restock').get('price') else ""
-        # @todo store in DB? build graphs?
-        snapshot_content = f"{update_obj.get('restock').get('in_stock')} - {price}"
 
         return changed_detected, update_obj, snapshot_content.encode('utf-8').strip()
