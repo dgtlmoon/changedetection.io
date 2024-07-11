@@ -1,8 +1,29 @@
 
 from changedetectionio.model.Watch import model as BaseWatch
 import re
+from babel.numbers import parse_decimal
 
 class Restock(dict):
+    
+    def parse_currency(self, raw_value: str) -> float:
+        # Clean and standardize the value
+        standardized_value = raw_value
+
+        if ',' in standardized_value and '.' in standardized_value:
+            # Identify the correct decimal separator
+            if standardized_value.rfind('.') > standardized_value.rfind(','):
+                standardized_value = standardized_value.replace(',', '')
+            else:
+                standardized_value = standardized_value.replace('.', '').replace(',', '.')
+        else:
+            standardized_value = standardized_value.replace(',', '.')
+
+        # Remove any non-numeric characters except for the decimal point
+        standardized_value = re.sub(r'[^\d.-]', '', standardized_value)
+
+        # Convert to float
+        return float(parse_decimal(standardized_value, locale='en'))
+
     def __init__(self, *args, **kwargs):
         # Define default values
         default_values = {
@@ -26,7 +47,7 @@ class Restock(dict):
         # Custom logic to handle setting price and original_price
         if key == 'price':
             if isinstance(value, str):
-                value = re.sub(r'[^0-9.]', '', value.strip())
+                value = self.parse_currency(raw_value=value)
 
             if value and not self.get('original_price'):
                 self['original_price'] = value

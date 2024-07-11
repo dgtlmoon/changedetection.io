@@ -1,12 +1,14 @@
 #!/usr/bin/python3
 
 import datetime
+import flask_login
+import locale
 import os
+import pytz
 import queue
 import threading
 import time
-
-from jinja2 import Template
+import timeago
 
 from .processors import find_processors, get_parent_module, get_custom_watch_obj_for_processor
 from .safe_jinja import render as jinja_render
@@ -14,9 +16,7 @@ from changedetectionio.strtobool import strtobool
 from copy import deepcopy
 from functools import wraps
 from threading import Event
-import flask_login
-import pytz
-import timeago
+
 from feedgen.feed import FeedGenerator
 from flask import (
     Flask,
@@ -111,6 +111,16 @@ def get_darkmode_state():
 @app.template_global()
 def get_css_version():
     return __version__
+
+@app.template_filter('format_number_locale')
+def _jinja2_filter_format_number_locale(value: float) -> str:
+    "Formats for example 4000.10 to the local locale default of 4,000.10"
+    default_locale = locale.getdefaultlocale()
+    locale.setlocale(locale.LC_ALL, default_locale)
+    # Format the number with two decimal places
+    formatted_value = locale.format_string("%.2f", value, grouping=True)
+
+    return formatted_value
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
 # running or something similar.
