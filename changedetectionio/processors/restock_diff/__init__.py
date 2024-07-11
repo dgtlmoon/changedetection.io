@@ -4,7 +4,7 @@ import re
 from babel.numbers import parse_decimal
 
 class Restock(dict):
-    
+
     def parse_currency(self, raw_value: str) -> float:
         # Clean and standardize the value
         standardized_value = raw_value
@@ -51,6 +51,7 @@ class Restock(dict):
 
             if value and not self.get('original_price'):
                 self['original_price'] = value
+
         super().__setitem__(key, value)
 
 class Watch(BaseWatch):

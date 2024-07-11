@@ -138,26 +138,18 @@ class perform_site_check(difference_detection_processor):
                 else:
                     update_obj['restock']['in_stock'] = False
 
-            # Used for the change detection, we store the real data separately, in the future this can implement some min,max threshold
-            # @todo if price is None?
-            self.fetcher.instock_data = f"{itemprop_availability.get('availability')} - {itemprop_availability.get('price')}"
-
-        elif self.fetcher.instock_data:
-            # 'Possibly in stock' comes from stock-not-in-stock.js when no string found above in the metadata of the HTML
-            update_obj['restock'] = Restock({'in_stock': True if self.fetcher.instock_data == 'Possibly in stock' else False})
-
-            # @todo scrape price somehow
-            logger.debug(
-                f"Restock - using scraped browserdata - Watch UUID {watch.get('uuid')} restock check returned '{self.fetcher.instock_data}' from JS scraper.")
-
         # Main detection method
         fetched_md5 = None
-        if self.fetcher.instock_data:
-            # 'Possibly in stock' comes from stock-not-in-stock.js when no string found above the fold.
-            update_obj["in_stock"] = True if self.fetcher.instock_data == 'Possibly in stock' else False
-            logger.debug(f"Watch UUID {watch.get('uuid')} restock check returned '{self.fetcher.instock_data}' from JS scraper.")
-        else:
+
+        if not self.fetcher.instock_data and not itemprop_availability.get('availability'):
             raise UnableToExtractRestockData(status_code=self.fetcher.status_code)
+
+        # Nothing automatic in microdata found, revert to scraping the page
+        if self.fetcher.instock_data and itemprop_availability.get('availability') is None:
+            # 'Possibly in stock' comes from stock-not-in-stock.js when no string found above the fold.
+            # Careful! this does not really come from chrome/js when the watch is set to plaintext
+            update_obj['restock']["in_stock"] = True if self.fetcher.instock_data == 'Possibly in stock' else False
+            logger.debug(f"Watch UUID {watch.get('uuid')} restock check returned '{self.fetcher.instock_data}' from JS scraper.")
 
         # Main detection method
         fetched_md5 = hashlib.md5(self.fetcher.instock_data.encode('utf-8')).hexdigest()
@@ -217,4 +209,8 @@ class perform_site_check(difference_detection_processor):
 
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5
-        return changed_detected, update_obj, self.fetcher.instock_data.encode('utf-8').strip()
+        price = update_obj.get('restock').get('price') if update_obj.get('restock').get('price') else ""
+        # @todo store in DB? build graphs?
+        snapshot_content = f"{update_obj.get('restock').get('in_stock')} - {price}"
+
+        return changed_detected, update_obj, snapshot_content.encode('utf-8').strip()

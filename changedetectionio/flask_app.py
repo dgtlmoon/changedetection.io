@@ -83,6 +83,10 @@ csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log=[]
 
+# get locale ready
+default_locale = locale.getdefaultlocale()
+locale.setlocale(locale.LC_ALL, default_locale)
+
 watch_api = Api(app, decorators=[csrf.exempt])
 
 def init_app_secret(datastore_path):
@@ -115,9 +119,7 @@ def get_css_version():
 @app.template_filter('format_number_locale')
 def _jinja2_filter_format_number_locale(value: float) -> str:
     "Formats for example 4000.10 to the local locale default of 4,000.10"
-    default_locale = locale.getdefaultlocale()
-    locale.setlocale(locale.LC_ALL, default_locale)
-    # Format the number with two decimal places
+    # Format the number with two decimal places (locale format string will return 6 decimal)
     formatted_value = locale.format_string("%.2f", value, grouping=True)
 
     return formatted_value
