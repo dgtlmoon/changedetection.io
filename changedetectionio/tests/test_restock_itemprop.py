@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+import time
+
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
@@ -34,6 +36,7 @@ def set_original_response(props_markup='', price="121.95"):
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
+    time.sleep(1)
     return None
 
 
@@ -175,6 +178,8 @@ def test_itemprop_price_minmax_limit(client, live_server):
 
     # price changed to something LESS than min (900), SHOULD be a change
     set_original_response(props_markup=instock_props[0], price='890.45')
+    # let previous runs wait
+    time.sleep(1)
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
     assert b'1 watches queued for rechecking.' in res.data
     wait_for_all_checks(client)
