@@ -1,6 +1,10 @@
+# Generally
+
+In any commercial activity involving 'Hosting' (as defined herein), whether in part or in full, this license must be executed and adhered to.
+
 # Commercial License Agreement
 
-This Commercial License Agreement ("Agreement") is entered into by and between Mr Morresi (the original creator of this software) here-in ("Licensor") and (your company or personal name) _____________ ("Licensee"). This Agreement sets forth the terms and conditions under which Licensor provides its software ("Software") and services to Licensee for the purpose of reselling the software either in part or full.
+This Commercial License Agreement ("Agreement") is entered into by and between Mr Morresi (the original creator of this software) here-in ("Licensor") and (your company or personal name) _____________ ("Licensee"). This Agreement sets forth the terms and conditions under which Licensor provides its software ("Software") and services to Licensee for the purpose of reselling the software either in part or full, as part of any commercial activity where the activity involves a third party.
 
 ### Definition of Hosting
 

@@ -398,7 +398,12 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?
 def has_ldjson_product_info(content):
     try:
+<<<<<<< HEAD
         if 'application/ld+json' in content and content.count('"price"') == 1 and content.count('"priceCurrency"') == 1:
+=======
+        lc = content.lower()
+        if 'application/ld+json' in lc and lc.count('"price"') == 1 and '"pricecurrency"' in lc:
+>>>>>>> master
             return True
 
 #       On some pages this is really terribly expensive when they dont really need it
