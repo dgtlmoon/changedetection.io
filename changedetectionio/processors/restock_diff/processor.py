@@ -53,15 +53,19 @@ def get_itemprop_availability(html_content) -> Restock:
     value = Restock()
     if data:
         logger.debug(f"Using jsonpath to find price/availability/etc")
-        price_parse = parse('$..(price|Price|highPrice)')
+        price_parse = parse('$..(price|Price)')
         pricecurrency_parse = parse('$..(pricecurrency|currency|priceCurrency )')
         availability_parse = parse('$..(availability|Availability)')
 
         price_result = price_parse.find(data)
         if price_result:
-            if len(price_result) > 1 and len(set(str(item.value).replace('$', '') for item in price_result)) > 1:
+            # Right now, we just support single product items, maybe we will store the whole actual metadata seperately in teh future and
+            # parse that for the UI?
+            prices_found = set(str(item.value).replace('$', '') for item in price_result)
+            if len(price_result) > 1 and len(prices_found) > 1:
                 # See of all prices are different, in the case that one product has many embedded data types with the same price
                 # One might have $121.95 and another 121.95 etc
+                logger.warning(f"More than one price found {prices_found}, throwing exception, cant use this plugin.")
                 raise MoreThanOnePriceFound()
 
             value['price'] = price_result[0].value
