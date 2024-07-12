@@ -395,22 +395,23 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
 
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?
 def has_ldjson_product_info(content):
-    pricing_data = ''
-
     try:
-        if not 'application/ld+json' in content:
-            return False
+        lc = content.lower()
+        if 'application/ld+json' in lc and lc.count('"price"') == 1 and '"pricecurrency"' in lc:
+            return True
 
-        for filter in LD_JSON_PRODUCT_OFFER_SELECTORS:
-            pricing_data += extract_json_as_string(content=content,
-                                                  json_filter=filter,
-                                                  ensure_is_ldjson_info_type="product")
-
+#       On some pages this is really terribly expensive when they dont really need it
+#       (For example you never want price monitoring, but this runs on every watch to suggest it)
+#        for filter in LD_JSON_PRODUCT_OFFER_SELECTORS:
+#            pricing_data += extract_json_as_string(content=content,
+#                                                  json_filter=filter,
+#                                                  ensure_is_ldjson_info_type="product")
     except Exception as e:
-        # Totally fine
+        # OK too
         return False
-    x=bool(pricing_data)
-    return x
+
+    return False
+
 
 
 def workarounds_for_obfuscations(content):
