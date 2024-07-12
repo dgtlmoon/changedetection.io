@@ -1,7 +1,6 @@
 from .processors.exceptions import ProcessorException
 from . import content_fetchers
 
-from .processors.restock_diff.processor import UnableToExtractRestockData
 from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
 from changedetectionio import html_tools
 
@@ -472,15 +471,6 @@ class update_worker(threading.Thread):
                         process_changedetection_results = False
                         logger.error(f"Exception (BrowserStepsInUnsupportedFetcher) reached processing watch UUID: {uuid}")
 
-                    except UnableToExtractRestockData as e:
-                        # Usually when fetcher.instock_data returns empty
-                        self.app.logger.error("Exception reached processing watch UUID: %s - %s", uuid, str(e))
-                        self.datastore.update_watch(uuid=uuid,
-                                                    update_obj={
-                                                        'last_error': f"Unable to extract restock data for this page unfortunately. (Got code {e.status_code} from server), no embedded stock information was found and nothing interesting in the text, try using this watch with Chrome.",
-                                                    }
-                                                    )
-                        process_changedetection_results = False
                     except Exception as e:
                         logger.error(f"Exception reached processing watch UUID: {uuid}")
                         logger.error(str(e))

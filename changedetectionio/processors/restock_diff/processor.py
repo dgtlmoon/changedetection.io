@@ -59,7 +59,9 @@ def get_itemprop_availability(html_content) -> Restock:
 
         price_result = price_parse.find(data)
         if price_result:
-            if len(price_result) > 1:
+            if len(price_result) > 1 and len(set(str(item.value).replace('$', '') for item in price_result)) > 1:
+                # See of all prices are different, in the case that one product has many embedded data types with the same price
+                # One might have $121.95 and another 121.95 etc
                 raise MoreThanOnePriceFound()
 
             value['price'] = price_result[0].value
@@ -88,7 +90,6 @@ def get_itemprop_availability(html_content) -> Restock:
                     value['availability'] = _search_prop_by_value([match.value], "product:availability")
                 if not value.get('currency'):
                     value['currency'] = _search_prop_by_value([match.value], "price:currency")
-
     logger.trace(f"Processed with Extruct in {time.time()-now:.3f}s")
 
     return value
@@ -161,7 +162,13 @@ class perform_site_check(difference_detection_processor):
         fetched_md5 = None
 
         if not self.fetcher.instock_data and not itemprop_availability.get('availability'):
-            raise UnableToExtractRestockData(status_code=self.fetcher.status_code)
+            raise ProcessorException(
+                message=f"Unable to extract restock data for this page unfortunately. (Got code {self.fetcher.get_last_status_code()} from server), no embedded stock information was found and nothing interesting in the text, try using this watch with Chrome.",
+                url=watch.get('url'),
+                status_code=self.fetcher.get_last_status_code(),
+                screenshot=self.fetcher.screenshot,
+                xpath_data=self.fetcher.xpath_data
+                )
 
         # Nothing automatic in microdata found, revert to scraping the page
         if self.fetcher.instock_data and itemprop_availability.get('availability') is None:
