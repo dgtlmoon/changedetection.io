@@ -169,7 +169,7 @@ def test_itemprop_price_minmax_limit(client, live_server):
 
     assert b'more than one price detected' not in res.data
     # BUT the new price should show, even tho its within limits
-    assert b'1,000.45' in res.data
+    assert b'1,000.45' or b'1000.45' in res.data #depending on locale
     assert b'unviewed' not in res.data
 
 
@@ -189,7 +189,7 @@ def test_itemprop_price_minmax_limit(client, live_server):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
-    assert b'1,890.45' in res.data
+    assert b'1,890.45' or b'1890.45' in res.data
     assert b'unviewed' in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
@@ -242,7 +242,7 @@ def test_itemprop_percent_threshold(client, live_server):
     client.get(url_for("form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
-    assert b'1,960.45' in res.data
+    assert b'1,960.45' or b'1960.45' in res.data #depending on locale
     assert b'unviewed' in res.data
 
 
@@ -252,7 +252,7 @@ def test_itemprop_percent_threshold(client, live_server):
     client.get(url_for("form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
-    assert b'1,950.45' in res.data
+    assert b'1,950.45' or b'1950.45' in res.data #depending on locale
     assert b'unviewed' not in res.data
 
 
