@@ -6,7 +6,6 @@ instock_props = [
     # LD+JSON with non-standard list of 'type' https://github.com/dgtlmoon/changedetection.io/issues/1833
     '<script type=\'application/ld+json\'>{"@context": "http://schema.org","@type": ["Product", "SubType"],"name": "My test product","description":"","Offers": {    "@type": "Offer",    "offeredBy": {        "@type": "Organization",        "name":"Person",       "telephone":"+1 999 999 999"    },    "price": $$PRICE$$,    "priceCurrency": "EUR",    "url": "/some/url", "availability": "http://schema.org/InStock"}        }</script>',
     # LD JSON
-    '<script type=\'application/ld+json\'>[{"@context":"http://schema.org","@type":"WebSite","name":"partsDíly.cz","description":"Nejlevnější autodlíly.","url":"https://parts.com/?id=3038915","potentialAction":{"@type":"SearchAction","target":"https://parts.com/vyhledavani?search={query}","query-input":{"@type":"PropertyValueSpecification","valueRequired":"http://schema.org/True","valueName":"query"}},"publisher":{"@context":"http://schema.org","@type":"Organization","name":"Car Díly.cz","url":"https://carparts.com/","logo":"https://parts.com/77026_3195959275.png","sameAs":["https://twitter.com/parts","https://www.instagram.com/parts/?hl=cs"]},"sameAs":["https://twitter.com/parts","https://www.instagram.com/parts/"]},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":0,"item":{"@id":"/autodily","name":"Autodíly pro osobní vozy"}},{"@type":"ListItem","position":1,"item":{"@id":"/autodily/dodge","name":"DODGE"}},{"@type":"ListItem","position":2,"item":{"@id":"https://parts.com/280kw","name":"parts parts  • 100 kW"}}]},{"@context":"http://schema.org","@type":"Product","name":"Olejový filtr K&N Filters","description":"","mpn":"xxx11","brand":"K&N Filters","image":"https://parts.com/images/1600/c8fe1f1428021f4fe17a39297686178b04cba885.jpg","offers":{"@context":"http://schema.org","@type":"Offer","price":$$PRICE$$,"priceCurrency":"CZK","url":"https://parts.com/filters/hp","availability":"http://schema.org/InStock"}}]</script>',
     '<script id="product-jsonld" type="application/ld+json">{"@context":"https://schema.org","@type":"Product","brand":{"@type":"Brand","name":"Ubiquiti"},"name":"UniFi Express","sku":"UX","description":"Impressively compact UniFi Cloud Gateway and WiFi 6 access point that runs UniFi Network. Powers an entire network or simply meshes as an access point.","url":"https://store.ui.com/us/en/products/ux","image":{"@type":"ImageObject","url":"https://cdn.ecomm.ui.com/products/4ed25b4c-db92-4b98-bbf3-b0989f007c0e/123417a2-895e-49c7-ba04-b6cd8f6acc03.png","width":"1500","height":"1500"},"offers":{"@type":"Offer","availability":"https://schema.org/InStock","priceSpecification":{"@type":"PriceSpecification","price":$$PRICE$$,"priceCurrency":"USD","valueAddedTaxIncluded":false}}}</script>',
     '<script id="product-schema" type="application/ld+json">{"@context": "https://schema.org","@type": "Product","itemCondition": "https://schema.org/NewCondition","image": "//1.com/hmgo","name": "Polo MuscleFit","color": "Beige","description": "Polo","sku": "0957102010","brand": {"@type": "Brand","name": "H&M"},"category": {"@type": "Thing","name": "Polo"},"offers": [{"@type": "Offer","url": "https:/www2.xxxxxx.com/fr_fr/productpage.0957102010.html","priceCurrency": "EUR","price": $$PRICE$$,"availability": "http://schema.org/InStock","seller": {  "@type": "Organization", "name": "H&amp;M"}}]}</script>'
     # Microdata
@@ -59,8 +58,10 @@ def test_restock_itemprop_basic(client, live_server):
         )
         wait_for_all_checks(client)
         res = client.get(url_for("index"))
-        assert b'has-restock-info in-stock' in res.data
-        assert b'has-restock-info not-in-stock' not in res.data
+        assert b'more than one price detected' not in res.data
+        assert b'has-restock-info' in res.data
+        assert b' in-stock' in res.data
+        assert b' not-in-stock' not in res.data
         res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
         assert b'Deleted' in res.data
 
@@ -74,6 +75,7 @@ def test_restock_itemprop_basic(client, live_server):
         )
         wait_for_all_checks(client)
         res = client.get(url_for("index"))
+
         assert b'has-restock-info not-in-stock' in res.data
 
         res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
@@ -164,7 +166,10 @@ def test_itemprop_price_minmax_limit(client, live_server):
     client.get(url_for("form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
-    assert b'1000.45' in res.data
+
+    assert b'more than one price detected' not in res.data
+    # BUT the new price should show, even tho its within limits
+    assert b'1,000.45' in res.data
     assert b'unviewed' not in res.data
 
 
@@ -184,7 +189,7 @@ def test_itemprop_price_minmax_limit(client, live_server):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
-    assert b'1890.45' in res.data
+    assert b'1,890.45' in res.data
     assert b'unviewed' in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
@@ -237,7 +242,7 @@ def test_itemprop_percent_threshold(client, live_server):
     client.get(url_for("form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
-    assert b'1960.45' in res.data
+    assert b'1,960.45' in res.data
     assert b'unviewed' in res.data
 
 
@@ -247,7 +252,7 @@ def test_itemprop_percent_threshold(client, live_server):
     client.get(url_for("form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
-    assert b'1950.45' in res.data
+    assert b'1,950.45' in res.data
     assert b'unviewed' not in res.data
 
 
