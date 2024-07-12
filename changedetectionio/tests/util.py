@@ -121,17 +121,20 @@ def extract_UUID_from_client(client):
     return uuid.strip()
 
 def wait_for_all_checks(client):
+    # actually this is not entirely true, it can still be 'processing' but not in the queue
     # Loop waiting until done..
     attempt=0
-    time.sleep(0.1)
+    # because sub-second rechecks are problematic in testing, use lots of delays
+    time.sleep(1)
     while attempt < 60:
-        time.sleep(1)
         res = client.get(url_for("index"))
         if not b'Checking now' in res.data:
             break
         logging.getLogger().info("Waiting for watch-list to not say 'Checking now'.. {}".format(attempt))
-
+        time.sleep(1)
         attempt += 1
+
+    time.sleep(1)
 
 def live_server_setup(live_server):
 
@@ -140,6 +143,9 @@ def live_server_setup(live_server):
         import secrets
         return "Random content - {}\n".format(secrets.token_hex(64))
 
+    @live_server.app.route('/test-endpoint2')
+    def test_endpoint2():
+        return "<html><body>some basic content</body></html>"
 
     @live_server.app.route('/test-endpoint')
     def test_endpoint():

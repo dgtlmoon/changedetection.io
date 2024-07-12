@@ -378,10 +378,16 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
     with open('test-datastore/' + extract_UUID_from_client(client) + '/headers.txt', 'w') as f:
         f.write("watch-header: nice")
 
+    wait_for_all_checks(client)
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
-    # Give the thread time to pick it up
+    # Give the thread time to pick it up, this actually is not super reliable and pytest can terminate before the check is ran
     wait_for_all_checks(client)
+
+    # WARNING - pytest and 'wait_for_all_checks' shuts down before it has actually stopped processing when using pyppeteer fetcher
+    # so adding more time here
+    if os.getenv('FAST_PUPPETEER_CHROME_FETCHER'):
+        time.sleep(6)
 
     res = client.get(url_for("edit_page", uuid="first"))
     assert b"Extra headers file found and will be added to this watch" in res.data

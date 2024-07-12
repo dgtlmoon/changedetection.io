@@ -140,6 +140,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
         url_for("edit_page", uuid="first"),
         data={"trigger_text": 'Oh yes please',
               "url": test_url,
+              'processor': 'text_json_diff',
               'fetch_backend': "html_requests",
               'filter_text_removed': '',
               'filter_text_added': 'y'},

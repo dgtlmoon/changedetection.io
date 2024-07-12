@@ -40,6 +40,8 @@ FROM python:${PYTHON_VERSION}-slim-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libxslt1.1 \
+    # For presenting price amounts correctly in the restock/price detection overview
+    locales \
     # For pdftohtml
     poppler-utils \
     zlib1g \

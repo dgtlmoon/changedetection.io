@@ -6,8 +6,8 @@ import os
 import re
 import urllib3
 
-from . import difference_detection_processor
-from ..html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
+from changedetectionio.processors import difference_detection_processor
+from changedetectionio.html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
 from changedetectionio import html_tools, content_fetchers
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
 from loguru import logger
@@ -16,6 +16,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 name = 'Webpage Text/HTML, JSON and PDF changes'
 description = 'Detects all text changes where possible'
+
 json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
 
 class FilterNotFoundInResponse(ValueError):
@@ -217,7 +218,7 @@ class perform_site_check(difference_detection_processor):
         # Rewrite's the processing text based on only what diff result they want to see
         if watch.has_special_diff_filter_options_set() and len(watch.history.keys()):
             # Now the content comes from the diff-parser and not the returned HTTP traffic, so could be some differences
-            from .. import diff
+            from changedetectionio import diff
             # needs to not include (added) etc or it may get used twice
             # Replace the processed text with the preferred result
             rendered_diff = diff.render_diff(previous_version_file_contents=watch.get_last_fetched_text_before_filters(),

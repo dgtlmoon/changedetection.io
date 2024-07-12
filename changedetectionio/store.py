@@ -18,6 +18,9 @@ import time
 import uuid as uuid_builder
 from loguru import logger
 
+from .processors import get_custom_watch_obj_for_processor
+from .processors.restock_diff import Restock
+
 # Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
 BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
 
@@ -80,9 +83,15 @@ class ChangeDetectionStore:
                         self.__data['settings']['application'].update(from_disk['settings']['application'])
 
                 # Convert each existing watch back to the Watch.model object
+
                 for uuid, watch in self.__data['watching'].items():
-                    watch['uuid']=uuid
-                    self.__data['watching'][uuid] = Watch.model(datastore_path=self.datastore_path, default=watch)
+                    watch['uuid'] = uuid
+                    watch_class = get_custom_watch_obj_for_processor(watch.get('processor'))
+                    if watch.get('uuid') != 'text_json_diff':
+                        logger.trace(f"Loading Watch object '{watch_class.__module__}.{watch_class.__name__}' for UUID {uuid}")
+
+                    self.__data['watching'][uuid] = watch_class(datastore_path=self.datastore_path, default=watch)
+
                     logger.info(f"Watching: {uuid} {self.__data['watching'][uuid]['url']}")
 
         # First time ran, Create the datastore.
@@ -240,32 +249,7 @@ class ChangeDetectionStore:
 
     # Remove a watchs data but keep the entry (URL etc)
     def clear_watch_history(self, uuid):
-        import pathlib
-
-        # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
-        for item in pathlib.Path(os.path.join(self.datastore_path, uuid)).rglob("*.*"):
-            unlink(item)
-
-        # Force the attr to recalculate
-        bump = self.__data['watching'][uuid].history
-
-        # Do this last because it will trigger a recheck due to last_checked being zero
-        self.__data['watching'][uuid].update({
-                'browser_steps_last_error_step' : None,
-                'check_count': 0,
-                'fetch_time' : 0.0,
-                'has_ldjson_price_data': None,
-                'in_stock': None,
-                'last_checked': 0,
-                'last_error': False,
-                'last_notification_error': False,
-                'last_viewed': 0,
-                'previous_md5': False,
-                'previous_md5_before_filters': False,
-                'remote_server_reply': None,
-                'track_ldjson_price_data': None,
-            })
-
+        self.__data['watching'][uuid].clear_watch()
         self.needs_write_urgent = True
 
     def add_watch(self, url, tag='', extras=None, tag_uuids=None, write_to_disk_now=True):
@@ -342,11 +326,13 @@ class ChangeDetectionStore:
         if apply_extras.get('tags'):
             apply_extras['tags'] = list(set(apply_extras.get('tags')))
 
-        new_watch = Watch.model(datastore_path=self.datastore_path, url=url)
+        # If the processor also has its own Watch implementation
+        watch_class = get_custom_watch_obj_for_processor(apply_extras.get('processor'))
+        new_watch = watch_class(datastore_path=self.datastore_path, url=url)
 
         new_uuid = new_watch.get('uuid')
 
-        logger.debug(f"Adding URL {url} - {new_uuid}")
+        logger.debug(f"Adding URL '{url}' - {new_uuid}")
 
         for k in ['uuid', 'history', 'last_checked', 'last_changed', 'newest_history_key', 'previous_md5', 'viewed']:
             if k in apply_extras:
@@ -582,7 +568,8 @@ class ChangeDetectionStore:
         # Eventually almost everything todo with a watch will apply as a Tag
         # So we use the same model as a Watch
         with self.lock:
-            new_tag = Watch.model(datastore_path=self.datastore_path, default={
+            from .model import Tag
+            new_tag = Tag.model(datastore_path=self.datastore_path, default={
                 'title': name.strip(),
                 'date_created': int(time.time())
             })
@@ -620,6 +607,12 @@ class ChangeDetectionStore:
         tags = self.__data['settings']['application']['tags'].values()
         return next((v for v in tags if v.get('title', '').lower() == tag_name.lower()),
                     None)
+
+    def any_watches_have_processor_by_name(self, processor_name):
+        for watch in self.data['watching'].values():
+            if watch.get('processor') == processor_name:
+                return True
+        return False
 
     def get_updates_available(self):
         import inspect
@@ -849,3 +842,12 @@ class ChangeDetectionStore:
         for uuid, watch in self.data['watching'].items():
             if isinstance(watch.get('tags'), str):
                 self.data['watching'][uuid]['tags'] = []
+
+    # Migrate old 'in_stock' values to the new Restock
+    def update_17(self):
+        for uuid, watch in self.data['watching'].items():
+            if 'in_stock' in watch:
+                watch['restock'] = Restock({'in_stock': watch.get('in_stock')})
+                del watch['in_stock']
+
+

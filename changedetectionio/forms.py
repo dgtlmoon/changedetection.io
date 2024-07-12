@@ -1,5 +1,6 @@
 import os
 import re
+
 from changedetectionio.strtobool import strtobool
 
 from wtforms import (
@@ -419,15 +420,18 @@ class quickWatchForm(Form):
 
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
+    from . import processors
 
-    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
-    notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
+    extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
+    fetch_backend = RadioField(u'Fetch Method', choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
-    fetch_backend = RadioField(u'Fetch Method', choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
-    extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
+    notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
+    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
+    processor = RadioField( label=u"Processor - What do you want to achieve?", choices=processors.available_processors(), default="text_json_diff")
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1,
                                                                                                                                     message="Should contain one or more seconds")])
+
 class importForm(Form):
     from . import processors
     processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
@@ -447,7 +451,7 @@ class SingleBrowserStep(Form):
 #    remove_button = SubmitField('-', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
 #    add_button = SubmitField('+', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
 
-class watchForm(commonSettingsForm):
+class processor_text_json_diff_form(commonSettingsForm):
 
     url = fields.URLField('URL', validators=[validateURL()])
     tags = StringTagUUID('Group tag', [validators.Optional()], default='')
@@ -475,9 +479,6 @@ class watchForm(commonSettingsForm):
     filter_text_replaced = BooleanField('Replaced/changed lines', default=True)
     filter_text_removed = BooleanField('Removed lines', default=True)
 
-    # @todo this class could be moved to its own text_json_diff_watchForm and this goes to restock_diff_Watchform perhaps
-    in_stock_only = BooleanField('Only trigger when product goes BACK to in-stock', default=True)
-
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)
@@ -492,6 +493,12 @@ class watchForm(commonSettingsForm):
 
     notification_muted = BooleanField('Notifications Muted / Off', default=False)
     notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
+
+    def extra_tab_content(self):
+        return None
+
+    def extra_form_content(self):
+        return None
 
     def validate(self, **kwargs):
         if not super().validate():
@@ -512,7 +519,6 @@ class watchForm(commonSettingsForm):
             self.url.errors.append('Invalid template syntax')
             result = False
         return result
-
 
 class SingleExtraProxy(Form):
 

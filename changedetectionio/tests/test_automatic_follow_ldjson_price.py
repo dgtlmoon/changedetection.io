@@ -100,12 +100,8 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
 
     # Accept it
     uuid = extract_UUID_from_client(client)
-    time.sleep(1)
+    #time.sleep(1)
     client.get(url_for('price_data_follower.accept', uuid=uuid, follow_redirects=True))
-    wait_for_all_checks(client)
-
-    # Trigger a check
-    time.sleep(1)
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     # Offer should be gone
@@ -120,8 +116,8 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
         headers={'x-api-key': api_key},
     )
 
-    # Should see this (dont know where the whitespace came from)
-    assert b'"highPrice": 8099900' in res.data
+    assert b'8097000' in res.data
+
     # And not this cause its not the ld-json
     assert b"So let's see what happens" not in res.data
 
@@ -235,4 +231,3 @@ def test_bad_ldjson_is_correctly_ignored(client, live_server, measure_memory_usa
     #     f.write(test_return_data)
     #
     # _test_runner_check_bad_format_ignored(live_server=live_server, client=client, has_ldjson_price_data=False)
-

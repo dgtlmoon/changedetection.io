@@ -1,8 +1,10 @@
+from .processors.exceptions import ProcessorException
 from . import content_fetchers
-from .processors.restock_diff import UnableToExtractRestockData
-from .processors.text_json_diff import FilterNotFoundInResponse
+
+from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
 from changedetectionio import html_tools
-from copy import deepcopy
+
+import importlib
 import os
 import queue
 import threading
@@ -13,7 +15,6 @@ import time
 # Requests for checking on a single site(watch) from a queue of watches
 # (another process inserts watches into the queue that are time-ready for checking)
 
-import sys
 from loguru import logger
 
 class update_worker(threading.Thread):
@@ -27,7 +28,6 @@ class update_worker(threading.Thread):
         super().__init__(*args, **kwargs)
 
     def queue_notification_for_watch(self, notification_q, n_object, watch):
-
         from changedetectionio import diff
         dates = []
         trigger_text = ''
@@ -226,8 +226,6 @@ class update_worker(threading.Thread):
                 os.unlink(full_path)
 
     def run(self):
-
-        from .processors import text_json_diff, restock_diff
         now = time.time()
         
         while not self.app.config.exit.is_set():
@@ -258,24 +256,21 @@ class update_worker(threading.Thread):
                     try:
                         # Processor is what we are using for detecting the "Change"
                         processor = watch.get('processor', 'text_json_diff')
-                        # if system...
-
                         # Abort processing when the content was the same as the last fetch
                         skip_when_same_checksum = queued_item_data.item.get('skip_when_checksum_same')
 
 
-                        # @todo some way to switch by name
-                        # Init a new 'difference_detection_processor'
+                        # Init a new 'difference_detection_processor', first look in processors
+                        processor_module_name = f"changedetectionio.processors.{processor}.processor"
+                        try:
+                            processor_module = importlib.import_module(processor_module_name)
+                        except ModuleNotFoundError as e:
+                            print(f"Processor module '{processor}' not found.")
+                            raise e
 
-                        if processor == 'restock_diff':
-                            update_handler = restock_diff.perform_site_check(datastore=self.datastore,
+                        update_handler = processor_module.perform_site_check(datastore=self.datastore,
                                                                              watch_uuid=uuid
                                                                              )
-                        else:
-                            # Used as a default and also by some tests
-                            update_handler = text_json_diff.perform_site_check(datastore=self.datastore,
-                                                                               watch_uuid=uuid
-                                                                               )
 
                         update_handler.call_browser()
 
@@ -293,6 +288,16 @@ class update_worker(threading.Thread):
                         logger.critical(f"File permission error updating file, watch: {uuid}")
                         logger.critical(str(e))
                         process_changedetection_results = False
+
+                    # A generic other-exception thrown by processors
+                    except ProcessorException as e:
+                        if e.screenshot:
+                            watch.save_screenshot(screenshot=e.screenshot)
+                        if e.xpath_data:
+                            watch.save_xpath_data(data=e.xpath_data)
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': e.message})
+                        process_changedetection_results = False
+
                     except content_fetchers.exceptions.ReplyWithContentButNoText as e:
                         # Totally fine, it's by choice - just continue on, nothing more to care about
                         # Page had elements/content but no renderable text
@@ -466,12 +471,6 @@ class update_worker(threading.Thread):
                         process_changedetection_results = False
                         logger.error(f"Exception (BrowserStepsInUnsupportedFetcher) reached processing watch UUID: {uuid}")
 
-                    except UnableToExtractRestockData as e:
-                        # Usually when fetcher.instock_data returns empty
-                        logger.error(f"Exception (UnableToExtractRestockData) reached processing watch UUID: {uuid}")
-                        logger.error(str(e))
-                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Unable to extract restock data for this page unfortunately. (Got code {e.status_code} from server)"})
-                        process_changedetection_results = False
                     except Exception as e:
                         logger.error(f"Exception reached processing watch UUID: {uuid}")
                         logger.error(str(e))

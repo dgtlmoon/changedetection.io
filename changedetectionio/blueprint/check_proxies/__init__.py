@@ -30,7 +30,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def long_task(uuid, preferred_proxy):
         import time
         from changedetectionio.content_fetchers import exceptions as content_fetcher_exceptions
-        from changedetectionio.processors import text_json_diff
+        from changedetectionio.processors.text_json_diff import text_json_diff
         from changedetectionio.safe_jinja import render as jinja_render
 
         status = {'status': '', 'length': 0, 'text': ''}

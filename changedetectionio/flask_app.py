@@ -1,18 +1,22 @@
 #!/usr/bin/python3
 
 import datetime
+import flask_login
+import locale
 import os
+import pytz
 import queue
 import threading
 import time
+import timeago
+
+from .processors import find_processors, get_parent_module, get_custom_watch_obj_for_processor
 from .safe_jinja import render as jinja_render
 from changedetectionio.strtobool import strtobool
 from copy import deepcopy
 from functools import wraps
 from threading import Event
-import flask_login
-import pytz
-import timeago
+
 from feedgen.feed import FeedGenerator
 from flask import (
     Flask,
@@ -79,6 +83,14 @@ csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log=[]
 
+# get locale ready
+default_locale = locale.getdefaultlocale()
+logger.info(f"System locale default is {default_locale}")
+try:
+    locale.setlocale(locale.LC_ALL, default_locale)
+except locale.Error:
+    logger.warning(f"Unable to set locale {default_locale}, locale is not installed maybe?")
+
 watch_api = Api(app, decorators=[csrf.exempt])
 
 def init_app_secret(datastore_path):
@@ -107,6 +119,14 @@ def get_darkmode_state():
 @app.template_global()
 def get_css_version():
     return __version__
+
+@app.template_filter('format_number_locale')
+def _jinja2_filter_format_number_locale(value: float) -> str:
+    "Formats for example 4000.10 to the local locale default of 4,000.10"
+    # Format the number with two decimal places (locale format string will return 6 decimal)
+    formatted_value = locale.format_string("%.2f", value, grouping=True)
+
+    return formatted_value
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
 # running or something similar.
@@ -616,11 +636,11 @@ def changedetection_app(config=None, datastore_o=None):
     @login_optionally_required
     # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
     # https://wtforms.readthedocs.io/en/3.0.x/forms/#wtforms.form.Form.populate_obj ?
-
     def edit_page(uuid):
         from . import forms
         from .blueprint.browser_steps.browser_steps import browser_step_ui_config
         from . import processors
+        import importlib
 
         # More for testing, possible to return the first/only
         if not datastore.data['watching'].keys():
@@ -652,9 +672,30 @@ def changedetection_app(config=None, datastore_o=None):
             # Radio needs '' not None, or incase that the chosen one no longer exists
             if default['proxy'] is None or not any(default['proxy'] in tup for tup in datastore.proxy_list):
                 default['proxy'] = ''
-
         # proxy_override set to the json/text list of the items
-        form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
+
+        # Does it use some custom form? does one exist?
+        processor_name = datastore.data['watching'][uuid].get('processor', '')
+        processor_classes = next((tpl for tpl in find_processors() if tpl[1] == processor_name), None)
+        if not processor_classes:
+            flash(f"Cannot load the edit form for processor/plugin '{processor_classes[1]}', plugin missing?", 'error')
+            return redirect(url_for('index'))
+
+        parent_module = get_parent_module(processor_classes[0])
+
+        try:
+            # Get the parent of the "processor.py" go up one, get the form (kinda spaghetti but its reusing existing code)
+            forms_module = importlib.import_module(f"{parent_module.__name__}.forms")
+            # Access the 'processor_settings_form' class from the 'forms' module
+            form_class = getattr(forms_module, 'processor_settings_form')
+        except ModuleNotFoundError as e:
+            # .forms didnt exist
+            form_class = forms.processor_text_json_diff_form
+        except AttributeError as e:
+            # .forms exists but no useful form
+            form_class = forms.processor_text_json_diff_form
+
+        form = form_class(formdata=request.form if request.method == 'POST' else None,
                                data=default
                                )
 
@@ -678,6 +719,11 @@ def changedetection_app(config=None, datastore_o=None):
 
 
         if request.method == 'POST' and form.validate():
+
+            # If they changed processor, it makes sense to reset it.
+            if datastore.data['watching'][uuid].get('processor') != form.data.get('processor'):
+                datastore.data['watching'][uuid].clear_watch()
+                flash("Reset watch history due to change of processor")
 
             extra_update_obj = {
                 'consecutive_filter_failures': 0,
@@ -720,10 +766,11 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)
 
-            if request.args.get('unpause_on_save'):
-                flash("Updated watch - unpaused!")
-            else:
-                flash("Updated watch.")
+            # Recast it if need be to right data Watch handler
+            watch_class = get_custom_watch_obj_for_processor(form.data.get('processor'))
+            datastore.data['watching'][uuid] = watch_class(datastore_path=datastore_o.datastore_path, default=datastore.data['watching'][uuid])
+
+            flash("Updated watch - unpaused!" if request.args.get('unpause_on_save') else "Updated watch.")
 
             # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
             # But in the case something is added we should save straight away
@@ -753,6 +800,7 @@ def changedetection_app(config=None, datastore_o=None):
                 jq_support = False
 
             watch = datastore.data['watching'].get(uuid)
+
             system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
 
             is_html_webdriver = False
@@ -761,23 +809,41 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and is_html_webdriver
+            template_args = {
+                'available_processors': processors.available_processors(),
+                'browser_steps_config': browser_step_ui_config,
+                'emailprefix': os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                'extra_title': f" - Edit - {watch.label}",
+                'extra_processor_config': form.extra_tab_content(),
+                'form': form,
+                'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,
+                'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
+                'has_special_tag_options': _watch_has_tag_options_set(watch=watch),
+                'is_html_webdriver': is_html_webdriver,
+                'jq_support': jq_support,
+                'playwright_enabled': os.getenv('PLAYWRIGHT_DRIVER_URL', False),
+                'settings_application': datastore.data['settings']['application'],
+                'using_global_webdriver_wait': not default['webdriver_delay'],
+                'uuid': uuid,
+                'visualselector_enabled': visualselector_enabled,
+                'watch': watch
+            }
+
+            included_content = None
+            if form.extra_form_content():
+                # So that the extra panels can access _helpers.html etc, we set the environment to load from templates/
+                # And then render the code from the module
+                from jinja2 import Environment, FileSystemLoader
+                import importlib.resources
+                templates_dir = str(importlib.resources.files("changedetectionio").joinpath('templates'))
+                env = Environment(loader=FileSystemLoader(templates_dir))
+                template = env.from_string(form.extra_form_content())
+                included_content = template.render(**template_args)
+
             output = render_template("edit.html",
-                                     available_processors=processors.available_processors(),
-                                     browser_steps_config=browser_step_ui_config,
-                                     emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
-                                     extra_title=f" - Edit - {watch.label}",
-                                     form=form,
-                                     has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
-                                     has_extra_headers_file=len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
-                                     has_special_tag_options=_watch_has_tag_options_set(watch=watch),
-                                     is_html_webdriver=is_html_webdriver,
-                                     jq_support=jq_support,
-                                     playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False),
-                                     settings_application=datastore.data['settings']['application'],
-                                     using_global_webdriver_wait=not default['webdriver_delay'],
-                                     uuid=uuid,
-                                     visualselector_enabled=visualselector_enabled,
-                                     watch=watch
+                                     extra_tab_content=form.extra_tab_content() if form.extra_tab_content() else None,
+                                     extra_form_content=included_content,
+                                     **template_args
                                      )
 
         return output
@@ -887,7 +953,7 @@ def changedetection_app(config=None, datastore_o=None):
             if request.values.get('urls') and len(request.values.get('urls').strip()):
                 # Import and push into the queue for immediate update check
                 importer = import_url_list()
-                importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor'))
+                importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor', 'text_json_diff'))
                 for uuid in importer.new_uuids:
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
@@ -1388,7 +1454,7 @@ def changedetection_app(config=None, datastore_o=None):
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False}))
                     i += 1
 
-        flash("{} watches queued for rechecking.".format(i))
+        flash(f"{i} watches queued for rechecking.")
         return redirect(url_for('index', tag=tag))
 
     @app.route("/form/checkbox-operations", methods=['POST'])
