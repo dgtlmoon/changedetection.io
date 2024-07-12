@@ -338,12 +338,6 @@ class perform_site_check(difference_detection_processor):
         if blocked:
             changed_detected = False
 
-        # Extract title as title
-        if is_html:
-            if self.datastore.data['settings']['application'].get('extract_title_as_title') or watch['extract_title_as_title']:
-                if not watch['title'] or not len(watch['title']):
-                    update_obj['title'] = html_tools.extract_element(find='title', html_content=self.fetcher.content)
-
         logger.debug(f"Watch UUID {watch.get('uuid')} content check - Previous MD5: {watch.get('previous_md5')}, Fetched MD5 {fetched_md5}")
 
         if changed_detected:
