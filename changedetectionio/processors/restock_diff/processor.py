@@ -118,7 +118,7 @@ class perform_site_check(difference_detection_processor):
             raise Exception("Watch no longer exists.")
 
         # Unset any existing notification error
-        update_obj = {'last_notification_error': False, 'last_error': False, 'restock':  None}
+        update_obj = {'last_notification_error': False, 'last_error': False, 'restock':  Restock()}
 
         self.screenshot = self.fetcher.screenshot
         self.xpath_data = self.fetcher.xpath_data
