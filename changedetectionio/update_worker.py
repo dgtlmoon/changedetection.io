@@ -1,4 +1,6 @@
+from .processors.exceptions import ProcessorException
 from . import content_fetchers
+
 from .processors.restock_diff.processor import UnableToExtractRestockData
 from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
 from changedetectionio import html_tools
@@ -287,6 +289,16 @@ class update_worker(threading.Thread):
                         logger.critical(f"File permission error updating file, watch: {uuid}")
                         logger.critical(str(e))
                         process_changedetection_results = False
+
+                    # A generic other-exception thrown by processors
+                    except ProcessorException as e:
+                        if e.screenshot:
+                            watch.save_screenshot(screenshot=e.screenshot)
+                        if e.xpath_data:
+                            watch.save_xpath_data(data=e.xpath_data)
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': e.message})
+                        process_changedetection_results = False
+
                     except content_fetchers.exceptions.ReplyWithContentButNoText as e:
                         # Totally fine, it's by choice - just continue on, nothing more to care about
                         # Page had elements/content but no renderable text

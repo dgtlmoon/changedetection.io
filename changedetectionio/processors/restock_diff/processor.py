@@ -1,4 +1,5 @@
 from .. import difference_detection_processor
+from ..exceptions import ProcessorException
 from . import Restock
 from loguru import logger
 import hashlib
@@ -14,6 +15,10 @@ class UnableToExtractRestockData(Exception):
     def __init__(self, status_code):
         # Set this so we can use it in other parts of the app
         self.status_code = status_code
+        return
+
+class MoreThanOnePriceFound(Exception):
+    def __init__(self):
         return
 
 def _search_prop_by_value(matches, value):
@@ -54,6 +59,9 @@ def get_itemprop_availability(html_content) -> Restock:
 
         price_result = price_parse.find(data)
         if price_result:
+            if len(price_result) > 1:
+                raise MoreThanOnePriceFound()
+
             value['price'] = price_result[0].value
 
         pricecurrency_result = pricecurrency_parse.find(data)
@@ -119,7 +127,18 @@ class perform_site_check(difference_detection_processor):
         update_obj['content_type'] = self.fetcher.headers.get('Content-Type', '')
         update_obj["last_check_status"] = self.fetcher.get_last_status_code()
 
-        itemprop_availability = get_itemprop_availability(html_content=self.fetcher.content)
+        itemprop_availability = {}
+        try:
+            itemprop_availability = get_itemprop_availability(html_content=self.fetcher.content)
+        except MoreThanOnePriceFound as e:
+            # Add the real data
+            raise ProcessorException(message="Cannot run, more than one price detected, this plugin is only for product pages with ONE product, try the content-change detection mode.",
+                                     url=watch.get('url'),
+                                     status_code=self.fetcher.get_last_status_code(),
+                                     screenshot=self.fetcher.screenshot,
+                                     xpath_data=self.fetcher.xpath_data
+                                     )
+
         # Something valid in get_itemprop_availability() by scraping metadata ?
         if itemprop_availability.get('price') or itemprop_availability.get('availability'):
             # Store for other usage

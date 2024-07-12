@@ -154,6 +154,7 @@
                       <span class="watch-tag-list">{{ watch_tag.title }}</span>
                     {% endfor %}
                 </td>
+            <!-- @todo make it so any watch handler obj can expose this --->
 {% if any_has_restock_price_processor %}
                 <td class="restock-and-price">
                     {% if watch['processor'] == 'restock_diff'  %}
@@ -173,8 +174,6 @@
                         {% elif not watch.has_restock_info %}
                             <span class="restock-label error">No information</span>
                         {% endif %}
-
-
                     {% endif %}
                 </td>
 {% endif %}
