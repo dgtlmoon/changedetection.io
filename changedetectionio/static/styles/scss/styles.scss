@@ -1118,6 +1118,9 @@ ul {
     color: #fff;
     opacity: 0.7;
   }
+  svg {
+    vertical-align: middle;
+  }
   @extend .inline-tag;
 }
 
