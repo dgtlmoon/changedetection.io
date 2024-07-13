@@ -13,7 +13,8 @@ class processor_settings_form(processor_text_json_diff_form):
                                   render_kw={"placeholder": "No limit", "size": "10"})
     price_change_max = FloatField('Maximum amount to trigger notification', [validators.Optional()],
                                   render_kw={"placeholder": "No limit", "size": "10"})
-    price_change_threshold_percent = FloatField('Threshold in % for price changes', validators=[
+    price_change_threshold_percent = FloatField('Threshold in % for price changes since the original price', validators=[
+
         validators.Optional(),
         validators.NumberRange(min=0, max=100, message="Should be between 0 and 100"),
     ], render_kw={"placeholder": "0%", "size": "5"})
@@ -37,12 +38,13 @@ class processor_settings_form(processor_text_json_diff_form):
             <div class="pure-control-group">
                 <fieldset class="pure-group">
                     {{ render_checkbox_field(form.in_stock_only) }}
-                    <span class="pure-form-message-inline">Only trigger notifications when page changes from <strong>out of stock</strong> to <strong>back in stock</strong></span>
+                    <span class="pure-form-message-inline">Only trigger re-stock notification when page changes from <strong>out of stock</strong> to <strong>back in stock</strong></span>
                 </fieldset>
                 <fieldset class="pure-group">
                     {{ render_checkbox_field(form.follow_price_changes) }}
                     <span class="pure-form-message-inline">Changes in price should trigger a notification</span>
-                    <span class="pure-form-message-inline">When OFF - only care about restock detection</span>
+                    <br>
+                    <span class="pure-form-message-inline">When OFF - Only care about restock detection</span>                    
                 </fieldset>
                 <fieldset class="pure-group price-change-minmax">               
                     {{ render_field(form.price_change_min, placeholder=watch['restock']['price']) }}
@@ -55,7 +57,7 @@ class processor_settings_form(processor_text_json_diff_form):
                 <fieldset class="pure-group price-change-minmax">
                     {{ render_field(form.price_change_threshold_percent) }}
                     <span class="pure-form-message-inline">Price must change more than this % to trigger a change.</span><br>
-                    <span class="pure-form-message-inline">For example, If the product is $1,000 USD, <strong>2%</strong> would mean it has to change more than $20 since the first check.</span><br>
+                    <span class="pure-form-message-inline">For example, If the product is $1,000 USD originally, <strong>2%</strong> would mean it has to change more than $20 since the first check.</span><br>
                 </fieldset>                
             </div>
         </fieldset>"""

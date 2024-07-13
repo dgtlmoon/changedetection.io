@@ -1194,6 +1194,11 @@ ul {
   color: #fff;
   opacity: 0.7; }
 
+
+.restock-label svg {
+  vertical-align: middle; }
+
+
 #chrome-extension-link {
   padding: 9px;
   border: 1px solid var(--color-grey-800);
