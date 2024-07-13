@@ -14,6 +14,7 @@ class processor_settings_form(processor_text_json_diff_form):
     price_change_max = FloatField('Maximum amount to trigger notification', [validators.Optional()],
                                   render_kw={"placeholder": "No limit", "size": "10"})
     price_change_threshold_percent = FloatField('Threshold in % for price changes since the original price', validators=[
+
         validators.Optional(),
         validators.NumberRange(min=0, max=100, message="Should be between 0 and 100"),
     ], render_kw={"placeholder": "0%", "size": "5"})
@@ -57,7 +58,6 @@ class processor_settings_form(processor_text_json_diff_form):
                     {{ render_field(form.price_change_threshold_percent) }}
                     <span class="pure-form-message-inline">Price must change more than this % to trigger a change.</span><br>
                     <span class="pure-form-message-inline">For example, If the product is $1,000 USD originally, <strong>2%</strong> would mean it has to change more than $20 since the first check.</span><br>
-                    
                 </fieldset>                
             </div>
         </fieldset>"""

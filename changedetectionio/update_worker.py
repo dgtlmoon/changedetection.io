@@ -505,6 +505,16 @@ class update_worker(threading.Thread):
                         if update_handler.xpath_data:
                             watch.save_xpath_data(data=update_handler.xpath_data)
 
+                        # Extract <title> as title if possible/requested.
+                        if self.datastore.data['settings']['application'].get('extract_title_as_title') or watch['extract_title_as_title']:
+                            if not watch['title'] or not len(watch['title']):
+                                try:
+                                    update_obj['title'] = html_tools.extract_element(find='title', html_content=update_handler.fetcher.content)
+                                    logger.info(f"UUID: {uuid} Extract <title> updated title to '{update_obj['title']}")
+                                except Exception as e:
+                                    logger.warning(f"UUID: {uuid} Extract <title> as watch title was enabled, but couldn't find a <title>.")
+
+                        # Now update after running everything
                         try:
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
