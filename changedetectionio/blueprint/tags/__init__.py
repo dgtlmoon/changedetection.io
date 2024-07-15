@@ -96,22 +96,41 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @tags_blueprint.route("/edit/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def form_tag_edit(uuid):
-        from changedetectionio import forms
+
+        from changedetectionio.processors.restock_diff.forms import processor_settings_form
 
         if uuid == 'first':
             uuid = list(datastore.data['settings']['application']['tags'].keys()).pop()
 
         default = datastore.data['settings']['application']['tags'].get(uuid)
 
-        form = forms.processor_text_json_diff_form(formdata=request.form if request.method == 'POST' else None,
-                               data=default,
-                               )
-        form.datastore=datastore # needed?
+        form = processor_settings_form(formdata=request.form if request.method == 'POST' else None,
+                                       data=default,
+                                       )
+
+        template_args = {
+            'data': default,
+            'form': form,
+            'watch': default
+        }
+
+        included_content = {}
+        if form.extra_form_content():
+            # So that the extra panels can access _helpers.html etc, we set the environment to load from templates/
+            # And then render the code from the module
+            from jinja2 import Environment, FileSystemLoader
+            import importlib.resources
+            templates_dir = str(importlib.resources.files("changedetectionio").joinpath('templates'))
+            env = Environment(loader=FileSystemLoader(templates_dir))
+            template = env.from_string(form.extra_form_content())
+            included_content = template.render(**template_args)
 
         output = render_template("edit-tag.html",
-                                 data=default,
-                                 form=form,
+
                                  settings_application=datastore.data['settings']['application'],
+                                 extra_tab_content=form.extra_tab_content() if form.extra_tab_content() else None,
+                                 extra_form_content=included_content,
+                                 **template_args
                                  )
 
         return output
@@ -120,13 +139,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @tags_blueprint.route("/edit/<string:uuid>", methods=['POST'])
     @login_optionally_required
     def form_tag_edit_submit(uuid):
-        from changedetectionio import forms
+        from changedetectionio.processors.restock_diff.forms import processor_settings_form
         if uuid == 'first':
             uuid = list(datastore.data['settings']['application']['tags'].keys()).pop()
 
         default = datastore.data['settings']['application']['tags'].get(uuid)
 
-        form = forms.processor_text_json_diff_form(formdata=request.form if request.method == 'POST' else None,
+        form = processor_settings_form(formdata=request.form if request.method == 'POST' else None,
                                data=default,
                                )
         # @todo subclass form so validation works
@@ -136,6 +155,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 #           return redirect(url_for('tags.form_tag_edit_submit', uuid=uuid))
 
         datastore.data['settings']['application']['tags'][uuid].update(form.data)
+        datastore.data['settings']['application']['tags'][uuid]['processor'] = 'restock_diff'
         datastore.needs_write_urgent = True
         flash("Updated")
 

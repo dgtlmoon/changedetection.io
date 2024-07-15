@@ -1550,7 +1550,7 @@ def changedetection_app(config=None, datastore_o=None):
                         if datastore.data['watching'].get(uuid):
                             datastore.data['watching'][uuid]['tags'].append(tag_uuid)
 
-            flash("{} watches assigned tag".format(len(uuids)))
+            flash(f"{len(uuids)} watches were tagged")
 
         return redirect(url_for('index'))
 
