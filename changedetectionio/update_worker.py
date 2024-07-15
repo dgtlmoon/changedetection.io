@@ -497,13 +497,6 @@ class update_worker(threading.Thread):
                     #
                     # Different exceptions mean that we may or may not want to bump the snapshot, trigger notifications etc
                     if process_changedetection_results:
-                        # Always save the screenshot if it's available
-
-                        if update_handler.screenshot:
-                            watch.save_screenshot(screenshot=update_handler.screenshot)
-
-                        if update_handler.xpath_data:
-                            watch.save_xpath_data(data=update_handler.xpath_data)
 
                         # Extract <title> as title if possible/requested.
                         if self.datastore.data['settings']['application'].get('extract_title_as_title') or watch['extract_title_as_title']:
@@ -515,12 +508,19 @@ class update_worker(threading.Thread):
                                     logger.warning(f"UUID: {uuid} Extract <title> as watch title was enabled, but couldn't find a <title>.")
 
                         # Now update after running everything
+                        timestamp = round(time.time())
                         try:
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
-                            # Also save the snapshot on the first time checked
-                            if changed_detected or not watch.get('last_checked'):
-                                timestamp = round(time.time())
+
+                            # Also save the snapshot on the first time checked, "last checked" will always be updated, so we just check history length.
+                            if changed_detected or not watch.history_n:
+
+                                if update_handler.screenshot:
+                                    watch.save_screenshot(screenshot=update_handler.screenshot)
+
+                                if update_handler.xpath_data:
+                                    watch.save_xpath_data(data=update_handler.xpath_data)
 
                                 # Small hack so that we sleep just enough to allow 1 second  between history snapshots
                                 # this is because history.txt indexes/keys snapshots by epoch seconds and we dont want dupe keys
@@ -538,15 +538,11 @@ class update_worker(threading.Thread):
                                 if update_handler.fetcher.content:
                                     watch.save_last_fetched_html(contents=update_handler.fetcher.content, timestamp=timestamp)
 
-                            # A change was detected
-                            if changed_detected:
                                 # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
                                 if watch.history_n >= 2:
                                     logger.info(f"Change detected in UUID {uuid} - {watch['url']}")
                                     if not watch.get('notification_muted'):
                                         self.send_content_changed_notification(watch_uuid=uuid)
-                                else:
-                                    logger.info(f"Change triggered in UUID {uuid} due to first history saving (no notifications sent) - {watch['url']}")
 
                         except Exception as e:
                             # Catch everything possible here, so that if a worker crashes, we don't lose it until restart!
