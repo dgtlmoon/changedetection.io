@@ -522,9 +522,6 @@ class update_worker(threading.Thread):
                                 if update_handler.xpath_data:
                                     watch.save_xpath_data(data=update_handler.xpath_data)
 
-                                if not watch.history_n:
-                                    logger.info(
-                                        f"Change triggered in UUID {uuid} due to first history saving (no notifications sent) - {watch['url']}")
                                 # Small hack so that we sleep just enough to allow 1 second  between history snapshots
                                 # this is because history.txt indexes/keys snapshots by epoch seconds and we dont want dupe keys
 
