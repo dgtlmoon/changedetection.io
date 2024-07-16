@@ -83,16 +83,14 @@ class ChangeDetectionStore:
                         self.__data['settings']['application'].update(from_disk['settings']['application'])
 
                 # Convert each existing watch back to the Watch.model object
-
                 for uuid, watch in self.__data['watching'].items():
-                    watch['uuid'] = uuid
-                    watch_class = get_custom_watch_obj_for_processor(watch.get('processor'))
-                    if watch.get('uuid') != 'text_json_diff':
-                        logger.trace(f"Loading Watch object '{watch_class.__module__}.{watch_class.__name__}' for UUID {uuid}")
+                    self.__data['watching'][uuid] = self.rehydrate_entity(uuid, watch)
+                    logger.info(f"Watching: {uuid} {watch['url']}")
 
-                    self.__data['watching'][uuid] = watch_class(datastore_path=self.datastore_path, default=watch)
-
-                    logger.info(f"Watching: {uuid} {self.__data['watching'][uuid]['url']}")
+                # And for Tags also, should be Restock type because it has extra settings
+                for uuid, tag in self.__data['settings']['application']['tags'].items():
+                    self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(uuid, tag, processor_override='restock_diff')
+                    logger.info(f"Tag: {uuid} {tag['title']}")
 
         # First time ran, Create the datastore.
         except (FileNotFoundError):
@@ -147,6 +145,22 @@ class ChangeDetectionStore:
         # Finally start the thread that will manage periodic data saves to JSON
         save_data_thread = threading.Thread(target=self.save_datastore).start()
 
+    def rehydrate_entity(self, uuid, entity, processor_override=None):
+        """Set the dict back to the dict Watch object"""
+        entity['uuid'] = uuid
+
+        if processor_override:
+            watch_class = get_custom_watch_obj_for_processor(processor_override)
+            entity['processor']=processor_override
+        else:
+            watch_class = get_custom_watch_obj_for_processor(entity.get('processor'))
+
+        if entity.get('uuid') != 'text_json_diff':
+            logger.trace(f"Loading Watch object '{watch_class.__module__}.{watch_class.__name__}' for UUID {uuid}")
+
+        entity = watch_class(datastore_path=self.datastore_path, default=entity)
+        return entity
+
     def set_last_viewed(self, uuid, timestamp):
         logger.debug(f"Setting watch UUID: {uuid} last viewed to {int(timestamp)}")
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
@@ -185,6 +199,9 @@ class ChangeDetectionStore:
 
     @property
     def has_unviewed(self):
+        if not self.__data.get('watching'):
+            return None
+
         for uuid, watch in self.__data['watching'].items():
             if watch.history_n >= 2 and watch.viewed == False:
                 return True
@@ -850,4 +867,17 @@ class ChangeDetectionStore:
                 watch['restock'] = Restock({'in_stock': watch.get('in_stock')})
                 del watch['in_stock']
 
+    # Migrate old restock settings
+    def update_18(self):
+        for uuid, watch in self.data['watching'].items():
+            if not watch.get('restock_settings'):
+                # So we enable price following by default
+                self.data['watching'][uuid]['restock_settings'] = {'follow_price_changes': True}
+
+            # Migrate and cleanoff old value
+            self.data['watching'][uuid]['restock_settings']['in_stock_processing'] = 'in_stock_only' if watch.get(
+                'in_stock_only') else 'all_changes'
+
+            if self.data['watching'][uuid].get('in_stock_only'):
+                del (self.data['watching'][uuid]['in_stock_only'])
 

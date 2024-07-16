@@ -132,6 +132,18 @@ class perform_site_check(difference_detection_processor):
         update_obj['content_type'] = self.fetcher.headers.get('Content-Type', '')
         update_obj["last_check_status"] = self.fetcher.get_last_status_code()
 
+        # Which restock settings to compare against?
+        restock_settings = watch.get('restock_settings', {})
+
+        # See if any tags have 'activate for individual watches in this tag/group?' enabled and use the first we find
+        for tag_uuid in watch.get('tags'):
+            tag = self.datastore.data['settings']['application']['tags'].get(tag_uuid, {})
+            if tag.get('overrides_watch'):
+                restock_settings = tag.get('restock_settings', {})
+                logger.info(f"Watch {watch.get('uuid')} - Tag '{tag.get('title')}' selected for restock settings override")
+                break
+
+
         itemprop_availability = {}
         try:
             itemprop_availability = get_itemprop_availability(html_content=self.fetcher.content)
@@ -195,14 +207,14 @@ class perform_site_check(difference_detection_processor):
         # out of stock -> back in stock only?
         if watch.get('restock') and watch['restock'].get('in_stock') != update_obj['restock'].get('in_stock'):
             # Yes if we only care about it going to instock, AND we are in stock
-            if watch.get('in_stock_only') and update_obj['restock']['in_stock']:
+            if restock_settings.get('in_stock_processing') == 'in_stock_only' and update_obj['restock']['in_stock']:
                 changed_detected = True
 
-            if not watch.get('in_stock_only'):
+            if restock_settings.get('in_stock_processing') == 'all_changes':
                 # All cases
                 changed_detected = True
 
-        if watch.get('follow_price_changes') and watch.get('restock') and update_obj.get('restock') and update_obj['restock'].get('price'):
+        if restock_settings.get('follow_price_changes') and watch.get('restock') and update_obj.get('restock') and update_obj['restock'].get('price'):
             price = float(update_obj['restock'].get('price'))
             # Default to current price if no previous price found
             if watch['restock'].get('original_price'):
@@ -214,26 +226,25 @@ class perform_site_check(difference_detection_processor):
             # Minimum/maximum price limit
             if update_obj.get('restock') and update_obj['restock'].get('price'):
                 logger.debug(
-                    f"{watch.get('uuid')} - Change was detected, 'price_change_max' is '{watch.get('price_change_max', '')}' 'price_change_min' is '{watch.get('price_change_min', '')}', price from website is '{update_obj['restock'].get('price', '')}'.")
+                    f"{watch.get('uuid')} - Change was detected, 'price_change_max' is '{restock_settings.get('price_change_max', '')}' 'price_change_min' is '{restock_settings.get('price_change_min', '')}', price from website is '{update_obj['restock'].get('price', '')}'.")
                 if update_obj['restock'].get('price'):
-                    min_limit = float(watch.get('price_change_min')) if watch.get('price_change_min') else None
-                    max_limit = float(watch.get('price_change_max')) if watch.get('price_change_max') else None
+                    min_limit = float(restock_settings.get('price_change_min')) if restock_settings.get('price_change_min') else None
+                    max_limit = float(restock_settings.get('price_change_max')) if restock_settings.get('price_change_max') else None
 
                     price = float(update_obj['restock'].get('price'))
                     logger.debug(f"{watch.get('uuid')} after float conversion - Min limit: '{min_limit}' Max limit: '{max_limit}' Price: '{price}'")
                     if min_limit or max_limit:
                         if is_between(number=price, lower=min_limit, upper=max_limit):
-                            logger.trace(f"{watch.get('uuid')} {price} is between {min_limit} and {max_limit}")
-                            if changed_detected:
-                                logger.debug(f"{watch.get('uuid')} Override change-detected to FALSE because price was inside threshold")
-                                changed_detected = False
+                            # Price was between min/max limit, so there was nothing todo in any case
+                            logger.trace(f"{watch.get('uuid')} {price} is between {min_limit} and {max_limit}, nothing to check, forcing changed_detected = False (was {changed_detected})")
+                            changed_detected = False
                         else:
-                            logger.trace(f"{watch.get('uuid')} {price} is NOT between {min_limit} and {max_limit}")
+                            logger.trace(f"{watch.get('uuid')} {price} is between {min_limit} and {max_limit}, continuing normal comparison")
 
                     # Price comparison by %
-                    if watch['restock'].get('original_price') and changed_detected and watch.get('price_change_threshold_percent'):
+                    if watch['restock'].get('original_price') and changed_detected and restock_settings.get('price_change_threshold_percent'):
                         previous_price = float(watch['restock'].get('original_price'))
-                        pc = float(watch.get('price_change_threshold_percent'))
+                        pc = float(restock_settings.get('price_change_threshold_percent'))
                         change = abs((price - previous_price) / previous_price * 100)
                         if change and change <= pc:
                             logger.debug(f"{watch.get('uuid')} Override change-detected to FALSE because % threshold ({pc}%) was {change:.3f}%")

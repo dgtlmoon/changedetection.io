@@ -1,4 +1,6 @@
-from flask import Blueprint, request, make_response, render_template, flash, url_for, redirect
+from flask import Blueprint, request, render_template, flash, url_for, redirect
+
+
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.flask_app import login_optionally_required
 
@@ -96,22 +98,53 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @tags_blueprint.route("/edit/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def form_tag_edit(uuid):
-        from changedetectionio import forms
-
+        from changedetectionio.blueprint.tags.form import group_restock_settings_form
         if uuid == 'first':
             uuid = list(datastore.data['settings']['application']['tags'].keys()).pop()
 
         default = datastore.data['settings']['application']['tags'].get(uuid)
 
-        form = forms.processor_text_json_diff_form(formdata=request.form if request.method == 'POST' else None,
-                               data=default,
-                               )
-        form.datastore=datastore # needed?
+        form = group_restock_settings_form(formdata=request.form if request.method == 'POST' else None,
+                                       data=default,
+                                       )
+
+        template_args = {
+            'data': default,
+            'form': form,
+            'watch': default
+        }
+
+        included_content = {}
+        if form.extra_form_content():
+            # So that the extra panels can access _helpers.html etc, we set the environment to load from templates/
+            # And then render the code from the module
+            from jinja2 import Environment, FileSystemLoader
+            import importlib.resources
+            templates_dir = str(importlib.resources.files("changedetectionio").joinpath('templates'))
+            env = Environment(loader=FileSystemLoader(templates_dir))
+            template_str = """{% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
+        <script>        
+            $(document).ready(function () {
+                toggleOpacity('#overrides_watch', '#restock-fieldset-price-group', true);
+            });
+        </script>            
+                <fieldset>
+                    <div class="pure-control-group">
+                        <fieldset class="pure-group">
+                        {{ render_checkbox_field(form.overrides_watch) }}
+                        <span class="pure-form-message-inline">Used for watches in "Restock & Price detection" mode</span>
+                        </fieldset>
+                </fieldset>
+                """
+            template_str += form.extra_form_content()
+            template = env.from_string(template_str)
+            included_content = template.render(**template_args)
 
         output = render_template("edit-tag.html",
-                                 data=default,
-                                 form=form,
                                  settings_application=datastore.data['settings']['application'],
+                                 extra_tab_content=form.extra_tab_content() if form.extra_tab_content() else None,
+                                 extra_form_content=included_content,
+                                 **template_args
                                  )
 
         return output
@@ -120,13 +153,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @tags_blueprint.route("/edit/<string:uuid>", methods=['POST'])
     @login_optionally_required
     def form_tag_edit_submit(uuid):
-        from changedetectionio import forms
+        from changedetectionio.blueprint.tags.form import group_restock_settings_form
         if uuid == 'first':
             uuid = list(datastore.data['settings']['application']['tags'].keys()).pop()
 
         default = datastore.data['settings']['application']['tags'].get(uuid)
 
-        form = forms.processor_text_json_diff_form(formdata=request.form if request.method == 'POST' else None,
+        form = group_restock_settings_form(formdata=request.form if request.method == 'POST' else None,
                                data=default,
                                )
         # @todo subclass form so validation works
@@ -136,6 +169,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 #           return redirect(url_for('tags.form_tag_edit_submit', uuid=uuid))
 
         datastore.data['settings']['application']['tags'][uuid].update(form.data)
+        datastore.data['settings']['application']['tags'][uuid]['processor'] = 'restock_diff'
         datastore.needs_write_urgent = True
         flash("Updated")
 

@@ -699,8 +699,12 @@ def changedetection_app(config=None, datastore_o=None):
                                data=default
                                )
 
-        # For the form widget tag uuid lookup
-        form.tags.datastore = datastore # in _value
+        # For the form widget tag UUID back to "string name" for the field
+        form.tags.datastore = datastore
+
+        # Used by some forms that need to dig deeper
+        form.datastore = datastore
+        form.watch = default
 
         for p in datastore.extra_browsers:
             form.fetch_backend.choices.append(p)
@@ -1559,7 +1563,7 @@ def changedetection_app(config=None, datastore_o=None):
 
                             datastore.data['watching'][uuid]['tags'].append(tag_uuid)
 
-            flash("{} watches assigned tag".format(len(uuids)))
+            flash(f"{len(uuids)} watches were tagged")
 
         return redirect(url_for('index'))
 
