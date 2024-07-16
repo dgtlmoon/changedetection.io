@@ -867,4 +867,17 @@ class ChangeDetectionStore:
                 watch['restock'] = Restock({'in_stock': watch.get('in_stock')})
                 del watch['in_stock']
 
+    # Migrate old restock settings
+    def update_18(self):
+        for uuid, watch in self.data['watching'].items():
+            if not watch.get('restock_settings'):
+                # So we enable price following by default
+                self.data['watching'][uuid]['restock_settings'] = {'follow_price_changes': True}
+
+            # Migrate and cleanoff old value
+            self.data['watching'][uuid]['restock_settings']['in_stock_processing'] = 'in_stock_only' if watch.get(
+                'in_stock_only') else 'all_changes'
+
+            if self.data['watching'][uuid].get('in_stock_only'):
+                del (self.data['watching'][uuid]['in_stock_only'])
 
