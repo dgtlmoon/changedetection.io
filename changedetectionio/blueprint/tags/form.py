@@ -1,16 +1,15 @@
 from wtforms import (
-    BooleanField,
     Form,
-    IntegerField,
-    RadioField,
-    SelectField,
     StringField,
     SubmitField,
-    TextAreaField,
     validators,
 )
+from wtforms.fields.simple import BooleanField
 
+from changedetectionio.processors.restock_diff.forms import processor_settings_form as restock_settings_form
 
+class group_restock_settings_form(restock_settings_form):
+    overrides_watch = BooleanField('Activate for individual watches in this tag/group?', default=False)
 
 class SingleTag(Form):
 

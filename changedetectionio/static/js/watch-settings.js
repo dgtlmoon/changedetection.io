@@ -27,6 +27,5 @@ $(document).ready(function () {
 
     toggleOpacity('#time_between_check_use_default', '#time_between_check', false);
 
-
 });
 

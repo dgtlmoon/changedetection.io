@@ -34,7 +34,7 @@ class processor_settings_form(processor_text_json_diff_form):
         </script>
 
 
-        <fieldset>
+        <fieldset id="restock-fieldset-price-group">
             <div class="pure-control-group">
                 <fieldset class="pure-group">
                     {{ render_checkbox_field(form.in_stock_only) }}
