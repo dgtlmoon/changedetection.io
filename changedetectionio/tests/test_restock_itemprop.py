@@ -114,7 +114,7 @@ def test_itemprop_price_change(client, live_server):
     set_original_response(props_markup=instock_props[0], price='120.45')
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"follow_price_changes": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"restock_settings-follow_price_changes": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -149,9 +149,9 @@ def test_itemprop_price_minmax_limit(client, live_server):
 
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"follow_price_changes": "y",
-              "price_change_min": 900.0,
-              "price_change_max": 1100.10,
+        data={"restock_settings-follow_price_changes": "y",
+              "restock_settings-price_change_min": 900.0,
+              "restock_settings-price_change_max": 1100.10,
               "url": test_url,
               "tags": "",
               "headers": "",
@@ -221,8 +221,8 @@ def test_itemprop_percent_threshold(client, live_server):
 
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"follow_price_changes": "y",
-              "price_change_threshold_percent": 5.0,
+        data={"restock_settings-follow_price_changes": "y",
+              "restock_settings-price_change_threshold_percent": 5.0,
               "url": test_url,
               "tags": "",
               "headers": "",
