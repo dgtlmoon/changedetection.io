@@ -132,6 +132,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     <div class="pure-control-group">
                         <fieldset class="pure-group">
                         {{ render_checkbox_field(form.overrides_watch) }}
+                        <span class="pure-form-message-inline">Used for watches in "Restock & Price detection" mode</span>
                         </fieldset>
                 </fieldset>
                 """
