@@ -53,11 +53,11 @@ class processor_settings_form(processor_text_json_diff_form):
                     <span class="pure-form-message-inline">When OFF - Only care about restock detection</span>                    
                 </fieldset>
                 <fieldset class="pure-group price-change-minmax">               
-                    {{ render_field(form.restock_settings.price_change_min, placeholder=watch['restock'].get('price')) }}
+                    {{ render_field(form.restock_settings.price_change_min, placeholder=watch.get('restock', {}).get('price')) }}
                     <span class="pure-form-message-inline">Minimum amount, only trigger a change when the price is less than this amount.</span>
                 </fieldset>
                 <fieldset class="pure-group price-change-minmax">
-                    {{ render_field(form.restock_settings.price_change_max, placeholder=watch['restock'].get('price')) }}
+                    {{ render_field(form.restock_settings.price_change_max, placeholder=watch.get('restock', {}).get('price')) }}
                     <span class="pure-form-message-inline">Maximum amount, only trigger a change when the price is more than this amount.</span>
                 </fieldset>
                 <fieldset class="pure-group price-change-minmax">
