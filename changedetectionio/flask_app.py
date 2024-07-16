@@ -766,6 +766,11 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)
 
+            if not datastore.data['watching'][uuid].get('tags'):
+                # Force it to be a list, because form.data['tags'] will be string if nothing found
+                # And del(form.data['tags'] ) wont work either for some reason
+                datastore.data['watching'][uuid]['tags'] = []
+
             # Recast it if need be to right data Watch handler
             watch_class = get_custom_watch_obj_for_processor(form.data.get('processor'))
             datastore.data['watching'][uuid] = watch_class(datastore_path=datastore_o.datastore_path, default=datastore.data['watching'][uuid])
@@ -1548,6 +1553,10 @@ def changedetection_app(config=None, datastore_o=None):
                     for uuid in uuids:
                         uuid = uuid.strip()
                         if datastore.data['watching'].get(uuid):
+                            # Bug in old versions caused by bad edit page/tag handler
+                            if isinstance(datastore.data['watching'][uuid]['tags'], str):
+                                datastore.data['watching'][uuid]['tags'] = []
+
                             datastore.data['watching'][uuid]['tags'].append(tag_uuid)
 
             flash("{} watches assigned tag".format(len(uuids)))
