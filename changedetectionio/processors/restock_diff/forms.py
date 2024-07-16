@@ -6,7 +6,6 @@ from wtforms import (
 from wtforms.fields.choices import RadioField
 from wtforms.fields.form import FormField
 from wtforms.form import Form
-from wtforms.validators import ValidationError
 
 from changedetectionio.forms import processor_text_json_diff_form
 
@@ -37,7 +36,16 @@ class processor_settings_form(processor_text_json_diff_form):
         return 'Restock & Price Detection'
 
     def extra_form_content(self):
-        return """
+        output = ""
+
+        if getattr(self, 'watch', None) and getattr(self, 'datastore'):
+            for tag_uuid in self.watch.get('tags'):
+                tag = self.datastore.data['settings']['application']['tags'].get(tag_uuid, {})
+                if tag.get('overrides_watch'):
+                    # @todo - Quick and dirty, cant access 'url_for' here because its out of scope somehow
+                    output = f"""<p><strong>Note! A Group tag overrides the restock and price detection here.</strong></p><style>#restock-fieldset-price-group {{ opacity: 0.6; }}</style>"""
+
+        output += """
         {% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
         <script>        
             $(document).ready(function () {
@@ -70,3 +78,4 @@ class processor_settings_form(processor_text_json_diff_form):
             </div>
         </fieldset>
         """
+        return output
