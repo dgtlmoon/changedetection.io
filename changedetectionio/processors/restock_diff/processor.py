@@ -135,6 +135,15 @@ class perform_site_check(difference_detection_processor):
         # Which restock settings to compare against?
         restock_settings = watch.get('restock_settings', {})
 
+        # See if any tags have 'activate for individual watches in this tag/group?' enabled and use the first we find
+        for tag_uuid in watch.get('tags'):
+            tag = self.datastore.data['settings']['application']['tags'].get(tag_uuid, {})
+            if tag.get('overrides_watch'):
+                restock_settings = tag.get('restock_settings', {})
+                logger.info(f"Watch {watch.get('uuid')} - Tag '{tag.get('title')}' selected for restock settings override")
+                break
+
+
         itemprop_availability = {}
         try:
             itemprop_availability = get_itemprop_availability(html_content=self.fetcher.content)
@@ -226,12 +235,11 @@ class perform_site_check(difference_detection_processor):
                     logger.debug(f"{watch.get('uuid')} after float conversion - Min limit: '{min_limit}' Max limit: '{max_limit}' Price: '{price}'")
                     if min_limit or max_limit:
                         if is_between(number=price, lower=min_limit, upper=max_limit):
-                            logger.trace(f"{watch.get('uuid')} {price} is between {min_limit} and {max_limit}")
-                            if changed_detected:
-                                logger.debug(f"{watch.get('uuid')} Override change-detected to FALSE because price was inside threshold")
-                                changed_detected = False
+                            # Price was between min/max limit, so there was nothing todo in any case
+                            logger.trace(f"{watch.get('uuid')} {price} is between {min_limit} and {max_limit}, nothing to check, forcing changed_detected = False (was {changed_detected})")
+                            changed_detected = False
                         else:
-                            logger.trace(f"{watch.get('uuid')} {price} is NOT between {min_limit} and {max_limit}")
+                            logger.trace(f"{watch.get('uuid')} {price} is between {min_limit} and {max_limit}, continuing normal comparison")
 
                     # Price comparison by %
                     if watch['restock'].get('original_price') and changed_detected and restock_settings.get('price_change_threshold_percent'):
