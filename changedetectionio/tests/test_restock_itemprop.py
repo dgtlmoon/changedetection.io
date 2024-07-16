@@ -131,8 +131,7 @@ def test_itemprop_price_change(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_itemprop_price_minmax_limit(client, live_server):
-    #live_server_setup(live_server)
+def _run_test_minmax_limit(client, extra_watch_edit_form):
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
@@ -149,17 +148,16 @@ def test_itemprop_price_minmax_limit(client, live_server):
     # A change in price, should trigger a change by default
     wait_for_all_checks(client)
 
-
+    data = {
+        "tags": "",
+        "url": test_url,
+        "headers": "",
+        'fetch_backend': "html_requests"
+    }
+    data.update(extra_watch_edit_form)
     res = client.post(
         url_for("edit_page", uuid="first"),
-        data={"restock_settings-follow_price_changes": "y",
-              "restock_settings-price_change_min": 900.0,
-              "restock_settings-price_change_max": 1100.10,
-              "url": test_url,
-              "tags": "",
-              "headers": "",
-              'fetch_backend': "html_requests"
-              },
+        data=data,
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -167,7 +165,7 @@ def test_itemprop_price_minmax_limit(client, live_server):
 
     client.get(url_for("mark_all_viewed"))
 
-    # price changed to something greater than min (900), and less than max (1100).. should be no change
+    # price changed to something greater than min (900), BUT less than max (1100).. should be no change
     set_original_response(props_markup=instock_props[0], price='1000.45')
     client.get(url_for("form_watch_checknow"))
     wait_for_all_checks(client)
@@ -202,6 +200,44 @@ def test_itemprop_price_minmax_limit(client, live_server):
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
+
+
+def test_restock_itemprop_minmax(client, live_server):
+#    live_server_setup(live_server)
+    extras = {
+        "restock_settings-follow_price_changes": "y",
+        "restock_settings-price_change_min": 900.0,
+        "restock_settings-price_change_max": 1100.10
+    }
+    _run_test_minmax_limit(client, extra_watch_edit_form=extras)
+
+def test_restock_itemprop_with_tag(client, live_server):
+    #live_server_setup(live_server)
+
+    res = client.post(
+        url_for("tags.form_tag_add"),
+        data={"name": "test-tag"},
+        follow_redirects=True
+    )
+    assert b"Tag added" in res.data
+
+    res = client.post(
+        url_for("tags.form_tag_edit_submit", uuid="first"),
+        data={"name": "test-tag",
+              "restock_settings-follow_price_changes": "y",
+              "restock_settings-price_change_min": 900.0,
+              "restock_settings-price_change_max": 1100.10,
+              "overrides_watch": "y", #overrides_watch should be restock_overrides_watch
+              },
+        follow_redirects=True
+    )
+
+    extras = {
+        "tags": "test-tag"
+    }
+
+    _run_test_minmax_limit(client, extra_watch_edit_form=extras)
+
 
 
 def test_itemprop_percent_threshold(client, live_server):
