@@ -52,6 +52,8 @@ def test_restock_itemprop_basic(client, live_server):
 
     test_url = url_for('test_endpoint', _external=True)
 
+    # By default it should enable ('in_stock_processing') == 'all_changes'
+
     for p in instock_props:
         set_original_response(props_markup=p)
         client.post(
@@ -87,6 +89,7 @@ def test_restock_itemprop_basic(client, live_server):
 def test_itemprop_price_change(client, live_server):
     #live_server_setup(live_server)
 
+    # Out of the box 'Follow price changes' should be ON
     test_url = url_for('test_endpoint', _external=True)
 
     set_original_response(props_markup=instock_props[0], price="190.95")

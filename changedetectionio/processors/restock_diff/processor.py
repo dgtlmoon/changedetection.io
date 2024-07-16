@@ -198,10 +198,10 @@ class perform_site_check(difference_detection_processor):
         # out of stock -> back in stock only?
         if watch.get('restock') and watch['restock'].get('in_stock') != update_obj['restock'].get('in_stock'):
             # Yes if we only care about it going to instock, AND we are in stock
-            if restock_settings.get('in_stock_only') and update_obj['restock']['in_stock']:
+            if restock_settings.get('in_stock_processing') == 'in_stock_only' and update_obj['restock']['in_stock']:
                 changed_detected = True
 
-            if not restock_settings.get('in_stock_only'):
+            if restock_settings.get('in_stock_processing') == 'all_changes':
                 # All cases
                 changed_detected = True
 
