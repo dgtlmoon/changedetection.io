@@ -1,8 +1,10 @@
 #!/usr/bin/python3
+import os
 import time
 
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
+from ..notification import default_notification_format
 
 instock_props = [
     # LD+JSON with non-standard list of 'type' https://github.com/dgtlmoon/changedetection.io/issues/1833
@@ -304,6 +306,70 @@ def test_itemprop_percent_threshold(client, live_server):
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
+
+
+
+def test_change_with_notification_values(client, live_server):
+    #live_server_setup(live_server)
+
+    if os.path.isfile("test-datastore/notification.txt"):
+        os.unlink("test-datastore/notification.txt")
+
+    test_url = url_for('test_endpoint', _external=True)
+    set_original_response(props_markup=instock_props[0], price='960.45')
+
+    notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
+
+    ######################
+    # You must add a type of 'restock_diff' for its tokens to register as valid in the global settings
+    client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
+        follow_redirects=True
+    )
+
+    # A change in price, should trigger a change by default
+    wait_for_all_checks(client)
+
+    # Should see new tokens register
+    res = client.get(url_for("settings_page"))
+    assert b'{{restock.original_price}}' in res.data
+    assert b'Original price at first check' in res.data
+
+    #####################
+    # Set this up for when we remove the notification from the watch, it should fallback with these details
+    res = client.post(
+        url_for("settings_page"),
+        data={"application-notification_urls": notification_url,
+              "application-notification_title": "title new price {{restock.price}}",
+              "application-notification_body": "new price {{restock.price}}",
+              "application-notification_format": default_notification_format,
+              "requests-time_between_check-minutes": 180,
+              'application-fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+
+    # check tag accepts without error
+
+    # Check the watches in these modes add the tokens for validating
+    assert b"A variable or function is not defined" not in res.data
+
+    assert b"Settings updated." in res.data
+
+
+    set_original_response(props_markup=instock_props[0], price='960.45')
+    # A change in price, should trigger a change by default
+    set_original_response(props_markup=instock_props[0], price='1950.45')
+    client.get(url_for("form_watch_checknow"))
+    wait_for_all_checks(client)
+    time.sleep(3)
+    assert os.path.isfile("test-datastore/notification.txt"), "Notification received"
+    with open("test-datastore/notification.txt", 'r') as f:
+        notification = f.read()
+        assert "new price 1950.45" in notification
+        assert "title new price 1950.45" in notification
+
+
 
 def test_data_sanity(client, live_server):
     #live_server_setup(live_server)

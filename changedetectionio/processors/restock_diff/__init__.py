@@ -68,3 +68,16 @@ class Watch(BaseWatch):
         super().clear_watch()
         self.update({'restock': Restock()})
 
+    def extra_notification_token_values(self):
+        values = super().extra_notification_token_values()
+        values['restock'] = self.get('restock', {})
+        return values
+
+    def extra_notification_token_placeholder_info(self):
+        values = super().extra_notification_token_placeholder_info()
+
+        values.append(('restock.price', "Price detected"))
+        values.append(('restock.original_price', "Original price at first check"))
+
+        return values
+

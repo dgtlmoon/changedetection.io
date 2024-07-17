@@ -696,8 +696,9 @@ def changedetection_app(config=None, datastore_o=None):
             form_class = forms.processor_text_json_diff_form
 
         form = form_class(formdata=request.form if request.method == 'POST' else None,
-                               data=default
-                               )
+                          data=default,
+                          extra_notification_tokens=default.extra_notification_token_values()
+                          )
 
         # For the form widget tag UUID back to "string name" for the field
         form.tags.datastore = datastore
@@ -824,6 +825,7 @@ def changedetection_app(config=None, datastore_o=None):
                 'emailprefix': os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                 'extra_title': f" - Edit - {watch.label}",
                 'extra_processor_config': form.extra_tab_content(),
+                'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
                 'form': form,
                 'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,
                 'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
@@ -878,7 +880,8 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Don't use form.data on POST so that it doesnt overrid the checkbox status from the POST status
         form = forms.globalSettingsForm(formdata=request.form if request.method == 'POST' else None,
-                                        data=default
+                                        data=default,
+                                        extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                         )
 
         # Remove the last option 'System default'
@@ -930,6 +933,7 @@ def changedetection_app(config=None, datastore_o=None):
         output = render_template("settings.html",
                                  api_key=datastore.data['settings']['application'].get('api_access_token'),
                                  emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                 extra_notification_token_placeholder_info=datastore.get_unique_notification_token_placeholders_available(),
                                  form=form,
                                  hide_remove_pass=os.getenv("SALTED_PASS", False),
                                  min_system_recheck_seconds=int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3)),
