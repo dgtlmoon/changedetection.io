@@ -81,6 +81,9 @@ class update_worker(threading.Thread):
             'uuid': watch.get('uuid') if watch else None,
             'watch_url': watch.get('url') if watch else None,
         })
+
+        n_object.update(watch.extra_notification_token_values())
+
         logger.trace(f"Main rendered notification placeholders (diff_added etc) calculated in {time.time()-now:.3f}s")
         logger.debug("Queued notification for sending")
         notification_q.put(n_object)

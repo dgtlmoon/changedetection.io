@@ -696,8 +696,9 @@ def changedetection_app(config=None, datastore_o=None):
             form_class = forms.processor_text_json_diff_form
 
         form = form_class(formdata=request.form if request.method == 'POST' else None,
-                               data=default
-                               )
+                          data=default,
+                          extra_notification_tokens=default.extra_notification_token_values()
+                          )
 
         # For the form widget tag UUID back to "string name" for the field
         form.tags.datastore = datastore
@@ -878,7 +879,8 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Don't use form.data on POST so that it doesnt overrid the checkbox status from the POST status
         form = forms.globalSettingsForm(formdata=request.form if request.method == 'POST' else None,
-                                        data=default
+                                        data=default,
+                                        extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                         )
 
         # Remove the last option 'System default'

@@ -106,6 +106,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         form = group_restock_settings_form(formdata=request.form if request.method == 'POST' else None,
                                        data=default,
+                                       extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                        )
 
         template_args = {
@@ -161,6 +162,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         form = group_restock_settings_form(formdata=request.form if request.method == 'POST' else None,
                                data=default,
+                               extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                )
         # @todo subclass form so validation works
         #if not form.validate():
