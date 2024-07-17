@@ -112,7 +112,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         template_args = {
             'data': default,
             'form': form,
-            'watch': default
+            'watch': default,
+            'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
         }
 
         included_content = {}

@@ -644,6 +644,20 @@ class ChangeDetectionStore:
 
         return extra_notification_tokens
 
+    def get_unique_notification_token_placeholders_available(self):
+        # The actual description of the tokens, could be combined with get_unique_notification_tokens_available instead of doing this twice
+        extra_notification_tokens = []
+        watch_processors_checked = set()
+
+        for watch_uuid, watch in self.__data['watching'].items():
+            processor = watch.get('processor')
+            if processor not in watch_processors_checked:
+                extra_notification_tokens+=watch.extra_notification_token_placeholder_info()
+                watch_processors_checked.add(processor)
+
+        return extra_notification_tokens
+
+
     def get_updates_available(self):
         import inspect
         updates_available = []

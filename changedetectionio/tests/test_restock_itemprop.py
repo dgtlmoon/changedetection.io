@@ -330,6 +330,12 @@ def test_change_with_notification_values(client, live_server):
 
     # A change in price, should trigger a change by default
     wait_for_all_checks(client)
+
+    # Should see new tokens register
+    res = client.get(url_for("settings_page"))
+    assert b'{{restock.original_price}}' in res.data
+    assert b'Original price at first check' in res.data
+
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(

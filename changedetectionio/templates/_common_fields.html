@@ -1,7 +1,7 @@
 
 {% from '_helpers.html' import render_field %}
 
-{% macro render_common_settings_form(form, emailprefix, settings_application) %}
+{% macro render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) %}
                         <div class="pure-control-group">
                             {{ render_field(form.notification_urls, rows=5, placeholder="Examples:
     Gitter - gitter://token/room
@@ -107,7 +107,15 @@
                                     <tr>
                                         <td><code>{{ '{{triggered_text}}' }}</code></td>
                                         <td>Text that tripped the trigger from filters</td>
-                                    </tr>
+
+                                        {% if extra_notification_token_placeholder_info %}
+                                            {% for token in extra_notification_token_placeholder_info %}
+                                                <tr>
+                                                    <td><code>{{ '{{' }}{{ token[0] }}{{ '}}' }}</code></td>
+                                                    <td>{{ token[1] }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% endif %}
                                     </tbody>
                                 </table>
                                 <div class="pure-form-message-inline">
