@@ -1,6 +1,11 @@
+import os
+
 from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 import time
+
+from .. import strtobool
+
 
 def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
@@ -55,17 +60,33 @@ def test_bad_access(client, live_server, measure_memory_usage):
 
     assert b'Watch protocol is not permitted by SAFE_PROTOCOL_REGEX' in res.data
 
-    # file:// is permitted by default, but it will be caught by ALLOW_FILE_URI
 
+def test_file_access(client, live_server, measure_memory_usage):
+    #live_server_setup(live_server)
+
+    test_file_path = "/tmp/test-file.txt"
+
+    # file:// is permitted by default, but it will be caught by ALLOW_FILE_URI
     client.post(
         url_for("form_quick_watch_add"),
-        data={"url": 'file:///tasty/disk/drive', "tags": ''},
+        data={"url": f"file://{test_file_path}", "tags": ''},
         follow_redirects=True
     )
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
 
-    assert b'file:// type access is denied for security reasons.' in res.data
+    # If it is enabled at test time
+    if strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
+        res = client.get(
+            url_for("preview_page", uuid="first"),
+            follow_redirects=True
+        )
+
+        # Should see something (this file added by run_basic_tests.sh)
+        assert b"Hello world" in res.data
+    else:
+        # Default should be here
+        assert b'file:// type access is denied for security reasons.' in res.data
 
 def test_xss(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)

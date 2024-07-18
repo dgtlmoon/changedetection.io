@@ -22,6 +22,7 @@ validators~=0.21
 # >= 2.26 also adds Brotli support if brotli is installed
 brotli~=1.0
 requests[socks]
+requests-file
 
 urllib3==1.26.19
 chardet>2.3.0
