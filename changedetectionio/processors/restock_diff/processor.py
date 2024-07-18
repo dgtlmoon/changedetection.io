@@ -200,7 +200,7 @@ class perform_site_check(difference_detection_processor):
 
         # What we store in the snapshot
         price = update_obj.get('restock').get('price') if update_obj.get('restock').get('price') else ""
-        snapshot_content = f"{update_obj.get('restock').get('in_stock')} - {price}"
+        snapshot_content = f"In Stock: {update_obj.get('restock').get('in_stock')} - Price: {price}"
 
         # Main detection method
         fetched_md5 = hashlib.md5(snapshot_content.encode('utf-8')).hexdigest()
