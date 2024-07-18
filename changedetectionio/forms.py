@@ -231,9 +231,6 @@ class ValidateJinja2Template(object):
     """
     Validates that a {token} is from a valid set
     """
-    def __init__(self, message=None):
-        self.message = message
-
     def __call__(self, form, field):
         from changedetectionio import notification
 
@@ -248,6 +245,10 @@ class ValidateJinja2Template(object):
         try:
             jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader)
             jinja2_env.globals.update(notification.valid_tokens)
+            # Extra validation tokens provided on the form_class(... extra_tokens={}) setup
+            if hasattr(field, 'extra_notification_tokens'):
+                jinja2_env.globals.update(field.extra_notification_tokens)
+
             jinja2_env.from_string(joined_data).render()
         except TemplateSyntaxError as e:
             raise ValidationError(f"This is not a valid Jinja2 template: {e}") from e
@@ -422,6 +423,12 @@ class quickWatchForm(Form):
 class commonSettingsForm(Form):
     from . import processors
 
+    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        self.notification_body.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
+        self.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
+        self.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
+
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
@@ -429,8 +436,8 @@ class commonSettingsForm(Form):
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     processor = RadioField( label=u"Processor - What do you want to achieve?", choices=processors.available_processors(), default="text_json_diff")
-    webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1,
-                                                                                                                                    message="Should contain one or more seconds")])
+    webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")])
+
 
 class importForm(Form):
     from . import processors
@@ -590,6 +597,11 @@ class globalSettingsForm(Form):
     # Define these as FormFields/"sub forms", this way it matches the JSON storage
     # datastore.data['settings']['application']..
     # datastore.data['settings']['requests']..
+    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        self.application.notification_body.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
+        self.application.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
+        self.application.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)

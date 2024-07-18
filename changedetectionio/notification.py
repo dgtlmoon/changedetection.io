@@ -272,19 +272,18 @@ def create_notification_parameters(n_object, datastore):
     tokens.update(
         {
             'base_url': base_url,
-            'current_snapshot': n_object.get('current_snapshot', ''),
-            'diff': n_object.get('diff', ''),  # Null default in the case we use a test
-            'diff_added': n_object.get('diff_added', ''),  # Null default in the case we use a test
-            'diff_full': n_object.get('diff_full', ''),  # Null default in the case we use a test
-            'diff_patch': n_object.get('diff_patch', ''),  # Null default in the case we use a test
-            'diff_removed': n_object.get('diff_removed', ''),  # Null default in the case we use a test
             'diff_url': diff_url,
             'preview_url': preview_url,
-            'triggered_text': n_object.get('triggered_text', ''),
             'watch_tag': watch_tag if watch_tag is not None else '',
             'watch_title': watch_title if watch_title is not None else '',
             'watch_url': watch_url,
             'watch_uuid': uuid,
         })
+
+    # n_object will contain diff, diff_added etc etc
+    tokens.update(n_object)
+
+    if uuid:
+        tokens.update(datastore.data['watching'].get(uuid).extra_notification_token_values())
 
     return tokens

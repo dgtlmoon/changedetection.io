@@ -41,6 +41,20 @@ Using the **Browser Steps** configuration, add basic steps before performing cha
 After **Browser Steps** have been run, then visit the **Visual Selector** tab to refine the content you're interested in.
 Requires Playwright to be enabled.
 
+### Awesome restock and price change notifications
+
+Enable the _"Re-stock & Price detection for single product pages"_ option to activate the best way to monitor product pricing.
+
+Easily organise and monitor prices for products from the dashboard, get alerts and notifications when the price of a product changes or comes back in stock again!
+
+[<img src="docs/restock-overview.png" style="max-width:100%;" alt="Easily keep an eye on product price changes directly from the UI"  title="Easily keep an eye on product price changes directly from the UI" />](https://changedetection.io?src=github)
+
+Set price change notification parameters, upper and lower price, price change percentage and more.
+Always know when a product for sale drops in price.
+
+[<img src="docs/restock-settings.png" style="max-width:100%;" alt="Set upper lower and percentage price change notification values"  title="Set upper lower and percentage price change notification values" />](https://changedetection.io?src=github)
+
+
 
 ### Example use cases
 

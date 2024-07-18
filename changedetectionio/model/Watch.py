@@ -432,6 +432,17 @@ class model(watch_base):
     def toggle_mute(self):
         self['notification_muted'] ^= True
 
+    def extra_notification_token_values(self):
+        # Used for providing extra tokens
+        # return {'widget': 555}
+        return {}
+
+    def extra_notification_token_placeholder_info(self):
+        # Used for providing extra tokens
+        # return [('widget', "Get widget amounts")]
+        return []
+
+
     def extract_regex_from_all_history(self, regex):
         import csv
         import re
