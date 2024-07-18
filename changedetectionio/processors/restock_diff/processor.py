@@ -177,6 +177,11 @@ class perform_site_check(difference_detection_processor):
         # Main detection method
         fetched_md5 = None
 
+        # store original price if not set
+        if itemprop_availability and itemprop_availability.get('price') and not itemprop_availability.get('original_price'):
+            itemprop_availability['original_price'] = itemprop_availability.get('price')
+            update_obj['restock']["original_price"] = itemprop_availability.get('price')
+
         if not self.fetcher.instock_data and not itemprop_availability.get('availability'):
             raise ProcessorException(
                 message=f"Unable to extract restock data for this page unfortunately. (Got code {self.fetcher.get_last_status_code()} from server), no embedded stock information was found and nothing interesting in the text, try using this watch with Chrome.",

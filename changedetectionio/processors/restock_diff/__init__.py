@@ -45,12 +45,9 @@ class Restock(dict):
 
     def __setitem__(self, key, value):
         # Custom logic to handle setting price and original_price
-        if key == 'price':
+        if key == 'price' or key == 'original_price':
             if isinstance(value, str):
                 value = self.parse_currency(raw_value=value)
-
-            if value and not self.get('original_price'):
-                self['original_price'] = value
 
         super().__setitem__(key, value)
 
