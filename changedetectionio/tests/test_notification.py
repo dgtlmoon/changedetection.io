@@ -3,6 +3,8 @@ import os
 import time
 import re
 from flask import url_for
+from loguru import logger
+
 from .util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, wait_for_all_checks, \
     set_longer_modified_response
 from . util import  extract_UUID_from_client
@@ -347,3 +349,81 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
         url_for("form_delete", uuid="all"),
         follow_redirects=True
     )
+
+
+#2510
+def test_global_send_test_notification(client, live_server, measure_memory_usage):
+
+
+    #live_server_setup(live_server)
+    set_original_response()
+
+    # otherwise other settings would have already existed from previous tests in this file
+    res = client.post(
+        url_for("settings_page"),
+        data={
+            "application-fetch_backend": "html_requests",
+            "application-minutes_between_check": 180,
+            "application-notification_body": 'change detection is cool',
+            "application-notification_format": default_notification_format,
+            "application-notification_urls": "",
+            "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
+        },
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url, "tags": 'nice one'},
+        follow_redirects=True
+    )
+
+    assert b"Watch added" in res.data
+
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}&+custom-header=123"
+
+    ######### Test global/system settings
+    res = client.post(
+        url_for("ajax_callback_send_notification_test")+"?mode=global-settings",
+        data={"notification_urls": test_notification_url},
+        follow_redirects=True
+    )
+
+    assert res.status_code != 400
+    assert res.status_code != 500
+
+    # Give apprise time to fire
+    time.sleep(4)
+
+    with open("test-datastore/notification.txt", 'r') as f:
+        x = f.read()
+        assert 'change detection is coo' in x
+
+
+    os.unlink("test-datastore/notification.txt")
+
+    ######### Test group/tag settings
+    res = client.post(
+        url_for("ajax_callback_send_notification_test")+"?mode=group-settings",
+        data={"notification_urls": test_notification_url},
+        follow_redirects=True
+    )
+
+    assert res.status_code != 400
+    assert res.status_code != 500
+
+    # Give apprise time to fire
+    time.sleep(4)
+
+    with open("test-datastore/notification.txt", 'r') as f:
+        x = f.read()
+        # Should come from notification.py default handler when there is no notification body to pull from
+        assert 'change detection is coo' in x
+
+    client.get(
+        url_for("form_delete", uuid="all"),
+        follow_redirects=True
+    )
+

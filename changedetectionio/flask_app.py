@@ -532,12 +532,21 @@ def changedetection_app(config=None, datastore_o=None):
     @login_optionally_required
     def ajax_callback_send_notification_test(watch_uuid=None):
 
-        # Watch_uuid could be unsuet in the case its used in tag editor, global setings
+        # Watch_uuid could be unset in the case its used in tag editor, global setings
         import apprise
+        import random
         from .apprise_asset import asset
         apobj = apprise.Apprise(asset=asset)
 
-        watch = datastore.data['watching'].get(watch_uuid) if watch_uuid else None
+        is_global_settings_form = request.args.get('mode', '') == 'global-settings'
+        is_group_settings_form = request.args.get('mode', '') == 'group-settings'
+
+        # Use an existing random one on the global/main settings form
+        if not watch_uuid and (is_global_settings_form or is_group_settings_form):
+            logger.debug(f"Send test notification - Choosing random Watch {watch_uuid}")
+            watch_uuid = random.choice(list(datastore.data['watching'].keys()))
+
+        watch = datastore.data['watching'].get(watch_uuid)
 
         notification_urls = request.form['notification_urls'].strip().splitlines()
 
@@ -549,8 +558,6 @@ def changedetection_app(config=None, datastore_o=None):
                     tag = datastore.tag_exists_by_name(k.strip())
                     notification_urls = tag.get('notifications_urls') if tag and tag.get('notifications_urls') else None
 
-        is_global_settings_form = request.args.get('mode', '') == 'global-settings'
-        is_group_settings_form = request.args.get('mode', '') == 'group-settings'
         if not notification_urls and not is_global_settings_form and not is_group_settings_form:
             # In the global settings, use only what is typed currently in the text box
             logger.debug("Test notification - Trying by global system settings notifications")
@@ -569,7 +576,7 @@ def changedetection_app(config=None, datastore_o=None):
         try:
             # use the same as when it is triggered, but then override it with the form test values
             n_object = {
-                'watch_url': request.form['window_url'],
+                'watch_url': request.form.get('window_url', "https://changedetection.io"),
                 'notification_urls': notification_urls
             }
 
