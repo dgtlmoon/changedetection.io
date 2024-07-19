@@ -347,3 +347,54 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
         url_for("form_delete", uuid="all"),
         follow_redirects=True
     )
+
+
+#2510
+def test_global_send_test_notification(client, live_server, measure_memory_usage):
+
+    #live_server_setup(live_server)
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url, "tags": 'nice one'},
+        follow_redirects=True
+    )
+
+    assert b"Watch added" in res.data
+
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}&+custom-header=123"
+
+    ######### Test global/system settings
+    res = client.post(
+        url_for("ajax_callback_send_notification_test")+"?mode=global-settings",
+        data={"notification_urls": test_notification_url},
+        follow_redirects=True
+    )
+
+    assert res.status_code != 400
+    assert res.status_code != 500
+
+    # Give apprise time to fire
+    time.sleep(3)
+    with open("test-datastore/notification.txt", 'r') as f:
+        x = f.read()
+        assert 'test-endpoint had a change' in x
+
+
+    os.unlink("test-datastore/notification.txt")
+
+    ######### Test group/tag settings
+    res = client.post(
+        url_for("ajax_callback_send_notification_test")+"?mode=group-settings",
+        data={"notification_urls": test_notification_url},
+        follow_redirects=True
+    )
+
+    assert res.status_code != 400
+    assert res.status_code != 500
+
+    # Give apprise time to fire
+    time.sleep(3)
+    with open("test-datastore/notification.txt", 'r') as f:
+        x = f.read()
+        assert 'test-endpoint had a change' in x
