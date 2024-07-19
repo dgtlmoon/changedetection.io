@@ -157,7 +157,7 @@ def process_notification(n_object, datastore):
                 logger.warning(f"Process Notification: skipping empty notification URL.")
                 continue
 
-            logger.info(">> Process Notification: AppRise notifying {}".format(url))
+            logger.info(f">> Process Notification: AppRise notifying {url}")
             url = jinja_render(template_str=url, **notification_parameters)
 
             # Re 323 - Limit discord length to their 2000 char limit total or it wont send.
@@ -230,6 +230,7 @@ def process_notification(n_object, datastore):
         log_value = logs.getvalue()
 
         if log_value and 'WARNING' in log_value or 'ERROR' in log_value:
+            logger.critical(log_value)
             raise Exception(log_value)
 
     # Return what was sent for better logging - after the for loop

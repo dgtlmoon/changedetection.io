@@ -576,7 +576,7 @@ def changedetection_app(config=None, datastore_o=None):
         try:
             # use the same as when it is triggered, but then override it with the form test values
             n_object = {
-                'watch_url': request.form.get('window_url',"https://changedetection.io"),
+                'watch_url': request.form.get('window_url', "https://changedetection.io"),
                 'notification_urls': notification_urls
             }
 
