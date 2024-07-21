@@ -150,6 +150,11 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     res = client.get(url_for("index"))
     assert b'preview/' in res.data
 
+
+    # Check the 'get latest snapshot works'
+    res = client.get(url_for("watch_get_latest_html", uuid=uuid))
+    assert b'<head><title>head title</title></head>' in res.data
+
     #
     # Cleanup everything
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)

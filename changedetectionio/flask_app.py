@@ -1369,6 +1369,30 @@ def changedetection_app(config=None, datastore_o=None):
         except FileNotFoundError:
             abort(404)
 
+    @app.route("/edit/<string:uuid>/get-html", methods=['GET'])
+    @login_optionally_required
+    def watch_get_latest_html(uuid):
+        from io import BytesIO
+        from flask import send_file
+        import brotli
+
+        watch = datastore.data['watching'].get(uuid)
+        if watch and os.path.isdir(watch.watch_data_dir):
+            latest_filename = list(watch.history.keys())[0]
+            html_fname = os.path.join(watch.watch_data_dir, f"{latest_filename}.html.br")
+            if html_fname.endswith('.br'):
+                # Read and decompress the Brotli file
+                with open(html_fname, 'rb') as f:
+                    decompressed_data = brotli.decompress(f.read())
+
+                buffer = BytesIO(decompressed_data)
+
+                return send_file(buffer, as_attachment=True, download_name=f"{latest_filename}.html", mimetype='text/html')
+
+
+        # Return a 500 error
+        abort(500)
+
     @app.route("/form/add/quickwatch", methods=['POST'])
     @login_optionally_required
     def form_quick_watch_add():
