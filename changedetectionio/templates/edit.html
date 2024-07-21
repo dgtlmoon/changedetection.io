@@ -479,6 +479,12 @@ Unavailable") }}
                         </tr>
                         </tbody>
                     </table>
+                    {% if watch.history_n %}
+                        <p>
+                             <a href="{{url_for('watch_get_latest_html', uuid=uuid)}}" class="pure-button button-small">Download latest HTML snapshot</a>
+                        </p>
+                    {% endif %}
+
                 </div>
             </div>
             <div id="actions">
