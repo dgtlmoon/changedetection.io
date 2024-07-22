@@ -70,8 +70,6 @@ COPY changedetection.py /app/changedetection.py
 # Because we now need to know more about locales due to the price-monitoring being able to format/show different numbers/currencies.
 ENV LC_ALL=en_US.UTF-8
 RUN locale-gen en_US.UTF-8
-# Set the locale (optional)
-RUN update-locale LC_ALL=en_US.UTF-8
 
 # Github Action test purpose(test-only.yml).
 # On production, it is effectively LOGGER_LEVEL=''.
