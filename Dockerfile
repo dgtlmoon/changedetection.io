@@ -43,10 +43,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # For presenting price amounts correctly in the restock/price detection overview
     locales \
     # For pdftohtml
+    locales \
     poppler-utils \
     zlib1g \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-
 
 # https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
 ENV PYTHONUNBUFFERED=1
@@ -66,6 +66,12 @@ EXPOSE 5000
 COPY changedetectionio /app/changedetectionio
 # Starting wrapper
 COPY changedetection.py /app/changedetection.py
+
+# Because we now need to know more about locales due to the price-monitoring being able to format/show different numbers/currencies.
+ENV LC_ALL=en_US.UTF-8
+RUN locale-gen en_US.UTF-8
+# Set the locale (optional)
+RUN update-locale LC_ALL=en_US.UTF-8
 
 # Github Action test purpose(test-only.yml).
 # On production, it is effectively LOGGER_LEVEL=''.
