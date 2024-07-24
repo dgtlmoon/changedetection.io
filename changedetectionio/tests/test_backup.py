@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 from .util import set_original_response, live_server_setup, wait_for_all_checks
 from flask import url_for
