@@ -214,7 +214,7 @@ if (include_filters.length) {
             console.log(e);
         }
 
-        if (results.length) {
+        if (results != null && results.length) {
 
             // Iterate over the results
             results.forEach(node => {
