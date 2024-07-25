@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 

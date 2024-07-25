@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """Test suite for the render/not render anchor tag content functionality"""
 
 import time
