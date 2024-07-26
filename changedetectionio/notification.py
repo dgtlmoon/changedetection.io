@@ -105,6 +105,9 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     except ValueError as e:
         pass
 
+    if isinstance(body, str):
+        body = body.encode('utf-8')
+        
     r(results.get('url'),
       auth=auth,
       data=body,
