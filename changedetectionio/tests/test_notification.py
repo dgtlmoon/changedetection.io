@@ -291,11 +291,11 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
         data={
               "application-fetch_backend": "html_requests",
               "application-minutes_between_check": 180,
-              "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444 }',
+              "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444, "somebug": "网站监测 内容更新了" }',
               "application-notification_format": default_notification_format,
               "application-notification_urls": test_notification_url,
               # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
-              "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
+              "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }} ",
               },
         follow_redirects=True
     )
@@ -324,6 +324,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
         j = json.loads(x)
         assert j['url'].startswith('http://localhost')
         assert j['secret'] == 444
+        assert j['somebug'] == '网站监测 内容更新了'
 
     # URL check, this will always be converted to lowercase
     assert os.path.isfile("test-datastore/notification-url.txt")
