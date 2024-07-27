@@ -291,11 +291,11 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
         data={
               "application-fetch_backend": "html_requests",
               "application-minutes_between_check": 180,
-              "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444 }',
+              "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444, "somebug": "网站监测 内容更新了" }',
               "application-notification_format": default_notification_format,
               "application-notification_urls": test_notification_url,
               # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
-              "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
+              "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }} ",
               },
         follow_redirects=True
     )
@@ -324,6 +324,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
         j = json.loads(x)
         assert j['url'].startswith('http://localhost')
         assert j['secret'] == 444
+        assert j['somebug'] == '网站监测 内容更新了'
 
     # URL check, this will always be converted to lowercase
     assert os.path.isfile("test-datastore/notification-url.txt")
@@ -354,9 +355,10 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
 #2510
 def test_global_send_test_notification(client, live_server, measure_memory_usage):
 
-
     #live_server_setup(live_server)
     set_original_response()
+    if os.path.isfile("test-datastore/notification.txt"):
+        os.unlink("test-datastore/notification.txt")
 
     # otherwise other settings would have already existed from previous tests in this file
     res = client.post(
@@ -364,7 +366,8 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
         data={
             "application-fetch_backend": "html_requests",
             "application-minutes_between_check": 180,
-            "application-notification_body": 'change detection is cool',
+            #1995 UTF-8 content should be encoded
+            "application-notification_body": 'change detection is cool 网站监测 内容更新了',
             "application-notification_format": default_notification_format,
             "application-notification_urls": "",
             "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
@@ -399,8 +402,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
 
     with open("test-datastore/notification.txt", 'r') as f:
         x = f.read()
-        assert 'change detection is coo' in x
-
+        assert 'change detection is cool 网站监测 内容更新了' in x
 
     os.unlink("test-datastore/notification.txt")
 
@@ -420,7 +422,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
     with open("test-datastore/notification.txt", 'r') as f:
         x = f.read()
         # Should come from notification.py default handler when there is no notification body to pull from
-        assert 'change detection is coo' in x
+        assert 'change detection is cool 网站监测 内容更新了' in x
 
     client.get(
         url_for("form_delete", uuid="all"),
