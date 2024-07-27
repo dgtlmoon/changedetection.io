@@ -107,7 +107,7 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
 
     r(results.get('url'),
       auth=auth,
-      data=body,
+      data=body.encode('utf-8') if type(body) is str else body,
       headers=headers,
       params=params
       )
