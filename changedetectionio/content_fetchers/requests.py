@@ -53,7 +53,7 @@ class fetcher(Fetcher):
             session.mount('file://', FileAdapter())
 
         r = session.request(method=request_method,
-                            data=request_body,
+                            data=request_body.encode('utf-8') if type(request_body) is str else request_body,
                             url=url,
                             headers=request_headers,
                             timeout=timeout,
