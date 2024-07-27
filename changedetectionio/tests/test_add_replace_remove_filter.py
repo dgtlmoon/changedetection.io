@@ -104,7 +104,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
 
 
 def test_check_add_line_contains_trigger(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
 
     # Give the endpoint time to spin up
     test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://') + "?xxx={{ watch_url }}"
