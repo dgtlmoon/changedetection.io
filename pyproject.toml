@@ -11,7 +11,7 @@ description = """\
     """
 readme = {file = "README-pip.md", content-type = "text/markdown"}
 license = {text = "Apache License 2.0"}
-authors = [{name = "dgtlmoon"}]
+authors = [{name = "Leigh Morresi / dgtlmoon"}]
 
 requires-python = ">= 3.10"
 
@@ -25,6 +25,8 @@ keywords = [
     "tracking",
     "websites",
     "monitoring",
+    "price monitoring",
+    "price tracking",
     "notification",
     "stock detection",
     "website tracking",
