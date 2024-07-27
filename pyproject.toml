@@ -10,7 +10,6 @@ description = """\
     web pages and send alerts/notifications.\
     """
 readme = {file = "README-pip.md", content-type = "text/markdown"}
-license = {text = "Apache License 2.0"}
 authors = [{name = "Leigh Morresi / dgtlmoon"}]
 
 requires-python = ">= 3.10"
@@ -71,6 +70,9 @@ classifiers=[
 Homepage = "https://changedetection.io"
 Repository = "https://github.com/dgtlmoon/changedetection.io.git"
 Issues = "https://github.com/dgtlmoon/changedetection.io/issues"
+
+[tool.setuptools]
+license-files = ["LICENSE", "COMMERCIAL_LICENCE.md"]
 
 [tool.setuptools.package-dir]
 # This is needed since the actual project name has a period in it and
