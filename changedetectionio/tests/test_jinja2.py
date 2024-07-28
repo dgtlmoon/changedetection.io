@@ -3,6 +3,7 @@
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
+from ..safe_jinja import render
 
 
 # def test_setup(client, live_server, measure_memory_usage):
@@ -56,3 +57,28 @@ def test_jinja2_security_url_query(client, live_server, measure_memory_usage):
     assert b'is invalid and cannot be used' in res.data
     # Some of the spewed output from the subclasses
     assert b'dict_values' not in res.data
+
+def test_add_time(environment):
+    """Verify that added time offset can be parsed."""
+
+    finalRender = render("{% now 'utc' + 'hours=2,seconds=30' %}")
+
+    assert finalRender == "Thu, 10 Dec 2015 01:33:31"
+
+
+def test_substract_time(environment):
+    """Verify that substracted time offset can be parsed."""
+
+    finalRender = render("{% now 'utc' - 'minutes=11' %}")
+
+    assert finalRender == "Wed, 09 Dec 2015 23:22:01"
+
+
+def test_offset_with_format(environment):
+    """Verify that offset works together with datetime format."""
+
+    finalRender = render(
+        "{% now 'utc' - 'days=2,minutes=33,seconds=1', '%d %b %Y %H:%M:%S' %}"
+    )
+
+    assert finalRender == "07 Dec 2015 23:00:00"

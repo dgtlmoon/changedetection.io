@@ -6,7 +6,7 @@
 import unittest
 import os
 
-from changedetectionio.processors import restock_diff
+import changedetectionio.processors.restock_diff.processor as restock_diff
 
 # mostly
 class TestDiffBuilder(unittest.TestCase):
