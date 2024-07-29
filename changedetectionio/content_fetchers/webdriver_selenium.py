@@ -56,7 +56,8 @@ class fetcher(Fetcher):
             request_method,
             ignore_status_codes=False,
             current_include_filters=None,
-            is_binary=False):
+            is_binary=False,
+            empty_pages_are_a_change=False):
 
         from selenium import webdriver
         from selenium.webdriver.chrome.options import Options as ChromeOptions

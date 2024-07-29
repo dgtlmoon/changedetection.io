@@ -81,7 +81,8 @@ class Fetcher():
             request_method,
             ignore_status_codes=False,
             current_include_filters=None,
-            is_binary=False):
+            is_binary=False,
+            empty_pages_are_a_change=False):
         # Should set self.error, self.status_code and self.content
         pass
 

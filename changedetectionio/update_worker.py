@@ -1,6 +1,5 @@
 from .processors.exceptions import ProcessorException
-from . import content_fetchers
-
+import changedetectionio.content_fetchers.exceptions as content_fetchers_exceptions
 from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
 from changedetectionio import html_tools
 
@@ -301,7 +300,7 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': e.message})
                         process_changedetection_results = False
 
-                    except content_fetchers.exceptions.ReplyWithContentButNoText as e:
+                    except content_fetchers_exceptions.ReplyWithContentButNoText as e:
                         # Totally fine, it's by choice - just continue on, nothing more to care about
                         # Page had elements/content but no renderable text
                         # Backend (not filters) gave zero output
@@ -327,7 +326,7 @@ class update_worker(threading.Thread):
                             
                         process_changedetection_results = False
 
-                    except content_fetchers.exceptions.Non200ErrorCodeReceived as e:
+                    except content_fetchers_exceptions.Non200ErrorCodeReceived as e:
                         if e.status_code == 403:
                             err_text = "Error - 403 (Access denied) received"
                         elif e.status_code == 404:
@@ -380,23 +379,23 @@ class update_worker(threading.Thread):
 
                         process_changedetection_results = False
 
-                    except content_fetchers.exceptions.checksumFromPreviousCheckWasTheSame as e:
+                    except content_fetchers_exceptions.checksumFromPreviousCheckWasTheSame as e:
                         # Yes fine, so nothing todo, don't continue to process.
                         process_changedetection_results = False
                         changed_detected = False
-                    except content_fetchers.exceptions.BrowserConnectError as e:
+                    except content_fetchers_exceptions.BrowserConnectError as e:
                         self.datastore.update_watch(uuid=uuid,
                                                     update_obj={'last_error': e.msg
                                                                 }
                                                     )
                         process_changedetection_results = False
-                    except content_fetchers.exceptions.BrowserFetchTimedOut as e:
+                    except content_fetchers_exceptions.BrowserFetchTimedOut as e:
                         self.datastore.update_watch(uuid=uuid,
                                                     update_obj={'last_error': e.msg
                                                                 }
                                                     )
                         process_changedetection_results = False
-                    except content_fetchers.exceptions.BrowserStepsStepException as e:
+                    except content_fetchers_exceptions.BrowserStepsStepException as e:
 
                         if not self.datastore.data['watching'].get(uuid):
                             continue
@@ -438,25 +437,25 @@ class update_worker(threading.Thread):
 
                         process_changedetection_results = False
 
-                    except content_fetchers.exceptions.EmptyReply as e:
+                    except content_fetchers_exceptions.EmptyReply as e:
                         # Some kind of custom to-str handler in the exception handler that does this?
                         err_text = "EmptyReply - try increasing 'Wait seconds before extracting text', Status Code {}".format(e.status_code)
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                         process_changedetection_results = False
-                    except content_fetchers.exceptions.ScreenshotUnavailable as e:
+                    except content_fetchers_exceptions.ScreenshotUnavailable as e:
                         err_text = "Screenshot unavailable, page did not render fully in the expected time or page was too long - try increasing 'Wait seconds before extracting text'"
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                         process_changedetection_results = False
-                    except content_fetchers.exceptions.JSActionExceptions as e:
+                    except content_fetchers_exceptions.JSActionExceptions as e:
                         err_text = "Error running JS Actions - Page request - "+e.message
                         if e.screenshot:
                             watch.save_screenshot(screenshot=e.screenshot, as_error=True)
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                            'last_check_status': e.status_code})
                         process_changedetection_results = False
-                    except content_fetchers.exceptions.PageUnloadable as e:
+                    except content_fetchers_exceptions.PageUnloadable as e:
                         err_text = "Page request from server didnt respond correctly"
                         if e.message:
                             err_text = "{} - {}".format(err_text, e.message)
@@ -468,7 +467,7 @@ class update_worker(threading.Thread):
                                                                            'last_check_status': e.status_code,
                                                                            'has_ldjson_price_data': None})
                         process_changedetection_results = False
-                    except content_fetchers.exceptions.BrowserStepsInUnsupportedFetcher as e:
+                    except content_fetchers_exceptions.BrowserStepsInUnsupportedFetcher as e:
                         err_text = "This watch has Browser Steps configured and so it cannot run with the 'Basic fast Plaintext/HTTP Client', either remove the Browser Steps or select a Chrome fetcher."
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
                         process_changedetection_results = False

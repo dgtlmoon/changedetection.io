@@ -83,7 +83,8 @@ class fetcher(Fetcher):
             request_method,
             ignore_status_codes=False,
             current_include_filters=None,
-            is_binary=False):
+            is_binary=False,
+            empty_pages_are_a_change=False):
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._errors
@@ -130,7 +131,7 @@ class fetcher(Fetcher):
             if response is None:
                 context.close()
                 browser.close()
-                logger.debug("Content Fetcher > Response object was none")
+                logger.debug("Content Fetcher > Response object from the browser communication was none")
                 raise EmptyReply(url=url, status_code=None)
 
             try:
@@ -166,10 +167,10 @@ class fetcher(Fetcher):
 
                 raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
 
-            if len(self.page.content().strip()) == 0:
+            if not empty_pages_are_a_change and len(self.page.content().strip()) == 0:
+                logger.debug("Content Fetcher > Content was empty, empty_pages_are_a_change = False")
                 context.close()
                 browser.close()
-                logger.debug("Content Fetcher > Content was empty")
                 raise EmptyReply(url=url, status_code=response.status)
 
             # Run Browser Steps here
