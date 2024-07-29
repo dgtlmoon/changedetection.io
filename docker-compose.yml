@@ -9,7 +9,8 @@ services:
 # Configurable proxy list support, see https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#proxy-list-support
 #        - ./proxies.json:/datastore/proxies.json
 
-  #    environment:
+      environment:
+         - LC_ALL=en_US.UTF-8
   #        Default listening port, can also be changed with the -p option
   #      - PORT=5000
 
