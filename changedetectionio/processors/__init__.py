@@ -26,6 +26,8 @@ class difference_detection_processor():
 
     def call_browser(self):
         from requests.structures import CaseInsensitiveDict
+        from changedetectionio.content_fetchers.exceptions import EmptyReply
+
         # Protect against file:// access
         if re.search(r'^file://', self.watch.get('url', '').strip(), re.IGNORECASE):
             if not strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
@@ -133,8 +135,18 @@ class difference_detection_processor():
         is_binary = self.watch.is_pdf
 
         # And here we go! call the right browser with browser-specific settings
-        self.fetcher.run(url, timeout, request_headers, request_body, request_method, ignore_status_codes, self.watch.get('include_filters'),
-                    is_binary=is_binary)
+        empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
+
+        self.fetcher.run(url=url,
+                         timeout=timeout,
+                         request_headers=request_headers,
+                         request_body=request_body,
+                         request_method=request_method,
+                         ignore_status_codes=ignore_status_codes,
+                         current_include_filters=self.watch.get('include_filters'),
+                         is_binary=is_binary,
+                         empty_pages_are_a_change=empty_pages_are_a_change
+                         )
 
         #@todo .quit here could go on close object, so we can run JS if change-detected
         self.fetcher.quit()

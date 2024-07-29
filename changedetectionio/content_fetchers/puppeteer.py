@@ -75,7 +75,8 @@ class fetcher(Fetcher):
                          request_method,
                          ignore_status_codes,
                          current_include_filters,
-                         is_binary
+                         is_binary,
+                         empty_pages_are_a_change
                          ):
 
         from changedetectionio.content_fetchers import visualselector_xpath_selectors
@@ -153,7 +154,7 @@ class fetcher(Fetcher):
         if response is None:
             await self.page.close()
             await browser.close()
-            logger.warning("Content Fetcher > Response object was none")
+            logger.warning("Content Fetcher > Response object was none (as in, the response from the browser was empty, not just the content)")
             raise EmptyReply(url=url, status_code=None)
 
         self.headers = response.headers
@@ -186,10 +187,11 @@ class fetcher(Fetcher):
 
             raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
         content = await self.page.content
-        if len(content.strip()) == 0:
+
+        if not empty_pages_are_a_change and len(content.strip()) == 0:
+            logger.error("Content Fetcher > Content was empty (empty_pages_are_a_change is False), closing browsers")
             await self.page.close()
             await browser.close()
-            logger.error("Content Fetcher > Content was empty")
             raise EmptyReply(url=url, status_code=response.status)
 
         # Run Browser Steps here
@@ -247,7 +249,7 @@ class fetcher(Fetcher):
         await self.fetch_page(**kwargs)
 
     def run(self, url, timeout, request_headers, request_body, request_method, ignore_status_codes=False,
-            current_include_filters=None, is_binary=False):
+            current_include_filters=None, is_binary=False, empty_pages_are_a_change=False):
 
         #@todo make update_worker async which could run any of these content_fetchers within memory and time constraints
         max_time = os.getenv('PUPPETEER_MAX_PROCESSING_TIMEOUT_SECONDS', 180)
@@ -262,7 +264,8 @@ class fetcher(Fetcher):
                 request_method=request_method,
                 ignore_status_codes=ignore_status_codes,
                 current_include_filters=current_include_filters,
-                is_binary=is_binary
+                is_binary=is_binary,
+                empty_pages_are_a_change=empty_pages_are_a_change
             ), timeout=max_time))
         except asyncio.TimeoutError:
             raise(BrowserFetchTimedOut(msg=f"Browser connected but was unable to process the page in {max_time} seconds."))
