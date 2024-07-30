@@ -119,6 +119,8 @@ class perform_site_check(difference_detection_processor):
     xpath_data = None
 
     def run_changedetection(self, watch, skip_when_checksum_same=True):
+        from .plugin_manager import pm
+
         if not watch:
             raise Exception("Watch no longer exists.")
 
@@ -197,6 +199,19 @@ class perform_site_check(difference_detection_processor):
             # Careful! this does not really come from chrome/js when the watch is set to plaintext
             update_obj['restock']["in_stock"] = True if self.fetcher.instock_data == 'Possibly in stock' else False
             logger.debug(f"Watch UUID {watch.get('uuid')} restock check returned '{self.fetcher.instock_data}' from JS scraper.")
+
+        # Ask any "changedetectionio.restock_price_scraper" namespace plugins if they can add something
+        # (Should return an updated 'update_obj')
+        plugin_price_scraping = pm.hook.scrape_price_restock(watch=watch,
+                                                             html_content=self.fetcher.content,
+                                                             screenshot=self.fetcher.screenshot,
+                                                             update_obj=update_obj)
+        if plugin_price_scraping:
+            for plugin_result in plugin_price_scraping:
+                update_obj.update(plugin_result)
+                if plugin_result.get('restock'):
+                    update_obj['restock'].update(plugin_result.get('restock'))
+
 
         # What we store in the snapshot
         price = update_obj.get('restock').get('price') if update_obj.get('restock').get('price') else ""
