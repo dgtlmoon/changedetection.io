@@ -94,4 +94,4 @@ babel
 greenlet >= 3.0.3
 
 # Our own plugins
-changedetection.io-amazon-price-scraper>=0.21
+changedetection.io-amazon-price-scraper>=0.03
