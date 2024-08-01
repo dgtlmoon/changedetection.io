@@ -1,5 +1,6 @@
 import os
 import re
+
 from changedetectionio.strtobool import strtobool
 
 from wtforms import (
@@ -230,9 +231,6 @@ class ValidateJinja2Template(object):
     """
     Validates that a {token} is from a valid set
     """
-    def __init__(self, message=None):
-        self.message = message
-
     def __call__(self, form, field):
         from changedetectionio import notification
 
@@ -247,6 +245,10 @@ class ValidateJinja2Template(object):
         try:
             jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader)
             jinja2_env.globals.update(notification.valid_tokens)
+            # Extra validation tokens provided on the form_class(... extra_tokens={}) setup
+            if hasattr(field, 'extra_notification_tokens'):
+                jinja2_env.globals.update(field.extra_notification_tokens)
+
             jinja2_env.from_string(joined_data).render()
         except TemplateSyntaxError as e:
             raise ValidationError(f"This is not a valid Jinja2 template: {e}") from e
@@ -419,15 +421,24 @@ class quickWatchForm(Form):
 
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
+    from . import processors
 
-    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
-    notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
+    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        self.notification_body.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
+        self.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
+        self.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
+
+    extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
+    fetch_backend = RadioField(u'Fetch Method', choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
-    fetch_backend = RadioField(u'Fetch Method', choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
-    extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
-    webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1,
-                                                                                                                                    message="Should contain one or more seconds")])
+    notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
+    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
+    processor = RadioField( label=u"Processor - What do you want to achieve?", choices=processors.available_processors(), default="text_json_diff")
+    webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")])
+
+
 class importForm(Form):
     from . import processors
     processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
@@ -447,7 +458,7 @@ class SingleBrowserStep(Form):
 #    remove_button = SubmitField('-', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
 #    add_button = SubmitField('+', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
 
-class watchForm(commonSettingsForm):
+class processor_text_json_diff_form(commonSettingsForm):
 
     url = fields.URLField('URL', validators=[validateURL()])
     tags = StringTagUUID('Group tag', [validators.Optional()], default='')
@@ -475,9 +486,6 @@ class watchForm(commonSettingsForm):
     filter_text_replaced = BooleanField('Replaced/changed lines', default=True)
     filter_text_removed = BooleanField('Removed lines', default=True)
 
-    # @todo this class could be moved to its own text_json_diff_watchForm and this goes to restock_diff_Watchform perhaps
-    in_stock_only = BooleanField('Only trigger when product goes BACK to in-stock', default=True)
-
     trigger_text = StringListField('Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)
@@ -492,6 +500,12 @@ class watchForm(commonSettingsForm):
 
     notification_muted = BooleanField('Notifications Muted / Off', default=False)
     notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
+
+    def extra_tab_content(self):
+        return None
+
+    def extra_form_content(self):
+        return None
 
     def validate(self, **kwargs):
         if not super().validate():
@@ -512,7 +526,6 @@ class watchForm(commonSettingsForm):
             self.url.errors.append('Invalid template syntax')
             result = False
         return result
-
 
 class SingleExtraProxy(Form):
 
@@ -572,6 +585,8 @@ class globalSettingsApplicationForm(commonSettingsForm):
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
     shared_diff_access = BooleanField('Allow access to view diff page when password is enabled', default=False, validators=[validators.Optional()])
+    rss_hide_muted_watches = BooleanField('Hide muted watches from RSS feed', default=True,
+                                      validators=[validators.Optional()])
     filter_failure_notification_threshold_attempts = IntegerField('Number of times the filter can be missing before sending a notification',
                                                                   render_kw={"style": "width: 5em;"},
                                                                   validators=[validators.NumberRange(min=0,
@@ -582,6 +597,11 @@ class globalSettingsForm(Form):
     # Define these as FormFields/"sub forms", this way it matches the JSON storage
     # datastore.data['settings']['application']..
     # datastore.data['settings']['requests']..
+    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        self.application.notification_body.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
+        self.application.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
+        self.application.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)

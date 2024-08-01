@@ -1,8 +1,8 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.45.23'
+__version__ = '0.46.02'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError

@@ -5,6 +5,7 @@ from changedetectionio.notification import (
     default_notification_title,
 )
 
+# Equal to or greater than this number of FilterNotFoundInResponse exceptions will trigger a filter-not-found notification
 _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT = 6
 DEFAULT_SETTINGS_HEADERS_USERAGENT='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36'
 
@@ -46,6 +47,8 @@ class model(dict):
                     'pager_size': 50,
                     'password': False,
                     'render_anchor_tag_content': False,
+                    'rss_access_token': None,
+                    'rss_hide_muted_watches': True,
                     'schema_version' : 0,
                     'shared_diff_access': False,
                     'webdriver_delay': None , # Extra delay in seconds before extracting text

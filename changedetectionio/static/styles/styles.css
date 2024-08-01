@@ -531,12 +531,15 @@ code {
     content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
     margin: 0 3px 0 5px; }
 
+.inline-tag, .watch-tag-list, .tracking-ldjson-price-data, .restock-label {
+  white-space: nowrap;
+  border-radius: 5px;
+  padding: 2px 5px;
+  margin-right: 4px; }
+
 .watch-tag-list {
   color: var(--color-white);
-  white-space: nowrap;
-  background: var(--color-text-watch-tag-list);
-  border-radius: 5px;
-  padding: 2px 5px; }
+  background: var(--color-text-watch-tag-list); }
 
 .box {
   max-width: 80%;
@@ -863,14 +866,17 @@ footer {
   and also iPads specifically.
   */
   .watch-table {
+    /* make headings work on mobile */
     /* Force table to not be like tables anymore */
-    /* Force table to not be like tables anymore */
-    /* Hide table headers (but not display: none;, for accessibility) */ }
-    .watch-table thead,
-    .watch-table tbody,
-    .watch-table th,
-    .watch-table td,
-    .watch-table tr {
+    /* Force table to not be like tables anymore */ }
+    .watch-table thead {
+      display: block; }
+      .watch-table thead tr th {
+        display: inline-block; }
+      .watch-table thead .empty-cell {
+        display: none; }
+    .watch-table tbody td,
+    .watch-table tbody tr {
       display: block; }
     .watch-table .last-checked > span {
       vertical-align: middle; }
@@ -882,10 +888,6 @@ footer {
       content: "Last Changed "; }
     .watch-table td.inline {
       display: inline-block; }
-    .watch-table thead tr {
-      position: absolute;
-      top: -9999px;
-      left: -9999px; }
     .watch-table .pure-table td,
     .watch-table .pure-table th {
       border: none; }
@@ -912,7 +914,8 @@ footer {
   border-color: var(--color-border-table-cell); }
   .pure-table thead {
     background-color: var(--color-background-table-thead);
-    color: var(--color-text); }
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-background-table-thead); }
   .pure-table td,
   .pure-table th {
     border-left-color: var(--color-border-table-cell); }
@@ -1065,6 +1068,7 @@ ul {
 
 #selector-wrapper {
   height: 100%;
+  text-align: center;
   max-height: 70vh;
   overflow-y: scroll;
   position: relative; }
@@ -1127,6 +1131,10 @@ ul {
   border-radius: 10px;
   margin-bottom: 1em;
   display: none; }
+  #checkbox-operations button {
+    /* some space if they wrap the page */
+    margin-bottom: 3px;
+    margin-top: 3px; }
 
 .checkbox-uuid > * {
   vertical-align: middle; }
@@ -1148,9 +1156,7 @@ ul {
 .tracking-ldjson-price-data {
   background-color: var(--color-background-button-green);
   color: #000;
-  padding: 3px;
-  border-radius: 3px;
-  white-space: nowrap; }
+  opacity: 0.6; }
 
 .ldjson-price-track-offer {
   font-weight: bold;
@@ -1175,16 +1181,23 @@ ul {
       #quick-watch-processor-type ul li > * {
         display: inline-block; }
 
-.restock-label {
-  padding: 3px;
-  border-radius: 3px;
-  white-space: nowrap; }
-  .restock-label.in-stock {
-    background-color: var(--color-background-button-green);
-    color: #fff; }
-  .restock-label.not-in-stock {
-    background-color: var(--color-background-button-cancel);
-    color: #777; }
+.restock-label.in-stock {
+  background-color: var(--color-background-button-green);
+  color: #fff; }
+
+.restock-label.not-in-stock {
+  background-color: var(--color-background-button-cancel);
+  color: #777; }
+
+.restock-label.error {
+  background-color: var(--color-background-button-error);
+  color: #fff;
+  opacity: 0.7; }
+
+
+.restock-label svg {
+  vertical-align: middle; }
+
 
 #chrome-extension-link {
   padding: 9px;

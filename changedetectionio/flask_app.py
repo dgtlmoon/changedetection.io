@@ -1,18 +1,22 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import datetime
+import flask_login
+import locale
 import os
+import pytz
 import queue
 import threading
 import time
+import timeago
+
+from .processors import find_processors, get_parent_module, get_custom_watch_obj_for_processor
 from .safe_jinja import render as jinja_render
 from changedetectionio.strtobool import strtobool
 from copy import deepcopy
 from functools import wraps
 from threading import Event
-import flask_login
-import pytz
-import timeago
+
 from feedgen.feed import FeedGenerator
 from flask import (
     Flask,
@@ -79,6 +83,14 @@ csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log=[]
 
+# get locale ready
+default_locale = locale.getdefaultlocale()
+logger.info(f"System locale default is {default_locale}")
+try:
+    locale.setlocale(locale.LC_ALL, default_locale)
+except locale.Error:
+    logger.warning(f"Unable to set locale {default_locale}, locale is not installed maybe?")
+
 watch_api = Api(app, decorators=[csrf.exempt])
 
 def init_app_secret(datastore_path):
@@ -108,6 +120,14 @@ def get_darkmode_state():
 def get_css_version():
     return __version__
 
+@app.template_filter('format_number_locale')
+def _jinja2_filter_format_number_locale(value: float) -> str:
+    "Formats for example 4000.10 to the local locale default of 4,000.10"
+    # Format the number with two decimal places (locale format string will return 6 decimal)
+    formatted_value = locale.format_string("%.2f", value, grouping=True)
+
+    return formatted_value
+
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
 # running or something similar.
 @app.template_filter('format_last_checked_time')
@@ -124,10 +144,10 @@ def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
 
 @app.template_filter('format_timestamp_timeago')
 def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
-    if timestamp == False:
+    if not timestamp:
         return 'Not yet'
 
-    return timeago.format(timestamp, time.time())
+    return timeago.format(int(timestamp), time.time())
 
 
 @app.template_filter('pagination_slice')
@@ -339,7 +359,7 @@ def changedetection_app(config=None, datastore_o=None):
         # @todo needs a .itemsWithTag() or something - then we can use that in Jinaj2 and throw this away
         for uuid, watch in datastore.data['watching'].items():
             # @todo tag notification_muted skip also (improve Watch model)
-            if watch.get('notification_muted'):
+            if datastore.data['settings']['application'].get('rss_hide_muted_watches') and watch.get('notification_muted'):
                 continue
             if limit_tag and not limit_tag in watch['tags']:
                 continue
@@ -472,7 +492,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  # Don't link to hosting when we're on the hosting environment
                                  active_tag=active_tag,
                                  active_tag_uuid=active_tag_uuid,
-                                 app_rss_token=datastore.data['settings']['application']['rss_access_token'],
+                                 app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
                                  datastore=datastore,
                                  errored_count=errored_count,
                                  form=form,
@@ -512,12 +532,21 @@ def changedetection_app(config=None, datastore_o=None):
     @login_optionally_required
     def ajax_callback_send_notification_test(watch_uuid=None):
 
-        # Watch_uuid could be unsuet in the case its used in tag editor, global setings
+        # Watch_uuid could be unset in the case its used in tag editor, global setings
         import apprise
+        import random
         from .apprise_asset import asset
         apobj = apprise.Apprise(asset=asset)
 
-        watch = datastore.data['watching'].get(watch_uuid) if watch_uuid else None
+        is_global_settings_form = request.args.get('mode', '') == 'global-settings'
+        is_group_settings_form = request.args.get('mode', '') == 'group-settings'
+
+        # Use an existing random one on the global/main settings form
+        if not watch_uuid and (is_global_settings_form or is_group_settings_form):
+            logger.debug(f"Send test notification - Choosing random Watch {watch_uuid}")
+            watch_uuid = random.choice(list(datastore.data['watching'].keys()))
+
+        watch = datastore.data['watching'].get(watch_uuid)
 
         notification_urls = request.form['notification_urls'].strip().splitlines()
 
@@ -529,8 +558,6 @@ def changedetection_app(config=None, datastore_o=None):
                     tag = datastore.tag_exists_by_name(k.strip())
                     notification_urls = tag.get('notifications_urls') if tag and tag.get('notifications_urls') else None
 
-        is_global_settings_form = request.args.get('mode', '') == 'global-settings'
-        is_group_settings_form = request.args.get('mode', '') == 'group-settings'
         if not notification_urls and not is_global_settings_form and not is_group_settings_form:
             # In the global settings, use only what is typed currently in the text box
             logger.debug("Test notification - Trying by global system settings notifications")
@@ -549,7 +576,7 @@ def changedetection_app(config=None, datastore_o=None):
         try:
             # use the same as when it is triggered, but then override it with the form test values
             n_object = {
-                'watch_url': request.form['window_url'],
+                'watch_url': request.form.get('window_url', "https://changedetection.io"),
                 'notification_urls': notification_urls
             }
 
@@ -616,11 +643,11 @@ def changedetection_app(config=None, datastore_o=None):
     @login_optionally_required
     # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
     # https://wtforms.readthedocs.io/en/3.0.x/forms/#wtforms.form.Form.populate_obj ?
-
     def edit_page(uuid):
         from . import forms
         from .blueprint.browser_steps.browser_steps import browser_step_ui_config
         from . import processors
+        import importlib
 
         # More for testing, possible to return the first/only
         if not datastore.data['watching'].keys():
@@ -652,14 +679,40 @@ def changedetection_app(config=None, datastore_o=None):
             # Radio needs '' not None, or incase that the chosen one no longer exists
             if default['proxy'] is None or not any(default['proxy'] in tup for tup in datastore.proxy_list):
                 default['proxy'] = ''
-
         # proxy_override set to the json/text list of the items
-        form = forms.watchForm(formdata=request.form if request.method == 'POST' else None,
-                               data=default
-                               )
 
-        # For the form widget tag uuid lookup
-        form.tags.datastore = datastore # in _value
+        # Does it use some custom form? does one exist?
+        processor_name = datastore.data['watching'][uuid].get('processor', '')
+        processor_classes = next((tpl for tpl in find_processors() if tpl[1] == processor_name), None)
+        if not processor_classes:
+            flash(f"Cannot load the edit form for processor/plugin '{processor_classes[1]}', plugin missing?", 'error')
+            return redirect(url_for('index'))
+
+        parent_module = get_parent_module(processor_classes[0])
+
+        try:
+            # Get the parent of the "processor.py" go up one, get the form (kinda spaghetti but its reusing existing code)
+            forms_module = importlib.import_module(f"{parent_module.__name__}.forms")
+            # Access the 'processor_settings_form' class from the 'forms' module
+            form_class = getattr(forms_module, 'processor_settings_form')
+        except ModuleNotFoundError as e:
+            # .forms didnt exist
+            form_class = forms.processor_text_json_diff_form
+        except AttributeError as e:
+            # .forms exists but no useful form
+            form_class = forms.processor_text_json_diff_form
+
+        form = form_class(formdata=request.form if request.method == 'POST' else None,
+                          data=default,
+                          extra_notification_tokens=default.extra_notification_token_values()
+                          )
+
+        # For the form widget tag UUID back to "string name" for the field
+        form.tags.datastore = datastore
+
+        # Used by some forms that need to dig deeper
+        form.datastore = datastore
+        form.watch = default
 
         for p in datastore.extra_browsers:
             form.fetch_backend.choices.append(p)
@@ -679,7 +732,15 @@ def changedetection_app(config=None, datastore_o=None):
 
         if request.method == 'POST' and form.validate():
 
-            extra_update_obj = {}
+            # If they changed processor, it makes sense to reset it.
+            if datastore.data['watching'][uuid].get('processor') != form.data.get('processor'):
+                datastore.data['watching'][uuid].clear_watch()
+                flash("Reset watch history due to change of processor")
+
+            extra_update_obj = {
+                'consecutive_filter_failures': 0,
+                'last_error' : False
+            }
 
             if request.args.get('unpause_on_save'):
                 extra_update_obj['paused'] = False
@@ -717,10 +778,16 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)
 
-            if request.args.get('unpause_on_save'):
-                flash("Updated watch - unpaused!.")
-            else:
-                flash("Updated watch.")
+            if not datastore.data['watching'][uuid].get('tags'):
+                # Force it to be a list, because form.data['tags'] will be string if nothing found
+                # And del(form.data['tags'] ) wont work either for some reason
+                datastore.data['watching'][uuid]['tags'] = []
+
+            # Recast it if need be to right data Watch handler
+            watch_class = get_custom_watch_obj_for_processor(form.data.get('processor'))
+            datastore.data['watching'][uuid] = watch_class(datastore_path=datastore_o.datastore_path, default=datastore.data['watching'][uuid])
+
+            flash("Updated watch - unpaused!" if request.args.get('unpause_on_save') else "Updated watch.")
 
             # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
             # But in the case something is added we should save straight away
@@ -750,6 +817,7 @@ def changedetection_app(config=None, datastore_o=None):
                 jq_support = False
 
             watch = datastore.data['watching'].get(uuid)
+
             system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
 
             is_html_webdriver = False
@@ -758,23 +826,42 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and is_html_webdriver
+            template_args = {
+                'available_processors': processors.available_processors(),
+                'browser_steps_config': browser_step_ui_config,
+                'emailprefix': os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                'extra_title': f" - Edit - {watch.label}",
+                'extra_processor_config': form.extra_tab_content(),
+                'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
+                'form': form,
+                'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,
+                'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
+                'has_special_tag_options': _watch_has_tag_options_set(watch=watch),
+                'is_html_webdriver': is_html_webdriver,
+                'jq_support': jq_support,
+                'playwright_enabled': os.getenv('PLAYWRIGHT_DRIVER_URL', False),
+                'settings_application': datastore.data['settings']['application'],
+                'using_global_webdriver_wait': not default['webdriver_delay'],
+                'uuid': uuid,
+                'visualselector_enabled': visualselector_enabled,
+                'watch': watch
+            }
+
+            included_content = None
+            if form.extra_form_content():
+                # So that the extra panels can access _helpers.html etc, we set the environment to load from templates/
+                # And then render the code from the module
+                from jinja2 import Environment, FileSystemLoader
+                import importlib.resources
+                templates_dir = str(importlib.resources.files("changedetectionio").joinpath('templates'))
+                env = Environment(loader=FileSystemLoader(templates_dir))
+                template = env.from_string(form.extra_form_content())
+                included_content = template.render(**template_args)
+
             output = render_template("edit.html",
-                                     available_processors=processors.available_processors(),
-                                     browser_steps_config=browser_step_ui_config,
-                                     emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
-                                     extra_title=f" - Edit - {watch.label}",
-                                     form=form,
-                                     has_default_notification_urls=True if len(datastore.data['settings']['application']['notification_urls']) else False,
-                                     has_extra_headers_file=len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
-                                     has_special_tag_options=_watch_has_tag_options_set(watch=watch),
-                                     is_html_webdriver=is_html_webdriver,
-                                     jq_support=jq_support,
-                                     playwright_enabled=os.getenv('PLAYWRIGHT_DRIVER_URL', False),
-                                     settings_application=datastore.data['settings']['application'],
-                                     using_global_webdriver_wait=not default['webdriver_delay'],
-                                     uuid=uuid,
-                                     visualselector_enabled=visualselector_enabled,
-                                     watch=watch
+                                     extra_tab_content=form.extra_tab_content() if form.extra_tab_content() else None,
+                                     extra_form_content=included_content,
+                                     **template_args
                                      )
 
         return output
@@ -800,7 +887,8 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Don't use form.data on POST so that it doesnt overrid the checkbox status from the POST status
         form = forms.globalSettingsForm(formdata=request.form if request.method == 'POST' else None,
-                                        data=default
+                                        data=default,
+                                        extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                         )
 
         # Remove the last option 'System default'
@@ -852,6 +940,7 @@ def changedetection_app(config=None, datastore_o=None):
         output = render_template("settings.html",
                                  api_key=datastore.data['settings']['application'].get('api_access_token'),
                                  emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
+                                 extra_notification_token_placeholder_info=datastore.get_unique_notification_token_placeholders_available(),
                                  form=form,
                                  hide_remove_pass=os.getenv("SALTED_PASS", False),
                                  min_system_recheck_seconds=int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3)),
@@ -884,7 +973,7 @@ def changedetection_app(config=None, datastore_o=None):
             if request.values.get('urls') and len(request.values.get('urls').strip()):
                 # Import and push into the queue for immediate update check
                 importer = import_url_list()
-                importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor'))
+                importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor', 'text_json_diff'))
                 for uuid in importer.new_uuids:
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
 
@@ -1280,6 +1369,30 @@ def changedetection_app(config=None, datastore_o=None):
         except FileNotFoundError:
             abort(404)
 
+    @app.route("/edit/<string:uuid>/get-html", methods=['GET'])
+    @login_optionally_required
+    def watch_get_latest_html(uuid):
+        from io import BytesIO
+        from flask import send_file
+        import brotli
+
+        watch = datastore.data['watching'].get(uuid)
+        if watch and os.path.isdir(watch.watch_data_dir):
+            latest_filename = list(watch.history.keys())[0]
+            html_fname = os.path.join(watch.watch_data_dir, f"{latest_filename}.html.br")
+            if html_fname.endswith('.br'):
+                # Read and decompress the Brotli file
+                with open(html_fname, 'rb') as f:
+                    decompressed_data = brotli.decompress(f.read())
+
+                buffer = BytesIO(decompressed_data)
+
+                return send_file(buffer, as_attachment=True, download_name=f"{latest_filename}.html", mimetype='text/html')
+
+
+        # Return a 500 error
+        abort(500)
+
     @app.route("/form/add/quickwatch", methods=['POST'])
     @login_optionally_required
     def form_quick_watch_add():
@@ -1385,7 +1498,7 @@ def changedetection_app(config=None, datastore_o=None):
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False}))
                     i += 1
 
-        flash("{} watches queued for rechecking.".format(i))
+        flash(f"{i} watches queued for rechecking.")
         return redirect(url_for('index', tag=tag))
 
     @app.route("/form/checkbox-operations", methods=['POST'])
@@ -1479,9 +1592,13 @@ def changedetection_app(config=None, datastore_o=None):
                     for uuid in uuids:
                         uuid = uuid.strip()
                         if datastore.data['watching'].get(uuid):
+                            # Bug in old versions caused by bad edit page/tag handler
+                            if isinstance(datastore.data['watching'][uuid]['tags'], str):
+                                datastore.data['watching'][uuid]['tags'] = []
+
                             datastore.data['watching'][uuid]['tags'].append(tag_uuid)
 
-            flash("{} watches assigned tag".format(len(uuids)))
+            flash(f"{len(uuids)} watches were tagged")
 
         return redirect(url_for('index'))
 

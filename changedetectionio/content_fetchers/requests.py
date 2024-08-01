@@ -1,9 +1,9 @@
+from loguru import logger
+import chardet
 import hashlib
 import os
-
-import chardet
 import requests
-
+from changedetectionio import strtobool
 from changedetectionio.content_fetchers.exceptions import BrowserStepsInUnsupportedFetcher, EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.base import Fetcher
 
@@ -25,7 +25,8 @@ class fetcher(Fetcher):
             request_method,
             ignore_status_codes=False,
             current_include_filters=None,
-            is_binary=False):
+            is_binary=False,
+            empty_pages_are_a_change=False):
 
         if self.browser_steps_get_valid_steps():
             raise BrowserStepsInUnsupportedFetcher(url=url)
@@ -45,13 +46,19 @@ class fetcher(Fetcher):
             if self.system_https_proxy:
                 proxies['https'] = self.system_https_proxy
 
-        r = requests.request(method=request_method,
-                             data=request_body,
-                             url=url,
-                             headers=request_headers,
-                             timeout=timeout,
-                             proxies=proxies,
-                             verify=False)
+        session = requests.Session()
+
+        if strtobool(os.getenv('ALLOW_FILE_URI', 'false')) and url.startswith('file://'):
+            from requests_file import FileAdapter
+            session.mount('file://', FileAdapter())
+
+        r = session.request(method=request_method,
+                            data=request_body.encode('utf-8') if type(request_body) is str else request_body,
+                            url=url,
+                            headers=request_headers,
+                            timeout=timeout,
+                            proxies=proxies,
+                            verify=False)
 
         # If the response did not tell us what encoding format to expect, Then use chardet to override what `requests` thinks.
         # For example - some sites don't tell us it's utf-8, but return utf-8 content
@@ -67,7 +74,10 @@ class fetcher(Fetcher):
         self.headers = r.headers
 
         if not r.content or not len(r.content):
-            raise EmptyReply(url=url, status_code=r.status_code)
+            if not empty_pages_are_a_change:
+                raise EmptyReply(url=url, status_code=r.status_code)
+            else:
+                logger.debug(f"URL {url} gave zero byte content reply with Status Code {r.status_code}, but empty_pages_are_a_change = True")
 
         # @todo test this
         # @todo maybe you really want to test zero-byte return pages?

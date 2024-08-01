@@ -186,12 +186,17 @@ code {
   }
 }
 
-.watch-tag-list {
-  color: var(--color-white);
+.inline-tag {
   white-space: nowrap;
-  background: var(--color-text-watch-tag-list);
   border-radius: 5px;
   padding: 2px 5px;
+  margin-right: 4px;
+}
+
+.watch-tag-list {
+  color: var(--color-white);
+  background: var(--color-text-watch-tag-list);
+  @extend .inline-tag;
 }
 
 .box {
@@ -671,14 +676,25 @@ footer {
   and also iPads specifically.
   */
   .watch-table {
+    /* make headings work on mobile */
+    thead {
+      display: block;
+      tr {
+        th {
+          display: inline-block;
+        }
+      }
+      .empty-cell {
+        display: none;
+      }
+    }
 
     /* Force table to not be like tables anymore */
-    thead,
-    tbody,
-    th,
-    td,
-    tr {
-      display: block;
+    tbody {
+      td,
+      tr {
+        display: block;
+      }
     }
 
     .last-checked {
@@ -700,13 +716,6 @@ footer {
     /* Force table to not be like tables anymore */
     td.inline {
       display: inline-block;
-    }
-
-    /* Hide table headers (but not display: none;, for accessibility) */
-    thead tr {
-      position: absolute;
-      top: -9999px;
-      left: -9999px;
     }
 
     .pure-table td,
@@ -753,6 +762,7 @@ footer {
   thead {
     background-color: var(--color-background-table-thead);
     color: var(--color-text);
+    border-bottom: 1px solid var(--color-background-table-thead);
   }
 
   td,
@@ -1021,6 +1031,11 @@ ul {
   border-radius: 10px;
   margin-bottom: 1em;
   display: none;
+  button {
+    /* some space if they wrap the page */
+    margin-bottom: 3px;
+    margin-top: 3px;
+  }
 }
 
 .checkbox-uuid {
@@ -1051,9 +1066,8 @@ ul {
 .tracking-ldjson-price-data {
   background-color: var(--color-background-button-green);
   color: #000;
-  padding: 3px;
-  border-radius: 3px;
-  white-space: nowrap;
+  opacity: 0.6;
+  @extend .inline-tag;
 }
 
 .ldjson-price-track-offer {
@@ -1099,9 +1113,17 @@ ul {
     background-color: var(--color-background-button-cancel);
     color: #777;
   }
-  padding: 3px;
-  border-radius: 3px;
-  white-space: nowrap;
+  &.error {
+    background-color: var(--color-background-button-error);
+    color: #fff;
+    opacity: 0.7;
+  }
+
+  svg {
+    vertical-align: middle;
+  }
+
+  @extend .inline-tag;
 }
 
 #chrome-extension-link {

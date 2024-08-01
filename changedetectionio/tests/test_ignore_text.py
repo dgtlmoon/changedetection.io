@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import time
 from flask import url_for
@@ -11,9 +11,6 @@ def test_setup(live_server):
 # Unit test of the stripper
 # Always we are dealing in utf-8
 def test_strip_text_func():
-    from ..processors import text_json_diff as fetch_site_status
-
-
     test_content = """
     Some content
     is listed here
@@ -82,7 +79,7 @@ def set_modified_ignore_response():
         f.write(test_return_data)
 
 
-def test_check_ignore_text_functionality(client, live_server):
+def test_check_ignore_text_functionality(client, live_server, measure_memory_usage):
 
     # Use a mix of case in ZzZ to prove it works case-insensitive.
     ignore_text = "XXXXX\r\nYYYYY\r\nzZzZZ\r\nnew ignore stuff"
@@ -164,7 +161,7 @@ def test_check_ignore_text_functionality(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_check_global_ignore_text_functionality(client, live_server):
+def test_check_global_ignore_text_functionality(client, live_server, measure_memory_usage):
 
     # Give the endpoint time to spin up
     time.sleep(1)

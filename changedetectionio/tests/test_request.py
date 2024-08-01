@@ -9,7 +9,7 @@ def test_setup(live_server):
 
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
-def test_headers_in_request(client, live_server):
+def test_headers_in_request(client, live_server, measure_memory_usage):
     #ve_server_setup(live_server)
     # Add our URL to the import page
     test_url = url_for('test_headers', _external=True)
@@ -84,7 +84,7 @@ def test_headers_in_request(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_body_in_request(client, live_server):
+def test_body_in_request(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     test_url = url_for('test_body', _external=True)
@@ -177,7 +177,7 @@ def test_body_in_request(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_method_in_request(client, live_server):
+def test_method_in_request(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_method', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
@@ -253,7 +253,63 @@ def test_method_in_request(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_headers_textfile_in_request(client, live_server):
+# Re #2408 - user-agent override test, also should handle case-insensitive header deduplication
+def test_ua_global_override(client, live_server, measure_memory_usage):
+    # live_server_setup(live_server)
+    test_url = url_for('test_headers', _external=True)
+
+    res = client.post(
+        url_for("settings_page"),
+        data={
+            "application-fetch_backend": "html_requests",
+            "application-minutes_between_check": 180,
+            "requests-default_ua-html_requests": "html-requests-user-agent"
+        },
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+
+    wait_for_all_checks(client)
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    assert b"html-requests-user-agent" in res.data
+    # default user-agent should have shown by now
+    # now add a custom one in the headers
+
+
+    # Add some headers to a request
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={
+            "url": test_url,
+            "tags": "testtag",
+            "fetch_backend": 'html_requests',
+            # Important - also test case-insensitive
+            "headers": "User-AGent: agent-from-watch"},
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    wait_for_all_checks(client)
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+    assert b"agent-from-watch" in res.data
+    assert b"html-requests-user-agent" not in res.data
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     # Add our URL to the import page
 
@@ -322,10 +378,16 @@ def test_headers_textfile_in_request(client, live_server):
     with open('test-datastore/' + extract_UUID_from_client(client) + '/headers.txt', 'w') as f:
         f.write("watch-header: nice")
 
+    wait_for_all_checks(client)
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
 
-    # Give the thread time to pick it up
+    # Give the thread time to pick it up, this actually is not super reliable and pytest can terminate before the check is ran
     wait_for_all_checks(client)
+
+    # WARNING - pytest and 'wait_for_all_checks' shuts down before it has actually stopped processing when using pyppeteer fetcher
+    # so adding more time here
+    if os.getenv('FAST_PUPPETEER_CHROME_FETCHER'):
+        time.sleep(6)
 
     res = client.get(url_for("edit_page", uuid="first"))
     assert b"Extra headers file found and will be added to this watch" in res.data
@@ -333,7 +395,7 @@ def test_headers_textfile_in_request(client, live_server):
     # Not needed anymore
     os.unlink('test-datastore/headers.txt')
     os.unlink('test-datastore/headers-testtag.txt')
-    os.unlink('test-datastore/' + extract_UUID_from_client(client) + '/headers.txt')
+
     # The service should echo back the request verb
     res = client.get(
         url_for("preview_page", uuid="first"),

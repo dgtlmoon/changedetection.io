@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import os.path
 import time
 from flask import url_for
@@ -35,10 +35,10 @@ def set_original(excluding=None, add_line=None):
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
-def test_setup(client, live_server):
+def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
-def test_check_removed_line_contains_trigger(client, live_server):
+def test_check_removed_line_contains_trigger(client, live_server, measure_memory_usage):
 
     # Give the endpoint time to spin up
     time.sleep(1)
@@ -103,7 +103,7 @@ def test_check_removed_line_contains_trigger(client, live_server):
     assert b'Deleted' in res.data
 
 
-def test_check_add_line_contains_trigger(client, live_server):
+def test_check_add_line_contains_trigger(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     # Give the endpoint time to spin up
@@ -112,7 +112,7 @@ def test_check_add_line_contains_trigger(client, live_server):
     res = client.post(
         url_for("settings_page"),
         data={"application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
-              "application-notification_body": 'triggered text was -{{triggered_text}}-',
+              "application-notification_body": 'triggered text was -{{triggered_text}}- 网站监测 内容更新了',
               # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
               "application-notification_urls": test_notification_url,
               "application-minutes_between_check": 180,
@@ -140,6 +140,7 @@ def test_check_add_line_contains_trigger(client, live_server):
         url_for("edit_page", uuid="first"),
         data={"trigger_text": 'Oh yes please',
               "url": test_url,
+              'processor': 'text_json_diff',
               'fetch_backend': "html_requests",
               'filter_text_removed': '',
               'filter_text_added': 'y'},
@@ -166,9 +167,10 @@ def test_check_add_line_contains_trigger(client, live_server):
     # Takes a moment for apprise to fire
     time.sleep(3)
     assert os.path.isfile("test-datastore/notification.txt"), "Notification fired because I can see the output file"
-    with open("test-datastore/notification.txt", 'r') as f:
-        response= f.read()
-        assert '-Oh yes please-' in response
+    with open("test-datastore/notification.txt", 'rb') as f:
+        response = f.read()
+        assert b'-Oh yes please-' in response
+        assert '网站监测 内容更新了'.encode('utf-8') in response
 
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)

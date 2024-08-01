@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import time
 from flask import url_for
@@ -6,7 +6,7 @@ from ..util import live_server_setup, wait_for_all_checks
 import logging
 
 # Requires playwright to be installed
-def test_fetch_webdriver_content(client, live_server):
+def test_fetch_webdriver_content(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
     #####################

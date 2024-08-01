@@ -1,7 +1,7 @@
 # Used by Pyppeteer
 pyee
 
-eventlet==0.33.3 # related to dnspython fixes
+eventlet>=0.36.1 # fixes SSL error on Python 3.12
 feedgen~=0.9
 flask-compress
 # 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)
@@ -22,31 +22,28 @@ validators~=0.21
 # >= 2.26 also adds Brotli support if brotli is installed
 brotli~=1.0
 requests[socks]
+requests-file
 
-urllib3==1.26.18
+urllib3==1.26.19
 chardet>2.3.0
 
 wtforms~=3.0
 jsonpath-ng~=1.5.3
 
-# Pinned: module 'eventlet.green.select' has no attribute 'epoll'
-# https://github.com/eventlet/eventlet/issues/805#issuecomment-1640463482
-dnspython==2.3.0 # related to eventlet fixes
+dnspython==2.6.1 # related to eventlet fixes
 
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise~=1.8.0
+apprise~=1.8.1
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 # and 2.0.0 https://github.com/dgtlmoon/changedetection.io/issues/2241 not yet compatible
 # use v1.x due to https://github.com/eclipse/paho.mqtt.python/issues/814
 paho-mqtt>=1.6.1,<2.0.0
 
-# This mainly affects some ARM builds, which unlike the other builds ignores "ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1"
-# so without this pinning, the newer versions on ARM will forcefully try to build rust, which results in "rust compiler not found"
-# (introduced once apprise became a dep)
-cryptography~=3.4
+# Requires extra wheel for rPi
+cryptography~=42.0.8
 
 # Used for CSS filtering
 beautifulsoup4
@@ -73,8 +70,6 @@ openpyxl
 jq~=1.3; python_version >= "3.8" and sys_platform == "darwin"
 jq~=1.3; python_version >= "3.8" and sys_platform == "linux"
 
-# Any current modern version, required so far for screenshot PNG->JPEG conversion but will be used more in the future
-pillow
 # playwright is installed at Dockerfile build time because it's not available on all platforms
 
 pyppeteer-ng==2.0.0rc5
@@ -88,3 +83,12 @@ pytest-flask ~=1.2
 jsonschema==4.17.3
 
 loguru
+
+# For scraping all possible metadata relating to products so we can do better restock detection
+extruct
+
+# For cleaning up unknown currency formats
+babel
+
+# Needed for > 3.10, https://github.com/microsoft/playwright-python/issues/2096
+greenlet >= 3.0.3

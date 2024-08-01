@@ -28,7 +28,7 @@ def manage_user_agent(headers, current_ua=''):
     :return:
     """
     # Ask it what the user agent is, if its obviously ChromeHeadless, switch it to the default
-    ua_in_custom_headers = next((v for k, v in headers.items() if k.lower() == "user-agent"), None)
+    ua_in_custom_headers = headers.get('User-Agent')
     if ua_in_custom_headers:
         return ua_in_custom_headers
 
@@ -64,10 +64,9 @@ class Fetcher():
     render_extract_delay = 0
 
     def __init__(self):
-        from pkg_resources import resource_string
-        # The code that scrapes elements and makes a list of elements/size/position to click on in the VisualSelector
-        self.xpath_element_js = resource_string(__name__, "res/xpath_element_scraper.js").decode('utf-8')
-        self.instock_data_js = resource_string(__name__, "res/stock-not-in-stock.js").decode('utf-8')
+        import importlib.resources
+        self.xpath_element_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text()
+        self.instock_data_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('stock-not-in-stock.js').read_text()
 
     @abstractmethod
     def get_error(self):
@@ -82,7 +81,8 @@ class Fetcher():
             request_method,
             ignore_status_codes=False,
             current_include_filters=None,
-            is_binary=False):
+            is_binary=False,
+            empty_pages_are_a_change=False):
         # Should set self.error, self.status_code and self.content
         pass
 
@@ -96,6 +96,9 @@ class Fetcher():
 
     @abstractmethod
     def screenshot_step(self, step_n):
+        if self.browser_steps_screenshot_path and not os.path.isdir(self.browser_steps_screenshot_path):
+            logger.debug(f"> Creating data dir {self.browser_steps_screenshot_path}")
+            os.mkdir(self.browser_steps_screenshot_path)
         return None
 
     @abstractmethod
@@ -169,5 +172,8 @@ class Fetcher():
                 if os.path.isfile(f):
                     os.unlink(f)
 
-    def save_step_html(self, param):
+    def save_step_html(self, step_n):
+        if self.browser_steps_screenshot_path and not os.path.isdir(self.browser_steps_screenshot_path):
+            logger.debug(f"> Creating data dir {self.browser_steps_screenshot_path}")
+            os.mkdir(self.browser_steps_screenshot_path)
         pass

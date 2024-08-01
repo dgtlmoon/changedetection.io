@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # coding=utf-8
 
 import time
@@ -41,19 +41,26 @@ and it can also be repeated
     from .. import html_tools
 
     # See that we can find the second <script> one, which is not broken, and matches our filter
-    text = html_tools.extract_json_as_string(content, "json:$.offers.price")
-    assert text == "23.5"
+    text = html_tools.extract_json_as_string(content, "json:$.offers.priceCurrency")
+    assert text == '"AUD"'
+
+    text = html_tools.extract_json_as_string('{"id":5}', "json:$.id")
+    assert text == "5"
 
     # also check for jq
     if jq_support:
-        text = html_tools.extract_json_as_string(content, "jq:.offers.price")
-        assert text == "23.5"
+        text = html_tools.extract_json_as_string(content, "jq:.offers.priceCurrency")
+        assert text == '"AUD"'
 
         text = html_tools.extract_json_as_string('{"id":5}', "jq:.id")
         assert text == "5"
 
-    text = html_tools.extract_json_as_string('{"id":5}', "json:$.id")
-    assert text == "5"
+        text = html_tools.extract_json_as_string(content, "jqraw:.offers.priceCurrency")
+        assert text == "AUD"
+
+        text = html_tools.extract_json_as_string('{"id":5}', "jqraw:.id")
+        assert text == "5"
+
 
     # When nothing at all is found, it should throw JSONNOTFound
     # Which is caught and shown to the user in the watch-overview table
@@ -63,6 +70,9 @@ and it can also be repeated
     if jq_support:
         with pytest.raises(html_tools.JSONNotFound) as e_info:
             html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jq:.id")
+
+        with pytest.raises(html_tools.JSONNotFound) as e_info:
+            html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jqraw:.id")
 
 
 def test_unittest_inline_extract_body():
@@ -191,7 +201,7 @@ def set_modified_response():
 
     return None
 
-def test_check_json_without_filter(client, live_server):
+def test_check_json_without_filter(client, live_server, measure_memory_usage):
     # Request a JSON document from a application/json source containing HTML
     # and be sure it doesn't get chewed up by instriptis
     set_json_response_with_html()
@@ -284,12 +294,16 @@ def check_json_filter(json_filter, client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_check_jsonpath_filter(client, live_server):
+def test_check_jsonpath_filter(client, live_server, measure_memory_usage):
     check_json_filter('json:boss.name', client, live_server)
 
-def test_check_jq_filter(client, live_server):
+def test_check_jq_filter(client, live_server, measure_memory_usage):
     if jq_support:
         check_json_filter('jq:.boss.name', client, live_server)
+
+def test_check_jqraw_filter(client, live_server, measure_memory_usage):
+    if jq_support:
+        check_json_filter('jqraw:.boss.name', client, live_server)
 
 def check_json_filter_bool_val(json_filter, client, live_server):
     set_original_response()
@@ -338,10 +352,14 @@ def check_json_filter_bool_val(json_filter, client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_check_jsonpath_filter_bool_val(client, live_server):
+def test_check_jsonpath_filter_bool_val(client, live_server, measure_memory_usage):
     check_json_filter_bool_val("json:$['available']", client, live_server)
 
-def test_check_jq_filter_bool_val(client, live_server):
+def test_check_jq_filter_bool_val(client, live_server, measure_memory_usage):
+    if jq_support:
+        check_json_filter_bool_val("jq:.available", client, live_server)
+
+def test_check_jqraw_filter_bool_val(client, live_server, measure_memory_usage):
     if jq_support:
         check_json_filter_bool_val("jq:.available", client, live_server)
 
@@ -412,7 +430,7 @@ def check_json_ext_filter(json_filter, client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_ignore_json_order(client, live_server):
+def test_ignore_json_order(client, live_server, measure_memory_usage):
     # A change in order shouldn't trigger a notification
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
@@ -454,7 +472,7 @@ def test_ignore_json_order(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_correct_header_detect(client, live_server):
+def test_correct_header_detect(client, live_server, measure_memory_usage):
     # Like in https://github.com/dgtlmoon/changedetection.io/pull/1593
     # Specify extra html that JSON is sometimes wrapped in - when using SockpuppetBrowser / Puppeteer / Playwrightetc
     with open("test-datastore/endpoint-content.txt", "w") as f:
@@ -486,9 +504,13 @@ def test_correct_header_detect(client, live_server):
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
-def test_check_jsonpath_ext_filter(client, live_server):
+def test_check_jsonpath_ext_filter(client, live_server, measure_memory_usage):
     check_json_ext_filter('json:$[?(@.status==Sold)]', client, live_server)
 
-def test_check_jq_ext_filter(client, live_server):
+def test_check_jq_ext_filter(client, live_server, measure_memory_usage):
+    if jq_support:
+        check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server)
+
+def test_check_jqraw_ext_filter(client, live_server, measure_memory_usage):
     if jq_support:
         check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server)

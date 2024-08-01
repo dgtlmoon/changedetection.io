@@ -3,8 +3,6 @@ from bs4 import BeautifulSoup
 from inscriptis import get_text
 from jsonpath_ng.ext import parse
 from typing import List
-from inscriptis.css_profiles import CSS_PROFILES, HtmlElement
-from inscriptis.html_properties import Display
 from inscriptis.model.config import ParserConfig
 from xml.sax.saxutils import escape as xml_escape
 import json
@@ -218,12 +216,12 @@ def extract_element(find='title', html_content=''):
 
 #
 def _parse_json(json_data, json_filter):
-    if 'json:' in json_filter:
+    if json_filter.startswith("json:"):
         jsonpath_expression = parse(json_filter.replace('json:', ''))
         match = jsonpath_expression.find(json_data)
         return _get_stripped_text_from_json_match(match)
 
-    if 'jq:' in json_filter:
+    if json_filter.startswith("jq:") or json_filter.startswith("jqraw:"):
 
         try:
             import jq
@@ -231,10 +229,15 @@ def _parse_json(json_data, json_filter):
             # `jq` requires full compilation in windows and so isn't generally available
             raise Exception("jq not support not found")
 
-        jq_expression = jq.compile(json_filter.replace('jq:', ''))
-        match = jq_expression.input(json_data).all()
+        if json_filter.startswith("jq:"):
+            jq_expression = jq.compile(json_filter.removeprefix("jq:"))
+            match = jq_expression.input(json_data).all()
+            return _get_stripped_text_from_json_match(match)
 
-        return _get_stripped_text_from_json_match(match)
+        if json_filter.startswith("jqraw:"):
+            jq_expression = jq.compile(json_filter.removeprefix("jqraw:"))
+            match = jq_expression.input(json_data).all()
+            return '\n'.join(str(item) for item in match)
 
 def _get_stripped_text_from_json_match(match):
     s = []
@@ -262,7 +265,7 @@ def _get_stripped_text_from_json_match(match):
 # ensure_is_ldjson_info_type - str "product", optional, "@type == product" (I dont know how to do that as a json selector)
 def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None):
     stripped_text_from_html = False
-
+# https://github.com/dgtlmoon/changedetection.io/pull/2041#issuecomment-1848397161w
     # Try to parse/filter out the JSON, if we get some parser error, then maybe it's embedded within HTML tags
     try:
         stripped_text_from_html = _parse_json(json.loads(content), json_filter)
@@ -301,17 +304,19 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
                 if isinstance(json_data, dict):
                     # If it has LD JSON 'key' @type, and @type is 'product', and something was found for the search
                     # (Some sites have multiple of the same ld+json @type='product', but some have the review part, some have the 'price' part)
-                    # @type could also be a list (Product, SubType)
+                    # @type could also be a list although non-standard ("@type": ["Product", "SubType"],)
                     # LD_JSON auto-extract also requires some content PLUS the ldjson to be present
                     # 1833 - could be either str or dict, should not be anything else
-                    if json_data.get('@type') and stripped_text_from_html:
-                        try:
-                            if json_data.get('@type') == str or json_data.get('@type') == dict:
-                                types = [json_data.get('@type')] if isinstance(json_data.get('@type'), str) else json_data.get('@type')
-                                if ensure_is_ldjson_info_type.lower() in [x.lower().strip() for x in types]:
-                                    break
-                        except:
-                            continue
+
+                    t = json_data.get('@type')
+                    if t and stripped_text_from_html:
+
+                        if isinstance(t, str) and t.lower() == ensure_is_ldjson_info_type.lower():
+                            break
+                        # The non-standard part, some have a list
+                        elif isinstance(t, list):
+                            if ensure_is_ldjson_info_type.lower() in [x.lower().strip() for x in t]:
+                                break
 
             elif stripped_text_from_html:
                 break
@@ -414,22 +419,23 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
 
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?
 def has_ldjson_product_info(content):
-    pricing_data = ''
-
     try:
-        if not 'application/ld+json' in content:
-            return False
+        lc = content.lower()
+        if 'application/ld+json' in lc and lc.count('"price"') == 1 and '"pricecurrency"' in lc:
+            return True
 
-        for filter in LD_JSON_PRODUCT_OFFER_SELECTORS:
-            pricing_data += extract_json_as_string(content=content,
-                                                  json_filter=filter,
-                                                  ensure_is_ldjson_info_type="product")
-
+#       On some pages this is really terribly expensive when they dont really need it
+#       (For example you never want price monitoring, but this runs on every watch to suggest it)
+#        for filter in LD_JSON_PRODUCT_OFFER_SELECTORS:
+#            pricing_data += extract_json_as_string(content=content,
+#                                                  json_filter=filter,
+#                                                  ensure_is_ldjson_info_type="product")
     except Exception as e:
-        # Totally fine
+        # OK too
         return False
-    x=bool(pricing_data)
-    return x
+
+    return False
+
 
 
 def workarounds_for_obfuscations(content):

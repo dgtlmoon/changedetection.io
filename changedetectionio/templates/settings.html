@@ -63,6 +63,9 @@
                         </span>
                     </div>
                     <div class="pure-control-group">
+                        {{ render_checkbox_field(form.application.form.rss_hide_muted_watches) }}
+                    </div>
+                    <div class="pure-control-group">
                         {{ render_field(form.application.form.pager_size) }}
                         <span class="pure-form-message-inline">Number of items per page in the watch overview list, 0 to disable.</span>
                     </div>
@@ -73,7 +76,7 @@
                     </div>
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.application.form.empty_pages_are_a_change) }}
-                        <span class="pure-form-message-inline">When a page contains HTML, but no renderable text appears (empty page), is this considered a change?</span>
+                        <span class="pure-form-message-inline">When a request returns no content, or the HTML does not contain any text, is this considered a change?</span>
                     </div>
                 {% if form.requests.proxy %}
                     <div class="pure-control-group inline-radio">
@@ -89,7 +92,7 @@
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div class="field-group">
-                        {{ render_common_settings_form(form.application.form, emailprefix, settings_application) }}
+                        {{ render_common_settings_form(form.application.form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                     </div>
                 </fieldset>
                 <div class="pure-control-group" id="notification-base-url">

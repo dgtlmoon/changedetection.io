@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import time
 from flask import url_for
@@ -9,7 +9,7 @@ sleep_time_for_fetch_thread = 3
 
 
 
-def test_check_extract_text_from_diff(client, live_server):
+def test_check_extract_text_from_diff(client, live_server, measure_memory_usage):
     import time
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("Now it's {} seconds since epoch, time flies!".format(str(time.time())))
@@ -29,6 +29,7 @@ def test_check_extract_text_from_diff(client, live_server):
     # Load in 5 different numbers/changes
     last_date=""
     for n in range(5):
+        time.sleep(1)
         # Give the thread time to pick it up
         print("Bumping snapshot and checking.. ", n)
         last_date = str(time.time())

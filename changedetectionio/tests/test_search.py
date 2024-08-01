@@ -5,7 +5,7 @@ import time
 def test_setup(live_server):
     live_server_setup(live_server)
 
-def test_basic_search(client, live_server):
+def test_basic_search(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     urls = ['https://localhost:12300?first-result=1',
@@ -38,7 +38,7 @@ def test_basic_search(client, live_server):
     assert urls[1].encode('utf-8') not in res.data
 
 
-def test_search_in_tag_limit(client, live_server):
+def test_search_in_tag_limit(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
     urls = ['https://localhost:12300?first-result=1 tag-one',

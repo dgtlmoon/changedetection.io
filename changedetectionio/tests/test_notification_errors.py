@@ -4,13 +4,10 @@ from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 import logging
 
-def test_check_notification_error_handling(client, live_server):
+def test_check_notification_error_handling(client, live_server, measure_memory_usage):
 
     live_server_setup(live_server)
     set_original_response()
-
-    # Give the endpoint time to spin up
-    time.sleep(1)
 
     # Set a URL and fetch it, then set a notification URL which is going to give errors
     test_url = url_for('test_endpoint', _external=True)

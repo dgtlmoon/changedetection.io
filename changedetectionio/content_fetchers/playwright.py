@@ -58,6 +58,7 @@ class fetcher(Fetcher):
                 self.proxy['password'] = parsed.password
 
     def screenshot_step(self, step_n=''):
+        super().screenshot_step(step_n=step_n)
         screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
 
         if self.browser_steps_screenshot_path is not None:
@@ -67,6 +68,7 @@ class fetcher(Fetcher):
                 f.write(screenshot)
 
     def save_step_html(self, step_n):
+        super().save_step_html(step_n=step_n)
         content = self.page.content()
         destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.html'.format(step_n))
         logger.debug(f"Saving step HTML to {destination}")
@@ -81,7 +83,8 @@ class fetcher(Fetcher):
             request_method,
             ignore_status_codes=False,
             current_include_filters=None,
-            is_binary=False):
+            is_binary=False,
+            empty_pages_are_a_change=False):
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._errors
@@ -128,7 +131,7 @@ class fetcher(Fetcher):
             if response is None:
                 context.close()
                 browser.close()
-                logger.debug("Content Fetcher > Response object was none")
+                logger.debug("Content Fetcher > Response object from the browser communication was none")
                 raise EmptyReply(url=url, status_code=None)
 
             try:
@@ -164,10 +167,10 @@ class fetcher(Fetcher):
 
                 raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
 
-            if len(self.page.content().strip()) == 0:
+            if not empty_pages_are_a_change and len(self.page.content().strip()) == 0:
+                logger.debug("Content Fetcher > Content was empty, empty_pages_are_a_change = False")
                 context.close()
                 browser.close()
-                logger.debug("Content Fetcher > Content was empty")
                 raise EmptyReply(url=url, status_code=response.status)
 
             # Run Browser Steps here

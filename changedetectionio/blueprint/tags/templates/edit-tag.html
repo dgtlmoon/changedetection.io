@@ -26,6 +26,9 @@
         <ul>
             <li class="tab" id=""><a href="#general">General</a></li>
             <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
+            {% if extra_tab_content %}
+            <li class="tab"><a href="#extras_tab">{{ extra_tab_content }}</a></li>
+            {% endif %}
             <li class="tab"><a href="#notifications">Notifications</a></li>
         </ul>
     </div>
@@ -63,7 +66,7 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                             <ul>
                                 <li>JSONPath: Prefix with <code>json:</code>, use <code>json:$</code> to force re-formatting if required,  <a href="https://jsonpath.com/" target="new">test your JSONPath here</a>.</li>
                                 {% if jq_support %}
-                                <li>jq: Prefix with <code>jq:</code> and <a href="https://jqplay.org/" target="new">test your jq here</a>. Using <a href="https://stedolan.github.io/jq/" target="new">jq</a> allows for complex filtering and processing of JSON data with built-in functions, regex, filtering, and more. See examples and documentation <a href="https://stedolan.github.io/jq/manual/" target="new">here</a>.</li>
+                                <li>jq: Prefix with <code>jq:</code> and <a href="https://jqplay.org/" target="new">test your jq here</a>. Using <a href="https://stedolan.github.io/jq/" target="new">jq</a> allows for complex filtering and processing of JSON data with built-in functions, regex, filtering, and more. See examples and documentation <a href="https://stedolan.github.io/jq/manual/" target="new">here</a>. Prefix <code>jqraw:</code> outputs the results as text instead of a JSON list.</li>
                                 {% else %}
                                 <li>jq support not installed</li>
                                 {% endif %}
@@ -97,6 +100,12 @@ nav
 
             </div>
 
+        {# rendered sub Template #}
+        {% if extra_form_content %}
+            <div class="tab-pane-inner" id="extras_tab">
+            {{ extra_form_content|safe }}
+            </div>
+        {% endif %}
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div  class="pure-control-group inline-radio">
@@ -119,7 +128,7 @@ nav
                         {% endif %}
                         <a href="#notifications" id="notification-setting-reset-to-default" class="pure-button button-xsmall" style="right: 20px; top: 20px; position: absolute; background-color: #5f42dd; border-radius: 4px; font-size: 70%; color: #fff">Use system defaults</a>
 
-                        {{ render_common_settings_form(form, emailprefix, settings_application) }}
+                        {{ render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                     </div>
                 </fieldset>
             </div>

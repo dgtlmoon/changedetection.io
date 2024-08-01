@@ -107,7 +107,7 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
 
     r(results.get('url'),
       auth=auth,
-      data=body,
+      data=body.encode('utf-8') if type(body) is str else body,
       headers=headers,
       params=params
       )
@@ -157,7 +157,7 @@ def process_notification(n_object, datastore):
                 logger.warning(f"Process Notification: skipping empty notification URL.")
                 continue
 
-            logger.info(">> Process Notification: AppRise notifying {}".format(url))
+            logger.info(f">> Process Notification: AppRise notifying {url}")
             url = jinja_render(template_str=url, **notification_parameters)
 
             # Re 323 - Limit discord length to their 2000 char limit total or it wont send.
@@ -230,6 +230,7 @@ def process_notification(n_object, datastore):
         log_value = logs.getvalue()
 
         if log_value and 'WARNING' in log_value or 'ERROR' in log_value:
+            logger.critical(log_value)
             raise Exception(log_value)
 
     # Return what was sent for better logging - after the for loop
@@ -272,19 +273,18 @@ def create_notification_parameters(n_object, datastore):
     tokens.update(
         {
             'base_url': base_url,
-            'current_snapshot': n_object.get('current_snapshot', ''),
-            'diff': n_object.get('diff', ''),  # Null default in the case we use a test
-            'diff_added': n_object.get('diff_added', ''),  # Null default in the case we use a test
-            'diff_full': n_object.get('diff_full', ''),  # Null default in the case we use a test
-            'diff_patch': n_object.get('diff_patch', ''),  # Null default in the case we use a test
-            'diff_removed': n_object.get('diff_removed', ''),  # Null default in the case we use a test
             'diff_url': diff_url,
             'preview_url': preview_url,
-            'triggered_text': n_object.get('triggered_text', ''),
             'watch_tag': watch_tag if watch_tag is not None else '',
             'watch_title': watch_title if watch_title is not None else '',
             'watch_url': watch_url,
             'watch_uuid': uuid,
         })
+
+    # n_object will contain diff, diff_added etc etc
+    tokens.update(n_object)
+
+    if uuid:
+        tokens.update(datastore.data['watching'].get(uuid).extra_notification_token_values())
 
     return tokens

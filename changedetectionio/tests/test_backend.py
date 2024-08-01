@@ -1,9 +1,10 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import time
 from flask import url_for
 from urllib.request import urlopen
-from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_rss_token_from_UI
+from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, \
+    extract_UUID_from_client
 
 sleep_time_for_fetch_thread = 3
 
@@ -16,7 +17,7 @@ def test_inscriptus():
     assert stripped_text_from_html == 'test!\nok man'
 
 
-def test_check_basic_change_detection_functionality(client, live_server):
+def test_check_basic_change_detection_functionality(client, live_server, measure_memory_usage):
     set_original_response()
     live_server_setup(live_server)
 
@@ -61,9 +62,6 @@ def test_check_basic_change_detection_functionality(client, live_server):
 
     # Make a change
     set_modified_response()
-
-    res = urlopen(url_for('test_endpoint', _external=True))
-    assert b'which has this one new line' in res.read()
 
     # Force recheck
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
@@ -135,11 +133,27 @@ def test_check_basic_change_detection_functionality(client, live_server):
     # It should have picked up the <title>
     assert b'head title' in res.data
 
+    # Be sure the last_viewed is going to be greater than the last snapshot
+    time.sleep(1)
+
     # hit the mark all viewed link
     res = client.get(url_for("mark_all_viewed"), follow_redirects=True)
 
     assert b'Mark all viewed' not in res.data
     assert b'unviewed' not in res.data
+
+    # #2458 "clear history" should make the Watch object update its status correctly when the first snapshot lands again
+    uuid = extract_UUID_from_client(client)
+    client.get(url_for("clear_watch_history", uuid=uuid))
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("index"))
+    assert b'preview/' in res.data
+
+
+    # Check the 'get latest snapshot works'
+    res = client.get(url_for("watch_get_latest_html", uuid=uuid))
+    assert b'<head><title>head title</title></head>' in res.data
 
     #
     # Cleanup everything

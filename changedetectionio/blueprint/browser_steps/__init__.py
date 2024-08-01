@@ -187,8 +187,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             u = browsersteps_sessions[browsersteps_session_id]['browserstepper'].page.url
             if is_last_step and u:
                 (screenshot, xpath_data) = browsersteps_sessions[browsersteps_session_id]['browserstepper'].request_visualselector_data()
-                datastore.save_screenshot(watch_uuid=uuid, screenshot=screenshot)
-                datastore.save_xpath_data(watch_uuid=uuid, data=xpath_data)
+                watch = datastore.data['watching'].get(uuid)
+                if watch:
+                    watch.save_screenshot(screenshot=screenshot)
+                    watch.save_xpath_data(data=xpath_data)
 
 #        if not this_session.page:
 #            cleanup_playwright_session()
