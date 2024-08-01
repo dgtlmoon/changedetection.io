@@ -242,7 +242,7 @@ class update_worker(threading.Thread):
                 'screenshot': None
             })
             self.notification_q.put(n_object)
-            print("Sent error notification for {}".format(watch_uuid))
+            logger.info("Sent error notification for {}".format(watch_uuid))
 
     def cleanup_error_artifacts(self, uuid):
         # All went fine, remove error artifacts
@@ -257,15 +257,11 @@ class update_worker(threading.Thread):
         #   If it had an error, handle notifications
         #   If it did not have one, clean up any error states
 
-        # TODO Future - loop over notification handlers and send them the update_obj, allowing modification
         last_error = update_obj.get('last_error', False)
         if last_error:
-            # TODO Future - message notification handlers
-            if self.datastore.data['watching'][uuid].get('notification_notify_on_failure', False) and not skip_notification:
+            if self._check_cascading_vars('notification_notify_on_failure', self.datastore.data['watching'][uuid]) and not skip_notification:
                 self.send_failure_notification(watch_uuid=uuid, error_text=update_obj['last_error'])
-            pass
         else:
-            # TODO Future - message notification handlers
             pass
 
         self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
