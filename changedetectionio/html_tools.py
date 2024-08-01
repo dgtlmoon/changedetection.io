@@ -114,7 +114,7 @@ def elementpath_tostring(obj):
 
 def forest_transplanting(root):
     """
-    libxml2 violates DOM rules. it means there can be multiple root element
+    The html parser of libxml2 violates DOM rules. It means there can be multiple root element
     nodes. So I choose just transplating them to a new root by default.
     See also, https://gitlab.gnome.org/GNOME/libxml2/-/issues/716
     This will emulate xpath1 of html of libxml2 like '/html[2]/*'.
