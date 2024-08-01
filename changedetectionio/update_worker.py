@@ -9,11 +9,6 @@ import queue
 import threading
 import time
 
-from changedetectionio import content_fetcher, html_tools
-from .processors.restock_diff import UnableToExtractRestockData
-from .processors.text_json_diff import FilterNotFoundInResponse
-
-
 # A single update worker
 #
 # Requests for checking on a single site(watch) from a queue of watches
@@ -257,7 +252,7 @@ class update_worker(threading.Thread):
             if os.path.isfile(full_path):
                 os.unlink(full_path)
 
-    def _update_watch(self, uuid, update_obj, exception):
+    def _update_watch(self, uuid, update_obj, exception, skip_notification = False):
         # TODO check if update succeeded or had an error.
         #   If it had an error, handle notifications
         #   If it did not have one, clean up any error states
@@ -266,7 +261,7 @@ class update_worker(threading.Thread):
         last_error = update_obj.get('last_error', False)
         if last_error:
             # TODO Future - message notification handlers
-            if self.datastore.data['watching'][uuid].get('notification_notify_on_failure', False):
+            if self.datastore.data['watching'][uuid].get('notification_notify_on_failure', False) and not skip_notification:
                 self.send_failure_notification(watch_uuid=uuid, error_text=update_obj['last_error'])
             pass
         else:
@@ -274,26 +269,6 @@ class update_worker(threading.Thread):
             pass
 
         self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
-
-        if isinstance(exception, FilterNotFoundInResponse) or isinstance(exception, content_fetcher.BrowserStepsStepTimout):
-            # Only when enabled, send the notification
-            if self.datastore.data['watching'][uuid].get('filter_failure_notification_send', False):
-                c = self.datastore.data['watching'][uuid].get('consecutive_filter_failures', 5)
-                c += 1
-                # Send notification if we reached the threshold?
-                threshold = self.datastore.data['settings']['application'].get(
-                    'filter_failure_notification_threshold_attempts',
-                    0)
-                print("Filter for {} not found, consecutive_filter_failures: {}".format(uuid, c))
-                if threshold > 0 and c >= threshold:
-                    if not self.datastore.data['watching'][uuid].get('notification_muted'):
-                        if isinstance(exception, FilterNotFoundInResponse):
-                            self.send_filter_failure_notification(uuid)
-                        else:
-                            self.send_step_failure_notification(watch_uuid=uuid, step_n=exception.step_n)
-                    c = 0
-
-                self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
 
     def run(self):
         now = time.time()
@@ -422,7 +397,8 @@ class update_worker(threading.Thread):
                             continue
 
                         err_text = "Warning, no filters were found, no change detection ran - Did the page change layout? update your Visual Filter if necessary."
-                        self._update_watch(uuid=uuid, update_obj={'last_error': err_text}, exception=None)
+                        # Do not trigger a notification - this is handled by the step failure notification
+                        self._update_watch(uuid=uuid, update_obj={'last_error': err_text}, exception=e, skip_notification=True)
 
                         # Filter wasnt found, but we should still update the visual selector so that they can have a chance to set it up again
                         if e.screenshot:
@@ -444,7 +420,8 @@ class update_worker(threading.Thread):
                                     self.send_filter_failure_notification(uuid)
                                 c = 0
 
-                            self._update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c}, exception=None)
+                            # Do not trigger a notification - this is handled by the step failure notification
+                            self._update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c}, exception=e, skip_notification=True)
 
                         process_changedetection_results = False
 
@@ -484,11 +461,12 @@ class update_worker(threading.Thread):
 
                         logger.debug(f"BrowserSteps exception at step {error_step} {str(e.original_e)}")
 
+                        # Do not trigger a notification - this is handled by the step failure notification
                         self._update_watch(uuid=uuid,
                                                     update_obj={'last_error': err_text,
                                                                 'browser_steps_last_error_step': error_step
                                                                 }
-                                                    , exception=None)
+                                                    , exception=e, skip_notification=True)
 
                         if watch.get('filter_failure_notification_send', False):
                             c = watch.get('consecutive_filter_failures', 5)
@@ -502,7 +480,8 @@ class update_worker(threading.Thread):
                                     self.send_step_failure_notification(watch_uuid=uuid, step_n=e.step_n)
                                 c = 0
 
-                            self._update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c}, exception=None)
+                            # Do not trigger a notification - this is handled by the step failure notification
+                            self._update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c}, skip_notification=True)
 
                         process_changedetection_results = False
 

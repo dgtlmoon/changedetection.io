@@ -44,6 +44,7 @@ class model(dict):
                     'notification_format': default_notification_format,
                     'notification_title': default_notification_title,
                     'notification_urls': [], # Apprise URL list
+                    'notification_notify_on_failure': False,
                     'pager_size': 50,
                     'password': False,
                     'render_anchor_tag_content': False,
