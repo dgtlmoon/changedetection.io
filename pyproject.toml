@@ -1,0 +1,82 @@
+[build-system]
+# setuptools 61 adds "dynamic" directive support
+requires = ["setuptools >= 61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "changedetection.io"
+description = """\
+    Website change detection and monitoring service, detect changes to \
+    web pages and send alerts/notifications.\
+    """
+readme = {file = "README-pip.md", content-type = "text/markdown"}
+license = {text = "Apache License 2.0"}
+authors = [{name = "Leigh Morresi / dgtlmoon"}]
+
+requires-python = ">= 3.10"
+
+dynamic = ["version", "dependencies"]
+
+keywords = [
+    "alert",
+    "alerts",
+    "change",
+    "changes",
+    "tracking",
+    "websites",
+    "monitoring",
+    "price monitoring",
+    "price tracking",
+    "notification",
+    "stock detection",
+    "website tracking",
+    "website monitoring",
+    "website change monitor",
+]
+
+classifiers=[
+    "License :: OSI Approved :: Apache Software License",
+    "Intended Audience :: Customer Service",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Healthcare Industry",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Legal Industry",
+    "Intended Audience :: Manufacturing",
+    "Intended Audience :: Other Audience",
+    "Intended Audience :: Religion",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Telecommunications Industry",
+    "Topic :: Education",
+    "Topic :: Internet",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Topic :: Internet :: WWW/HTTP :: Site Management",
+    "Topic :: Internet :: WWW/HTTP :: Site Management :: Link Checking",
+    "Topic :: Internet :: WWW/HTTP :: Browsers",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Office/Business",
+    "Topic :: Other/Nonlisted Topic",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Text Processing :: Markup :: HTML",
+    "Topic :: Utilities"
+]
+
+[project.scripts]
+"changedetection.io" = "changedetectionio:main"
+
+[project.urls]
+Homepage = "https://changedetection.io"
+Repository = "https://github.com/dgtlmoon/changedetection.io.git"
+Issues = "https://github.com/dgtlmoon/changedetection.io/issues"
+
+[tool.setuptools.package-dir]
+# This is needed since the actual project name has a period in it and
+# the source directory does not which breaks package autodiscovery.
+changedetectionio = "changedetectionio"
+
+[tool.setuptools.dynamic]
+version = {attr = "changedetectionio.__version__"}
+dependencies = {file = ["requirements.txt"]}
