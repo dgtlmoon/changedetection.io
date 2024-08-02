@@ -293,7 +293,7 @@ class update_worker(threading.Thread):
                     watch = self.datastore.data['watching'].get(uuid)
 
                     logger.info(f"Processing watch UUID {uuid} Priority {queued_item_data.priority} URL {watch[
-                                                                               'url']}")
+                                                                              
                     now = time.time()
 
                     try:
