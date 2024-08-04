@@ -63,7 +63,7 @@ werkzeug~=3.0
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1
-jinja2-time
+arrow
 openpyxl
 # https://peps.python.org/pep-0508/#environment-markers
 # https://github.com/dgtlmoon/changedetection.io/pull/1009
@@ -78,6 +78,7 @@ pyppeteerstealth>=0.0.4
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup
 pytest ~=7.2
 pytest-flask ~=1.2
+pytest-mock==3.14.0
 
 # Pin jsonschema version to prevent build errors on armv6 while rpds-py wheels aren't available (1708)
 jsonschema==4.17.3
