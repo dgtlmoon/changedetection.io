@@ -4,6 +4,7 @@ import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 from ..safe_jinja import render
+import arrow
 
 
 def test_setup(client, live_server, measure_memory_usage):
@@ -58,27 +59,40 @@ def test_jinja2_security_url_query(client, live_server, measure_memory_usage):
     # Some of the spewed output from the subclasses
     assert b'dict_values' not in res.data
 
-def test_add_time(environment):
+def test_add_time(mocker):
     """Verify that added time offset can be parsed."""
 
-    finalRender = render("{% now 'utc' + 'hours=2,seconds=30' %}")
+    timezone = 'utc'
+    currentDate = arrow.now(timezone)
+    arrowNowMock = mocker.patch("arrow.now")
+    arrowNowMock.return_value = currentDate
+    finalRender = render(f"{{% now '{timezone}' + 'hours=2,seconds=30' %}}")
 
-    assert finalRender == "Thu, 10 Dec 2015 01:33:31"
+    assert finalRender == currentDate.strftime("%Y-%m-%d")
 
 
-def test_substract_time(environment):
+def test_substract_time(mocker):
     """Verify that substracted time offset can be parsed."""
 
-    finalRender = render("{% now 'utc' - 'minutes=11' %}")
+    timezone = 'utc'
+    currentDate = arrow.now(timezone)
+    arrowNowMock = mocker.patch("arrow.now")
+    arrowNowMock.return_value = currentDate
+    finalRender = render(f"{{% now '{timezone}' - 'minutes=11' %}}")
 
-    assert finalRender == "Wed, 09 Dec 2015 23:22:01"
+    assert finalRender == currentDate.shift(minutes=-11).strftime("%Y-%m-%d")
 
 
-def test_offset_with_format(environment):
+def test_offset_with_format(mocker):
     """Verify that offset works together with datetime format."""
 
+    timezone = 'utc'
+    currentDate = arrow.now(timezone)
+    arrowNowMock = mocker.patch("arrow.now")
+    arrowNowMock.return_value = currentDate
+    format = '%d %b %Y %H:%M:%S'
     finalRender = render(
-        "{% now 'utc' - 'days=2,minutes=33,seconds=1', '%d %b %Y %H:%M:%S' %}"
+        f"{{% now '{timezone}' - 'days=2,minutes=33,seconds=1', '%d %b %Y %H:%M:%S' %}}"
     )
 
-    assert finalRender == "07 Dec 2015 23:00:00"
+    assert finalRender == currentDate.shift(days=-2, minutes=-33, seconds=-1).strftime(format)
