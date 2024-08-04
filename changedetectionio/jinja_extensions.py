@@ -24,6 +24,11 @@ class TimeExtension(Extension):
         for param in offset.split(','):
             interval, value = param.split('=')
             shift_params[interval.strip()] = float(operator + value.strip())
+        
+        # Fix weekday parameter can not be float
+        if 'weekday' in shift_params:
+            shift_params['weekday'] = int(shift_params['weekday'])
+
         d = d.shift(**shift_params)
 
         if datetime_format is None:

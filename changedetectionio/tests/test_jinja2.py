@@ -58,12 +58,46 @@ def test_jinja2_security_url_query(client, live_server, measure_memory_usage):
     # Some of the spewed output from the subclasses
     assert b'dict_values' not in res.data
 
+def test_timezone(mocker):
+    """Verify that timezone is parsed."""
+
+    timezone = 'America/Buenos_Aires'
+    currentDate = arrow.now(timezone)
+    arrowNowMock = mocker.patch("arrow.now")
+    arrowNowMock.return_value = currentDate
+    finalRender = render(f"{{% now '{timezone}' %}}")
+
+    assert finalRender == currentDate.strftime("%Y-%m-%d")
+
+def test_format(mocker):
+    """Verify that format is parsed."""
+
+    timezone = 'utc'
+    format = '%d %b %Y %H:%M:%S'
+    currentDate = arrow.now(timezone)
+    arrowNowMock = mocker.patch("arrow.now")
+    arrowNowMock.return_value = currentDate
+    finalRender = render(f"{{% now '{timezone}', '{format}' %}}")
+
+    assert finalRender == currentDate.strftime(format)
+
 def test_add_time(environment):
     """Verify that added time offset can be parsed."""
 
     finalRender = render("{% now 'utc' + 'hours=2,seconds=30' %}")
 
     assert finalRender == "Thu, 10 Dec 2015 01:33:31"
+
+def test_add_weekday(mocker):
+    """Verify that added weekday offset can be parsed."""
+
+    timezone = 'utc'
+    currentDate = arrow.now(timezone)
+    arrowNowMock = mocker.patch("arrow.now")
+    arrowNowMock.return_value = currentDate
+    finalRender = render(f"{{% now '{timezone}' + 'weekday=1' %}}")
+
+    assert finalRender == currentDate.shift(weekday=1).strftime('%Y-%m-%d')
 
 
 def test_substract_time(environment):
