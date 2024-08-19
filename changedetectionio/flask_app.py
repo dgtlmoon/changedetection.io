@@ -1377,8 +1377,8 @@ def changedetection_app(config=None, datastore_o=None):
         import brotli
 
         watch = datastore.data['watching'].get(uuid)
-        if watch and os.path.isdir(watch.watch_data_dir):
-            latest_filename = list(watch.history.keys())[0]
+        if watch and watch.history.keys() and os.path.isdir(watch.watch_data_dir):
+            latest_filename = list(watch.history.keys())[-1]
             html_fname = os.path.join(watch.watch_data_dir, f"{latest_filename}.html.br")
             if html_fname.endswith('.br'):
                 # Read and decompress the Brotli file
