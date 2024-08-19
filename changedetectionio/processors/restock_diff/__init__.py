@@ -1,11 +1,12 @@
 
-from changedetectionio.model.Watch import model as BaseWatch
-import re
 from babel.numbers import parse_decimal
+from changedetectionio.model.Watch import model as BaseWatch
+from typing import Union
+import re
 
 class Restock(dict):
 
-    def parse_currency(self, raw_value: str) -> float:
+    def parse_currency(self, raw_value: str) -> Union[float, None]:
         # Clean and standardize the value (ie 1,400.00 should be 1400.00), even better would be store the whole thing as an integer.
         standardized_value = raw_value
 
@@ -21,8 +22,11 @@ class Restock(dict):
         # Remove any non-numeric characters except for the decimal point
         standardized_value = re.sub(r'[^\d.-]', '', standardized_value)
 
-        # Convert to float
-        return float(parse_decimal(standardized_value, locale='en'))
+        if standardized_value:
+            # Convert to float
+            return float(parse_decimal(standardized_value, locale='en'))
+
+        return None
 
     def __init__(self, *args, **kwargs):
         # Define default values
