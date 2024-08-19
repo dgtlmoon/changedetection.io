@@ -1380,14 +1380,16 @@ def changedetection_app(config=None, datastore_o=None):
         if watch and watch.history.keys() and os.path.isdir(watch.watch_data_dir):
             latest_filename = list(watch.history.keys())[-1]
             html_fname = os.path.join(watch.watch_data_dir, f"{latest_filename}.html.br")
-            if html_fname.endswith('.br'):
-                # Read and decompress the Brotli file
-                with open(html_fname, 'rb') as f:
+            with open(html_fname, 'rb') as f:
+                if html_fname.endswith('.br'):
+                    # Read and decompress the Brotli file
                     decompressed_data = brotli.decompress(f.read())
+                else:
+                    decompressed_data = f.read()
 
-                buffer = BytesIO(decompressed_data)
+            buffer = BytesIO(decompressed_data)
 
-                return send_file(buffer, as_attachment=True, download_name=f"{latest_filename}.html", mimetype='text/html')
+            return send_file(buffer, as_attachment=True, download_name=f"{latest_filename}.html", mimetype='text/html')
 
 
         # Return a 500 error
