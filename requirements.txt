@@ -79,7 +79,9 @@ pyppeteerstealth>=0.0.4
 pytest ~=7.2
 pytest-flask ~=1.2
 
-jsonschema ~= 4
+# Anything 4.0 and up but not 5.0
+jsonschema ~= 4.0
+
 
 loguru
 
