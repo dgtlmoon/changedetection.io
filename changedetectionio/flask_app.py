@@ -1602,6 +1602,15 @@ def changedetection_app(config=None, datastore_o=None):
 
             flash(f"{len(uuids)} watches were tagged")
 
+        elif op.startswith('mode:'):
+            mode = op.replace('mode:','')
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid]['processor'] = mode
+            flash(f"{len(uuids)} watches changed modes")
+
+
         return redirect(url_for('index'))
 
     @app.route("/api/share-url", methods=['GET'])

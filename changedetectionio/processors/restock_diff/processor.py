@@ -3,9 +3,12 @@ from ..exceptions import ProcessorException
 from . import Restock
 from loguru import logger
 import hashlib
+import os
 import re
 import urllib3
 import time
+
+from ...html_tools import html_to_text
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 name = 'Re-stock & Price detection for single product pages'
@@ -118,6 +121,45 @@ class perform_site_check(difference_detection_processor):
     screenshot = None
     xpath_data = None
 
+    def ML_scrape_for_price_data(self, ML_price_scraper_url):
+        import requests
+        from changedetectionio import html_tools
+
+        price_info = None
+
+        # Perform the POST request
+        response = requests.post(ML_price_scraper_url, json=self.fetcher.xpath_data)
+        logger.debug(f"ML Price scraper - {ML_price_scraper_url} Response OK? - '{response.ok}'")
+        # Check if the response contains a dict
+        if response.ok:  # This checks if the request was successful (status code 200-299)
+            response_json = response.json()
+            logger.debug(f"ML Price scraper: response - {response_json}'")
+            if isinstance(response_json, dict) and 'idx' in response_json.keys():
+                suggested_xpath_idx = response_json.get('idx')
+
+                # Use the path provided to extra the price text
+                from price_parser import Price
+                scrape_element = self.fetcher.xpath_data.get('size_pos', {})[suggested_xpath_idx]
+                result_s = None
+                if scrape_element['xpath'][0] == '/' or scrape_element['xpath'].startswith('xpath'):
+                    result_s = html_tools.xpath_filter(xpath_filter=scrape_element['xpath'],
+                                                       html_content=self.fetcher.content)
+                else:
+                    # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
+                    result_s = html_tools.include_filters(include_filters=scrape_element['xpath'],
+                                                          html_content=self.fetcher.content)
+
+                if result_s:
+                    text = html_to_text(result_s)
+                    if text:
+                        price_info = Price.fromstring(text)
+            else:
+                logger.error(f"ML Price scraper: missing xpath index (IDX) in response?")
+        else:
+            print(f"ML Price scraper: Request failed with status code: {response.status_code}")
+
+        return price_info
+
     def run_changedetection(self, watch, skip_when_checksum_same=True):
         if not watch:
             raise Exception("Watch no longer exists.")
@@ -173,6 +215,21 @@ class perform_site_check(difference_detection_processor):
                     update_obj['restock']['in_stock'] = True
                 else:
                     update_obj['restock']['in_stock'] = False
+
+        # Attempt to pass the elements off to the machine-learning endpoint if its enabled
+        # This might return a confident guess as to which element contains the price data
+        if not itemprop_availability.get('price'):
+            ML_price_scraper_url = os.getenv("PRICE_SCRAPER_ML_ENDPOINT")
+            if self.fetcher.xpath_data and ML_price_scraper_url:
+                price_info = self.ML_scrape_for_price_data(ML_price_scraper_url)
+                if price_info and price_info.amount:
+                    logger.success(f"ML Price scraper: Got price data {price_info}")
+                    itemprop_availability['price'] = f"{price_info.amount}"
+                    update_obj['restock']['price'] = f"{price_info.amount}"
+                if price_info and price_info.currency:
+                    itemprop_availability['currency'] = price_info.currency
+                    update_obj['restock']['currency'] = price_info.currency
+
 
         # Main detection method
         fetched_md5 = None
