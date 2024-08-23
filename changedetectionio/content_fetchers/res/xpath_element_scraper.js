@@ -77,7 +77,56 @@ const findUpTag = (el) => {
     }
     return null;
 }
+// Text width scraper for ML training/detection
+// Create a single canvas and get its 2D context
+const canvas = document.createElement("canvas");
+const context = canvas.getContext("2d");
 
+// Function to get the width and height of the text inside an element and round them to the nearest integer
+function getTextWidthAndHeightinPx(element) {
+    // Set the font to match the style of the text in the element
+    context.font = window.getComputedStyle(element).font;
+
+    // Get the text inside the element
+    const text = element.textContent || element.innerText;
+
+    // Measure the text width
+    const metrics = context.measureText(text);
+    const width = Math.round(metrics.width);
+
+    // Get the font size from the computed style
+    const fontSize = parseFloat(window.getComputedStyle(element).fontSize);
+    const height = Math.round(fontSize); // Using font size as an approximation of height
+
+    // Return both width and height as an object
+    return { textWidth: width, textHeight: height };
+}
+
+
+// Function to determine which RGB value is the highest, or return 0 if they are all the same
+function getDominantColorValue(element) {
+    // Get the computed style of the element to get the color property
+    const computedStyle = window.getComputedStyle(element);
+    const color = computedStyle.color;
+
+    // Extract the RGB values from the color string (format: rgb(r, g, b))
+    const rgbValues = color.match(/\d+/g).map(Number);
+    const [red, green, blue] = rgbValues;
+
+    // Check if all values are the same
+    if (red === green && green === blue) {
+        return 0; // All RGB values are the same
+    }
+
+    // Determine which value is the highest and return the corresponding number
+    if (red > green && red > blue) {
+        return 1; // Red is highest
+    } else if (green > red && green > blue) {
+        return 2; // Green is highest
+    } else {
+        return 3; // Blue is highest
+    }
+}
 
 // @todo - if it's SVG or IMG, go into image diff mode
 // %ELEMENTS% replaced at injection time because different interfaces use it with different settings
@@ -164,7 +213,7 @@ visibleElementsArray.forEach(function (element) {
         }
     }
 
-    let label = "not-interesting" // A placeholder, the actual labels for training are done by hand for now
+    let label = "none" // A placeholder, the actual labels for training are done by hand for now
 
     let text = element.textContent.trim().slice(0, 30).trim();
     while (/\n{2,}|\t{2,}/.test(text)) {
@@ -172,7 +221,10 @@ visibleElementsArray.forEach(function (element) {
     }
 
     // Try to identify any possible currency amounts "Sale: 4000" or "Sale now 3000 Kc", can help with the training.
-    const hasDigitCurrency = (/\d/.test(text.slice(0, 6)) || /\d/.test(text.slice(-6)) ) &&  /([€£$¥₩₹]|USD|AUD|EUR|Kč|kr|SEK|,–)/.test(text) ;
+    // @todo could be instead of USD/AUD etc [A-Z]{2,3} ?
+    const hasDigitCurrency = (/\d/.test(text.slice(0, 6)) || /\d/.test(text.slice(-6)) ) &&  /([€£$¥₩₹]|USD|AUD|EUR|Kč|kr|SEK|RM|,–)/.test(text) ;
+    // Sizing of the actual text inside the element can be very different from the elements size
+    const { textWidth, textHeight } = getTextWidthAndHeightinPx(element);
 
     size_pos.push({
         xpath: xpath_result,
@@ -189,6 +241,9 @@ visibleElementsArray.forEach(function (element) {
         fontSize: window.getComputedStyle(element).getPropertyValue('font-size'),
         fontWeight: window.getComputedStyle(element).getPropertyValue('font-weight'),
         hasDigitCurrency: hasDigitCurrency,
+        textColorClass: getDominantColorValue(element),
+        textWidth: textWidth,
+        textHeight: textHeight,
         label: label,
     });
 
