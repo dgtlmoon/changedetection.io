@@ -103,31 +103,6 @@ function getTextWidthAndHeightinPx(element) {
 }
 
 
-// Function to determine which RGB value is the highest, or return 0 if they are all the same
-function getDominantColorValue(element) {
-    // Get the computed style of the element to get the color property
-    const computedStyle = window.getComputedStyle(element);
-    const color = computedStyle.color;
-
-    // Extract the RGB values from the color string (format: rgb(r, g, b))
-    const rgbValues = color.match(/\d+/g).map(Number);
-    const [red, green, blue] = rgbValues;
-
-    // Check if all values are the same
-    if (red === green && green === blue) {
-        return 0; // All RGB values are the same
-    }
-
-    // Determine which value is the highest and return the corresponding number
-    if (red > green && red > blue) {
-        return 1; // Red is highest
-    } else if (green > red && green > blue) {
-        return 2; // Green is highest
-    } else {
-        return 3; // Blue is highest
-    }
-}
-
 // @todo - if it's SVG or IMG, go into image diff mode
 // %ELEMENTS% replaced at injection time because different interfaces use it with different settings
 
@@ -226,6 +201,17 @@ visibleElementsArray.forEach(function (element) {
     // Sizing of the actual text inside the element can be very different from the elements size
     const { textWidth, textHeight } = getTextWidthAndHeightinPx(element);
 
+    const computedStyle = window.getComputedStyle(element);
+    let red, green, blue;
+
+    if (text.length) {
+        // Extract the RGB values from the color string (format: rgb(r, g, b))
+        [red, green, blue] = computedStyle.color.match(/\d+/g).map(Number);
+    } else {
+        // Assign default values if text is empty
+        [red, green, blue] = [0, 0, 0];
+    }
+
     size_pos.push({
         xpath: xpath_result,
         width: Math.round(bbox['width']),
@@ -241,9 +227,11 @@ visibleElementsArray.forEach(function (element) {
         fontSize: window.getComputedStyle(element).getPropertyValue('font-size'),
         fontWeight: window.getComputedStyle(element).getPropertyValue('font-weight'),
         hasDigitCurrency: hasDigitCurrency,
-        textColorClass: getDominantColorValue(element),
         textWidth: textWidth,
         textHeight: textHeight,
+        t_r: red,
+        t_g: green,
+        t_b: blue,
         label: label,
     });
 
