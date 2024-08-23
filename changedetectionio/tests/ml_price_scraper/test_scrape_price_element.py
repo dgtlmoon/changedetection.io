@@ -1,11 +1,11 @@
-
-#!/usr/bin/env python3
 import os
-import time
 
 from flask import url_for
-from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
+from changedetectionio.tests.util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, \
+    wait_for_all_checks, \
+    set_longer_modified_response
 
+import time
 
 # No semantic data just some text, we should be able to find the product price.
 def set_response(price="121.95"):
