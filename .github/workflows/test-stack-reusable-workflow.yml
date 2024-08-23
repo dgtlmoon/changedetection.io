@@ -54,7 +54,7 @@ jobs:
 
           # CDIO AI Element scraper for prices
           # Run CDIO with PRICE_SCRAPER_ML_ENDPOINT=http://cdio-ai-price-element:5005/price-element
-          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --name cdio-ai-price-element --hostname cdio-ai-price-element -p 5005:5005 --rm dgtlmoon/dgtlmoon/changedetection.io-ai:latest
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --name cdio-ai-price-element --hostname cdio-ai-price-element -p 5005:5005 --rm dgtlmoon/changedetection.io-ai:latest
 
       - name: Spin up ancillary SMTP+Echo message test server
         run: |
