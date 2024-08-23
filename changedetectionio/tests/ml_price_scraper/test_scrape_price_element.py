@@ -106,7 +106,10 @@ def test_restock_itemprop_basic(client, live_server):
 
     set_response(price="123.99")
 
+    # because it needs to access itself from within the sockpuppetbrowser
     test_url = url_for('test_endpoint', _external=True)
+    test_url = test_url.replace('localhost.localdomain', 'cdio')
+    test_url = test_url.replace('localhost', 'cdio')
 
     client.post(
         url_for("form_quick_watch_add"),
