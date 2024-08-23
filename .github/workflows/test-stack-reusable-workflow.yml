@@ -102,7 +102,7 @@ jobs:
 # PLAYWRIGHT/NODE-> CDP
       - name: ML/AI Price element scraper via Playwright+dgtlmoon/changedetection.io-ai
         run: |
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" -e "PLAYWRIGHT_DRIVER_URL=ws://cdio-ai-price-element:5005/price-element" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/ml_price_scraper/test_scrape_price_element.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" -e "PRICE_SCRAPER_ML_ENDPOINT=ws://cdio-ai-price-element:5005/price-element" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/ml_price_scraper/test_scrape_price_element.py'
 
       - name: Playwright and SocketPuppetBrowser - Restock detection
         run: |                            
