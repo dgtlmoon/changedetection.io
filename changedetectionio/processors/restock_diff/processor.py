@@ -37,6 +37,7 @@ def get_itemprop_availability(html_content) -> Restock:
     Kind of funny/cool way to find price/availability in one many different possibilities.
     Use 'extruct' to find any possible RDFa/microdata/json-ld data, make a JSON string from the output then search it.
     """
+
     from jsonpath_ng import parse
 
     now = time.time()
@@ -54,6 +55,7 @@ def get_itemprop_availability(html_content) -> Restock:
 
     # First phase, dead simple scanning of anything that looks useful
     value = Restock()
+    return value
     if data:
         logger.debug(f"Using jsonpath to find price/availability/etc")
         price_parse = parse('$..(price|Price)')
@@ -136,10 +138,15 @@ class perform_site_check(difference_detection_processor):
             logger.debug(f"ML Price scraper: response - {response_json}'")
             if isinstance(response_json, dict) and 'idx' in response_json.keys():
                 suggested_xpath_idx = response_json.get('idx')
+                if response_json.get('score') <0.80 or response_json.get('score') > 1.0:
+                    logger.warning(f"Predict score was outside normal range, aborting ML/AI price check, needs better training data in this case?")
+                    return None
 
                 # Use the path provided to extra the price text
                 from price_parser import Price
                 scrape_element = self.fetcher.xpath_data.get('size_pos', {})[suggested_xpath_idx]
+                logger.debug(f"Predicted selector with price information is {scrape_element['xpath']}")
+
                 result_s = None
                 if scrape_element['xpath'][0] == '/' or scrape_element['xpath'].startswith('xpath'):
                     result_s = html_tools.xpath_filter(xpath_filter=scrape_element['xpath'],
@@ -151,6 +158,7 @@ class perform_site_check(difference_detection_processor):
 
                 if result_s:
                     text = html_to_text(result_s)
+                    logger.debug(f"Guessed the text '{text}' as the price information")
                     if text:
                         price_info = Price.fromstring(text)
             else:
@@ -158,6 +166,7 @@ class perform_site_check(difference_detection_processor):
         else:
             print(f"ML Price scraper: Request failed with status code: {response.status_code}")
 
+#@TODO THROW HELPFUL MESSAGE WITH LINK TO TUTORIAL IF IT CANT CONNECT!
         return price_info
 
     def run_changedetection(self, watch, skip_when_checksum_same=True):

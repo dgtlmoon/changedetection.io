@@ -15,6 +15,7 @@ try {
     console.log(e);
 }
 
+const percentageNumerical = str => Math.round((str.match(/\d/g) || []).length / str.length * 100);
 
 // Include the getXpath script directly, easier than fetching
 function getxpath(e) {
@@ -146,8 +147,10 @@ const visibleElementsArray = [];
 // Call collectVisibleElements with the starting parent element
 collectVisibleElements(document.body, visibleElementsArray);
 
+// Append any custom selectors to the visibleElementsArray
 
-visibleElementsArray.forEach(function (element) {
+
+function get_element_metadata(element) {
 
     bbox = element.getBoundingClientRect();
 
@@ -190,14 +193,21 @@ visibleElementsArray.forEach(function (element) {
 
     let label = "none" // A placeholder, the actual labels for training are done by hand for now
 
-    let text = element.textContent.trim().slice(0, 30).trim();
-    while (/\n{2,}|\t{2,}/.test(text)) {
-        text = text.replace(/\n{2,}/g, '\n').replace(/\t{2,}/g, '\t')
-    }
+    // Check if the element was found and get its text , not including any child element
+    let text = Array.from(element.childNodes)
+        .filter(node => node.nodeType === Node.TEXT_NODE)
+        .map(node => node.textContent)
+        .join('');
+
+    // Remove any gaps in sequences of newlines and tabs inside the string
+    text = text.trim().replace(/[\s\t\n\r]{2,}/g, ' ').trim();
 
     // Try to identify any possible currency amounts "Sale: 4000" or "Sale now 3000 Kc", can help with the training.
     // @todo could be instead of USD/AUD etc [A-Z]{2,3} ?
+    //const hasDigitCurrency = (/\d/.test(text.slice(0, 6)) || /\d/.test(text.slice(-6)) ) &&  /([€£$¥₩₹]|USD|AUD|EUR|Kč|kr|SEK|RM|,–)/.test(text) ;
     const hasDigitCurrency = (/\d/.test(text.slice(0, 6)) || /\d/.test(text.slice(-6)) ) &&  /([€£$¥₩₹]|USD|AUD|EUR|Kč|kr|SEK|RM|,–)/.test(text) ;
+    const hasDigit = /[0-9]/.test(text) ;
+
     // Sizing of the actual text inside the element can be very different from the elements size
     const { textWidth, textHeight } = getTextWidthAndHeightinPx(element);
 
@@ -211,8 +221,7 @@ visibleElementsArray.forEach(function (element) {
         // Assign default values if text is empty
         [red, green, blue] = [0, 0, 0];
     }
-
-    size_pos.push({
+    return {
         xpath: xpath_result,
         width: Math.round(bbox['width']),
         height: Math.round(bbox['height']),
@@ -223,18 +232,27 @@ visibleElementsArray.forEach(function (element) {
         // tagtype used by Browser Steps
         tagtype: (element.tagName.toLowerCase() === 'input' && element.type) ? element.type.toLowerCase() : '',
         isClickable: window.getComputedStyle(element).cursor === "pointer",
-        // Used by the keras trainer
+        // Used by the keras/pytorch trainer
         fontSize: window.getComputedStyle(element).getPropertyValue('font-size'),
         fontWeight: window.getComputedStyle(element).getPropertyValue('font-weight'),
+        pcNumerical: text.length && percentageNumerical(text),
+        hasDigit: hasDigit,
         hasDigitCurrency: hasDigitCurrency,
         textWidth: textWidth,
         textHeight: textHeight,
+        textLength: text.length,
         t_r: red,
         t_g: green,
         t_b: blue,
         label: label,
-    });
+    };
+}
 
+visibleElementsArray.forEach(function (element) {
+    let metadata = get_element_metadata(element);
+    if(metadata) {
+        size_pos.push(metadata);
+    }
 });
 
 
@@ -243,7 +261,19 @@ visibleElementsArray.forEach(function (element) {
 if (include_filters.length) {
     let results;
     // Foreach filter, go and find it on the page and add it to the results so we can visualise it again
+    outerLoop:
     for (const f of include_filters) {
+        // Quick check so we dont end up with duplicates in the training data
+        for (let index = 0; index < size_pos.length; index++) {
+            let item = size_pos[index];
+            if (item.xpath === f) {
+                item.highlight_as_custom_filter = true;
+                item.found_as_duplicate = true;
+                item.label = "price";
+                continue outerLoop;
+            }
+        }
+
         bbox = false;
         q = false;
 
@@ -264,7 +294,6 @@ if (include_filters.length) {
                 }
             } else {
                 console.log("[css] Scanning for included filter " + f)
-                console.log("[css] Scanning for included filter " + f);
                 results = document.querySelectorAll(f);
             }
         } catch (e) {
@@ -301,17 +330,15 @@ if (include_filters.length) {
                         console.log("xpath_element_scraper: error looking up q.ownerElement")
                     }
                 }
-
-                if (bbox && bbox['width'] > 0 && bbox['height'] > 0) {
-                    size_pos.push({
-                        xpath: f,
-                        width: parseInt(bbox['width']),
-                        height: parseInt(bbox['height']),
-                        left: parseInt(bbox['left']),
-                        top: parseInt(bbox['top']) + scroll_y,
-                        highlight_as_custom_filter: true
-                    });
+                element_info = get_element_metadata(node);
+                if(element_info) {
+                    // Be sure we use exactly what was written
+                    element_info['xpath'] = f;
+                    element_info['highlight_as_custom_filter'] = true;
+                    element_info['label'] = "price";
+                    size_pos.push(element_info);
                 }
+
             });
         }
     }
