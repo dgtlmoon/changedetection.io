@@ -40,13 +40,16 @@ def get_itemprop_availability(html_content) -> Restock:
     import extruct
     logger.trace(f"Imported extruct module in {time.time() - now:.3f}s")
 
-    value = {}
     now = time.time()
+
     # Extruct is very slow, I'm wondering if some ML is going to be faster (800ms on my i7), 'rdfa' seems to be the heaviest.
-
     syntaxes = ['dublincore', 'json-ld', 'microdata', 'microformat', 'opengraph']
+    try:
+        data = extruct.extract(html_content, syntaxes=syntaxes)
+    except Exception as e:
+        logger.warning(f"Unable to extract data, document parsing with extruct failed with {type(e).__name__} - {str(e)}")
+        return Restock()
 
-    data = extruct.extract(html_content, syntaxes=syntaxes)
     logger.trace(f"Extruct basic extract of all metadata done in {time.time() - now:.3f}s")
 
     # First phase, dead simple scanning of anything that looks useful
