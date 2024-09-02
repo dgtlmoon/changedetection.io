@@ -174,7 +174,8 @@ function isItemInStock() {
         const element = elementsToScan[i];
         // outside the 'fold' or some weird text in the heading area
         // .getBoundingClientRect() was causing a crash in chrome 119, can only be run on contentVisibility != hidden
-        if (element.getBoundingClientRect().top + window.scrollY >= vh + 250 || element.getBoundingClientRect().top + window.scrollY <= 200) {
+        // Note: theres also an automated test that places the 'out of stock' text fairly low down
+        if (element.getBoundingClientRect().top + window.scrollY >= vh + 250 || element.getBoundingClientRect().top + window.scrollY <= 100) {
             continue
         }
         elementText = "";
