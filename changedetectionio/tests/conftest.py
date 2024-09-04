@@ -8,7 +8,7 @@ from changedetectionio import changedetection_app
 from changedetectionio import store
 import os
 import sys
-from loguru import logger
+
 
 # https://github.com/pallets/flask/blob/1.1.2/examples/tutorial/tests/test_auth.py
 # Much better boilerplate than the docs

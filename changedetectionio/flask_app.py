@@ -792,9 +792,9 @@ def changedetection_app(config=None, datastore_o=None):
             # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
             # But in the case something is added we should save straight away
             datastore.needs_write_urgent = True
-
-            # Queue the watch for immediate recheck, with a higher priority
-            update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
+            if not datastore.data['watching'][uuid].get('paused'):
+                # Queue the watch for immediate recheck, with a higher priority
+                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff':
@@ -1601,6 +1601,15 @@ def changedetection_app(config=None, datastore_o=None):
                             datastore.data['watching'][uuid]['tags'].append(tag_uuid)
 
             flash(f"{len(uuids)} watches were tagged")
+
+        elif op.startswith('mode:'):
+            mode = op.replace('mode:','')
+            for uuid in uuids:
+                uuid = uuid.strip()
+                if datastore.data['watching'].get(uuid):
+                    datastore.data['watching'][uuid]['processor'] = mode
+            flash(f"{len(uuids)} watches changed modes")
+
 
         return redirect(url_for('index'))
 

@@ -518,7 +518,7 @@ class model(watch_base):
         self.ensure_data_dir_exists()
 
         with open(target_path, 'w') as f:
-            f.write(json.dumps(data))
+            f.write(json.dumps(data, indent=2))
             f.close()
 
     # Save as PNG, PNG is larger but better for doing visual diff in the future

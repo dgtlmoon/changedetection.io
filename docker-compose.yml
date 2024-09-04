@@ -58,6 +58,10 @@ services:
   #
   #        Absolute minimum seconds to recheck, overrides any watch minimum, change to 0 to disable
   #      - MINIMUM_SECONDS_RECHECK_TIME=3
+  #
+  #        Scrape prices from web pages automatically where the page has no embedded price information (see below also)
+  #      - PRICE_SCRAPER_ML_ENDPOINT=http://cdio-price-scraper:5005
+
       # Comment out ports: when using behind a reverse proxy , enable networks: etc.
       ports:
         - 5000:5000
@@ -104,6 +108,13 @@ services:
 #            # Workaround to avoid the browser crashing inside a docker container
 #            # See https://github.com/SeleniumHQ/docker-selenium#quick-start
 #            - /dev/shm:/dev/shm
+#        restart: unless-stopped
+
+     # Machine Learning/AI - Use "Visual Selector" elements data to scrape price data
+
+#    cdio-keras-price-scraper:
+#        hostname: cdio-price-scraper
+#        image: dgtlmoon/changedetection-AI-pricescraper
 #        restart: unless-stopped
 
 volumes:

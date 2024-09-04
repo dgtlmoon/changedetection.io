@@ -2,6 +2,7 @@
 
 from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
+import time
 
 def set_nonrenderable_response():
     test_return_data = """<html>
@@ -90,6 +91,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # A totally zero byte (#2528) response should also not trigger an error
     set_zero_byte_response()
+    time.sleep(2)
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
