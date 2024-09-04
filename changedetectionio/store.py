@@ -409,7 +409,7 @@ class ChangeDetectionStore:
                 # This is a fairly basic strategy to deal with the case that the file is corrupted,
                 # system was out of memory, out of RAM etc
                 with open(self.json_store_path+".tmp", 'w') as json_file:
-                    json.dump(config_data, json_file, indent=4)
+                    json.dump(config_data, json_file, indent=2)
                 os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
                 logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")
@@ -422,7 +422,8 @@ class ChangeDetectionStore:
                     # This is a fairly basic strategy to deal with the case that the file is corrupted,
                     # system was out of memory, out of RAM etc
                     with open(watch_config_path + ".tmp", 'w') as json_file:
-                        json.dump(watch, json_file, indent=4)
+                        json.dump(watch, json_file, indent=2)
+                        logger.trace(f"Saved/written watch {uuid} to {watch_config_path}")
                     os.replace(watch_config_path + ".tmp", watch_config_path)
                 except Exception as e:
                     logger.error(f"Error writing watch config {uuid} to {watch_config_path} JSON!! {str(e)}")
@@ -458,25 +459,6 @@ class ChangeDetectionStore:
                 time.sleep(0.5)
                 if self.stop_thread or self.needs_write_urgent:
                     break
-
-    # Go through the datastore path and remove any snapshots that are not mentioned in the index
-    # This usually is not used, but can be handy.
-    def remove_unused_snapshots(self):
-        logger.info("Removing snapshots from datastore that are not in the index..")
-
-        index=[]
-        for uuid in self.data['watching']:
-            for id in self.data['watching'][uuid].history:
-                index.append(self.data['watching'][uuid].history[str(id)])
-
-        import pathlib
-
-        # Only in the sub-directories
-        for uuid in self.data['watching']:
-            for item in pathlib.Path(self.datastore_path).rglob(uuid+"/*.txt"):
-                if not str(item) in index:
-                    logger.info(f"Removing {item}")
-                    unlink(item)
 
     @property
     def proxy_list(self):

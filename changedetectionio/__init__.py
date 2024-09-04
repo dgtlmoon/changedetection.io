@@ -145,10 +145,6 @@ def main():
     signal.signal(signal.SIGTERM, sigshutdown_handler)
     signal.signal(signal.SIGINT, sigshutdown_handler)
 
-    # Go into cleanup mode
-    if do_cleanup:
-        datastore.remove_unused_snapshots()
-
     app.config['datastore_path'] = datastore_path
 
 
