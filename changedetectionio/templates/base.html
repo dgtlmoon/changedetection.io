@@ -33,7 +33,7 @@
     <script src="{{url_for('static_content', group='js', filename='csrf.js')}}" defer></script>
   </head>
 
-  <body>
+  <body class="">
     <div class="header">
       <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed" id="nav-menu">
         {% if has_password and not current_user.is_authenticated %}

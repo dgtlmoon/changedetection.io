@@ -357,4 +357,4 @@ class perform_site_check(difference_detection_processor):
         if not watch.get('previous_md5'):
             watch['previous_md5'] = fetched_md5
 
-        return changed_detected, update_obj, text_content_before_ignored_filter
+        return changed_detected, update_obj, text_content_before_ignored_filter, stripped_text_from_html

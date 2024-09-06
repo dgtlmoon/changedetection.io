@@ -1,4 +1,6 @@
 from abc import abstractmethod
+
+from changedetectionio.content_fetchers.base import Fetcher
 from changedetectionio.strtobool import strtobool
 
 from copy import deepcopy
@@ -23,10 +25,11 @@ class difference_detection_processor():
         super().__init__(*args, **kwargs)
         self.datastore = datastore
         self.watch = deepcopy(self.datastore.data['watching'].get(watch_uuid))
+        # Generic fetcher that should be extended (requests, playwright etc)
+        self.fetcher = Fetcher()
 
     def call_browser(self):
         from requests.structures import CaseInsensitiveDict
-        from changedetectionio.content_fetchers.exceptions import EmptyReply
 
         # Protect against file:// access
         if re.search(r'^file://', self.watch.get('url', '').strip(), re.IGNORECASE):
@@ -159,7 +162,7 @@ class difference_detection_processor():
         some_data = 'xxxxx'
         update_obj["previous_md5"] = hashlib.md5(some_data.encode('utf-8')).hexdigest()
         changed_detected = False
-        return changed_detected, update_obj, ''.encode('utf-8')
+        return changed_detected, update_obj, ''.encode('utf-8'), b''
 
 
 def find_sub_packages(package_name):
