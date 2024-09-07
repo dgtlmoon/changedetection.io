@@ -236,7 +236,7 @@ class perform_site_check(difference_detection_processor):
                 # We had some content, but no differences were found
                 # Store our new file as the MD5 so it will trigger in the future
                 c = hashlib.md5(text_content_before_ignored_filter.translate(None, b'\r\n\t ')).hexdigest()
-                return False, {'previous_md5': c}, stripped_text_from_html.encode('utf-8')
+                return False, {'previous_md5': c}, stripped_text_from_html.encode('utf-8'), stripped_text_from_html.encode('utf-8')
             else:
                 stripped_text_from_html = rendered_diff
 
