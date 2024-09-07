@@ -12,6 +12,26 @@ function toggleOpacity(checkboxSelector, fieldSelector, inverted) {
     checkbox.addEventListener('change', updateOpacity);
 }
 
+(function($) {
+    // Object to store ongoing requests by namespace
+    const requests = {};
+
+    $.abortiveSingularAjax = function(options) {
+        const namespace = options.namespace || 'default';
+
+        // Abort the current request in this namespace if it's still ongoing
+        if (requests[namespace]) {
+            requests[namespace].abort();
+        }
+
+        // Start a new AJAX request and store its reference in the correct namespace
+        requests[namespace] = $.ajax(options);
+
+        // Return the current request in case it's needed
+        return requests[namespace];
+    };
+})(jQuery);
+
 function request_textpreview_update() {
     const data = {};
     $('textarea:visible, input:visible').each(function () {
@@ -20,10 +40,11 @@ function request_textpreview_update() {
         data[name] = $element.is(':checkbox') ? ($element.is(':checked') ? $element.val() : undefined) : $element.val();
     });
 
-    $.ajax({
+    $.abortiveSingularAjax({
         type: "POST",
         url: preview_text_edit_filters_url,
-        data: data
+        data: data,
+        namespace: 'watchEdit'
     }).done(function (data) {
         $('#filters-and-triggers #text-preview-inner').text(data);
     }).fail(function (data) {
