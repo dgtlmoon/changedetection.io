@@ -59,6 +59,7 @@ class watch_base(dict):
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
             'time_between_check_use_default': True,
             'title': None,
+            'trim_text_whitespace': False,
             'track_ldjson_price_data': None,
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'url': '',

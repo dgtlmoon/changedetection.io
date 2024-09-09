@@ -210,6 +210,9 @@ class perform_site_check(difference_detection_processor):
             stripped_text_from_html = stripped_text_from_html.replace('\n\n', '\n')
             stripped_text_from_html = '\n'.join( sorted(stripped_text_from_html.splitlines(), key=lambda x: x.lower() ))
 
+        if watch.get('trim_text_whitespace') and stripped_text_from_html:
+            stripped_text_from_html = '\n'.join(line.strip() for line in stripped_text_from_html.splitlines())
+
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 
