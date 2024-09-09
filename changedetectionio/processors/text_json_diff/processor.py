@@ -213,6 +213,9 @@ class perform_site_check(difference_detection_processor):
         if watch.get('trim_text_whitespace') and stripped_text_from_html:
             stripped_text_from_html = '\n'.join(line.strip() for line in stripped_text_from_html.splitlines())
 
+        if watch.get('remove_duplicate_lines') and stripped_text_from_html:
+            stripped_text_from_html = '\n'.join(dict.fromkeys(line for line in stripped_text_from_html.splitlines()))
+
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 
