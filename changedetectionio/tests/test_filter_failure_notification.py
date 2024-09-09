@@ -1,7 +1,8 @@
 import os
 import time
 from flask import url_for
-from .util import set_original_response, live_server_setup, extract_UUID_from_client, wait_for_all_checks
+from .util import set_original_response, live_server_setup, extract_UUID_from_client, wait_for_all_checks, \
+    wait_for_notification_endpoint_output
 from changedetectionio.model import App
 
 
@@ -107,7 +108,8 @@ def run_filter_test(client, live_server, content_filter):
     # One more check should trigger the _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT threshold
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    time.sleep(2)  # delay for apprise to fire
+
+    wait_for_notification_endpoint_output()
     # Now it should exist and contain our "filter not found" alert
     assert os.path.isfile("test-datastore/notification.txt")
 
@@ -127,6 +129,7 @@ def run_filter_test(client, live_server, content_filter):
         client.get(url_for("form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
 
+    wait_for_notification_endpoint_output()
     # It should have sent a notification, but..
     assert os.path.isfile("test-datastore/notification.txt")
     # but it should not contain the info about a failed filter (because there was none in this case)
