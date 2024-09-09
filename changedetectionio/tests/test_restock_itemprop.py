@@ -182,7 +182,8 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     # price changed to something LESS than min (900), SHOULD be a change
     set_original_response(props_markup=instock_props[0], price='890.45')
     # let previous runs wait
-    time.sleep(1)
+    time.sleep(2)
+    
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
     assert b'1 watches queued for rechecking.' in res.data
     wait_for_all_checks(client)
