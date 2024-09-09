@@ -3,7 +3,7 @@ import os
 import time
 
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
+from .util import live_server_setup, wait_for_all_checks, extract_UUID_from_client, wait_for_notification_endpoint_output
 from ..notification import default_notification_format
 
 instock_props = [
@@ -362,7 +362,7 @@ def test_change_with_notification_values(client, live_server):
     set_original_response(props_markup=instock_props[0], price='1950.45')
     client.get(url_for("form_watch_checknow"))
     wait_for_all_checks(client)
-    time.sleep(3)
+    wait_for_notification_endpoint_output()
     assert os.path.isfile("test-datastore/notification.txt"), "Notification received"
     with open("test-datastore/notification.txt", 'r') as f:
         notification = f.read()
