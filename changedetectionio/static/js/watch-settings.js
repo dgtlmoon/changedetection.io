@@ -47,9 +47,12 @@ function request_textpreview_update() {
         namespace: 'watchEdit'
     }).done(function (data) {
         $('#filters-and-triggers #text-preview-inner').text(data);
-    }).fail(function (data) {
-        console.log(data);
-        $('#filters-and-triggers #text-preview-inner').text('There was an error communicating with the server.');
+    }).fail(function (error) {
+        if (error.statusText === 'abort') {
+            console.log('Request was aborted due to a new request being fired.');
+        } else {
+            $('#filters-and-triggers #text-preview-inner').text('There was an error communicating with the server.');
+        }
     })
 }
 
