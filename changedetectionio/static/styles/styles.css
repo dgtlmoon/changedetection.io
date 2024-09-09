@@ -446,6 +446,12 @@ body.preview-text-enabled {
     overflow-wrap: break-word;
     /* Allows long words to break and wrap to the next line */ }
 
+#activate-text-preview {
+  right: 0;
+  position: absolute;
+  z-index: 0;
+  box-shadow: 1px 1px 4px var(--color-shadow-jump); }
+
 body {
   color: var(--color-text);
   background: var(--color-background-page);

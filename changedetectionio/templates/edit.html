@@ -254,9 +254,9 @@ User-Agent: wonderbra 1.0") }}
 
             {% if watch['processor'] == 'text_json_diff' %}
             <div class="tab-pane-inner" id="filters-and-triggers">
-            <span id="activate-text-preview" style="right: 0;position: absolute;     z-index: 100;" class="pure-button pure-button-primary button-xsmall">Activate preview</span>
+                <span id="activate-text-preview" class="pure-button pure-button-primary button-xsmall">Activate preview</span>
               <div>
-                <div id="edit-text-filter">
+              <div id="edit-text-filter">
                     <div class="pure-control-group" id="pro-tips">
                             <strong>Pro-tips:</strong><br>
                             <ul>
@@ -410,7 +410,7 @@ Unavailable") }}
                 </fieldset>
                 </div>
             </div>
-            <div id="text-preview" style="display: none;" >
+              <div id="text-preview" style="display: none;" >
                     <script>
                         const preview_text_edit_filters_url="{{url_for('watch_get_preview_rendered', uuid=uuid)}}";
                     </script>
