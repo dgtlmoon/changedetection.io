@@ -73,7 +73,7 @@ def element_removal(selectors: List[str], html_content):
 
 def elementpath_tostring(obj):
     """
-    change elementpath.select results to string type
+    change elementpath.select results(XDM) to string type
     # The MIT License (MIT), Copyright (c), 2018-2021, SISSA (Scuola Internazionale Superiore di Studi Avanzati)
     # https://github.com/sissaschool/elementpath/blob/dfcc2fd3d6011b16e02bf30459a7924f547b47d0/elementpath/xpath_tokens.py#L1038
     """
@@ -116,9 +116,9 @@ def forest_transplanting(root):
     """
     The html parser of libxml2 violates DOM rules. It means there can be
     multiple root element nodes. So I choose just transplating them to a new
-    root when the violation happens.  See also,
+    root when the violation happens. See also,
     https://gitlab.gnome.org/GNOME/libxml2/-/issues/716 This will emulate
-    xpath1 of html of libxml2 like '/html[2]/*'.  To make this function work,
+    xpath1 of html of libxml2 like '/html[2]/*'. To make this function work,
     'fragment=True' in elementpath.select is required.
     """
     from lxml import etree
