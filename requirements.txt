@@ -79,8 +79,9 @@ pyppeteerstealth>=0.0.4
 pytest ~=7.2
 pytest-flask ~=1.2
 
-# Pin jsonschema version to prevent build errors on armv6 while rpds-py wheels aren't available (1708)
-jsonschema==4.17.3
+# Anything 4.0 and up but not 5.0
+jsonschema ~= 4.0
+
 
 loguru
 
