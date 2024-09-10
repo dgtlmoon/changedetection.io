@@ -123,14 +123,14 @@ def forest_transplanting(root):
     """
     from lxml import etree
 
-    root_siblings_preceding = [ s for s in root.itersiblings(preceding=True)]
+    root_siblings_preceding = [s for s in root.itersiblings(preceding=True)]
     root_siblings = [s for s in root.itersiblings()]
 
-    Is_fragment=False
+    Is_fragment = False
     # If element node exsits in root element node's sibilings, it is fragment.
     for node in chain(root_siblings_preceding, root_siblings):
         if not hasattr(node.tag, '__name__'):
-            Is_fragment=True
+            Is_fragment = True
             # early exit. because the root is already root element.
             # So, two root element nodes are detected. DOM violation.
             break
