@@ -35,7 +35,7 @@ dnspython==2.6.1 # related to eventlet fixes
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise~=1.8.1
+apprise==1.9.0
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 # and 2.0.0 https://github.com/dgtlmoon/changedetection.io/issues/2241 not yet compatible
