@@ -11,7 +11,6 @@ from threading import Lock
 import json
 import os
 import re
-import requests
 import secrets
 import threading
 import time
@@ -270,6 +269,7 @@ class ChangeDetectionStore:
         self.needs_write_urgent = True
 
     def add_watch(self, url, tag='', extras=None, tag_uuids=None, write_to_disk_now=True):
+        import requests
 
         if extras is None:
             extras = {}

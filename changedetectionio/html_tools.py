@@ -1,10 +1,4 @@
-
-from bs4 import BeautifulSoup
-from inscriptis import get_text
-from jsonpath_ng.ext import parse
 from typing import List
-from inscriptis.model.config import ParserConfig
-from xml.sax.saxutils import escape as xml_escape
 import json
 import re
 
@@ -39,6 +33,7 @@ def perl_style_slash_enclosed_regex_to_options(regex):
 
 # Given a CSS Rule, and a blob of HTML, return the blob of HTML that matches
 def include_filters(include_filters, html_content, append_pretty_line_formatting=False):
+    from bs4 import BeautifulSoup
     soup = BeautifulSoup(html_content, "html.parser")
     html_block = ""
     r = soup.select(include_filters, separator="")
@@ -56,6 +51,7 @@ def include_filters(include_filters, html_content, append_pretty_line_formatting
     return html_block
 
 def subtractive_css_selector(css_selector, html_content):
+    from bs4 import BeautifulSoup
     soup = BeautifulSoup(html_content, "html.parser")
     for item in soup.select(css_selector):
         item.decompose()
@@ -181,6 +177,7 @@ def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=Fals
 
 # Extract/find element
 def extract_element(find='title', html_content=''):
+    from bs4 import BeautifulSoup
 
     #Re #106, be sure to handle when its not found
     element_text = None
@@ -194,6 +191,8 @@ def extract_element(find='title', html_content=''):
 
 #
 def _parse_json(json_data, json_filter):
+    from jsonpath_ng.ext import parse
+
     if json_filter.startswith("json:"):
         jsonpath_expression = parse(json_filter.replace('json:', ''))
         match = jsonpath_expression.find(json_data)
@@ -242,6 +241,8 @@ def _get_stripped_text_from_json_match(match):
 # json_filter - ie json:$..price
 # ensure_is_ldjson_info_type - str "product", optional, "@type == product" (I dont know how to do that as a json selector)
 def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None):
+    from bs4 import BeautifulSoup
+
     stripped_text_from_html = False
 # https://github.com/dgtlmoon/changedetection.io/pull/2041#issuecomment-1848397161w
     # Try to parse/filter out the JSON, if we get some parser error, then maybe it's embedded within HTML tags
@@ -352,6 +353,7 @@ def strip_ignore_text(content, wordlist, mode="content"):
     return "\n".encode('utf8').join(output)
 
 def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False) -> str:
+    from xml.sax.saxutils import escape as xml_escape
     pattern = '<!\[CDATA\[(\s*(?:.(?<!\]\]>)\s*)*)\]\]>'
     def repl(m):
         text = m.group(1)
@@ -360,6 +362,9 @@ def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False
     return re.sub(pattern, repl, html_content)
 
 def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=False) -> str:
+    from inscriptis import get_text
+    from inscriptis.model.config import ParserConfig
+
     """Converts html string to a string with just the text. If ignoring
     rendering anchor tag content is enable, anchor tag content are also
     included in the text
