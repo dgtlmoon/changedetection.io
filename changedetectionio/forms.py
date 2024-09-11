@@ -325,7 +325,7 @@ class ValidateCSSJSONXPATHInput(object):
         self.allow_json = allow_json
 
     def __call__(self, form, field):
-
+        from lxml.etree import XPathEvalError
         if isinstance(field.data, str):
             data = [field.data]
         else:
@@ -349,12 +349,12 @@ class ValidateCSSJSONXPATHInput(object):
 
                 try:
                     # Call the determined function
-                    res = filter_function(xpath_filter=line.strip(), html_content=form.last_html_for_form_validation)
+                    res = filter_function(xpath_filter=line, html_content=form.last_html_for_form_validation)
                     # It's OK if this is an empty result, we just want to check that it doesn't crash the parser
-                except elementpath.ElementPathError as e:
+                except (elementpath.ElementPathError,XPathEvalError) as e:
                     message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
                     raise ValidationError(message % (line, str(e)))
-                except:
+                except Exception as e:
                     raise ValidationError("A system-error occurred when validating your XPath expression")
 
             elif 'json:' in line:
