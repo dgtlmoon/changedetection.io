@@ -2,8 +2,7 @@ from .. import difference_detection_processor
 from ..exceptions import ProcessorException
 from . import Restock
 from loguru import logger
-import hashlib
-import re
+
 import urllib3
 import time
 
@@ -36,6 +35,7 @@ def get_itemprop_availability(html_content) -> Restock:
     """
     from jsonpath_ng import parse
 
+    import re
     now = time.time()
     import extruct
     logger.trace(f"Imported extruct module in {time.time() - now:.3f}s")
@@ -122,6 +122,10 @@ class perform_site_check(difference_detection_processor):
     xpath_data = None
 
     def run_changedetection(self, watch, skip_when_checksum_same=True):
+        import hashlib
+
+        from concurrent.futures import ProcessPoolExecutor
+        from functools import partial
         if not watch:
             raise Exception("Watch no longer exists.")
 
@@ -149,7 +153,11 @@ class perform_site_check(difference_detection_processor):
 
         itemprop_availability = {}
         try:
-            itemprop_availability = get_itemprop_availability(html_content=self.fetcher.content)
+            with ProcessPoolExecutor() as executor:
+                # Use functools.partial to create a callable with arguments
+                # anything using bs4/lxml etc is quite "leaky"
+                future = executor.submit(partial(get_itemprop_availability, self.fetcher.content))
+                itemprop_availability = future.result()
         except MoreThanOnePriceFound as e:
             # Add the real data
             raise ProcessorException(message="Cannot run, more than one price detected, this plugin is only for product pages with ONE product, try the content-change detection mode.",
