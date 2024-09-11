@@ -198,7 +198,8 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
-    assert b'1,890.45' or b'1890.45' in res.data
+    # Depending on the LOCALE it may be either of these (generally for US/default/etc)
+    assert b'1,890.45' in res.data or b'1890.45' in res.data
     assert b'unviewed' in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
