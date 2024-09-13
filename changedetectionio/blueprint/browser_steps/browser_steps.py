@@ -109,6 +109,7 @@ class steppable_browser_interface():
         if not len(value.strip()):
             return
         elem = self.page.get_by_text(value)
+        logger.debug(f"Clicking element containing text - {elem.count()} elements found")
         if elem.count():
             elem.first.click(delay=randint(200, 500), timeout=3000)
         else:
