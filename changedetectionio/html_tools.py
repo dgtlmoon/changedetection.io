@@ -116,7 +116,8 @@ def forest_transplanting(root):
     root element when the violation happens. See also,
     https://gitlab.gnome.org/GNOME/libxml2/-/issues/716 This will emulate
     xpath1 of html of libxml2 like '/html[2]/*'. To make this function work,
-    'fragment=True' in elementpath.select is required.
+    'fragment=True' in elementpath.select is required. This part is where I
+    violates the spec.
     """
     from lxml import etree
 
