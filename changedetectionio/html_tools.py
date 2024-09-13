@@ -11,6 +11,7 @@ from itertools import chain
 from elementpath import select as elementpath_select
 # xpath 2.0-3.1
 from elementpath.xpath3 import XPath3Parser
+from loguru import logger
 
 
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
@@ -136,6 +137,7 @@ def forest_transplanting(root):
             break
 
     if Is_fragment:
+        logger.debug("forest_transplanting is triggered.")
         new_root = etree.Element("new_root")
         root_siblings_preceding.reverse()
         for node in chain(root_siblings_preceding, [root], root_siblings):
