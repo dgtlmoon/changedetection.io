@@ -87,6 +87,7 @@ def test_element_removal_output():
      Some initial text<br>
      <p>across multiple lines</p>
      <div id="changetext">Some text that changes</div>
+     <div>Some text should be matched by xPath selector</div>
      </body>
     <footer>
     <p>Footer</p>
@@ -94,7 +95,7 @@ def test_element_removal_output():
      </html>
     """
     html_blob = element_removal(
-        ["header", "footer", "nav", "#changetext"], html_content=content
+        ["header", "footer", "nav", "#changetext", "xpath://*[contains(text(), 'xPath selector')]"], html_content=content
     )
     text = get_text(html_blob)
     assert (

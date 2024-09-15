@@ -1,4 +1,5 @@
 from typing import List
+from lxml import etree
 import json
 import re
 
@@ -57,11 +58,26 @@ def subtractive_css_selector(css_selector, html_content):
         item.decompose()
     return str(soup)
 
+def subtractive_xpath_selector(xpath_selector, html_content): 
+    html_tree = etree.HTML(html_content)
+    elements_to_remove = html_tree.xpath(xpath_selector)
+
+    for element in elements_to_remove:
+        element.getparent().remove(element)
+
+    modified_html = etree.tostring(html_tree, method="html").decode("utf-8")
+    return modified_html
 
 def element_removal(selectors: List[str], html_content):
-    """Joins individual filters into one css filter."""
-    selector = ",".join(selectors)
-    return subtractive_css_selector(selector, html_content)
+    """Removes elements that match a list of CSS or xPath selectors."""
+    modified_html = html_content
+    for selector in selectors:
+        if selector.startswith('xpath:'):
+            xpath_selector = selector.removeprefix('xpath:')
+            modified_html = subtractive_xpath_selector(xpath_selector, modified_html)
+        else:
+            modified_html = subtractive_css_selector(selector, modified_html)
+    return modified_html
 
 def elementpath_tostring(obj):
     """
