@@ -72,8 +72,8 @@ def element_removal(selectors: List[str], html_content):
     """Removes elements that match a list of CSS or xPath selectors."""
     modified_html = html_content
     for selector in selectors:
-        if selector.startswith('xpath:'):
-            xpath_selector = selector.removeprefix('xpath:')
+        if selector.startswith(('xpath:', 'xpath1:', '//')):
+            xpath_selector = selector.removeprefix('xpath:').removeprefix('xpath1:')
             modified_html = subtractive_xpath_selector(xpath_selector, modified_html)
         else:
             modified_html = subtractive_css_selector(selector, modified_html)
