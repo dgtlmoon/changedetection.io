@@ -146,14 +146,13 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
         data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
-
-    # A change in price, should trigger a change by default
     wait_for_all_checks(client)
 
     data = {
         "tags": "",
         "url": test_url,
         "headers": "",
+        "time_between_check-hours": 5,
         'fetch_backend': "html_requests"
     }
     data.update(extra_watch_edit_form)
@@ -178,12 +177,9 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     assert b'1,000.45' or b'1000.45' in res.data #depending on locale
     assert b'unviewed' not in res.data
 
-
     # price changed to something LESS than min (900), SHOULD be a change
     set_original_response(props_markup=instock_props[0], price='890.45')
-    # let previous runs wait
-    time.sleep(2)
-    
+
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
     assert b'1 watches queued for rechecking.' in res.data
     wait_for_all_checks(client)
