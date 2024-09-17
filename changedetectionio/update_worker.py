@@ -380,6 +380,8 @@ class update_worker(threading.Thread):
                                 logger.debug(f"Reset filter failure count back to zero")
 
                             self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
+                        else:
+                            logger.trace(f"{uuid} - filter_failure_notification_send not enabled, skipping")
 
                         process_changedetection_results = False
 
