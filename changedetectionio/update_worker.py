@@ -189,7 +189,9 @@ class update_worker(threading.Thread):
                 'screenshot': None
             })
             self.notification_q.put(n_object)
-            logger.error(f"Sent filter not found notification for {watch_uuid}")
+            logger.debug(f"Sent filter not found notification for {watch_uuid}")
+        else:
+            logger.debug(f"NOT sending filter not found notification for {watch_uuid} - no notification URLs")
 
     def send_step_failure_notification(self, watch_uuid, step_n):
         watch = self.datastore.data['watching'].get(watch_uuid, False)
