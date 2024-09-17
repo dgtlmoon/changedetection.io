@@ -26,6 +26,25 @@ def _search_prop_by_value(matches, value):
             if value in prop[0]:
                 return prop[1]  # Yield the desired value and exit the function
 
+def _deduplicate_prices(data):
+    seen = set()
+    unique_data = []
+
+    for datum in data:
+        # Convert 'value' to float if it can be a numeric string, otherwise leave it as is
+        try:
+            normalized_value = float(datum.value) if isinstance(datum.value, str) and datum.value.replace('.', '', 1).isdigit() else datum.value
+        except ValueError:
+            normalized_value = datum.value
+
+        # If the normalized value hasn't been seen yet, add it to unique data
+        if normalized_value not in seen:
+            unique_data.append(datum)
+            seen.add(normalized_value)
+    
+    return unique_data
+
+
 # should return Restock()
 # add casting?
 def get_itemprop_availability(html_content) -> Restock:
@@ -60,7 +79,7 @@ def get_itemprop_availability(html_content) -> Restock:
         pricecurrency_parse = parse('$..(pricecurrency|currency|priceCurrency )')
         availability_parse = parse('$..(availability|Availability)')
 
-        price_result = price_parse.find(data)
+        price_result = _deduplicate_prices(price_parse.find(data))
         if price_result:
             # Right now, we just support single product items, maybe we will store the whole actual metadata seperately in teh future and
             # parse that for the UI?
