@@ -1,5 +1,6 @@
 import os
 import time
+from loguru import logger
 from flask import url_for
 from .util import set_original_response, live_server_setup, extract_UUID_from_client, wait_for_all_checks, \
     wait_for_notification_endpoint_output
@@ -93,9 +94,11 @@ def run_filter_test(client, live_server, content_filter):
 
     # Now the notification should not exist, because we didnt reach the threshold
     assert not os.path.isfile("test-datastore/notification.txt")
+#    for uuid, watch in client.application.config.get('DATASTORE').data.get('watching').items():
+#        logger.debug(f"{uuid} has consecutive_filter_failures: {watch.get('consecutive_filter_failures', 5)}")
 
     # recheck it up to just before the threshold, including the fact that in the previous POST it would have rechecked (and incremented)
-    for i in range(0, App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT-2):
+    for i in range(0, App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT-1):
         client.get(url_for("form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
         time.sleep(2) # delay for apprise to fire
@@ -110,6 +113,7 @@ def run_filter_test(client, live_server, content_filter):
     wait_for_all_checks(client)
 
     wait_for_notification_endpoint_output()
+
     # Now it should exist and contain our "filter not found" alert
     assert os.path.isfile("test-datastore/notification.txt")
 
@@ -155,9 +159,11 @@ def test_setup(live_server):
     live_server_setup(live_server)
 
 def test_check_include_filters_failure_notification(client, live_server, measure_memory_usage):
+#    live_server_setup(live_server)
     run_filter_test(client, live_server,'#nope-doesnt-exist')
 
 def test_check_xpath_filter_failure_notification(client, live_server, measure_memory_usage):
+#    live_server_setup(live_server)
     run_filter_test(client, live_server, '//*[@id="nope-doesnt-exist"]')
 
 # Test that notification is never sent

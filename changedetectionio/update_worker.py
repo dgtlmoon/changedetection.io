@@ -365,9 +365,9 @@ class update_worker(threading.Thread):
                             watch.save_xpath_data(data=e.xpath_data)
 
                         # Only when enabled, send the notification
+
                         if watch.get('filter_failure_notification_send', False):
                             c = watch.get('consecutive_filter_failures', 5)
-                            c += 1
                             # Send notification if we reached the threshold?
                             threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts',0)
 
@@ -376,12 +376,14 @@ class update_worker(threading.Thread):
                                 if not watch.get('notification_muted'):
                                     logger.debug(f"Sending filter failed notification for {uuid}")
                                     self.send_filter_failure_notification(uuid)
-                                c = 0
                                 logger.debug(f"Reset filter failure count back to zero")
+                            else:
+                                c += 1
 
                             self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
                         else:
                             logger.trace(f"{uuid} - filter_failure_notification_send not enabled, skipping")
+
 
                         process_changedetection_results = False
 
