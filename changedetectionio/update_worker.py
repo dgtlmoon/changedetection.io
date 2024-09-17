@@ -377,6 +377,7 @@ class update_worker(threading.Thread):
                                 if not watch.get('notification_muted'):
                                     logger.debug(f"Sending filter failed notification for {uuid}")
                                     self.send_filter_failure_notification(uuid)
+                                    c = 0
                                 logger.debug(f"Reset filter failure count back to zero")
 
                             self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
