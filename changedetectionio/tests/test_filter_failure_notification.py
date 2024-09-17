@@ -101,23 +101,21 @@ def run_filter_test(client, live_server, content_filter):
 
     wait_for_all_checks(client)
     assert not os.path.isfile("test-datastore/notification.txt")
-    time.sleep(2)
 
     # Hitting [save] would have triggered a recheck, and we have a filter, so this would be ONE failure
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['consecutive_filter_failures'] == 1, "Should have been checked once"
 
-
     # recheck it up to just before the threshold, including the fact that in the previous POST it would have rechecked (and incremented)
     # Add 4 more checks
-    checked=0
-    attempt_threshold_setting = live_server.app.config['DATASTORE'].data['settings']['application'].get('filter_failure_notification_threshold_attempts', 0)
-    for i in range(0, attempt_threshold_setting-2):
-        checked+=1
+    checked = 0
+    ATTEMPT_THRESHOLD_SETTING = live_server.app.config['DATASTORE'].data['settings']['application'].get('filter_failure_notification_threshold_attempts', 0)
+    for i in range(0, ATTEMPT_THRESHOLD_SETTING - 2):
+        checked += 1
         client.get(url_for("form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
         res = client.get(url_for("index"))
         assert b'Warning, no filters were found' in res.data
-        assert not os.path.isfile("test-datastore/notification.txt"), f"test-datastore/notification.txt should not exist - Attempt {i} when threshold is {App._FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT}"
+        assert not os.path.isfile("test-datastore/notification.txt")
 
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['consecutive_filter_failures'] == 5
 
@@ -140,7 +138,7 @@ def run_filter_test(client, live_server, content_filter):
     set_response_with_filter()
 
     # Try several times, it should NOT have 'filter not found'
-    for i in range(0, attempt_threshold_setting+2):
+    for i in range(0, ATTEMPT_THRESHOLD_SETTING + 2):
         client.get(url_for("form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
 
