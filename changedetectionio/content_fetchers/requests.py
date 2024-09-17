@@ -1,8 +1,6 @@
 from loguru import logger
-import chardet
 import hashlib
 import os
-import requests
 from changedetectionio import strtobool
 from changedetectionio.content_fetchers.exceptions import BrowserStepsInUnsupportedFetcher, EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.base import Fetcher
@@ -27,6 +25,9 @@ class fetcher(Fetcher):
             current_include_filters=None,
             is_binary=False,
             empty_pages_are_a_change=False):
+
+        import chardet
+        import requests
 
         if self.browser_steps_get_valid_steps():
             raise BrowserStepsInUnsupportedFetcher(url=url)

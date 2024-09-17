@@ -541,7 +541,8 @@ def changedetection_app(config=None, datastore_o=None):
         import random
         from .apprise_asset import asset
         apobj = apprise.Apprise(asset=asset)
-
+        # so that the custom endpoints are registered
+        from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
         is_global_settings_form = request.args.get('mode', '') == 'global-settings'
         is_group_settings_form = request.args.get('mode', '') == 'group-settings'
 
