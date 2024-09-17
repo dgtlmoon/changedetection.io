@@ -25,6 +25,7 @@ browser_step_ui_config = {'Choose one': '0 0',
                           'Click element if exists': '1 0',
                           'Click element': '1 0',
                           'Click element containing text': '0 1',
+                          'Click element containing text if exists': '0 1',
                           'Enter text in field': '1 1',
                           'Execute JS': '0 1',
 #                          'Extract text and use as filter': '1 0',
@@ -96,11 +97,23 @@ class steppable_browser_interface():
         return self.action_goto_url(value=self.start_url)
 
     def action_click_element_containing_text(self, selector=None, value=''):
+        logger.debug("Clicking element containing text")
         if not len(value.strip()):
             return
         elem = self.page.get_by_text(value)
         if elem.count():
             elem.first.click(delay=randint(200, 500), timeout=3000)
+
+    def action_click_element_containing_text_if_exists(self, selector=None, value=''):
+        logger.debug("Clicking element containing text if exists")
+        if not len(value.strip()):
+            return
+        elem = self.page.get_by_text(value)
+        logger.debug(f"Clicking element containing text - {elem.count()} elements found")
+        if elem.count():
+            elem.first.click(delay=randint(200, 500), timeout=3000)
+        else:
+            return
 
     def action_enter_text_in_field(self, selector, value):
         if not len(selector.strip()):
