@@ -469,7 +469,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
 
-    subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
+    subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_json=False)])
 
     extract_text = StringListField('Extract text', [ValidateListRegex()])
 
@@ -576,7 +576,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
     empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
     fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
-    global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
+    global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_json=False)])
     ignore_whitespace = BooleanField('Ignore whitespace')
     password = SaltyPasswordField()
     pager_size = IntegerField('Pager size',

@@ -310,12 +310,13 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                     {{ render_field(form.subtractive_selectors, rows=5, placeholder=has_tag_filters_extra+"header
 footer
 nav
-.stockticker") }}
+.stockticker
+//*[contains(text(), 'Advertisement')]") }}
                     <span class="pure-form-message-inline">
                         <ul>
-                          <li> Remove HTML element(s) by CSS selector before text conversion. </li>
-                          <li> Don't paste HTML here, use only CSS selectors </li>
-                          <li> Add multiple elements or CSS selectors per line to ignore multiple parts of the HTML. </li>
+                          <li> Remove HTML element(s) by CSS and XPath selectors before text conversion. </li>
+                          <li> Don't paste HTML here, use only CSS and XPath selectors </li>
+                          <li> Add multiple elements, CSS or XPath selectors per line to ignore multiple parts of the HTML. </li>
                         </ul>
                       </span>
                 </fieldset>
