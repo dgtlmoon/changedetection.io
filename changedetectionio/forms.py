@@ -222,7 +222,7 @@ class ValidateAppRiseServers(object):
         import apprise
         apobj = apprise.Apprise()
         # so that the custom endpoints are registered
-        from changedetectionio.apprise import apprise_custom_api_call_wrapper
+        from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
         for server_url in field.data:
             if not apobj.add(server_url):
                 message = field.gettext('\'%s\' is not a valid AppRise URL.' % (server_url))

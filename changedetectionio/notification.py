@@ -39,7 +39,8 @@ valid_notification_formats = {
 
 def process_notification(n_object, datastore):
     # so that the custom endpoints are registered
-    from changedetectionio.apprise import apprise_custom_api_call_wrapper
+    from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
+
     from .safe_jinja import render as jinja_render
     now = time.time()
     if n_object.get('notification_timestamp'):
