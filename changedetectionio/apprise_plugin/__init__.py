@@ -1,4 +1,4 @@
-
+import apprise
 # include the decorator
 from apprise.decorators import notify
 
