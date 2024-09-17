@@ -369,16 +369,15 @@ class update_worker(threading.Thread):
                         if watch.get('filter_failure_notification_send', False):
                             c = watch.get('consecutive_filter_failures', 5)
                             # Send notification if we reached the threshold?
-                            threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts',0)
-
+                            threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts', 0)
+                            # zero/first should also be 1
+                            c += 1
                             logger.debug(f"Filter for {uuid} not found, consecutive_filter_failures: {c} of threshold {threshold}")
                             if threshold and c >= threshold:
                                 if not watch.get('notification_muted'):
                                     logger.debug(f"Sending filter failed notification for {uuid}")
                                     self.send_filter_failure_notification(uuid)
                                 logger.debug(f"Reset filter failure count back to zero")
-                            else:
-                                c += 1
 
                             self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
                         else:
