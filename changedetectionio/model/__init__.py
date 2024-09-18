@@ -60,6 +60,8 @@ class watch_base(dict):
             'time_between_check_use_default': True,
             'title': None,
             'track_ldjson_price_data': None,
+            'trim_text_whitespace': False,
+            'remove_duplicate_lines': False,
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'url': '',
             'uuid': str(uuid.uuid4()),
