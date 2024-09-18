@@ -2,7 +2,7 @@
 import os.path
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output
 from changedetectionio import html_tools
 
 
@@ -165,7 +165,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     assert b'unviewed' in res.data
 
     # Takes a moment for apprise to fire
-    time.sleep(3)
+    wait_for_notification_endpoint_output()
     assert os.path.isfile("test-datastore/notification.txt"), "Notification fired because I can see the output file"
     with open("test-datastore/notification.txt", 'rb') as f:
         response = f.read()

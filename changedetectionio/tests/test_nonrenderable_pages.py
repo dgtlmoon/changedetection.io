@@ -2,6 +2,8 @@
 
 from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
+import time
+
 
 def set_nonrenderable_response():
     test_return_data = """<html>
@@ -11,17 +13,16 @@ def set_nonrenderable_response():
      </body>
      </html>
     """
-
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
+    time.sleep(1)
 
     return None
 
 def set_zero_byte_response():
-
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("")
-
+    time.sleep(1)
     return None
 
 def test_check_basic_change_detection_functionality(client, live_server, measure_memory_usage):

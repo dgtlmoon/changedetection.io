@@ -69,6 +69,12 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     wait_for_all_checks(client)
 
+    uuid = extract_UUID_from_client(client)
+
+    # Check the 'get latest snapshot works'
+    res = client.get(url_for("watch_get_latest_html", uuid=uuid))
+    assert b'which has this one new line' in res.data
+
     # Now something should be ready, indicated by having a 'unviewed' class
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
@@ -86,7 +92,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     assert expected_url.encode('utf-8') in res.data
 
     # Following the 'diff' link, it should no longer display as 'unviewed' even after we recheck it a few times
-    res = client.get(url_for("diff_history_page", uuid="first"))
+    res = client.get(url_for("diff_history_page", uuid=uuid))
     assert b'selected=""' in res.data, "Confirm diff history page loaded"
 
     # Check the [preview] pulls the right one
@@ -143,17 +149,11 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     assert b'unviewed' not in res.data
 
     # #2458 "clear history" should make the Watch object update its status correctly when the first snapshot lands again
-    uuid = extract_UUID_from_client(client)
     client.get(url_for("clear_watch_history", uuid=uuid))
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'preview/' in res.data
-
-
-    # Check the 'get latest snapshot works'
-    res = client.get(url_for("watch_get_latest_html", uuid=uuid))
-    assert b'<head><title>head title</title></head>' in res.data
 
     #
     # Cleanup everything

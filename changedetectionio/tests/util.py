@@ -76,6 +76,17 @@ def set_more_modified_response():
     return None
 
 
+def wait_for_notification_endpoint_output():
+    '''Apprise can take a few seconds to fire'''
+    from os.path import isfile
+    for i in range(1, 20):
+        time.sleep(1)
+        if isfile("test-datastore/notification.txt"):
+            return True
+
+    return False
+
+
 # kinda funky, but works for now
 def extract_api_key_from_UI(client):
     import re

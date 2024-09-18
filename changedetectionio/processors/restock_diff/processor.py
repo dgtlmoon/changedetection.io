@@ -2,8 +2,7 @@ from .. import difference_detection_processor
 from ..exceptions import ProcessorException
 from . import Restock
 from loguru import logger
-import hashlib
-import re
+
 import urllib3
 import time
 
@@ -27,6 +26,25 @@ def _search_prop_by_value(matches, value):
             if value in prop[0]:
                 return prop[1]  # Yield the desired value and exit the function
 
+def _deduplicate_prices(data):
+    seen = set()
+    unique_data = []
+
+    for datum in data:
+        # Convert 'value' to float if it can be a numeric string, otherwise leave it as is
+        try:
+            normalized_value = float(datum.value) if isinstance(datum.value, str) and datum.value.replace('.', '', 1).isdigit() else datum.value
+        except ValueError:
+            normalized_value = datum.value
+
+        # If the normalized value hasn't been seen yet, add it to unique data
+        if normalized_value not in seen:
+            unique_data.append(datum)
+            seen.add(normalized_value)
+    
+    return unique_data
+
+
 # should return Restock()
 # add casting?
 def get_itemprop_availability(html_content) -> Restock:
@@ -36,17 +54,21 @@ def get_itemprop_availability(html_content) -> Restock:
     """
     from jsonpath_ng import parse
 
+    import re
     now = time.time()
     import extruct
     logger.trace(f"Imported extruct module in {time.time() - now:.3f}s")
 
-    value = {}
     now = time.time()
+
     # Extruct is very slow, I'm wondering if some ML is going to be faster (800ms on my i7), 'rdfa' seems to be the heaviest.
-
     syntaxes = ['dublincore', 'json-ld', 'microdata', 'microformat', 'opengraph']
+    try:
+        data = extruct.extract(html_content, syntaxes=syntaxes)
+    except Exception as e:
+        logger.warning(f"Unable to extract data, document parsing with extruct failed with {type(e).__name__} - {str(e)}")
+        return Restock()
 
-    data = extruct.extract(html_content, syntaxes=syntaxes)
     logger.trace(f"Extruct basic extract of all metadata done in {time.time() - now:.3f}s")
 
     # First phase, dead simple scanning of anything that looks useful
@@ -57,7 +79,7 @@ def get_itemprop_availability(html_content) -> Restock:
         pricecurrency_parse = parse('$..(pricecurrency|currency|priceCurrency )')
         availability_parse = parse('$..(availability|Availability)')
 
-        price_result = price_parse.find(data)
+        price_result = _deduplicate_prices(price_parse.find(data))
         if price_result:
             # Right now, we just support single product items, maybe we will store the whole actual metadata seperately in teh future and
             # parse that for the UI?
@@ -119,6 +141,10 @@ class perform_site_check(difference_detection_processor):
     xpath_data = None
 
     def run_changedetection(self, watch, skip_when_checksum_same=True):
+        import hashlib
+
+        from concurrent.futures import ProcessPoolExecutor
+        from functools import partial
         if not watch:
             raise Exception("Watch no longer exists.")
 
@@ -146,7 +172,11 @@ class perform_site_check(difference_detection_processor):
 
         itemprop_availability = {}
         try:
-            itemprop_availability = get_itemprop_availability(html_content=self.fetcher.content)
+            with ProcessPoolExecutor() as executor:
+                # Use functools.partial to create a callable with arguments
+                # anything using bs4/lxml etc is quite "leaky"
+                future = executor.submit(partial(get_itemprop_availability, self.fetcher.content))
+                itemprop_availability = future.result()
         except MoreThanOnePriceFound as e:
             # Add the real data
             raise ProcessorException(message="Cannot run, more than one price detected, this plugin is only for product pages with ONE product, try the content-change detection mode.",

@@ -35,7 +35,7 @@ dnspython==2.6.1 # related to eventlet fixes
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise~=1.8.1
+apprise==1.9.0
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 # and 2.0.0 https://github.com/dgtlmoon/changedetection.io/issues/2241 not yet compatible
@@ -79,8 +79,9 @@ pyppeteerstealth>=0.0.4
 pytest ~=7.2
 pytest-flask ~=1.2
 
-# Pin jsonschema version to prevent build errors on armv6 while rpds-py wheels aren't available (1708)
-jsonschema==4.17.3
+# Anything 4.0 and up but not 5.0
+jsonschema ~= 4.0
+
 
 loguru
 

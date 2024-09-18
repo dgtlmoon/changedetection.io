@@ -164,6 +164,15 @@ visibleElementsArray.forEach(function (element) {
         }
     }
 
+    let label = "not-interesting" // A placeholder, the actual labels for training are done by hand for now
+
+    let text = element.textContent.trim().slice(0, 30).trim();
+    while (/\n{2,}|\t{2,}/.test(text)) {
+        text = text.replace(/\n{2,}/g, '\n').replace(/\t{2,}/g, '\t')
+    }
+
+    // Try to identify any possible currency amounts "Sale: 4000" or "Sale now 3000 Kc", can help with the training.
+    const hasDigitCurrency = (/\d/.test(text.slice(0, 6)) || /\d/.test(text.slice(-6)) ) &&  /([€£$¥₩₹]|USD|AUD|EUR|Kč|kr|SEK|,–)/.test(text) ;
 
     size_pos.push({
         xpath: xpath_result,
@@ -171,9 +180,16 @@ visibleElementsArray.forEach(function (element) {
         height: Math.round(bbox['height']),
         left: Math.floor(bbox['left']),
         top: Math.floor(bbox['top']) + scroll_y,
+        // tagName used by Browser Steps
         tagName: (element.tagName) ? element.tagName.toLowerCase() : '',
+        // tagtype used by Browser Steps
         tagtype: (element.tagName.toLowerCase() === 'input' && element.type) ? element.type.toLowerCase() : '',
-        isClickable: window.getComputedStyle(element).cursor == "pointer"
+        isClickable: window.getComputedStyle(element).cursor === "pointer",
+        // Used by the keras trainer
+        fontSize: window.getComputedStyle(element).getPropertyValue('font-size'),
+        fontWeight: window.getComputedStyle(element).getPropertyValue('font-weight'),
+        hasDigitCurrency: hasDigitCurrency,
+        label: label,
     });
 
 });
