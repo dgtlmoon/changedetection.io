@@ -350,10 +350,6 @@ nav
                     {{ render_checkbox_field(form.trim_text_whitespace) }}
                     <span class="pure-form-message-inline">Remove any whitespace before and after each line of text</span>
                 </fieldset>
-                <fieldset class="pure-control-group">
-                    {{ render_checkbox_field(form.check_unique_lines) }}
-                    <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
-                </fieldset>
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.trigger_text, rows=5, placeholder="Some text to wait for in a line
