@@ -200,7 +200,7 @@ User-Agent: wonderbra 1.0") }}
                         <div id="loading-status-text" style="display: none;">Please wait, first browser step can take a little time to load..<div class="spinner"></div></div>
                         <div class="flex-wrapper" >
 
-                            <div id="browser-steps-ui" class="noselect"  style="width: 100%; background-color: #eee; border-radius: 5px;">
+                            <div id="browser-steps-ui" class="noselect">
 
                                 <div class="noselect"  id="browsersteps-selector-wrapper" style="width: 100%">
                                     <span class="loader" >
@@ -215,7 +215,7 @@ User-Agent: wonderbra 1.0") }}
                                     <canvas  class="noselect" id="browsersteps-selector-canvas" style="max-width: 100%; width: 100%;"></canvas>
                                 </div>
                             </div>
-                            <div id="browser-steps-fieldlist" style="padding-left: 1em;  width: 350px; font-size: 80%;" >
+                            <div id="browser-steps-fieldlist" >
                                 <span id="browser-seconds-remaining">Loading</span> <span style="font-size: 80%;"> (<a target=_new href="https://github.com/dgtlmoon/changedetection.io/pull/478/files#diff-1a79d924d1840c485238e66772391268a89c95b781d69091384cf1ea1ac146c9R4">?</a>) </span>
                                 {{ render_field(form.browser_steps) }}
                             </div>
@@ -313,12 +313,13 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                     {{ render_field(form.subtractive_selectors, rows=5, placeholder=has_tag_filters_extra+"header
 footer
 nav
-.stockticker") }}
+.stockticker
+//*[contains(text(), 'Advertisement')]") }}
                     <span class="pure-form-message-inline">
                         <ul>
-                          <li> Remove HTML element(s) by CSS selector before text conversion. </li>
-                          <li> Don't paste HTML here, use only CSS selectors </li>
-                          <li> Add multiple elements or CSS selectors per line to ignore multiple parts of the HTML. </li>
+                          <li> Remove HTML element(s) by CSS and XPath selectors before text conversion. </li>
+                          <li> Don't paste HTML here, use only CSS and XPath selectors </li>
+                          <li> Add multiple elements, CSS or XPath selectors per line to ignore multiple parts of the HTML. </li>
                         </ul>
                       </span>
                 </fieldset>
@@ -333,10 +334,21 @@ nav
                     <span class="pure-form-message-inline">So it's always better to select <strong>Added</strong>+<strong>Replaced</strong> when you're interested in new content.</span><br>
                     <span class="pure-form-message-inline">When content is merely moved in a list, it will also trigger an <strong>addition</strong>, consider enabling <code><strong>Only trigger when unique lines appear</strong></code></span>
                 </fieldset>
-
+                <fieldset class="pure-control-group">
+                    {{ render_checkbox_field(form.check_unique_lines) }}
+                    <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
+                </fieldset>
+                <fieldset class="pure-control-group">
+                    {{ render_checkbox_field(form.remove_duplicate_lines) }}
+                    <span class="pure-form-message-inline">Remove duplicate lines of text</span>
+                </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.sort_text_alphabetically) }}
                     <span class="pure-form-message-inline">Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below.</span>
+                </fieldset>
+                <fieldset class="pure-control-group">
+                    {{ render_checkbox_field(form.trim_text_whitespace) }}
+                    <span class="pure-form-message-inline">Remove any whitespace before and after each line of text</span>
                 </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.check_unique_lines) }}

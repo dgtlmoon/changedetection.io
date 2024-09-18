@@ -46,14 +46,31 @@
     #browser_steps li > label {
       display: none; }
 
-#browser-steps-fieldlist {
-  height: 100%;
-  overflow-y: scroll; }
-
 #browser-steps .flex-wrapper {
   display: flex;
   flex-flow: row;
-  height: 70vh; }
+  height: 70vh;
+  font-size: 80%; }
+  #browser-steps .flex-wrapper #browser-steps-ui {
+    flex-grow: 1;
+    /* Allow it to grow and fill the available space */
+    flex-shrink: 1;
+    /* Allow it to shrink if needed */
+    flex-basis: 0;
+    /* Start with 0 base width so it stretches as much as possible */
+    background-color: #eee;
+    border-radius: 5px; }
+  #browser-steps .flex-wrapper #browser-steps-fieldlist {
+    flex-grow: 0;
+    /* Don't allow it to grow */
+    flex-shrink: 0;
+    /* Don't allow it to shrink */
+    flex-basis: auto;
+    /* Base width is determined by the content */
+    max-width: 400px;
+    /* Set a max width to prevent overflow */
+    padding-left: 1rem;
+    overflow-y: scroll; }
 
 /*  this is duplicate :( */
 #browsersteps-selector-wrapper {
