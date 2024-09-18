@@ -200,7 +200,7 @@ User-Agent: wonderbra 1.0") }}
                         <div id="loading-status-text" style="display: none;">Please wait, first browser step can take a little time to load..<div class="spinner"></div></div>
                         <div class="flex-wrapper" >
 
-                            <div id="browser-steps-ui" class="noselect"  style="width: 100%; background-color: #eee; border-radius: 5px;">
+                            <div id="browser-steps-ui" class="noselect">
 
                                 <div class="noselect"  id="browsersteps-selector-wrapper" style="width: 100%">
                                     <span class="loader" >
@@ -215,7 +215,7 @@ User-Agent: wonderbra 1.0") }}
                                     <canvas  class="noselect" id="browsersteps-selector-canvas" style="max-width: 100%; width: 100%;"></canvas>
                                 </div>
                             </div>
-                            <div id="browser-steps-fieldlist" style="padding-left: 1em;  width: 350px; font-size: 80%;" >
+                            <div id="browser-steps-fieldlist" >
                                 <span id="browser-seconds-remaining">Loading</span> <span style="font-size: 80%;"> (<a target=_new href="https://github.com/dgtlmoon/changedetection.io/pull/478/files#diff-1a79d924d1840c485238e66772391268a89c95b781d69091384cf1ea1ac146c9R4">?</a>) </span>
                                 {{ render_field(form.browser_steps) }}
                             </div>
