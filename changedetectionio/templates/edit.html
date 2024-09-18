@@ -331,10 +331,21 @@ nav
                     <span class="pure-form-message-inline">So it's always better to select <strong>Added</strong>+<strong>Replaced</strong> when you're interested in new content.</span><br>
                     <span class="pure-form-message-inline">When content is merely moved in a list, it will also trigger an <strong>addition</strong>, consider enabling <code><strong>Only trigger when unique lines appear</strong></code></span>
                 </fieldset>
-
+                <fieldset class="pure-control-group">
+                    {{ render_checkbox_field(form.check_unique_lines) }}
+                    <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
+                </fieldset>
+                <fieldset class="pure-control-group">
+                    {{ render_checkbox_field(form.remove_duplicate_lines) }}
+                    <span class="pure-form-message-inline">Remove duplicate lines of text</span>
+                </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.sort_text_alphabetically) }}
                     <span class="pure-form-message-inline">Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below.</span>
+                </fieldset>
+                <fieldset class="pure-control-group">
+                    {{ render_checkbox_field(form.trim_text_whitespace) }}
+                    <span class="pure-form-message-inline">Remove any whitespace before and after each line of text</span>
                 </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.check_unique_lines) }}
