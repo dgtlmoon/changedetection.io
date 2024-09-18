@@ -11,6 +11,8 @@ def set_original_ignore_response():
      <p>Some initial text</p>
      <p>Which is across multiple lines</p>
      <p>So let's see what happens.</p>
+     <p>&nbsp;  So let's see what happens.   <br> </p>
+     <p>A - sortable line</p> 
      </body>
      </html>
     """
@@ -164,5 +166,52 @@ def test_sort_lines_functionality(client, live_server, measure_memory_usage):
     assert res.data.find(b'A uppercase') < res.data.find(b'Z last')
     assert res.data.find(b'Some initial text') < res.data.find(b'Which is across multiple lines')
     
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+
+def test_extra_filters(client, live_server, measure_memory_usage):
+    #live_server_setup(live_server)
+
+    set_original_ignore_response()
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    wait_for_all_checks(client)
+
+    # Add our URL to the import page
+    res = client.post(
+        url_for("edit_page", uuid="first"),
+        data={"remove_duplicate_lines": "y",
+              "trim_text_whitespace": "y",
+              "sort_text_alphabetically": "",  # leave this OFF for testing
+              "url": test_url,
+              "fetch_backend": "html_requests"},
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    # Give the thread time to pick it up
+    wait_for_all_checks(client)
+    # Trigger a check
+    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+
+    # Give the thread time to pick it up
+    wait_for_all_checks(client)
+
+    res = client.get(
+        url_for("preview_page", uuid="first")
+    )
+
+    assert res.data.count(b"see what happens.") == 1
+
+    # still should remain unsorted ('A - sortable line') stays at the end
+    assert res.data.find(b'A - sortable line') > res.data.find(b'Which is across multiple lines')
+
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
