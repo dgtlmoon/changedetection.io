@@ -149,6 +149,14 @@ Then visit http://127.0.0.1:5000 , You should now be able to access the UI.
 
 _Now with per-site configurable support for using a fast built in HTTP fetcher or use a Chrome based fetcher for monitoring of JavaScript websites!_
 
+## One-click Deploy ChangeDetection
+
+### Elestio
+
+You can deploy ChangeDetection on Elestio using one-click deployment. Elestio supports ChangeDetection by providing revenue share so go ahead and click below to deploy and use ChangeDetection.
+
+[![Deploy on Elestio](https://elest.io/images/logos/deploy-to-elestio-btn.png)](https://elest.io/open-source/changedetection)
+
 ## Updating changedetection.io
 
 ### Docker
