@@ -65,4 +65,4 @@ def test_socks5_from_proxiesjson_file(client, live_server, measure_memory_usage)
     )
 
     # Should see the proper string
-    assert "+0200:".encode('utf-8') in res.data
+    assert "Awesome, you made it".encode('utf-8') in res.data
