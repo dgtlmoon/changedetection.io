@@ -143,8 +143,6 @@ class perform_site_check(difference_detection_processor):
     def run_changedetection(self, watch, skip_when_checksum_same=True):
         import hashlib
 
-        from concurrent.futures import ProcessPoolExecutor
-        from functools import partial
         if not watch:
             raise Exception("Watch no longer exists.")
 
@@ -186,11 +184,7 @@ class perform_site_check(difference_detection_processor):
 
         itemprop_availability = {}
         try:
-            with ProcessPoolExecutor() as executor:
-                # Use functools.partial to create a callable with arguments
-                # anything using bs4/lxml etc is quite "leaky"
-                future = executor.submit(partial(get_itemprop_availability, self.fetcher.content))
-                itemprop_availability = future.result()
+            itemprop_availability = get_itemprop_availability(self.fetcher.content)
         except MoreThanOnePriceFound as e:
             # Add the real data
             raise ProcessorException(message="Cannot run, more than one price detected, this plugin is only for product pages with ONE product, try the content-change detection mode.",

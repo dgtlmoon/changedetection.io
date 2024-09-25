@@ -36,8 +36,6 @@ class PDFToHTMLToolNotFound(ValueError):
 class perform_site_check(difference_detection_processor):
 
     def run_changedetection(self, watch, skip_when_checksum_same=True):
-        from concurrent.futures import ProcessPoolExecutor
-        from functools import partial
 
         changed_detected = False
         html_content = ""
@@ -174,30 +172,20 @@ class perform_site_check(difference_detection_processor):
                     for filter_rule in include_filters_rule:
                         # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
                         if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
-                            with ProcessPoolExecutor() as executor:
-                                # Use functools.partial to create a callable with arguments - anything using bs4/lxml etc is quite "leaky"
-                                future = executor.submit(partial(html_tools.xpath_filter, xpath_filter=filter_rule.replace('xpath:', ''),
+                            html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
                                                                     html_content=self.fetcher.content,
                                                                     append_pretty_line_formatting=not watch.is_source_type_url,
-                                                                    is_rss=is_rss))
-                                html_content += future.result()
+                                                                    is_rss=is_rss)
 
                         elif filter_rule.startswith('xpath1:'):
-                            with ProcessPoolExecutor() as executor:
-                                # Use functools.partial to create a callable with arguments - anything using bs4/lxml etc is quite "leaky"
-                                future = executor.submit(partial(html_tools.xpath1_filter, xpath_filter=filter_rule.replace('xpath1:', ''),
-                                                                    html_content=self.fetcher.content,
-                                                                    append_pretty_line_formatting=not watch.is_source_type_url,
-                                                                    is_rss=is_rss))
-                                html_content += future.result()
+                            html_content += html_tools.xpath1_filter(xpath_filter=filter_rule.replace('xpath1:', ''),
+                                                                     html_content=self.fetcher.content,
+                                                                     append_pretty_line_formatting=not watch.is_source_type_url,
+                                                                     is_rss=is_rss)
                         else:
-                            with ProcessPoolExecutor() as executor:
-                                # Use functools.partial to create a callable with arguments - anything using bs4/lxml etc is quite "leaky"
-                                # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-                                future = executor.submit(partial(html_tools.include_filters, include_filters=filter_rule,
+                            html_content += html_tools.include_filters(include_filters=filter_rule,
                                                                        html_content=self.fetcher.content,
-                                                                       append_pretty_line_formatting=not watch.is_source_type_url))
-                                html_content += future.result()
+                                                                       append_pretty_line_formatting=not watch.is_source_type_url)
 
                     if not html_content.strip():
                         raise FilterNotFoundInResponse(msg=include_filters_rule, screenshot=self.fetcher.screenshot, xpath_data=self.fetcher.xpath_data)
@@ -210,13 +198,9 @@ class perform_site_check(difference_detection_processor):
                 else:
                     # extract text
                     do_anchor = self.datastore.data["settings"]["application"].get("render_anchor_tag_content", False)
-                    with ProcessPoolExecutor() as executor:
-                        # Use functools.partial to create a callable with arguments - anything using bs4/lxml etc is quite "leaky"
-                        # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
-                        future = executor.submit(partial(html_tools.html_to_text, html_content=html_content,
-                            render_anchor_tag_content=do_anchor,
-                            is_rss=is_rss)) #1874 activate the <title workaround hack
-                        stripped_text_from_html = future.result()
+                    stripped_text_from_html = html_tools.html_to_text(html_content=html_content,
+                                                                      render_anchor_tag_content=do_anchor,
+                                                                      is_rss=is_rss)  # 1874 activate the <title workaround hack
 
 
         if watch.get('trim_text_whitespace'):
