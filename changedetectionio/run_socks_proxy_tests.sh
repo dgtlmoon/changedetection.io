@@ -16,6 +16,7 @@ echo "---------------------------------- SOCKS5 -------------------"
 docker run --network changedet-network \
   -v `pwd`/tests/proxy_socks5/proxies.json-example:/app/changedetectionio/test-datastore/proxies.json \
   --rm \
+  -e "FLASK_SERVER_NAME=cdio" \
   --hostname cdio \
   -e "SOCKSTEST=proxiesjson" \
   test-changedetectionio \
@@ -24,6 +25,7 @@ docker run --network changedet-network \
 # SOCKS5 related - by manually entering in UI
 docker run --network changedet-network \
   --rm \
+  -e "FLASK_SERVER_NAME=cdio" \
   --hostname cdio \
   -e "SOCKSTEST=manual" \
   test-changedetectionio \
@@ -33,6 +35,7 @@ docker run --network changedet-network \
 docker run --network changedet-network \
   -e "SOCKSTEST=manual-playwright" \
   --hostname cdio \
+  -e "FLASK_SERVER_NAME=cdio" \
   -v `pwd`/tests/proxy_socks5/proxies.json-example-noauth:/app/changedetectionio/test-datastore/proxies.json \
   -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" \
   --rm \
