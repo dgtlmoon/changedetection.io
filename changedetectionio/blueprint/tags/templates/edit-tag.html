@@ -58,9 +58,9 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                         {% if '/text()' in  field %}
                           <span class="pure-form-message-inline"><strong>Note!: //text() function does not work where the &lt;element&gt; contains &lt;![CDATA[]]&gt;</strong></span><br>
                         {% endif %}
-                        <span class="pure-form-message-inline">One rule per line, <i>any</i> rules that matches will be used.<br>
-
-                    <ul>
+                        <span class="pure-form-message-inline">One CSS, xPath, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used.<br>
+                    <div data-target="#advanced-help-selectors" class="toggle-show pure-button button-tag button-xsmall">Show advanced help and tips</div>
+                    <ul id="advanced-help-selectors">
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
                         <li>JSON - Limit text to this JSON rule, using either <a href="https://pypi.org/project/jsonpath-ng/" target="new">JSONPath</a> or <a href="https://stedolan.github.io/jq/" target="new">jq</a> (if installed).
                             <ul>
@@ -89,11 +89,13 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                     {{ render_field(form.subtractive_selectors, rows=5, placeholder="header
 footer
 nav
-.stockticker") }}
+.stockticker
+//*[contains(text(), 'Advertisement')]") }}
                     <span class="pure-form-message-inline">
                         <ul>
-                          <li> Remove HTML element(s) by CSS selector before text conversion. </li>
-                          <li> Add multiple elements or CSS selectors per line to ignore multiple parts of the HTML. </li>
+                          <li> Remove HTML element(s) by CSS and XPath selectors before text conversion. </li>
+                          <li> Don't paste HTML here, use only CSS and XPath selectors </li>
+                          <li> Add multiple elements, CSS or XPath selectors per line to ignore multiple parts of the HTML. </li>
                         </ul>
                       </span>
                 </fieldset>

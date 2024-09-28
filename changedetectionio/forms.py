@@ -221,7 +221,8 @@ class ValidateAppRiseServers(object):
     def __call__(self, form, field):
         import apprise
         apobj = apprise.Apprise()
-
+        # so that the custom endpoints are registered
+        from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
         for server_url in field.data:
             if not apobj.add(server_url):
                 message = field.gettext('\'%s\' is not a valid AppRise URL.' % (server_url))
@@ -468,7 +469,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
 
-    subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
+    subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_json=False)])
 
     extract_text = StringListField('Extract text', [ValidateListRegex()])
 
@@ -479,8 +480,10 @@ class processor_text_json_diff_form(commonSettingsForm):
     body = TextAreaField('Request body', [validators.Optional()])
     method = SelectField('Request method', choices=valid_method, default=default_method)
     ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
-    check_unique_lines = BooleanField('Only trigger when unique lines appear', default=False)
+    check_unique_lines = BooleanField('Only trigger when unique lines appear in all history', default=False)
+    remove_duplicate_lines = BooleanField('Remove duplicate lines of text', default=False)
     sort_text_alphabetically =  BooleanField('Sort text alphabetically', default=False)
+    trim_text_whitespace = BooleanField('Trim whitespace before and after text', default=False)
 
     filter_text_added = BooleanField('Added lines', default=True)
     filter_text_replaced = BooleanField('Replaced/changed lines', default=True)
@@ -575,7 +578,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
     empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
     fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
-    global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
+    global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_json=False)])
     ignore_whitespace = BooleanField('Ignore whitespace')
     password = SaltyPasswordField()
     pager_size = IntegerField('Pager size',

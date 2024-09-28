@@ -2,8 +2,7 @@ from .. import difference_detection_processor
 from ..exceptions import ProcessorException
 from . import Restock
 from loguru import logger
-import hashlib
-import re
+
 import urllib3
 import time
 
@@ -27,6 +26,25 @@ def _search_prop_by_value(matches, value):
             if value in prop[0]:
                 return prop[1]  # Yield the desired value and exit the function
 
+def _deduplicate_prices(data):
+    seen = set()
+    unique_data = []
+
+    for datum in data:
+        # Convert 'value' to float if it can be a numeric string, otherwise leave it as is
+        try:
+            normalized_value = float(datum.value) if isinstance(datum.value, str) and datum.value.replace('.', '', 1).isdigit() else datum.value
+        except ValueError:
+            normalized_value = datum.value
+
+        # If the normalized value hasn't been seen yet, add it to unique data
+        if normalized_value not in seen:
+            unique_data.append(datum)
+            seen.add(normalized_value)
+    
+    return unique_data
+
+
 # should return Restock()
 # add casting?
 def get_itemprop_availability(html_content) -> Restock:
@@ -36,6 +54,7 @@ def get_itemprop_availability(html_content) -> Restock:
     """
     from jsonpath_ng import parse
 
+    import re
     now = time.time()
     import extruct
     logger.trace(f"Imported extruct module in {time.time() - now:.3f}s")
@@ -60,7 +79,7 @@ def get_itemprop_availability(html_content) -> Restock:
         pricecurrency_parse = parse('$..(pricecurrency|currency|priceCurrency )')
         availability_parse = parse('$..(availability|Availability)')
 
-        price_result = price_parse.find(data)
+        price_result = _deduplicate_prices(price_parse.find(data))
         if price_result:
             # Right now, we just support single product items, maybe we will store the whole actual metadata seperately in teh future and
             # parse that for the UI?
@@ -122,6 +141,8 @@ class perform_site_check(difference_detection_processor):
     xpath_data = None
 
     def run_changedetection(self, watch, skip_when_checksum_same=True):
+        import hashlib
+
         if not watch:
             raise Exception("Watch no longer exists.")
 
@@ -134,6 +155,20 @@ class perform_site_check(difference_detection_processor):
         # Track the content type
         update_obj['content_type'] = self.fetcher.headers.get('Content-Type', '')
         update_obj["last_check_status"] = self.fetcher.get_last_status_code()
+
+        # Only try to process restock information (like scraping for keywords) if the page was actually rendered correctly.
+        # Otherwise it will assume "in stock" because nothing suggesting the opposite was found
+        from ...html_tools import html_to_text
+        text = html_to_text(self.fetcher.content)
+        logger.debug(f"Length of text after conversion: {len(text)}")
+        if not len(text):
+            from ...content_fetchers.exceptions import ReplyWithContentButNoText
+            raise ReplyWithContentButNoText(url=watch.link,
+                                            status_code=self.fetcher.get_last_status_code(),
+                                            screenshot=self.fetcher.screenshot,
+                                            html_content=self.fetcher.content,
+                                            xpath_data=self.fetcher.xpath_data
+                                            )
 
         # Which restock settings to compare against?
         restock_settings = watch.get('restock_settings', {})
@@ -149,7 +184,7 @@ class perform_site_check(difference_detection_processor):
 
         itemprop_availability = {}
         try:
-            itemprop_availability = get_itemprop_availability(html_content=self.fetcher.content)
+            itemprop_availability = get_itemprop_availability(self.fetcher.content)
         except MoreThanOnePriceFound as e:
             # Add the real data
             raise ProcessorException(message="Cannot run, more than one price detected, this plugin is only for product pages with ONE product, try the content-change detection mode.",
@@ -263,4 +298,4 @@ class perform_site_check(difference_detection_processor):
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5
 
-        return changed_detected, update_obj, snapshot_content.encode('utf-8').strip()
+        return changed_detected, update_obj, snapshot_content.encode('utf-8').strip(), b''

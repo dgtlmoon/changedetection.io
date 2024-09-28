@@ -11,8 +11,11 @@
     class="notification-urls" )
                             }}
                             <div class="pure-form-message-inline">
-                              <ul>
-                                <li>Use <a target=_new href="https://github.com/caronc/apprise">AppRise URLs</a> for notification to just about any service! <i><a target=_new href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes">Please read the notification services wiki here for important configuration notes</a></i>.</li>
+                                <p>
+                                <strong>Tip:</strong> Use <a target=_new href="https://github.com/caronc/apprise">AppRise Notification URLs</a> for notification to just about any service! <i><a target=_new href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes">Please read the notification services wiki here for important configuration notes</a></i>.<br>
+</p>
+                                <div data-target="#advanced-help-notifications" class="toggle-show pure-button button-tag button-xsmall">Show advanced help and tips</div>
+                                <ul style="display: none" id="advanced-help-notifications">
                                 <li><code><a target=_new href="https://github.com/caronc/apprise/wiki/Notify_discord">discord://</a></code> (or <code>https://discord.com/api/webhooks...</code>)) only supports a maximum <strong>2,000 characters</strong> of notification text, including the title.</li>
                                 <li><code><a target=_new href="https://github.com/caronc/apprise/wiki/Notify_telegram">tgram://</a></code> bots can't send messages to other bots, so you should specify chat ID of non-bot user.</li>
                                 <li><code><a target=_new href="https://github.com/caronc/apprise/wiki/Notify_telegram">tgram://</a></code> only supports very limited HTML and can fail when extra tags are sent, <a href="https://core.telegram.org/bots/api#html-style">read more here</a> (or use plaintext/markdown format)</li>
@@ -40,7 +43,7 @@
 
                             </div>
                             <div class="pure-controls">
-                                <div id="notification-token-toggle" class="pure-button button-tag button-xsmall">Show token/placeholders</div>
+                                <div data-target="#notification-tokens-info" class="toggle-show pure-button button-tag button-xsmall">Show token/placeholders</div>
                             </div>
                             <div class="pure-controls" style="display: none;" id="notification-tokens-info">
                                 <table class="pure-table" id="token-table">

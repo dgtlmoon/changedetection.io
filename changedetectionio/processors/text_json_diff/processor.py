@@ -36,6 +36,7 @@ class PDFToHTMLToolNotFound(ValueError):
 class perform_site_check(difference_detection_processor):
 
     def run_changedetection(self, watch, skip_when_checksum_same=True):
+
         changed_detected = False
         html_content = ""
         screenshot = False  # as bytes
@@ -175,13 +176,13 @@ class perform_site_check(difference_detection_processor):
                                                                     html_content=self.fetcher.content,
                                                                     append_pretty_line_formatting=not watch.is_source_type_url,
                                                                     is_rss=is_rss)
+
                         elif filter_rule.startswith('xpath1:'):
                             html_content += html_tools.xpath1_filter(xpath_filter=filter_rule.replace('xpath1:', ''),
-                                                                    html_content=self.fetcher.content,
-                                                                    append_pretty_line_formatting=not watch.is_source_type_url,
-                                                                    is_rss=is_rss)
+                                                                     html_content=self.fetcher.content,
+                                                                     append_pretty_line_formatting=not watch.is_source_type_url,
+                                                                     is_rss=is_rss)
                         else:
-                            # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
                             html_content += html_tools.include_filters(include_filters=filter_rule,
                                                                        html_content=self.fetcher.content,
                                                                        append_pretty_line_formatting=not watch.is_source_type_url)
@@ -197,18 +198,23 @@ class perform_site_check(difference_detection_processor):
                 else:
                     # extract text
                     do_anchor = self.datastore.data["settings"]["application"].get("render_anchor_tag_content", False)
-                    stripped_text_from_html = \
-                        html_tools.html_to_text(
-                            html_content=html_content,
-                            render_anchor_tag_content=do_anchor,
-                            is_rss=is_rss # #1874 activate the <title workaround hack
-                        )
+                    stripped_text_from_html = html_tools.html_to_text(html_content=html_content,
+                                                                      render_anchor_tag_content=do_anchor,
+                                                                      is_rss=is_rss)  # 1874 activate the <title workaround hack
 
-        if watch.get('sort_text_alphabetically') and stripped_text_from_html:
+
+        if watch.get('trim_text_whitespace'):
+            stripped_text_from_html = '\n'.join(line.strip() for line in stripped_text_from_html.replace("\n\n", "\n").splitlines())
+
+        if watch.get('remove_duplicate_lines'):
+            stripped_text_from_html = '\n'.join(dict.fromkeys(line.strip() for line in stripped_text_from_html.replace("\n\n", "\n").splitlines()))
+
+        if watch.get('sort_text_alphabetically'):
             # Note: Because a <p>something</p> will add an extra line feed to signify the paragraph gap
             # we end up with 'Some text\n\n', sorting will add all those extra \n at the start, so we remove them here.
-            stripped_text_from_html = stripped_text_from_html.replace('\n\n', '\n')
-            stripped_text_from_html = '\n'.join( sorted(stripped_text_from_html.splitlines(), key=lambda x: x.lower() ))
+            stripped_text_from_html = stripped_text_from_html.replace("\n\n", "\n")
+            stripped_text_from_html = '\n'.join(sorted(stripped_text_from_html.splitlines(), key=lambda x: x.lower()))
+
 
         # Re #340 - return the content before the 'ignore text' was applied
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
@@ -236,7 +242,7 @@ class perform_site_check(difference_detection_processor):
                 # We had some content, but no differences were found
                 # Store our new file as the MD5 so it will trigger in the future
                 c = hashlib.md5(text_content_before_ignored_filter.translate(None, b'\r\n\t ')).hexdigest()
-                return False, {'previous_md5': c}, stripped_text_from_html.encode('utf-8')
+                return False, {'previous_md5': c}, stripped_text_from_html.encode('utf-8'), stripped_text_from_html.encode('utf-8')
             else:
                 stripped_text_from_html = rendered_diff
 
@@ -290,13 +296,15 @@ class perform_site_check(difference_detection_processor):
                         for match in res:
                             regex_matched_output += [match] + [b'\n']
 
-            # Now we will only show what the regex matched
+            ##########################################################
             stripped_text_from_html = b''
             text_content_before_ignored_filter = b''
             if regex_matched_output:
                 # @todo some formatter for presentation?
                 stripped_text_from_html = b''.join(regex_matched_output)
                 text_content_before_ignored_filter = stripped_text_from_html
+
+
 
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
         if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
@@ -357,4 +365,4 @@ class perform_site_check(difference_detection_processor):
         if not watch.get('previous_md5'):
             watch['previous_md5'] = fetched_md5
 
-        return changed_detected, update_obj, text_content_before_ignored_filter
+        return changed_detected, update_obj, text_content_before_ignored_filter, stripped_text_from_html

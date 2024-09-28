@@ -18,9 +18,11 @@ $(document).ready(function () {
 
     });
 
-    $("#notification-token-toggle").click(function (e) {
+    $(".toggle-show").click(function (e) {
         e.preventDefault();
-        $('#notification-tokens-info').toggle();
+        let target = $(this).data('target');
+        $(target).toggle();
     });
+
 });
 

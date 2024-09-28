@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import datetime
+import importlib
+
 import flask_login
 import locale
 import os
@@ -10,7 +12,9 @@ import threading
 import time
 import timeago
 
+from .content_fetchers.exceptions import ReplyWithContentButNoText
 from .processors import find_processors, get_parent_module, get_custom_watch_obj_for_processor
+from .processors.text_json_diff.processor import FilterNotFoundInResponse
 from .safe_jinja import render as jinja_render
 from changedetectionio.strtobool import strtobool
 from copy import deepcopy
@@ -537,7 +541,8 @@ def changedetection_app(config=None, datastore_o=None):
         import random
         from .apprise_asset import asset
         apobj = apprise.Apprise(asset=asset)
-
+        # so that the custom endpoints are registered
+        from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
         is_global_settings_form = request.args.get('mode', '') == 'global-settings'
         is_group_settings_form = request.args.get('mode', '') == 'group-settings'
 
@@ -1394,6 +1399,57 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Return a 500 error
         abort(500)
+
+    @app.route("/edit/<string:uuid>/preview-rendered", methods=['POST'])
+    @login_optionally_required
+    def watch_get_preview_rendered(uuid):
+        '''For when viewing the "preview" of the rendered text from inside of Edit'''
+        now = time.time()
+        import brotli
+        from . import forms
+
+        text_after_filter = ''
+        tmp_watch = deepcopy(datastore.data['watching'].get(uuid))
+
+        if tmp_watch and tmp_watch.history and os.path.isdir(tmp_watch.watch_data_dir):
+            # Splice in the temporary stuff from the form
+            form = forms.processor_text_json_diff_form(formdata=request.form if request.method == 'POST' else None,
+                                                       data=request.form
+                                                       )
+            # Only update vars that came in via the AJAX post
+            p = {k: v for k, v in form.data.items() if k in request.form.keys()}
+            tmp_watch.update(p)
+
+            latest_filename = next(reversed(tmp_watch.history))
+            html_fname = os.path.join(tmp_watch.watch_data_dir, f"{latest_filename}.html.br")
+            with open(html_fname, 'rb') as f:
+                decompressed_data = brotli.decompress(f.read()).decode('utf-8') if html_fname.endswith('.br') else f.read().decode('utf-8')
+
+                # Just like a normal change detection except provide a fake "watch" object and dont call .call_browser()
+                processor_module = importlib.import_module("changedetectionio.processors.text_json_diff.processor")
+                update_handler = processor_module.perform_site_check(datastore=datastore,
+                                                                     watch_uuid=uuid # probably not needed anymore anyway?
+                                                                     )
+                # Use the last loaded HTML as the input
+                update_handler.fetcher.content = decompressed_data
+                try:
+                    changed_detected, update_obj, contents, text_after_filter = update_handler.run_changedetection(
+                        watch=tmp_watch,
+                        skip_when_checksum_same=False,
+                    )
+                except FilterNotFoundInResponse as e:
+                    text_after_filter = f"Filter not found in HTML: {str(e)}"
+                except ReplyWithContentButNoText as e:
+                    text_after_filter = f"Filter found but no text (empty result)"
+                except Exception as e:
+                    text_after_filter = f"Error: {str(e)}"
+
+            if not text_after_filter.strip():
+                text_after_filter = 'Empty content'
+
+        logger.trace(f"Parsed in {time.time()-now:.3f}s")
+        return text_after_filter.strip()
+
 
     @app.route("/form/add/quickwatch", methods=['POST'])
     @login_optionally_required
