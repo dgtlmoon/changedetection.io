@@ -78,6 +78,7 @@ def set_more_modified_response():
 
 def wait_for_notification_endpoint_output():
     '''Apprise can take a few seconds to fire'''
+    #@todo - could check the apprise object directly instead of looking for this file
     from os.path import isfile
     for i in range(1, 20):
         time.sleep(1)

@@ -116,9 +116,11 @@ def run_filter_test(client, live_server, content_filter):
         res = client.get(url_for("index"))
         assert b'Warning, no filters were found' in res.data
         assert not os.path.isfile("test-datastore/notification.txt")
-
+        time.sleep(1)
+        
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['consecutive_filter_failures'] == 5
 
+    time.sleep(2)
     # One more check should trigger the _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT threshold
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)

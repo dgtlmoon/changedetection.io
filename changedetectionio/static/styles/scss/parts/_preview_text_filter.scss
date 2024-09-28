@@ -1,0 +1,45 @@
+body.preview-text-enabled {
+  #filters-and-triggers > div {
+    display: flex; /* Establishes Flexbox layout */
+    gap: 20px; /* Adds space between the columns */
+    position: relative; /* Ensures the sticky positioning is relative to this parent */
+  }
+
+  /* layout of the page */
+  #edit-text-filter, #text-preview {
+    flex: 1; /* Each column takes an equal amount of available space */
+    align-self: flex-start; /* Aligns the right column to the start, allowing it to maintain its content height */
+  }
+
+  #edit-text-filter {
+    #pro-tips {
+      display: none;
+    }
+  }
+
+  #text-preview {
+    position: sticky;
+    top: 25px;
+    display: block !important;
+  }
+
+  /* actual preview area */
+  #text-preview-inner {
+    background: var(--color-grey-900);
+    border: 1px solid var(--color-grey-600);
+    padding: 1rem;
+    color: #333;
+    font-family: "Courier New", Courier, monospace; /* Sets the font to a monospace type */
+    font-size: 12px;
+    overflow-x: scroll;
+    white-space: pre-wrap; /* Preserves whitespace and line breaks like <pre> */
+    overflow-wrap: break-word; /* Allows long words to break and wrap to the next line */
+  }
+}
+
+#activate-text-preview {
+  right: 0;
+  position: absolute;
+  z-index: 0;
+  box-shadow: 1px 1px 4px var(--color-shadow-jump);
+}
