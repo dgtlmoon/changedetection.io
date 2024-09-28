@@ -73,6 +73,7 @@ $(document).ready(function () {
 
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
     $("#text-preview-inner").css('max-height', (vh-300)+"px");
+    var debounced_request_textpreview_update = request_textpreview_update.debounce(100);
 
     $("#activate-text-preview").click(function (e) {
         $(this).fadeOut();
@@ -82,10 +83,8 @@ $(document).ready(function () {
         $("#text-preview-refresh").click(function (e) {
             request_textpreview_update();
         });
-        $('textarea:visible, input:visible').on('keyup keypress blur change click', function (e) {
-            request_textpreview_update();
-        });
-
+        $('textarea:visible').on('keyup blur', debounced_request_textpreview_update);
+        $('input:visible').on('keyup blur change', debounced_request_textpreview_update);
     });
 
 });
