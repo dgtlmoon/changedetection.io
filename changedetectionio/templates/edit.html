@@ -65,7 +65,7 @@
             <div class="tab-pane-inner" id="general">
                 <fieldset>
                     <div class="pure-control-group">
-                        {{ render_field(form.url, placeholder="https://...", required=true, class="m-d") }}
+                        {{ render_field(form.url, placeholder="https://...", required=true) }}
                         <span class="pure-form-message-inline">Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a></span><br>
                         <span class="pure-form-message-inline">You can use variables in the URL, perfect for inserting the current date and other logic, <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a></span><br>
                     </div>

@@ -16,7 +16,8 @@
 body {
   color: var(--color-text);
   background: var(--color-background-page);
-  font-family: Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif;
+  font-family: Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu,
+    Cantarell, Fira Sans, sans-serif;
 }
 
 .visually-hidden {
@@ -61,9 +62,9 @@ a.github-link {
 
 #search-q {
   opacity: 0;
-  -webkit-transition: all .9s ease;
-  -moz-transition: all .9s ease;
-  transition: all .9s ease;
+  -webkit-transition: all 0.9s ease;
+  -moz-transition: all 0.9s ease;
+  transition: all 0.9s ease;
   width: 0;
   display: none;
   &.expanded {
@@ -96,8 +97,6 @@ button.toggle-button {
   .icon-light {
     display: block;
   }
-
-
 }
 
 .pure-menu-horizontal {
@@ -151,7 +150,6 @@ code {
     color: var(--color-watch-table-row-text);
   }
 
-
   td {
     white-space: nowrap;
     &.title-col {
@@ -159,7 +157,6 @@ code {
       white-space: normal;
     }
   }
-
 
   th {
     white-space: nowrap;
@@ -206,7 +203,6 @@ code {
   justify-content: center;
 }
 
-
 #post-list-buttons {
   text-align: right;
   padding: 0px;
@@ -224,10 +220,14 @@ code {
   }
 }
 
-
 body:after {
   content: "";
-  background: linear-gradient(130deg, var(--color-background-gradient-first), var(--color-background-gradient-second) 41.07%, var(--color-background-gradient-third) 84.05%);
+  background: linear-gradient(
+    130deg,
+    var(--color-background-gradient-first),
+    var(--color-background-gradient-second) 41.07%,
+    var(--color-background-gradient-third) 84.05%
+  );
 }
 
 body:after,
@@ -252,8 +252,216 @@ body::before {
 
 body:after,
 body:before {
-  -webkit-clip-path: polygon(100% 0, 0 0, 0 77.5%, 1% 77.4%, 2% 77.1%, 3% 76.6%, 4% 75.9%, 5% 75.05%, 6% 74.05%, 7% 72.95%, 8% 71.75%, 9% 70.55%, 10% 69.3%, 11% 68.05%, 12% 66.9%, 13% 65.8%, 14% 64.8%, 15% 64%, 16% 63.35%, 17% 62.85%, 18% 62.6%, 19% 62.5%, 20% 62.65%, 21% 63%, 22% 63.5%, 23% 64.2%, 24% 65.1%, 25% 66.1%, 26% 67.2%, 27% 68.4%, 28% 69.65%, 29% 70.9%, 30% 72.15%, 31% 73.3%, 32% 74.35%, 33% 75.3%, 34% 76.1%, 35% 76.75%, 36% 77.2%, 37% 77.45%, 38% 77.5%, 39% 77.3%, 40% 76.95%, 41% 76.4%, 42% 75.65%, 43% 74.75%, 44% 73.75%, 45% 72.6%, 46% 71.4%, 47% 70.15%, 48% 68.9%, 49% 67.7%, 50% 66.55%, 51% 65.5%, 52% 64.55%, 53% 63.75%, 54% 63.15%, 55% 62.75%, 56% 62.55%, 57% 62.5%, 58% 62.7%, 59% 63.1%, 60% 63.7%, 61% 64.45%, 62% 65.4%, 63% 66.45%, 64% 67.6%, 65% 68.8%, 66% 70.05%, 67% 71.3%, 68% 72.5%, 69% 73.6%, 70% 74.65%, 71% 75.55%, 72% 76.35%, 73% 76.9%, 74% 77.3%, 75% 77.5%, 76% 77.45%, 77% 77.25%, 78% 76.8%, 79% 76.2%, 80% 75.4%, 81% 74.45%, 82% 73.4%, 83% 72.25%, 84% 71.05%, 85% 69.8%, 86% 68.55%, 87% 67.35%, 88% 66.2%, 89% 65.2%, 90% 64.3%, 91% 63.55%, 92% 63%, 93% 62.65%, 94% 62.5%, 95% 62.55%, 96% 62.8%, 97% 63.3%, 98% 63.9%, 99% 64.75%, 100% 65.7%);
-  clip-path: polygon(100% 0, 0 0, 0 77.5%, 1% 77.4%, 2% 77.1%, 3% 76.6%, 4% 75.9%, 5% 75.05%, 6% 74.05%, 7% 72.95%, 8% 71.75%, 9% 70.55%, 10% 69.3%, 11% 68.05%, 12% 66.9%, 13% 65.8%, 14% 64.8%, 15% 64%, 16% 63.35%, 17% 62.85%, 18% 62.6%, 19% 62.5%, 20% 62.65%, 21% 63%, 22% 63.5%, 23% 64.2%, 24% 65.1%, 25% 66.1%, 26% 67.2%, 27% 68.4%, 28% 69.65%, 29% 70.9%, 30% 72.15%, 31% 73.3%, 32% 74.35%, 33% 75.3%, 34% 76.1%, 35% 76.75%, 36% 77.2%, 37% 77.45%, 38% 77.5%, 39% 77.3%, 40% 76.95%, 41% 76.4%, 42% 75.65%, 43% 74.75%, 44% 73.75%, 45% 72.6%, 46% 71.4%, 47% 70.15%, 48% 68.9%, 49% 67.7%, 50% 66.55%, 51% 65.5%, 52% 64.55%, 53% 63.75%, 54% 63.15%, 55% 62.75%, 56% 62.55%, 57% 62.5%, 58% 62.7%, 59% 63.1%, 60% 63.7%, 61% 64.45%, 62% 65.4%, 63% 66.45%, 64% 67.6%, 65% 68.8%, 66% 70.05%, 67% 71.3%, 68% 72.5%, 69% 73.6%, 70% 74.65%, 71% 75.55%, 72% 76.35%, 73% 76.9%, 74% 77.3%, 75% 77.5%, 76% 77.45%, 77% 77.25%, 78% 76.8%, 79% 76.2%, 80% 75.4%, 81% 74.45%, 82% 73.4%, 83% 72.25%, 84% 71.05%, 85% 69.8%, 86% 68.55%, 87% 67.35%, 88% 66.2%, 89% 65.2%, 90% 64.3%, 91% 63.55%, 92% 63%, 93% 62.65%, 94% 62.5%, 95% 62.55%, 96% 62.8%, 97% 63.3%, 98% 63.9%, 99% 64.75%, 100% 65.7%)
+  -webkit-clip-path: polygon(
+    100% 0,
+    0 0,
+    0 77.5%,
+    1% 77.4%,
+    2% 77.1%,
+    3% 76.6%,
+    4% 75.9%,
+    5% 75.05%,
+    6% 74.05%,
+    7% 72.95%,
+    8% 71.75%,
+    9% 70.55%,
+    10% 69.3%,
+    11% 68.05%,
+    12% 66.9%,
+    13% 65.8%,
+    14% 64.8%,
+    15% 64%,
+    16% 63.35%,
+    17% 62.85%,
+    18% 62.6%,
+    19% 62.5%,
+    20% 62.65%,
+    21% 63%,
+    22% 63.5%,
+    23% 64.2%,
+    24% 65.1%,
+    25% 66.1%,
+    26% 67.2%,
+    27% 68.4%,
+    28% 69.65%,
+    29% 70.9%,
+    30% 72.15%,
+    31% 73.3%,
+    32% 74.35%,
+    33% 75.3%,
+    34% 76.1%,
+    35% 76.75%,
+    36% 77.2%,
+    37% 77.45%,
+    38% 77.5%,
+    39% 77.3%,
+    40% 76.95%,
+    41% 76.4%,
+    42% 75.65%,
+    43% 74.75%,
+    44% 73.75%,
+    45% 72.6%,
+    46% 71.4%,
+    47% 70.15%,
+    48% 68.9%,
+    49% 67.7%,
+    50% 66.55%,
+    51% 65.5%,
+    52% 64.55%,
+    53% 63.75%,
+    54% 63.15%,
+    55% 62.75%,
+    56% 62.55%,
+    57% 62.5%,
+    58% 62.7%,
+    59% 63.1%,
+    60% 63.7%,
+    61% 64.45%,
+    62% 65.4%,
+    63% 66.45%,
+    64% 67.6%,
+    65% 68.8%,
+    66% 70.05%,
+    67% 71.3%,
+    68% 72.5%,
+    69% 73.6%,
+    70% 74.65%,
+    71% 75.55%,
+    72% 76.35%,
+    73% 76.9%,
+    74% 77.3%,
+    75% 77.5%,
+    76% 77.45%,
+    77% 77.25%,
+    78% 76.8%,
+    79% 76.2%,
+    80% 75.4%,
+    81% 74.45%,
+    82% 73.4%,
+    83% 72.25%,
+    84% 71.05%,
+    85% 69.8%,
+    86% 68.55%,
+    87% 67.35%,
+    88% 66.2%,
+    89% 65.2%,
+    90% 64.3%,
+    91% 63.55%,
+    92% 63%,
+    93% 62.65%,
+    94% 62.5%,
+    95% 62.55%,
+    96% 62.8%,
+    97% 63.3%,
+    98% 63.9%,
+    99% 64.75%,
+    100% 65.7%
+  );
+  clip-path: polygon(
+    100% 0,
+    0 0,
+    0 77.5%,
+    1% 77.4%,
+    2% 77.1%,
+    3% 76.6%,
+    4% 75.9%,
+    5% 75.05%,
+    6% 74.05%,
+    7% 72.95%,
+    8% 71.75%,
+    9% 70.55%,
+    10% 69.3%,
+    11% 68.05%,
+    12% 66.9%,
+    13% 65.8%,
+    14% 64.8%,
+    15% 64%,
+    16% 63.35%,
+    17% 62.85%,
+    18% 62.6%,
+    19% 62.5%,
+    20% 62.65%,
+    21% 63%,
+    22% 63.5%,
+    23% 64.2%,
+    24% 65.1%,
+    25% 66.1%,
+    26% 67.2%,
+    27% 68.4%,
+    28% 69.65%,
+    29% 70.9%,
+    30% 72.15%,
+    31% 73.3%,
+    32% 74.35%,
+    33% 75.3%,
+    34% 76.1%,
+    35% 76.75%,
+    36% 77.2%,
+    37% 77.45%,
+    38% 77.5%,
+    39% 77.3%,
+    40% 76.95%,
+    41% 76.4%,
+    42% 75.65%,
+    43% 74.75%,
+    44% 73.75%,
+    45% 72.6%,
+    46% 71.4%,
+    47% 70.15%,
+    48% 68.9%,
+    49% 67.7%,
+    50% 66.55%,
+    51% 65.5%,
+    52% 64.55%,
+    53% 63.75%,
+    54% 63.15%,
+    55% 62.75%,
+    56% 62.55%,
+    57% 62.5%,
+    58% 62.7%,
+    59% 63.1%,
+    60% 63.7%,
+    61% 64.45%,
+    62% 65.4%,
+    63% 66.45%,
+    64% 67.6%,
+    65% 68.8%,
+    66% 70.05%,
+    67% 71.3%,
+    68% 72.5%,
+    69% 73.6%,
+    70% 74.65%,
+    71% 75.55%,
+    72% 76.35%,
+    73% 76.9%,
+    74% 77.3%,
+    75% 77.5%,
+    76% 77.45%,
+    77% 77.25%,
+    78% 76.8%,
+    79% 76.2%,
+    80% 75.4%,
+    81% 74.45%,
+    82% 73.4%,
+    83% 72.25%,
+    84% 71.05%,
+    85% 69.8%,
+    86% 68.55%,
+    87% 67.35%,
+    88% 66.2%,
+    89% 65.2%,
+    90% 64.3%,
+    91% 63.55%,
+    92% 63%,
+    93% 62.65%,
+    94% 62.5%,
+    95% 62.55%,
+    96% 62.8%,
+    97% 63.3%,
+    98% 63.9%,
+    99% 64.75%,
+    100% 65.7%
+  );
 }
 
 .button-small {
@@ -299,7 +507,6 @@ a.pure-button-selected {
     background: var(--color-background-button-tag-active);
     font-weight: bold;
   }
-
 }
 
 .button-error {
@@ -320,9 +527,9 @@ a.pure-button-selected {
   background: var(--color-background-button-cancel);
 }
 
-#save_button {
-  margin-right: 1rem;
-}
+// #save_button {
+//   margin-right: 1rem;
+// }
 
 .messages {
   li {
@@ -346,7 +553,7 @@ a.pure-button-selected {
   }
 
   &.with-share-link {
-    >*:hover {
+    > *:hover {
       cursor: pointer;
     }
   }
@@ -357,9 +564,9 @@ a.pure-button-selected {
 }
 
 label {
- &:hover {
-   cursor: pointer;
- }  
+  &:hover {
+    cursor: pointer;
+  }
 }
 
 #notification-customisation {
@@ -376,7 +583,6 @@ label {
 }
 
 #token-table {
-
   &.pure-table td,
   &.pure-table th {
     font-size: 80%;
@@ -409,7 +615,6 @@ label {
   }
 
   #watch-add-wrapper-zone {
-
     @media only screen and (min-width: 760px) {
       display: flex;
       gap: 0.3rem;
@@ -436,7 +641,6 @@ label {
     }
   }
 }
-
 
 #diff-col {
   padding-left: 40px;
@@ -548,7 +752,6 @@ footer {
   }
 }
 
-
 .pure-form {
   fieldset {
     padding-top: 0px;
@@ -569,12 +772,12 @@ footer {
     }
 
     .checkbox {
-      >* {
+      > * {
         display: inline;
         vertical-align: middle;
       }
 
-      >label {
+      > label {
         padding-left: 5px;
       }
     }
@@ -593,7 +796,7 @@ footer {
 
   /* The list of errors */
   ul.errors {
-    padding: .5em .6em;
+    padding: 0.5em 0.6em;
     border: 1px solid var(--color-error-list);
     border-radius: 4px;
     vertical-align: middle;
@@ -620,19 +823,19 @@ footer {
       list-style: none;
 
       li {
-        >* {
-          display: inline-block;
-        }
+        display: flex;
+        gap: 1em;
+        margin-right: 1em;
+        align-items: center;
       }
     }
   }
 }
 
-
 @media only screen and (max-width: 760px),
-(min-device-width: 768px) and (max-device-width: 1024px) {
+  (min-device-width: 768px) and (max-device-width: 1024px) {
   .box {
-    max-width: 95%
+    max-width: 95%;
   }
 
   .edit-form {
@@ -645,10 +848,8 @@ footer {
   }
 }
 
-
 @media only screen and (max-width: 760px),
-(min-device-width: 768px) and (max-device-width: 800px) {
-
+  (min-device-width: 768px) and (max-device-width: 800px) {
   div.sticky-tab#hosted-sticky {
     top: 60px;
     left: 0px;
@@ -666,7 +867,7 @@ footer {
     margin-right: 0px;
   }
 
-  input[type='text'] {
+  input[type="text"] {
     width: 100%;
   }
 
@@ -691,14 +892,24 @@ footer {
 
     /* Force table to not be like tables anymore */
     tbody {
-      td,
       tr {
-        display: block;
+        display: flex;
+        flex-wrap: wrap;
+
+        td:nth-child(1),
+        td:nth-child(2) {
+          display: inline-block;
+        }
+
+        td:nth-child(n + 3) {
+          display: block;
+          width: 100%; /* Stack the remaining <td> elements */
+        }
       }
     }
 
     .last-checked {
-      >span {
+      > span {
         vertical-align: middle;
       }
     }
@@ -714,9 +925,9 @@ footer {
     }
 
     /* Force table to not be like tables anymore */
-    td.inline {
-      display: inline-block;
-    }
+    // td.inline {
+    //   display: inline-block;
+    // }
 
     .pure-table td,
     .pure-table th {
@@ -752,7 +963,6 @@ footer {
         background-color: inherit;
       }
     }
-
   }
 }
 
@@ -779,20 +989,20 @@ footer {
   }
 }
 
-.pure-form input[type=color],
-.pure-form input[type=date],
-.pure-form input[type=datetime-local],
-.pure-form input[type=datetime],
-.pure-form input[type=email],
-.pure-form input[type=month],
-.pure-form input[type=number],
-.pure-form input[type=password],
-.pure-form input[type=search],
-.pure-form input[type=tel],
-.pure-form input[type=text],
-.pure-form input[type=time],
-.pure-form input[type=url],
-.pure-form input[type=week],
+.pure-form input[type="color"],
+.pure-form input[type="date"],
+.pure-form input[type="datetime-local"],
+.pure-form input[type="datetime"],
+.pure-form input[type="email"],
+.pure-form input[type="month"],
+.pure-form input[type="number"],
+.pure-form input[type="password"],
+.pure-form input[type="search"],
+.pure-form input[type="tel"],
+.pure-form input[type="text"],
+.pure-form input[type="time"],
+.pure-form input[type="url"],
+.pure-form input[type="week"],
 .pure-form select,
 .pure-form textarea {
   border: var(--color-border-input);
@@ -810,19 +1020,27 @@ textarea::placeholder {
   color: var(--color-text-input-placeholder);
 }
 
-
 /** Desktop vs mobile input field strategy
 - We dont use 'size' with <input> because `size` is too unreliable to override, and will often push-out
 - Rely always on width in CSS
 */
-@media only screen and (min-width: 761px) {
 
+.pure-form input[type="text"],
+.pure-form input[type="email"],
+.pure-form input[type="password"],
+.pure-form input[type="search"],
+.pure-form input[type="tel"],
+.pure-form input[type="url"],
+.pure-form textarea {
+  width: 100%;
+}
+
+@media only screen and (min-width: 761px) {
   /* m-d is medium-desktop */
   .m-d {
     min-width: 80%;
   }
 }
-
 
 .tabs {
   ul {
@@ -866,7 +1084,7 @@ textarea::placeholder {
 $form-edge-padding: 20px;
 
 .pure-form-stacked {
-  >div:first-child {
+  > div:first-child {
     display: block;
   }
 }
@@ -874,7 +1092,6 @@ $form-edge-padding: 20px;
 .login-form {
   .inner {
     background: var(--color-background);
-    ;
     padding: $form-edge-padding;
     border-radius: 5px;
   }
@@ -928,13 +1145,18 @@ body.full-width {
   #actions {
     display: block;
     background: var(--color-background);
+
+    .pure-control-group {
+      display: flex;
+      gap: 0.25em;
+    }
   }
 
   .pure-form-message-inline {
     padding-left: 0;
     color: var(--color-text-input-description);
     code {
-      font-size: .875em;
+      font-size: 0.875em;
     }
   }
 }
@@ -955,8 +1177,6 @@ body.full-width {
   }
 }
 
-
-
 ul {
   padding-left: 1em;
   padding-top: 0px;
@@ -964,8 +1184,15 @@ ul {
 }
 
 .time-check-widget {
+  tbody {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
   tr {
-    display: inline;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    justify-content: flex-end;
 
     input[type="number"] {
       width: 5em;
@@ -976,7 +1203,7 @@ ul {
 @import "parts/_visualselector";
 
 #webdriver_delay {
-    width: 5em;
+  width: 5em;
 }
 
 #api-key {
@@ -1039,13 +1266,13 @@ ul {
 }
 
 .checkbox-uuid {
-  >* {
+  > * {
     vertical-align: middle;
   }
 }
 
 .inline-warning {
-  >span {
+  > span {
     display: inline-block;
     vertical-align: middle;
   }
@@ -1087,7 +1314,6 @@ ul {
   vertical-align: middle;
 }
 
-
 #quick-watch-processor-type {
   color: #fff;
   ul {
@@ -1101,7 +1327,6 @@ ul {
       }
     }
   }
-
 }
 
 .restock-label {
@@ -1138,4 +1363,3 @@ ul {
   border-radius: 10px;
   vertical-align: middle;
 }
-

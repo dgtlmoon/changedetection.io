@@ -431,7 +431,7 @@ html[data-darkmode="true"] #toggle-light-mode .icon-dark {
 body {
   color: var(--color-text);
   background: var(--color-background-page);
-  font-family: Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif; }
+  font-family: Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif; }
 
 .visually-hidden {
   clip: rect(0 0 0 0);
@@ -465,9 +465,9 @@ a.github-link {
 
 #search-q {
   opacity: 0;
-  -webkit-transition: all .9s ease;
-  -moz-transition: all .9s ease;
-  transition: all .9s ease;
+  -webkit-transition: all 0.9s ease;
+  -moz-transition: all 0.9s ease;
+  transition: all 0.9s ease;
   width: 0;
   display: none; }
   #search-q.expanded {
@@ -651,9 +651,6 @@ a.pure-button-selected {
 .button-cancel {
   background: var(--color-background-button-cancel); }
 
-#save_button {
-  margin-right: 1rem; }
-
 .messages li {
   list-style: none;
   padding: 1em;
@@ -836,7 +833,7 @@ footer {
   .pure-form .error input {
     background-color: var(--color-error-input); }
   .pure-form ul.errors {
-    padding: .5em .6em;
+    padding: 0.5em 0.6em;
     border: 1px solid var(--color-error-list);
     border-radius: 4px;
     vertical-align: middle;
@@ -852,8 +849,11 @@ footer {
   .pure-form .inline-radio ul {
     margin: 0px;
     list-style: none; }
-    .pure-form .inline-radio ul li > * {
-      display: inline-block; }
+    .pure-form .inline-radio ul li {
+      display: flex;
+      gap: 1em;
+      margin-right: 1em;
+      align-items: center; }
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
   .box {
@@ -875,7 +875,7 @@ footer {
     display: block;
     border-radius: 0px;
     margin-right: 0px; }
-  input[type='text'] {
+  input[type="text"] {
     width: 100%; }
   /*
   Max width before this PARTICULAR table gets nasty
@@ -892,9 +892,16 @@ footer {
         display: inline-block; }
       .watch-table thead .empty-cell {
         display: none; }
-    .watch-table tbody td,
     .watch-table tbody tr {
-      display: block; }
+      display: flex;
+      flex-wrap: wrap; }
+      .watch-table tbody tr td:nth-child(1),
+      .watch-table tbody tr td:nth-child(2) {
+        display: inline-block; }
+      .watch-table tbody tr td:nth-child(n + 3) {
+        display: block;
+        width: 100%;
+        /* Stack the remaining <td> elements */ }
     .watch-table .last-checked > span {
       vertical-align: middle; }
     .watch-table .last-checked::before {
@@ -903,8 +910,6 @@ footer {
     .watch-table .last-changed::before {
       color: var(--color-last-checked);
       content: "Last Changed "; }
-    .watch-table td.inline {
-      display: inline-block; }
     .watch-table .pure-table td,
     .watch-table .pure-table th {
       border: none; }
@@ -940,40 +945,40 @@ footer {
 .pure-table-striped tr:nth-child(2n-1) td {
   background-color: var(--color-table-stripe); }
 
-.pure-form input[type=color],
-.pure-form input[type=date],
-.pure-form input[type=datetime-local],
-.pure-form input[type=datetime],
-.pure-form input[type=email],
-.pure-form input[type=month],
-.pure-form input[type=number],
-.pure-form input[type=password],
-.pure-form input[type=search],
-.pure-form input[type=tel],
-.pure-form input[type=text],
-.pure-form input[type=time],
-.pure-form input[type=url],
-.pure-form input[type=week],
+.pure-form input[type="color"],
+.pure-form input[type="date"],
+.pure-form input[type="datetime-local"],
+.pure-form input[type="datetime"],
+.pure-form input[type="email"],
+.pure-form input[type="month"],
+.pure-form input[type="number"],
+.pure-form input[type="password"],
+.pure-form input[type="search"],
+.pure-form input[type="tel"],
+.pure-form input[type="text"],
+.pure-form input[type="time"],
+.pure-form input[type="url"],
+.pure-form input[type="week"],
 .pure-form select,
 .pure-form textarea {
   border: var(--color-border-input);
   box-shadow: inset 0 1px 3px var(--color-shadow-input);
   background-color: var(--color-background-input);
   color: var(--color-text-input); }
-  .pure-form input[type=color]:active,
-  .pure-form input[type=date]:active,
-  .pure-form input[type=datetime-local]:active,
-  .pure-form input[type=datetime]:active,
-  .pure-form input[type=email]:active,
-  .pure-form input[type=month]:active,
-  .pure-form input[type=number]:active,
-  .pure-form input[type=password]:active,
-  .pure-form input[type=search]:active,
-  .pure-form input[type=tel]:active,
-  .pure-form input[type=text]:active,
-  .pure-form input[type=time]:active,
-  .pure-form input[type=url]:active,
-  .pure-form input[type=week]:active,
+  .pure-form input[type="color"]:active,
+  .pure-form input[type="date"]:active,
+  .pure-form input[type="datetime-local"]:active,
+  .pure-form input[type="datetime"]:active,
+  .pure-form input[type="email"]:active,
+  .pure-form input[type="month"]:active,
+  .pure-form input[type="number"]:active,
+  .pure-form input[type="password"]:active,
+  .pure-form input[type="search"]:active,
+  .pure-form input[type="tel"]:active,
+  .pure-form input[type="text"]:active,
+  .pure-form input[type="time"]:active,
+  .pure-form input[type="url"]:active,
+  .pure-form input[type="week"]:active,
   .pure-form select:active,
   .pure-form textarea:active {
     background-color: var(--color-background-input); }
@@ -986,6 +991,15 @@ textarea::placeholder {
 - We dont use 'size' with <input> because `size` is too unreliable to override, and will often push-out
 - Rely always on width in CSS
 */
+.pure-form input[type="text"],
+.pure-form input[type="email"],
+.pure-form input[type="password"],
+.pure-form input[type="search"],
+.pure-form input[type="tel"],
+.pure-form input[type="url"],
+.pure-form textarea {
+  width: 100%; }
+
 @media only screen and (min-width: 761px) {
   /* m-d is medium-desktop */
   .m-d {
@@ -1055,11 +1069,14 @@ body.full-width .edit-form {
   .edit-form #actions {
     display: block;
     background: var(--color-background); }
+    .edit-form #actions .pure-control-group {
+      display: flex;
+      gap: 0.25em; }
   .edit-form .pure-form-message-inline {
     padding-left: 0;
     color: var(--color-text-input-description); }
     .edit-form .pure-form-message-inline code {
-      font-size: .875em; }
+      font-size: 0.875em; }
 
 .border-fieldset {
   border: 1px solid #ccc;
@@ -1078,8 +1095,15 @@ ul {
   padding-top: 0px;
   margin-top: 4px; }
 
+.time-check-widget tbody {
+  display: grid;
+  grid-template-columns: 1fr 1fr; }
+
 .time-check-widget tr {
-  display: inline; }
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  justify-content: flex-end; }
   .time-check-widget tr input[type="number"] {
     width: 5em; }
 
