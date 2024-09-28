@@ -207,7 +207,7 @@ class perform_site_check(difference_detection_processor):
             stripped_text_from_html = '\n'.join(line.strip() for line in stripped_text_from_html.replace("\n\n", "\n").splitlines())
 
         if watch.get('remove_duplicate_lines'):
-            stripped_text_from_html = '\n'.join(dict.fromkeys(line.strip() for line in stripped_text_from_html.replace("\n\n", "\n").splitlines()))
+            stripped_text_from_html = '\n'.join(dict.fromkeys(line for line in stripped_text_from_html.replace("\n\n", "\n").splitlines()))
 
         if watch.get('sort_text_alphabetically'):
             # Note: Because a <p>something</p> will add an extra line feed to signify the paragraph gap

@@ -1432,6 +1432,7 @@ def changedetection_app(config=None, datastore_o=None):
                                                                      )
                 # Use the last loaded HTML as the input
                 update_handler.fetcher.content = decompressed_data
+                update_handler.fetcher.headers['content-type'] = tmp_watch.get('content-type')
                 try:
                     changed_detected, update_obj, contents, text_after_filter = update_handler.run_changedetection(
                         watch=tmp_watch,

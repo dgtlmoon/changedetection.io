@@ -491,6 +491,8 @@ class update_worker(threading.Thread):
                         if not self.datastore.data['watching'].get(uuid):
                             continue
 
+                        update_obj['content-type'] = update_handler.fetcher.get_all_headers().get('content-type', '').lower()
+
                         # Mark that we never had any failures
                         if not watch.get('ignore_status_codes'):
                             update_obj['consecutive_filter_failures'] = 0
