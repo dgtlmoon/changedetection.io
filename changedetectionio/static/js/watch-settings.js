@@ -33,6 +33,10 @@ function toggleOpacity(checkboxSelector, fieldSelector, inverted) {
 })(jQuery);
 
 function request_textpreview_update() {
+    if (!$('body').hasClass('preview-text-enabled')) {
+        return
+    }
+
     const data = {};
     $('textarea:visible, input:visible').each(function () {
         const $element = $(this); // Cache the jQuery object for the current element
@@ -80,11 +84,13 @@ $(document).ready(function () {
         $('body').toggleClass('preview-text-enabled')
 
         request_textpreview_update();
+
         $("#text-preview-refresh").click(function (e) {
             request_textpreview_update();
         });
         $('textarea:visible').on('keyup blur', debounced_request_textpreview_update);
         $('input:visible').on('keyup blur change', debounced_request_textpreview_update);
+        $("#filters-and-triggers-tab").on('click', debounced_request_textpreview_update);
     });
 
 });
