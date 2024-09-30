@@ -78,11 +78,12 @@ class perform_site_check(difference_detection_processor):
 
         ctype_header = self.fetcher.get_all_headers().get('content-type', '').lower()
         # Go into RSS preprocess for converting CDATA/comment to usable text
-        if any(substring in ctype_header for substring in ['application/xml', 'application/rss', 'text/xml']):
-            if '<rss' in self.fetcher.content[:100].lower():
+        # Ctype_header could be unset if we are just reprocessing the existin content
+        if any(substring in ctype_header for substring in ['application/xml', 'application/rss', 'text/xml']) or not ctype_header:
+            top_text = self.fetcher.content[:200].lower().strip()
+            if '<rss' in top_text or 'search.yahoo.com/mrss/' in top_text:
                 self.fetcher.content = cdata_in_document_to_text(html_content=self.fetcher.content)
                 is_rss = True
-
         # source: support, basically treat it as plaintext
         if watch.is_source_type_url:
             is_html = False

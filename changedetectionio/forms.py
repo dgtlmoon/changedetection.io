@@ -1,6 +1,9 @@
 import os
 import re
 
+import elementpath
+
+from changedetectionio.html_tools import xpath_filter, xpath1_filter
 from changedetectionio.strtobool import strtobool
 
 from wtforms import (
@@ -323,52 +326,39 @@ class ValidateCSSJSONXPATHInput(object):
         self.allow_json = allow_json
 
     def __call__(self, form, field):
-
+        from lxml.etree import XPathEvalError
         if isinstance(field.data, str):
             data = [field.data]
         else:
             data = field.data
 
         for line in data:
-        # Nothing to see here
-            if not len(line.strip()):
-                return
+            line = line.strip()
 
-            # Does it look like XPath?
-            if line.strip()[0] == '/' or line.strip().startswith('xpath:'):
+            if not line:
+                continue
+
+            if line.startswith('xpath') or line.startswith('/'):
                 if not self.allow_xpath:
                     raise ValidationError("XPath not permitted in this field!")
-                from lxml import etree, html
-                import elementpath
-                # xpath 2.0-3.1
-                from elementpath.xpath3 import XPath3Parser
-                tree = html.fromstring("<html></html>")
-                line = line.replace('xpath:', '')
+
+                if line.startswith('xpath1:'):
+                    filter_function = xpath1_filter
+                else:
+                    line = line.replace('xpath:', '')
+                    filter_function = xpath_filter
 
                 try:
-                    elementpath.select(tree, line.strip(), parser=XPath3Parser)
-                except elementpath.ElementPathError as e:
+                    # Call the determined function
+                    res = filter_function(xpath_filter=line, html_content=form.last_html_for_form_validation)
+                    # It's OK if this is an empty result, we just want to check that it doesn't crash the parser
+                except (elementpath.ElementPathError,XPathEvalError) as e:
                     message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
                     raise ValidationError(message % (line, str(e)))
-                except:
+                except Exception as e:
                     raise ValidationError("A system-error occurred when validating your XPath expression")
 
-            if line.strip().startswith('xpath1:'):
-                if not self.allow_xpath:
-                    raise ValidationError("XPath not permitted in this field!")
-                from lxml import etree, html
-                tree = html.fromstring("<html></html>")
-                line = re.sub(r'^xpath1:', '', line)
-
-                try:
-                    tree.xpath(line.strip())
-                except etree.XPathEvalError as e:
-                    message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
-                    raise ValidationError(message % (line, str(e)))
-                except:
-                    raise ValidationError("A system-error occurred when validating your XPath expression")
-
-            if 'json:' in line:
+            elif 'json:' in line:
                 if not self.allow_json:
                     raise ValidationError("JSONPath not permitted in this field!")
 
@@ -393,7 +383,7 @@ class ValidateCSSJSONXPATHInput(object):
                 if not self.allow_json:
                     raise ValidationError("jq not permitted in this field!")
 
-            if 'jq:' in line:
+            elif line.startswith('jq:'):
                 try:
                     import jq
                 except ModuleNotFoundError:

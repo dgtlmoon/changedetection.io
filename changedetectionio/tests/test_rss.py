@@ -164,3 +164,46 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
     assert b'Some other description' not in res.data  # Should NOT be selected by the xpath
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+
+def test_namespace_selectors(live_server, client):
+    set_original_cdata_xml()
+    #live_server_setup(live_server)
+
+    test_url = url_for('test_endpoint', content_type="application/xml", _external=True)
+
+    res = client.post(
+        url_for("import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+
+    assert b"1 Imported" in res.data
+
+    wait_for_all_checks(client)
+
+    uuid = extract_UUID_from_client(client)
+    # because it will look for the namespaced stuff during form validation, but on the first check it wont exist..
+    res = client.post(
+        url_for("edit_page", uuid=uuid),
+        data={
+            "include_filters": "//media:thumbnail/@url",
+            "fetch_backend": "html_requests",
+            "headers": "",
+            "proxy": "no-proxy",
+            "tags": "",
+            "url": test_url,
+        },
+        follow_redirects=True
+    )
+
+    wait_for_all_checks(client)
+
+    res = client.get(
+        url_for("preview_page", uuid="first"),
+        follow_redirects=True
+    )
+    assert b'CDATA' not in res.data
+    assert b'<![' not in res.data
+    assert b'https://testsite.com/thumbnail-c224e10d81488e818701c981da04869e.jpg' in res.data
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)

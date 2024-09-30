@@ -3,6 +3,7 @@ from lxml import etree
 import json
 import re
 
+from loguru import logger
 
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
 TEXT_FILTER_LIST_LINE_SUFFIX = "<br>"
@@ -120,6 +121,20 @@ def elementpath_tostring(obj):
 
     return str(obj)
 
+def extract_namespaces(xml_content):
+    """
+    Extracts all namespaces from the XML content.
+    """
+    from lxml import etree
+    from io import BytesIO
+
+    it = etree.iterparse(BytesIO(xml_content), events=('start-ns',))
+    namespaces = {}
+    for _, ns in it:
+        prefix, uri = ns
+        namespaces[prefix] = uri
+    return namespaces
+
 # Return str Utf-8 of matched rules
 def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
     from lxml import etree, html
@@ -135,7 +150,14 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
     html_block = ""
 
-    r = elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser)
+    # Automatically extract all namespaces from the XML content
+    namespaces = {'re': 'http://exslt.org/regular-expressions'}
+    try:
+        namespaces.update(extract_namespaces(html_content.encode('utf-8')))
+    except Exception as e:
+        logger.warning(f"Problem extracting namespaces from HTMl/XML content {str(e)}")
+
+    r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces, parser=XPath3Parser)
     #@note: //title/text() wont work where <title>CDATA..
 
     if type(r) != list:

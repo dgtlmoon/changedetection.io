@@ -734,6 +734,12 @@ def changedetection_app(config=None, datastore_o=None):
             for p in datastore.proxy_list:
                 form.proxy.choices.append(tuple((p, datastore.proxy_list[p]['label'])))
 
+        # Add some HTML to be used for form validation
+        if datastore.data['watching'][uuid].history.keys():
+            timestamp = list(datastore.data['watching'][uuid].history.keys())[-1]
+            form.last_html_for_form_validation = datastore.data['watching'][uuid].get_fetched_html(timestamp)
+        else:
+            form.last_html_for_form_validation = "<html><body></body></html>"
 
         if request.method == 'POST' and form.validate():
 
