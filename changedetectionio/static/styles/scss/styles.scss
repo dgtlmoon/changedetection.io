@@ -321,10 +321,6 @@ a.pure-button-selected {
   background: var(--color-background-button-cancel);
 }
 
-#save_button {
-  margin-right: 1rem;
-}
-
 .messages {
   li {
     list-style: none;
@@ -621,9 +617,9 @@ footer {
       list-style: none;
 
       li {
-        >* {
-          display: inline-block;
-        }
+        display: flex;
+        align-items: center;
+        gap: 1em;
       }
     }
   }
@@ -695,6 +691,24 @@ footer {
       td,
       tr {
         display: block;
+      }
+    }
+
+    tbody {
+      tr {
+        display: flex;
+        flex-wrap: wrap;
+
+        // The third child of each row will take up the remaining space
+        // This is useful for the URL column, which should expand to fill the remaining space
+        :nth-child(3) {
+          flex-grow: 1;
+        }
+        // The last three children (from the end) of each row will take up the full width
+        // This is useful for the "Last Checked", "Last Changed", and the action buttons columns, which should each take up the full width
+        :nth-last-child(-n+3) {
+          flex-basis: 100%;
+        }
       }
     }
 
@@ -816,6 +830,11 @@ textarea::placeholder {
 - We dont use 'size' with <input> because `size` is too unreliable to override, and will often push-out
 - Rely always on width in CSS
 */
+/** Set max width for input field */
+.m-d {
+  min-width: 100%;
+}
+
 @media only screen and (min-width: 761px) {
 
   /* m-d is medium-desktop */
@@ -931,6 +950,13 @@ body.full-width {
     background: var(--color-background);
   }
 
+  /* Make action buttons have consistent size and spacing */
+  #actions .pure-control-group {
+    display: flex;
+    gap: 0.625em;
+    flex-wrap: wrap;
+  }
+
   .pure-form-message-inline {
     padding-left: 0;
     color: var(--color-text-input-description);
@@ -970,6 +996,28 @@ ul {
 
     input[type="number"] {
       width: 5em;
+    }
+  }
+}
+
+@media only screen and (max-width: 760px) {
+  .time-check-widget {
+    tbody {
+      display: grid;
+      grid-template-columns: auto 1fr auto 1fr;
+      gap: 0.625em 0.3125em;
+      align-items: center;
+    }    
+    tr {
+      display: contents; 
+      th {
+        text-align: right;
+        padding-right: 5px;
+      }
+      input[type="number"] {
+        width: 100%;
+        max-width: 5em;
+      }
     }
   }
 }
