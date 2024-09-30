@@ -18,6 +18,7 @@ class watch_base(dict):
             'check_count': 0,
             'check_unique_lines': False,  # On change-detected, compare against all history if its something new
             'consecutive_filter_failures': 0,  # Every time the CSS/xPath filter cannot be located, reset when all is fine.
+            'content-type': None,
             'date_created': None,
             'extract_text': [],  # Extract text by regex after filters
             'extract_title_as_title': False,

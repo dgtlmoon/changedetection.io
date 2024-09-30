@@ -34,6 +34,7 @@ function toggleOpacity(checkboxSelector, fieldSelector, inverted) {
 
 function request_textpreview_update() {
     if (!$('body').hasClass('preview-text-enabled')) {
+        console.error("Preview text was requested but body tag was not setup")
         return
     }
 
@@ -77,20 +78,19 @@ $(document).ready(function () {
 
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
     $("#text-preview-inner").css('max-height', (vh-300)+"px");
+
+    // Realtime preview of 'Filters & Text' setup
     var debounced_request_textpreview_update = request_textpreview_update.debounce(100);
 
     $("#activate-text-preview").click(function (e) {
-        $(this).fadeOut();
         $('body').toggleClass('preview-text-enabled')
-
         request_textpreview_update();
 
-        $("#text-preview-refresh").click(function (e) {
-            request_textpreview_update();
-        });
-        $('textarea:visible').on('keyup blur', debounced_request_textpreview_update);
-        $('input:visible').on('keyup blur change', debounced_request_textpreview_update);
-        $("#filters-and-triggers-tab").on('click', debounced_request_textpreview_update);
+        const method = $('body').hasClass('preview-text-enabled') ? 'on' : 'off';
+        $("#text-preview-refresh")[method]('click', debounced_request_textpreview_update);
+        $('textarea:visible')[method]('keyup blur', debounced_request_textpreview_update);
+        $('input:visible')[method]('keyup blur change', debounced_request_textpreview_update);
+        $("#filters-and-triggers-tab")[method]('click', debounced_request_textpreview_update);
     });
 
 });
