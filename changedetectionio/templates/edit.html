@@ -24,7 +24,7 @@
     const watch_visual_selector_data_url="{{url_for('static_content', group='visual_selector_data', filename=uuid)}}";
     const default_system_fetch_backend="{{ settings_application['fetch_backend'] }}";
 </script>
-
+<script src="{{url_for('static_content', group='js', filename='plugins.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
@@ -371,10 +371,10 @@ nav
 ") }}
                     <span class="pure-form-message-inline">
                         <ul>
+                            <li>Matching text will be <strong>removed</strong> from the text snapshot</li>
                             <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
                             <li>Regular Expression support, wrap the entire line in forward slash <code>/regex/</code></li>
                             <li>Changing this will affect the comparison checksum which may trigger an alert</li>
-                            <li>Use the preview/show current tab to see ignores</li>
                         </ul>
                 </span>
 
@@ -422,14 +422,21 @@ Unavailable") }}
                     <script>
                         const preview_text_edit_filters_url="{{url_for('watch_get_preview_rendered', uuid=uuid)}}";
                     </script>
-                    <span><strong>Preview of the text that is used for changedetection after all filters run.</strong></span><br>
+                    <br>
                     {#<div id="text-preview-controls"><span id="text-preview-refresh" class="pure-button button-xsmall">Refresh</span></div>#}
-                <p>
-                    <div id="text-preview-inner"></div>
-                </p>
+
+                    <div class="minitabs-wrapper">
+                        <div id="text-preview-inner" class="monospace-preview">
+                            <p>Loading...</p>
+                        </div>
+                        <div id="text-preview-before-inner" style="display: none;" class="monospace-preview">
+                            <p>Loading...</p>
+                        </div>
+                    </div>
             </div>
           </div>
         </div>
+
         {% endif %}
         {# rendered sub Template #}
         {% if extra_form_content %}

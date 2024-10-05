@@ -11,43 +11,59 @@ function redirect_to_version(version) {
     window.location.href = baseUrl + '?version=' + version + anchor;
 }
 
-document.addEventListener('keydown', function (event) {
+function setup_date_widget() {
+    document.addEventListener('keydown', function (event) {
+        var selectElement = document.getElementById('preview-version');
+        if (selectElement) {
+            var selectedOption = selectElement.querySelector('option:checked');
+            if (selectedOption) {
+                if (event.key === 'ArrowLeft') {
+                    if (selectedOption.previousElementSibling) {
+                        redirect_to_version(selectedOption.previousElementSibling.value);
+                    }
+                } else if (event.key === 'ArrowRight') {
+                    if (selectedOption.nextElementSibling) {
+                        redirect_to_version(selectedOption.nextElementSibling.value);
+                    }
+                }
+            }
+        }
+    });
+
+
+    document.getElementById('preview-version').addEventListener('change', function () {
+        redirect_to_version(this.value);
+    });
+
     var selectElement = document.getElementById('preview-version');
     if (selectElement) {
         var selectedOption = selectElement.querySelector('option:checked');
         if (selectedOption) {
-            if (event.key === 'ArrowLeft') {
-                if (selectedOption.previousElementSibling) {
-                    redirect_to_version(selectedOption.previousElementSibling.value);
-                }
-            } else if (event.key === 'ArrowRight') {
-                if (selectedOption.nextElementSibling) {
-                    redirect_to_version(selectedOption.nextElementSibling.value);
-                }
+            if (selectedOption.previousElementSibling) {
+                document.getElementById('btn-previous').href = "?version=" + selectedOption.previousElementSibling.value;
+            } else {
+                document.getElementById('btn-previous').remove()
             }
+            if (selectedOption.nextElementSibling) {
+                document.getElementById('btn-next').href = "?version=" + selectedOption.nextElementSibling.value;
+            } else {
+                document.getElementById('btn-next').remove()
+            }
+
         }
-    }
-});
-
-
-document.getElementById('preview-version').addEventListener('change', function () {
-    redirect_to_version(this.value);
-});
-
-var selectElement = document.getElementById('preview-version');
-if (selectElement) {
-    var selectedOption = selectElement.querySelector('option:checked');
-    if (selectedOption) {
-        if (selectedOption.previousElementSibling) {
-            document.getElementById('btn-previous').href = "?version=" + selectedOption.previousElementSibling.value;
-        } else {
-            document.getElementById('btn-previous').remove()
-        }
-        if (selectedOption.nextElementSibling) {
-            document.getElementById('btn-next').href = "?version=" + selectedOption.nextElementSibling.value;
-        } else {
-            document.getElementById('btn-next').remove()
-        }
-
     }
 }
+
+$(document).ready(function () {
+    if ($('#preview-version').length) {
+        setup_date_widget()
+    }
+
+    $('#diff-col> pre')
+        .highlightLines([
+            {
+                'color': '#ee0000',
+                'lines': triggered_line_numbers
+            }
+        ]);
+});

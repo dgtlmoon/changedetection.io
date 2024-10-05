@@ -298,4 +298,4 @@ class perform_site_check(difference_detection_processor):
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5
 
-        return changed_detected, update_obj, snapshot_content.encode('utf-8').strip(), b''
+        return changed_detected, update_obj, snapshot_content.encode('utf-8').strip()

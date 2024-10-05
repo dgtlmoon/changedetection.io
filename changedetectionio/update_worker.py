@@ -278,7 +278,7 @@ class update_worker(threading.Thread):
 
                         update_handler.call_browser()
 
-                        changed_detected, update_obj, contents, content_after_filters = update_handler.run_changedetection(
+                        changed_detected, update_obj, contents = update_handler.run_changedetection(
                             watch=watch,
                             skip_when_checksum_same=skip_when_same_checksum,
                         )

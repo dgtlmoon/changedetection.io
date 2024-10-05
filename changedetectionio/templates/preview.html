@@ -3,11 +3,13 @@
 {% block content %}
     <script>
         const screenshot_url = "{{url_for('static_content', group='screenshot', filename=uuid)}}";
+        const triggered_line_numbers = {{ triggered_line_numbers|tojson }};
         {% if last_error_screenshot %}
             const error_screenshot_url = "{{url_for('static_content', group='screenshot', filename=uuid, error_screenshot=1) }}";
         {% endif %}
         const highlight_submit_ignore_url = "{{url_for('highlight_submit_ignore_url', uuid=uuid)}}";
     </script>
+    <script src="{{url_for('static_content', group='js', filename='plugins.js')}}"></script>
     <script src="{{ url_for('static_content', group='js', filename='diff-overview.js') }}" defer></script>
     <script src="{{ url_for('static_content', group='js', filename='preview.js') }}" defer></script>
     <script src="{{ url_for('static_content', group='js', filename='tabs.js') }}" defer></script>
@@ -67,16 +69,15 @@
 
         <div class="tab-pane-inner" id="text">
             <div class="snapshot-age">{{ current_version|format_timestamp_timeago }}</div>
-            <span class="ignored">Grey lines are ignored</span> <span class="triggered">Blue lines are triggers</span>
             <span class="tip"><strong>Pro-tip</strong>: Highlight text to add to ignore filters</span>
 
             <table>
                 <tbody>
                 <tr>
                     <td id="diff-col" class="highlightable-filter">
-                        {% for row in content %}
-                            <div class="{{ row.classes }}">{{ row.line }}</div>
-                        {% endfor %}
+                        <pre style="border-left: 2px solid #ddd;">
+{{ content }}
+                        </pre>
                     </td>
                 </tr>
                 </tbody>

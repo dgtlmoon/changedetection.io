@@ -1158,8 +1158,6 @@ def changedetection_app(config=None, datastore_o=None):
     @login_optionally_required
     def preview_page(uuid):
         content = []
-        ignored_line_numbers = []
-        trigger_line_numbers = []
         versions = []
         timestamp = None
 
@@ -1176,11 +1174,10 @@ def changedetection_app(config=None, datastore_o=None):
         system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
         extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
 
-
         is_html_webdriver = False
         if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
             is_html_webdriver = True
-
+        triggered_line_numbers = []
         if datastore.data['watching'][uuid].history_n == 0 and (watch.get_error_text() or watch.get_error_snapshot()):
             flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
         else:
@@ -1193,31 +1190,12 @@ def changedetection_app(config=None, datastore_o=None):
 
             try:
                 versions = list(watch.history.keys())
-                tmp = watch.get_history_snapshot(timestamp).splitlines()
+                content = watch.get_history_snapshot(timestamp)
 
-                # Get what needs to be highlighted
-                ignore_rules = watch.get('ignore_text', []) + datastore.data['settings']['application']['global_ignore_text']
-
-                # .readlines will keep the \n, but we will parse it here again, in the future tidy this up
-                ignored_line_numbers = html_tools.strip_ignore_text(content="\n".join(tmp),
-                                                                    wordlist=ignore_rules,
-                                                                    mode='line numbers'
-                                                                    )
-
-                trigger_line_numbers = html_tools.strip_ignore_text(content="\n".join(tmp),
-                                                                    wordlist=watch['trigger_text'],
-                                                                    mode='line numbers'
-                                                                    )
-                # Prepare the classes and lines used in the template
-                i=0
-                for l in tmp:
-                    classes=[]
-                    i+=1
-                    if i in ignored_line_numbers:
-                        classes.append('ignored')
-                    if i in trigger_line_numbers:
-                        classes.append('triggered')
-                    content.append({'line': l, 'classes': ' '.join(classes)})
+                triggered_line_numbers = html_tools.strip_ignore_text(content=content,
+                                                                      wordlist=watch['trigger_text'],
+                                                                      mode='line numbers'
+                                                                      )
 
             except Exception as e:
                 content.append({'line': f"File doesnt exist or unable to read timestamp {timestamp}", 'classes': ''})
@@ -1228,8 +1206,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  history_n=watch.history_n,
                                  extra_stylesheets=extra_stylesheets,
                                  extra_title=f" - Diff - {watch.label} @ {timestamp}",
-                                 ignored_line_numbers=ignored_line_numbers,
-                                 triggered_line_numbers=trigger_line_numbers,
+                                 triggered_line_numbers=triggered_line_numbers,
                                  current_diff_url=watch['url'],
                                  screenshot=watch.get_screenshot(),
                                  watch=watch,
@@ -1400,9 +1377,11 @@ def changedetection_app(config=None, datastore_o=None):
         # Return a 500 error
         abort(500)
 
+    # Ajax callback
     @app.route("/edit/<string:uuid>/preview-rendered", methods=['POST'])
     @login_optionally_required
     def watch_get_preview_rendered(uuid):
+        from flask import jsonify
         '''For when viewing the "preview" of the rendered text from inside of Edit'''
         now = time.time()
         import brotli
@@ -1434,7 +1413,7 @@ def changedetection_app(config=None, datastore_o=None):
                 update_handler.fetcher.content = decompressed_data
                 update_handler.fetcher.headers['content-type'] = tmp_watch.get('content-type')
                 try:
-                    changed_detected, update_obj, contents, text_after_filter = update_handler.run_changedetection(
+                    changed_detected, update_obj, text_after_filter = update_handler.run_changedetection(
                         watch=tmp_watch,
                         skip_when_checksum_same=False,
                     )
@@ -1448,8 +1427,32 @@ def changedetection_app(config=None, datastore_o=None):
             if not text_after_filter.strip():
                 text_after_filter = 'Empty content'
 
-        logger.trace(f"Parsed in {time.time()-now:.3f}s")
-        return text_after_filter.strip()
+        # because run_changedetection always returns bytes due to saving the snapshots etc
+        text_after_filter = text_after_filter.decode('utf-8') if isinstance(text_after_filter, bytes) else text_after_filter
+
+        do_anchor = datastore.data["settings"]["application"].get("render_anchor_tag_content", False)
+
+        trigger_line_numbers = []
+        try:
+            text_before_filter = html_tools.html_to_text(html_content=decompressed_data,
+                                                         render_anchor_tag_content=do_anchor)
+
+            trigger_line_numbers = html_tools.strip_ignore_text(content=text_after_filter,
+                                                                wordlist=tmp_watch['trigger_text'],
+                                                                mode='line numbers'
+                                                                )
+        except Exception as e:
+            text_before_filter = f"Error: {str(e)}"
+
+        logger.trace(f"Parsed in {time.time() - now:.3f}s")
+
+        return jsonify(
+            {
+                'after_filter': text_after_filter,
+                'before_filter': text_before_filter.decode('utf-8') if isinstance(text_before_filter, bytes) else text_before_filter,
+                'trigger_line_numbers': trigger_line_numbers
+            }
+        )
 
 
     @app.route("/form/add/quickwatch", methods=['POST'])
