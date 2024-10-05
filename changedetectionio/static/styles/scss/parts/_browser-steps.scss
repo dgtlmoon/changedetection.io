@@ -42,26 +42,36 @@
 
 
 #browser-steps .flex-wrapper {
-  display: flex;
-  flex-flow: row;
-  height: 70vh;
   font-size: 80%;
-  #browser-steps-ui {
-    flex-grow: 1;      /* Allow it to grow and fill the available space */
-    flex-shrink: 1;    /* Allow it to shrink if needed */
-    flex-basis: 0;     /* Start with 0 base width so it stretches as much as possible */
-    background-color: #eee;
-    border-radius: 5px;
 
+  @media screen and (min-width: 800px) {
+    display: flex;
+    flex-flow: row;
+    height: 70vh;
+    #browser-steps-fieldlist {
+      flex-grow: 0; /* Don't allow it to grow */
+      flex-shrink: 0; /* Don't allow it to shrink */
+      flex-basis: auto; /* Base width is determined by the content */
+      max-width: 400px; /* Set a max width to prevent overflow */
+      padding-left: 1rem;
+      overflow-y: scroll;
+    }
+
+
+    #browser-steps-ui {
+      flex-grow: 1; /* Allow it to grow and fill the available space */
+      flex-shrink: 1; /* Allow it to shrink if needed */
+      flex-basis: 0; /* Start with 0 base width so it stretches as much as possible */
+    }
   }
 
-  #browser-steps-fieldlist {
-    flex-grow: 0;      /* Don't allow it to grow */
-    flex-shrink: 0;    /* Don't allow it to shrink */
-    flex-basis: auto;  /* Base width is determined by the content */
-    max-width: 400px;  /* Set a max width to prevent overflow */
-    padding-left: 1rem;
-    overflow-y: scroll;
+  #browser-steps-ui {
+    background-color: #eee;
+    border-radius: 5px;
+  }
+
+  #browser-steps-field-list {
+    text-align: center;
   }
 }
 
