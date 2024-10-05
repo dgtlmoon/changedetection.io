@@ -480,10 +480,10 @@ body.preview-text-enabled {
   body.preview-text-enabled #activate-text-preview {
     background-color: var(--color-grey-500); }
   body.preview-text-enabled .monospace-preview {
-    background: var(--color-grey-900);
+    background: var(--color-background-input);
     border: 1px solid var(--color-grey-600);
     padding: 1rem;
-    color: var(--color-grey-100);
+    color: var(--color-text-input);
     font-family: "Courier New", Courier, monospace;
     /* Sets the font to a monospace type */
     font-size: 70%;

@@ -35,10 +35,10 @@ body.preview-text-enabled {
 
   /* actual preview area */
   .monospace-preview {
-    background: var(--color-grey-900);
+    background: var(--color-background-input);
     border: 1px solid var(--color-grey-600);
     padding: 1rem;
-    color: var(--color-grey-100);
+    color: var(--color-text-input);
     font-family: "Courier New", Courier, monospace; /* Sets the font to a monospace type */
     font-size: 70%;
     overflow-x: scroll;
