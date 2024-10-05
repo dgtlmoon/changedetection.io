@@ -58,6 +58,10 @@ services:
   #
   #        Absolute minimum seconds to recheck, overrides any watch minimum, change to 0 to disable
   #      - MINIMUM_SECONDS_RECHECK_TIME=3
+  #
+  #        If you want to watch local files file:///path/to/file.txt (careful! security implications!)
+  #      - ALLOW_FILE_URI=False
+  
       # Comment out ports: when using behind a reverse proxy , enable networks: etc.
       ports:
         - 5000:5000
