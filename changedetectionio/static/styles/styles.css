@@ -457,13 +457,14 @@ html[data-darkmode="true"] #toggle-light-mode .icon-dark {
 body.preview-text-enabled {
   /* layout of the page */
   /* actual preview area */ }
-  body.preview-text-enabled #filters-and-triggers > div {
-    display: flex;
-    /* Establishes Flexbox layout */
-    gap: 20px;
-    /* Adds space between the columns */
-    position: relative;
-    /* Ensures the sticky positioning is relative to this parent */ }
+  @media (min-width: 800px) {
+    body.preview-text-enabled #filters-and-triggers > div {
+      display: flex;
+      /* Establishes Flexbox layout */
+      gap: 20px;
+      /* Adds space between the columns */
+      position: relative;
+      /* Ensures the sticky positioning is relative to this parent */ } }
   body.preview-text-enabled #edit-text-filter, body.preview-text-enabled #text-preview {
     flex: 1;
     /* Each column takes an equal amount of available space */
@@ -474,6 +475,7 @@ body.preview-text-enabled {
   body.preview-text-enabled #text-preview {
     position: sticky;
     padding-top: 1rem;
+    padding-bottom: 1rem;
     display: block !important; }
   body.preview-text-enabled #activate-text-preview {
     background-color: var(--color-grey-500); }
