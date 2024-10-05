@@ -23,7 +23,7 @@ function request_textpreview_update() {
     $('textarea:visible, input:visible').each(function () {
         const $element = $(this); // Cache the jQuery object for the current element
         const name = $element.attr('name'); // Get the name attribute of the element
-        data[name] = $element.is(':checkbox') ? ($element.is(':checked') ? $element.val() : undefined) : $element.val();
+        data[name] = $element.is(':checkbox') ? ($element.is(':checked') ? $element.val() : false) : $element.val();
     });
 
     $.abortiveSingularAjax({
