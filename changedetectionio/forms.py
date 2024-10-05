@@ -1,5 +1,6 @@
 import os
 import re
+from loguru import logger
 
 from changedetectionio.strtobool import strtobool
 
@@ -525,9 +526,16 @@ class processor_text_json_diff_form(commonSettingsForm):
         try:
             from changedetectionio.safe_jinja import render as jinja_render
             jinja_render(template_str=self.url.data)
+        except ModuleNotFoundError as e:
+            # incase jinja2_time or others is missing
+            logger.error(e)
+            self.url.errors.append(e)
+            result = False
         except Exception as e:
+            logger.error(e)
             self.url.errors.append('Invalid template syntax')
             result = False
+
         return result
 
 class SingleExtraProxy(Form):
