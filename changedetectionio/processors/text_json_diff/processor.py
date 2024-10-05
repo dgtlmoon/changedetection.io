@@ -202,7 +202,6 @@ class perform_site_check(difference_detection_processor):
                                                                       render_anchor_tag_content=do_anchor,
                                                                       is_rss=is_rss)  # 1874 activate the <title workaround hack
 
-
         if watch.get('trim_text_whitespace'):
             stripped_text_from_html = '\n'.join(line.strip() for line in stripped_text_from_html.replace("\n\n", "\n").splitlines())
 
@@ -215,8 +214,8 @@ class perform_site_check(difference_detection_processor):
             stripped_text_from_html = stripped_text_from_html.replace("\n\n", "\n")
             stripped_text_from_html = '\n'.join(sorted(stripped_text_from_html.splitlines(), key=lambda x: x.lower()))
 
-
         # Re #340 - return the content before the 'ignore text' was applied
+        # Also used to calculate/show what was removed
         text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
 
         # @todo whitespace coming from missing rtrim()?
@@ -241,8 +240,8 @@ class perform_site_check(difference_detection_processor):
             if not rendered_diff and stripped_text_from_html:
                 # We had some content, but no differences were found
                 # Store our new file as the MD5 so it will trigger in the future
-                c = hashlib.md5(text_content_before_ignored_filter.translate(None, b'\r\n\t ')).hexdigest()
-                return False, {'previous_md5': c}, stripped_text_from_html.encode('utf-8'), stripped_text_from_html.encode('utf-8')
+                c = hashlib.md5(stripped_text_from_html.encode('utf-8').translate(None, b'\r\n\t ')).hexdigest()
+                return False, {'previous_md5': c}, stripped_text_from_html.encode('utf-8')
             else:
                 stripped_text_from_html = rendered_diff
 
@@ -365,4 +364,5 @@ class perform_site_check(difference_detection_processor):
         if not watch.get('previous_md5'):
             watch['previous_md5'] = fetched_md5
 
-        return changed_detected, update_obj, text_content_before_ignored_filter, stripped_text_from_html
+        # stripped_text_from_html - Everything after filters and NO 'ignored' content
+        return changed_detected, update_obj, stripped_text_from_html

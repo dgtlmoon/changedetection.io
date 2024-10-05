@@ -12,25 +12,6 @@ function toggleOpacity(checkboxSelector, fieldSelector, inverted) {
     checkbox.addEventListener('change', updateOpacity);
 }
 
-(function($) {
-    // Object to store ongoing requests by namespace
-    const requests = {};
-
-    $.abortiveSingularAjax = function(options) {
-        const namespace = options.namespace || 'default';
-
-        // Abort the current request in this namespace if it's still ongoing
-        if (requests[namespace]) {
-            requests[namespace].abort();
-        }
-
-        // Start a new AJAX request and store its reference in the correct namespace
-        requests[namespace] = $.ajax(options);
-
-        // Return the current request in case it's needed
-        return requests[namespace];
-    };
-})(jQuery);
 
 function request_textpreview_update() {
     if (!$('body').hasClass('preview-text-enabled')) {
@@ -51,7 +32,19 @@ function request_textpreview_update() {
         data: data,
         namespace: 'watchEdit'
     }).done(function (data) {
-        $('#filters-and-triggers #text-preview-inner').text(data);
+        $('#filters-and-triggers #text-preview-before-inner').text(data['before_filter']);
+
+        $('#filters-and-triggers #text-preview-inner')
+            .text(data['after_filter'])
+            .highlightLines([
+                {
+                    'color': '#ee0000',
+                    'lines': data['trigger_line_numbers']
+                }
+            ]);
+
+
+
     }).fail(function (error) {
         if (error.statusText === 'abort') {
             console.log('Request was aborted due to a new request being fired.');
@@ -78,6 +71,7 @@ $(document).ready(function () {
 
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
     $("#text-preview-inner").css('max-height', (vh-300)+"px");
+    $("#text-preview-before-inner").css('max-height', (vh-300)+"px");
 
     // Realtime preview of 'Filters & Text' setup
     var debounced_request_textpreview_update = request_textpreview_update.debounce(100);
@@ -92,6 +86,9 @@ $(document).ready(function () {
         $('input:visible')[method]('keyup blur change', debounced_request_textpreview_update);
         $("#filters-and-triggers-tab")[method]('click', debounced_request_textpreview_update);
     });
-
+    $('.minitabs-wrapper').miniTabs({
+        "Content after filters": "#text-preview-inner",
+        "Content raw/before filters": "#text-preview-before-inner"
+    });
 });
 

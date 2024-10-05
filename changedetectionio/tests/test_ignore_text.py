@@ -79,14 +79,14 @@ def set_modified_ignore_response():
         f.write(test_return_data)
 
 
+# Ignore text now just removes it entirely, is a LOT more simpler code this way
+
 def test_check_ignore_text_functionality(client, live_server, measure_memory_usage):
 
     # Use a mix of case in ZzZ to prove it works case-insensitive.
     ignore_text = "XXXXX\r\nYYYYY\r\nzZzZZ\r\nnew ignore stuff"
     set_original_ignore_response()
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -151,12 +151,10 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
-    # Check the preview/highlighter, we should be able to see what we ignored, but it should be highlighted
-    # We only introduce the "modified" content that includes what we ignore so we can prove the newest version also displays
-    # at /preview
     res = client.get(url_for("preview_page", uuid="first"))
-    # We should be able to see what we ignored
-    assert b'<div class="ignored">new ignore stuff' in res.data
+
+    # Should no longer be in the preview
+    assert b'new ignore stuff' not in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

@@ -39,9 +39,8 @@ def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
 def test_check_removed_line_contains_trigger(client, live_server, measure_memory_usage):
-
+    #live_server_setup(live_server)
     # Give the endpoint time to spin up
-    time.sleep(1)
     set_original()
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -152,7 +151,9 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
 
     # A line thats not the trigger should not trigger anything
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
+
     assert b'1 watches queued for rechecking.' in res.data
+
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data

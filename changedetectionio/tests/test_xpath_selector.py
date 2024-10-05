@@ -161,8 +161,8 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
         follow_redirects=True
     )
 
-    assert b'<div class="">Stock Alert (UK): RPi CM4' in res.data
-    assert b'<div class="">Stock Alert (UK): Big monitor' in res.data
+    assert b'Stock Alert (UK): RPi CM4' in res.data
+    assert b'Stock Alert (UK): Big monitor' in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

@@ -115,9 +115,9 @@ def test_check_filter_multiline(client, live_server, measure_memory_usage):
     # Plaintext that doesnt look like a regex should match also
     assert b'and this should be' in res.data
 
-    assert b'<div class="">Something' in res.data
-    assert b'<div class="">across 6 billion multiple' in res.data
-    assert b'<div class="">lines' in res.data
+    assert b'Something' in res.data
+    assert b'across 6 billion multiple' in res.data
+    assert b'lines' in res.data
 
     # but the last one, which also says 'lines' shouldnt be here (non-greedy match checking)
     assert b'aaand something lines' not in res.data
@@ -183,20 +183,19 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
         follow_redirects=True
     )
 
-    # Class will be blank for now because the frontend didnt apply the diff
-    assert b'<div class="">1000 online' in res.data
+    assert b'1000 online' in res.data
 
     # All regex matching should be here
-    assert b'<div class="">2000 online' in res.data
+    assert b'2000 online' in res.data
 
     # Both regexs should be here
-    assert b'<div class="">80 guests' in res.data
+    assert b'80 guests' in res.data
 
     # Regex with flag handling should be here
-    assert b'<div class="">SomeCase insensitive 3456' in res.data
+    assert b'SomeCase insensitive 3456' in res.data
 
     # Singular group from /somecase insensitive (345\d)/i
-    assert b'<div class="">3456' in res.data
+    assert b'3456' in res.data
 
     # Regex with multiline flag handling should be here
 
