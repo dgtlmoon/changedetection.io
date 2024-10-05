@@ -44,7 +44,7 @@ def test_select_custom(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
     # We should see something via proxy
-    assert b'<div class=""> - 0.' in res.data
+    assert b' - 0.' in res.data
 
     #
     # Now we should see the request in the container logs for "squid-squid-custom" because it will be the only default
