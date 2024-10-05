@@ -692,9 +692,6 @@ a.pure-button-selected {
 .button-cancel {
   background: var(--color-background-button-cancel); }
 
-#save_button {
-  margin-right: 1rem; }
-
 .messages li {
   list-style: none;
   padding: 1em;
@@ -893,8 +890,10 @@ footer {
   .pure-form .inline-radio ul {
     margin: 0px;
     list-style: none; }
-    .pure-form .inline-radio ul li > * {
-      display: inline-block; }
+    .pure-form .inline-radio ul li {
+      display: flex;
+      align-items: center;
+      gap: 1em; }
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
   .box {
@@ -936,6 +935,13 @@ footer {
     .watch-table tbody td,
     .watch-table tbody tr {
       display: block; }
+    .watch-table tbody tr {
+      display: flex;
+      flex-wrap: wrap; }
+      .watch-table tbody tr :nth-child(3) {
+        flex-grow: 1; }
+      .watch-table tbody tr :nth-last-child(-n+3) {
+        flex-basis: 100%; }
     .watch-table .last-checked > span {
       vertical-align: middle; }
     .watch-table .last-checked::before {
@@ -1027,6 +1033,10 @@ textarea::placeholder {
 - We dont use 'size' with <input> because `size` is too unreliable to override, and will often push-out
 - Rely always on width in CSS
 */
+/** Set max width for input field */
+.m-d {
+  min-width: 100%; }
+
 @media only screen and (min-width: 761px) {
   /* m-d is medium-desktop */
   .m-d {
@@ -1087,7 +1097,8 @@ body.full-width .edit-form {
 .edit-form {
   min-width: 70%;
   /* so it cant overflow */
-  max-width: 95%; }
+  max-width: 95%;
+  /* Make action buttons have consistent size and spacing */ }
   .edit-form .box-wrap {
     position: relative; }
   .edit-form .inner {
@@ -1096,6 +1107,10 @@ body.full-width .edit-form {
   .edit-form #actions {
     display: block;
     background: var(--color-background); }
+  .edit-form #actions .pure-control-group {
+    display: flex;
+    gap: 0.625em;
+    flex-wrap: wrap; }
   .edit-form .pure-form-message-inline {
     padding-left: 0;
     color: var(--color-text-input-description); }
@@ -1123,6 +1138,21 @@ ul {
   display: inline; }
   .time-check-widget tr input[type="number"] {
     width: 5em; }
+
+@media only screen and (max-width: 760px) {
+  .time-check-widget tbody {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr;
+    gap: 0.625em 0.3125em;
+    align-items: center; }
+  .time-check-widget tr {
+    display: contents; }
+    .time-check-widget tr th {
+      text-align: right;
+      padding-right: 5px; }
+    .time-check-widget tr input[type="number"] {
+      width: 100%;
+      max-width: 5em; } }
 
 #selector-wrapper {
   height: 100%;
