@@ -154,10 +154,14 @@ function isItemInStock() {
         }
 
         elementText = "";
-        if (element.tagName.toLowerCase() === "input") {
-            elementText = element.value.toLowerCase().trim();
-        } else {
-            elementText = getElementBaseText(element);
+        try {
+            if (element.tagName.toLowerCase() === "input") {
+                elementText = element.value.toLowerCase().trim();
+            } else {
+                elementText = getElementBaseText(element);
+            }
+        } catch (e) {
+            console.warn('stock-not-in-stock.js scraper - handling element for gettext failed', e);
         }
 
         if (elementText.length) {
