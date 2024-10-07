@@ -239,11 +239,11 @@ class perform_site_check(difference_detection_processor):
 
         # Very often websites will lie about the 'availability' in the metadata, so if the scraped version says its NOT in stock, use that.
         if self.fetcher.instock_data != 'None' and self.fetcher.instock_data != 'Possibly in stock':
-            if itemprop_availability.get('availability'):
+            if update_obj['restock'].get('in_stock'):
                 logger.warning(
                     f"Lie detected in the availability machine data!! when scraping said its not in stock!! itemprop was '{itemprop_availability}' and scraped from browser was '{self.fetcher.instock_data}' ")
-            logger.debug(f"Setting instock to FALSE, scraper found '{self.fetcher.instock_data}'")
-            update_obj['restock']["in_stock"] = False
+                logger.debug(f"Setting instock to FALSE, scraper found '{self.fetcher.instock_data}' in the body but metadata reported not-in-stock")
+                update_obj['restock']["in_stock"] = False
 
         # What we store in the snapshot
         price = update_obj.get('restock').get('price') if update_obj.get('restock').get('price') else ""
