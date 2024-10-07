@@ -338,7 +338,8 @@ class update_worker(threading.Thread):
                         elif e.status_code == 500:
                             err_text = "Error - 500 (Internal server error) received from the web site"
                         else:
-                            err_text = "Error - Request returned a HTTP error code {}".format(str(e.status_code))
+                            extra = ' (Access denied or blocked)' if str(e.status_code).startswith('4') else ''
+                            err_text = f"Error - Request returned a HTTP error code {e.status_code}{extra}"
 
                         if e.screenshot:
                             watch.save_screenshot(screenshot=e.screenshot, as_error=True)
