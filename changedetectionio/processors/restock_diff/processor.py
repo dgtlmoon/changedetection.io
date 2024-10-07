@@ -238,7 +238,7 @@ class perform_site_check(difference_detection_processor):
             logger.debug(f"Watch UUID {watch.get('uuid')} restock check returned instock_data - '{self.fetcher.instock_data}' from JS scraper.")
 
         # Very often websites will lie about the 'availability' in the metadata, so if the scraped version says its NOT in stock, use that.
-        if self.fetcher.instock_data != 'None' and self.fetcher.instock_data != 'Possibly in stock':
+        if self.fetcher.instock_data and self.fetcher.instock_data != 'Possibly in stock':
             if update_obj['restock'].get('in_stock'):
                 logger.warning(
                     f"Lie detected in the availability machine data!! when scraping said its not in stock!! itemprop was '{itemprop_availability}' and scraped from browser was '{self.fetcher.instock_data}' update obj was {update_obj['restock']} ")
