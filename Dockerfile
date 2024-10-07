@@ -39,6 +39,7 @@ RUN pip install --target=/dependencies playwright~=1.41.2 \
 FROM python:${PYTHON_VERSION}-slim-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
     libxslt1.1 \
     # For presenting price amounts correctly in the restock/price detection overview
     locales \
@@ -66,6 +67,9 @@ EXPOSE 5000
 COPY changedetectionio /app/changedetectionio
 # Starting wrapper
 COPY changedetection.py /app/changedetection.py
+
+# Healthcheck
+HEALTHCHECK --interval=1m CMD curl -f http://localhost:5000/ || exit 1
 
 # Github Action test purpose(test-only.yml).
 # On production, it is effectively LOGGER_LEVEL=''.
