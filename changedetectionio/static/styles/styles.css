@@ -960,7 +960,12 @@ footer {
     .watch-table thead {
       display: block; }
       .watch-table thead tr th {
-        display: inline-block; }
+        display: inline-block; } }
+      @media only screen and (max-width: 760px) and (max-width: 768px), (min-device-width: 768px) and (max-device-width: 800px) and (max-width: 768px) {
+        .watch-table thead tr th .hide-on-mobile {
+          display: none; } }
+
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 800px) {
       .watch-table thead .empty-cell {
         display: none; }
     .watch-table tbody td,

@@ -679,6 +679,12 @@ footer {
       tr {
         th {
           display: inline-block;
+          // Hide the "Last" text for smaller screens
+          @media (max-width: 768px) {
+            .hide-on-mobile {
+              display: none; 
+            }
+          }
         }
       }
       .empty-cell {
