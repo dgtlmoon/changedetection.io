@@ -241,8 +241,8 @@ class perform_site_check(difference_detection_processor):
         if self.fetcher.instock_data != 'None' and self.fetcher.instock_data != 'Possibly in stock':
             if update_obj['restock'].get('in_stock'):
                 logger.warning(
-                    f"Lie detected in the availability machine data!! when scraping said its not in stock!! itemprop was '{itemprop_availability}' and scraped from browser was '{self.fetcher.instock_data}' ")
-                logger.debug(f"Setting instock to FALSE, scraper found '{self.fetcher.instock_data}' in the body but metadata reported not-in-stock")
+                    f"Lie detected in the availability machine data!! when scraping said its not in stock!! itemprop was '{itemprop_availability}' and scraped from browser was '{self.fetcher.instock_data}' update obj was {update_obj['restock']} ")
+                logger.warning(f"Setting instock to FALSE, scraper found '{self.fetcher.instock_data}' in the body but metadata reported not-in-stock")
                 update_obj['restock']["in_stock"] = False
 
         # What we store in the snapshot
