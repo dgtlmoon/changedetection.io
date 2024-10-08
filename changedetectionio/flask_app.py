@@ -1450,7 +1450,8 @@ def changedetection_app(config=None, datastore_o=None):
             {
                 'after_filter': text_after_filter,
                 'before_filter': text_before_filter.decode('utf-8') if isinstance(text_before_filter, bytes) else text_before_filter,
-                'trigger_line_numbers': trigger_line_numbers
+                'duration': time.time() - now,
+                'trigger_line_numbers': trigger_line_numbers,
             }
         )
 

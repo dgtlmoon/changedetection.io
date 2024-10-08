@@ -434,6 +434,13 @@ html[data-darkmode="true"] #toggle-light-mode .icon-dark {
     padding: 20px;
     border: 1px solid #ccc;
     border-top: none; }
+  .minitabs-wrapper .minitabs-content {
+    width: 100%;
+    display: flex; }
+    .minitabs-wrapper .minitabs-content > div {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: scroll; }
   .minitabs-wrapper .minitabs {
     display: flex;
     border-bottom: 1px solid #ccc; }
@@ -488,11 +495,9 @@ body.preview-text-enabled {
     font-family: "Courier New", Courier, monospace;
     /* Sets the font to a monospace type */
     font-size: 70%;
-    overflow-x: scroll;
+    word-break: break-word;
     white-space: pre-wrap;
-    /* Preserves whitespace and line breaks like <pre> */
-    overflow-wrap: break-word;
-    /* Allows long words to break and wrap to the next line */ }
+    /* Preserves whitespace and line breaks like <pre> */ }
 
 #activate-text-preview {
   right: 0;

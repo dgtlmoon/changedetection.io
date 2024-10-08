@@ -424,15 +424,17 @@ Unavailable") }}
                     </script>
                     <br>
                     {#<div id="text-preview-controls"><span id="text-preview-refresh" class="pure-button button-xsmall">Refresh</span></div>#}
-
                     <div class="minitabs-wrapper">
-                        <div id="text-preview-inner" class="monospace-preview">
-                            <p>Loading...</p>
-                        </div>
-                        <div id="text-preview-before-inner" style="display: none;" class="monospace-preview">
-                            <p>Loading...</p>
-                        </div>
+                      <div class="minitabs-content">
+                          <div id="text-preview-inner" class="monospace-preview">
+                              <p>Loading...</p>
+                          </div>
+                          <div id="text-preview-before-inner" style="display: none;" class="monospace-preview">
+                              <p>Loading...</p>
+                          </div>
+                      </div>
                     </div>
+                    <div class="spinner" style="display: none;" id="text-preview-spinner"></div>
             </div>
           </div>
         </div>

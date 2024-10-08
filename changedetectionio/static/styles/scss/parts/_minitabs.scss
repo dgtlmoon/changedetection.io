@@ -7,6 +7,16 @@
     border-top: none;
   }
 
+  .minitabs-content {
+    width: 100%;
+    display: flex;
+    > div {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: scroll;
+    }
+  }
+
   .minitabs {
     display: flex;
     border-bottom: 1px solid #ccc;
