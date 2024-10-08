@@ -1,19 +1,4 @@
 (function($) {
-
-/*
-    $('#code-block').highlightLines([
-      {
-        'color': '#dd0000',
-        'lines': [10, 12]
-      },
-      {
-        'color': '#ee0000',
-        'lines': [15, 18]
-      }
-    ]);
-  });
-*/
-
   $.fn.highlightLines = function(configurations) {
     return this.each(function() {
       const $pre = $(this);
