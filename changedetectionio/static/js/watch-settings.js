@@ -25,14 +25,15 @@ function request_textpreview_update() {
         const name = $element.attr('name'); // Get the name attribute of the element
         data[name] = $element.is(':checkbox') ? ($element.is(':checked') ? $element.val() : false) : $element.val();
     });
-    $('#text-preview-spinner').show();
+
+    $('body').toggleClass('spinner-active', 1);
+
     $.abortiveSingularAjax({
         type: "POST",
         url: preview_text_edit_filters_url,
         data: data,
         namespace: 'watchEdit'
     }).done(function (data) {
-        $('#text-preview-spinner').fadeOut();
         $('#filters-and-triggers #text-preview-before-inner').text(data['before_filter']);
         $('#filters-and-triggers #text-preview-inner')
             .text(data['after_filter'])
@@ -43,7 +44,6 @@ function request_textpreview_update() {
                 }
             ]);
     }).fail(function (error) {
-        $('#text-preview-spinner').fadeOut();
         if (error.statusText === 'abort') {
             console.log('Request was aborted due to a new request being fired.');
         } else {
