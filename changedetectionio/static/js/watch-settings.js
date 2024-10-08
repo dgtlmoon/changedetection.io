@@ -72,16 +72,13 @@ $(document).ready(function () {
     $("#text-preview-inner").css('max-height', (vh-300)+"px");
     $("#text-preview-before-inner").css('max-height', (vh-300)+"px");
 
-    // Realtime preview of 'Filters & Text' setup
-    var debounced_request_textpreview_update = request_textpreview_update.debounce(100);
-
     $("#activate-text-preview").click(function (e) {
         $('body').toggleClass('preview-text-enabled')
         request_textpreview_update();
         const method = $('body').hasClass('preview-text-enabled') ? 'on' : 'off';
-        $('textarea:visible')[method]('keyup blur', debounced_request_textpreview_update);
-        $('input:visible')[method]('keyup blur change', debounced_request_textpreview_update);
-        $("#filters-and-triggers-tab")[method]('click', debounced_request_textpreview_update);
+        $('textarea:visible')[method]('keyup blur', request_textpreview_update.throttle(1000));
+        $('input:visible')[method]('keyup blur change', request_textpreview_update.throttle(1000));
+        $("#filters-and-triggers-tab")[method]('click', request_textpreview_update.throttle(1000));
     });
     $('.minitabs-wrapper').miniTabs({
         "Content after filters": "#text-preview-inner",
