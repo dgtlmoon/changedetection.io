@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import datetime
-import importlib
 
 import flask_login
 import locale
@@ -12,9 +11,7 @@ import threading
 import time
 import timeago
 
-from .content_fetchers.exceptions import ReplyWithContentButNoText
 from .processors import find_processors, get_parent_module, get_custom_watch_obj_for_processor
-from .processors.text_json_diff.processor import FilterNotFoundInResponse
 from .safe_jinja import render as jinja_render
 from changedetectionio.strtobool import strtobool
 from copy import deepcopy
@@ -1381,79 +1378,9 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/edit/<string:uuid>/preview-rendered", methods=['POST'])
     @login_optionally_required
     def watch_get_preview_rendered(uuid):
-        from flask import jsonify
         '''For when viewing the "preview" of the rendered text from inside of Edit'''
-        now = time.time()
-        import brotli
-        from . import forms
-
-        text_after_filter = ''
-        tmp_watch = deepcopy(datastore.data['watching'].get(uuid))
-
-        if tmp_watch and tmp_watch.history and os.path.isdir(tmp_watch.watch_data_dir):
-            # Splice in the temporary stuff from the form
-            form = forms.processor_text_json_diff_form(formdata=request.form if request.method == 'POST' else None,
-                                                       data=request.form
-                                                       )
-            # Only update vars that came in via the AJAX post
-            p = {k: v for k, v in form.data.items() if k in request.form.keys()}
-            tmp_watch.update(p)
-
-            latest_filename = next(reversed(tmp_watch.history))
-            html_fname = os.path.join(tmp_watch.watch_data_dir, f"{latest_filename}.html.br")
-            with open(html_fname, 'rb') as f:
-                decompressed_data = brotli.decompress(f.read()).decode('utf-8') if html_fname.endswith('.br') else f.read().decode('utf-8')
-
-                # Just like a normal change detection except provide a fake "watch" object and dont call .call_browser()
-                processor_module = importlib.import_module("changedetectionio.processors.text_json_diff.processor")
-                update_handler = processor_module.perform_site_check(datastore=datastore,
-                                                                     watch_uuid=uuid # probably not needed anymore anyway?
-                                                                     )
-                # Use the last loaded HTML as the input
-                update_handler.fetcher.content = decompressed_data
-                update_handler.fetcher.headers['content-type'] = tmp_watch.get('content-type')
-                try:
-                    changed_detected, update_obj, text_after_filter = update_handler.run_changedetection(
-                        watch=tmp_watch,
-                        skip_when_checksum_same=False,
-                    )
-                except FilterNotFoundInResponse as e:
-                    text_after_filter = f"Filter not found in HTML: {str(e)}"
-                except ReplyWithContentButNoText as e:
-                    text_after_filter = f"Filter found but no text (empty result)"
-                except Exception as e:
-                    text_after_filter = f"Error: {str(e)}"
-
-            if not text_after_filter.strip():
-                text_after_filter = 'Empty content'
-
-        # because run_changedetection always returns bytes due to saving the snapshots etc
-        text_after_filter = text_after_filter.decode('utf-8') if isinstance(text_after_filter, bytes) else text_after_filter
-
-        do_anchor = datastore.data["settings"]["application"].get("render_anchor_tag_content", False)
-
-        trigger_line_numbers = []
-        try:
-            text_before_filter = html_tools.html_to_text(html_content=decompressed_data,
-                                                         render_anchor_tag_content=do_anchor)
-
-            trigger_line_numbers = html_tools.strip_ignore_text(content=text_after_filter,
-                                                                wordlist=tmp_watch['trigger_text'],
-                                                                mode='line numbers'
-                                                                )
-        except Exception as e:
-            text_before_filter = f"Error: {str(e)}"
-
-        logger.trace(f"Parsed in {time.time() - now:.3f}s")
-
-        return jsonify(
-            {
-                'after_filter': text_after_filter,
-                'before_filter': text_before_filter.decode('utf-8') if isinstance(text_before_filter, bytes) else text_before_filter,
-                'duration': time.time() - now,
-                'trigger_line_numbers': trigger_line_numbers,
-            }
-        )
+        from .processors.text_json_diff import prepare_filter_prevew
+        return prepare_filter_prevew(watch_uuid=uuid, datastore=datastore)
 
 
     @app.route("/form/add/quickwatch", methods=['POST'])
