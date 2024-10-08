@@ -78,9 +78,7 @@ $(document).ready(function () {
     $("#activate-text-preview").click(function (e) {
         $('body').toggleClass('preview-text-enabled')
         request_textpreview_update();
-
         const method = $('body').hasClass('preview-text-enabled') ? 'on' : 'off';
-        $("#text-preview-refresh")[method]('click', debounced_request_textpreview_update);
         $('textarea:visible')[method]('keyup blur', debounced_request_textpreview_update);
         $('input:visible')[method]('keyup blur change', debounced_request_textpreview_update);
         $("#filters-and-triggers-tab")[method]('click', debounced_request_textpreview_update);

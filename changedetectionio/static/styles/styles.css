@@ -577,7 +577,7 @@ button.toggle-button {
 
 #pure-menu-horizontal-spinner {
   height: 3px;
-  background: linear-gradient(-75deg, #ed5900, #ed8600, #edc600, #ed0000);
+  background: linear-gradient(-75deg, #ff6000, #ff8f00, #ffdd00, #ed0000);
   background-size: 400% 400%;
   width: 100%;
   animation: gradient 200s ease infinite; }
