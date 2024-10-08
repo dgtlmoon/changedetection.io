@@ -1,5 +1,6 @@
 # include the decorator
 from apprise.decorators import notify
+from loguru import logger
 
 @notify(on="delete")
 @notify(on="deletes")
@@ -64,10 +65,12 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
             auth = (URLBase.unquote(results.get('user')))
 
     # Try to auto-guess if it's JSON
+    h = 'application/json; charset=utf-8'
     try:
         json.loads(body)
-        headers['Content-Type'] = 'application/json; charset=utf-8'
+        headers['Content-Type'] = h
     except ValueError as e:
+        logger.warning(f"Could not automatically add '{h}' header to the {kwargs['meta'].get('schema')}:// notification because the document failed to parse as JSON: {e}")
         pass
 
     r(results.get('url'),
