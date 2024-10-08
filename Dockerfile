@@ -37,6 +37,7 @@ RUN pip install --target=/dependencies playwright~=1.41.2 \
 
 # Final image stage
 FROM python:${PYTHON_VERSION}-slim-bookworm
+LABEL org.opencontainers.image.source="https://github.com/dgtlmoon/changedetection.io"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libxslt1.1 \
