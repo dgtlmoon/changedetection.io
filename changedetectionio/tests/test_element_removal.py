@@ -155,7 +155,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
     assert bytes(subtractive_selectors_data.encode("utf-8")) in res.data
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
     assert b'1 watches queued for rechecking.' in res.data
 
     wait_for_all_checks(client)
