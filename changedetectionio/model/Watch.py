@@ -36,8 +36,9 @@ class model(watch_base):
     jitter_seconds = 0
 
     def __init__(self, *arg, **kw):
-        self.__datastore_path = kw['datastore_path']
-        del kw['datastore_path']
+        self.__datastore_path = kw.get('datastore_path')
+        if kw.get('datastore_path'):
+            del kw['datastore_path']
         super(model, self).__init__(*arg, **kw)
         if kw.get('default'):
             self.update(kw['default'])
@@ -170,6 +171,10 @@ class model(watch_base):
 
         """
         tmp_history = {}
+
+        # In the case we are only using the watch for processing without history
+        if not self.watch_data_dir:
+            return []
 
         # Read the history file as a dict
         fname = os.path.join(self.watch_data_dir, "history.txt")
@@ -396,8 +401,8 @@ class model(watch_base):
     @property
     def watch_data_dir(self):
         # The base dir of the watch data
-        return os.path.join(self.__datastore_path, self['uuid'])
-    
+        return os.path.join(self.__datastore_path, self['uuid']) if self.__datastore_path else None
+
     def get_error_text(self):
         """Return the text saved from a previous request that resulted in a non-200 error"""
         fname = os.path.join(self.watch_data_dir, "last-error.txt")

@@ -573,8 +573,25 @@ button.toggle-button {
   padding: 5px;
   display: flex;
   justify-content: space-between;
-  border-bottom: 2px solid var(--color-menu-accent);
   align-items: center; }
+
+#pure-menu-horizontal-spinner {
+  height: 3px;
+  background: linear-gradient(-75deg, #ff6000, #ff8f00, #ffdd00, #ed0000);
+  background-size: 400% 400%;
+  width: 100%;
+  animation: gradient 200s ease infinite; }
+
+body.spinner-active #pure-menu-horizontal-spinner {
+  animation: gradient 1s ease infinite; }
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%; }
+  50% {
+    background-position: 100% 50%; }
+  100% {
+    background-position: 0% 50%; } }
 
 .pure-menu-heading {
   color: var(--color-text-menu-heading); }

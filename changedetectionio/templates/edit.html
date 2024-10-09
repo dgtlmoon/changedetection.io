@@ -398,7 +398,9 @@ Unavailable") }}
                 </fieldset>
                 <fieldset>
                     <div class="pure-control-group">
-                        {{ render_field(form.extract_text, rows=5, placeholder="\d+ online") }}
+                        {{ render_field(form.extract_text, rows=5, placeholder="/.+?\d+ comments.+?/
+ or
+keyword") }}
                         <span class="pure-form-message-inline">
                     <ul>
                         <li>Extracts text in the final output (line by line) after other filters using regular expressions or string match;
@@ -434,7 +436,6 @@ Unavailable") }}
                           </div>
                       </div>
                     </div>
-                    <div class="spinner" style="display: none;" id="text-preview-spinner"></div>
             </div>
           </div>
         </div>
