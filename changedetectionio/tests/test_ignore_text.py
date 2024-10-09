@@ -23,8 +23,8 @@ def test_strip_text_func():
 
     stripped_content = html_tools.strip_ignore_text(test_content, ignore_lines)
 
-    assert b"sometimes" not in stripped_content
-    assert b"Some content" in stripped_content
+    assert "sometimes" not in stripped_content
+    assert "Some content" in stripped_content
 
 
 def set_original_ignore_response():
