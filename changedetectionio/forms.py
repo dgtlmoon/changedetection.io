@@ -504,6 +504,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     notification_muted = BooleanField('Notifications Muted / Off', default=False)
     notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
+    notification_notify_on_failure = BooleanField('Send a notification on watch failure', default=False)
 
     def extra_tab_content(self):
         return None
@@ -602,6 +603,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
                                                                   render_kw={"style": "width: 5em;"},
                                                                   validators=[validators.NumberRange(min=0,
                                                                                                      message="Should contain zero or more attempts")])
+    notification_notify_on_failure = BooleanField('Send a notification on watch failure', default=False)
 
 
 class globalSettingsForm(Form):

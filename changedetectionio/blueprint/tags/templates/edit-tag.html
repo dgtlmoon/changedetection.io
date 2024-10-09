@@ -113,6 +113,9 @@ nav
                     <div  class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_muted) }}
                     </div>
+                    <div  class="pure-control-group inline-radio">
+                        {{ render_checkbox_field(form.notification_notify_on_failure) }}
+                    </div>
                     {% if is_html_webdriver %}
                     <div class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_screenshot) }}

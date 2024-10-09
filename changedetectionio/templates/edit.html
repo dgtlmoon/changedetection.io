@@ -92,6 +92,9 @@
                          Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and your filter will not work anymore.
                         </span>
                     </div>
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.notification_notify_on_failure) }}
+                    </div>
                 </fieldset>
             </div>
 

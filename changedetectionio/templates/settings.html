@@ -45,6 +45,9 @@
                         </span>
                     </div>
                     <div class="pure-control-group">
+                        {{ render_checkbox_field(form.application.form.notification_notify_on_failure) }}
+                    </div>
+                    <div class="pure-control-group">
                         {% if not hide_remove_pass %}
                             {% if current_user.is_authenticated %}
                                 {{ render_button(form.application.form.removepassword_button) }}
