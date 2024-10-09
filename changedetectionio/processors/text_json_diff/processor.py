@@ -266,30 +266,30 @@ class perform_site_check(difference_detection_processor):
                 # incase they specified something in '/.../x'
                 if re.search(PERL_STYLE_REGEX, s_re, re.IGNORECASE):
                     regex = html_tools.perl_style_slash_enclosed_regex_to_options(s_re)
-                    result = re.findall(regex.encode('utf-8'), stripped_text_from_html)
+                    result = re.findall(regex, stripped_text_from_html)
 
                     for l in result:
                         if type(l) is tuple:
                             # @todo - some formatter option default (between groups)
-                            regex_matched_output += list(l) + [b'\n']
+                            regex_matched_output += list(l) + ['\n']
                         else:
                             # @todo - some formatter option default (between each ungrouped result)
-                            regex_matched_output += [l] + [b'\n']
+                            regex_matched_output += [l] + ['\n']
                 else:
                     # Doesnt look like regex, just hunt for plaintext and return that which matches
                     # `stripped_text_from_html` will be bytes, so we must encode s_re also to bytes
-                    r = re.compile(re.escape(s_re.encode('utf-8')), re.IGNORECASE)
+                    r = re.compile(re.escape(s_re), re.IGNORECASE)
                     res = r.findall(stripped_text_from_html)
                     if res:
                         for match in res:
-                            regex_matched_output += [match] + [b'\n']
+                            regex_matched_output += [match] + ['\n']
 
             ##########################################################
-            stripped_text_from_html = b''
-            text_content_before_ignored_filter = b''
+            stripped_text_from_html = ''
+
             if regex_matched_output:
                 # @todo some formatter for presentation?
-                stripped_text_from_html = b''.join(regex_matched_output)
+                stripped_text_from_html = ''.join(regex_matched_output)
 
         if watch.get('remove_duplicate_lines'):
             stripped_text_from_html = '\n'.join(dict.fromkeys(line for line in stripped_text_from_html.replace("\n\n", "\n").splitlines()))
@@ -302,7 +302,7 @@ class perform_site_check(difference_detection_processor):
             stripped_text_from_html = '\n'.join(sorted(stripped_text_from_html.splitlines(), key=lambda x: x.lower()))
 
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
-        if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
+        if stripped_text_from_html and self.datastore.data['settings']['application'].get('ignore_whitespace', False):
             fetched_md5 = hashlib.md5(stripped_text_from_html.translate(b'\r\n\t ').encode('utf-8')).hexdigest()
         else:
             fetched_md5 = hashlib.md5(stripped_text_from_html.encode('utf-8')).hexdigest()

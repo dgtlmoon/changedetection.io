@@ -71,7 +71,7 @@ def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
 def test_check_filter_multiline(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    live_server_setup(live_server)
     set_multiline_response()
 
     # Add our URL to the import page
