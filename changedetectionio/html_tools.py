@@ -356,8 +356,7 @@ def strip_ignore_text(content, wordlist, mode="content"):
                     got_match = True
 
         if not got_match:
-            # Not ignored
-            # Plus "\n" because
+            # Not ignored, and should preserve "keepends"
             output.append(line)
         else:
             ignored_line_numbers.append(i)
