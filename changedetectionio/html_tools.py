@@ -357,7 +357,7 @@ def strip_ignore_text(content, wordlist, mode="content"):
 
             if not got_match:
                 # Not ignored
-                output.append(line.encode('utf8'))
+                output.append(line)
             else:
                 ignored_line_numbers.append(i)
 
@@ -366,7 +366,7 @@ def strip_ignore_text(content, wordlist, mode="content"):
     if mode == "line numbers":
         return ignored_line_numbers
 
-    return "\n".encode('utf8').join(output)
+    return "\n".join(output)
 
 def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False) -> str:
     from xml.sax.saxutils import escape as xml_escape

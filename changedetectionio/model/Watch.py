@@ -312,13 +312,13 @@ class model(watch_base):
             dest = os.path.join(self.watch_data_dir, snapshot_fname)
             if not os.path.exists(dest):
                 with open(dest, 'wb') as f:
-                    f.write(brotli.compress(contents, mode=brotli.MODE_TEXT))
+                    f.write(brotli.compress(contents.encode('utf-8'), mode=brotli.MODE_TEXT))
         else:
             snapshot_fname = f"{snapshot_id}.txt"
             dest = os.path.join(self.watch_data_dir, snapshot_fname)
             if not os.path.exists(dest):
                 with open(dest, 'wb') as f:
-                    f.write(contents)
+                    f.write(contents.encode('utf-8'))
 
         # Append to index
         # @todo check last char was \n

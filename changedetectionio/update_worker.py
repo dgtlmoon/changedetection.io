@@ -286,8 +286,8 @@ class update_worker(threading.Thread):
                         # Re #342
                         # In Python 3, all strings are sequences of Unicode characters. There is a bytes type that holds raw bytes.
                         # We then convert/.decode('utf-8') for the notification etc
-                        if not isinstance(contents, (bytes, bytearray)):
-                            raise Exception("Error - returned data from the fetch handler SHOULD be bytes")
+#                        if not isinstance(contents, (bytes, bytearray)):
+#                            raise Exception("Error - returned data from the fetch handler SHOULD be bytes")
                     except PermissionError as e:
                         logger.critical(f"File permission error updating file, watch: {uuid}")
                         logger.critical(str(e))

@@ -72,7 +72,7 @@ def prepare_filter_prevew(datastore, watch_uuid):
                                                                  )
             # Use the last loaded HTML as the input
             update_handler.datastore = datastore
-            update_handler.fetcher.content = decompressed_data
+            update_handler.fetcher.content = str(decompressed_data) # str() because playwright/puppeteer/requests return string
             update_handler.fetcher.headers['content-type'] = tmp_watch.get('content-type')
 
             # Process our watch with filters and the HTML from disk, and also a blank watch with no filters but also with the same HTML from disk

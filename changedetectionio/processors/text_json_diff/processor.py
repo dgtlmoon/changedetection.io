@@ -205,18 +205,9 @@ class perform_site_check(difference_detection_processor):
         if watch.get('trim_text_whitespace'):
             stripped_text_from_html = '\n'.join(line.strip() for line in stripped_text_from_html.replace("\n\n", "\n").splitlines())
 
-        if watch.get('remove_duplicate_lines'):
-            stripped_text_from_html = '\n'.join(dict.fromkeys(line for line in stripped_text_from_html.replace("\n\n", "\n").splitlines()))
-
-        if watch.get('sort_text_alphabetically'):
-            # Note: Because a <p>something</p> will add an extra line feed to signify the paragraph gap
-            # we end up with 'Some text\n\n', sorting will add all those extra \n at the start, so we remove them here.
-            stripped_text_from_html = stripped_text_from_html.replace("\n\n", "\n")
-            stripped_text_from_html = '\n'.join(sorted(stripped_text_from_html.splitlines(), key=lambda x: x.lower()))
-
         # Re #340 - return the content before the 'ignore text' was applied
         # Also used to calculate/show what was removed
-        text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
+        text_content_before_ignored_filter = stripped_text_from_html
 
         # @todo whitespace coming from missing rtrim()?
         # stripped_text_from_html could be based on their preferences, replace the processed text with only that which they want to know about.
@@ -235,12 +226,12 @@ class perform_site_check(difference_detection_processor):
                                              line_feed_sep="\n",
                                              include_change_type_prefix=False)
 
-            watch.save_last_text_fetched_before_filters(text_content_before_ignored_filter)
+            watch.save_last_text_fetched_before_filters(text_content_before_ignored_filter.encode('utf-8'))
 
             if not rendered_diff and stripped_text_from_html:
                 # We had some content, but no differences were found
                 # Store our new file as the MD5 so it will trigger in the future
-                c = hashlib.md5(stripped_text_from_html.encode('utf-8').translate(None, b'\r\n\t ')).hexdigest()
+                c = hashlib.md5(stripped_text_from_html.translate(b'\r\n\t ').encode('utf-8')).hexdigest()
                 return False, {'previous_md5': c}, stripped_text_from_html.encode('utf-8')
             else:
                 stripped_text_from_html = rendered_diff
@@ -264,10 +255,8 @@ class perform_site_check(difference_detection_processor):
         # If there's text to skip
         # @todo we could abstract out the get_text() to handle this cleaner
         text_to_ignore = watch.get('ignore_text', []) + self.datastore.data['settings']['application'].get('global_ignore_text', [])
-        if len(text_to_ignore):
+        if text_to_ignore:
             stripped_text_from_html = html_tools.strip_ignore_text(stripped_text_from_html, text_to_ignore)
-        else:
-            stripped_text_from_html = stripped_text_from_html.encode('utf8')
 
         # 615 Extract text by regex
         extract_text = watch.get('extract_text', [])
@@ -301,15 +290,22 @@ class perform_site_check(difference_detection_processor):
             if regex_matched_output:
                 # @todo some formatter for presentation?
                 stripped_text_from_html = b''.join(regex_matched_output)
-                text_content_before_ignored_filter = stripped_text_from_html
+
+        if watch.get('remove_duplicate_lines'):
+            stripped_text_from_html = '\n'.join(dict.fromkeys(line for line in stripped_text_from_html.replace("\n\n", "\n").splitlines()))
 
 
+        if watch.get('sort_text_alphabetically'):
+            # Note: Because a <p>something</p> will add an extra line feed to signify the paragraph gap
+            # we end up with 'Some text\n\n', sorting will add all those extra \n at the start, so we remove them here.
+            stripped_text_from_html = stripped_text_from_html.replace("\n\n", "\n")
+            stripped_text_from_html = '\n'.join(sorted(stripped_text_from_html.splitlines(), key=lambda x: x.lower()))
 
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
         if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
-            fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
+            fetched_md5 = hashlib.md5(stripped_text_from_html.translate(b'\r\n\t ').encode('utf-8')).hexdigest()
         else:
-            fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
+            fetched_md5 = hashlib.md5(stripped_text_from_html.encode('utf-8')).hexdigest()
 
         ############ Blocking rules, after checksum #################
         blocked = False
