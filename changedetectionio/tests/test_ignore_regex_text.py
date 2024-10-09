@@ -43,3 +43,7 @@ def test_strip_regex_text_func():
     stripped_content = html_tools.strip_ignore_text(test_content, ignore_lines, mode="line numbers")
     assert stripped_content == [2, 5, 6, 7, 8, 10]
 
+    # Check that linefeeds are preserved when there are is no matching ignores
+    content = "some text\n\nand other text\n"
+    stripped_content = html_tools.strip_ignore_text(content, ignore_lines)
+    assert content == stripped_content

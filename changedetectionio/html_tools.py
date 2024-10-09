@@ -326,6 +326,7 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
 #          - "line numbers" return a list of line numbers that match (int list)
 #
 # wordlist - list of regex's (str) or words (str)
+# Preserves all linefeeds and other whitespacing, its not the job of this to remove that
 def strip_ignore_text(content, wordlist, mode="content"):
     i = 0
     output = []
@@ -341,32 +342,31 @@ def strip_ignore_text(content, wordlist, mode="content"):
         else:
             ignore_text.append(k.strip())
 
-    for line in content.splitlines():
+    for line in content.splitlines(keepends=True):
         i += 1
         # Always ignore blank lines in this mode. (when this function gets called)
         got_match = False
-        if len(line.strip()):
-            for l in ignore_text:
-                if l.lower() in line.lower():
+        for l in ignore_text:
+            if l.lower() in line.lower():
+                got_match = True
+
+        if not got_match:
+            for r in ignore_regex:
+                if r.search(line):
                     got_match = True
 
-            if not got_match:
-                for r in ignore_regex:
-                    if r.search(line):
-                        got_match = True
-
-            if not got_match:
-                # Not ignored
-                output.append(line)
-            else:
-                ignored_line_numbers.append(i)
-
+        if not got_match:
+            # Not ignored
+            # Plus "\n" because
+            output.append(line)
+        else:
+            ignored_line_numbers.append(i)
 
     # Used for finding out what to highlight
     if mode == "line numbers":
         return ignored_line_numbers
 
-    return "\n".join(output)
+    return ''.join(output)
 
 def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False) -> str:
     from xml.sax.saxutils import escape as xml_escape
