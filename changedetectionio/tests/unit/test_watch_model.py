@@ -18,12 +18,13 @@ class TestDiffBuilder(unittest.TestCase):
 
         watch['last_viewed'] = 110
 
-        watch.save_history_text(contents=b"hello world", timestamp=100, snapshot_id=str(uuid_builder.uuid4()))
-        watch.save_history_text(contents=b"hello world", timestamp=105, snapshot_id=str(uuid_builder.uuid4()))
-        watch.save_history_text(contents=b"hello world", timestamp=109, snapshot_id=str(uuid_builder.uuid4()))
-        watch.save_history_text(contents=b"hello world", timestamp=112, snapshot_id=str(uuid_builder.uuid4()))
-        watch.save_history_text(contents=b"hello world", timestamp=115, snapshot_id=str(uuid_builder.uuid4()))
-        watch.save_history_text(contents=b"hello world", timestamp=117, snapshot_id=str(uuid_builder.uuid4()))
+        # Contents from the browser are always returned from the browser/requests/etc as str, str is basically UTF-16 in python
+        watch.save_history_text(contents="hello world", timestamp=100, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_text(contents="hello world", timestamp=105, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_text(contents="hello world", timestamp=109, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_text(contents="hello world", timestamp=112, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_text(contents="hello world", timestamp=115, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_text(contents="hello world", timestamp=117, snapshot_id=str(uuid_builder.uuid4()))
 
         p = watch.get_next_snapshot_key_to_last_viewed
         assert p == "112", "Correct last-viewed timestamp was detected"
