@@ -119,6 +119,7 @@ across multiple lines
 
 
 def test_element_removal_full(client, live_server, measure_memory_usage):
+    #live_server_setup(live_server)
 
     set_original_response()
 
