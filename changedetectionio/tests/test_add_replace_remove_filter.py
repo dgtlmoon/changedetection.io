@@ -151,7 +151,6 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
 
     # A line thats not the trigger should not trigger anything
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-
     assert b'1 watches queued for rechecking.' in res.data
 
     wait_for_all_checks(client)
