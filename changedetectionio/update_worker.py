@@ -260,9 +260,6 @@ class update_worker(threading.Thread):
                     try:
                         # Processor is what we are using for detecting the "Change"
                         processor = watch.get('processor', 'text_json_diff')
-                        # Abort processing when the content was the same as the last fetch
-                        skip_when_same_checksum = queued_item_data.item.get('skip_when_checksum_same')
-
 
                         # Init a new 'difference_detection_processor', first look in processors
                         processor_module_name = f"changedetectionio.processors.{processor}.processor"
@@ -279,8 +276,7 @@ class update_worker(threading.Thread):
                         update_handler.call_browser()
 
                         changed_detected, update_obj, contents = update_handler.run_changedetection(
-                            watch=watch,
-                            skip_when_checksum_same=skip_when_same_checksum,
+                            watch=watch
                         )
 
                         # Re #342

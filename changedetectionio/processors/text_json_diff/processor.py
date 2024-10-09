@@ -35,7 +35,7 @@ class PDFToHTMLToolNotFound(ValueError):
 # (set_proxy_from_list)
 class perform_site_check(difference_detection_processor):
 
-    def run_changedetection(self, watch, skip_when_checksum_same=True):
+    def run_changedetection(self, watch):
 
         changed_detected = False
         html_content = ""
@@ -59,9 +59,6 @@ class perform_site_check(difference_detection_processor):
         # Watches added automatically in the queue manager will skip if its the same checksum as the previous run
         # Saves a lot of CPU
         update_obj['previous_md5_before_filters'] = hashlib.md5(self.fetcher.content.encode('utf-8')).hexdigest()
-        if skip_when_checksum_same:
-            if update_obj['previous_md5_before_filters'] == watch.get('previous_md5_before_filters'):
-                raise content_fetchers.exceptions.checksumFromPreviousCheckWasTheSame()
 
         # Fetching complete, now filters
 
