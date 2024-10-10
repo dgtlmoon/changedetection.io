@@ -1,4 +1,7 @@
+import importlib
 from concurrent.futures import ThreadPoolExecutor
+
+from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
 from changedetectionio.store import ChangeDetectionStore
 
 from functools import wraps
@@ -30,7 +33,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def long_task(uuid, preferred_proxy):
         import time
         from changedetectionio.content_fetchers import exceptions as content_fetcher_exceptions
-        from changedetectionio.processors.text_json_diff import text_json_diff
         from changedetectionio.safe_jinja import render as jinja_render
 
         status = {'status': '', 'length': 0, 'text': ''}
@@ -38,8 +40,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         contents = ''
         now = time.time()
         try:
-            update_handler = text_json_diff.perform_site_check(datastore=datastore, watch_uuid=uuid)
-            update_handler.call_browser()
+            processor_module = importlib.import_module("changedetectionio.processors.text_json_diff.processor")
+            update_handler = processor_module.perform_site_check(datastore=datastore,
+                                                                 watch_uuid=uuid
+                                                                 )
+
+            update_handler.call_browser(preferred_proxy_id=preferred_proxy)
         # title, size is len contents not len xfer
         except content_fetcher_exceptions.Non200ErrorCodeReceived as e:
             if e.status_code == 404:
@@ -48,7 +54,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 status.update({'status': 'ERROR', 'length': len(contents), 'text': f"{e.status_code} - Access denied"})
             else:
                 status.update({'status': 'ERROR', 'length': len(contents), 'text': f"Status code: {e.status_code}"})
-        except text_json_diff.FilterNotFoundInResponse:
+        except FilterNotFoundInResponse:
             status.update({'status': 'OK', 'length': len(contents), 'text': f"OK but CSS/xPath filter not found (page changed layout?)"})
         except content_fetcher_exceptions.EmptyReply as e:
             if e.status_code == 403 or e.status_code == 401:

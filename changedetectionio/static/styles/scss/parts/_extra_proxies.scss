@@ -25,15 +25,19 @@ ul#requests-extra_proxies {
 
 body.proxy-check-active {
   #request {
+    // Padding set by flex layout
+    /*
     .proxy-status {
       width: 2em;
     }
+    */
 
     .proxy-check-details {
       font-size: 80%;
       color: #555;
       display: block;
-      padding-left: 4em;
+      padding-left: 2em;
+      max-width: 500px;
     }
 
     .proxy-timing {
