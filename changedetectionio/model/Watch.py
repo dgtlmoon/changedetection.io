@@ -6,6 +6,8 @@ import re
 from pathlib import Path
 from loguru import logger
 
+from ..html_tools import TRANSLATE_WHITESPACE_TABLE
+
 # Allowable protocols, protects against javascript: etc
 # file:// is further checked by ALLOW_FILE_URI
 SAFE_PROTOCOL_REGEX='^(http|https|ftp|file):'
@@ -312,13 +314,13 @@ class model(watch_base):
             dest = os.path.join(self.watch_data_dir, snapshot_fname)
             if not os.path.exists(dest):
                 with open(dest, 'wb') as f:
-                    f.write(brotli.compress(contents, mode=brotli.MODE_TEXT))
+                    f.write(brotli.compress(contents.encode('utf-8'), mode=brotli.MODE_TEXT))
         else:
             snapshot_fname = f"{snapshot_id}.txt"
             dest = os.path.join(self.watch_data_dir, snapshot_fname)
             if not os.path.exists(dest):
                 with open(dest, 'wb') as f:
-                    f.write(contents)
+                    f.write(contents.encode('utf-8'))
 
         # Append to index
         # @todo check last char was \n
@@ -350,14 +352,32 @@ class model(watch_base):
         return seconds
 
     # Iterate over all history texts and see if something new exists
-    def lines_contain_something_unique_compared_to_history(self, lines: list):
-        local_lines = set([l.decode('utf-8').strip().lower() for l in lines])
+    # Always applying .strip() to start/end but optionally replace any other whitespace
+    def lines_contain_something_unique_compared_to_history(self, lines: list, ignore_whitespace=False):
+        local_lines = []
+        if lines:
+            if ignore_whitespace:
+                if isinstance(lines[0], str): # Can be either str or bytes depending on what was on the disk
+                    local_lines = set([l.translate(TRANSLATE_WHITESPACE_TABLE).lower() for l in lines])
+                else:
+                    local_lines = set([l.decode('utf-8').translate(TRANSLATE_WHITESPACE_TABLE).lower() for l in lines])
+            else:
+                if isinstance(lines[0], str): # Can be either str or bytes depending on what was on the disk
+                    local_lines = set([l.strip().lower() for l in lines])
+                else:
+                    local_lines = set([l.decode('utf-8').strip().lower() for l in lines])
+
 
         # Compare each lines (set) against each history text file (set) looking for something new..
         existing_history = set({})
         for k, v in self.history.items():
             content = self.get_history_snapshot(k)
-            alist = set([line.strip().lower() for line in content.splitlines()])
+
+            if ignore_whitespace:
+                alist = set([line.translate(TRANSLATE_WHITESPACE_TABLE).lower() for line in content.splitlines()])
+            else:
+                alist = set([line.strip().lower() for line in content.splitlines()])
+
             existing_history = existing_history.union(alist)
 
         # Check that everything in local_lines(new stuff) already exists in existing_history - it should

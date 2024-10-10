@@ -7,7 +7,7 @@ import re
 import urllib3
 
 from changedetectionio.processors import difference_detection_processor
-from changedetectionio.html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
+from changedetectionio.html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text, TRANSLATE_WHITESPACE_TABLE
 from changedetectionio import html_tools, content_fetchers
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
 from loguru import logger
@@ -36,7 +36,6 @@ class PDFToHTMLToolNotFound(ValueError):
 class perform_site_check(difference_detection_processor):
 
     def run_changedetection(self, watch, skip_when_checksum_same=True):
-
         changed_detected = False
         html_content = ""
         screenshot = False  # as bytes
@@ -205,18 +204,9 @@ class perform_site_check(difference_detection_processor):
         if watch.get('trim_text_whitespace'):
             stripped_text_from_html = '\n'.join(line.strip() for line in stripped_text_from_html.replace("\n\n", "\n").splitlines())
 
-        if watch.get('remove_duplicate_lines'):
-            stripped_text_from_html = '\n'.join(dict.fromkeys(line for line in stripped_text_from_html.replace("\n\n", "\n").splitlines()))
-
-        if watch.get('sort_text_alphabetically'):
-            # Note: Because a <p>something</p> will add an extra line feed to signify the paragraph gap
-            # we end up with 'Some text\n\n', sorting will add all those extra \n at the start, so we remove them here.
-            stripped_text_from_html = stripped_text_from_html.replace("\n\n", "\n")
-            stripped_text_from_html = '\n'.join(sorted(stripped_text_from_html.splitlines(), key=lambda x: x.lower()))
-
         # Re #340 - return the content before the 'ignore text' was applied
         # Also used to calculate/show what was removed
-        text_content_before_ignored_filter = stripped_text_from_html.encode('utf-8')
+        text_content_before_ignored_filter = stripped_text_from_html
 
         # @todo whitespace coming from missing rtrim()?
         # stripped_text_from_html could be based on their preferences, replace the processed text with only that which they want to know about.
@@ -236,12 +226,12 @@ class perform_site_check(difference_detection_processor):
                                              line_feed_sep="\n",
                                              include_change_type_prefix=False)
 
-            watch.save_last_text_fetched_before_filters(text_content_before_ignored_filter)
+            watch.save_last_text_fetched_before_filters(text_content_before_ignored_filter.encode('utf-8'))
 
             if not rendered_diff and stripped_text_from_html:
                 # We had some content, but no differences were found
                 # Store our new file as the MD5 so it will trigger in the future
-                c = hashlib.md5(stripped_text_from_html.encode('utf-8').translate(None, b'\r\n\t ')).hexdigest()
+                c = hashlib.md5(stripped_text_from_html.translate(TRANSLATE_WHITESPACE_TABLE).encode('utf-8')).hexdigest()
                 return False, {'previous_md5': c}, stripped_text_from_html.encode('utf-8')
             else:
                 stripped_text_from_html = rendered_diff
@@ -262,14 +252,6 @@ class perform_site_check(difference_detection_processor):
 
         update_obj["last_check_status"] = self.fetcher.get_last_status_code()
 
-        # If there's text to skip
-        # @todo we could abstract out the get_text() to handle this cleaner
-        text_to_ignore = watch.get('ignore_text', []) + self.datastore.data['settings']['application'].get('global_ignore_text', [])
-        if len(text_to_ignore):
-            stripped_text_from_html = html_tools.strip_ignore_text(stripped_text_from_html, text_to_ignore)
-        else:
-            stripped_text_from_html = stripped_text_from_html.encode('utf8')
-
         # 615 Extract text by regex
         extract_text = watch.get('extract_text', [])
         if len(extract_text) > 0:
@@ -278,39 +260,53 @@ class perform_site_check(difference_detection_processor):
                 # incase they specified something in '/.../x'
                 if re.search(PERL_STYLE_REGEX, s_re, re.IGNORECASE):
                     regex = html_tools.perl_style_slash_enclosed_regex_to_options(s_re)
-                    result = re.findall(regex.encode('utf-8'), stripped_text_from_html)
+                    result = re.findall(regex, stripped_text_from_html)
 
                     for l in result:
                         if type(l) is tuple:
                             # @todo - some formatter option default (between groups)
-                            regex_matched_output += list(l) + [b'\n']
+                            regex_matched_output += list(l) + ['\n']
                         else:
                             # @todo - some formatter option default (between each ungrouped result)
-                            regex_matched_output += [l] + [b'\n']
+                            regex_matched_output += [l] + ['\n']
                 else:
                     # Doesnt look like regex, just hunt for plaintext and return that which matches
                     # `stripped_text_from_html` will be bytes, so we must encode s_re also to bytes
-                    r = re.compile(re.escape(s_re.encode('utf-8')), re.IGNORECASE)
+                    r = re.compile(re.escape(s_re), re.IGNORECASE)
                     res = r.findall(stripped_text_from_html)
                     if res:
                         for match in res:
-                            regex_matched_output += [match] + [b'\n']
+                            regex_matched_output += [match] + ['\n']
 
             ##########################################################
-            stripped_text_from_html = b''
-            text_content_before_ignored_filter = b''
+            stripped_text_from_html = ''
+
             if regex_matched_output:
                 # @todo some formatter for presentation?
-                stripped_text_from_html = b''.join(regex_matched_output)
-                text_content_before_ignored_filter = stripped_text_from_html
+                stripped_text_from_html = ''.join(regex_matched_output)
+
+        if watch.get('remove_duplicate_lines'):
+            stripped_text_from_html = '\n'.join(dict.fromkeys(line for line in stripped_text_from_html.replace("\n\n", "\n").splitlines()))
 
 
+        if watch.get('sort_text_alphabetically'):
+            # Note: Because a <p>something</p> will add an extra line feed to signify the paragraph gap
+            # we end up with 'Some text\n\n', sorting will add all those extra \n at the start, so we remove them here.
+            stripped_text_from_html = stripped_text_from_html.replace("\n\n", "\n")
+            stripped_text_from_html = '\n'.join(sorted(stripped_text_from_html.splitlines(), key=lambda x: x.lower()))
+
+### CALCULATE MD5
+        # If there's text to ignore
+        text_to_ignore = watch.get('ignore_text', []) + self.datastore.data['settings']['application'].get('global_ignore_text', [])
+        text_for_checksuming = stripped_text_from_html
+        if text_to_ignore:
+            text_for_checksuming = html_tools.strip_ignore_text(stripped_text_from_html, text_to_ignore)
 
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
-        if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
-            fetched_md5 = hashlib.md5(stripped_text_from_html.translate(None, b'\r\n\t ')).hexdigest()
+        if text_for_checksuming and self.datastore.data['settings']['application'].get('ignore_whitespace', False):
+            fetched_md5 = hashlib.md5(text_for_checksuming.translate(TRANSLATE_WHITESPACE_TABLE).encode('utf-8')).hexdigest()
         else:
-            fetched_md5 = hashlib.md5(stripped_text_from_html).hexdigest()
+            fetched_md5 = hashlib.md5(text_for_checksuming.encode('utf-8')).hexdigest()
 
         ############ Blocking rules, after checksum #################
         blocked = False
@@ -350,7 +346,13 @@ class perform_site_check(difference_detection_processor):
 
         if changed_detected:
             if watch.get('check_unique_lines', False):
-                has_unique_lines = watch.lines_contain_something_unique_compared_to_history(lines=stripped_text_from_html.splitlines())
+                ignore_whitespace = self.datastore.data['settings']['application'].get('ignore_whitespace')
+
+                has_unique_lines = watch.lines_contain_something_unique_compared_to_history(
+                    lines=stripped_text_from_html.splitlines(),
+                    ignore_whitespace=ignore_whitespace
+                )
+
                 # One or more lines? unsure?
                 if not has_unique_lines:
                     logger.debug(f"check_unique_lines: UUID {watch.get('uuid')} didnt have anything new setting change_detected=False")

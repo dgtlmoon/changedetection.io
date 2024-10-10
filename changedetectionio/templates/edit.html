@@ -26,7 +26,6 @@
 </script>
 <script src="{{url_for('static_content', group='js', filename='plugins.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
-<script src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='visual-selector.js')}}" defer></script>
 {% if playwright_enabled %}
@@ -330,9 +329,9 @@ nav
                         {{ render_checkbox_field(form.filter_text_added) }}
                         {{ render_checkbox_field(form.filter_text_replaced) }}
                         {{ render_checkbox_field(form.filter_text_removed) }}
-                    <span class="pure-form-message-inline">Note: Depending on the length and similarity of the text on each line, the algorithm may consider an <strong>addition</strong> instead of <strong>replacement</strong> for example.</span>
-                    <span class="pure-form-message-inline">So it's always better to select <strong>Added</strong>+<strong>Replaced</strong> when you're interested in new content.</span><br>
-                    <span class="pure-form-message-inline">When content is merely moved in a list, it will also trigger an <strong>addition</strong>, consider enabling <code><strong>Only trigger when unique lines appear</strong></code></span>
+                    <span class="pure-form-message-inline">Note: Depending on the length and similarity of the text on each line, the algorithm may consider an <strong>addition</strong> instead of <strong>replacement</strong> for example.</span><br>
+                    <span class="pure-form-message-inline">&nbsp;So it's always better to select <strong>Added</strong>+<strong>Replaced</strong> when you're interested in new content.</span><br>
+                    <span class="pure-form-message-inline">&nbsp;When content is merely moved in a list, it will also trigger an <strong>addition</strong>, consider enabling <code><strong>Only trigger when unique lines appear</strong></code></span>
                 </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.check_unique_lines) }}
@@ -371,7 +370,7 @@ nav
 ") }}
                     <span class="pure-form-message-inline">
                         <ul>
-                            <li>Matching text will be <strong>removed</strong> from the text snapshot</li>
+                            <li>Matching text will be <strong>ignored</strong> in the text snapshot (you can still see it but it wont trigger a change)</li>
                             <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
                             <li>Regular Expression support, wrap the entire line in forward slash <code>/regex/</code></li>
                             <li>Changing this will affect the comparison checksum which may trigger an alert</li>
