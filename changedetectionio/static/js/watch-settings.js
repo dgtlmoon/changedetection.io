@@ -43,7 +43,12 @@ function request_textpreview_update() {
                     'color': '#ee0000',
                     'lines': data['trigger_line_numbers']
                 }
-            ]);
+            ]).highlightLines([
+            {
+                'color': '#757575',
+                'lines': data['ignore_line_numbers']
+            }
+        ])
     }).fail(function (error) {
         if (error.statusText === 'abort') {
             console.log('Request was aborted due to a new request being fired.');
