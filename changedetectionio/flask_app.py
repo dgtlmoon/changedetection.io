@@ -788,7 +788,6 @@ def changedetection_app(config=None, datastore_o=None):
             # Recast it if need be to right data Watch handler
             watch_class = get_custom_watch_obj_for_processor(form.data.get('processor'))
             datastore.data['watching'][uuid] = watch_class(datastore_path=datastore_o.datastore_path, default=datastore.data['watching'][uuid])
-            p  = datastore.data['watching']
             flash("Updated watch - unpaused!" if request.args.get('unpause_on_save') else "Updated watch.")
 
             # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
@@ -1487,7 +1486,6 @@ def changedetection_app(config=None, datastore_o=None):
                         continue
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False}))
                     i += 1
-        p = datastore.data['watching']
         flash(f"{i} watches queued for rechecking.")
         return redirect(url_for('index', tag=tag))
 
