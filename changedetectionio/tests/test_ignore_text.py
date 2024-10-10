@@ -22,10 +22,15 @@ def test_strip_text_func():
     ignore_lines = ["sometimes"]
 
     stripped_content = html_tools.strip_ignore_text(test_content, ignore_lines)
-
     assert "sometimes" not in stripped_content
     assert "Some content" in stripped_content
 
+    # Check that line feeds dont get chewed up when something is found
+    test_content = "Some initial text\n\nWhich is across multiple lines\n\nZZZZz\n\n\nSo let's see what happens."
+    ignore = ['something irrelevent but just to check', 'XXXXX', 'YYYYY', 'ZZZZZ']
+
+    stripped_content = html_tools.strip_ignore_text(test_content, ignore)
+    assert stripped_content == "Some initial text\n\nWhich is across multiple lines\n\n\n\nSo let's see what happens."
 
 def set_original_ignore_response():
     test_return_data = """<html>
@@ -159,11 +164,9 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
+# When adding some ignore text, it should not trigger a change, even if something else on that line changes
 def test_check_global_ignore_text_functionality(client, live_server, measure_memory_usage):
-
-    # Give the endpoint time to spin up
-    time.sleep(1)
-
+    #live_server_setup(live_server)
     ignore_text = "XXXXX\r\nYYYYY\r\nZZZZZ"
     set_original_ignore_response()
 
@@ -172,6 +175,7 @@ def test_check_global_ignore_text_functionality(client, live_server, measure_mem
         url_for("settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
+            "application-ignore_whitespace": "y",
             "application-global_ignore_text": ignore_text,
             'application-fetch_backend': "html_requests"
         },
@@ -192,9 +196,7 @@ def test_check_global_ignore_text_functionality(client, live_server, measure_mem
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
-
-    # Goto the edit page of the item, add our ignore text
-    # Add our URL to the import page
+    #Adding some ignore text should not trigger a change
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={"ignore_text": "something irrelevent but just to check", "url": test_url, 'fetch_backend': "html_requests"},
@@ -210,20 +212,15 @@ def test_check_global_ignore_text_functionality(client, live_server, measure_mem
 
     # Trigger a check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
-
-    # Give the thread time to pick it up
     wait_for_all_checks(client)
-
-    # so that we are sure everything is viewed and in a known 'nothing changed' state
-    res = client.get(url_for("diff_history_page", uuid="first"))
-
-    # It should report nothing found (no new 'unviewed' class)
+    # It should report nothing found (no new 'unviewed' class), adding random ignore text should not cause a change
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
     assert b'/test-endpoint' in res.data
+#####
 
-
-    #  Make a change which includes the ignore text
+    # Make a change which includes the ignore text, it should be ignored and no 'change' triggered
+    # It adds text with "ZZZZzzzz" and "ZZZZ" is in the ignore list
     set_modified_ignore_response()
 
     # Trigger a check
@@ -233,6 +230,7 @@ def test_check_global_ignore_text_functionality(client, live_server, measure_mem
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
+
     assert b'unviewed' not in res.data
     assert b'/test-endpoint' in res.data
 

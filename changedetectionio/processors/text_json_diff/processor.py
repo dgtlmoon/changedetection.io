@@ -252,12 +252,6 @@ class perform_site_check(difference_detection_processor):
 
         update_obj["last_check_status"] = self.fetcher.get_last_status_code()
 
-        # If there's text to skip
-        # @todo we could abstract out the get_text() to handle this cleaner
-        text_to_ignore = watch.get('ignore_text', []) + self.datastore.data['settings']['application'].get('global_ignore_text', [])
-        if text_to_ignore:
-            stripped_text_from_html = html_tools.strip_ignore_text(stripped_text_from_html, text_to_ignore)
-
         # 615 Extract text by regex
         extract_text = watch.get('extract_text', [])
         if len(extract_text) > 0:
@@ -301,11 +295,19 @@ class perform_site_check(difference_detection_processor):
             stripped_text_from_html = stripped_text_from_html.replace("\n\n", "\n")
             stripped_text_from_html = '\n'.join(sorted(stripped_text_from_html.splitlines(), key=lambda x: x.lower()))
 
+### CALCULATE MD5
+        # If there's text to ignore
+        text_to_ignore = watch.get('ignore_text', []) + self.datastore.data['settings']['application'].get('global_ignore_text', [])
+        text_for_checksuming = stripped_text_from_html
+        if text_to_ignore:
+            # MOVE THIS TO THE MD5 PART SIDE, TEXT MUST BE KEPT BUT IT IS IGNORED_EXCEPTIONS
+            text_for_checksuming = html_tools.strip_ignore_text(stripped_text_from_html, text_to_ignore)
+
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
-        if stripped_text_from_html and self.datastore.data['settings']['application'].get('ignore_whitespace', False):
-            fetched_md5 = hashlib.md5(stripped_text_from_html.translate(b'\r\n\t ').encode('utf-8')).hexdigest()
+        if text_for_checksuming and self.datastore.data['settings']['application'].get('ignore_whitespace', False):
+            fetched_md5 = hashlib.md5(text_for_checksuming.translate(str.maketrans("", "", "\n\r\t ")).encode('utf-8')).hexdigest()
         else:
-            fetched_md5 = hashlib.md5(stripped_text_from_html.encode('utf-8')).hexdigest()
+            fetched_md5 = hashlib.md5(text_for_checksuming.encode('utf-8')).hexdigest()
 
         ############ Blocking rules, after checksum #################
         blocked = False
