@@ -7,7 +7,7 @@ import re
 import urllib3
 
 from changedetectionio.processors import difference_detection_processor
-from changedetectionio.html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text
+from changedetectionio.html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text, TRANSLATE_WHITESPACE_TABLE
 from changedetectionio import html_tools, content_fetchers
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
 from loguru import logger
@@ -230,7 +230,7 @@ class perform_site_check(difference_detection_processor):
             if not rendered_diff and stripped_text_from_html:
                 # We had some content, but no differences were found
                 # Store our new file as the MD5 so it will trigger in the future
-                c = hashlib.md5(stripped_text_from_html.translate(b'\r\n\t ').encode('utf-8')).hexdigest()
+                c = hashlib.md5(stripped_text_from_html.translate(TRANSLATE_WHITESPACE_TABLE).encode('utf-8')).hexdigest()
                 return False, {'previous_md5': c}, stripped_text_from_html.encode('utf-8')
             else:
                 stripped_text_from_html = rendered_diff
@@ -304,7 +304,7 @@ class perform_site_check(difference_detection_processor):
 
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
         if text_for_checksuming and self.datastore.data['settings']['application'].get('ignore_whitespace', False):
-            fetched_md5 = hashlib.md5(text_for_checksuming.translate(str.maketrans("", "", "\n\r\t ")).encode('utf-8')).hexdigest()
+            fetched_md5 = hashlib.md5(text_for_checksuming.translate(TRANSLATE_WHITESPACE_TABLE).encode('utf-8')).hexdigest()
         else:
             fetched_md5 = hashlib.md5(text_for_checksuming.encode('utf-8')).hexdigest()
 
@@ -346,7 +346,13 @@ class perform_site_check(difference_detection_processor):
 
         if changed_detected:
             if watch.get('check_unique_lines', False):
-                has_unique_lines = watch.lines_contain_something_unique_compared_to_history(lines=stripped_text_from_html.splitlines())
+                ignore_whitespace = self.datastore.data['settings']['application'].get('ignore_whitespace')
+
+                has_unique_lines = watch.lines_contain_something_unique_compared_to_history(
+                    lines=stripped_text_from_html.splitlines(),
+                    ignore_whitespace=ignore_whitespace
+                )
+
                 # One or more lines? unsure?
                 if not has_unique_lines:
                     logger.debug(f"check_unique_lines: UUID {watch.get('uuid')} didnt have anything new setting change_detected=False")

@@ -4,6 +4,7 @@ from flask import (
     flash
 )
 
+from .html_tools import TRANSLATE_WHITESPACE_TABLE
 from . model import App, Watch
 from copy import deepcopy, copy
 from os import path, unlink
@@ -750,17 +751,17 @@ class ChangeDetectionStore:
     def update_5(self):
         # If the watch notification body, title look the same as the global one, unset it, so the watch defaults back to using the main settings
         # In other words - the watch notification_title and notification_body are not needed if they are the same as the default one
-        current_system_body = self.data['settings']['application']['notification_body'].translate(str.maketrans('', '', "\r\n "))
-        current_system_title = self.data['settings']['application']['notification_body'].translate(str.maketrans('', '', "\r\n "))
+        current_system_body = self.data['settings']['application']['notification_body'].translate(TRANSLATE_WHITESPACE_TABLE)
+        current_system_title = self.data['settings']['application']['notification_body'].translate(TRANSLATE_WHITESPACE_TABLE)
         for uuid, watch in self.data['watching'].items():
             try:
                 watch_body = watch.get('notification_body', '')
-                if watch_body and watch_body.translate(str.maketrans('', '', "\r\n ")) == current_system_body:
+                if watch_body and watch_body.translate(TRANSLATE_WHITESPACE_TABLE) == current_system_body:
                     # Looks the same as the default one, so unset it
                     watch['notification_body'] = None
 
                 watch_title = watch.get('notification_title', '')
-                if watch_title and watch_title.translate(str.maketrans('', '', "\r\n ")) == current_system_title:
+                if watch_title and watch_title.translate(TRANSLATE_WHITESPACE_TABLE) == current_system_title:
                     # Looks the same as the default one, so unset it
                     watch['notification_title'] = None
             except Exception as e:

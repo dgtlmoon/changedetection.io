@@ -3,11 +3,11 @@ from lxml import etree
 import json
 import re
 
-
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
 TEXT_FILTER_LIST_LINE_SUFFIX = "<br>"
-
+TRANSLATE_WHITESPACE_TABLE = str.maketrans('', '', '\r\n\t ')
 PERL_STYLE_REGEX = r'^/(.*?)/([a-z]*)?$'
+
 # 'price' , 'lowPrice', 'highPrice' are usually under here
 # All of those may or may not appear on different websites - I didnt find a way todo case-insensitive searching here
 LD_JSON_PRODUCT_OFFER_SELECTORS = ["json:$..offers", "json:$..Offers"]
