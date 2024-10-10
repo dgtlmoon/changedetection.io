@@ -146,8 +146,6 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
 
 
 
-
-
     # Just to be sure.. set a regular modified change..
     set_modified_original_ignore_response()
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
@@ -158,8 +156,10 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
 
     res = client.get(url_for("preview_page", uuid="first"))
 
-    # Should no longer be in the preview
-    assert b'new ignore stuff' not in res.data
+    # SHOULD BE be in the preview, it was added in set_modified_original_ignore_response()
+    # and we have "new ignore stuff" in ignore_text
+    # it is only ignored, it is not removed (it will be highlighted too)
+    assert b'new ignore stuff' in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

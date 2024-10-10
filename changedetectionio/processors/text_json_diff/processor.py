@@ -36,7 +36,6 @@ class PDFToHTMLToolNotFound(ValueError):
 class perform_site_check(difference_detection_processor):
 
     def run_changedetection(self, watch, skip_when_checksum_same=True):
-
         changed_detected = False
         html_content = ""
         screenshot = False  # as bytes
