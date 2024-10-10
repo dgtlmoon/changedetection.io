@@ -18,6 +18,7 @@ class difference_detection_processor():
     screenshot = None
     watch = None
     xpath_data = None
+    preferred_proxy = None
 
     def __init__(self, *args, datastore, watch_uuid, **kwargs):
         super().__init__(*args, **kwargs)
@@ -26,7 +27,8 @@ class difference_detection_processor():
         # Generic fetcher that should be extended (requests, playwright etc)
         self.fetcher = Fetcher()
 
-    def call_browser(self):
+    def call_browser(self, preferred_proxy_id=None):
+
         from requests.structures import CaseInsensitiveDict
 
         # Protect against file:// access
@@ -42,7 +44,7 @@ class difference_detection_processor():
         prefer_fetch_backend = self.watch.get('fetch_backend', 'system')
 
         # Proxy ID "key"
-        preferred_proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=self.watch.get('uuid'))
+        preferred_proxy_id = preferred_proxy_id if preferred_proxy_id else self.datastore.get_preferred_proxy_for_watch(uuid=self.watch.get('uuid'))
 
         # Pluggable content self.fetcher
         if not prefer_fetch_backend or prefer_fetch_backend == 'system':

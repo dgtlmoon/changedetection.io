@@ -119,19 +119,22 @@ ul#requests-extra_proxies {
   #request label[for=proxy] {
     display: inline-block; }
 
-body.proxy-check-active #request .proxy-status {
-  width: 2em; }
-
-body.proxy-check-active #request .proxy-check-details {
-  font-size: 80%;
-  color: #555;
-  display: block;
-  padding-left: 4em; }
-
-body.proxy-check-active #request .proxy-timing {
-  font-size: 80%;
-  padding-left: 1rem;
-  color: var(--color-link); }
+body.proxy-check-active #request {
+  /*
+    .proxy-status {
+      width: 2em;
+    }
+    */ }
+  body.proxy-check-active #request .proxy-check-details {
+    font-size: 80%;
+    color: #555;
+    display: block;
+    padding-left: 2em;
+    max-width: 500px; }
+  body.proxy-check-active #request .proxy-timing {
+    font-size: 80%;
+    padding-left: 1rem;
+    color: var(--color-link); }
 
 #recommended-proxy {
   display: grid;
