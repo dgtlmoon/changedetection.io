@@ -75,6 +75,7 @@ class fetcher(Fetcher):
         self.headers = r.headers
 
         if not r.content or not len(r.content):
+            logger.debug(f"Requests returned empty content for '{url}'")
             if not empty_pages_are_a_change:
                 raise EmptyReply(url=url, status_code=r.status_code)
             else:

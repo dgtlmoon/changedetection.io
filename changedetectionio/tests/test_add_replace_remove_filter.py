@@ -77,6 +77,8 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
 
     # The trigger line is REMOVED,  this should trigger
     set_original(excluding='The golden line')
+
+    # Check in the processor here what's going on, its triggering empty-reply and no change.
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
@@ -151,7 +153,6 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
 
     # A line thats not the trigger should not trigger anything
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-
     assert b'1 watches queued for rechecking.' in res.data
 
     wait_for_all_checks(client)
@@ -172,7 +173,6 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
         response = f.read()
         assert b'-Oh yes please-' in response
         assert '网站监测 内容更新了'.encode('utf-8') in response
-
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
