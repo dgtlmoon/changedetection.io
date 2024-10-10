@@ -299,7 +299,6 @@ class perform_site_check(difference_detection_processor):
         text_to_ignore = watch.get('ignore_text', []) + self.datastore.data['settings']['application'].get('global_ignore_text', [])
         text_for_checksuming = stripped_text_from_html
         if text_to_ignore:
-            # MOVE THIS TO THE MD5 PART SIDE, TEXT MUST BE KEPT BUT IT IS IGNORED_EXCEPTIONS
             text_for_checksuming = html_tools.strip_ignore_text(stripped_text_from_html, text_to_ignore)
 
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison

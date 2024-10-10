@@ -476,7 +476,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     title = StringField('Title', default='')
 
-    ignore_text = StringListField('Remove lines containing', [ValidateListRegex()])
+    ignore_text = StringListField('Ignore lines containing', [ValidateListRegex()])
     headers = StringDictKeyValue('Request headers')
     body = TextAreaField('Request body', [validators.Optional()])
     method = SelectField('Request method', choices=valid_method, default=default_method)
