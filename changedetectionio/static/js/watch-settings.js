@@ -42,13 +42,12 @@ function request_textpreview_update() {
                 {
                     'color': '#ee0000',
                     'lines': data['trigger_line_numbers']
+                },
+                {
+                    'color': '#757575',
+                    'lines': data['ignore_line_numbers']
                 }
-            ]).highlightLines([
-            {
-                'color': '#757575',
-                'lines': data['ignore_line_numbers']
-            }
-        ])
+            ])
     }).fail(function (error) {
         if (error.statusText === 'abort') {
             console.log('Request was aborted due to a new request being fired.');
@@ -81,8 +80,8 @@ $(document).ready(function () {
         $('body').toggleClass('preview-text-enabled')
         request_textpreview_update();
         const method = $('body').hasClass('preview-text-enabled') ? 'on' : 'off';
-        $('textarea:visible')[method]('keyup blur', request_textpreview_update.throttle(1000));
-        $('input:visible')[method]('keyup blur change', request_textpreview_update.throttle(1000));
+        $('#filters-and-triggers textarea')[method]('blur', request_textpreview_update.throttle(1000));
+        $('#filters-and-triggers input')[method]('change', request_textpreview_update.throttle(1000));
         $("#filters-and-triggers-tab")[method]('click', request_textpreview_update.throttle(1000));
     });
     $('.minitabs-wrapper').miniTabs({
