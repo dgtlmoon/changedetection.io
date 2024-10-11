@@ -795,7 +795,7 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.needs_write_urgent = True
 
             # Queue the watch for immediate recheck, with a higher priority
-            update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
+            update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff':
@@ -976,7 +976,7 @@ def changedetection_app(config=None, datastore_o=None):
                 importer = import_url_list()
                 importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor', 'text_json_diff'))
                 for uuid in importer.new_uuids:
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
                 if len(importer.remaining_data) == 0:
                     return redirect(url_for('index'))
@@ -989,7 +989,7 @@ def changedetection_app(config=None, datastore_o=None):
                 d_importer = import_distill_io_json()
                 d_importer.run(data=request.values.get('distill-io'), flash=flash, datastore=datastore)
                 for uuid in d_importer.new_uuids:
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
             # XLSX importer
             if request.files and request.files.get('xlsx_file'):
@@ -1013,7 +1013,7 @@ def changedetection_app(config=None, datastore_o=None):
                     w_importer.run(data=file, flash=flash, datastore=datastore)
 
                 for uuid in w_importer.new_uuids:
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': True}))
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
         # Could be some remaining, or we could be on GET
         form = forms.importForm(formdata=request.form if request.method == 'POST' else None)
@@ -1442,7 +1442,7 @@ def changedetection_app(config=None, datastore_o=None):
         new_uuid = datastore.clone(uuid)
         if new_uuid:
             if not datastore.data['watching'].get(uuid).get('paused'):
-                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid, 'skip_when_checksum_same': True}))
+                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid}))
             flash('Cloned.')
 
         return redirect(url_for('index'))
@@ -1463,7 +1463,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         if uuid:
             if uuid not in running_uuids:
-                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
+                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
             i = 1
 
         elif tag:
@@ -1474,7 +1474,7 @@ def changedetection_app(config=None, datastore_o=None):
                         continue
                     if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                         update_q.put(
-                            queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False})
+                            queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid})
                         )
                         i += 1
 
@@ -1484,7 +1484,7 @@ def changedetection_app(config=None, datastore_o=None):
                 if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
                     if with_errors and not watch.get('last_error'):
                         continue
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid, 'skip_when_checksum_same': False}))
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
                     i += 1
         flash(f"{i} watches queued for rechecking.")
         return redirect(url_for('index', tag=tag))
@@ -1542,7 +1542,7 @@ def changedetection_app(config=None, datastore_o=None):
                 uuid = uuid.strip()
                 if datastore.data['watching'].get(uuid):
                     # Recheck and require a full reprocessing
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
             flash("{} watches queued for rechecking".format(len(uuids)))
 
         elif (op == 'clear-errors'):
@@ -1866,7 +1866,7 @@ def ticker_thread_check_time_launch_checks():
                         f"{now - watch['last_checked']:0.2f}s since last checked")
 
                     # Into the queue with you
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid, 'skip_when_checksum_same': True}))
+                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid}))
 
                     # Reset for next time
                     watch.jitter_seconds = 0

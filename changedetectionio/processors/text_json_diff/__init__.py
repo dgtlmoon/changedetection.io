@@ -11,10 +11,7 @@ def _task(watch, update_handler):
 
     try:
         # The slow process (we run 2 of these in parallel)
-        changed_detected, update_obj, text_after_filter = update_handler.run_changedetection(
-            watch=watch,
-            skip_when_checksum_same=False,
-        )
+        changed_detected, update_obj, text_after_filter = update_handler.run_changedetection(watch=watch)
     except FilterNotFoundInResponse as e:
         text_after_filter = f"Filter not found in HTML: {str(e)}"
     except ReplyWithContentButNoText as e:

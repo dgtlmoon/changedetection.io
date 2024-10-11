@@ -144,7 +144,7 @@ class perform_site_check(difference_detection_processor):
     screenshot = None
     xpath_data = None
 
-    def run_changedetection(self, watch, skip_when_checksum_same=True):
+    def run_changedetection(self, watch):
         import hashlib
 
         if not watch:
