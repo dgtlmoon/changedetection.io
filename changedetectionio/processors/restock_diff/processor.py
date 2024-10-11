@@ -27,22 +27,27 @@ def _search_prop_by_value(matches, value):
                 return prop[1]  # Yield the desired value and exit the function
 
 def _deduplicate_prices(data):
-    seen = set()
-    unique_data = []
+    import re
 
+    '''
+    Some price data has multiple entries, OR it has a single entry with ['$159', '159', 159, "$ 159"] or just "159"
+    Get all the values, clean it and add it to a set then return the unique values
+    '''
+    unique_data = set()
+
+    # Return the complete 'datum' where its price was not seen before
     for datum in data:
-        # Convert 'value' to float if it can be a numeric string, otherwise leave it as is
-        try:
-            normalized_value = float(datum.value) if isinstance(datum.value, str) and datum.value.replace('.', '', 1).isdigit() else datum.value
-        except ValueError:
-            normalized_value = datum.value
 
-        # If the normalized value hasn't been seen yet, add it to unique data
-        if normalized_value not in seen:
-            unique_data.append(datum)
-            seen.add(normalized_value)
-    
-    return unique_data
+        if isinstance(datum.value, list):
+            # Process each item in the list
+            normalized_value = set([float(re.sub(r'[^\d.]', '', str(item))) for item in datum.value])
+            unique_data.update(normalized_value)
+        else:
+            # Process single value
+            v = float(re.sub(r'[^\d.]', '', str(datum.value)))
+            unique_data.add(v)
+
+    return list(unique_data)
 
 
 # should return Restock()
@@ -83,14 +88,13 @@ def get_itemprop_availability(html_content) -> Restock:
         if price_result:
             # Right now, we just support single product items, maybe we will store the whole actual metadata seperately in teh future and
             # parse that for the UI?
-            prices_found = set(str(item.value).replace('$', '') for item in price_result)
-            if len(price_result) > 1 and len(prices_found) > 1:
+            if len(price_result) > 1 and len(price_result) > 1:
                 # See of all prices are different, in the case that one product has many embedded data types with the same price
                 # One might have $121.95 and another 121.95 etc
-                logger.warning(f"More than one price found {prices_found}, throwing exception, cant use this plugin.")
+                logger.warning(f"More than one price found {price_result}, throwing exception, cant use this plugin.")
                 raise MoreThanOnePriceFound()
 
-            value['price'] = price_result[0].value
+            value['price'] = price_result[0]
 
         pricecurrency_result = pricecurrency_parse.find(data)
         if pricecurrency_result:
@@ -220,7 +224,7 @@ class perform_site_check(difference_detection_processor):
             itemprop_availability['original_price'] = itemprop_availability.get('price')
             update_obj['restock']["original_price"] = itemprop_availability.get('price')
 
-        if not self.fetcher.instock_data and not itemprop_availability.get('availability'):
+        if not self.fetcher.instock_data and not itemprop_availability.get('availability') and not itemprop_availability.get('price'):
             raise ProcessorException(
                 message=f"Unable to extract restock data for this page unfortunately. (Got code {self.fetcher.get_last_status_code()} from server), no embedded stock information was found and nothing interesting in the text, try using this watch with Chrome.",
                 url=watch.get('url'),
