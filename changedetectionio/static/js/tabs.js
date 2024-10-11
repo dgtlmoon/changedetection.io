@@ -26,8 +26,7 @@ function set_active_tab() {
     if (tab.length) {
         tab[0].parentElement.className = "active";
     }
-    // hash could move the page down
-    window.scrollTo(0, 0);
+
 }
 
 function focus_error_tab() {
