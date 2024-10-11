@@ -605,8 +605,11 @@ body.spinner-active #pure-menu-horizontal-spinner {
     background-color: var(--color-background-menu-link-hover);
     color: var(--color-text-menu-link-hover); }
 
+.edit-form .tab-pane-inner {
+  scroll-margin-top: 200px; }
+
 section.content {
-  padding-top: 5em;
+  padding-top: 100px;
   padding-bottom: 1em;
   flex-direction: column;
   display: flex;

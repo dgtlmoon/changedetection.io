@@ -147,8 +147,13 @@ body.spinner-active {
   }
 }
 
+.edit-form .tab-pane-inner {
+  // .tab-pane-inner will have the #id that the tab button jumps/anchors to
+  scroll-margin-top: 200px;
+}
+
 section.content {
-  padding-top: 5em;
+  padding-top: 100px;
   padding-bottom: 1em;
   flex-direction: column;
   display: flex;
@@ -931,6 +936,7 @@ $form-edge-padding: 20px;
 }
 
 .tab-pane-inner {
+
   &:not(:target) {
     display: none;
   }
