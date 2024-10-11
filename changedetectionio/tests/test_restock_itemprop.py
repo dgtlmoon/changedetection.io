@@ -420,7 +420,7 @@ def test_data_sanity(client, live_server):
 # All examples should give a prive of 666.66
 def test_special_prop_examples(client, live_server):
     import glob
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
     check_path = os.path.join(os.path.dirname(__file__), "itemprop_test_examples", "*.txt")
