@@ -19,7 +19,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q: PriorityQueue
         datastore.data['watching'][uuid]['track_ldjson_price_data'] = PRICE_DATA_TRACK_ACCEPT
         datastore.data['watching'][uuid]['processor'] = 'restock_diff'
         datastore.data['watching'][uuid].clear_watch()
-        update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid, 'skip_when_checksum_same': False}))
+        update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
         return redirect(url_for("index"))
 
     @login_required
