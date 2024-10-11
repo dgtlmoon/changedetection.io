@@ -3,9 +3,7 @@ import os
 import time
 
 from flask import url_for
-from virtualenv.discovery.builtin import check_path
-
-from .util import live_server_setup, wait_for_all_checks, extract_UUID_from_client, wait_for_notification_endpoint_output
+from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output
 from ..notification import default_notification_format
 
 instock_props = [
