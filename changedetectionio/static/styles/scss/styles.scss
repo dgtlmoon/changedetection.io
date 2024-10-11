@@ -147,7 +147,8 @@ body.spinner-active {
   }
 }
 
-.edit-form .tab-pane-inner {
+
+.tabs ul li a {
   // .tab-pane-inner will have the #id that the tab button jumps/anchors to
   scroll-margin-top: 200px;
 }
