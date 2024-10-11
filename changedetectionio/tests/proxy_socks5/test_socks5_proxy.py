@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
+import json
 import os
 from flask import url_for
-from changedetectionio.tests.util import live_server_setup, wait_for_all_checks
+from changedetectionio.tests.util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
 
 def set_response():
@@ -17,7 +18,6 @@ def set_response():
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(data)
     time.sleep(1)
-
 
 def test_socks5(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
@@ -79,3 +79,22 @@ def test_socks5(client, live_server, measure_memory_usage):
 
     # Should see the proper string
     assert "Awesome, you made it".encode('utf-8') in res.data
+
+    # PROXY CHECKER WIDGET CHECK - this needs more checking
+    uuid = extract_UUID_from_client(client)
+
+    res = client.get(
+        url_for("check_proxies.start_check", uuid=uuid),
+        follow_redirects=True
+    )
+    assert b"RUNNING" in res.data
+    wait_for_all_checks(client)
+    res = client.get(
+        url_for("check_proxies.get_recheck_status", uuid=uuid),
+        follow_redirects=True
+    )
+    assert b"OK" in res.data
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
