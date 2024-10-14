@@ -331,13 +331,21 @@ class perform_site_check(difference_detection_processor):
             if result:
                 blocked = True
 
-        # The main thing that all this at the moment comes down to :)
-        if watch.get('previous_md5') != fetched_md5:
-            changed_detected = True
 
         # Looks like something changed, but did it match all the rules?
         if blocked:
             changed_detected = False
+        else:
+            # The main thing that all this at the moment comes down to :)
+            if watch.get('previous_md5') != fetched_md5:
+                changed_detected = True
+
+            # Always record the new checksum
+            update_obj["previous_md5"] = fetched_md5
+
+            # On the first run of a site, watch['previous_md5'] will be None, set it the current one.
+            if not watch.get('previous_md5'):
+                watch['previous_md5'] = fetched_md5
 
         logger.debug(f"Watch UUID {watch.get('uuid')} content check - Previous MD5: {watch.get('previous_md5')}, Fetched MD5 {fetched_md5}")
 
@@ -357,12 +365,6 @@ class perform_site_check(difference_detection_processor):
                 else:
                     logger.debug(f"check_unique_lines: UUID {watch.get('uuid')} had unique content")
 
-        # Always record the new checksum
-        update_obj["previous_md5"] = fetched_md5
-
-        # On the first run of a site, watch['previous_md5'] will be None, set it the current one.
-        if not watch.get('previous_md5'):
-            watch['previous_md5'] = fetched_md5
 
         # stripped_text_from_html - Everything after filters and NO 'ignored' content
         return changed_detected, update_obj, stripped_text_from_html
