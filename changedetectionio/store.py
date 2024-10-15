@@ -1,3 +1,5 @@
+import pathlib
+
 from changedetectionio.strtobool import strtobool
 
 from flask import (
@@ -61,13 +63,27 @@ class ChangeDetectionStore:
 
         try:
             # @todo retest with ", encoding='utf-8'"
+
+            logger.debug(f"Scanning for watch.json in data-directory")
+            self.__data['watching'] = {}
+            for item in pathlib.Path(datastore_path).glob("*/watch.json"):
+                try:
+                    logger.trace(f"Found {item}")
+                    with open(item, 'r') as f:
+                        loaded = json.load(f)
+                        if not loaded.get('uuid'):
+                            logger.error(f"Unable to find UUID in {item}")
+                        self.__data['watching'][loaded.get('uuid')] = loaded
+                except Exception as e:
+                    logger.critical(f"Error reading watch config file {item} - {str(e)}")
+
+            # Convert each existing watch back to the Watch.model object
+            for uuid, watch in self.__data['watching'].items():
+                self.__data['watching'][uuid] = self.rehydrate_entity(uuid, watch)
+                logger.info(f"Watching: {uuid} {watch['url']}")
+
             with open(self.json_store_path) as json_file:
                 from_disk = json.load(json_file)
-
-                # @todo isnt there a way todo this dict.update recursively?
-                # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
-                if 'watching' in from_disk:
-                    self.__data['watching'].update(from_disk['watching'])
 
                 if 'app_guid' in from_disk:
                     self.__data['app_guid'] = from_disk['app_guid']
@@ -81,11 +97,6 @@ class ChangeDetectionStore:
 
                     if 'application' in from_disk['settings']:
                         self.__data['settings']['application'].update(from_disk['settings']['application'])
-
-                # Convert each existing watch back to the Watch.model object
-                for uuid, watch in self.__data['watching'].items():
-                    self.__data['watching'][uuid] = self.rehydrate_entity(uuid, watch)
-                    logger.info(f"Watching: {uuid} {watch['url']}")
 
                 # And for Tags also, should be Restock type because it has extra settings
                 for uuid, tag in self.__data['settings']['application']['tags'].items():
@@ -383,24 +394,41 @@ class ChangeDetectionStore:
     def sync_to_json(self):
         logger.info("Saving JSON..")
         try:
-            data = deepcopy(self.__data)
+            config_data = deepcopy(self.__data)
+            watch_data = config_data.pop('watching')
+
         except RuntimeError as e:
             # Try again in 15 seconds
-            time.sleep(15)
+            time.sleep(5)
             logger.error(f"! Data changed when writing to JSON, trying again.. {str(e)}")
             self.sync_to_json()
             return
         else:
-
+            # Write the main config file for general settings
             try:
                 # Re #286  - First write to a temp file, then confirm it looks OK and rename it
                 # This is a fairly basic strategy to deal with the case that the file is corrupted,
                 # system was out of memory, out of RAM etc
                 with open(self.json_store_path+".tmp", 'w') as json_file:
-                    json.dump(data, json_file, indent=4)
+                    json.dump(config_data, json_file, indent=2)
                 os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
                 logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")
+
+            for uuid, watch in watch_data.items():
+                watch_config_path = os.path.join(self.datastore_path, uuid, "watch.json")
+                # Write the main config file for general settings
+                try:
+                    # Re #286  - First write to a temp file, then confirm it looks OK and rename it
+                    # This is a fairly basic strategy to deal with the case that the file is corrupted,
+                    # system was out of memory, out of RAM etc
+                    with open(watch_config_path + ".tmp", 'w') as json_file:
+                        json.dump(watch, json_file, indent=2)
+                        logger.trace(f"Saved/written watch {uuid} to {watch_config_path}")
+                    os.replace(watch_config_path + ".tmp", watch_config_path)
+                except Exception as e:
+                    logger.error(f"Error writing watch config {uuid} to {watch_config_path} JSON!! {str(e)}")
+
 
             self.needs_write = False
             self.needs_write_urgent = False
@@ -432,25 +460,6 @@ class ChangeDetectionStore:
                 time.sleep(0.5)
                 if self.stop_thread or self.needs_write_urgent:
                     break
-
-    # Go through the datastore path and remove any snapshots that are not mentioned in the index
-    # This usually is not used, but can be handy.
-    def remove_unused_snapshots(self):
-        logger.info("Removing snapshots from datastore that are not in the index..")
-
-        index=[]
-        for uuid in self.data['watching']:
-            for id in self.data['watching'][uuid].history:
-                index.append(self.data['watching'][uuid].history[str(id)])
-
-        import pathlib
-
-        # Only in the sub-directories
-        for uuid in self.data['watching']:
-            for item in pathlib.Path(self.datastore_path).rglob(uuid+"/*.txt"):
-                if not str(item) in index:
-                    logger.info(f"Removing {item}")
-                    unlink(item)
 
     @property
     def proxy_list(self):
