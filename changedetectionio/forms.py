@@ -496,7 +496,7 @@ class processor_text_json_diff_form(commonSettingsForm):
     text_should_not_be_present = StringListField('Block change-detection while text matches', [validators.Optional(), ValidateListRegex()])
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
 
-    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+    save_button = SubmitField('Save', render_kw={"class": "pure-button button-small pure-button-primary"})
 
     proxy = RadioField('Proxy')
     filter_failure_notification_send = BooleanField(
@@ -616,7 +616,7 @@ class globalSettingsForm(Form):
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
-    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+    save_button = SubmitField('Save', render_kw={"class": "pure-button button-small pure-button-primary"})
 
 
 class extractDataForm(Form):

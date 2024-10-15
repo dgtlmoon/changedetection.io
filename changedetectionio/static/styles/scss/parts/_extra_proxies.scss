@@ -11,7 +11,19 @@ ul#requests-extra_proxies {
   /* each proxy entry is a `table` */
   table {
     tr {
-      display: inline;
+      display: table-row; // default display for small screens
+      input[type=text] {
+        width: 100%;
+      }
+    }
+  }
+  
+  // apply inline display for large screens
+  @media only screen and (min-width: 1024px) {
+    table {
+      tr {
+        display: inline;
+      }
     }
   }
 }

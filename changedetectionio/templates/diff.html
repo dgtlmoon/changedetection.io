@@ -14,7 +14,7 @@
 
 <div id="settings">
     <form class="pure-form " action="" method="GET" id="diff-form">
-        <fieldset>
+        <fieldset class="diff-fieldset">
             {% if versions|length >= 1 %}
                 <strong>Compare</strong>
                 <del class="change"><span>from</span></del>
@@ -33,7 +33,7 @@
                         </option>
                     {% endfor %}
                 </select>
-                <button type="submit" class="pure-button pure-button-primary">Go</button>
+                <button type="submit" class="pure-button pure-button-primary reset-margin">Go</button>
             {% endif %}
         </fieldset>
         <fieldset>
