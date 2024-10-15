@@ -112,7 +112,12 @@ ul#requests-extra_proxies {
   ul#requests-extra_proxies li > label {
     display: none; }
   ul#requests-extra_proxies table tr {
-    display: inline; }
+    display: table-row; }
+    ul#requests-extra_proxies table tr input[type=text] {
+      width: 100%; }
+  @media only screen and (min-width: 1024px) {
+    ul#requests-extra_proxies table tr {
+      display: inline; } }
 
 #request {
   /* Auto proxy scan/checker */ }
@@ -161,7 +166,14 @@ ul#requests-extra_browsers {
   ul#requests-extra_browsers li > label {
     display: none; }
   ul#requests-extra_browsers table tr {
-    display: inline; }
+    display: table-row; }
+    ul#requests-extra_browsers table tr input[type=text] {
+      width: 100%; }
+  @media only screen and (min-width: 1280px) {
+    ul#requests-extra_browsers table tr {
+      display: inline; }
+      ul#requests-extra_browsers table tr input[type=text] {
+        width: 100%; } }
 
 #extra-browsers-setting {
   border: 1px solid var(--color-grey-800);
