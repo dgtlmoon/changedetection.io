@@ -40,6 +40,8 @@ class model(dict):
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
                     'global_subtractive_selectors': [],
                     'ignore_whitespace': True,
+                    'keep_history_n': None,  # Number of snapshots to keep
+                    'keep_history_seconds': None,  # Or time ago back to keep
                     'notification_body': default_notification_body,
                     'notification_format': default_notification_format,
                     'notification_title': default_notification_title,
