@@ -588,6 +588,8 @@ class globalSettingsApplicationForm(commonSettingsForm):
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_json=False)])
     ignore_whitespace = BooleanField('Ignore whitespace')
+    keep_history_n = IntegerField('Number of snapshots to keep in history for each watch')
+    keep_history_seconds = IntegerField('Number of snapshots to keep - maximum age (todo/seconds)')
     password = SaltyPasswordField()
     pager_size = IntegerField('Pager size',
                               render_kw={"style": "width: 5em;"},

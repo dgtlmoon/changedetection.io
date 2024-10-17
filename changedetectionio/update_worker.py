@@ -568,6 +568,12 @@ class update_worker(threading.Thread):
                     except Exception as e:
                         pass
 
+                    try:
+                        watch.post_process()
+                    except Exception as e:
+                        logger.critical(e)
+
+
                     self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - now, 3),
                                                                        'last_checked': round(time.time()),
                                                                        'check_count': count

@@ -625,6 +625,9 @@ class model(watch_base):
             if index > 1 and os.path.isfile(filepath):
                 os.remove(filepath)
 
+    def post_process(self):
+
+        x=1
 
     @property
     def get_browsersteps_available_screenshots(self):
