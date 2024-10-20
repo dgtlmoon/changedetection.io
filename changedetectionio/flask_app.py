@@ -67,7 +67,6 @@ FlaskCompress(app)
 
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-
 app.config.exit = Event()
 
 app.config['NEW_VERSION_AVAILABLE'] = False
@@ -470,7 +469,7 @@ def changedetection_app(config=None, datastore_o=None):
                     continue
             if watch.get('last_error'):
                 errored_count += 1
-                
+
             if search_q:
                 if (watch.get('title') and search_q in watch.get('title').lower()) or search_q in watch.get('url', '').lower():
                     sorted_watches.append(watch)
@@ -533,7 +532,7 @@ def changedetection_app(config=None, datastore_o=None):
     @login_optionally_required
     def ajax_callback_send_notification_test(watch_uuid=None):
 
-        # Watch_uuid could be unset in the case its used in tag editor, global setings
+        # Watch_uuid could be unset in the case it`s used in tag editor, global settings
         import apprise
         import random
         from .apprise_asset import asset
@@ -542,13 +541,15 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
         is_global_settings_form = request.args.get('mode', '') == 'global-settings'
         is_group_settings_form = request.args.get('mode', '') == 'group-settings'
-
         # Use an existing random one on the global/main settings form
-        if not watch_uuid and (is_global_settings_form or is_group_settings_form):
+        if not watch_uuid and (is_global_settings_form or is_group_settings_form) \
+                and len(list(datastore.data['watching'].keys())) > 0:
+
             logger.debug(f"Send test notification - Choosing random Watch {watch_uuid}")
             watch_uuid = random.choice(list(datastore.data['watching'].keys()))
-
-        watch = datastore.data['watching'].get(watch_uuid)
+            watch = datastore.data['watching'].get(watch_uuid)
+        else:
+            watch = None
 
         notification_urls = request.form['notification_urls'].strip().splitlines()
 
@@ -1396,7 +1397,7 @@ def changedetection_app(config=None, datastore_o=None):
         url = request.form.get('url').strip()
         if datastore.url_exists(url):
             flash(f'Warning, URL {url} already exists', "notice")
-            
+
         add_paused = request.form.get('edit_and_watch_submit_button') != None
         processor = request.form.get('processor', 'text_json_diff')
         new_uuid = datastore.add_watch(url=url, tag=request.form.get('tags').strip(), extras={'paused': add_paused, 'processor': processor})
