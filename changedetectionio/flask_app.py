@@ -543,7 +543,7 @@ def changedetection_app(config=None, datastore_o=None):
         is_group_settings_form = request.args.get('mode', '') == 'group-settings'
         # Use an existing random one on the global/main settings form
         if not watch_uuid and (is_global_settings_form or is_group_settings_form) \
-                and len(list(datastore.data['watching'].keys())) > 0:
+                and datastore.data.get('watching'):
 
             logger.debug(f"Send test notification - Choosing random Watch {watch_uuid}")
             watch_uuid = random.choice(list(datastore.data['watching'].keys()))
