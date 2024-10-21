@@ -153,7 +153,8 @@ html[data-darkmode="true"] {
     border: 1px solid transparent;
     vertical-align: top;
     font: 1em monospace;
-    text-align: left; }
+    text-align: left;
+    overflow: clip; }
   #diff-ui pre {
     white-space: pre-wrap; }
 
@@ -172,7 +173,9 @@ ins {
   text-decoration: none; }
 
 #result {
-  white-space: pre-wrap; }
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word; }
 
 #settings {
   background: rgba(0, 0, 0, 0.05);
@@ -231,3 +234,12 @@ td#diff-col div {
   border-radius: 5px;
   background: var(--color-background);
   box-shadow: 1px 1px 4px var(--color-shadow-jump); }
+
+.pure-form button.reset-margin {
+  margin: 0px; }
+
+.diff-fieldset {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap; }
