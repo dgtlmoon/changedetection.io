@@ -33,6 +33,8 @@ class watch_base(dict):
             'headers': {},  # Extra headers to send
             'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
             'in_stock_only': True,  # Only trigger change on going to instock from out-of-stock
+            'keep_history_n': None, # Number of snapshots to keep
+            'keep_history_seconds': None, # Or time ago back to keep
             'include_filters': [],
             'last_checked': 0,
             'last_error': False,

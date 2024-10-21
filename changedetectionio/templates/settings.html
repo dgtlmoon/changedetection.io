@@ -130,6 +130,13 @@
                     </span>
                 </div>
                 <div class="pure-control-group">
+                    {{ render_field(form.application.form.keep_history_n) }}
+                    <span class="pure-form-message-inline">Blank - keep all</span>
+                    {{ render_field(form.application.form.keep_history_seconds) }}
+                    <span class="pure-form-message-inline">Blank - keep all</span>
+                </div>
+
+                <div class="pure-control-group">
                                         <br>
                     Tip: <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">Connect using Bright Data and Oxylabs Proxies, find out more here.</a>
 
