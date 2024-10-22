@@ -1,0 +1,48 @@
+name: Build Debian Package
+# Check status: systemctl status changedetection.io.service
+# Get logs: journalctl -u changedetection.io.service
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-latest
+    name: Build and Package changedetection.io
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            devscripts \
+            dh-virtualenv \
+            dh-python \
+            python3-all \
+            python3-all-dev \
+            python3.10 \
+            python3.10-venv \
+            python3.10-dev \
+            debhelper-compat
+
+      - name: Build the Debian Package
+        run: |
+          debuild -us -uc
+
+      - name: Upload Debian Package Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: changedetection.io-deb-package
+          path: ../*.deb
