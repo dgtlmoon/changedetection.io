@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+# Remove user on purge
+if [ "$1" = "purge" ]; then
+    deluser --system changedetio
+fi
+
+systemctl daemon-reload
+
+exit 0

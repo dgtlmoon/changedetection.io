@@ -1,0 +1,23 @@
+#!/bin/sh
+set -e
+
+# Determine Python version
+PYTHON_VERSION=$(ls /usr/bin/python3.1[0-2] | head -n1 | xargs basename)
+
+# Create 'changedetio' user if it doesn't exist
+if ! id "changedetio" >/dev/null 2>&1; then
+    adduser --system --group --no-create-home changedetio
+fi
+
+# Set ownership of the installation directory
+chown -R changedetio:changedetio /opt/changedetection.io
+
+# Update the systemd service file if necessary
+sed -i "s|ExecStart=.*|ExecStart=/opt/changedetection.io/bin/$PYTHON_VERSION -m changedetectionio|" /lib/systemd/system/changedetection.io.service
+
+# Enable and start the service
+systemctl daemon-reload
+systemctl enable changedetection.io.service
+systemctl start changedetection.io.service
+
+exit 0

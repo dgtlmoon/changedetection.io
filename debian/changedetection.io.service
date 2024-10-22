@@ -1,0 +1,13 @@
+[Unit]
+Description=changedetection.io Service
+After=network.target
+
+[Service]
+User=changedetio
+Group=changedetio
+WorkingDirectory=/opt/changedetection.io
+ExecStart=/opt/changedetection.io/bin/python -m changedetectionio
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

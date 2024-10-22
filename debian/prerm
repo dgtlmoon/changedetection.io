@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+# Stop and disable the service
+systemctl stop changedetection.io.service
+systemctl disable changedetection.io.service
+
+exit 0
