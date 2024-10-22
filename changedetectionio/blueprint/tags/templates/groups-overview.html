@@ -42,7 +42,7 @@
             </tr>
             {% endif %}
             {% for uuid, tag in available_tags  %}
-            <tr id="{{ uuid }}" class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }}">
+            <tr id="{{ uuid }}">
                 <td class="watch-controls">
                     <a class="link-mute state-{{'on' if tag.notification_muted else 'off'}}" href="{{url_for('tags.mute', uuid=tag.uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="Mute notifications" title="Mute notifications" class="icon icon-mute" ></a>
                 </td>

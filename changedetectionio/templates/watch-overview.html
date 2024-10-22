@@ -94,7 +94,7 @@
                 {% set is_unviewed =  watch.newest_history_key| int > watch.last_viewed and watch.history_n>=2 %}
 
             <tr id="{{ watch.uuid }}"
-                class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }} processor-{{ watch['processor'] }}
+                class="processor-{{ watch['processor'] }}
                 {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
                 {% if watch.last_notification_error is defined and watch.last_notification_error != False %}error{% endif %}
                 {% if watch.paused is defined and watch.paused != False %}paused{% endif %}
