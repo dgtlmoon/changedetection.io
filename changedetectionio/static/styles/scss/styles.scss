@@ -37,10 +37,6 @@ body {
   vertical-align: middle;
 }
 
-.pure-table-even {
-  background: var(--color-background);
-}
-
 /* Some styles from https://css-tricks.com/ */
 a {
   text-decoration: none;
@@ -789,21 +785,6 @@ footer {
         white-space: nowrap;
       }
     }
-
-    &.pure-table-striped {
-      tr {
-        background-color: var(--color-table-background);
-      }
-
-      tr:nth-child(2n-1) {
-        background-color: var(--color-table-stripe);
-      }
-
-      tr:nth-child(2n-1) td {
-        background-color: inherit;
-      }
-    }
-
   }
 }
 
@@ -823,9 +804,15 @@ footer {
 }
 
 .pure-table-striped {
-  tr:nth-child(2n-1) {
+  tr:nth-child(2n+1) {
     td {
       background-color: var(--color-table-stripe);
+    }
+  }
+
+  tr:nth-child(2n) {
+    td {
+      background-color: var(--color-table-background);
     }
   }
 }

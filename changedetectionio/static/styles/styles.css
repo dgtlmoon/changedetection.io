@@ -539,9 +539,6 @@ body {
   height: 1rem;
   vertical-align: middle; }
 
-.pure-table-even {
-  background: var(--color-background); }
-
 /* Some styles from https://css-tricks.com/ */
 a {
   text-decoration: none;
@@ -1042,13 +1039,7 @@ footer {
         left: 6px;
         width: 45%;
         padding-right: 10px;
-        white-space: nowrap; }
-    .watch-table.pure-table-striped tr {
-      background-color: var(--color-table-background); }
-    .watch-table.pure-table-striped tr:nth-child(2n-1) {
-      background-color: var(--color-table-stripe); }
-    .watch-table.pure-table-striped tr:nth-child(2n-1) td {
-      background-color: inherit; } }
+        white-space: nowrap; } }
 
 .pure-table {
   border-color: var(--color-border-table-cell); }
@@ -1062,6 +1053,9 @@ footer {
 
 .pure-table-striped tr:nth-child(2n-1) td {
   background-color: var(--color-table-stripe); }
+
+.pure-table-striped tr:nth-child(2n) td {
+  background-color: var(--color-table-background); }
 
 .pure-form input[type=color],
 .pure-form input[type=date],
