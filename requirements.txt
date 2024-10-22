@@ -82,7 +82,7 @@ pytest-flask ~=1.2
 # Anything 4.0 and up but not 5.0
 jsonschema ~= 4.0
 
-
+apscheduler
 loguru
 
 # For scraping all possible metadata relating to products so we can do better restock detection
