@@ -28,17 +28,14 @@ $(document).ready(function() {
       url: notification_base_url,
       data : data,
         statusCode: {
-        400: function() {
-            // More than likely the CSRF token was lost when the server restarted
-          alert("There was a problem processing the request, please reload the page.");
+        400: function(data) {
+          // More than likely the CSRF token was lost when the server restarted
+          alert(data.responseText);
         }
       }
     }).done(function(data){
       console.log(data);
       alert(data);
-    }).fail(function(data){
-      console.log(data);
-      alert('There was an error communicating with the server.');
     })
   });
 });

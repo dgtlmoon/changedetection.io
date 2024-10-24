@@ -429,24 +429,15 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
         follow_redirects=True
     )
 
-    #2727 - be sure a test notification when there are zero watches works ( should all be deleted now)
-
-    os.unlink("test-datastore/notification.txt")
-
-
-    ######### Test global/system settings
+    ######### Test global/system settings - When everything is deleted it should give a helpful error
+    # See #2727
     res = client.post(
         url_for("ajax_callback_send_notification_test")+"?mode=global-settings",
         data={"notification_urls": test_notification_url},
         follow_redirects=True
     )
+    assert res.status_code == 400
+    assert b"Error: You must have atleast one watch configured for 'test notification' to work" in res.data
 
-    assert res.status_code != 400
-    assert res.status_code != 500
 
-    # Give apprise time to fire
-    time.sleep(4)
 
-    with open("test-datastore/notification.txt", 'r') as f:
-        x = f.read()
-        assert 'change detection is cool 网站监测 内容更新了' in x
