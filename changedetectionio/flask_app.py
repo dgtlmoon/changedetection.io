@@ -537,19 +537,22 @@ def changedetection_app(config=None, datastore_o=None):
         import random
         from .apprise_asset import asset
         apobj = apprise.Apprise(asset=asset)
+
         # so that the custom endpoints are registered
         from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
         is_global_settings_form = request.args.get('mode', '') == 'global-settings'
         is_group_settings_form = request.args.get('mode', '') == 'group-settings'
+
         # Use an existing random one on the global/main settings form
         if not watch_uuid and (is_global_settings_form or is_group_settings_form) \
                 and datastore.data.get('watching'):
-
             logger.debug(f"Send test notification - Choosing random Watch {watch_uuid}")
             watch_uuid = random.choice(list(datastore.data['watching'].keys()))
-            watch = datastore.data['watching'].get(watch_uuid)
-        else:
-            watch = None
+
+        if not watch_uuid:
+            return make_response("Error: You must have atleast one watch configured for 'test notification' to work", 400)
+
+        watch = datastore.data['watching'].get(watch_uuid)
 
         notification_urls = request.form['notification_urls'].strip().splitlines()
 
@@ -569,12 +572,12 @@ def changedetection_app(config=None, datastore_o=None):
 
 
         if not notification_urls:
-            return 'No Notification URLs set/found'
+            return 'Error: No Notification URLs set/found'
 
         for n_url in notification_urls:
             if len(n_url.strip()):
                 if not apobj.add(n_url):
-                    return f'Error - {n_url} is not a valid AppRise URL.'
+                    return f'Error:  {n_url} is not a valid AppRise URL.'
 
         try:
             # use the same as when it is triggered, but then override it with the form test values
@@ -593,11 +596,13 @@ def changedetection_app(config=None, datastore_o=None):
             if 'notification_body' in request.form and request.form['notification_body'].strip():
                 n_object['notification_body'] = request.form.get('notification_body', '').strip()
 
+            n_object.update(watch.extra_notification_token_values())
+
             from . import update_worker
             new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
             new_worker.queue_notification_for_watch(notification_q=notification_q, n_object=n_object, watch=watch)
         except Exception as e:
-            return make_response({'error': str(e)}, 400)
+            return make_response(f"Error: str(e)", 400)
 
         return 'OK - Sent test notifications'
 
