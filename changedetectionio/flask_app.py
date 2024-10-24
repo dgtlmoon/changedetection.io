@@ -554,7 +554,10 @@ def changedetection_app(config=None, datastore_o=None):
 
         watch = datastore.data['watching'].get(watch_uuid)
 
-        notification_urls = request.form['notification_urls'].strip().splitlines()
+        notification_urls = None
+
+        if request.form.get('notification_urls'):
+            notification_urls = request.form['notification_urls'].strip().splitlines()
 
         if not notification_urls:
             logger.debug("Test notification - Trying by group/tag in the edit form if available")

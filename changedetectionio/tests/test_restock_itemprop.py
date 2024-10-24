@@ -3,7 +3,7 @@ import os
 import time
 
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output
+from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output, extract_UUID_from_client
 from ..notification import default_notification_format
 
 instock_props = [
@@ -367,6 +367,12 @@ def test_change_with_notification_values(client, live_server):
         assert "new price 1950.45" in notification
         assert "title new price 1950.45" in notification
 
+    ## Now test the "SEND TEST NOTIFICATION" is working
+    os.unlink("test-datastore/notification.txt")
+    uuid = extract_UUID_from_client(client)
+    res = client.post(url_for("ajax_callback_send_notification_test", watch_uuid=uuid), data={}, follow_redirects=True)
+    time.sleep(5)
+    assert os.path.isfile("test-datastore/notification.txt"), "Notification received"
 
 
 def test_data_sanity(client, live_server):
