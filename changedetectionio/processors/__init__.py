@@ -120,10 +120,8 @@ class difference_detection_processor():
 
         timeout = self.datastore.data['settings']['requests'].get('timeout')
 
-        request_body = self.watch.get('body')
-        if request_body:
-            from changedetectionio.safe_jinja import render as jinja_render
-            request_body = jinja_render(template_str=self.watch.get('body'))
+        from changedetectionio.safe_jinja import render as jinja_render
+        request_body = request_body = jinja_render(template_str=self.watch.get('body', ''))
         request_method = self.watch.get('method')
         ignore_status_codes = self.watch.get('ignore_status_codes', False)
 

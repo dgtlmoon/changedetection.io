@@ -537,7 +537,7 @@ class processor_text_json_diff_form(commonSettingsForm):
             result = False
 
         # Attempt to validate jinja2 templates in the body
-        if self.body.data:
+        if self.body.data and self.body.data.strip():
             try:
                 jinja_render(template_str=self.body.data)
             except ModuleNotFoundError as e:
