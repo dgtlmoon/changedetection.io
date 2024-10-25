@@ -117,7 +117,8 @@ def test_body_in_request(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     # Now the change which should trigger a change
-    body_value = 'Test Body Value'
+    body_value = 'Test Body Value {{ 1+1 }}'
+    body_value_formatted = 'Test Body Value 2'
     res = client.post(
         url_for("edit_page", uuid="first"),
         data={
@@ -140,8 +141,9 @@ def test_body_in_request(client, live_server, measure_memory_usage):
 
     # If this gets stuck something is wrong, something should always be there
     assert b"No history found" not in res.data
-    # We should see what we sent in the reply
-    assert str.encode(body_value) in res.data
+    # We should see the formatted value of what we sent in the reply
+    assert str.encode(body_value) not in res.data
+    assert str.encode(body_value_formatted) in res.data
 
     ####### data sanity checks
     # Add the test URL twice, we will check
