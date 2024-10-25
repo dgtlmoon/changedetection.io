@@ -515,6 +515,7 @@ class processor_text_json_diff_form(commonSettingsForm):
         if not super().validate():
             return False
 
+        from changedetectionio.safe_jinja import render as jinja_render
         result = True
 
         # Fail form validation when a body is set for a GET
@@ -524,7 +525,6 @@ class processor_text_json_diff_form(commonSettingsForm):
 
         # Attempt to validate jinja2 templates in the URL
         try:
-            from changedetectionio.safe_jinja import render as jinja_render
             jinja_render(template_str=self.url.data)
         except ModuleNotFoundError as e:
             # incase jinja2_time or others is missing
@@ -534,6 +534,19 @@ class processor_text_json_diff_form(commonSettingsForm):
         except Exception as e:
             logger.error(e)
             self.url.errors.append('Invalid template syntax')
+            result = False
+
+        # Attempt to validate jinja2 templates in the body
+        try:
+            jinja_render(template_str=self.body.data)
+        except ModuleNotFoundError as e:
+            # incase jinja2_time or others is missing
+            logger.error(e)
+            self.body.errors.append(e)
+            result = False
+        except Exception as e:
+            logger.error(e)
+            self.body.errors.append('Invalid template syntax')
             result = False
 
         return result
