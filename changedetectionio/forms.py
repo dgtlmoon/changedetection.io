@@ -537,17 +537,18 @@ class processor_text_json_diff_form(commonSettingsForm):
             result = False
 
         # Attempt to validate jinja2 templates in the body
-        try:
-            jinja_render(template_str=self.body.data)
-        except ModuleNotFoundError as e:
-            # incase jinja2_time or others is missing
-            logger.error(e)
-            self.body.errors.append(e)
-            result = False
-        except Exception as e:
-            logger.error(e)
-            self.body.errors.append('Invalid template syntax')
-            result = False
+        if self.body.data:
+            try:
+                jinja_render(template_str=self.body.data)
+            except ModuleNotFoundError as e:
+                # incase jinja2_time or others is missing
+                logger.error(e)
+                self.body.errors.append(e)
+                result = False
+            except Exception as e:
+                logger.error(e)
+                self.body.errors.append('Invalid template syntax')
+                result = False
 
         return result
 
