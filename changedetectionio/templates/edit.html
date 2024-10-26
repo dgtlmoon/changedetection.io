@@ -65,8 +65,8 @@
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.url, placeholder="https://...", required=true, class="m-d") }}
-                        <span class="pure-form-message-inline">Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a></span><br>
-                        <span class="pure-form-message-inline">You can use variables in the URL, perfect for inserting the current date and other logic, <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a></span><br>
+                        <div class="pure-form-message">Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a></div>
+                        <div class="pure-form-message">Variables are supported in the URL (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a>).</div>
                     </div>
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.processor) }}
@@ -149,21 +149,24 @@
                             {{ render_field(form.method) }}
                         </div>
                         <div id="request-body">
-                                            {{ render_field(form.body, rows=5, placeholder="Example
+                                            {{ render_field(form.body, rows=7, placeholder="Example
 {
    \"name\":\"John\",
    \"age\":30,
-   \"car\":null
+   \"car\":null,
+   \"year\":{% now 'Europe/Berlin', '%Y' %}
 }") }}
                         </div>
+                        <div class="pure-form-message">Variables are supported in the request body (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a>).</div>
                     </div>
                 </fieldset>
             <!-- hmm -->
                 <div class="pure-control-group advanced-options"  style="display: none;">
-                    {{ render_field(form.headers, rows=5, placeholder="Example
+                    {{ render_field(form.headers, rows=7, placeholder="Example
 Cookie: foobar
-User-Agent: wonderbra 1.0") }}
-
+User-Agent: wonderbra 1.0
+Math: {{ 1 + 1 }}") }}
+                        <div class="pure-form-message">Variables are supported in the request header values (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a>).</div>
                         <div class="pure-form-message-inline">
                             {% if has_extra_headers_file %}
                                 <strong>Alert! Extra headers file found and will be added to this watch!</strong>
