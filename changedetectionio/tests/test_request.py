@@ -45,7 +45,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage):
               "url": test_url,
               "tags": "",
               "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
-              "headers": "xxx:ooo\ncool:yeah\r\ncookie:"+cookie_header},
+              "headers": "jinja2:{{ 1+1 }}\nxxx:ooo\ncool:yeah\r\ncookie:"+cookie_header},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -61,6 +61,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage):
     )
 
     # Flask will convert the header key to uppercase
+    assert b"Jinja2:2" in res.data
     assert b"Xxx:ooo" in res.data
     assert b"Cool:yeah" in res.data
 
