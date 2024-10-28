@@ -529,11 +529,11 @@ class processor_text_json_diff_form(commonSettingsForm):
         except ModuleNotFoundError as e:
             # incase jinja2_time or others is missing
             logger.error(e)
-            self.url.errors.append(e)
+            self.headers.errors.append(f'Invalid template syntax configuration: {e}')
             result = False
         except Exception as e:
             logger.error(e)
-            self.url.errors.append('Invalid template syntax')
+            self.url.errors.append(f'Invalid template syntax: {e}')
             result = False
 
         # Attempt to validate jinja2 templates in the body
@@ -543,11 +543,11 @@ class processor_text_json_diff_form(commonSettingsForm):
             except ModuleNotFoundError as e:
                 # incase jinja2_time or others is missing
                 logger.error(e)
-                self.body.errors.append(e)
+                self.headers.errors.append(f'Invalid template syntax configuration: {e}')
                 result = False
             except Exception as e:
                 logger.error(e)
-                self.body.errors.append('Invalid template syntax')
+                self.body.errors.append(f'Invalid template syntax: {e}')
                 result = False
 
         # Attempt to validate jinja2 templates in the headers
@@ -558,11 +558,11 @@ class processor_text_json_diff_form(commonSettingsForm):
             except ModuleNotFoundError as e:
                 # incase jinja2_time or others is missing
                 logger.error(e)
-                self.headers.errors.append(e)
+                self.headers.errors.append(f'Invalid template syntax configuration: {e}')
                 result = False
             except Exception as e:
                 logger.error(e)
-                self.headers.errors.append('Invalid template syntax')
+                self.headers.errors.append(f'Invalid template syntax in "{header}" header: {e}')
                 result = False
 
         return result
