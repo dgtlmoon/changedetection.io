@@ -284,7 +284,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     # CUSTOM JSON BODY CHECK for POST://
     set_original_response()
     # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#header-manipulation
-    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}&+custom-header=123"
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}&+custom-header=123&+second=hello+world%20%22space%22"
 
     res = client.post(
         url_for("settings_page"),
@@ -326,6 +326,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
         assert j['secret'] == 444
         assert j['somebug'] == '网站监测 内容更新了'
 
+
     # URL check, this will always be converted to lowercase
     assert os.path.isfile("test-datastore/notification-url.txt")
     with open("test-datastore/notification-url.txt", 'r') as f:
@@ -337,6 +338,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     with open("test-datastore/notification-headers.txt", 'r') as f:
         notification_headers = f.read()
         assert 'custom-header: 123' in notification_headers.lower()
+        assert 'second: hello world "space"' in notification_headers.lower()
 
 
     # Should always be automatically detected as JSON content type even when we set it as 'Text' (default)
