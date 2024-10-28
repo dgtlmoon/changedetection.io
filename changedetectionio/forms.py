@@ -529,7 +529,7 @@ class processor_text_json_diff_form(commonSettingsForm):
         except ModuleNotFoundError as e:
             # incase jinja2_time or others is missing
             logger.error(e)
-            self.headers.errors.append(f'Invalid template syntax configuration: {e}')
+            self.url.errors.append(f'Invalid template syntax configuration: {e}')
             result = False
         except Exception as e:
             logger.error(e)
@@ -543,7 +543,7 @@ class processor_text_json_diff_form(commonSettingsForm):
             except ModuleNotFoundError as e:
                 # incase jinja2_time or others is missing
                 logger.error(e)
-                self.headers.errors.append(f'Invalid template syntax configuration: {e}')
+                self.body.errors.append(f'Invalid template syntax configuration: {e}')
                 result = False
             except Exception as e:
                 logger.error(e)
