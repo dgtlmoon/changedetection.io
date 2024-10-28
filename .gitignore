@@ -10,5 +10,6 @@ dist
 venv
 test-datastore/*
 test-datastore
+test-memory.log
 *.egg-info*
 .vscode/settings.json

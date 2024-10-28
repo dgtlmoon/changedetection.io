@@ -515,6 +515,7 @@ class processor_text_json_diff_form(commonSettingsForm):
         if not super().validate():
             return False
 
+        from changedetectionio.safe_jinja import render as jinja_render
         result = True
 
         # Fail form validation when a body is set for a GET
@@ -524,17 +525,45 @@ class processor_text_json_diff_form(commonSettingsForm):
 
         # Attempt to validate jinja2 templates in the URL
         try:
-            from changedetectionio.safe_jinja import render as jinja_render
             jinja_render(template_str=self.url.data)
         except ModuleNotFoundError as e:
             # incase jinja2_time or others is missing
             logger.error(e)
-            self.url.errors.append(e)
+            self.url.errors.append(f'Invalid template syntax configuration: {e}')
             result = False
         except Exception as e:
             logger.error(e)
-            self.url.errors.append('Invalid template syntax')
+            self.url.errors.append(f'Invalid template syntax: {e}')
             result = False
+
+        # Attempt to validate jinja2 templates in the body
+        if self.body.data and self.body.data.strip():
+            try:
+                jinja_render(template_str=self.body.data)
+            except ModuleNotFoundError as e:
+                # incase jinja2_time or others is missing
+                logger.error(e)
+                self.body.errors.append(f'Invalid template syntax configuration: {e}')
+                result = False
+            except Exception as e:
+                logger.error(e)
+                self.body.errors.append(f'Invalid template syntax: {e}')
+                result = False
+
+        # Attempt to validate jinja2 templates in the headers
+        if len(self.headers.data) > 0:
+            try:
+                for header, value in self.headers.data.items():
+                    jinja_render(template_str=value)
+            except ModuleNotFoundError as e:
+                # incase jinja2_time or others is missing
+                logger.error(e)
+                self.headers.errors.append(f'Invalid template syntax configuration: {e}')
+                result = False
+            except Exception as e:
+                logger.error(e)
+                self.headers.errors.append(f'Invalid template syntax in "{header}" header: {e}')
+                result = False
 
         return result
 
