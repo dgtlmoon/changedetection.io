@@ -550,6 +550,21 @@ class processor_text_json_diff_form(commonSettingsForm):
                 self.body.errors.append('Invalid template syntax')
                 result = False
 
+        # Attempt to validate jinja2 templates in the headers
+        if len(self.headers.data) > 0:
+            try:
+                for header, value in self.headers.data.items():
+                    jinja_render(template_str=value)
+            except ModuleNotFoundError as e:
+                # incase jinja2_time or others is missing
+                logger.error(e)
+                self.headers.errors.append(e)
+                result = False
+            except Exception as e:
+                logger.error(e)
+                self.headers.errors.append('Invalid template syntax')
+                result = False
+
         return result
 
 class SingleExtraProxy(Form):
