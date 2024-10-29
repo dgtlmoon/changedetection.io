@@ -803,8 +803,9 @@ def changedetection_app(config=None, datastore_o=None):
             # But in the case something is added we should save straight away
             datastore.needs_write_urgent = True
 
-            # Queue the watch for immediate recheck, with a higher priority
-            update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+            if not datastore.data['watching'][uuid].get('paused'):
+                # Queue the watch for immediate recheck, with a higher priority
+                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff':
