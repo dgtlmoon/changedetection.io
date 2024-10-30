@@ -34,9 +34,6 @@ def set_response_with_multiple_index():
     <td>10</td>
   </tr>
 </table>
-
-<p>To understand the example better, we have added borders to the table.</p>
-
 </body>
 </html>
 """
@@ -260,8 +257,8 @@ body > table > tr:nth-child(3) > td:nth-child(3)""",
             follow_redirects=True
         )
 
-        assert "Tobias".encode('utf-8') not in res.data
-        assert "Linus".encode('utf-8') not in res.data
+        assert b"Tobias" not in res.data
+        assert b"Linus" not in res.data
         assert b"Person 2" not in res.data
         assert b"Person 3" not in res.data
         # First column should exist
