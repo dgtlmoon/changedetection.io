@@ -215,47 +215,55 @@ def test_element_removal_nth_offset_no_shift(client, live_server, measure_memory
     #live_server_setup(live_server)
 
     set_response_with_multiple_index()
-
-    # Add our URL to the import page
-    test_url = url_for("test_endpoint", _external=True)
-    res = client.post(
-        url_for("import_page"), data={"urls": test_url}, follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
-    wait_for_all_checks(client)
-
-    subtractive_selectors_data = """
+    subtractive_selectors_data = ["""
 body > table > tr:nth-child(1) > th:nth-child(2)
 body > table >  tr:nth-child(2) > td:nth-child(2)
 body > table > tr:nth-child(3) > td:nth-child(2)
 body > table > tr:nth-child(1) > th:nth-child(3)
 body > table >  tr:nth-child(2) > td:nth-child(3)
-body > table > tr:nth-child(3) > td:nth-child(3)    
-    """
+body > table > tr:nth-child(3) > td:nth-child(3)""",
+"""//body/table/tr[1]/th[2]
+//body/table/tr[2]/td[2]
+//body/table/tr[3]/td[2]
+//body/table/tr[1]/th[3]
+//body/table/tr[2]/td[3]
+//body/table/tr[3]/td[3]"""]
 
-    res = client.post(
-        url_for("edit_page", uuid="first"),
-        data={
-            "subtractive_selectors": subtractive_selectors_data,
-            "url": test_url,
-            "tags": "",
-            "fetch_backend": "html_requests",
-        },
-        follow_redirects=True,
-    )
-    assert b"Updated watch." in res.data
-    wait_for_all_checks(client)
+    for selector_list in subtractive_selectors_data:
 
-    res = client.get(
-        url_for("preview_page", uuid="first"),
-        follow_redirects=True
-    )
+        res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+        assert b'Deleted' in res.data
 
-    assert "Tobias".encode('utf-8') not in res.data
-    assert "Linus".encode('utf-8') not in res.data
-    assert b"Person 2" not in res.data
-    assert b"Person 3" not in res.data
-    # First column should exist
-    assert b"Emil" in res.data
+        # Add our URL to the import page
+        test_url = url_for("test_endpoint", _external=True)
+        res = client.post(
+            url_for("import_page"), data={"urls": test_url}, follow_redirects=True
+        )
+        assert b"1 Imported" in res.data
+        wait_for_all_checks(client)
 
+        res = client.post(
+            url_for("edit_page", uuid="first"),
+            data={
+                "subtractive_selectors": selector_list,
+                "url": test_url,
+                "tags": "",
+                "fetch_backend": "html_requests",
+            },
+            follow_redirects=True,
+        )
+        assert b"Updated watch." in res.data
+        wait_for_all_checks(client)
+
+        res = client.get(
+            url_for("preview_page", uuid="first"),
+            follow_redirects=True
+        )
+
+        assert "Tobias".encode('utf-8') not in res.data
+        assert "Linus".encode('utf-8') not in res.data
+        assert b"Person 2" not in res.data
+        assert b"Person 3" not in res.data
+        # First column should exist
+        assert b"Emil" in res.data
 
