@@ -31,14 +31,14 @@ class difference_detection_processor():
 
         from requests.structures import CaseInsensitiveDict
 
-        # Protect against file:// access
-        if re.search(r'^file://', self.watch.get('url', '').strip(), re.IGNORECASE):
+        url = self.watch.link
+
+        # Protect against file:// access, check the real "link" without any meta "source:" etc prepended.
+        if re.search(r'^file://', url, re.IGNORECASE):
             if not strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
                 raise Exception(
                     "file:// type access is denied for security reasons."
                 )
-
-        url = self.watch.link
 
         # Requests, playwright, other browser via wss:// etc, fetch_extra_something
         prefer_fetch_backend = self.watch.get('fetch_backend', 'system')

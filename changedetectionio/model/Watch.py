@@ -89,6 +89,10 @@ class model(watch_base):
 
         if ready_url.startswith('source:'):
             ready_url=ready_url.replace('source:', '')
+
+        # Also double check it after any Jinja2 formatting just incase
+        if not is_safe_url(ready_url):
+            return 'DISABLED'
         return ready_url
 
     def clear_watch(self):
