@@ -129,6 +129,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if not re.match(r"^" + backup_filename_regex + "$", filename):
             abort(400)  # Bad Request if the filename doesn't match the pattern
 
+        logger.debug(f"Backup download request for '{full_path}'")
         return send_from_directory(os.path.abspath(datastore.datastore_path), filename, as_attachment=True)
 
     @login_optionally_required
