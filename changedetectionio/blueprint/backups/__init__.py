@@ -80,9 +80,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def request_backup():
         if any(thread.is_alive() for thread in backup_threads):
             flash("A backup is already running, check back in a few minutes", "error")
+            return redirect(url_for('backups.index'))
 
         if len(find_backups()) > int(os.getenv("MAX_NUMBER_BACKUPS", 100)):
             flash("Maximum number of backups reached, please remove some", "error")
+            return redirect(url_for('backups.index'))
 
         # Be sure we're written fresh
         datastore.sync_to_json()
