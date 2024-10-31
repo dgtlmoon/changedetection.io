@@ -20,7 +20,9 @@
                     {% endfor %}
                     </ul>
                 {% else %}
+                    <p>
                     <strong>No backups found.</strong>
+                    </p>
                 {% endif %}
 
             <a class="pure-button pure-button-primary" href="{{ url_for('backups.request_backup') }}">Create backup</a>

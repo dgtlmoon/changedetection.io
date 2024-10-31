@@ -60,3 +60,11 @@ def test_backup(client, live_server, measure_memory_usage):
 
     # Should be two txt files in the archive (history and the snapshot)
     assert len(newlist) == 2
+
+    # Get the latest one
+    res = client.get(
+        url_for("backups.remove_backups"),
+        follow_redirects=True
+    )
+
+    assert b'No backups found.' in res.data
