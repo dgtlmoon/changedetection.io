@@ -80,6 +80,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def request_backup():
         if any(thread.is_alive() for thread in backup_threads):
             flash("A backup is already running, check back in a few minutes", "error")
+
+        if len(find_backups()) > int(os.getenv("MAX_NUMBER_BACKUPS", 100)):
+            flash("Maximum number of backups reached, please remove some", "error")
+
         # Be sure we're written fresh
         datastore.sync_to_json()
         zip_thread = threading.Thread(target=create_backup, args=(datastore.datastore_path, datastore.data.get("watching")))
@@ -113,6 +117,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         import re
         filename = filename.strip()
         backup_filename_regex = BACKUP_FILENAME_FORMAT.format("\d+")
+
+        full_path = os.path.join(os.path.abspath(datastore.datastore_path), filename)
+        if not full_path.startswith(os.path.abspath(datastore.datastore_path)):
+            abort(404)
 
         if filename == 'latest':
             backups = find_backups()

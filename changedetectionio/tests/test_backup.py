@@ -40,7 +40,7 @@ def test_backup(client, live_server, measure_memory_usage):
     # Can see the download link to the backup
     assert b'<a href="/backups/download/changedetection-backup-20' in res.data
     assert b'Remove backups' in res.data
-    
+
     # Get the latest one
     res = client.get(
         url_for("backups.download_backup", filename="latest"),
