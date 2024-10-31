@@ -1236,78 +1236,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         return output
 
-    # We're good but backups are even better!
-    @app.route("/backup", methods=['GET'])
-    @login_optionally_required
-    def get_backup():
-
-        import zipfile
-        from pathlib import Path
-
-        # Remove any existing backup file, for now we just keep one file
-
-        for previous_backup_filename in Path(datastore_o.datastore_path).rglob('changedetection-backup-*.zip'):
-            os.unlink(previous_backup_filename)
-
-        # create a ZipFile object
-        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        backupname = "changedetection-backup-{}.zip".format(timestamp)
-        backup_filepath = os.path.join(datastore_o.datastore_path, backupname)
-
-        with zipfile.ZipFile(backup_filepath, "w",
-                             compression=zipfile.ZIP_DEFLATED,
-                             compresslevel=8) as zipObj:
-
-            # Be sure we're written fresh
-            datastore.sync_to_json()
-
-            # Add the index
-            zipObj.write(os.path.join(datastore_o.datastore_path, "url-watches.json"), arcname="url-watches.json")
-
-            # Add the flask app secret
-            zipObj.write(os.path.join(datastore_o.datastore_path, "secret.txt"), arcname="secret.txt")
-
-            # Add any data in the watch data directory.
-            for uuid, w in datastore.data['watching'].items():
-                for f in Path(w.watch_data_dir).glob('*'):
-                    zipObj.write(f,
-                                 # Use the full path to access the file, but make the file 'relative' in the Zip.
-                                 arcname=os.path.join(f.parts[-2], f.parts[-1]),
-                                 compress_type=zipfile.ZIP_DEFLATED,
-                                 compresslevel=8)
-
-            # Create a list file with just the URLs, so it's easier to port somewhere else in the future
-            list_file = "url-list.txt"
-            with open(os.path.join(datastore_o.datastore_path, list_file), "w") as f:
-                for uuid in datastore.data["watching"]:
-                    url = datastore.data["watching"][uuid]["url"]
-                    f.write("{}\r\n".format(url))
-            list_with_tags_file = "url-list-with-tags.txt"
-            with open(
-                os.path.join(datastore_o.datastore_path, list_with_tags_file), "w"
-            ) as f:
-                for uuid in datastore.data["watching"]:
-                    url = datastore.data["watching"][uuid].get('url')
-                    tag = datastore.data["watching"][uuid].get('tags', {})
-                    f.write("{} {}\r\n".format(url, tag))
-
-            # Add it to the Zip
-            zipObj.write(
-                os.path.join(datastore_o.datastore_path, list_file),
-                arcname=list_file,
-                compress_type=zipfile.ZIP_DEFLATED,
-                compresslevel=8,
-            )
-            zipObj.write(
-                os.path.join(datastore_o.datastore_path, list_with_tags_file),
-                arcname=list_with_tags_file,
-                compress_type=zipfile.ZIP_DEFLATED,
-                compresslevel=8,
-            )
-
-        # Send_from_directory needs to be the full absolute path
-        return send_from_directory(os.path.abspath(datastore_o.datastore_path), backupname, as_attachment=True)
-
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
         from flask import make_response
@@ -1686,6 +1614,9 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.check_proxies as check_proxies
     app.register_blueprint(check_proxies.construct_blueprint(datastore=datastore), url_prefix='/check_proxy')
+
+    import changedetectionio.blueprint.backups as backups
+    app.register_blueprint(backups.construct_blueprint(datastore), url_prefix='/backups')
 
 
     # @todo handle ctrl break
