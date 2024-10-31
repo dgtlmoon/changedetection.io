@@ -26,8 +26,23 @@ def test_backup(client, live_server, measure_memory_usage):
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
 
+    # Launch the thread in the background to create the backup
     res = client.get(
-        url_for("get_backup"),
+        url_for("backups.request_backup"),
+        follow_redirects=True
+    )
+    time.sleep(2)
+
+    res = client.get(
+        url_for("backups.index"),
+        follow_redirects=True
+    )
+    # Can see the download link to the backup
+    assert b'<a href="/backups/download/changedetection-backup-20' in res.data
+
+    # Get the latest one
+    res = client.get(
+        url_for("backups.download_backup", filename="latest"),
         follow_redirects=True
     )
 
