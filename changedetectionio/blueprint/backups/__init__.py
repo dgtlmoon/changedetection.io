@@ -22,7 +22,7 @@ def create_backup(datastore_path, watches: dict):
     backupname = BACKUP_FILENAME_FORMAT.format(timestamp)
     backup_filepath = os.path.join(datastore_path, backupname)
 
-    with zipfile.ZipFile(backup_filepath, "w",
+    with zipfile.ZipFile(backup_filepath.replace('.zip', '.tmp'), "w",
                          compression=zipfile.ZIP_DEFLATED,
                          compresslevel=8) as zipObj:
 
@@ -69,6 +69,9 @@ def create_backup(datastore_path, watches: dict):
             compress_type=zipfile.ZIP_DEFLATED,
             compresslevel=8,
         )
+
+    # Now it's done, rename it so it shows up finally and its completed being written.
+    os.rename(backup_filepath.replace('.zip', '.tmp'), backup_filepath.replace('.tmp', '.zip'))
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
