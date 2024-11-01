@@ -37,3 +37,10 @@ jobs:
       python-version: '3.12'
       skip-pypuppeteer: true
 
+  test-application-3-13:
+    needs: lint-code
+    uses: ./.github/workflows/test-stack-reusable-workflow.yml
+    with:
+      python-version: '3.13'
+      skip-pypuppeteer: true
+      
