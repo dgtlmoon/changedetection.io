@@ -33,8 +33,8 @@ class difference_detection_processor():
 
         url = self.watch.link
 
-        # Protect against file:// access, check the real "link" without any meta "source:" etc prepended.
-        if re.search(r'^file://', url, re.IGNORECASE):
+        # Protect against file://, file:/ access, check the real "link" without any meta "source:" etc prepended.
+        if re.search(r'^file:/', url.strip(), re.IGNORECASE):
             if not strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
                 raise Exception(
                     "file:// type access is denied for security reasons."
