@@ -64,7 +64,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
 def test_file_slashslash_access(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
-    test_file_path = "/tmp/test-file.txt"
+    test_file_path = os.path.abspath(__file__)
 
     # file:// is permitted by default, but it will be caught by ALLOW_FILE_URI
     client.post(
@@ -82,8 +82,7 @@ def test_file_slashslash_access(client, live_server, measure_memory_usage):
             follow_redirects=True
         )
 
-        # Should see something (this file added by run_basic_tests.sh)
-        assert b"Hello world" in res.data
+        assert b"test_file_slashslash_access" in res.data
     else:
         # Default should be here
         assert b'file:// type access is denied for security reasons.' in res.data
@@ -109,8 +108,7 @@ def test_file_slash_access(client, live_server, measure_memory_usage):
             follow_redirects=True
         )
 
-        # Should see something (this file added by run_basic_tests.sh)
-        assert b"Hello world" in res.data
+        assert b"test_file_slash_access" in res.data
     else:
         # Default should be here
         assert b'file:// type access is denied for security reasons.' in res.data
