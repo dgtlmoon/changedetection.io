@@ -90,7 +90,7 @@ def test_file_slashslash_access(client, live_server, measure_memory_usage):
 def test_file_slash_access(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
-    test_file_path = "/tmp/test-file.txt"
+    test_file_path = os.path.abspath(__file__)
 
     # file:// is permitted by default, but it will be caught by ALLOW_FILE_URI
     client.post(
@@ -103,12 +103,9 @@ def test_file_slash_access(client, live_server, measure_memory_usage):
 
     # If it is enabled at test time
     if strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
-        res = client.get(
-            url_for("preview_page", uuid="first"),
-            follow_redirects=True
-        )
-
-        assert b"test_file_slash_access" in res.data
+        # So it should permit it, but it should fall back to the 'requests' library giving an error
+        # (but means it gets passed to playwright etc)
+        assert b"URLs with hostname components are not permitted" in res.data
     else:
         # Default should be here
         assert b'file:// type access is denied for security reasons.' in res.data
