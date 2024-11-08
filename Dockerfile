@@ -70,16 +70,15 @@ ENV PYTHONPATH=/usr/local \
 EXPOSE 5000
 
 # The entrypoint script handling PUID/PGID and permissions
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+COPY --chmod=755 docker-entrypoint.sh /app/docker-entrypoint.sh
 
 # The actual flask app module
 COPY changedetectionio /app/changedetectionio
 # Starting wrapper
 COPY changedetection.py /app/changedetection.py
 
-RUN chmod 755 /app/docker-entrypoint.sh && \
-    # create test directory for pytest to run in
-    mkdir -p /app/changedetectionio/test-datastore && \
+# create test directory for pytest to run in
+RUN mkdir -p /app/changedetectionio/test-datastore && \
     chown changedetection:changedetection /app/changedetectionio/test-datastore
 
 # Github Action test purpose(test-only.yml).
