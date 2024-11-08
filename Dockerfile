@@ -50,7 +50,7 @@ RUN set -ex; \
         zlib1g && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*; \
-    useradd -u 911 -U -M -s /bin/false changedetection && \
+    useradd -u 911 -U -m -s /bin/false changedetection && \
     usermod -G users changedetection; \
     mkdir -p /datastore
 

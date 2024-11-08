@@ -21,6 +21,7 @@ if [ "$(id -u)" = '0' -a -z "${KEEP_PRIVILEGES:-}" ]; then
 
     # Look for files in datadir not owned by the correct user and chown them
     find "$DATASTORE_PATH" \! -user changedetection -exec chown changedetection '{}' +
+    chown -R changedetection:changedetection ~changedetection
 
     # Restart this script as an unprivileged user
     exec gosu changedetection:changedetection "$BASH_SOURCE" "$@"
