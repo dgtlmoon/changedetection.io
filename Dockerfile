@@ -65,7 +65,9 @@ ENV PYTHONPATH=/usr/local \
     # https://stackoverflow.com/questions/64808915/should-pycache-folders-be-included-in-production-containers
     # This avoids permission denied errors because the app directory is root-owned.
     PYTHONDONTWRITEBYTECODE=1 \
-    DATASTORE_PATH="/datastore"
+    DATASTORE_PATH="/datastore" \
+    # Disable creation of Pytest cache dir when running tests inside the container by default
+    PYTEST_ADDOPTS="-p no:cacheprovider"
 
 EXPOSE 5000
 
