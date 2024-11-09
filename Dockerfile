@@ -90,4 +90,4 @@ ENV LOGGER_LEVEL "$LOGGER_LEVEL"
 
 WORKDIR /app
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["python", "./changedetection.py", "-d", "/datastore"]
+CMD ["python", "/app/changedetection.py"]
