@@ -19,8 +19,19 @@ if [ "$(id -u)" = '0' -a -z "${KEEP_PRIVILEGES:-}" ]; then
     groupmod -o -g "$PGID" changedetection
     usermod -o -u "$PUID" changedetection
 
-    # Look for files in datadir not owned by the correct user and chown them
-    find "$DATASTORE_PATH" \! -user changedetection -exec chown changedetection '{}' +
+    # Check if the supplied uid/gid grants write permissions on the datastore
+    # root directory. Only if it does not, chown it recursively.
+    # In my testing, `test -w "$DATASTORE_PATH"` did not work reliably.
+    tempfile="$DATASTORE_PATH/.check-writable"
+    gosu changedetection:changedetection bash -c ">> '$tempfile'" &&
+        rm -f "$tempfile" ||
+        chown -R changedetection:changedetection "$DATASTORE_PATH" ||
+        (
+            echo "Failed to change permissions on $DATASTORE_PATH. Ensure it is writable by $PUID:$PGID" >&2
+            exit 1
+        )
+
+    # Ensure the home directory's permissions are adjusted as well.
     chown -R changedetection:changedetection ~changedetection
 
     # Restart this script as an unprivileged user
