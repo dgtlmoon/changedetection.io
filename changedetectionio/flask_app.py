@@ -53,6 +53,7 @@ extra_stylesheets = []
 
 update_q = queue.PriorityQueue()
 notification_q = queue.Queue()
+MAX_QUEUE_SIZE = 2000
 
 app = Flask(__name__,
             static_url_path="",
@@ -1742,12 +1743,14 @@ def ticker_thread_check_time_launch_checks():
             except RuntimeError as e:
                 # RuntimeError: dictionary changed size during iteration
                 time.sleep(0.1)
+                watch_uuid_list = []
             else:
                 break
 
         # Re #438 - Don't place more watches in the queue to be checked if the queue is already large
         while update_q.qsize() >= 2000:
-            time.sleep(1)
+            logger.warning(f"Recheck watches queue size limit reached ({MAX_QUEUE_SIZE}), skipping adding more items")
+            time.sleep(3)
 
 
         recheck_time_system_seconds = int(datastore.threshold_seconds)
