@@ -61,6 +61,9 @@ services:
   #
   #        If you want to watch local files file:///path/to/file.txt (careful! security implications!)
   #      - ALLOW_FILE_URI=False
+  #
+  #        For complete privacy if you don't want to use the 'check version' / telemetry service
+  #      - DISABLE_VERSION_CHECK=true
   
       # Comment out ports: when using behind a reverse proxy , enable networks: etc.
       ports:
