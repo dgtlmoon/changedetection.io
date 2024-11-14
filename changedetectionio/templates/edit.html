@@ -137,6 +137,27 @@
                                 href="https://github.com/dgtlmoon/changedetection.io/wiki/Run-JavaScript-before-change-detection">More
                             help and examples here</a>
                         </div>
+
+                        <div class="pure-control-group spacing-top">
+                            {{ render_checkbox_field(form.webdriver_enable_pagination) }}
+                            <div class="pure-form-message-inline">
+                                Running in pagination mode will extract data from each page, and inject it on the last in the following element:
+                                <pre>&lt;input type="hidden" id="cd_data" value="&lt;extracted data here&gt;"&gt;</pre>
+                            </div>
+                        </div>
+
+                        <div data-visible-for="webdriver_enable_pagination=y" style="display: none;">
+                            {{ render_field(form.webdriver_paginated_js_execute_each_page) }}
+                            <div class="pure-form-message-inline">
+                                This code will be executed on each page to extract the data.
+                            </div>
+                            
+                            {{ render_field(form.webdriver_paginated_next_selector) }}
+                            <div class="pure-form-message-inline">
+                                This selector defines the element that should be clicked to navigate to the next page. If this element cannot bet found,
+                                the watch will interpret it as the last page.
+                            </div>
+                        </div>
                     </div>
                 </fieldset>
                 <!-- html requests always -->

@@ -2,6 +2,7 @@ $(document).ready(function () {
 
     // Lazy Hide/Show elements mechanism
     $('[data-visible-for]').hide();
+
     function show_related_elem(e) {
         var n = $(e).attr('name') + "=" + $(e).val();
         if (n === 'fetch_backend=system') {
@@ -9,16 +10,31 @@ $(document).ready(function () {
         }
         $(`[data-visible-for~="${n}"]`).show();
     }
+
+    function toggle_related_elem(e) {
+        var n = $(e).attr('name') + "=" + $(e).val();
+        if (n === 'fetch_backend=system') {
+            n = "fetch_backend=" + default_system_fetch_backend;
+        }
+        console.log('n: ' + n);
+        $(`[data-visible-for~="${n}"]`).toggle();
+    }
+
     $(':radio').on('keyup keypress blur change click', function (e) {
         $(`[data-visible-for]`).hide();
         $('.advanced-options').hide();
         show_related_elem(this);
     });
-
     $(':radio:checked').each(function (e) {
        show_related_elem(this);
-    })
+    });
 
+    $(':checkbox').on('change', function (e) {
+        toggle_related_elem(this);
+    });
+    $(':checkbox:checked').each(function (e) {
+        show_related_elem(this);
+    });
 
     // Show advanced
     $('.show-advanced').click(function (e) {

@@ -494,7 +494,12 @@ class processor_text_json_diff_form(commonSettingsForm):
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)
     text_should_not_be_present = StringListField('Block change-detection while text matches', [validators.Optional(), ValidateListRegex()])
+
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
+    
+    webdriver_enable_pagination = BooleanField('Enable paginated mode', default=False)
+    webdriver_paginated_js_execute_each_page = TextAreaField('(Paginated) Execute JavaScript on each page', render_kw={"rows": "5"}, validators=[validators.Optional()])
+    webdriver_paginated_next_selector = TextAreaField('(Paginated) Next page button selector', validators=[validators.Optional()])
 
     save_button = SubmitField('Save', render_kw={"class": "pure-button button-small pure-button-primary"})
 

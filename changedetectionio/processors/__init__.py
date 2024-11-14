@@ -141,6 +141,12 @@ class difference_detection_processor():
         if self.watch.get('webdriver_js_execute_code') is not None and self.watch.get('webdriver_js_execute_code').strip():
             self.fetcher.webdriver_js_execute_code = self.watch.get('webdriver_js_execute_code')
 
+        self.fetcher.webdriver_enable_pagination = self.watch.get('webdriver_enable_pagination', False)
+        if self.watch.get('webdriver_paginated_js_execute_each_page') is not None and self.watch.get('webdriver_paginated_js_execute_each_page').strip():
+            self.fetcher.webdriver_paginated_js_execute_each_page = self.watch.get('webdriver_paginated_js_execute_each_page')
+        if self.watch.get('webdriver_paginated_next_selector') is not None and self.watch.get('webdriver_paginated_next_selector').strip():
+            self.fetcher.webdriver_paginated_next_selector = self.watch.get('webdriver_paginated_next_selector')
+
         # Requests for PDF's, images etc should be passwd the is_binary flag
         is_binary = self.watch.is_pdf
 

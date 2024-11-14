@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from loguru import logger
 
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
-from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
+from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, PaginatedContentMisconfigured, ScreenshotUnavailable
 
 class fetcher(Fetcher):
     fetcher_description = "Playwright {}/Javascript".format(
@@ -133,10 +133,13 @@ class fetcher(Fetcher):
                 browser.close()
                 logger.debug("Content Fetcher > Response object from the browser communication was none")
                 raise EmptyReply(url=url, status_code=None)
-
+            
             try:
                 if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
-                    browsersteps_interface.action_execute_js(value=self.webdriver_js_execute_code, selector=None)
+                    if self.webdriver_enable_pagination == True:
+                        self.run_paginated(url=url)
+                    else:
+                        self.run_normal(browsersteps_interface=browsersteps_interface)
             except playwright._impl._errors.TimeoutError as e:
                 context.close()
                 browser.close()
@@ -147,7 +150,7 @@ class fetcher(Fetcher):
                 context.close()
                 browser.close()
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
-
+            
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
             self.page.wait_for_timeout(extra_wait * 1000)
 
@@ -209,3 +212,60 @@ class fetcher(Fetcher):
             finally:
                 context.close()
                 browser.close()
+
+    def run_normal(self, browsersteps_interface):
+        """
+        Run normal content extraction.
+        """
+        browsersteps_interface.action_execute_js(value=self.webdriver_js_execute_code, selector=None)
+
+    def run_paginated(self, url):
+        """
+        Run paginated content extraction in the following order:
+        1. Execute initial JS code after the page is loaded
+        2.
+            a. Execute JS code to extract content from the page\n
+            b. Look for a "next page" button and click it if it exists\n
+            c. Repeat step 2 until the "next page" button is not found
+        3. Write the extracted content to a hidden input element with ID "cd_data"
+        """
+        if self.webdriver_paginated_js_execute_each_page is None or not len(self.webdriver_paginated_js_execute_each_page) \
+            or self.webdriver_paginated_next_selector is None or not len(self.webdriver_paginated_next_selector):
+            raise PaginatedContentMisconfigured()
+
+        from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
+        from playwright._impl._errors import TimeoutError
+
+        browsersteps_interface = steppable_browser_interface(start_url=url)
+        browsersteps_interface.page = self.page
+        
+        browsersteps_interface.action_execute_js(value=self.webdriver_js_execute_code, selector=None)
+        browsersteps_interface.action_wait_for_load_state(selector=None)
+
+        data = ""
+        step_n = 1
+        while True:
+            if data != "":
+                data += ","
+
+            logger.debug(f"Paginated content > Page {step_n}")
+            data += browsersteps_interface.action_execute_js(value=self.webdriver_paginated_js_execute_each_page, selector=None)
+
+            try:
+                next_button = browsersteps_interface.get_locator(self.webdriver_paginated_next_selector)
+                next_button.wait_for()
+                next_button.click()
+                browsersteps_interface.action_wait_for_load_state(selector=None)
+                step_n += 1
+            except TimeoutError:
+                # This just means the button could not be found.
+                logger.debug(f"Paginated content > Next button could not be found")
+                break
+
+        self.page.evaluate('''(data) => {
+            const el = document.createElement('input');
+            el.id = 'cd_data';
+            el.type = 'hidden';
+            el.value = data;
+            document.body.appendChild(el);
+        }''', data)

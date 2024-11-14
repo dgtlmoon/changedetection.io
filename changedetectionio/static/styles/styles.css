@@ -925,6 +925,10 @@ footer {
   .pure-form .pure-group,
   .pure-form .pure-controls {
     padding-bottom: 1em; }
+    .pure-form .pure-control-group.spacing-top,
+    .pure-form .pure-group.spacing-top,
+    .pure-form .pure-controls.spacing-top {
+      padding-top: 1rem; }
     .pure-form .pure-control-group div,
     .pure-form .pure-group div,
     .pure-form .pure-controls div {
@@ -942,6 +946,10 @@ footer {
     .pure-form .pure-group legend,
     .pure-form .pure-controls legend {
       color: var(--color-text-legend); }
+    .pure-form .pure-control-group pre,
+    .pure-form .pure-group pre,
+    .pure-form .pure-controls pre {
+      margin-bottom: 0; }
   .pure-form .error input {
     background-color: var(--color-error-input); }
   .pure-form ul.errors {

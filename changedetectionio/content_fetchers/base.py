@@ -52,6 +52,9 @@ class Fetcher():
     instock_data_js = ""
     status_code = None
     webdriver_js_execute_code = None
+    webdriver_enable_pagination = False
+    webdriver_paginated_js_execute_each_page = None
+    webdriver_paginated_next_selector = None
     xpath_data = None
     xpath_element_js = ""
 

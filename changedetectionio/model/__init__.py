@@ -68,6 +68,9 @@ class watch_base(dict):
             'uuid': str(uuid.uuid4()),
             'webdriver_delay': None,
             'webdriver_js_execute_code': None,  # Run before change-detection
+            'webdriver_enable_pagination': False,  # Run before change-detection
+            'webdriver_paginated_js_execute_each_page': None,  # Run before change-detection
+            'webdriver_paginated_next_selector': None,  # Run before change-detection
         })
 
         super(watch_base, self).__init__(*arg, **kw)
