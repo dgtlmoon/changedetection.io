@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # coding=utf-8
 
 import time
@@ -499,7 +499,7 @@ def test_correct_header_detect(client, live_server, measure_memory_usage):
     )
 
     assert b'&#34;hello&#34;: 123,' in res.data
-    assert b'&#34;world&#34;: 123</div>' in res.data
+    assert b'&#34;world&#34;: 123' in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

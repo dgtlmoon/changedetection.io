@@ -46,14 +46,31 @@
     #browser_steps li > label {
       display: none; }
 
-#browser-steps-fieldlist {
-  height: 100%;
-  overflow-y: scroll; }
-
 #browser-steps .flex-wrapper {
   display: flex;
   flex-flow: row;
-  height: 70vh; }
+  height: 70vh;
+  font-size: 80%; }
+  #browser-steps .flex-wrapper #browser-steps-ui {
+    flex-grow: 1;
+    /* Allow it to grow and fill the available space */
+    flex-shrink: 1;
+    /* Allow it to shrink if needed */
+    flex-basis: 0;
+    /* Start with 0 base width so it stretches as much as possible */
+    background-color: #eee;
+    border-radius: 5px; }
+  #browser-steps .flex-wrapper #browser-steps-fieldlist {
+    flex-grow: 0;
+    /* Don't allow it to grow */
+    flex-shrink: 0;
+    /* Don't allow it to shrink */
+    flex-basis: auto;
+    /* Base width is determined by the content */
+    max-width: 400px;
+    /* Set a max width to prevent overflow */
+    padding-left: 1rem;
+    overflow-y: scroll; }
 
 /*  this is duplicate :( */
 #browsersteps-selector-wrapper {
@@ -95,26 +112,34 @@ ul#requests-extra_proxies {
   ul#requests-extra_proxies li > label {
     display: none; }
   ul#requests-extra_proxies table tr {
-    display: inline; }
+    display: table-row; }
+    ul#requests-extra_proxies table tr input[type=text] {
+      width: 100%; }
+  @media only screen and (min-width: 1024px) {
+    ul#requests-extra_proxies table tr {
+      display: inline; } }
 
 #request {
   /* Auto proxy scan/checker */ }
   #request label[for=proxy] {
     display: inline-block; }
 
-body.proxy-check-active #request .proxy-status {
-  width: 2em; }
-
-body.proxy-check-active #request .proxy-check-details {
-  font-size: 80%;
-  color: #555;
-  display: block;
-  padding-left: 4em; }
-
-body.proxy-check-active #request .proxy-timing {
-  font-size: 80%;
-  padding-left: 1rem;
-  color: var(--color-link); }
+body.proxy-check-active #request {
+  /*
+    .proxy-status {
+      width: 2em;
+    }
+    */ }
+  body.proxy-check-active #request .proxy-check-details {
+    font-size: 80%;
+    color: #555;
+    display: block;
+    padding-left: 2em;
+    max-width: 500px; }
+  body.proxy-check-active #request .proxy-timing {
+    font-size: 80%;
+    padding-left: 1rem;
+    color: var(--color-link); }
 
 #recommended-proxy {
   display: grid;
@@ -141,7 +166,14 @@ ul#requests-extra_browsers {
   ul#requests-extra_browsers li > label {
     display: none; }
   ul#requests-extra_browsers table tr {
-    display: inline; }
+    display: table-row; }
+    ul#requests-extra_browsers table tr input[type=text] {
+      width: 100%; }
+  @media only screen and (min-width: 1280px) {
+    ul#requests-extra_browsers table tr {
+      display: inline; }
+      ul#requests-extra_browsers table tr input[type=text] {
+        width: 100%; } }
 
 #extra-browsers-setting {
   border: 1px solid var(--color-grey-800);
@@ -411,6 +443,83 @@ html[data-darkmode="true"] #toggle-light-mode .icon-dark {
     fill: #ff0000 !important;
     transition: all ease 0.3s !important; }
 
+.minitabs-wrapper {
+  width: 100%; }
+  .minitabs-wrapper > div[id] {
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-top: none; }
+  .minitabs-wrapper .minitabs-content {
+    width: 100%;
+    display: flex; }
+    .minitabs-wrapper .minitabs-content > div {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: scroll; }
+  .minitabs-wrapper .minitabs {
+    display: flex;
+    border-bottom: 1px solid #ccc; }
+  .minitabs-wrapper .minitab {
+    flex: 1;
+    text-align: center;
+    padding: 12px 0;
+    text-decoration: none;
+    color: #333;
+    background-color: #f1f1f1;
+    border: 1px solid #ccc;
+    border-bottom: none;
+    cursor: pointer;
+    transition: background-color 0.3s; }
+  .minitabs-wrapper .minitab:hover {
+    background-color: #ddd; }
+  .minitabs-wrapper .minitab.active {
+    background-color: #fff;
+    font-weight: bold; }
+
+body.preview-text-enabled {
+  /* layout of the page */
+  /* actual preview area */ }
+  @media (min-width: 800px) {
+    body.preview-text-enabled #filters-and-triggers > div {
+      display: flex;
+      /* Establishes Flexbox layout */
+      gap: 20px;
+      /* Adds space between the columns */
+      position: relative;
+      /* Ensures the sticky positioning is relative to this parent */ } }
+  body.preview-text-enabled #edit-text-filter, body.preview-text-enabled #text-preview {
+    flex: 1;
+    /* Each column takes an equal amount of available space */
+    align-self: flex-start;
+    /* Aligns the right column to the start, allowing it to maintain its content height */ }
+  body.preview-text-enabled #edit-text-filter #pro-tips {
+    display: none; }
+  body.preview-text-enabled #text-preview {
+    position: sticky;
+    top: 20px;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    display: block !important; }
+  body.preview-text-enabled #activate-text-preview {
+    background-color: var(--color-grey-500); }
+  body.preview-text-enabled .monospace-preview {
+    background: var(--color-background-input);
+    border: 1px solid var(--color-grey-600);
+    padding: 1rem;
+    color: var(--color-text-input);
+    font-family: "Courier New", Courier, monospace;
+    /* Sets the font to a monospace type */
+    font-size: 70%;
+    word-break: break-word;
+    white-space: pre-wrap;
+    /* Preserves whitespace and line breaks like <pre> */ }
+
+#activate-text-preview {
+  right: 0;
+  position: absolute;
+  z-index: 3;
+  box-shadow: 1px 1px 4px var(--color-shadow-jump); }
+
 body {
   color: var(--color-text);
   background: var(--color-background-page);
@@ -479,8 +588,25 @@ button.toggle-button {
   padding: 5px;
   display: flex;
   justify-content: space-between;
-  border-bottom: 2px solid var(--color-menu-accent);
   align-items: center; }
+
+#pure-menu-horizontal-spinner {
+  height: 3px;
+  background: linear-gradient(-75deg, #ff6000, #ff8f00, #ffdd00, #ed0000);
+  background-size: 400% 400%;
+  width: 100%;
+  animation: gradient 200s ease infinite; }
+
+body.spinner-active #pure-menu-horizontal-spinner {
+  animation: gradient 1s ease infinite; }
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%; }
+  50% {
+    background-position: 100% 50%; }
+  100% {
+    background-position: 0% 50%; } }
 
 .pure-menu-heading {
   color: var(--color-text-menu-heading); }
@@ -491,8 +617,11 @@ button.toggle-button {
     background-color: var(--color-background-menu-link-hover);
     color: var(--color-text-menu-link-hover); }
 
+.tab-pane-inner {
+  scroll-margin-top: 200px; }
+
 section.content {
-  padding-top: 5em;
+  padding-top: 100px;
   padding-bottom: 1em;
   flex-direction: column;
   display: flex;
@@ -633,9 +762,6 @@ a.pure-button-selected {
 
 .button-cancel {
   background: var(--color-background-button-cancel); }
-
-#save_button {
-  margin-right: 1rem; }
 
 .messages li {
   list-style: none;
@@ -835,8 +961,10 @@ footer {
   .pure-form .inline-radio ul {
     margin: 0px;
     list-style: none; }
-    .pure-form .inline-radio ul li > * {
-      display: inline-block; }
+    .pure-form .inline-radio ul li {
+      display: flex;
+      align-items: center;
+      gap: 1em; }
 
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
   .box {
@@ -872,12 +1000,24 @@ footer {
     .watch-table thead {
       display: block; }
       .watch-table thead tr th {
-        display: inline-block; }
+        display: inline-block; } }
+      @media only screen and (max-width: 760px) and (max-width: 768px), (min-device-width: 768px) and (max-device-width: 800px) and (max-width: 768px) {
+        .watch-table thead tr th .hide-on-mobile {
+          display: none; } }
+
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 800px) {
       .watch-table thead .empty-cell {
         display: none; }
     .watch-table tbody td,
     .watch-table tbody tr {
       display: block; }
+    .watch-table tbody tr {
+      display: flex;
+      flex-wrap: wrap; }
+      .watch-table tbody tr :nth-child(3) {
+        flex-grow: 1; }
+      .watch-table tbody tr :nth-last-child(-n+3) {
+        flex-basis: 100%; }
     .watch-table .last-checked > span {
       vertical-align: middle; }
     .watch-table .last-checked::before {
@@ -969,6 +1109,10 @@ textarea::placeholder {
 - We dont use 'size' with <input> because `size` is too unreliable to override, and will often push-out
 - Rely always on width in CSS
 */
+/** Set max width for input field */
+.m-d {
+  min-width: 100%; }
+
 @media only screen and (min-width: 761px) {
   /* m-d is medium-desktop */
   .m-d {
@@ -1029,7 +1173,8 @@ body.full-width .edit-form {
 .edit-form {
   min-width: 70%;
   /* so it cant overflow */
-  max-width: 95%; }
+  max-width: 95%;
+  /* Make action buttons have consistent size and spacing */ }
   .edit-form .box-wrap {
     position: relative; }
   .edit-form .inner {
@@ -1038,6 +1183,10 @@ body.full-width .edit-form {
   .edit-form #actions {
     display: block;
     background: var(--color-background); }
+  .edit-form #actions .pure-control-group {
+    display: flex;
+    gap: 0.625em;
+    flex-wrap: wrap; }
   .edit-form .pure-form-message-inline {
     padding-left: 0;
     color: var(--color-text-input-description); }
@@ -1065,6 +1214,21 @@ ul {
   display: inline; }
   .time-check-widget tr input[type="number"] {
     width: 5em; }
+
+@media only screen and (max-width: 760px) {
+  .time-check-widget tbody {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr;
+    gap: 0.625em 0.3125em;
+    align-items: center; }
+  .time-check-widget tr {
+    display: contents; }
+    .time-check-widget tr th {
+      text-align: right;
+      padding-right: 5px; }
+    .time-check-widget tr input[type="number"] {
+      width: 100%;
+      max-width: 5em; } }
 
 #selector-wrapper {
   height: 100%;
@@ -1194,10 +1358,8 @@ ul {
   color: #fff;
   opacity: 0.7; }
 
-
 .restock-label svg {
   vertical-align: middle; }
-
 
 #chrome-extension-link {
   padding: 9px;

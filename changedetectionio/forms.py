@@ -1,5 +1,6 @@
 import os
 import re
+from loguru import logger
 
 from changedetectionio.strtobool import strtobool
 
@@ -221,7 +222,8 @@ class ValidateAppRiseServers(object):
     def __call__(self, form, field):
         import apprise
         apobj = apprise.Apprise()
-
+        # so that the custom endpoints are registered
+        from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
         for server_url in field.data:
             if not apobj.add(server_url):
                 message = field.gettext('\'%s\' is not a valid AppRise URL.' % (server_url))
@@ -468,19 +470,21 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
 
-    subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
+    subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_json=False)])
 
     extract_text = StringListField('Extract text', [ValidateListRegex()])
 
     title = StringField('Title', default='')
 
-    ignore_text = StringListField('Ignore text', [ValidateListRegex()])
+    ignore_text = StringListField('Ignore lines containing', [ValidateListRegex()])
     headers = StringDictKeyValue('Request headers')
     body = TextAreaField('Request body', [validators.Optional()])
     method = SelectField('Request method', choices=valid_method, default=default_method)
     ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
-    check_unique_lines = BooleanField('Only trigger when unique lines appear', default=False)
+    check_unique_lines = BooleanField('Only trigger when unique lines appear in all history', default=False)
+    remove_duplicate_lines = BooleanField('Remove duplicate lines of text', default=False)
     sort_text_alphabetically =  BooleanField('Sort text alphabetically', default=False)
+    trim_text_whitespace = BooleanField('Trim whitespace before and after text', default=False)
 
     filter_text_added = BooleanField('Added lines', default=True)
     filter_text_replaced = BooleanField('Replaced/changed lines', default=True)
@@ -492,7 +496,7 @@ class processor_text_json_diff_form(commonSettingsForm):
     text_should_not_be_present = StringListField('Block change-detection while text matches', [validators.Optional(), ValidateListRegex()])
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
 
-    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+    save_button = SubmitField('Save', render_kw={"class": "pure-button button-small pure-button-primary"})
 
     proxy = RadioField('Proxy')
     filter_failure_notification_send = BooleanField(
@@ -511,6 +515,7 @@ class processor_text_json_diff_form(commonSettingsForm):
         if not super().validate():
             return False
 
+        from changedetectionio.safe_jinja import render as jinja_render
         result = True
 
         # Fail form validation when a body is set for a GET
@@ -520,11 +525,46 @@ class processor_text_json_diff_form(commonSettingsForm):
 
         # Attempt to validate jinja2 templates in the URL
         try:
-            from changedetectionio.safe_jinja import render as jinja_render
             jinja_render(template_str=self.url.data)
-        except Exception as e:
-            self.url.errors.append('Invalid template syntax')
+        except ModuleNotFoundError as e:
+            # incase jinja2_time or others is missing
+            logger.error(e)
+            self.url.errors.append(f'Invalid template syntax configuration: {e}')
             result = False
+        except Exception as e:
+            logger.error(e)
+            self.url.errors.append(f'Invalid template syntax: {e}')
+            result = False
+
+        # Attempt to validate jinja2 templates in the body
+        if self.body.data and self.body.data.strip():
+            try:
+                jinja_render(template_str=self.body.data)
+            except ModuleNotFoundError as e:
+                # incase jinja2_time or others is missing
+                logger.error(e)
+                self.body.errors.append(f'Invalid template syntax configuration: {e}')
+                result = False
+            except Exception as e:
+                logger.error(e)
+                self.body.errors.append(f'Invalid template syntax: {e}')
+                result = False
+
+        # Attempt to validate jinja2 templates in the headers
+        if len(self.headers.data) > 0:
+            try:
+                for header, value in self.headers.data.items():
+                    jinja_render(template_str=value)
+            except ModuleNotFoundError as e:
+                # incase jinja2_time or others is missing
+                logger.error(e)
+                self.headers.errors.append(f'Invalid template syntax configuration: {e}')
+                result = False
+            except Exception as e:
+                logger.error(e)
+                self.headers.errors.append(f'Invalid template syntax in "{header}" header: {e}')
+                result = False
+
         return result
 
 class SingleExtraProxy(Form):
@@ -575,7 +615,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
     empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
     fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
-    global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_xpath=False, allow_json=False)])
+    global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_json=False)])
     ignore_whitespace = BooleanField('Ignore whitespace')
     password = SaltyPasswordField()
     pager_size = IntegerField('Pager size',
@@ -605,7 +645,7 @@ class globalSettingsForm(Form):
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
-    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+    save_button = SubmitField('Save', render_kw={"class": "pure-button button-small pure-button-primary"})
 
 
 class extractDataForm(Form):

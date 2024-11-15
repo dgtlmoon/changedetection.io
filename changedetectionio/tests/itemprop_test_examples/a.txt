@@ -1,0 +1,25 @@
+<div class="PriceSection PriceSection_PriceSection__Vx1_Q PriceSection_variantHuge__P9qxg PdpPriceSection"
+     data-testid="price-section"
+     data-optly-product-tile-price-section="true"><span
+        class="PriceRange ProductPrice variant-huge" itemprop="offers"
+        itemscope="" itemtype="http://schema.org/Offer"><div
+        class="VisuallyHidden_VisuallyHidden__VBD83">$155.55</div><span
+        aria-hidden="true" class="Price variant-huge" data-testid="price"
+        itemprop="price"><sup class="sup" data-testid="price-symbol"
+                              itemprop="priceCurrency" content="AUD">$</sup><span
+        class="dollars" data-testid="price-value" itemprop="price"
+        content="155.55">155.55</span><span class="extras"><span class="sup"
+                                                              data-testid="price-sup"></span></span></span></span>
+</div>
+
+<script type="application/ld+json">{
+                                "@type": "Product",
+                                "@context": "https://schema.org",
+                                "name": "test",
+                                "description": "test",
+                                "offers": {
+                                    "@type": "Offer",
+                                    "priceCurrency": "AUD",
+                                    "price": 155.55
+                                },
+                            }</script>

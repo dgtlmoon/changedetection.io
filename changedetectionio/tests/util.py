@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 from flask import make_response, request
 from flask import url_for
@@ -74,6 +74,18 @@ def set_more_modified_response():
         f.write(test_return_data)
 
     return None
+
+
+def wait_for_notification_endpoint_output():
+    '''Apprise can take a few seconds to fire'''
+    #@todo - could check the apprise object directly instead of looking for this file
+    from os.path import isfile
+    for i in range(1, 20):
+        time.sleep(1)
+        if isfile("test-datastore/notification.txt"):
+            return True
+
+    return False
 
 
 # kinda funky, but works for now

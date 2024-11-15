@@ -18,6 +18,7 @@ class watch_base(dict):
             'check_count': 0,
             'check_unique_lines': False,  # On change-detected, compare against all history if its something new
             'consecutive_filter_failures': 0,  # Every time the CSS/xPath filter cannot be located, reset when all is fine.
+            'content-type': None,
             'date_created': None,
             'extract_text': [],  # Extract text by regex after filters
             'extract_title_as_title': False,
@@ -60,6 +61,8 @@ class watch_base(dict):
             'time_between_check_use_default': True,
             'title': None,
             'track_ldjson_price_data': None,
+            'trim_text_whitespace': False,
+            'remove_duplicate_lines': False,
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'url': '',
             'uuid': str(uuid.uuid4()),

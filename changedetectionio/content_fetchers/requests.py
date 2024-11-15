@@ -1,9 +1,6 @@
+from loguru import logger
 import hashlib
 import os
-
-import chardet
-import requests
-
 from changedetectionio import strtobool
 from changedetectionio.content_fetchers.exceptions import BrowserStepsInUnsupportedFetcher, EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.base import Fetcher
@@ -26,7 +23,11 @@ class fetcher(Fetcher):
             request_method,
             ignore_status_codes=False,
             current_include_filters=None,
-            is_binary=False):
+            is_binary=False,
+            empty_pages_are_a_change=False):
+
+        import chardet
+        import requests
 
         if self.browser_steps_get_valid_steps():
             raise BrowserStepsInUnsupportedFetcher(url=url)
@@ -53,7 +54,7 @@ class fetcher(Fetcher):
             session.mount('file://', FileAdapter())
 
         r = session.request(method=request_method,
-                            data=request_body,
+                            data=request_body.encode('utf-8') if type(request_body) is str else request_body,
                             url=url,
                             headers=request_headers,
                             timeout=timeout,
@@ -74,7 +75,11 @@ class fetcher(Fetcher):
         self.headers = r.headers
 
         if not r.content or not len(r.content):
-            raise EmptyReply(url=url, status_code=r.status_code)
+            logger.debug(f"Requests returned empty content for '{url}'")
+            if not empty_pages_are_a_change:
+                raise EmptyReply(url=url, status_code=r.status_code)
+            else:
+                logger.debug(f"URL {url} gave zero byte content reply with Status Code {r.status_code}, but empty_pages_are_a_change = True")
 
         # @todo test this
         # @todo maybe you really want to test zero-byte return pages?

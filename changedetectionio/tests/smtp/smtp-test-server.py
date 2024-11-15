@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import asyncio
 from aiosmtpd.controller import Controller
 from aiosmtpd.smtp import SMTP

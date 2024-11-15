@@ -11,7 +11,22 @@ ul#requests-extra_browsers {
   /* each proxy entry is a `table` */
   table {
     tr {
-      display: inline;
+      display: table-row; // default display for small screens
+      input[type=text] {
+        width: 100%;
+      }
+    }
+  }
+  
+  // apply inline display for larger screens
+  @media only screen and (min-width: 1280px) {
+    table {
+      tr {
+        display: inline;
+        input[type=text] {
+          width: 100%;
+        }
+      }
     }
   }
 }

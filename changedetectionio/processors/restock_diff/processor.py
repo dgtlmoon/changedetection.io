@@ -2,8 +2,7 @@ from .. import difference_detection_processor
 from ..exceptions import ProcessorException
 from . import Restock
 from loguru import logger
-import hashlib
-import re
+
 import urllib3
 import time
 
@@ -27,6 +26,30 @@ def _search_prop_by_value(matches, value):
             if value in prop[0]:
                 return prop[1]  # Yield the desired value and exit the function
 
+def _deduplicate_prices(data):
+    import re
+
+    '''
+    Some price data has multiple entries, OR it has a single entry with ['$159', '159', 159, "$ 159"] or just "159"
+    Get all the values, clean it and add it to a set then return the unique values
+    '''
+    unique_data = set()
+
+    # Return the complete 'datum' where its price was not seen before
+    for datum in data:
+
+        if isinstance(datum.value, list):
+            # Process each item in the list
+            normalized_value = set([float(re.sub(r'[^\d.]', '', str(item))) for item in datum.value if str(item).strip()])
+            unique_data.update(normalized_value)
+        else:
+            # Process single value
+            v = float(re.sub(r'[^\d.]', '', str(datum.value)))
+            unique_data.add(v)
+
+    return list(unique_data)
+
+
 # should return Restock()
 # add casting?
 def get_itemprop_availability(html_content) -> Restock:
@@ -36,17 +59,21 @@ def get_itemprop_availability(html_content) -> Restock:
     """
     from jsonpath_ng import parse
 
+    import re
     now = time.time()
     import extruct
     logger.trace(f"Imported extruct module in {time.time() - now:.3f}s")
 
-    value = {}
     now = time.time()
+
     # Extruct is very slow, I'm wondering if some ML is going to be faster (800ms on my i7), 'rdfa' seems to be the heaviest.
-
     syntaxes = ['dublincore', 'json-ld', 'microdata', 'microformat', 'opengraph']
+    try:
+        data = extruct.extract(html_content, syntaxes=syntaxes)
+    except Exception as e:
+        logger.warning(f"Unable to extract data, document parsing with extruct failed with {type(e).__name__} - {str(e)}")
+        return Restock()
 
-    data = extruct.extract(html_content, syntaxes=syntaxes)
     logger.trace(f"Extruct basic extract of all metadata done in {time.time() - now:.3f}s")
 
     # First phase, dead simple scanning of anything that looks useful
@@ -57,18 +84,17 @@ def get_itemprop_availability(html_content) -> Restock:
         pricecurrency_parse = parse('$..(pricecurrency|currency|priceCurrency )')
         availability_parse = parse('$..(availability|Availability)')
 
-        price_result = price_parse.find(data)
+        price_result = _deduplicate_prices(price_parse.find(data))
         if price_result:
             # Right now, we just support single product items, maybe we will store the whole actual metadata seperately in teh future and
             # parse that for the UI?
-            prices_found = set(str(item.value).replace('$', '') for item in price_result)
-            if len(price_result) > 1 and len(prices_found) > 1:
+            if len(price_result) > 1 and len(price_result) > 1:
                 # See of all prices are different, in the case that one product has many embedded data types with the same price
                 # One might have $121.95 and another 121.95 etc
-                logger.warning(f"More than one price found {prices_found}, throwing exception, cant use this plugin.")
+                logger.warning(f"More than one price found {price_result}, throwing exception, cant use this plugin.")
                 raise MoreThanOnePriceFound()
 
-            value['price'] = price_result[0].value
+            value['price'] = price_result[0]
 
         pricecurrency_result = pricecurrency_parse.find(data)
         if pricecurrency_result:
@@ -118,7 +144,9 @@ class perform_site_check(difference_detection_processor):
     screenshot = None
     xpath_data = None
 
-    def run_changedetection(self, watch, skip_when_checksum_same=True):
+    def run_changedetection(self, watch):
+        import hashlib
+
         if not watch:
             raise Exception("Watch no longer exists.")
 
@@ -131,6 +159,20 @@ class perform_site_check(difference_detection_processor):
         # Track the content type
         update_obj['content_type'] = self.fetcher.headers.get('Content-Type', '')
         update_obj["last_check_status"] = self.fetcher.get_last_status_code()
+
+        # Only try to process restock information (like scraping for keywords) if the page was actually rendered correctly.
+        # Otherwise it will assume "in stock" because nothing suggesting the opposite was found
+        from ...html_tools import html_to_text
+        text = html_to_text(self.fetcher.content)
+        logger.debug(f"Length of text after conversion: {len(text)}")
+        if not len(text):
+            from ...content_fetchers.exceptions import ReplyWithContentButNoText
+            raise ReplyWithContentButNoText(url=watch.link,
+                                            status_code=self.fetcher.get_last_status_code(),
+                                            screenshot=self.fetcher.screenshot,
+                                            html_content=self.fetcher.content,
+                                            xpath_data=self.fetcher.xpath_data
+                                            )
 
         # Which restock settings to compare against?
         restock_settings = watch.get('restock_settings', {})
@@ -146,7 +188,7 @@ class perform_site_check(difference_detection_processor):
 
         itemprop_availability = {}
         try:
-            itemprop_availability = get_itemprop_availability(html_content=self.fetcher.content)
+            itemprop_availability = get_itemprop_availability(self.fetcher.content)
         except MoreThanOnePriceFound as e:
             # Add the real data
             raise ProcessorException(message="Cannot run, more than one price detected, this plugin is only for product pages with ONE product, try the content-change detection mode.",
@@ -182,7 +224,7 @@ class perform_site_check(difference_detection_processor):
             itemprop_availability['original_price'] = itemprop_availability.get('price')
             update_obj['restock']["original_price"] = itemprop_availability.get('price')
 
-        if not self.fetcher.instock_data and not itemprop_availability.get('availability'):
+        if not self.fetcher.instock_data and not itemprop_availability.get('availability') and not itemprop_availability.get('price'):
             raise ProcessorException(
                 message=f"Unable to extract restock data for this page unfortunately. (Got code {self.fetcher.get_last_status_code()} from server), no embedded stock information was found and nothing interesting in the text, try using this watch with Chrome.",
                 url=watch.get('url'),
@@ -191,12 +233,21 @@ class perform_site_check(difference_detection_processor):
                 xpath_data=self.fetcher.xpath_data
                 )
 
+        logger.debug(f"self.fetcher.instock_data is - '{self.fetcher.instock_data}' and itemprop_availability.get('availability') is {itemprop_availability.get('availability')}")
         # Nothing automatic in microdata found, revert to scraping the page
         if self.fetcher.instock_data and itemprop_availability.get('availability') is None:
             # 'Possibly in stock' comes from stock-not-in-stock.js when no string found above the fold.
             # Careful! this does not really come from chrome/js when the watch is set to plaintext
             update_obj['restock']["in_stock"] = True if self.fetcher.instock_data == 'Possibly in stock' else False
-            logger.debug(f"Watch UUID {watch.get('uuid')} restock check returned '{self.fetcher.instock_data}' from JS scraper.")
+            logger.debug(f"Watch UUID {watch.get('uuid')} restock check returned instock_data - '{self.fetcher.instock_data}' from JS scraper.")
+
+        # Very often websites will lie about the 'availability' in the metadata, so if the scraped version says its NOT in stock, use that.
+        if self.fetcher.instock_data and self.fetcher.instock_data != 'Possibly in stock':
+            if update_obj['restock'].get('in_stock'):
+                logger.warning(
+                    f"Lie detected in the availability machine data!! when scraping said its not in stock!! itemprop was '{itemprop_availability}' and scraped from browser was '{self.fetcher.instock_data}' update obj was {update_obj['restock']} ")
+                logger.warning(f"Setting instock to FALSE, scraper found '{self.fetcher.instock_data}' in the body but metadata reported not-in-stock")
+                update_obj['restock']["in_stock"] = False
 
         # What we store in the snapshot
         price = update_obj.get('restock').get('price') if update_obj.get('restock').get('price') else ""
@@ -260,4 +311,4 @@ class perform_site_check(difference_detection_processor):
         # Always record the new checksum
         update_obj["previous_md5"] = fetched_md5
 
-        return changed_detected, update_obj, snapshot_content.encode('utf-8').strip()
+        return changed_detected, update_obj, snapshot_content.strip()

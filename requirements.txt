@@ -35,7 +35,7 @@ dnspython==2.6.1 # related to eventlet fixes
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise~=1.8.0
+apprise==1.9.0
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 # and 2.0.0 https://github.com/dgtlmoon/changedetection.io/issues/2241 not yet compatible
@@ -59,7 +59,9 @@ elementpath==4.1.5
 
 selenium~=4.14.0
 
-werkzeug~=3.0
+# https://github.com/pallets/werkzeug/issues/2985
+# Maybe related to pytest?
+werkzeug==3.0.6
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1
@@ -79,8 +81,9 @@ pyppeteerstealth>=0.0.4
 pytest ~=7.2
 pytest-flask ~=1.2
 
-# Pin jsonschema version to prevent build errors on armv6 while rpds-py wheels aren't available (1708)
-jsonschema==4.17.3
+# Anything 4.0 and up but not 5.0
+jsonschema ~= 4.0
+
 
 loguru
 
@@ -92,3 +95,5 @@ babel
 
 # Needed for > 3.10, https://github.com/microsoft/playwright-python/issues/2096
 greenlet >= 3.0.3
+
+

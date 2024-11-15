@@ -1,0 +1,47 @@
+.minitabs-wrapper {
+  width: 100%;
+
+  > div[id] {
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-top: none;
+  }
+
+  .minitabs-content {
+    width: 100%;
+    display: flex;
+    > div {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: scroll;
+    }
+  }
+
+  .minitabs {
+    display: flex;
+    border-bottom: 1px solid #ccc;
+  }
+
+  .minitab {
+    flex: 1;
+    text-align: center;
+    padding: 12px 0;
+    text-decoration: none;
+    color: #333;
+    background-color: #f1f1f1;
+    border: 1px solid #ccc;
+    border-bottom: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .minitab:hover {
+    background-color: #ddd;
+  }
+
+  .minitab.active {
+    background-color: #fff;
+    font-weight: bold;
+  }
+
+}

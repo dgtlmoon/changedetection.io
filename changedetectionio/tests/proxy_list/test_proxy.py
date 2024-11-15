@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import time
 from flask import url_for
@@ -16,4 +16,4 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     )
 
     assert b"1 Imported" in res.data
-    time.sleep(3)
+    wait_for_all_checks(client)

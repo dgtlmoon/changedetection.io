@@ -61,10 +61,10 @@ def test_bad_access(client, live_server, measure_memory_usage):
     assert b'Watch protocol is not permitted by SAFE_PROTOCOL_REGEX' in res.data
 
 
-def test_file_access(client, live_server, measure_memory_usage):
+def test_file_slashslash_access(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
 
-    test_file_path = "/tmp/test-file.txt"
+    test_file_path = os.path.abspath(__file__)
 
     # file:// is permitted by default, but it will be caught by ALLOW_FILE_URI
     client.post(
@@ -82,8 +82,30 @@ def test_file_access(client, live_server, measure_memory_usage):
             follow_redirects=True
         )
 
-        # Should see something (this file added by run_basic_tests.sh)
-        assert b"Hello world" in res.data
+        assert b"test_file_slashslash_access" in res.data
+    else:
+        # Default should be here
+        assert b'file:// type access is denied for security reasons.' in res.data
+
+def test_file_slash_access(client, live_server, measure_memory_usage):
+    #live_server_setup(live_server)
+
+    test_file_path = os.path.abspath(__file__)
+
+    # file:// is permitted by default, but it will be caught by ALLOW_FILE_URI
+    client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": f"file:/{test_file_path}", "tags": ''},
+        follow_redirects=True
+    )
+    wait_for_all_checks(client)
+    res = client.get(url_for("index"))
+
+    # If it is enabled at test time
+    if strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
+        # So it should permit it, but it should fall back to the 'requests' library giving an error
+        # (but means it gets passed to playwright etc)
+        assert b"URLs with hostname components are not permitted" in res.data
     else:
         # Default should be here
         assert b'file:// type access is denied for security reasons.' in res.data

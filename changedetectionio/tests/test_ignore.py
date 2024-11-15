@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import time
 from flask import url_for
@@ -23,7 +23,7 @@ def set_original_ignore_response():
         f.write(test_return_data)
 
 
-def test_highlight_ignore(client, live_server, measure_memory_usage):
+def test_ignore(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
     set_original_ignore_response()
     test_url = url_for('test_endpoint', _external=True)
@@ -51,9 +51,9 @@ def test_highlight_ignore(client, live_server, measure_memory_usage):
     # Should return a link
     assert b'href' in res.data
 
-    # And it should register in the preview page
+    # It should not be in the preview anymore
     res = client.get(url_for("preview_page", uuid=uuid))
-    assert b'<div class="ignored">oh yeah 456' in res.data
+    assert b'<div class="ignored">oh yeah 456' not in res.data
 
     # Should be in base.html
     assert b'csrftoken' in res.data

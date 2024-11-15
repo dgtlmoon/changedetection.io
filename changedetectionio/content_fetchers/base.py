@@ -65,8 +65,8 @@ class Fetcher():
 
     def __init__(self):
         import importlib.resources
-        self.xpath_element_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text()
-        self.instock_data_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('stock-not-in-stock.js').read_text()
+        self.xpath_element_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text(encoding='utf-8')
+        self.instock_data_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('stock-not-in-stock.js').read_text(encoding='utf-8')
 
     @abstractmethod
     def get_error(self):
@@ -81,7 +81,8 @@ class Fetcher():
             request_method,
             ignore_status_codes=False,
             current_include_filters=None,
-            is_binary=False):
+            is_binary=False,
+            empty_pages_are_a_change=False):
         # Should set self.error, self.status_code and self.content
         pass
 

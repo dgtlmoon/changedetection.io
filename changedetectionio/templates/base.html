@@ -33,9 +33,11 @@
     <script src="{{url_for('static_content', group='js', filename='csrf.js')}}" defer></script>
   </head>
 
-  <body>
+  <body class="">
     <div class="header">
-      <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed" id="nav-menu">
+    <div class="pure-menu-fixed" style="width: 100%;">
+      <div class="home-menu pure-menu pure-menu-horizontal" id="nav-menu">
+
         {% if has_password and not current_user.is_authenticated %}
           <a class="pure-menu-heading" href="https://changedetection.io" rel="noopener">
             <strong>Change</strong>Detection.io</a>
@@ -68,7 +70,7 @@
                 <a href="{{ url_for('import_page')}}" class="pure-menu-link">IMPORT</a>
               </li>
               <li class="pure-menu-item">
-                <a href="{{ url_for('get_backup')}}" class="pure-menu-link">BACKUP</a>
+                <a href="{{ url_for('backups.index')}}" class="pure-menu-link">BACKUPS</a>
               </li>
             {% else %}
               <li class="pure-menu-item">
@@ -129,7 +131,12 @@
           </li>
         </ul>
       </div>
+      <div id="pure-menu-horizontal-spinner"></div>
+      </div>
+
     </div>
+
+
     {% if hosted_sticky %}
       <div class="sticky-tab" id="hosted-sticky">
         <a href="https://changedetection.io/?ref={{guid}}">Let us host your instance!</a>

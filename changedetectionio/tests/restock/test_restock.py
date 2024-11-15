@@ -1,8 +1,8 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import os
 import time
 from flask import url_for
-from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
+from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_client, wait_for_notification_endpoint_output
 from changedetectionio.notification import (
     default_notification_body,
     default_notification_format,
@@ -94,7 +94,7 @@ def test_restock_detection(client, live_server, measure_memory_usage):
     assert b'not-in-stock' not in res.data
 
     # We should have a notification
-    time.sleep(2)
+    wait_for_notification_endpoint_output()
     assert os.path.isfile("test-datastore/notification.txt"), "Notification received"
     os.unlink("test-datastore/notification.txt")
 
@@ -103,6 +103,7 @@ def test_restock_detection(client, live_server, measure_memory_usage):
     set_original_response()
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
+    time.sleep(5)
     assert not os.path.isfile("test-datastore/notification.txt"), "No notification should have fired when it went OUT OF STOCK by default"
 
     # BUT we should see that it correctly shows "not in stock"

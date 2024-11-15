@@ -1,0 +1,55 @@
+@import "minitabs";
+
+body.preview-text-enabled {
+
+  @media (min-width: 800px) {
+    #filters-and-triggers > div {
+      display: flex; /* Establishes Flexbox layout */
+      gap: 20px; /* Adds space between the columns */
+      position: relative; /* Ensures the sticky positioning is relative to this parent */
+    }
+  }
+
+  /* layout of the page */
+  #edit-text-filter, #text-preview {
+    flex: 1; /* Each column takes an equal amount of available space */
+    align-self: flex-start; /* Aligns the right column to the start, allowing it to maintain its content height */
+  }
+
+  #edit-text-filter {
+    #pro-tips {
+      display: none;
+    }
+  }
+
+  #text-preview {
+    position: sticky;
+    top: 20px;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    display: block !important;
+  }
+
+  #activate-text-preview {
+      background-color: var(--color-grey-500);
+  }
+
+  /* actual preview area */
+  .monospace-preview {
+    background: var(--color-background-input);
+    border: 1px solid var(--color-grey-600);
+    padding: 1rem;
+    color: var(--color-text-input);
+    font-family: "Courier New", Courier, monospace; /* Sets the font to a monospace type */
+    font-size: 70%;
+    word-break: break-word;
+    white-space: pre-wrap; /* Preserves whitespace and line breaks like <pre> */
+  }
+}
+
+#activate-text-preview {
+  right: 0;
+  position: absolute;
+  z-index: 3;
+  box-shadow: 1px 1px 4px var(--color-shadow-jump);
+}

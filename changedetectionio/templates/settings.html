@@ -76,7 +76,7 @@
                     </div>
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.application.form.empty_pages_are_a_change) }}
-                        <span class="pure-form-message-inline">When a page contains HTML, but no renderable text appears (empty page), is this considered a change?</span>
+                        <span class="pure-form-message-inline">When a request returns no content, or the HTML does not contain any text, is this considered a change?</span>
                     </div>
                 {% if form.requests.proxy %}
                     <div class="pure-control-group inline-radio">
@@ -155,11 +155,13 @@
                       {{ render_field(form.application.form.global_subtractive_selectors, rows=5, placeholder="header
 footer
 nav
-.stockticker") }}
+.stockticker
+//*[contains(text(), 'Advertisement')]") }}
                       <span class="pure-form-message-inline">
                         <ul>
-                          <li> Remove HTML element(s) by CSS selector before text conversion. </li>
-                          <li> Add multiple elements or CSS selectors per line to ignore multiple parts of the HTML. </li>
+                          <li> Remove HTML element(s) by CSS and XPath selectors before text conversion. </li>
+                          <li> Don't paste HTML here, use only CSS and XPath selectors </li>
+                          <li> Add multiple elements, CSS or XPath selectors per line to ignore multiple parts of the HTML. </li>
                         </ul>
                       </span>
                     </fieldset>
@@ -170,11 +172,11 @@ nav
                     <span class="pure-form-message-inline">Note: This is applied globally in addition to the per-watch rules.</span><br>
                     <span class="pure-form-message-inline">
                         <ul>
+                            <li>Matching text will be <strong>ignored</strong> in the text snapshot (you can still see it but it wont trigger a change)</li>
                             <li>Note: This is applied globally in addition to the per-watch rules.</li>
                             <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
                             <li>Regular Expression support, wrap the entire line in forward slash <code>/regex/</code></li>
                             <li>Changing this will affect the comparison checksum which may trigger an alert</li>
-                            <li>Use the preview/show current tab to see ignores</li>
                         </ul>
                      </span>
                     </fieldset>
@@ -274,7 +276,7 @@ nav
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
                     <a href="{{url_for('index')}}" class="pure-button button-small button-cancel">Back</a>
-                    <a href="{{url_for('clear_all_history')}}" class="pure-button button-small button-cancel">Clear Snapshot History</a>
+                    <a href="{{url_for('clear_all_history')}}" class="pure-button button-small button-error">Clear Snapshot History</a>
                 </div>
             </div>
         </form>

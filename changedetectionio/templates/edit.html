@@ -4,6 +4,7 @@
 {% from '_common_fields.html' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <script>
     const browser_steps_available_screenshots=JSON.parse('{{ watch.get_browsersteps_available_screenshots|tojson }}');
     const browser_steps_config=JSON.parse('{{ browser_steps_config|tojson }}');
@@ -23,9 +24,8 @@
     const watch_visual_selector_data_url="{{url_for('static_content', group='visual_selector_data', filename=uuid)}}";
     const default_system_fetch_backend="{{ settings_application['fetch_backend'] }}";
 </script>
-
+<script src="{{url_for('static_content', group='js', filename='plugins.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
-<script src="{{url_for('static_content', group='js', filename='limit.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='visual-selector.js')}}" defer></script>
 {% if playwright_enabled %}
@@ -49,7 +49,7 @@
             {% endif %}
             {% if watch['processor'] == 'text_json_diff' %}
             <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
-            <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
+            <li class="tab" id="filters-and-triggers-tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
             {% endif %}
             <li class="tab"><a href="#notifications">Notifications</a></li>
             <li class="tab"><a href="#stats">Stats</a></li>
@@ -65,8 +65,8 @@
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.url, placeholder="https://...", required=true, class="m-d") }}
-                        <span class="pure-form-message-inline">Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a></span><br>
-                        <span class="pure-form-message-inline">You can use variables in the URL, perfect for inserting the current date and other logic, <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a></span><br>
+                        <div class="pure-form-message">Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a></div>
+                        <div class="pure-form-message">Variables are supported in the URL (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a>).</div>
                     </div>
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.processor) }}
@@ -149,21 +149,24 @@
                             {{ render_field(form.method) }}
                         </div>
                         <div id="request-body">
-                                            {{ render_field(form.body, rows=5, placeholder="Example
+                                            {{ render_field(form.body, rows=7, placeholder="Example
 {
    \"name\":\"John\",
    \"age\":30,
-   \"car\":null
+   \"car\":null,
+   \"year\":{% now 'Europe/Berlin', '%Y' %}
 }") }}
                         </div>
+                        <div class="pure-form-message">Variables are supported in the request body (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a>).</div>
                     </div>
                 </fieldset>
             <!-- hmm -->
                 <div class="pure-control-group advanced-options"  style="display: none;">
-                    {{ render_field(form.headers, rows=5, placeholder="Example
+                    {{ render_field(form.headers, rows=7, placeholder="Example
 Cookie: foobar
-User-Agent: wonderbra 1.0") }}
-
+User-Agent: wonderbra 1.0
+Math: {{ 1 + 1 }}") }}
+                        <div class="pure-form-message">Variables are supported in the request header values (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a>).</div>
                         <div class="pure-form-message-inline">
                             {% if has_extra_headers_file %}
                                 <strong>Alert! Extra headers file found and will be added to this watch!</strong>
@@ -199,7 +202,7 @@ User-Agent: wonderbra 1.0") }}
                         <div id="loading-status-text" style="display: none;">Please wait, first browser step can take a little time to load..<div class="spinner"></div></div>
                         <div class="flex-wrapper" >
 
-                            <div id="browser-steps-ui" class="noselect"  style="width: 100%; background-color: #eee; border-radius: 5px;">
+                            <div id="browser-steps-ui" class="noselect">
 
                                 <div class="noselect"  id="browsersteps-selector-wrapper" style="width: 100%">
                                     <span class="loader" >
@@ -214,7 +217,7 @@ User-Agent: wonderbra 1.0") }}
                                     <canvas  class="noselect" id="browsersteps-selector-canvas" style="max-width: 100%; width: 100%;"></canvas>
                                 </div>
                             </div>
-                            <div id="browser-steps-fieldlist" style="padding-left: 1em;  width: 350px; font-size: 80%;" >
+                            <div id="browser-steps-fieldlist" >
                                 <span id="browser-seconds-remaining">Loading</span> <span style="font-size: 80%;"> (<a target=_new href="https://github.com/dgtlmoon/changedetection.io/pull/478/files#diff-1a79d924d1840c485238e66772391268a89c95b781d69091384cf1ea1ac146c9R4">?</a>) </span>
                                 {{ render_field(form.browser_steps) }}
                             </div>
@@ -253,7 +256,10 @@ User-Agent: wonderbra 1.0") }}
 
             {% if watch['processor'] == 'text_json_diff' %}
             <div class="tab-pane-inner" id="filters-and-triggers">
-                    <div class="pure-control-group">
+                <span id="activate-text-preview" class="pure-button pure-button-primary button-xsmall">Activate preview</span>
+              <div>
+              <div id="edit-text-filter">
+                    <div class="pure-control-group" id="pro-tips">
                             <strong>Pro-tips:</strong><br>
                             <ul>
                                 <li>
@@ -275,9 +281,9 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                         {% if '/text()' in  field %}
                           <span class="pure-form-message-inline"><strong>Note!: //text() function does not work where the &lt;element&gt; contains &lt;![CDATA[]]&gt;</strong></span><br>
                         {% endif %}
-                        <span class="pure-form-message-inline">One rule per line, <i>any</i> rules that matches will be used.<br>
-
-                    <ul>
+                        <span class="pure-form-message-inline">One CSS, xPath, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used.<br>
+<p><div data-target="#advanced-help-selectors" class="toggle-show pure-button button-tag button-xsmall">Show advanced help and tips</div><br></p>
+                    <ul id="advanced-help-selectors" style="display: none;">
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
                         <li>JSON - Limit text to this JSON rule, using either <a href="https://pypi.org/project/jsonpath-ng/" target="new">JSONPath</a> or <a href="https://stedolan.github.io/jq/" target="new">jq</a> (if installed).
                             <ul>
@@ -297,21 +303,25 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                                 <li>To use XPath1.0: Prefix with <code>xpath1:</code></li>
                             </ul>
                             </li>
-                    </ul>
-                    Please be sure that you thoroughly understand how to write CSS, JSONPath, XPath{% if jq_support %}, or jq selector{%endif%} rules before filing an issue on GitHub! <a
+                    <li>
+                        Please be sure that you thoroughly understand how to write CSS, JSONPath, XPath{% if jq_support %}, or jq selector{%endif%} rules before filing an issue on GitHub! <a
                                 href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br>
+                    </li>
+                    </ul>
+
                 </span>
                     </div>
                 <fieldset class="pure-control-group">
                     {{ render_field(form.subtractive_selectors, rows=5, placeholder=has_tag_filters_extra+"header
 footer
 nav
-.stockticker") }}
+.stockticker
+//*[contains(text(), 'Advertisement')]") }}
                     <span class="pure-form-message-inline">
                         <ul>
-                          <li> Remove HTML element(s) by CSS selector before text conversion. </li>
-                          <li> Don't paste HTML here, use only CSS selectors </li>
-                          <li> Add multiple elements or CSS selectors per line to ignore multiple parts of the HTML. </li>
+                          <li> Remove HTML element(s) by CSS and XPath selectors before text conversion. </li>
+                          <li> Don't paste HTML here, use only CSS and XPath selectors </li>
+                          <li> Add multiple elements, CSS or XPath selectors per line to ignore multiple parts of the HTML. </li>
                         </ul>
                       </span>
                 </fieldset>
@@ -322,18 +332,25 @@ nav
                         {{ render_checkbox_field(form.filter_text_added) }}
                         {{ render_checkbox_field(form.filter_text_replaced) }}
                         {{ render_checkbox_field(form.filter_text_removed) }}
-                    <span class="pure-form-message-inline">Note: Depending on the length and similarity of the text on each line, the algorithm may consider an <strong>addition</strong> instead of <strong>replacement</strong> for example.</span>
-                    <span class="pure-form-message-inline">So it's always better to select <strong>Added</strong>+<strong>Replaced</strong> when you're interested in new content.</span><br>
-                    <span class="pure-form-message-inline">When content is merely moved in a list, it will also trigger an <strong>addition</strong>, consider enabling <code><strong>Only trigger when unique lines appear</strong></code></span>
+                    <span class="pure-form-message-inline">Note: Depending on the length and similarity of the text on each line, the algorithm may consider an <strong>addition</strong> instead of <strong>replacement</strong> for example.</span><br>
+                    <span class="pure-form-message-inline">&nbsp;So it's always better to select <strong>Added</strong>+<strong>Replaced</strong> when you're interested in new content.</span><br>
+                    <span class="pure-form-message-inline">&nbsp;When content is merely moved in a list, it will also trigger an <strong>addition</strong>, consider enabling <code><strong>Only trigger when unique lines appear</strong></code></span>
                 </fieldset>
-
+                <fieldset class="pure-control-group">
+                    {{ render_checkbox_field(form.check_unique_lines) }}
+                    <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
+                </fieldset>
+                <fieldset class="pure-control-group">
+                    {{ render_checkbox_field(form.remove_duplicate_lines) }}
+                    <span class="pure-form-message-inline">Remove duplicate lines of text</span>
+                </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.sort_text_alphabetically) }}
                     <span class="pure-form-message-inline">Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below.</span>
                 </fieldset>
                 <fieldset class="pure-control-group">
-                    {{ render_checkbox_field(form.check_unique_lines) }}
-                    <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
+                    {{ render_checkbox_field(form.trim_text_whitespace) }}
+                    <span class="pure-form-message-inline">Remove any whitespace before and after each line of text</span>
                 </fieldset>
                 <fieldset>
                     <div class="pure-control-group">
@@ -356,10 +373,10 @@ nav
 ") }}
                     <span class="pure-form-message-inline">
                         <ul>
+                            <li>Matching text will be <strong>ignored</strong> in the text snapshot (you can still see it but it wont trigger a change)</li>
                             <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
                             <li>Regular Expression support, wrap the entire line in forward slash <code>/regex/</code></li>
                             <li>Changing this will affect the comparison checksum which may trigger an alert</li>
-                            <li>Use the preview/show current tab to see ignores</li>
                         </ul>
                 </span>
 
@@ -383,7 +400,9 @@ Unavailable") }}
                 </fieldset>
                 <fieldset>
                     <div class="pure-control-group">
-                        {{ render_field(form.extract_text, rows=5, placeholder="\d+ online") }}
+                        {{ render_field(form.extract_text, rows=5, placeholder="/.+?\d+ comments.+?/
+ or
+keyword") }}
                         <span class="pure-form-message-inline">
                     <ul>
                         <li>Extracts text in the final output (line by line) after other filters using regular expressions or string match;
@@ -403,7 +422,27 @@ Unavailable") }}
                 </fieldset>
                 </div>
             </div>
-            {% endif %}
+              <div id="text-preview" style="display: none;" >
+                    <script>
+                        const preview_text_edit_filters_url="{{url_for('watch_get_preview_rendered', uuid=uuid)}}";
+                    </script>
+                    <br>
+                    {#<div id="text-preview-controls"><span id="text-preview-refresh" class="pure-button button-xsmall">Refresh</span></div>#}
+                    <div class="minitabs-wrapper">
+                      <div class="minitabs-content">
+                          <div id="text-preview-inner" class="monospace-preview">
+                              <p>Loading...</p>
+                          </div>
+                          <div id="text-preview-before-inner" style="display: none;" class="monospace-preview">
+                              <p>Loading...</p>
+                          </div>
+                      </div>
+                    </div>
+            </div>
+          </div>
+        </div>
+
+        {% endif %}
         {# rendered sub Template #}
         {% if extra_form_content %}
             <div class="tab-pane-inner" id="extras_tab">

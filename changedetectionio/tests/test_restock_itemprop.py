@@ -1,9 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import os
 import time
 
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
+from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output, extract_UUID_from_client
 from ..notification import default_notification_format
 
 instock_props = [
@@ -146,14 +146,13 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
         data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
-
-    # A change in price, should trigger a change by default
     wait_for_all_checks(client)
 
     data = {
         "tags": "",
         "url": test_url,
         "headers": "",
+        "time_between_check-hours": 5,
         'fetch_backend': "html_requests"
     }
     data.update(extra_watch_edit_form)
@@ -178,11 +177,9 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     assert b'1,000.45' or b'1000.45' in res.data #depending on locale
     assert b'unviewed' not in res.data
 
-
     # price changed to something LESS than min (900), SHOULD be a change
     set_original_response(props_markup=instock_props[0], price='890.45')
-    # let previous runs wait
-    time.sleep(1)
+
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
     assert b'1 watches queued for rechecking.' in res.data
     wait_for_all_checks(client)
@@ -197,7 +194,8 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
-    assert b'1,890.45' or b'1890.45' in res.data
+    # Depending on the LOCALE it may be either of these (generally for US/default/etc)
+    assert b'1,890.45' in res.data or b'1890.45' in res.data
     assert b'unviewed' in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
@@ -362,13 +360,19 @@ def test_change_with_notification_values(client, live_server):
     set_original_response(props_markup=instock_props[0], price='1950.45')
     client.get(url_for("form_watch_checknow"))
     wait_for_all_checks(client)
-    time.sleep(3)
+    wait_for_notification_endpoint_output()
     assert os.path.isfile("test-datastore/notification.txt"), "Notification received"
     with open("test-datastore/notification.txt", 'r') as f:
         notification = f.read()
         assert "new price 1950.45" in notification
         assert "title new price 1950.45" in notification
 
+    ## Now test the "SEND TEST NOTIFICATION" is working
+    os.unlink("test-datastore/notification.txt")
+    uuid = extract_UUID_from_client(client)
+    res = client.post(url_for("ajax_callback_send_notification_test", watch_uuid=uuid), data={}, follow_redirects=True)
+    time.sleep(5)
+    assert os.path.isfile("test-datastore/notification.txt"), "Notification received"
 
 
 def test_data_sanity(client, live_server):
@@ -415,3 +419,31 @@ def test_data_sanity(client, live_server):
     res = client.get(
         url_for("edit_page", uuid="first"))
     assert test_url2.encode('utf-8') in res.data
+
+    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+
+# All examples should give a prive of 666.66
+def test_special_prop_examples(client, live_server):
+    import glob
+    #live_server_setup(live_server)
+
+    test_url = url_for('test_endpoint', _external=True)
+    check_path = os.path.join(os.path.dirname(__file__), "itemprop_test_examples", "*.txt")
+    files = glob.glob(check_path)
+    assert files
+    for test_example_filename in files:
+        with open(test_example_filename, 'r') as example_f:
+            with open("test-datastore/endpoint-content.txt", "w") as test_f:
+                test_f.write(f"<html><body>{example_f.read()}</body></html>")
+
+            # Now fetch it and check the price worked
+            client.post(
+                url_for("form_quick_watch_add"),
+                data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
+                follow_redirects=True
+            )
+            wait_for_all_checks(client)
+            res = client.get(url_for("index"))
+            assert b'ception' not in res.data
+            assert b'155.55' in res.data
