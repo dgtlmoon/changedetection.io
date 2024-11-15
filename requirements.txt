@@ -38,9 +38,8 @@ dnspython==2.6.1 # related to eventlet fixes
 apprise==1.9.0
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
-# and 2.0.0 https://github.com/dgtlmoon/changedetection.io/issues/2241 not yet compatible
-# use v1.x due to https://github.com/eclipse/paho.mqtt.python/issues/814
-paho-mqtt>=1.6.1,<2.0.0
+# use any version other than 2.0.x due to https://github.com/eclipse/paho.mqtt.python/issues/814
+paho-mqtt!=2.0.*
 
 # Requires extra wheel for rPi
 cryptography~=42.0.8
