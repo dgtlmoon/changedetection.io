@@ -1,18 +1,31 @@
-.git
-.github
-changedetectionio/processors/__pycache__
-changedetectionio/api/__pycache__
-changedetectionio/model/__pycache__
-changedetectionio/blueprint/price_data_follower/__pycache__
-changedetectionio/blueprint/tags/__pycache__
-changedetectionio/blueprint/__pycache__
-changedetectionio/blueprint/browser_steps/__pycache__
-changedetectionio/fetchers/__pycache__
-changedetectionio/tests/visualselector/__pycache__
-changedetectionio/tests/restock/__pycache__
-changedetectionio/tests/__pycache__
-changedetectionio/tests/fetchers/__pycache__
-changedetectionio/tests/unit/__pycache__
-changedetectionio/tests/proxy_list/__pycache__
-changedetectionio/__pycache__
+# Git
+.git/
+.gitignore
 
+# GitHub
+.github/
+
+# Byte-compiled / optimized / DLL files
+**/__pycache__
+**/*.py[cod]
+
+# Caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info*
+
+# Virtual environment
+.env
+.venv/
+venv/
+
+# IntelliJ IDEA
+.idea/
+
+# Visual Studio
+.vscode/
