@@ -920,6 +920,7 @@ class ChangeDetectionStore:
             if os.path.exists(json_path):
                 with open(json_path, "rb") as f_j:
                     with open(deflate_path, "wb") as f_d:
+                        logger.debug(f"Compressing {str(json_path)} to {str(deflate_path)}..")
                         f_d.write(zlib.compress(f_j.read()))
                         os.unlink(json_path)
 
