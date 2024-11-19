@@ -12,6 +12,7 @@ RUN \
     cargo \
     g++ \
     gcc \
+    git \
     jpeg-dev \
     libc-dev \
     libffi-dev \
