@@ -132,6 +132,7 @@ $(document).ready(() => {
         }).done((data) => {
             $fetchingUpdateNoticeElem.html("Rendering..");
             selectorData = data;
+
             sortScrapedElementsBySize();
             console.log(`Reported browser width from backend: ${data['browser_width']}`);
 

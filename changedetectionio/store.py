@@ -374,7 +374,7 @@ class ChangeDetectionStore:
     def visualselector_data_is_ready(self, watch_uuid):
         output_path = "{}/{}".format(self.datastore_path, watch_uuid)
         screenshot_filename = "{}/last-screenshot.png".format(output_path)
-        elements_index_filename = "{}/elements.json".format(output_path)
+        elements_index_filename = "{}/elements.deflate".format(output_path)
         if path.isfile(screenshot_filename) and  path.isfile(elements_index_filename) :
             return True
 
@@ -908,4 +908,18 @@ class ChangeDetectionStore:
 
             if self.data['watching'][uuid].get('in_stock_only'):
                 del (self.data['watching'][uuid]['in_stock_only'])
+
+    # Compress old elements.json to elements.deflate, saving disk, this compression is pretty fast.
+    def update_19(self):
+        import zlib
+
+        for uuid, watch in self.data['watching'].items():
+            json_path = os.path.join(self.datastore_path, uuid, "elements.json")
+            deflate_path = os.path.join(self.datastore_path, uuid, "elements.deflate")
+
+            if os.path.exists(json_path):
+                with open(json_path, "rb") as f_j:
+                    with open(deflate_path, "wb") as f_d:
+                        f_d.write(zlib.compress(f_j.read()))
+                        os.unlink(json_path)
 
