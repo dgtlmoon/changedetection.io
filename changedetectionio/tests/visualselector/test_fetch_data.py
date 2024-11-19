@@ -59,8 +59,10 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     # Open it and see if it roughly looks correct
     with open(os.path.join('test-datastore', uuid, 'elements.deflate'), 'rb') as f:
         import zlib
-        decompressed_data = zlib.decompress(f.read())
-        json.load(decompressed_data)
+        compressed_data = f.read()
+        decompressed_data = zlib.decompress(compressed_data)
+        # See if any error was thrown
+        json_data = json.loads(decompressed_data.decode('utf-8'))
 
     # Attempt to fetch it via the web hook that the browser would use
     res = client.get(url_for('static_content', group='visual_selector_data', filename=uuid))
