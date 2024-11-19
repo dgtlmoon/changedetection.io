@@ -4,21 +4,17 @@ import time
 from threading import Thread
 
 import pytest
-from changedetectionio import changedetection_app
+from changedetectionio.flask_app import changedetection_app
 from changedetectionio import store
 import os
 import sys
 from loguru import logger
 
+
 # https://github.com/pallets/flask/blob/1.1.2/examples/tutorial/tests/test_auth.py
 # Much better boilerplate than the docs
 # https://www.python-boilerplate.com/py3+flask+pytest/
 
-global app
-
-# https://loguru.readthedocs.io/en/latest/resources/migration.html#replacing-caplog-fixture-from-pytest-library
-# Show loguru logs only if CICD pytest fails.
-from loguru import logger
 @pytest.fixture
 def reportlog(pytestconfig):
     logging_plugin = pytestconfig.pluginmanager.getplugin("logging-plugin")
