@@ -84,7 +84,7 @@ csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log=[]
 
-# get locale ready
+# Locale for correct presentation of prices etc
 default_locale = locale.getdefaultlocale()
 logger.info(f"System locale default is {default_locale}")
 try:
@@ -158,6 +158,21 @@ def _jinja2_filter_pagination_slice(arr, skip):
         return arr[skip:skip + per_page]
 
     return arr
+
+def app_get_system_time():
+    from zoneinfo import ZoneInfo  # Built-in timezone support in Python 3.9+
+
+    system_timezone = datastore.data['settings']['application'].get('timezone')
+    if not system_timezone:
+        system_timezone = os.environ.get("TZ")
+
+    try:
+        system_zone = ZoneInfo(system_timezone)
+    except Exception as e:
+        logger.warning(f'Warning, unable to use timezone "{system_timezone}" defaulting to UTC- {str(e)}')
+        system_zone = ZoneInfo("UTC")  # Fallback to UTC if the timezone is invalid
+
+    return system_zone
 
 @app.template_filter('format_seconds_ago')
 def _jinja2_filter_seconds_precise(timestamp):
@@ -242,6 +257,9 @@ def changedetection_app(config=None, datastore_o=None):
     # so far just for read-only via tests, but this will be moved eventually to be the main source
     # (instead of the global var)
     app.config['DATASTORE'] = datastore_o
+
+    # Just to check (it will output some debug if not)
+    app_get_system_time()
 
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
@@ -882,6 +900,7 @@ def changedetection_app(config=None, datastore_o=None):
     @login_optionally_required
     def settings_page():
         from changedetectionio import forms
+        from datetime import datetime
 
         default = deepcopy(datastore.data['settings'])
         if datastore.proxy_list is not None:
@@ -949,6 +968,13 @@ def changedetection_app(config=None, datastore_o=None):
             else:
                 flash("An error occurred, please see below.", "error")
 
+
+        system_timezone = app_get_system_time()
+        system_time = datetime.now(system_timezone)
+
+        # Fallback for locale formatting
+        formatted_system_time = system_time.strftime("%Y-%m-%d %H:%M:%S %Z%z")  # Locale-aware time
+
         output = render_template("settings.html",
                                  api_key=datastore.data['settings']['application'].get('api_access_token'),
                                  emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
@@ -956,7 +982,9 @@ def changedetection_app(config=None, datastore_o=None):
                                  form=form,
                                  hide_remove_pass=os.getenv("SALTED_PASS", False),
                                  min_system_recheck_seconds=int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3)),
-                                 settings_application=datastore.data['settings']['application']
+                                 settings_application=datastore.data['settings']['application'],
+                                 system_time=formatted_system_time,
+                                 timezone_name=system_timezone
                                  )
 
         return output
@@ -1709,7 +1737,6 @@ def notification_runner():
 def ticker_thread_check_time_launch_checks():
     import random
     from changedetectionio import update_worker
-
     proxy_last_called_time = {}
 
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
