@@ -1297,12 +1297,23 @@ def changedetection_app(config=None, datastore_o=None):
 
             # These files should be in our subdirectory
             try:
-                # set nocache, set content-type
-                response = make_response(send_from_directory(os.path.join(datastore_o.datastore_path, filename), "elements.json"))
-                response.headers['Content-type'] = 'application/json'
-                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-                response.headers['Pragma'] = 'no-cache'
-                response.headers['Expires'] = 0
+                # set nocache, set content-type,
+                # `filename` is actually directory UUID of the watch
+                watch_directory = str(os.path.join(datastore_o.datastore_path, filename))
+                response = None
+                if os.path.isfile(os.path.join(watch_directory, "elements.deflate")):
+                    response = make_response(send_from_directory(watch_directory, "elements.deflate"))
+                    response.headers['Content-Type'] = 'application/json'
+                    response.headers['Content-Encoding'] = 'deflate'
+                else:
+                    logger.error(f'Request elements.deflate at "{watch_directory}" but was notfound.')
+                    abort(404)
+
+                if response:
+                    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                    response.headers['Pragma'] = 'no-cache'
+                    response.headers['Expires'] = "0"
+
                 return response
 
             except FileNotFoundError:

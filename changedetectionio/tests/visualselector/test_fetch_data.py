@@ -54,15 +54,21 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
 
 
     assert os.path.isfile(os.path.join('test-datastore', uuid, 'last-screenshot.png')), "last-screenshot.png should exist"
-    assert os.path.isfile(os.path.join('test-datastore', uuid, 'elements.json')), "xpath elements.json data should exist"
+    assert os.path.isfile(os.path.join('test-datastore', uuid, 'elements.deflate')), "xpath elements.deflate data should exist"
 
     # Open it and see if it roughly looks correct
-    with open(os.path.join('test-datastore', uuid, 'elements.json'), 'r') as f:
-        json.load(f)
+    with open(os.path.join('test-datastore', uuid, 'elements.deflate'), 'rb') as f:
+        import zlib
+        compressed_data = f.read()
+        decompressed_data = zlib.decompress(compressed_data)
+        # See if any error was thrown
+        json_data = json.loads(decompressed_data.decode('utf-8'))
 
     # Attempt to fetch it via the web hook that the browser would use
     res = client.get(url_for('static_content', group='visual_selector_data', filename=uuid))
-    json.loads(res.data)
+    decompressed_data = zlib.decompress(res.data)
+    json_data = json.loads(decompressed_data.decode('utf-8'))
+    
     assert res.mimetype == 'application/json'
     assert res.status_code == 200
 
