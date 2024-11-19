@@ -1,8 +1,7 @@
 # Used by Pyppeteer
 pyee
 
-# Support for Python 3.13
-eventlet @ git+https://github.com/eventlet/eventlet@4d48d10b990910cc87ec6bbeeaea63b295fe314d
+eventlet>=0.38.0
 feedgen~=0.9
 flask-compress
 # 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)

@@ -13,7 +13,6 @@ ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
 RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     gcc \
-    git \
     libc-dev \
     libffi-dev \
     libjpeg-dev \
