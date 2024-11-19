@@ -94,5 +94,3 @@ babel
 
 # Needed for > 3.10, https://github.com/microsoft/playwright-python/issues/2096
 greenlet >= 3.0.3
-
-zlib
