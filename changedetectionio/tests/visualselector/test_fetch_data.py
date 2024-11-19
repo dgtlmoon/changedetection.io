@@ -66,7 +66,9 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
 
     # Attempt to fetch it via the web hook that the browser would use
     res = client.get(url_for('static_content', group='visual_selector_data', filename=uuid))
-    json.loads(res.data)
+    decompressed_data = zlib.decompress(res.data)
+    json_data = json.loads(decompressed_data.decode('utf-8'))
+    
     assert res.mimetype == 'application/json'
     assert res.status_code == 200
 
