@@ -1,15 +1,29 @@
-__pycache__
-.idea
-*.pyc
-datastore/url-watches.json
-datastore/*
-__pycache__
-.pytest_cache
-build
-dist
-venv
-test-datastore/*
-test-datastore
-test-memory.log
+# Byte-compiled / optimized / DLL files
+**/__pycache__
+**/*.py[cod]
+
+# Caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Distribution / packaging
+build/
+dist/
 *.egg-info*
+
+# Virtual environment
+.env
+.venv/
+venv/
+
+# IDEs
+.idea
 .vscode/settings.json
+
+# Datastore files
+datastore/
+test-datastore/
+
+# Memory consumption log
+test-memory.log
