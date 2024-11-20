@@ -1,7 +1,7 @@
 # Used by Pyppeteer
 pyee
 
-eventlet>=0.36.1 # fixes SSL error on Python 3.12
+eventlet>=0.38.0
 feedgen~=0.9
 flask-compress
 # 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)
