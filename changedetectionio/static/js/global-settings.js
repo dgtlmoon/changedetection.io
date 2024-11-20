@@ -24,5 +24,8 @@ $(document).ready(function () {
         $(target).toggle();
     });
 
+    $(".local-time").each(function (e) {
+        $(this).text(new Date($(this).data("utc")).toLocaleString());
+    })
 });
 

@@ -79,8 +79,8 @@
                         <span class="pure-form-message-inline">When a request returns no content, or the HTML does not contain any text, is this considered a change?</span>
                     </div>
                     <div class="pure-control-group">
-                        <p><strong>Local Time:</strong> {{ system_time }}</p>
-                        <p><strong>Timezone:</strong> {{ timezone_name }}</p>
+                        <p><strong>UTC Time from Server:</strong> <span id="utc-time" >{{ utc_time }}</span></p>
+                        <p><strong>Local Time in Browser:</strong> <span class="local-time" data-utc="{{ utc_time }}"></span></p>
                     </div>
                 {% if form.requests.proxy %}
                     <div class="pure-control-group inline-radio">
