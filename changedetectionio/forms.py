@@ -1,18 +1,22 @@
 import os
 import re
 from loguru import logger
+from wtforms.fields.simple import HiddenField
+from wtforms.widgets.core import TimeInput
 
 from changedetectionio.strtobool import strtobool
 
 from wtforms import (
     BooleanField,
     Form,
+Field,
     IntegerField,
     RadioField,
     SelectField,
     StringField,
     SubmitField,
     TextAreaField,
+    TimeField,
     fields,
     validators,
     widgets
@@ -124,6 +128,56 @@ class StringTagUUID(StringField):
             return ''
 
         return 'error'
+
+class TimeDurationForm(Form):
+    hours = SelectField(choices=[(f"{i:02d}", f"{i:02d}h") for i in range(0, 25)], default="24", validators=[])
+    minutes = SelectField(choices=[(f"{i:02d}", f"{i:02d}m") for i in range(0, 60)], default="00", validators=[])
+
+class TimeStringField(Field):
+    """
+    A WTForms field for time inputs (HH:MM) that stores the value as a string.
+    """
+    widget = TimeInput()  # Use the built-in time input widget
+
+    def _value(self):
+        """
+        Returns the value for rendering in the form.
+        """
+        return self.data if self.data is not None else ""
+
+    def process_formdata(self, valuelist):
+        """
+        Processes the raw input from the form and stores it as a string.
+        """
+        if valuelist:
+            time_str = valuelist[0]
+            # Simple validation for HH:MM format
+            if not time_str or len(time_str.split(":")) != 2:
+                raise ValidationError("Invalid time format. Use HH:MM.")
+            self.data = time_str
+
+class ScheduleLimitDaySubForm(Form):
+    day_enabled = BooleanField("", default=True)
+    start_time_UTC = TimeStringField("Start At", render_kw={"placeholder": "HH:MM"}, validators=[validators.Optional()])
+    duration = FormField(TimeDurationForm)
+
+    def __init__(self, *args, label=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if label:
+            self.day_enabled.label.text = label  # Dynamically set the label text
+
+
+
+class ScheduleLimitForm(Form):
+
+    monday = FormField(ScheduleLimitDaySubForm)
+    tuesday = FormField(ScheduleLimitDaySubForm)
+    wednesday = FormField(ScheduleLimitDaySubForm)
+    thursday = FormField(ScheduleLimitDaySubForm)
+    friday = FormField(ScheduleLimitDaySubForm)
+    saturday = FormField(ScheduleLimitDaySubForm)
+    sunday = FormField(ScheduleLimitDaySubForm)
+    timezone_offset = HiddenField()  # Store the browser's timezone offset
 
 class TimeBetweenCheckForm(Form):
     weeks = IntegerField('Weeks', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
@@ -466,6 +520,8 @@ class processor_text_json_diff_form(commonSettingsForm):
     tags = StringTagUUID('Group tag', [validators.Optional()], default='')
 
     time_between_check = FormField(TimeBetweenCheckForm)
+    time_schedule_limit = FormField(ScheduleLimitForm)
+
     time_between_check_use_default = BooleanField('Use global settings for time between check', default=False)
 
     include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
@@ -587,6 +643,7 @@ class DefaultUAInputForm(Form):
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     time_between_check = FormField(TimeBetweenCheckForm)
+    time_schedule_limit = FormField(ScheduleLimitForm)
     proxy = RadioField('Proxy')
     jitter_seconds = IntegerField('Random jitter seconds ± check',
                                   render_kw={"style": "width: 5em;"},

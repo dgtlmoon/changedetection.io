@@ -59,6 +59,17 @@ class watch_base(dict):
             'text_should_not_be_present': [],  # Text that should not present
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
             'time_between_check_use_default': True,
+            "time_schedule_limit": {
+                "start_time": None, # Should be stored as UTC
+                "end_time": None, # Should be stored as UTC
+                "monday": True,
+                "tuesday": True,
+                "wednesday": True,
+                "thursday": True,
+                "friday": True,
+                "saturday": True,
+                "sunday": True
+            },
             'title': None,
             'track_ldjson_price_data': None,
             'trim_text_whitespace': False,

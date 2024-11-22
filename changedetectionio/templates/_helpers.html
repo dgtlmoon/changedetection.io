@@ -60,3 +60,24 @@
 {% macro render_button(field) %}
   {{ field(**kwargs)|safe }}
 {% endmacro %}
+
+{% macro render_time_schedule_form(form) %}
+    <label>Schedule time limits</label><a id="send-test-notification" class="pure-button button-secondary button-xsmall">Business hours</a> <a id="send-test-notification" class="pure-button button-secondary button-xsmall">Weekends</a><br>
+    <style>
+    .day-schedule *, .day-schedule select {
+        display: inline-block;
+    }
+    ul#day-wrapper {
+        list-style: none;
+    }
+    </style>
+    <ul id="day-wrapper">
+        {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
+            <li class="day-schedule">
+                    {{ render_field(form.time_schedule_limit[day]) }}
+            </li>
+        {% endfor %}
+    </ul>
+    {# Used for the widge to conver to/from UTC time for storage #}
+    {{  render_field(form.time_schedule_limit.timezone_offset) }}
+{% endmacro %}

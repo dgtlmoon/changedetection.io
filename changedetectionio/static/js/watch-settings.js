@@ -70,7 +70,13 @@ $(document).ready(function () {
         $('#notification-tokens-info').toggle();
     });
 
-    toggleOpacity('#time_between_check_use_default', '#time_between_check', false);
+    toggleOpacity('#time_between_check_use_default', '#time_between_check, #time-between-check-schedule', false);
+
+    const offset = new Date().getTimezoneOffset();
+
+    // For time limit start time UTC conversion
+    $('input[name="time_schedule_limit-timezone_offset"]').val(offset);
+    console.log("Timezone offset from UTC is "+offset)
 
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
     $("#text-preview-inner").css('max-height', (vh-300)+"px");
