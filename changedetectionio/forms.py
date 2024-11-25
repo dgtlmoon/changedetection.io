@@ -179,6 +179,8 @@ class ScheduleLimitForm(Form):
     sunday = FormField(ScheduleLimitDaySubForm)
     timezone_offset = StringField("Timezone to run in")
 
+    #@todo validate timezone_offset, either by name or 
+
 
 class TimeBetweenCheckForm(Form):
     weeks = IntegerField('Weeks', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
