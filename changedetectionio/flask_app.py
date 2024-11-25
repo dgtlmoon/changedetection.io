@@ -38,8 +38,6 @@ from flask_restful import abort, Api
 from flask_cors import CORS
 from flask_wtf import CSRFProtect
 from loguru import logger
-from zoneinfo import ZoneInfo
-
 
 from changedetectionio import html_tools, __version__
 from changedetectionio import queuedWatchMetaData
@@ -1783,6 +1781,17 @@ def ticker_thread_check_time_launch_checks():
             # No need todo further processing if it's paused
             if watch['paused']:
                 continue
+
+
+            # Maybe make this a hook?
+
+            # Check if we are inside the time range
+            time_schedule_limit = watch.get('time_schedule_limit')
+            if time_schedule_limit and time_schedule_limit.get('enabled'):
+                result = watch.watch_recheck_is_within_schedule
+                if not result:
+                    logger.trace(f"{uuid} time scheduler - not within schedule skipping.")
+                    continue
 
             # If they supplied an individual entry minutes to threshold.
             threshold = recheck_time_system_seconds if watch.get('time_between_check_use_default') else watch.threshold_seconds()

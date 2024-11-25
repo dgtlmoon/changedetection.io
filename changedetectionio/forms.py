@@ -1,7 +1,6 @@
 import os
 import re
 from loguru import logger
-from wtforms.fields.simple import HiddenField
 from wtforms.widgets.core import TimeInput
 
 from changedetectionio.strtobool import strtobool
@@ -9,7 +8,7 @@ from changedetectionio.strtobool import strtobool
 from wtforms import (
     BooleanField,
     Form,
-Field,
+    Field,
     IntegerField,
     RadioField,
     SelectField,
@@ -157,8 +156,8 @@ class TimeStringField(Field):
             self.data = time_str
 
 class ScheduleLimitDaySubForm(Form):
-    day_enabled = BooleanField("", default=True)
-    start_time_UTC = TimeStringField("Start At", render_kw={"placeholder": "HH:MM"}, validators=[validators.Optional()])
+    enabled = BooleanField("", default=True)
+    start_time = TimeStringField("Start At", default="00:00", render_kw={"placeholder": "HH:MM"}, validators=[validators.Optional()])
     duration = FormField(TimeDurationForm)
 
     def __init__(self, *args, label=None, **kwargs):
@@ -170,6 +169,7 @@ class ScheduleLimitDaySubForm(Form):
 
 class ScheduleLimitForm(Form):
 
+    enabled = BooleanField("Enabled", default=False)
     monday = FormField(ScheduleLimitDaySubForm)
     tuesday = FormField(ScheduleLimitDaySubForm)
     wednesday = FormField(ScheduleLimitDaySubForm)
@@ -177,7 +177,8 @@ class ScheduleLimitForm(Form):
     friday = FormField(ScheduleLimitDaySubForm)
     saturday = FormField(ScheduleLimitDaySubForm)
     sunday = FormField(ScheduleLimitDaySubForm)
-    timezone_offset = HiddenField()  # Store the browser's timezone offset
+    timezone_offset = StringField("Timezone to run in")
+
 
 class TimeBetweenCheckForm(Form):
     weeks = IntegerField('Weeks', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])

@@ -62,7 +62,9 @@
 {% endmacro %}
 
 {% macro render_time_schedule_form(form) %}
-    <label>Schedule time limits</label><a id="send-test-notification" class="pure-button button-secondary button-xsmall">Business hours</a> <a id="send-test-notification" class="pure-button button-secondary button-xsmall">Weekends</a><br>
+    <label>Schedule time limits</label><a id="send-test-notification" class="pure-button button-secondary button-xsmall">Business hours</a>
+    <a id="send-test-notification" class="pure-button button-secondary button-xsmall">Weekends</a>
+    <a id="send-test-notification" class="pure-button button-secondary button-xsmall">Reset</a><br>
     <style>
     .day-schedule *, .day-schedule select {
         display: inline-block;
@@ -71,13 +73,22 @@
         list-style: none;
     }
     </style>
+    <br>
+    {{ render_checkbox_field(form.time_schedule_limit.enabled) }}
+    <span class="pure-form-message-inline">
+        Enabled - The rules below will be used.
+    </span>
+    <br>
+
     <ul id="day-wrapper">
         {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
             <li class="day-schedule">
                     {{ render_field(form.time_schedule_limit[day]) }}
             </li>
         {% endfor %}
+        <li>
+            {{  render_field(form.time_schedule_limit.timezone_offset) }} <span id="local-time-in-tz"></span>
+        </li>
     </ul>
-    {# Used for the widge to conver to/from UTC time for storage #}
-    {{  render_field(form.time_schedule_limit.timezone_offset) }}
+
 {% endmacro %}

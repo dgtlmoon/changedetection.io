@@ -12,6 +12,25 @@ function toggleOpacity(checkboxSelector, fieldSelector, inverted) {
     checkbox.addEventListener('change', updateOpacity);
 }
 
+function getTimeInTimezone(timezone) {
+    const now = new Date();
+    const options = {
+        timeZone: timezone,
+        weekday: 'long',
+        year: 'numeric',
+        hour12: false,
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+    };
+
+    const formatter = new Intl.DateTimeFormat('en-US', options);
+    return formatter.format(now);
+}
+
+
 
 function request_textpreview_update() {
     if (!$('body').hasClass('preview-text-enabled')) {
@@ -58,6 +77,12 @@ function request_textpreview_update() {
 }
 
 $(document).ready(function () {
+
+        window.setInterval(function () {
+            document.getElementById('local-time-in-tz').textContent =
+                getTimeInTimezone($("#time_schedule_limit-timezone_offset").val() );
+        }, 1000);
+
     $('#notification-setting-reset-to-default').click(function (e) {
         $('#notification_title').val('');
         $('#notification_body').val('');
@@ -71,12 +96,13 @@ $(document).ready(function () {
     });
 
     toggleOpacity('#time_between_check_use_default', '#time_between_check, #time-between-check-schedule', false);
-
-    const offset = new Date().getTimezoneOffset();
+    toggleOpacity('#time_schedule_limit-enabled', '#day-wrapper', true)
 
     // For time limit start time UTC conversion
-    $('input[name="time_schedule_limit-timezone_offset"]').val(offset);
-    console.log("Timezone offset from UTC is "+offset)
+    if (!$('input[name="time_schedule_limit-timezone_offset"]').val().length) {
+        $('input[name="time_schedule_limit-timezone_offset"]').val(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    }
+
 
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
     $("#text-preview-inner").css('max-height', (vh-300)+"px");
