@@ -166,6 +166,20 @@ class ScheduleLimitDaySubForm(Form):
             self.day_enabled.label.text = label  # Dynamically set the label text
 
 
+class validateTimeZoneName(object):
+    """
+       Flask wtform validators wont work with basic auth
+    """
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        from zoneinfo import available_timezones
+        python_timezones = available_timezones()
+        if not field.data in python_timezones:
+            raise ValidationError("Not a valid timezone name")
+
 
 class ScheduleLimitForm(Form):
 
@@ -177,9 +191,7 @@ class ScheduleLimitForm(Form):
     friday = FormField(ScheduleLimitDaySubForm)
     saturday = FormField(ScheduleLimitDaySubForm)
     sunday = FormField(ScheduleLimitDaySubForm)
-    timezone_offset = StringField("Timezone to run in")
-
-    #@todo validate timezone_offset, either by name or
+    timezone_offset = StringField("Timezone to run in", render_kw={"list": "timezones", "placeholder": "Default"}, validators=[validateTimeZoneName(), validators.Optional()])
 
 
 class TimeBetweenCheckForm(Form):
@@ -335,6 +347,7 @@ class validateURL(object):
     def __call__(self, form, field):
         # This should raise a ValidationError() or not
         validate_url(field.data)
+
 
 def validate_url(test_url):
     # If hosts that only contain alphanumerics are allowed ("localhost" for example)

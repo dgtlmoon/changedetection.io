@@ -837,6 +837,8 @@ def changedetection_app(config=None, datastore_o=None):
             if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
                 is_html_webdriver = True
 
+            from zoneinfo import available_timezones
+
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and is_html_webdriver
             template_args = {
@@ -856,6 +858,7 @@ def changedetection_app(config=None, datastore_o=None):
                 'settings_application': datastore.data['settings']['application'],
                 'using_global_webdriver_wait': not default['webdriver_delay'],
                 'uuid': uuid,
+                'available_timezones': sorted(available_timezones()),
                 'visualselector_enabled': visualselector_enabled,
                 'watch': watch
             }

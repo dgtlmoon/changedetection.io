@@ -80,16 +80,16 @@ function request_textpreview_update() {
 $(document).ready(function () {
 
     window.setInterval(function () {
-        document.getElementById('local-time-in-tz').textContent =
-            getTimeInTimezone($("#time_schedule_limit-timezone_offset").val() );
-    }, 1000);
+        if ($("#time_schedule_limit-timezone_offset").val().length) {
+            document.getElementById('local-time-in-tz').textContent =
+                getTimeInTimezone($("#time_schedule_limit-timezone_offset").val());
+        }
+    }, 500);
 
     $('#time_schedule_limit-saturday, #time_schedule_limit-sunday').addClass("weekend-day")
 
-$(document).on('click', '[data-template].set-schedule', function() {
+    $(document).on('click', '[data-template].set-schedule', function() {
     // Get the value of the 'data-template' attribute
-
-
 
         switch ($(this).attr('data-template')) {
             case 'business-hours':
@@ -119,11 +119,8 @@ $(document).on('click', '[data-template].set-schedule', function() {
                 $('.day-schedule input[id*="-enabled"]').prop('checked', true);
                 break;
         }
-
-
     });
-
-
+    
     $('#notification-setting-reset-to-default').click(function (e) {
         $('#notification_title').val('');
         $('#notification_body').val('');
@@ -138,12 +135,6 @@ $(document).on('click', '[data-template].set-schedule', function() {
 
     toggleOpacity('#time_between_check_use_default', '#time_between_check, #time-between-check-schedule', false);
     toggleOpacity('#time_schedule_limit-enabled', '#day-wrapper', true)
-
-    // For time limit start time UTC conversion
-    if (!$('input[name="time_schedule_limit-timezone_offset"]').val().length) {
-        $('input[name="time_schedule_limit-timezone_offset"]').val(Intl.DateTimeFormat().resolvedOptions().timeZone);
-    }
-
 
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
     $("#text-preview-inner").css('max-height', (vh-300)+"px");
