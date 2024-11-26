@@ -76,12 +76,53 @@ function request_textpreview_update() {
     })
 }
 
+
 $(document).ready(function () {
 
-        window.setInterval(function () {
-            document.getElementById('local-time-in-tz').textContent =
-                getTimeInTimezone($("#time_schedule_limit-timezone_offset").val() );
-        }, 1000);
+    window.setInterval(function () {
+        document.getElementById('local-time-in-tz').textContent =
+            getTimeInTimezone($("#time_schedule_limit-timezone_offset").val() );
+    }, 1000);
+
+    $('#time_schedule_limit-saturday, #time_schedule_limit-sunday').addClass("weekend-day")
+
+$(document).on('click', '[data-template].set-schedule', function() {
+    // Get the value of the 'data-template' attribute
+
+
+
+        switch ($(this).attr('data-template')) {
+            case 'business-hours':
+                $('table:not(.weekend-day) input[type="time"]').val('09:00')
+                $('table:not(.weekend-day) select[id*="-duration-hours"]').val('8');
+                $('table:not(.weekend-day) select[id*="-duration-minutes"]').val('0');
+                $('input[id*="-enabled"]').prop('checked', true);
+                $('.weekend-day input[id*="-enabled"]').prop('checked', false);
+                break;
+            case 'weekend':
+                $('.weekend-day input[type="time"][id$="start-time"]').val('00:00')
+                $('.weekend-day select[id*="-duration-hours"]').val('24');
+                $('.weekend-day select[id*="-duration-minutes"]').val('0');
+                $('input[id*="-enabled"]').prop('checked', false);
+                $('.weekend-day input[id*="-enabled"]').prop('checked', true);
+                break;
+            case 'reset':
+                $('.day-schedule input[type="time"]').val('00:00')
+                $('.day-schedule select[id*="-duration-hours"]').val('24');
+                $('.day-schedule select[id*="-duration-minutes"]').val('0');
+                $('.day-schedule input[id*="-enabled"]').prop('checked', true);
+                break;
+            case 'once-per-day':
+                $('.day-schedule input[type="time"]').val('00:00')
+                $('.day-schedule select[id*="-duration-hours"]').val('24');
+                $('.day-schedule select[id*="-duration-minutes"]').val('0');
+                $('.day-schedule input[id*="-enabled"]').prop('checked', true);
+                break;
+        }
+
+
+    });
+
 
     $('#notification-setting-reset-to-default').click(function (e) {
         $('#notification_title').val('');

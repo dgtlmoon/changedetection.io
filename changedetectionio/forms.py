@@ -129,8 +129,8 @@ class StringTagUUID(StringField):
         return 'error'
 
 class TimeDurationForm(Form):
-    hours = SelectField(choices=[(f"{i:02d}", f"{i:02d}h") for i in range(0, 25)], default="24", validators=[])
-    minutes = SelectField(choices=[(f"{i:02d}", f"{i:02d}m") for i in range(0, 60)], default="00", validators=[])
+    hours = SelectField(choices=[(f"{i}", f"{i}") for i in range(0, 25)], default="24", validators=[])
+    minutes = SelectField(choices=[(f"{i}", f"{i}") for i in range(0, 60)], default="00", validators=[])
 
 class TimeStringField(Field):
     """
@@ -179,7 +179,7 @@ class ScheduleLimitForm(Form):
     sunday = FormField(ScheduleLimitDaySubForm)
     timezone_offset = StringField("Timezone to run in")
 
-    #@todo validate timezone_offset, either by name or 
+    #@todo validate timezone_offset, either by name or
 
 
 class TimeBetweenCheckForm(Form):
