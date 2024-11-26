@@ -887,6 +887,7 @@ def changedetection_app(config=None, datastore_o=None):
     def settings_page():
         from changedetectionio import forms
         from datetime import datetime
+        from zoneinfo import available_timezones
 
         default = deepcopy(datastore.data['settings'])
         if datastore.proxy_list is not None:
@@ -959,6 +960,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         output = render_template("settings.html",
                                  api_key=datastore.data['settings']['application'].get('api_access_token'),
+                                 available_timezones=sorted(available_timezones()),
                                  emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                  extra_notification_token_placeholder_info=datastore.get_unique_notification_token_placeholders_available(),
                                  form=form,
