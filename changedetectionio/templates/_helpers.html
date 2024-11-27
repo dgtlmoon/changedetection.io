@@ -62,20 +62,25 @@
 {% endmacro %}
 
 {% macro render_time_schedule_form(form, available_timezones) %}
-    <label>Schedule time limits</label><a data-template="business-hours" class="set-schedule pure-button button-secondary button-xsmall">Business hours</a>
-    <a data-template="weekend" class="set-schedule pure-button button-secondary button-xsmall">Weekends</a>
-    <a  data-template="reset" class="set-schedule pure-button button-xsmall">Reset</a><br>
     <style>
     .day-schedule *, .day-schedule select {
         display: inline-block;
     }
     .day-schedule > div:nth-child(1) {
-        min-width: 6rem;
+        /* Hidden, doesnt work */
+        display: none;
     }
+    .day-schedule label[for^="time_schedule_limit-"][for$="-enabled"] {
+        min-width: 6rem;
+        font-weight: bold;
+    }
+    .day-schedule label {
+        font-weight: normal;
+    }
+
     .day-schedule table label {
         padding-left: 0.5rem;
         padding-right: 0.5rem;
-        font-weight: normal;
     }
     ul#day-wrapper {
         list-style: none;
@@ -83,18 +88,41 @@
     #timezone-info > * {
         display: inline-block;
     }
+
+    #scheduler-icon-label {
+        background-position: left center;
+        background-repeat: no-repeat;
+        background-size: contain;
+        display: inline-block;
+        vertical-align: middle;
+        padding-left: 50px;
+        background-image: url({{ url_for('static_content', group='images', filename='schedule.svg') }});
+    }
     </style>
     <br>
-    {{ render_checkbox_field(form.time_schedule_limit.enabled) }}
-    <span class="pure-form-message-inline">
-        Enabled - The rules below will be used.
-    </span>
-    <br>
 
+    <div>
+        <span
+              style="">
+            .
+        </span>
+        <span id="scheduler-icon-label" style="">
+            {{ render_checkbox_field(form.time_schedule_limit.enabled) }}
+            <div class="pure-form-message-inline">
+                Set a hourly/week day schedule
+            </div>
+        </span>
+
+    </div>
+    <br>
+<label>Schedule time limits</label><a data-template="business-hours" class="set-schedule pure-button button-secondary button-xsmall">Business hours</a>
+    <a data-template="weekend" class="set-schedule pure-button button-secondary button-xsmall">Weekends</a>
+    <a data-template="reset" class="set-schedule pure-button button-xsmall">Reset</a><br>
+    <br>
     <ul id="day-wrapper">
         {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
             <li class="day-schedule">
-                    {{ render_field(form.time_schedule_limit[day]) }}
+               {{ render_field(form.time_schedule_limit[day]) }}
             </li>
         {% endfor %}
         <li id="timezone-info">
@@ -104,7 +132,6 @@
                     <option value="{{ timezone }}">{{ timezone }}</option>
                 {% endfor %}
             </datalist>
-
         </li>
     </ul>
 

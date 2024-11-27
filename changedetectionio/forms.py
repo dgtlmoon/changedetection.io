@@ -155,16 +155,6 @@ class TimeStringField(Field):
                 raise ValidationError("Invalid time format. Use HH:MM.")
             self.data = time_str
 
-class ScheduleLimitDaySubForm(Form):
-    enabled = BooleanField("", default=True)
-    start_time = TimeStringField("Start At", default="00:00", render_kw={"placeholder": "HH:MM"}, validators=[validators.Optional()])
-    duration = FormField(TimeDurationForm)
-
-    def __init__(self, *args, label=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        if label:
-            self.day_enabled.label.text = label  # Dynamically set the label text
-
 
 class validateTimeZoneName(object):
     """
@@ -180,18 +170,43 @@ class validateTimeZoneName(object):
         if not field.data in python_timezones:
             raise ValidationError("Not a valid timezone name")
 
+class ScheduleLimitDaySubForm(Form):
+    enabled = BooleanField("xxx", default=True)
+    start_time = TimeStringField("Start At", default="00:00", render_kw={"placeholder": "HH:MM"}, validators=[validators.Optional()])
+    duration = FormField(TimeDurationForm, label="Run duration")
 
 class ScheduleLimitForm(Form):
+    enabled = BooleanField("Use time scheduler", default=False)
+    # Because the label for=""" doesnt line up/work with the actual checkbox
+    monday = FormField(ScheduleLimitDaySubForm, label="")
+    tuesday = FormField(ScheduleLimitDaySubForm, label="")
+    wednesday = FormField(ScheduleLimitDaySubForm, label="")
+    thursday = FormField(ScheduleLimitDaySubForm, label="")
+    friday = FormField(ScheduleLimitDaySubForm, label="")
+    saturday = FormField(ScheduleLimitDaySubForm, label="")
+    sunday = FormField(ScheduleLimitDaySubForm, label="")
 
-    enabled = BooleanField("Enabled", default=False)
-    monday = FormField(ScheduleLimitDaySubForm)
-    tuesday = FormField(ScheduleLimitDaySubForm)
-    wednesday = FormField(ScheduleLimitDaySubForm)
-    thursday = FormField(ScheduleLimitDaySubForm)
-    friday = FormField(ScheduleLimitDaySubForm)
-    saturday = FormField(ScheduleLimitDaySubForm)
-    sunday = FormField(ScheduleLimitDaySubForm)
-    timezone_offset = StringField("Timezone to run in", render_kw={"list": "timezones", "placeholder": "Default"}, validators=[validateTimeZoneName(), validators.Optional()])
+    timezone_offset = StringField("Timezone to run in",
+                                  render_kw={"list": "timezones", "placeholder": "Default"},
+                                  validators=[validateTimeZoneName(), validators.Optional()]
+                                  )
+    def __init__(
+        self,
+        formdata=None,
+        obj=None,
+        prefix="",
+        data=None,
+        meta=None,
+        **kwargs,
+    ):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        self.monday.form.enabled.label.text="Monday"
+        self.tuesday.form.enabled.label.text = "Tuesday"
+        self.wednesday.form.enabled.label.text = "Wednesday"
+        self.thursday.form.enabled.label.text = "Thursday"
+        self.friday.form.enabled.label.text = "Friday"
+        self.saturday.form.enabled.label.text = "Saturday"
+        self.sunday.form.enabled.label.text = "Sunday"
 
 
 class TimeBetweenCheckForm(Form):

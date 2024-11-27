@@ -640,8 +640,14 @@ class model(watch_base):
         time_schedule_limit = self.get('time_schedule_limit')
         if time_schedule_limit and time_schedule_limit.get('enabled'):
             # Get the timezone the time schedule is in, so we know what day it is there
-            tz_name = time_schedule_limit.get('timezone_offset')  # @todo if this is not set?
-            now_day_name_in_tz = datetime.now(ZoneInfo(tz_name)).strftime('%A')
+            tz_name = time_schedule_limit.get('timezone_offset','').strip()  # @todo if this is not set?
+            # @todo if not tz_name use system default
+            try:
+                now_day_name_in_tz = datetime.now(ZoneInfo(tz_name)).strftime('%A')
+            except Exception as e:
+                logger.error(f"{self.get('uuid')} - Recheck scheduler, error handling timezone, check skipped - TZ name '{tz_name}' - {str(e)}")
+                return False
+
             selected_day_schedule = time_schedule_limit.get(now_day_name_in_tz.lower())
             if not selected_day_schedule.get('enabled'):
                 logger.trace(f"{self.get('uuid')} - Skipped check for {now_day_name_in_tz} in {tz_name}, not enabled.")

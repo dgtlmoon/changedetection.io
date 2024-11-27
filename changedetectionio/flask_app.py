@@ -843,11 +843,12 @@ def changedetection_app(config=None, datastore_o=None):
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and is_html_webdriver
             template_args = {
                 'available_processors': processors.available_processors(),
+                'available_timezones': sorted(available_timezones()),
                 'browser_steps_config': browser_step_ui_config,
                 'emailprefix': os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
-                'extra_title': f" - Edit - {watch.label}",
-                'extra_processor_config': form.extra_tab_content(),
                 'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
+                'extra_processor_config': form.extra_tab_content(),
+                'extra_title': f" - Edit - {watch.label}",
                 'form': form,
                 'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,
                 'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
@@ -858,7 +859,6 @@ def changedetection_app(config=None, datastore_o=None):
                 'settings_application': datastore.data['settings']['application'],
                 'using_global_webdriver_wait': not default['webdriver_delay'],
                 'uuid': uuid,
-                'available_timezones': sorted(available_timezones()),
                 'visualselector_enabled': visualselector_enabled,
                 'watch': watch
             }
@@ -1641,6 +1641,8 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.backups as backups
     app.register_blueprint(backups.construct_blueprint(datastore), url_prefix='/backups')
 
+    import changedetectionio.blueprint.introduction as introduction
+    app.register_blueprint(introduction.construct_blueprint(datastore), url_prefix='/introduction')
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
