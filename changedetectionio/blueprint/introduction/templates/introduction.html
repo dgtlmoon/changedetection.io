@@ -1,10 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
-    {% from '_helpers.html' import render_simple_field, render_field %}
+    {% from '_helpers.html' import render_button, render_field %}
     <div class="edit-form">
         <div class="box-wrap inner">
             <form class="pure-form" action="{{ url_for('introduction.index_post') }}" method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            Welcome to changedetection.io !<br>
+            First, we just need to know what the default timezone is
                 <fieldset>
                     <p><strong>Local Time in Browser:</strong> <span class="local-time"
                                                                      data-utc="{{ utc_time }}"></span></p>
@@ -16,7 +18,7 @@
                             {% endfor %}
                         </datalist>
 
-                        {{ render_field(form.save_button) }}
+                        {{ render_button(form.save_button) }}
                     </p>
                 </fieldset>
             </form>
