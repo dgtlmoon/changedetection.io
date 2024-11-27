@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+    {% from '_helpers.html' import render_simple_field, render_field %}
+    <div class="edit-form">
+        <div class="box-wrap inner">
+            <form class="pure-form" action="{{ url_for('introduction.index_post') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <fieldset>
+                    <p><strong>Local Time in Browser:</strong> <span class="local-time"
+                                                                     data-utc="{{ utc_time }}"></span></p>
+                    <p>
+                        {{ render_field(form.default_timezone) }}
+                        <datalist id="timezones" style="display: none;">
+                            {% for timezone in available_timezones %}
+                                <option value="{{ timezone }}">{{ timezone }}</option>
+                            {% endfor %}
+                        </datalist>
+
+                        {{ render_field(form.save_button) }}
+                    </p>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+
+
+{% endblock %}
