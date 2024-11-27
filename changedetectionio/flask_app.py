@@ -22,6 +22,7 @@ from feedgen.feed import FeedGenerator
 from flask import (
     Flask,
     abort,
+    current_app,
     flash,
     g,
     make_response,
@@ -133,17 +134,17 @@ def login_optionally_required(func):
         has_password_enabled = g.datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
 
         # Permitted
-        if request.endpoint == 'static_content' and request.view_args['group'] == 'styles':
+        if request.endpoint == 'static_content' and request.view_args and request.view_args['group'] == 'styles':
             return func(*args, **kwargs)
         # Permitted
         elif request.endpoint == 'diff_history_page' and g.datastore.data['settings']['application'].get('shared_diff_access'):
             return func(*args, **kwargs)
         elif request.method in flask_login.config.EXEMPT_METHODS:
             return func(*args, **kwargs)
-        elif g.app.config.get('LOGIN_DISABLED'):
+        elif current_app.config.get('LOGIN_DISABLED'):
             return func(*args, **kwargs)
         elif has_password_enabled and not current_user.is_authenticated:
-            return g.app.login_manager.unauthorized()
+            return current_app.login_manager.unauthorized()
 
         return func(*args, **kwargs)
 
@@ -165,7 +166,8 @@ def changedetection_app(config, datastore):
 
     # Stop browser caching of assets
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-    app.config.exit = Event()
+    exit_event = Event()
+    app.config.exit = exit_event
 
     app.config['NEW_VERSION_AVAILABLE'] = False
 
@@ -181,8 +183,6 @@ def changedetection_app(config, datastore):
     csrf.init_app(app)
     
     app.config["notification_debug_log"] = []
-
-    app.config['DATASTORE'] = datastore
 
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
@@ -322,7 +322,6 @@ def changedetection_app(config, datastore):
 
     @app.before_request
     def remember_app_and_datastore():
-        g.app = app
         g.datastore = datastore
 
     @app.before_request
@@ -1630,25 +1629,23 @@ def changedetection_app(config, datastore):
 
 
     # @todo handle ctrl break
-    threading.Thread(target=ticker_thread_check_time_launch_checks, args=(app,)).start()
-    threading.Thread(target=notification_runner, args=(app,)).start()
+    threading.Thread(target=ticker_thread_check_time_launch_checks, kwargs={'app': app, 'datastore': datastore, 'exit_event': exit_event}).start()
+    threading.Thread(target=notification_runner, kwargs={'app': app, 'datastore': datastore, 'exit_event': exit_event}).start()
 
     # Check for new release version, but not when running in test/build or pytest
     if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')):
-        threading.Thread(target=check_for_new_version, args=(app,)).start()
+        threading.Thread(target=check_for_new_version, kwargs={'app': app, 'datastore': datastore, 'exit_event': exit_event}).start()
 
     return app
 
 
 # Check for new version and anonymous stats
-def check_for_new_version(app, url="https://changedetection.io/check-ver.php", delay_time=86400):
+def check_for_new_version(*, app, datastore, exit_event, url="https://changedetection.io/check-ver.php", delay_time=86400):
     import requests
     import urllib3
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-    datastore = app.config["DATASTORE"]
-
-    while not app.config.exit.is_set():
+    while not exit_event.is_set():
         try:
             r = requests.post(url,
                               data={'version': __version__,
@@ -1667,13 +1664,13 @@ def check_for_new_version(app, url="https://changedetection.io/check-ver.php", d
             pass
 
         # Check daily
-        app.config.exit.wait(delay_time)
+        exit_event.wait(delay_time)
 
 
-def notification_runner(app):
+def notification_runner(*, app, datastore, exit_event):
     from datetime import datetime
     import json
-    while not app.config.exit.is_set():
+    while not exit_event.is_set():
         try:
             # At the moment only one thread runs (single runner)
             n_object = notification_q.get(block=False)
@@ -1686,8 +1683,6 @@ def notification_runner(app):
             sent_obj = None
 
             notification_debug_log = app.config["notification_debug_log"]
-
-            datastore = app.config["DATASTORE"]
 
             try:
                 from changedetectionio import notification
@@ -1720,11 +1715,9 @@ def notification_runner(app):
             notification_debug_log = notification_debug_log[-100:]
 
 # Threaded runner, look for new watches to feed into the Queue.
-def ticker_thread_check_time_launch_checks(app):
+def ticker_thread_check_time_launch_checks(*, app, datastore, exit_event):
     import random
     from changedetectionio import update_worker
-
-    datastore = app.config["DATASTORE"]
 
     proxy_last_called_time = {}
 
@@ -1739,7 +1732,7 @@ def ticker_thread_check_time_launch_checks(app):
         running_update_threads.append(new_worker)
         new_worker.start()
 
-    while not app.config.exit.is_set():
+    while not exit_event.is_set():
 
         # Get a list of watches by UUID that are currently fetching data
         running_uuids = []
@@ -1835,4 +1828,4 @@ def ticker_thread_check_time_launch_checks(app):
         time.sleep(1)
 
         # Should be low so we can break this out in testing
-        app.config.exit.wait(1)
+        exit_event.wait(1)

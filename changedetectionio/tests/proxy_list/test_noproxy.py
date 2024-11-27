@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import time
-from flask import url_for
+from flask import url_for, g
 from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
 
@@ -73,5 +73,5 @@ def test_noproxy_option(client, live_server, measure_memory_usage):
 
     # Prove that it actually checked
 
-    assert live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked'] != 0
+    assert g.datastore.data['watching'][uuid]['last_checked'] != 0
 

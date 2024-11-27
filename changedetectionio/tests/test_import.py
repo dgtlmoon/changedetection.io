@@ -3,7 +3,7 @@ import io
 import os
 import time
 
-from flask import url_for
+from flask import url_for, g
 
 from .util import live_server_setup, wait_for_all_checks
 
@@ -163,7 +163,7 @@ def test_import_custom_xlsx(client, live_server, measure_memory_usage):
     assert b'City news results' in res.data
 
     # Just find one to check over
-    for uuid, watch in live_server.app.config['DATASTORE'].data['watching'].items():
+    for uuid, watch in g.datastore.data['watching'].items():
         if watch.get('title') == 'Somesite results ABC':
             filters = watch.get('include_filters')
             assert filters[0] == '/html[1]/body[1]/div[4]/div[1]/div[1]/div[1]||//*[@id=\'content\']/div[3]/div[1]/div[1]||//*[@id=\'content\']/div[1]'
@@ -201,7 +201,7 @@ def test_import_watchete_xlsx(client, live_server, measure_memory_usage):
     assert b'City news results' in res.data
 
     # Just find one to check over
-    for uuid, watch in live_server.app.config['DATASTORE'].data['watching'].items():
+    for uuid, watch in g.datastore.data['watching'].items():
         if watch.get('title') == 'Somesite results ABC':
             filters = watch.get('include_filters')
             assert filters[0] == '/html[1]/body[1]/div[4]/div[1]/div[1]/div[1]||//*[@id=\'content\']/div[3]/div[1]/div[1]||//*[@id=\'content\']/div[1]'

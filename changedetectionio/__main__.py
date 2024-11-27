@@ -19,19 +19,19 @@ from . import __version__
 
 # Parent wrapper or OS sends us a SIGTERM/SIGINT, do everything required for a clean shutdown
 class SigShutdownHandler(object):
-    def __init__(self, app):
+    def __init__(self, app: Flask, datastore: store.ChangeDetectionStore):
         self.app = app
+        self.datastore = datastore
         signal.signal(signal.SIGTERM, lambda _signum, _frame: self._signal_handler("SIGTERM"))
         signal.signal(signal.SIGINT, lambda _signum, _frame: self._signal_handler("SIGINT"))
 
     def _signal_handler(self, signame):
         logger.critical(f'Shutdown: Got Signal - {signame}, Saving DB to disk and calling shutdown')
-        datastore = self.app.config["DATASTORE"]
-        datastore.sync_to_json()
+        self.datastore.sync_to_json()
         logger.success('Sync JSON to disk complete.')
         # This will throw a SystemExit exception, because eventlet.wsgi.server doesn't know how to deal with it.
         # Solution: move to gevent or other server in the future (#2014)
-        datastore.stop_thread = True
+        self.datastore.stop_thread = True
         self.app.config.exit.set()
         sys.exit(0)
 
@@ -136,7 +136,7 @@ def create_application() -> Flask:
 
     app = changedetection_app(app_config, datastore)
 
-    sigshutdown_handler = SigShutdownHandler(app)
+    sigshutdown_handler = SigShutdownHandler(app, datastore)
 
     # Go into cleanup mode
     if do_cleanup:

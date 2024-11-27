@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from flask import make_response, request
-from flask import url_for
+from flask import url_for, g
 import logging
 import time
 
@@ -103,7 +103,7 @@ def extract_api_key_from_UI(client):
 
 # kinda funky, but works for now
 def get_UUID_for_tag_name(client, name):
-    app_config = client.application.config.get('DATASTORE').data
+    app_config = g.datastore.data
     for uuid, tag in app_config['settings']['application'].get('tags', {}).items():
         if name == tag.get('title', '').lower().strip():
             return uuid

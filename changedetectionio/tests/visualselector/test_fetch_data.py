@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import os
-from flask import url_for
+from flask import url_for, g
 from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
 def test_setup(client, live_server, measure_memory_usage):
@@ -43,7 +43,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     wait_for_all_checks(client)
 
 
-    assert live_server.app.config['DATASTORE'].data['watching'][uuid].history_n >= 1, "Watch history had atleast 1 (everything fetched OK)"
+    assert g.datastore.data['watching'][uuid].history_n >= 1, "Watch history had atleast 1 (everything fetched OK)"
 
     res = client.get(
         url_for("preview_page", uuid=uuid),
@@ -120,7 +120,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     uuid = extract_UUID_from_client(client)
-    assert live_server.app.config['DATASTORE'].data['watching'][uuid].history_n >= 1, "Watch history had atleast 1 (everything fetched OK)"
+    assert g.datastore.data['watching'][uuid].history_n >= 1, "Watch history had atleast 1 (everything fetched OK)"
 
     assert b"This text should be removed" not in res.data
 
