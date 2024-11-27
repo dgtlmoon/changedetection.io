@@ -631,17 +631,17 @@ class model(watch_base):
             if index > 1 and os.path.isfile(filepath):
                 os.remove(filepath)
 
-
-    @property
-    def watch_recheck_is_within_schedule(self):
+    def watch_recheck_is_within_schedule(self, default_tz="UTC"):
         from datetime import datetime
 
         # Check if we are inside the time range
         time_schedule_limit = self.get('time_schedule_limit')
         if time_schedule_limit and time_schedule_limit.get('enabled'):
             # Get the timezone the time schedule is in, so we know what day it is there
-            tz_name = time_schedule_limit.get('timezone_offset','').strip()  # @todo if this is not set?
-            # @todo if not tz_name use system default
+            tz_name = time_schedule_limit.get('timezone_offset', '').strip()
+            if not tz_name:
+                tz_name = default_tz
+
             try:
                 now_day_name_in_tz = datetime.now(ZoneInfo(tz_name)).strftime('%A')
             except Exception as e:

@@ -15,7 +15,6 @@ from wtforms import (
     StringField,
     SubmitField,
     TextAreaField,
-    TimeField,
     fields,
     validators,
     widgets
@@ -167,11 +166,11 @@ class validateTimeZoneName(object):
     def __call__(self, form, field):
         from zoneinfo import available_timezones
         python_timezones = available_timezones()
-        if not field.data in python_timezones:
+        if field.data and field.data not in python_timezones:
             raise ValidationError("Not a valid timezone name")
 
 class ScheduleLimitDaySubForm(Form):
-    enabled = BooleanField("xxx", default=True)
+    enabled = BooleanField("not set", default=True)
     start_time = TimeStringField("Start At", default="00:00", render_kw={"placeholder": "HH:MM"}, validators=[validators.Optional()])
     duration = FormField(TimeDurationForm, label="Run duration")
 
@@ -188,7 +187,7 @@ class ScheduleLimitForm(Form):
 
     timezone_offset = StringField("Timezone to run in",
                                   render_kw={"list": "timezones", "placeholder": "Default"},
-                                  validators=[validateTimeZoneName(), validators.Optional()]
+                                  validators=[validateTimeZoneName()]
                                   )
     def __init__(
         self,
@@ -523,7 +522,7 @@ class commonSettingsForm(Form):
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     processor = RadioField( label=u"Processor - What do you want to achieve?", choices=processors.available_processors(), default="text_json_diff")
-    timezone = StringField("Timezone to run in", render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
+    timezone = StringField("Timezone to run in", render_kw={"list": "timezones", "placeholder": "Default"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")])
 
 
@@ -552,6 +551,7 @@ class processor_text_json_diff_form(commonSettingsForm):
     tags = StringTagUUID('Group tag', [validators.Optional()], default='')
 
     time_between_check = FormField(TimeBetweenCheckForm)
+
     time_schedule_limit = FormField(ScheduleLimitForm)
 
     time_between_check_use_default = BooleanField('Use global settings for time between check', default=False)
@@ -675,7 +675,7 @@ class DefaultUAInputForm(Form):
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     time_between_check = FormField(TimeBetweenCheckForm)
-    time_schedule_limit = FormField(ScheduleLimitForm)
+
     proxy = RadioField('Proxy')
     jitter_seconds = IntegerField('Random jitter seconds ± check',
                                   render_kw={"style": "width: 5em;"},

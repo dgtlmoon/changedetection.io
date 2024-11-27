@@ -1796,7 +1796,7 @@ def ticker_thread_check_time_launch_checks():
             # Check if we are inside the time range
             time_schedule_limit = watch.get('time_schedule_limit')
             if time_schedule_limit and time_schedule_limit.get('enabled'):
-                result = watch.watch_recheck_is_within_schedule
+                result = watch.watch_recheck_is_within_schedule(default_tz=datastore.data['settings']['application'].get('timezone', 'UTC'))
                 if not result:
                     logger.trace(f"{uuid} time scheduler - not within schedule skipping.")
                     continue
