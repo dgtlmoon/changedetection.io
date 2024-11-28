@@ -638,7 +638,7 @@ class model(watch_base):
         time_schedule_limit = self.get('time_schedule_limit')
         if time_schedule_limit and time_schedule_limit.get('enabled'):
             # Get the timezone the time schedule is in, so we know what day it is there
-            tz_name = time_schedule_limit.get('timezone_offset', '').strip()
+            tz_name = time_schedule_limit.get('timezone', '').strip()
             if not tz_name:
                 tz_name = default_tz
 

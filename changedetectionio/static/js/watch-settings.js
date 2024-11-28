@@ -80,9 +80,13 @@ function request_textpreview_update() {
 $(document).ready(function () {
 
     window.setInterval(function () {
-        if ($("#time_schedule_limit-timezone_offset").val().length) {
+        if ($("#time_schedule_limit-timezone").val().length) {
             document.getElementById('local-time-in-tz').textContent =
-                getTimeInTimezone($("#time_schedule_limit-timezone_offset").val());
+                getTimeInTimezone($("#time_schedule_limit-timezone").val());
+        } else {
+            // So maybe use what is in the placeholder (which will be the default settings)
+            document.getElementById('local-time-in-tz').textContent =
+                getTimeInTimezone($("#time_schedule_limit-timezone").attr('placeholder'));
         }
     }, 500);
 

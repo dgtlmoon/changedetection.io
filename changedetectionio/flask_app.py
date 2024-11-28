@@ -717,7 +717,8 @@ def changedetection_app(config=None, datastore_o=None):
 
         form = form_class(formdata=request.form if request.method == 'POST' else None,
                           data=default,
-                          extra_notification_tokens=default.extra_notification_token_values()
+                          extra_notification_tokens=default.extra_notification_token_values(),
+                          default_system_settings=datastore.data['settings']
                           )
 
         # For the form widget tag UUID back to "string name" for the field

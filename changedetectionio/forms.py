@@ -185,8 +185,8 @@ class ScheduleLimitForm(Form):
     saturday = FormField(ScheduleLimitDaySubForm, label="")
     sunday = FormField(ScheduleLimitDaySubForm, label="")
 
-    timezone_offset = StringField("Timezone to run in",
-                                  render_kw={"list": "timezones", "placeholder": "Default"},
+    timezone = StringField("Timezone to run in",
+                                  render_kw={"list": "timezones"},
                                   validators=[validateTimeZoneName()]
                                   )
     def __init__(
@@ -522,7 +522,7 @@ class commonSettingsForm(Form):
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     processor = RadioField( label=u"Processor - What do you want to achieve?", choices=processors.available_processors(), default="text_json_diff")
-    timezone = StringField("Timezone to run in", render_kw={"list": "timezones", "placeholder": "Default"}, validators=[validateTimeZoneName()])
+    timezone = StringField("Timezone to run in", render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")])
 
 
@@ -654,6 +654,23 @@ class processor_text_json_diff_form(commonSettingsForm):
                 result = False
 
         return result
+
+    def __init__(
+            self,
+            formdata=None,
+            obj=None,
+            prefix="",
+            data=None,
+            meta=None,
+            **kwargs,
+    ):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+
+        default_tz = kwargs.get('default_system_settings').get('application', {}).get('timezone')
+        if default_tz:
+            self.time_schedule_limit.form.timezone.render_kw['placeholder'] = default_tz
+
+
 
 class SingleExtraProxy(Form):
 
