@@ -125,8 +125,7 @@ def test_check_markup_include_filters_restriction(client, live_server, measure_m
 
 # Tests the whole stack works with the CSS Filter
 def test_check_multiple_filters(client, live_server, measure_memory_usage):
-    sleep_time_for_fetch_thread = 3
-
+    #live_server_setup(live_server)
     include_filters = "#blob-a\r\nxpath://*[contains(@id,'blob-b')]"
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
@@ -138,9 +137,6 @@ def test_check_multiple_filters(client, live_server, measure_memory_usage):
      </html>
     """)
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
-
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -149,7 +145,7 @@ def test_check_multiple_filters(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    time.sleep(1)
+    wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -165,7 +161,7 @@ def test_check_multiple_filters(client, live_server, measure_memory_usage):
     assert b"Updated watch." in res.data
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     res = client.get(
         url_for("preview_page", uuid="first"),

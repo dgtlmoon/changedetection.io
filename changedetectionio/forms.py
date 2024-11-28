@@ -128,8 +128,8 @@ class StringTagUUID(StringField):
         return 'error'
 
 class TimeDurationForm(Form):
-    hours = SelectField(choices=[(f"{i}", f"{i}") for i in range(0, 25)], default="24", validators=[])
-    minutes = SelectField(choices=[(f"{i}", f"{i}") for i in range(0, 60)], default="00", validators=[])
+    hours = SelectField(choices=[(f"{i}", f"{i}") for i in range(0, 25)], default="24",  validators=[validators.Optional()])
+    minutes = SelectField(choices=[(f"{i}", f"{i}") for i in range(0, 60)], default="00", validators=[validators.Optional()])
 
 class TimeStringField(Field):
     """
