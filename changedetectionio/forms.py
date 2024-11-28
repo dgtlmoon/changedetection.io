@@ -664,10 +664,10 @@ class processor_text_json_diff_form(commonSettingsForm):
             **kwargs,
     ):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
-
-        default_tz = kwargs.get('default_system_settings').get('application', {}).get('timezone')
-        if default_tz:
-            self.time_schedule_limit.form.timezone.render_kw['placeholder'] = default_tz
+        if kwargs and kwargs.get('default_system_settings'):
+            default_tz = kwargs.get('default_system_settings').get('application', {}).get('timezone')
+            if default_tz:
+                self.time_schedule_limit.form.timezone.render_kw['placeholder'] = default_tz
 
 
 
