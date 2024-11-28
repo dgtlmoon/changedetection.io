@@ -24,8 +24,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @introduction_blueprint.route("/", methods=['POST'])
     def index_post():
         form = forms.IntroductionSettings(formdata=request.form)
-        datastore.data['settings']['application']['timezone'] = form.data.get('default_timezone')
-        flash("Updated!")
-        return redirect(url_for("index"))
+
+        if form.validate():
+            datastore.data['settings']['application']['timezone'] = form.data.get('default_timezone')
+            flash("Updated!")
+            return redirect(url_for("index"))
+        else:
+            flash("The timezone not is not valid, enter a valid timezone name.", "error")
+            return redirect(url_for('introduction.index'))
 
     return introduction_blueprint
