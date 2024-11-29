@@ -12,6 +12,20 @@ function toggleOpacity(checkboxSelector, fieldSelector, inverted) {
     checkbox.addEventListener('change', updateOpacity);
 }
 
+function toggleVisibility(checkboxSelector, fieldSelector, inverted) {
+    const checkbox = document.querySelector(checkboxSelector);
+    const fields = document.querySelectorAll(fieldSelector);
+    function updateOpacity() {
+        const opacityValue = !checkbox.checked ? (inverted ? 'none' : 'block') : (inverted ? 'block' : 'none');
+        fields.forEach(field => {
+            field.style.display = opacityValue;
+        });
+    }
+    // Initial setup
+    updateOpacity();
+    checkbox.addEventListener('change', updateOpacity);
+}
+
 function getTimeInTimezone(timezone) {
     const now = new Date();
     const options = {
@@ -137,8 +151,8 @@ $(document).ready(function () {
         $('#notification-tokens-info').toggle();
     });
 
-    toggleOpacity('#time_between_check_use_default', '#time_between_check, #time-between-check-schedule', false);
-    toggleOpacity('#time_schedule_limit-enabled', '#day-wrapper', true)
+    toggleOpacity('#time_between_check_use_default', '#time-check-widget-wrapper, #time-between-check-schedule', false);
+    toggleVisibility('#time_schedule_limit-enabled', '#schedule-day-limits-wrapper', true)
 
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
     $("#text-preview-inner").css('max-height', (vh-300)+"px");

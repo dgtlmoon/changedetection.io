@@ -107,24 +107,28 @@
 
     </div>
     <br>
-<label>Schedule time limits</label><a data-template="business-hours" class="set-schedule pure-button button-secondary button-xsmall">Business hours</a>
-    <a data-template="weekend" class="set-schedule pure-button button-secondary button-xsmall">Weekends</a>
-    <a data-template="reset" class="set-schedule pure-button button-xsmall">Reset</a><br>
-    <br>
-    <ul id="day-wrapper">
-        {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
-            <li class="day-schedule" id="schedule-{{ day }}">
-               {{ render_nolabel_field(form.time_schedule_limit[day]) }}
-            </li>
-        {% endfor %}
-        <li id="timezone-info">
-            {{  render_field(form.time_schedule_limit.timezone) }} <span id="local-time-in-tz"></span>
-            <datalist id="timezones" style="display: none;">
-                {% for timezone in available_timezones %}
-                    <option value="{{ timezone }}">{{ timezone }}</option>
-                {% endfor %}
-            </datalist>
-        </li>
-    </ul>
+    <div id="schedule-day-limits-wrapper">
+        <label>Schedule time limits</label><a data-template="business-hours"
+                                              class="set-schedule pure-button button-secondary button-xsmall">Business
+        hours</a>
+        <a data-template="weekend" class="set-schedule pure-button button-secondary button-xsmall">Weekends</a>
+        <a data-template="reset" class="set-schedule pure-button button-xsmall">Reset</a><br>
+        <br>
 
+        <ul id="day-wrapper">
+            {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
+                <li class="day-schedule" id="schedule-{{ day }}">
+                    {{ render_nolabel_field(form.time_schedule_limit[day]) }}
+                </li>
+            {% endfor %}
+            <li id="timezone-info">
+                {{ render_field(form.time_schedule_limit.timezone) }} <span id="local-time-in-tz"></span>
+                <datalist id="timezones" style="display: none;">
+                    {% for timezone in available_timezones %}
+                        <option value="{{ timezone }}">{{ timezone }}</option>
+                    {% endfor %}
+                </datalist>
+            </li>
+        </ul>
+    </div>
 {% endmacro %}

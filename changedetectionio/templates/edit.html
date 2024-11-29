@@ -80,11 +80,15 @@
                     </div>
                     <div class="pure-control-group time-between-check border-fieldset">
 
-                        {{ render_field(form.time_between_check, class="time-check-widget") }}
+                        {{ render_checkbox_field(form.time_between_check_use_default, class="use-default-timecheck") }}
+                        <br>
+                        <div id="time-check-widget-wrapper">
+                            {{ render_field(form.time_between_check, class="time-check-widget") }}
 
-                        <span class="pure-form-message-inline">
-                         The interval/amount of time between each check.
-                        </span><br><br>
+                            <span class="pure-form-message-inline">
+                             The interval/amount of time between each check.
+                            </span>
+                        </div>
                         <div id="time-between-check-schedule">
                             <!-- Start Time and End Time -->
                             <div id="limit-between-time">
@@ -95,9 +99,7 @@
                          <a href="">More help and examples about using the scheduler</a>
                         </span>
 <br>
-                        <br>
-                        {{ render_checkbox_field(form.time_between_check_use_default, class="use-default-timecheck") }}
-                    </div>
+              </div>
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.extract_title_as_title) }}
                     </div>
