@@ -806,7 +806,18 @@ def changedetection_app(config=None, datastore_o=None):
             # But in the case something is added we should save straight away
             datastore.needs_write_urgent = True
 
-            if not datastore.data['watching'][uuid].get('paused'):
+            # Do not queue on edit if its not within the time range
+            # @todo connect with watch.get('time_between_check_use_default')
+            # @todo maybe it should never queue anyway on edit...
+            is_in_schedule = True
+            time_schedule_limit = datastore.data['watching'][uuid].get('time_schedule_limit')
+            if time_schedule_limit and time_schedule_limit.get('enabled'):
+                is_in_schedule = datastore.data['watching'][uuid].watch_recheck_is_within_schedule(
+                    default_tz=datastore.data['settings']['application'].get('timezone', 'UTC')
+                )
+
+
+            if not datastore.data['watching'][uuid].get('paused') and is_in_schedule:
                 # Queue the watch for immediate recheck, with a higher priority
                 update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
