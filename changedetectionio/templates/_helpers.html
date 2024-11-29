@@ -66,10 +66,6 @@
     .day-schedule *, .day-schedule select {
         display: inline-block;
     }
-    .day-schedule > div:nth-child(1) {
-        /* Hidden, doesnt work */
-        display: none;
-    }
     .day-schedule label[for^="time_schedule_limit-"][for$="-enabled"] {
         min-width: 6rem;
         font-weight: bold;
@@ -102,10 +98,6 @@
     <br>
 
     <div>
-        <span
-              style="">
-            .
-        </span>
         <span id="scheduler-icon-label" style="">
             {{ render_checkbox_field(form.time_schedule_limit.enabled) }}
             <div class="pure-form-message-inline">
@@ -121,8 +113,8 @@
     <br>
     <ul id="day-wrapper">
         {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
-            <li class="day-schedule">
-               {{ render_field(form.time_schedule_limit[day]) }}
+            <li class="day-schedule" id="schedule-{{ day }}">
+               {{ render_nolabel_field(form.time_schedule_limit[day]) }}
             </li>
         {% endfor %}
         <li id="timezone-info">
