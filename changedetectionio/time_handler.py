@@ -1,6 +1,5 @@
 from datetime import timedelta, datetime
 from enum import IntEnum
-from typing import Optional
 from zoneinfo import ZoneInfo
 
 class Weekday(IntEnum):
