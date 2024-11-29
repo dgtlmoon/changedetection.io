@@ -14,7 +14,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     test_url = url_for('test_random_content_endpoint', _external=True)
 
     # We use "Pacific/Kiritimati" because its the furthest +14 hours, so it might show up more interesting bugs
-
+    # The rest of the actual functionality should be covered in the unit-test  unit/test_scheduler.py
     #####################
     res = client.post(
         url_for("settings_page"),
