@@ -645,7 +645,8 @@ class model(watch_base):
             try:
                 now_day_name_in_tz = datetime.now(ZoneInfo(tz_name)).strftime('%A')
             except Exception as e:
-                logger.error(f"{self.get('uuid')} - Recheck scheduler, error handling timezone, check skipped - TZ name '{tz_name}' - {str(e)}")
+                logger.error(
+                    f"{self.get('uuid')} - Recheck scheduler, error handling timezone, check skipped - TZ name '{tz_name}' - {str(e)}")
                 return False
 
             selected_day_schedule = time_schedule_limit.get(now_day_name_in_tz.lower())
@@ -656,12 +657,10 @@ class model(watch_base):
             duration = selected_day_schedule.get('duration')
             selected_day_run_duration_m = int(duration.get('hours')) * 60 + int(duration.get('minutes'))
 
-            #@todo Also check to see if the previous day of the week applied
-
             is_valid = am_i_inside_time(day_of_week=now_day_name_in_tz,
-                                       time_str=selected_day_schedule['start_time'],
-                                       timezone_str=tz_name,
-                                       duration=selected_day_run_duration_m)
+                                        time_str=selected_day_schedule['start_time'],
+                                        timezone_str=tz_name,
+                                        duration=selected_day_run_duration_m)
 
             return is_valid
 

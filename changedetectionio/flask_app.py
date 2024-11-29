@@ -1795,11 +1795,12 @@ def ticker_thread_check_time_launch_checks():
             # Maybe make this a hook?
 
             # Check if we are inside the time range
+            # @todo connect with watch.get('time_between_check_use_default')
             time_schedule_limit = watch.get('time_schedule_limit')
             if time_schedule_limit and time_schedule_limit.get('enabled'):
                 result = watch.watch_recheck_is_within_schedule(default_tz=datastore.data['settings']['application'].get('timezone', 'UTC'))
                 if not result:
-                    logger.trace(f"{uuid} time scheduler - not within schedule skipping.")
+                    logger.debug(f"{uuid} time scheduler - not within schedule skipping.")
                     continue
 
             # If they supplied an individual entry minutes to threshold.
