@@ -1,12 +1,14 @@
 function toggleOpacity(checkboxSelector, fieldSelector, inverted) {
     const checkbox = document.querySelector(checkboxSelector);
     const fields = document.querySelectorAll(fieldSelector);
+
     function updateOpacity() {
         const opacityValue = !checkbox.checked ? (inverted ? 0.6 : 1) : (inverted ? 1 : 0.6);
         fields.forEach(field => {
             field.style.opacity = opacityValue;
         });
     }
+
     // Initial setup
     updateOpacity();
     checkbox.addEventListener('change', updateOpacity);
@@ -15,12 +17,14 @@ function toggleOpacity(checkboxSelector, fieldSelector, inverted) {
 function toggleVisibility(checkboxSelector, fieldSelector, inverted) {
     const checkbox = document.querySelector(checkboxSelector);
     const fields = document.querySelectorAll(fieldSelector);
+
     function updateOpacity() {
         const opacityValue = !checkbox.checked ? (inverted ? 'none' : 'block') : (inverted ? 'block' : 'none');
         fields.forEach(field => {
             field.style.display = opacityValue;
         });
     }
+
     // Initial setup
     updateOpacity();
     checkbox.addEventListener('change', updateOpacity);
@@ -43,7 +47,6 @@ function getTimeInTimezone(timezone) {
     const formatter = new Intl.DateTimeFormat('en-US', options);
     return formatter.format(now);
 }
-
 
 
 function request_textpreview_update() {
@@ -92,6 +95,8 @@ function request_textpreview_update() {
 
 
 $(document).ready(function () {
+    let exceedsLimit = false;
+    const warning_text = $("#timespan-warning")
 
     window.setInterval(function () {
         if ($("#time_schedule_limit-timezone").val().length) {
@@ -102,12 +107,39 @@ $(document).ready(function () {
             document.getElementById('local-time-in-tz').textContent =
                 getTimeInTimezone($("#time_schedule_limit-timezone").attr('placeholder'));
         }
+        let allOk = true;
+
+        $("li.day-schedule").each(function () {
+            const $schedule = $(this);
+            const $checkbox = $schedule.find("input[type='checkbox']");
+
+            if ($checkbox.is(":checked")) {
+                const timeValue = $schedule.find("input[type='time']").val();
+                const durationHours = parseInt($schedule.find("select[name*='-duration-hours']").val(), 10) || 0;
+                const durationMinutes = parseInt($schedule.find("select[name*='-duration-minutes']").val(), 10) || 0;
+
+                if (timeValue) {
+                    const [startHours, startMinutes] = timeValue.split(":").map(Number);
+                    const totalMinutes = (startHours * 60 + startMinutes) + (durationHours * 60 + durationMinutes);
+
+                    exceedsLimit = totalMinutes > 1440
+                    if (exceedsLimit) {
+                        allOk = false
+                    }
+                    $schedule.toggleClass("warning", exceedsLimit);
+                }
+            } else {
+                $schedule.toggleClass("warning", false);
+            }
+        });
+
+        warning_text.toggle(!allOk)
     }, 500);
 
     $('#time_schedule_limit-saturday, #time_schedule_limit-sunday').addClass("weekend-day")
 
-    $(document).on('click', '[data-template].set-schedule', function() {
-    // Get the value of the 'data-template' attribute
+    $(document).on('click', '[data-template].set-schedule', function () {
+        // Get the value of the 'data-template' attribute
 
         switch ($(this).attr('data-template')) {
             case 'business-hours':
@@ -138,7 +170,7 @@ $(document).ready(function () {
                 break;
         }
     });
-    
+
     $('#notification-setting-reset-to-default').click(function (e) {
         $('#notification_title').val('');
         $('#notification_body').val('');
@@ -155,8 +187,8 @@ $(document).ready(function () {
     toggleVisibility('#time_schedule_limit-enabled', '#schedule-day-limits-wrapper', true)
 
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
-    $("#text-preview-inner").css('max-height', (vh-300)+"px");
-    $("#text-preview-before-inner").css('max-height', (vh-300)+"px");
+    $("#text-preview-inner").css('max-height', (vh - 300) + "px");
+    $("#text-preview-before-inner").css('max-height', (vh - 300) + "px");
 
     $("#activate-text-preview").click(function (e) {
         $('body').toggleClass('preview-text-enabled')

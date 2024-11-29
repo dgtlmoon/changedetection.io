@@ -1811,7 +1811,7 @@ def ticker_thread_check_time_launch_checks():
             if time_schedule_limit and time_schedule_limit.get('enabled'):
                 result = watch.watch_recheck_is_within_schedule(default_tz=datastore.data['settings']['application'].get('timezone', 'UTC'))
                 if not result:
-                    logger.debug(f"{uuid} time scheduler - not within schedule skipping.")
+                    logger.trace(f"{uuid} Time scheduler - not within schedule skipping.")
                     continue
 
             # If they supplied an individual entry minutes to threshold.
