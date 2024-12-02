@@ -66,7 +66,8 @@
     .day-schedule *, .day-schedule select {
         display: inline-block;
     }
-    .day-schedule label[for^="time_schedule_limit-"][for$="-enabled"] {
+
+    .day-schedule label[for*="time_schedule_limit-"][for$="-enabled"] {
         min-width: 6rem;
         font-weight: bold;
     }
@@ -99,6 +100,9 @@
         vertical-align: middle;
         padding-left: 50px;
         background-image: url({{ url_for('static_content', group='images', filename='schedule.svg') }});
+    }
+    #timespan-warning {
+        display: none;
     }
     </style>
     <br>

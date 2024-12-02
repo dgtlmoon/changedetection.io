@@ -1,53 +1,3 @@
-function toggleOpacity(checkboxSelector, fieldSelector, inverted) {
-    const checkbox = document.querySelector(checkboxSelector);
-    const fields = document.querySelectorAll(fieldSelector);
-
-    function updateOpacity() {
-        const opacityValue = !checkbox.checked ? (inverted ? 0.6 : 1) : (inverted ? 1 : 0.6);
-        fields.forEach(field => {
-            field.style.opacity = opacityValue;
-        });
-    }
-
-    // Initial setup
-    updateOpacity();
-    checkbox.addEventListener('change', updateOpacity);
-}
-
-function toggleVisibility(checkboxSelector, fieldSelector, inverted) {
-    const checkbox = document.querySelector(checkboxSelector);
-    const fields = document.querySelectorAll(fieldSelector);
-
-    function updateOpacity() {
-        const opacityValue = !checkbox.checked ? (inverted ? 'none' : 'block') : (inverted ? 'block' : 'none');
-        fields.forEach(field => {
-            field.style.display = opacityValue;
-        });
-    }
-
-    // Initial setup
-    updateOpacity();
-    checkbox.addEventListener('change', updateOpacity);
-}
-
-function getTimeInTimezone(timezone) {
-    const now = new Date();
-    const options = {
-        timeZone: timezone,
-        weekday: 'long',
-        year: 'numeric',
-        hour12: false,
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-    };
-
-    const formatter = new Intl.DateTimeFormat('en-US', options);
-    return formatter.format(now);
-}
-
 
 function request_textpreview_update() {
     if (!$('body').hasClass('preview-text-enabled')) {
@@ -95,81 +45,6 @@ function request_textpreview_update() {
 
 
 $(document).ready(function () {
-    let exceedsLimit = false;
-    const warning_text = $("#timespan-warning")
-
-    window.setInterval(function () {
-        if ($("#time_schedule_limit-timezone").val().length) {
-            document.getElementById('local-time-in-tz').textContent =
-                getTimeInTimezone($("#time_schedule_limit-timezone").val());
-        } else {
-            // So maybe use what is in the placeholder (which will be the default settings)
-            document.getElementById('local-time-in-tz').textContent =
-                getTimeInTimezone($("#time_schedule_limit-timezone").attr('placeholder'));
-        }
-        let allOk = true;
-
-        $("li.day-schedule").each(function () {
-            const $schedule = $(this);
-            const $checkbox = $schedule.find("input[type='checkbox']");
-
-            if ($checkbox.is(":checked")) {
-                const timeValue = $schedule.find("input[type='time']").val();
-                const durationHours = parseInt($schedule.find("select[name*='-duration-hours']").val(), 10) || 0;
-                const durationMinutes = parseInt($schedule.find("select[name*='-duration-minutes']").val(), 10) || 0;
-
-                if (timeValue) {
-                    const [startHours, startMinutes] = timeValue.split(":").map(Number);
-                    const totalMinutes = (startHours * 60 + startMinutes) + (durationHours * 60 + durationMinutes);
-
-                    exceedsLimit = totalMinutes > 1440
-                    if (exceedsLimit) {
-                        allOk = false
-                    }
-                    $schedule.toggleClass("warning", exceedsLimit);
-                }
-            } else {
-                $schedule.toggleClass("warning", false);
-            }
-        });
-
-        warning_text.toggle(!allOk)
-    }, 500);
-
-    $('#time_schedule_limit-saturday, #time_schedule_limit-sunday').addClass("weekend-day")
-
-    $(document).on('click', '[data-template].set-schedule', function () {
-        // Get the value of the 'data-template' attribute
-
-        switch ($(this).attr('data-template')) {
-            case 'business-hours':
-                $('table:not(.weekend-day) input[type="time"]').val('09:00')
-                $('table:not(.weekend-day) select[id*="-duration-hours"]').val('8');
-                $('table:not(.weekend-day) select[id*="-duration-minutes"]').val('0');
-                $('input[id*="-enabled"]').prop('checked', true);
-                $('.weekend-day input[id*="-enabled"]').prop('checked', false);
-                break;
-            case 'weekend':
-                $('.weekend-day input[type="time"][id$="start-time"]').val('00:00')
-                $('.weekend-day select[id*="-duration-hours"]').val('24');
-                $('.weekend-day select[id*="-duration-minutes"]').val('0');
-                $('input[id*="-enabled"]').prop('checked', false);
-                $('.weekend-day input[id*="-enabled"]').prop('checked', true);
-                break;
-            case 'reset':
-                $('.day-schedule input[type="time"]').val('00:00')
-                $('.day-schedule select[id*="-duration-hours"]').val('24');
-                $('.day-schedule select[id*="-duration-minutes"]').val('0');
-                $('.day-schedule input[id*="-enabled"]').prop('checked', true);
-                break;
-            case 'once-per-day':
-                $('.day-schedule input[type="time"]').val('00:00')
-                $('.day-schedule select[id*="-duration-hours"]').val('24');
-                $('.day-schedule select[id*="-duration-minutes"]').val('0');
-                $('.day-schedule input[id*="-enabled"]').prop('checked', true);
-                break;
-        }
-    });
 
     $('#notification-setting-reset-to-default').click(function (e) {
         $('#notification_title').val('');
@@ -184,7 +59,7 @@ $(document).ready(function () {
     });
 
     toggleOpacity('#time_between_check_use_default', '#time-check-widget-wrapper, #time-between-check-schedule', false);
-    toggleVisibility('#time_schedule_limit-enabled', '#schedule-day-limits-wrapper', true)
+
 
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
     $("#text-preview-inner").css('max-height', (vh - 300) + "px");
