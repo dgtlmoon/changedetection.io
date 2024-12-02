@@ -869,6 +869,7 @@ def changedetection_app(config=None, datastore_o=None):
                 'jq_support': jq_support,
                 'playwright_enabled': os.getenv('PLAYWRIGHT_DRIVER_URL', False),
                 'settings_application': datastore.data['settings']['application'],
+                'timezone_default_config': datastore.data['settings']['application'].get('timezone'),
                 'using_global_webdriver_wait': not default['webdriver_delay'],
                 'uuid': uuid,
                 'visualselector_enabled': visualselector_enabled,
@@ -979,6 +980,7 @@ def changedetection_app(config=None, datastore_o=None):
                                  hide_remove_pass=os.getenv("SALTED_PASS", False),
                                  min_system_recheck_seconds=int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3)),
                                  settings_application=datastore.data['settings']['application'],
+                                 timezone_default_config=datastore.data['settings']['application'].get('timezone'),
                                  utc_time=utc_time,
                                  )
 
@@ -1652,9 +1654,6 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.backups as backups
     app.register_blueprint(backups.construct_blueprint(datastore), url_prefix='/backups')
-
-    import changedetectionio.blueprint.introduction as introduction
-    app.register_blueprint(introduction.construct_blueprint(datastore), url_prefix='/introduction')
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()

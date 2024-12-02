@@ -61,7 +61,7 @@
   {{ field(**kwargs)|safe }}
 {% endmacro %}
 
-{% macro render_time_schedule_form(form, available_timezones) %}
+{% macro render_time_schedule_form(form, available_timezones, timezone_default_config) %}
     <style>
     .day-schedule *, .day-schedule select {
         display: inline-block;
@@ -107,6 +107,7 @@
     </style>
     <br>
 
+    {% if timezone_default_config %}
     <div>
         <span id="scheduler-icon-label" style="">
             {{ render_checkbox_field(form.time_schedule_limit.enabled) }}
@@ -134,7 +135,7 @@
             <li id="timespan-warning">Warning, one or more of your 'days' has a duration that would extend into the next day.<br>
             This could have unintended consequences.</li>
             <li id="timezone-info">
-                {{ render_field(form.time_schedule_limit.timezone) }} <span id="local-time-in-tz"></span>
+                {{ render_field(form.time_schedule_limit.timezone, placeholder=timezone_default_config) }} <span id="local-time-in-tz"></span>
                 <datalist id="timezones" style="display: none;">
                     {% for timezone in available_timezones %}
                         <option value="{{ timezone }}">{{ timezone }}</option>
@@ -142,5 +143,16 @@
                 </datalist>
             </li>
         </ul>
+    <br>
+        <span class="pure-form-message-inline">
+         <a href="https://changedetection.io/tutorials">More help and examples about using the scheduler</a>
+        </span>
     </div>
+    {% else %}
+        <span class="pure-form-message-inline">
+            Want to use a time schedule? <a href="{{url_for('settings_page')}}#timedate">First confirm/save your Time Zone Settings</a>
+        </span>
+        <br>
+    {% endif %}
+
 {% endmacro %}

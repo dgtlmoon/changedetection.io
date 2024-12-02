@@ -185,7 +185,7 @@ class ScheduleLimitForm(Form):
     saturday = FormField(ScheduleLimitDaySubForm, label="")
     sunday = FormField(ScheduleLimitDaySubForm, label="")
 
-    timezone = StringField("Timezone to run in",
+    timezone = StringField("Optional timezone to run in",
                                   render_kw={"list": "timezones"},
                                   validators=[validateTimeZoneName()]
                                   )

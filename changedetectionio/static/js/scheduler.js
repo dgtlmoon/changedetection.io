@@ -20,11 +20,12 @@ $(document).ready(function () {
 
     let exceedsLimit = false;
     const warning_text = $("#timespan-warning")
-    const timezone_text_widget = $("input[id*='-time_schedule_limit-timezone']")
+    const timezone_text_widget = $("input[id*='time_schedule_limit-timezone']")
 
     toggleVisibility('#time_schedule_limit-enabled, #requests-time_schedule_limit-enabled', '#schedule-day-limits-wrapper', true)
 
-    window.setInterval(function () {
+    $('#schedule-day-limits-wrapper').on('change click blur', 'input, checkbox, select', function() {
+
         if (timezone_text_widget.val().length) {
             document.getElementById('local-time-in-tz').textContent =
                 getTimeInTimezone(timezone_text_widget.val());
