@@ -27,6 +27,9 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
 
     assert b"Settings updated." in res.data
 
+    res = client.get(url_for("settings_page"))
+    assert b'Pacific/Kiritimati' in res.data
+
     res = client.post(
         url_for("import_page"),
         data={"urls": test_url},
@@ -36,6 +39,8 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
     uuid = extract_UUID_from_client(client)
+
+    # Setup all the days of the weeks using XXX as the placeholder for monday/tuesday/etc
 
     tpl = {
         "time_schedule_limit-XXX-start_time": "00:00",
@@ -65,6 +70,10 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
+
+
+    res = client.get(url_for("edit_page", uuid="first"))
+    assert b"Pacific/Kiritimati" in res.data, "Should be Pacific/Kiritimati in placeholder data"
 
     # "Edit" should not trigger a check because it's not enabled in the schedule.
     time.sleep(2)
