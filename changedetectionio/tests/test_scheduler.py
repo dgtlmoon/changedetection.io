@@ -4,12 +4,13 @@ import time
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from flask import url_for
-from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, \
-    extract_UUID_from_client
+from .util import  live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
+def test_setup(client, live_server):
+    live_server_setup(live_server)
 
 def test_check_basic_scheduler_functionality(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
     days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
     test_url = url_for('test_random_content_endpoint', _external=True)
 
@@ -91,7 +92,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
 
 
 def test_check_basic_global_scheduler_functionality(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
     days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
     test_url = url_for('test_random_content_endpoint', _external=True)
 
