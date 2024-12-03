@@ -59,6 +59,65 @@ class watch_base(dict):
             'text_should_not_be_present': [],  # Text that should not present
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
             'time_between_check_use_default': True,
+            "time_schedule_limit": {
+                "enabled": False,
+                "monday": {
+                    "enabled": True,
+                    "start_time": "00:00",
+                    "duration": {
+                        "hours": "24",
+                        "minutes": "00"
+                    }
+                },
+                "tuesday": {
+                    "enabled": True,
+                    "start_time": "00:00",
+                    "duration": {
+                        "hours": "24",
+                        "minutes": "00"
+                    }
+                },
+                "wednesday": {
+                    "enabled": True,
+                    "start_time": "00:00",
+                    "duration": {
+                        "hours": "24",
+                        "minutes": "00"
+                    }
+                },
+                "thursday": {
+                    "enabled": True,
+                    "start_time": "00:00",
+                    "duration": {
+                        "hours": "24",
+                        "minutes": "00"
+                    }
+                },
+                "friday": {
+                    "enabled": True,
+                    "start_time": "00:00",
+                    "duration": {
+                        "hours": "24",
+                        "minutes": "00"
+                    }
+                },
+                "saturday": {
+                    "enabled": True,
+                    "start_time": "00:00",
+                    "duration": {
+                        "hours": "24",
+                        "minutes": "00"
+                    }
+                },
+                "sunday": {
+                    "enabled": True,
+                    "start_time": "00:00",
+                    "duration": {
+                        "hours": "24",
+                        "minutes": "00"
+                    }
+                },
+            },
             'title': None,
             'track_ldjson_price_data': None,
             'trim_text_whitespace': False,

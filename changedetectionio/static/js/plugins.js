@@ -160,3 +160,37 @@
         return requests[namespace];
     };
 })(jQuery);
+
+
+
+function toggleOpacity(checkboxSelector, fieldSelector, inverted) {
+    const checkbox = document.querySelector(checkboxSelector);
+    const fields = document.querySelectorAll(fieldSelector);
+
+    function updateOpacity() {
+        const opacityValue = !checkbox.checked ? (inverted ? 0.6 : 1) : (inverted ? 1 : 0.6);
+        fields.forEach(field => {
+            field.style.opacity = opacityValue;
+        });
+    }
+
+    // Initial setup
+    updateOpacity();
+    checkbox.addEventListener('change', updateOpacity);
+}
+
+function toggleVisibility(checkboxSelector, fieldSelector, inverted) {
+    const checkbox = document.querySelector(checkboxSelector);
+    const fields = document.querySelectorAll(fieldSelector);
+
+    function updateOpacity() {
+        const opacityValue = !checkbox.checked ? (inverted ? 'none' : 'block') : (inverted ? 'block' : 'none');
+        fields.forEach(field => {
+            field.style.display = opacityValue;
+        });
+    }
+
+    // Initial setup
+    updateOpacity();
+    checkbox.addEventListener('change', updateOpacity);
+}

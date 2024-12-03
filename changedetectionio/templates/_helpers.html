@@ -60,3 +60,99 @@
 {% macro render_button(field) %}
   {{ field(**kwargs)|safe }}
 {% endmacro %}
+
+{% macro render_time_schedule_form(form, available_timezones, timezone_default_config) %}
+    <style>
+    .day-schedule *, .day-schedule select {
+        display: inline-block;
+    }
+
+    .day-schedule label[for*="time_schedule_limit-"][for$="-enabled"] {
+        min-width: 6rem;
+        font-weight: bold;
+    }
+    .day-schedule label {
+        font-weight: normal;
+    }
+
+    .day-schedule table label {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    #timespan-warning {
+        color: #ff0000;
+    }
+    .day-schedule.warning table {
+        background-color: #ffbbc2;
+    }
+    ul#day-wrapper {
+        list-style: none;
+    }
+    #timezone-info > * {
+        display: inline-block;
+    }
+
+    #scheduler-icon-label {
+        background-position: left center;
+        background-repeat: no-repeat;
+        background-size: contain;
+        display: inline-block;
+        vertical-align: middle;
+        padding-left: 50px;
+        background-image: url({{ url_for('static_content', group='images', filename='schedule.svg') }});
+    }
+    #timespan-warning {
+        display: none;
+    }
+    </style>
+    <br>
+
+    {% if timezone_default_config %}
+    <div>
+        <span id="scheduler-icon-label" style="">
+            {{ render_checkbox_field(form.time_schedule_limit.enabled) }}
+            <div class="pure-form-message-inline">
+                Set a hourly/week day schedule
+            </div>
+        </span>
+
+    </div>
+    <br>
+    <div id="schedule-day-limits-wrapper">
+        <label>Schedule time limits</label><a data-template="business-hours"
+                                              class="set-schedule pure-button button-secondary button-xsmall">Business
+        hours</a>
+        <a data-template="weekend" class="set-schedule pure-button button-secondary button-xsmall">Weekends</a>
+        <a data-template="reset" class="set-schedule pure-button button-xsmall">Reset</a><br>
+        <br>
+
+        <ul id="day-wrapper">
+            {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
+                <li class="day-schedule" id="schedule-{{ day }}">
+                    {{ render_nolabel_field(form.time_schedule_limit[day]) }}
+                </li>
+            {% endfor %}
+            <li id="timespan-warning">Warning, one or more of your 'days' has a duration that would extend into the next day.<br>
+            This could have unintended consequences.</li>
+            <li id="timezone-info">
+                {{ render_field(form.time_schedule_limit.timezone, placeholder=timezone_default_config) }} <span id="local-time-in-tz"></span>
+                <datalist id="timezones" style="display: none;">
+                    {% for timezone in available_timezones %}
+                        <option value="{{ timezone }}">{{ timezone }}</option>
+                    {% endfor %}
+                </datalist>
+            </li>
+        </ul>
+    <br>
+        <span class="pure-form-message-inline">
+         <a href="https://changedetection.io/tutorials">More help and examples about using the scheduler</a>
+        </span>
+    </div>
+    {% else %}
+        <span class="pure-form-message-inline">
+            Want to use a time schedule? <a href="{{url_for('settings_page')}}#timedate">First confirm/save your Time Zone Settings</a>
+        </span>
+        <br>
+    {% endif %}
+
+{% endmacro %}

@@ -1,12 +1,14 @@
 import os
 import re
 from loguru import logger
+from wtforms.widgets.core import TimeInput
 
 from changedetectionio.strtobool import strtobool
 
 from wtforms import (
     BooleanField,
     Form,
+    Field,
     IntegerField,
     RadioField,
     SelectField,
@@ -124,6 +126,87 @@ class StringTagUUID(StringField):
             return ''
 
         return 'error'
+
+class TimeDurationForm(Form):
+    hours = SelectField(choices=[(f"{i}", f"{i}") for i in range(0, 25)], default="24",  validators=[validators.Optional()])
+    minutes = SelectField(choices=[(f"{i}", f"{i}") for i in range(0, 60)], default="00", validators=[validators.Optional()])
+
+class TimeStringField(Field):
+    """
+    A WTForms field for time inputs (HH:MM) that stores the value as a string.
+    """
+    widget = TimeInput()  # Use the built-in time input widget
+
+    def _value(self):
+        """
+        Returns the value for rendering in the form.
+        """
+        return self.data if self.data is not None else ""
+
+    def process_formdata(self, valuelist):
+        """
+        Processes the raw input from the form and stores it as a string.
+        """
+        if valuelist:
+            time_str = valuelist[0]
+            # Simple validation for HH:MM format
+            if not time_str or len(time_str.split(":")) != 2:
+                raise ValidationError("Invalid time format. Use HH:MM.")
+            self.data = time_str
+
+
+class validateTimeZoneName(object):
+    """
+       Flask wtform validators wont work with basic auth
+    """
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        from zoneinfo import available_timezones
+        python_timezones = available_timezones()
+        if field.data and field.data not in python_timezones:
+            raise ValidationError("Not a valid timezone name")
+
+class ScheduleLimitDaySubForm(Form):
+    enabled = BooleanField("not set", default=True)
+    start_time = TimeStringField("Start At", default="00:00", render_kw={"placeholder": "HH:MM"}, validators=[validators.Optional()])
+    duration = FormField(TimeDurationForm, label="Run duration")
+
+class ScheduleLimitForm(Form):
+    enabled = BooleanField("Use time scheduler", default=False)
+    # Because the label for=""" doesnt line up/work with the actual checkbox
+    monday = FormField(ScheduleLimitDaySubForm, label="")
+    tuesday = FormField(ScheduleLimitDaySubForm, label="")
+    wednesday = FormField(ScheduleLimitDaySubForm, label="")
+    thursday = FormField(ScheduleLimitDaySubForm, label="")
+    friday = FormField(ScheduleLimitDaySubForm, label="")
+    saturday = FormField(ScheduleLimitDaySubForm, label="")
+    sunday = FormField(ScheduleLimitDaySubForm, label="")
+
+    timezone = StringField("Optional timezone to run in",
+                                  render_kw={"list": "timezones"},
+                                  validators=[validateTimeZoneName()]
+                                  )
+    def __init__(
+        self,
+        formdata=None,
+        obj=None,
+        prefix="",
+        data=None,
+        meta=None,
+        **kwargs,
+    ):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        self.monday.form.enabled.label.text="Monday"
+        self.tuesday.form.enabled.label.text = "Tuesday"
+        self.wednesday.form.enabled.label.text = "Wednesday"
+        self.thursday.form.enabled.label.text = "Thursday"
+        self.friday.form.enabled.label.text = "Friday"
+        self.saturday.form.enabled.label.text = "Saturday"
+        self.sunday.form.enabled.label.text = "Sunday"
+
 
 class TimeBetweenCheckForm(Form):
     weeks = IntegerField('Weeks', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
@@ -278,6 +361,7 @@ class validateURL(object):
     def __call__(self, form, field):
         # This should raise a ValidationError() or not
         validate_url(field.data)
+
 
 def validate_url(test_url):
     # If hosts that only contain alphanumerics are allowed ("localhost" for example)
@@ -438,6 +522,7 @@ class commonSettingsForm(Form):
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     processor = RadioField( label=u"Processor - What do you want to achieve?", choices=processors.available_processors(), default="text_json_diff")
+    timezone = StringField("Timezone for watch schedule", render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")])
 
 
@@ -447,7 +532,6 @@ class importForm(Form):
     urls = TextAreaField('URLs')
     xlsx_file = FileField('Upload .xlsx file', validators=[FileAllowed(['xlsx'], 'Must be .xlsx file!')])
     file_mapping = SelectField('File mapping', [validators.DataRequired()], choices={('wachete', 'Wachete mapping'), ('custom','Custom mapping')})
-
 
 class SingleBrowserStep(Form):
 
@@ -466,6 +550,9 @@ class processor_text_json_diff_form(commonSettingsForm):
     tags = StringTagUUID('Group tag', [validators.Optional()], default='')
 
     time_between_check = FormField(TimeBetweenCheckForm)
+
+    time_schedule_limit = FormField(ScheduleLimitForm)
+
     time_between_check_use_default = BooleanField('Use global settings for time between check', default=False)
 
     include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
@@ -567,6 +654,23 @@ class processor_text_json_diff_form(commonSettingsForm):
 
         return result
 
+    def __init__(
+            self,
+            formdata=None,
+            obj=None,
+            prefix="",
+            data=None,
+            meta=None,
+            **kwargs,
+    ):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        if kwargs and kwargs.get('default_system_settings'):
+            default_tz = kwargs.get('default_system_settings').get('application', {}).get('timezone')
+            if default_tz:
+                self.time_schedule_limit.form.timezone.render_kw['placeholder'] = default_tz
+
+
+
 class SingleExtraProxy(Form):
 
     # maybe better to set some <script>var..
@@ -587,6 +691,7 @@ class DefaultUAInputForm(Form):
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     time_between_check = FormField(TimeBetweenCheckForm)
+    time_schedule_limit = FormField(ScheduleLimitForm)
     proxy = RadioField('Proxy')
     jitter_seconds = IntegerField('Random jitter seconds ± check',
                                   render_kw={"style": "width: 5em;"},

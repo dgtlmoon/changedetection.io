@@ -340,7 +340,6 @@ class model(watch_base):
         return snapshot_fname
 
     @property
-    @property
     def has_empty_checktime(self):
         # using all() + dictionary comprehension
         # Check if all values are 0 in dictionary

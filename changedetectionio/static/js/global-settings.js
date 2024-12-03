@@ -24,8 +24,18 @@ $(document).ready(function () {
         $(target).toggle();
     });
 
+    // Time zone config related
     $(".local-time").each(function (e) {
         $(this).text(new Date($(this).data("utc")).toLocaleString());
     })
+
+    const timezoneInput = $('#application-timezone');
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    if (!timezoneInput.val().trim()) {
+        timezoneInput.val(timezone);
+        timezoneInput.after('<div class="timezone-message">The timezone was set from your browser, <strong>be sure to press save!</strong></div>');
+    }
+
 });
 

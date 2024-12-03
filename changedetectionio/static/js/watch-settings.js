@@ -1,17 +1,3 @@
-function toggleOpacity(checkboxSelector, fieldSelector, inverted) {
-    const checkbox = document.querySelector(checkboxSelector);
-    const fields = document.querySelectorAll(fieldSelector);
-    function updateOpacity() {
-        const opacityValue = !checkbox.checked ? (inverted ? 0.6 : 1) : (inverted ? 1 : 0.6);
-        fields.forEach(field => {
-            field.style.opacity = opacityValue;
-        });
-    }
-    // Initial setup
-    updateOpacity();
-    checkbox.addEventListener('change', updateOpacity);
-}
-
 
 function request_textpreview_update() {
     if (!$('body').hasClass('preview-text-enabled')) {
@@ -57,7 +43,9 @@ function request_textpreview_update() {
     })
 }
 
+
 $(document).ready(function () {
+
     $('#notification-setting-reset-to-default').click(function (e) {
         $('#notification_title').val('');
         $('#notification_body').val('');
@@ -70,11 +58,12 @@ $(document).ready(function () {
         $('#notification-tokens-info').toggle();
     });
 
-    toggleOpacity('#time_between_check_use_default', '#time_between_check', false);
+    toggleOpacity('#time_between_check_use_default', '#time-check-widget-wrapper, #time-between-check-schedule', false);
+
 
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
-    $("#text-preview-inner").css('max-height', (vh-300)+"px");
-    $("#text-preview-before-inner").css('max-height', (vh-300)+"px");
+    $("#text-preview-inner").css('max-height', (vh - 300) + "px");
+    $("#text-preview-before-inner").css('max-height', (vh - 300) + "px");
 
     $("#activate-text-preview").click(function (e) {
         $('body').toggleClass('preview-text-enabled')
