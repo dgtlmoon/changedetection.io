@@ -43,6 +43,7 @@ from loguru import logger
 from changedetectionio import html_tools, __version__
 from changedetectionio import queuedWatchMetaData
 from changedetectionio.api import api_v1
+from .time_handler import is_within_schedule
 
 datastore = None
 
@@ -807,16 +808,31 @@ def changedetection_app(config=None, datastore_o=None):
             datastore.needs_write_urgent = True
 
             # Do not queue on edit if its not within the time range
-            # @todo connect with watch.get('time_between_check_use_default')
+
             # @todo maybe it should never queue anyway on edit...
             is_in_schedule = True
-            time_schedule_limit = datastore.data['watching'][uuid].get('time_schedule_limit')
+            watch = datastore.data['watching'].get(uuid)
+
+            if watch.get('time_between_check_use_default'):
+                time_schedule_limit = datastore.data['settings']['requests'].get('time_schedule_limit', {})
+            else:
+                time_schedule_limit = watch.get('time_schedule_limit')
+
+            tz_name = time_schedule_limit.get('timezone')
+            if not tz_name:
+                tz_name =  datastore.data['settings']['application'].get('timezone', 'UTC')
+
             if time_schedule_limit and time_schedule_limit.get('enabled'):
-                is_in_schedule = datastore.data['watching'][uuid].watch_recheck_is_within_schedule(
-                    default_tz=datastore.data['settings']['application'].get('timezone', 'UTC')
-                )
+                try:
+                    is_in_schedule = is_within_schedule(time_schedule_limit=time_schedule_limit,
+                                                        default_tz=tz_name
+                                                        )
+                except Exception as e:
+                    logger.error(
+                        f"{uuid} - Recheck scheduler, error handling timezone, check skipped - TZ name '{tz_name}' - {str(e)}")
+                    return False
 
-
+            #############################
             if not datastore.data['watching'][uuid].get('paused') and is_in_schedule:
                 # Queue the watch for immediate recheck, with a higher priority
                 update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
@@ -1801,18 +1817,28 @@ def ticker_thread_check_time_launch_checks():
             if watch['paused']:
                 continue
 
+            # @todo - Maybe make this a hook?
+            # Time schedule limit - Decide between watch or global settings
+            if watch.get('time_between_check_use_default'):
+                time_schedule_limit = datastore.data['settings']['requests'].get('time_schedule_limit', {})
+                logger.trace(f"{uuid} Time scheduler - Using system/global settings")
+            else:
+                time_schedule_limit = watch.get('time_schedule_limit')
+                logger.trace(f"{uuid} Time scheduler - Using watch settings (not global settings)")
+            tz_name = datastore.data['settings']['application'].get('timezone', 'UTC')
 
-            # Maybe make this a hook?
-
-            # Check if we are inside the time range
-            # @todo connect with watch.get('time_between_check_use_default')
-            time_schedule_limit = watch.get('time_schedule_limit')
             if time_schedule_limit and time_schedule_limit.get('enabled'):
-                result = watch.watch_recheck_is_within_schedule(default_tz=datastore.data['settings']['application'].get('timezone', 'UTC'))
-                if not result:
-                    logger.trace(f"{uuid} Time scheduler - not within schedule skipping.")
-                    continue
-
+                try:
+                    result = is_within_schedule(time_schedule_limit=time_schedule_limit,
+                                                default_tz=tz_name
+                                                )
+                    if not result:
+                        logger.trace(f"{uuid} Time scheduler - not within schedule skipping.")
+                        continue
+                except Exception as e:
+                    logger.error(
+                        f"{uuid} - Recheck scheduler, error handling timezone, check skipped - TZ name '{tz_name}' - {str(e)}")
+                    return False
             # If they supplied an individual entry minutes to threshold.
             threshold = recheck_time_system_seconds if watch.get('time_between_check_use_default') else watch.threshold_seconds()
 
