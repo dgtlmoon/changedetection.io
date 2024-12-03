@@ -184,7 +184,7 @@ $(document).ready(function () {
             }
 
 
-        }.debounce(10));
+        }.debounce(100));
     });
 
 //    $("#browser-steps-fieldlist").bind('mouseover', function(e) {
@@ -345,7 +345,7 @@ $(document).ready(function () {
 
         var elem_to_remove = $("#browser_steps li")[p];
         $('.clear', elem_to_remove).click();
-        $("#browser_steps li").slice(p, 10).each(function (index) {
+        $("#browser_steps li").slice(p, 100).each(function (index) {
             // get the next one's value from where we clicked
             var next = $("#browser_steps li")[p + index + 1];
             if (next) {
