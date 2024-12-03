@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import datetime
+from zoneinfo import ZoneInfo
 
 import flask_login
 import locale
@@ -42,6 +43,7 @@ from loguru import logger
 from changedetectionio import html_tools, __version__
 from changedetectionio import queuedWatchMetaData
 from changedetectionio.api import api_v1
+from .time_handler import is_within_schedule
 
 datastore = None
 
@@ -53,6 +55,7 @@ extra_stylesheets = []
 
 update_q = queue.PriorityQueue()
 notification_q = queue.Queue()
+MAX_QUEUE_SIZE = 2000
 
 app = Flask(__name__,
             static_url_path="",
@@ -83,7 +86,7 @@ csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log=[]
 
-# get locale ready
+# Locale for correct presentation of prices etc
 default_locale = locale.getdefaultlocale()
 logger.info(f"System locale default is {default_locale}")
 try:
@@ -715,7 +718,8 @@ def changedetection_app(config=None, datastore_o=None):
 
         form = form_class(formdata=request.form if request.method == 'POST' else None,
                           data=default,
-                          extra_notification_tokens=default.extra_notification_token_values()
+                          extra_notification_tokens=default.extra_notification_token_values(),
+                          default_system_settings=datastore.data['settings']
                           )
 
         # For the form widget tag UUID back to "string name" for the field
@@ -803,7 +807,33 @@ def changedetection_app(config=None, datastore_o=None):
             # But in the case something is added we should save straight away
             datastore.needs_write_urgent = True
 
-            if not datastore.data['watching'][uuid].get('paused'):
+            # Do not queue on edit if its not within the time range
+
+            # @todo maybe it should never queue anyway on edit...
+            is_in_schedule = True
+            watch = datastore.data['watching'].get(uuid)
+
+            if watch.get('time_between_check_use_default'):
+                time_schedule_limit = datastore.data['settings']['requests'].get('time_schedule_limit', {})
+            else:
+                time_schedule_limit = watch.get('time_schedule_limit')
+
+            tz_name = time_schedule_limit.get('timezone')
+            if not tz_name:
+                tz_name =  datastore.data['settings']['application'].get('timezone', 'UTC')
+
+            if time_schedule_limit and time_schedule_limit.get('enabled'):
+                try:
+                    is_in_schedule = is_within_schedule(time_schedule_limit=time_schedule_limit,
+                                                        default_tz=tz_name
+                                                        )
+                except Exception as e:
+                    logger.error(
+                        f"{uuid} - Recheck scheduler, error handling timezone, check skipped - TZ name '{tz_name}' - {str(e)}")
+                    return False
+
+            #############################
+            if not datastore.data['watching'][uuid].get('paused') and is_in_schedule:
                 # Queue the watch for immediate recheck, with a higher priority
                 update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
@@ -835,15 +865,18 @@ def changedetection_app(config=None, datastore_o=None):
             if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
                 is_html_webdriver = True
 
+            from zoneinfo import available_timezones
+
             # Only works reliably with Playwright
             visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and is_html_webdriver
             template_args = {
                 'available_processors': processors.available_processors(),
+                'available_timezones': sorted(available_timezones()),
                 'browser_steps_config': browser_step_ui_config,
                 'emailprefix': os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
-                'extra_title': f" - Edit - {watch.label}",
-                'extra_processor_config': form.extra_tab_content(),
                 'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
+                'extra_processor_config': form.extra_tab_content(),
+                'extra_title': f" - Edit - {watch.label}",
                 'form': form,
                 'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,
                 'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
@@ -852,6 +885,7 @@ def changedetection_app(config=None, datastore_o=None):
                 'jq_support': jq_support,
                 'playwright_enabled': os.getenv('PLAYWRIGHT_DRIVER_URL', False),
                 'settings_application': datastore.data['settings']['application'],
+                'timezone_default_config': datastore.data['settings']['application'].get('timezone'),
                 'using_global_webdriver_wait': not default['webdriver_delay'],
                 'uuid': uuid,
                 'visualselector_enabled': visualselector_enabled,
@@ -881,6 +915,8 @@ def changedetection_app(config=None, datastore_o=None):
     @login_optionally_required
     def settings_page():
         from changedetectionio import forms
+        from datetime import datetime
+        from zoneinfo import available_timezones
 
         default = deepcopy(datastore.data['settings'])
         if datastore.proxy_list is not None:
@@ -948,14 +984,20 @@ def changedetection_app(config=None, datastore_o=None):
             else:
                 flash("An error occurred, please see below.", "error")
 
+        # Convert to ISO 8601 format, all date/time relative events stored as UTC time
+        utc_time = datetime.now(ZoneInfo("UTC")).isoformat()
+
         output = render_template("settings.html",
                                  api_key=datastore.data['settings']['application'].get('api_access_token'),
+                                 available_timezones=sorted(available_timezones()),
                                  emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                  extra_notification_token_placeholder_info=datastore.get_unique_notification_token_placeholders_available(),
                                  form=form,
                                  hide_remove_pass=os.getenv("SALTED_PASS", False),
                                  min_system_recheck_seconds=int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3)),
-                                 settings_application=datastore.data['settings']['application']
+                                 settings_application=datastore.data['settings']['application'],
+                                 timezone_default_config=datastore.data['settings']['application'].get('timezone'),
+                                 utc_time=utc_time,
                                  )
 
         return output
@@ -1268,12 +1310,23 @@ def changedetection_app(config=None, datastore_o=None):
 
             # These files should be in our subdirectory
             try:
-                # set nocache, set content-type
-                response = make_response(send_from_directory(os.path.join(datastore_o.datastore_path, filename), "elements.json"))
-                response.headers['Content-type'] = 'application/json'
-                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-                response.headers['Pragma'] = 'no-cache'
-                response.headers['Expires'] = 0
+                # set nocache, set content-type,
+                # `filename` is actually directory UUID of the watch
+                watch_directory = str(os.path.join(datastore_o.datastore_path, filename))
+                response = None
+                if os.path.isfile(os.path.join(watch_directory, "elements.deflate")):
+                    response = make_response(send_from_directory(watch_directory, "elements.deflate"))
+                    response.headers['Content-Type'] = 'application/json'
+                    response.headers['Content-Encoding'] = 'deflate'
+                else:
+                    logger.error(f'Request elements.deflate at "{watch_directory}" but was notfound.')
+                    abort(404)
+
+                if response:
+                    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                    response.headers['Pragma'] = 'no-cache'
+                    response.headers['Expires'] = "0"
+
                 return response
 
             except FileNotFoundError:
@@ -1618,13 +1671,12 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.backups as backups
     app.register_blueprint(backups.construct_blueprint(datastore), url_prefix='/backups')
 
-
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
     threading.Thread(target=notification_runner).start()
 
     # Check for new release version, but not when running in test/build or pytest
-    if not os.getenv("GITHUB_REF", False) and not config.get('disable_checkver') == True:
+    if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')):
         threading.Thread(target=check_for_new_version).start()
 
     return app
@@ -1708,7 +1760,6 @@ def notification_runner():
 def ticker_thread_check_time_launch_checks():
     import random
     from changedetectionio import update_worker
-
     proxy_last_called_time = {}
 
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
@@ -1742,12 +1793,14 @@ def ticker_thread_check_time_launch_checks():
             except RuntimeError as e:
                 # RuntimeError: dictionary changed size during iteration
                 time.sleep(0.1)
+                watch_uuid_list = []
             else:
                 break
 
         # Re #438 - Don't place more watches in the queue to be checked if the queue is already large
         while update_q.qsize() >= 2000:
-            time.sleep(1)
+            logger.warning(f"Recheck watches queue size limit reached ({MAX_QUEUE_SIZE}), skipping adding more items")
+            time.sleep(3)
 
 
         recheck_time_system_seconds = int(datastore.threshold_seconds)
@@ -1764,6 +1817,28 @@ def ticker_thread_check_time_launch_checks():
             if watch['paused']:
                 continue
 
+            # @todo - Maybe make this a hook?
+            # Time schedule limit - Decide between watch or global settings
+            if watch.get('time_between_check_use_default'):
+                time_schedule_limit = datastore.data['settings']['requests'].get('time_schedule_limit', {})
+                logger.trace(f"{uuid} Time scheduler - Using system/global settings")
+            else:
+                time_schedule_limit = watch.get('time_schedule_limit')
+                logger.trace(f"{uuid} Time scheduler - Using watch settings (not global settings)")
+            tz_name = datastore.data['settings']['application'].get('timezone', 'UTC')
+
+            if time_schedule_limit and time_schedule_limit.get('enabled'):
+                try:
+                    result = is_within_schedule(time_schedule_limit=time_schedule_limit,
+                                                default_tz=tz_name
+                                                )
+                    if not result:
+                        logger.trace(f"{uuid} Time scheduler - not within schedule skipping.")
+                        continue
+                except Exception as e:
+                    logger.error(
+                        f"{uuid} - Recheck scheduler, error handling timezone, check skipped - TZ name '{tz_name}' - {str(e)}")
+                    return False
             # If they supplied an individual entry minutes to threshold.
             threshold = recheck_time_system_seconds if watch.get('time_between_check_use_default') else watch.threshold_seconds()
 

@@ -32,7 +32,7 @@ RUN pip install --extra-index-url https://www.piwheels.org/simple  --target=/dep
 # Playwright is an alternative to Selenium
 # Excluded this package from requirements.txt to prevent arm/v6 and arm/v7 builds from failing
 # https://github.com/dgtlmoon/changedetection.io/pull/1067 also musl/alpine (not supported)
-RUN pip install --target=/dependencies playwright~=1.41.2 \
+RUN pip install --target=/dependencies playwright~=1.48.0 \
     || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
 
 # Final image stage

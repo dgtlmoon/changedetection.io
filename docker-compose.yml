@@ -61,6 +61,12 @@ services:
   #
   #        If you want to watch local files file:///path/to/file.txt (careful! security implications!)
   #      - ALLOW_FILE_URI=False
+  #
+  #        For complete privacy if you don't want to use the 'check version' / telemetry service
+  #      - DISABLE_VERSION_CHECK=true
+  #
+  #        A valid timezone name to run as (for scheduling watch checking) see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  #      - TZ=America/Los_Angeles
   
       # Comment out ports: when using behind a reverse proxy , enable networks: etc.
       ports:
@@ -74,7 +80,7 @@ services:
      # If WEBDRIVER or PLAYWRIGHT are enabled, changedetection container depends on that
      # and must wait before starting (substitute "browser-chrome" with "playwright-chrome" if last one is used)
 #      depends_on:
-#          playwright-chrome:
+#          sockpuppetbrowser:
 #              condition: service_started
 
 

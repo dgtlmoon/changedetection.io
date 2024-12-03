@@ -1,7 +1,7 @@
 # Used by Pyppeteer
 pyee
 
-eventlet>=0.36.1 # fixes SSL error on Python 3.12
+eventlet>=0.38.0
 feedgen~=0.9
 flask-compress
 # 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)
@@ -38,9 +38,8 @@ dnspython==2.6.1 # related to eventlet fixes
 apprise==1.9.0
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
-# and 2.0.0 https://github.com/dgtlmoon/changedetection.io/issues/2241 not yet compatible
-# use v1.x due to https://github.com/eclipse/paho.mqtt.python/issues/814
-paho-mqtt>=1.6.1,<2.0.0
+# use any version other than 2.0.x due to https://github.com/eclipse/paho.mqtt.python/issues/814
+paho-mqtt!=2.0.*
 
 # Requires extra wheel for rPi
 cryptography~=42.0.8
@@ -95,5 +94,4 @@ babel
 
 # Needed for > 3.10, https://github.com/microsoft/playwright-python/issues/2096
 greenlet >= 3.0.3
-
 

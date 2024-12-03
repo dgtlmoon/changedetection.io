@@ -52,7 +52,8 @@ class model(dict):
                     'schema_version' : 0,
                     'shared_diff_access': False,
                     'webdriver_delay': None , # Extra delay in seconds before extracting text
-                    'tags': {} #@todo use Tag.model initialisers
+                    'tags': {}, #@todo use Tag.model initialisers
+                    'timezone': None, # Default IANA timezone name
                 }
             }
         }

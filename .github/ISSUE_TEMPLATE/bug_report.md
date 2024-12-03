@@ -27,6 +27,10 @@ A clear and concise description of what the bug is.
 **Version**
 *Exact version* in the top right area: 0....
 
+**How did you install?**
+
+Docker, Pip, from source directly etc
+
 **To Reproduce**
 
 Steps to reproduce the behavior:
