@@ -24,16 +24,28 @@ $(document).ready(function () {
 
     toggleVisibility('#time_schedule_limit-enabled, #requests-time_schedule_limit-enabled', '#schedule-day-limits-wrapper', true)
 
+    setInterval(() => {
+        let success = true;
+        try {
+            // Show the current local time according to either placeholder or entered TZ name
+            if (timezone_text_widget.val().length) {
+                $('#local-time-in-tz').text(getTimeInTimezone(timezone_text_widget.val()));
+            } else {
+                // So maybe use what is in the placeholder (which will be the default settings)
+                $('#local-time-in-tz').text(getTimeInTimezone(timezone_text_widget.attr('placeholder')));
+            }
+        } catch (error) {
+            success = false;
+            $('#local-time-in-tz').text("");
+            console.error(timezone_text_widget.val())
+        }
+
+        $(timezone_text_widget).toggleClass('error', !success);
+
+    }, 500);
+
     $('#schedule-day-limits-wrapper').on('change click blur', 'input, checkbox, select', function() {
 
-        if (timezone_text_widget.val().length) {
-            document.getElementById('local-time-in-tz').textContent =
-                getTimeInTimezone(timezone_text_widget.val());
-        } else {
-            // So maybe use what is in the placeholder (which will be the default settings)
-            document.getElementById('local-time-in-tz').textContent =
-                getTimeInTimezone(timezone_text_widget.attr('placeholder'));
-        }
         let allOk = true;
 
         // Controls setting the warning that the time could overlap into the next day
@@ -63,14 +75,13 @@ $(document).ready(function () {
         });
 
         warning_text.toggle(!allOk)
-    }, 500);
+    });
 
     $('table[id*="time_schedule_limit-saturday"], table[id*="time_schedule_limit-sunday"]').addClass("weekend-day")
 
     // Presets [weekend] [business hours] etc
     $(document).on('click', '[data-template].set-schedule', function () {
         // Get the value of the 'data-template' attribute
-
         switch ($(this).attr('data-template')) {
             case 'business-hours':
                 $('.day-schedule table:not(.weekend-day) input[type="time"]').val('09:00')
@@ -87,16 +98,11 @@ $(document).ready(function () {
                 $('.day-schedule .weekend-day input[id*="-enabled"]').prop('checked', true);
                 break;
             case 'reset':
-                $('.day-schedule .day-schedule input[type="time"]').val('00:00')
-                $('.day-schedule .day-schedule select[id*="-duration-hours"]').val('24');
-                $('.day-schedule .day-schedule select[id*="-duration-minutes"]').val('0');
-                $('.day-schedule .day-schedule input[id*="-enabled"]').prop('checked', true);
-                break;
-            case 'once-per-day':
-                $('.day-schedule .day-schedule input[type="time"]').val('00:00')
-                $('.day-schedule .day-schedule select[id*="-duration-hours"]').val('24');
-                $('.day-schedule .day-schedule select[id*="-duration-minutes"]').val('0');
-                $('.day-schedule .day-schedule input[id*="-enabled"]').prop('checked', true);
+
+                $('.day-schedule input[type="time"]').val('00:00')
+                $('.day-schedule select[id*="-duration-hours"]').val('24');
+                $('.day-schedule select[id*="-duration-minutes"]').val('0');
+                $('.day-schedule input[id*="-enabled"]').prop('checked', true);
                 break;
         }
     });

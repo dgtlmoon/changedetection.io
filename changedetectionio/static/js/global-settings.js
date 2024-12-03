@@ -30,11 +30,12 @@ $(document).ready(function () {
     })
 
     const timezoneInput = $('#application-timezone');
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    if (!timezoneInput.val().trim()) {
-        timezoneInput.val(timezone);
-        timezoneInput.after('<div class="timezone-message">The timezone was set from your browser, <strong>be sure to press save!</strong></div>');
+    if(timezoneInput.length) {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (!timezoneInput.val().trim()) {
+            timezoneInput.val(timezone);
+            timezoneInput.after('<div class="timezone-message">The timezone was set from your browser, <strong>be sure to press save!</strong></div>');
+        }
     }
 
 });
