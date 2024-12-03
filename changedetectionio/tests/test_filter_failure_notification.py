@@ -1,7 +1,7 @@
 import os
 import time
 from loguru import logger
-from flask import url_for
+from flask import url_for, g
 from .util import set_original_response, live_server_setup, extract_UUID_from_client, wait_for_all_checks, \
     wait_for_notification_endpoint_output
 from changedetectionio.model import App
@@ -53,7 +53,7 @@ def run_filter_test(client, live_server, content_filter):
 
     uuid = extract_UUID_from_client(client)
 
-    assert live_server.app.config['DATASTORE'].data['watching'][uuid]['consecutive_filter_failures'] == 0, "No filter = No filter failure"
+    assert g.datastore.data['watching'][uuid]['consecutive_filter_failures'] == 0, "No filter = No filter failure"
 
     watch_data = {"notification_urls": notification_url,
                   "notification_title": "New ChangeDetection.io Notification - {{watch_url}}",
@@ -86,7 +86,7 @@ def run_filter_test(client, live_server, content_filter):
     )
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
-    assert live_server.app.config['DATASTORE'].data['watching'][uuid]['consecutive_filter_failures'] == 0, "No filter = No filter failure"
+    assert g.datastore.data['watching'][uuid]['consecutive_filter_failures'] == 0, "No filter = No filter failure"
 
     # Now add a filter, because recheck hours == 5, ONLY pressing of the [edit] or [recheck all] should trigger
     watch_data['include_filters'] = content_filter
@@ -103,12 +103,12 @@ def run_filter_test(client, live_server, content_filter):
     assert not os.path.isfile("test-datastore/notification.txt")
 
     # Hitting [save] would have triggered a recheck, and we have a filter, so this would be ONE failure
-    assert live_server.app.config['DATASTORE'].data['watching'][uuid]['consecutive_filter_failures'] == 1, "Should have been checked once"
+    assert g.datastore.data['watching'][uuid]['consecutive_filter_failures'] == 1, "Should have been checked once"
 
     # recheck it up to just before the threshold, including the fact that in the previous POST it would have rechecked (and incremented)
     # Add 4 more checks
     checked = 0
-    ATTEMPT_THRESHOLD_SETTING = live_server.app.config['DATASTORE'].data['settings']['application'].get('filter_failure_notification_threshold_attempts', 0)
+    ATTEMPT_THRESHOLD_SETTING = g.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts', 0)
     for i in range(0, ATTEMPT_THRESHOLD_SETTING - 2):
         checked += 1
         client.get(url_for("form_watch_checknow"), follow_redirects=True)
@@ -118,7 +118,7 @@ def run_filter_test(client, live_server, content_filter):
         assert not os.path.isfile("test-datastore/notification.txt")
         time.sleep(1)
         
-    assert live_server.app.config['DATASTORE'].data['watching'][uuid]['consecutive_filter_failures'] == 5
+    assert g.datastore.data['watching'][uuid]['consecutive_filter_failures'] == 5
 
     time.sleep(2)
     # One more check should trigger the _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT threshold

@@ -23,7 +23,9 @@ from feedgen.feed import FeedGenerator
 from flask import (
     Flask,
     abort,
+    current_app,
     flash,
+    g,
     make_response,
     redirect,
     render_template,
@@ -45,8 +47,6 @@ from changedetectionio import queuedWatchMetaData
 from changedetectionio.api import api_v1
 from .time_handler import is_within_schedule
 
-datastore = None
-
 # Local
 running_update_threads = []
 ticker_thread = None
@@ -57,44 +57,14 @@ update_q = queue.PriorityQueue()
 notification_q = queue.Queue()
 MAX_QUEUE_SIZE = 2000
 
-app = Flask(__name__,
-            static_url_path="",
-            static_folder="static",
-            template_folder="templates")
-
-# Enable CORS, especially useful for the Chrome extension to operate from anywhere
-CORS(app)
-
-# Super handy for compressing large BrowserSteps responses and others
-FlaskCompress(app)
-
-# Stop browser caching of assets
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-app.config.exit = Event()
-
-app.config['NEW_VERSION_AVAILABLE'] = False
-
-if os.getenv('FLASK_SERVER_NAME'):
-    app.config['SERVER_NAME'] = os.getenv('FLASK_SERVER_NAME')
-
-#app.config["EXPLAIN_TEMPLATE_LOADING"] = True
-
-# Disables caching of the templates
-app.config['TEMPLATES_AUTO_RELOAD'] = True
-app.jinja_env.add_extension('jinja2.ext.loopcontrols')
-csrf = CSRFProtect()
-csrf.init_app(app)
-notification_debug_log=[]
-
-# Locale for correct presentation of prices etc
-default_locale = locale.getdefaultlocale()
-logger.info(f"System locale default is {default_locale}")
-try:
-    locale.setlocale(locale.LC_ALL, default_locale)
-except locale.Error:
-    logger.warning(f"Unable to set locale {default_locale}, locale is not installed maybe?")
-
-watch_api = Api(app, decorators=[csrf.exempt])
+def setup_locale():
+    # get locale ready
+    default_locale = locale.getdefaultlocale()
+    logger.info(f"System locale default is {default_locale}")
+    try:
+        locale.setlocale(locale.LC_ALL, default_locale)
+    except locale.Error:
+        logger.warning(f"Unable to set locale {default_locale}, locale is not installed maybe?")
 
 def init_app_secret(datastore_path):
     secret = ""
@@ -112,61 +82,6 @@ def init_app_secret(datastore_path):
             f.write(secret)
 
     return secret
-
-
-@app.template_global()
-def get_darkmode_state():
-    css_dark_mode = request.cookies.get('css_dark_mode', 'false')
-    return 'true' if css_dark_mode and strtobool(css_dark_mode) else 'false'
-
-@app.template_global()
-def get_css_version():
-    return __version__
-
-@app.template_filter('format_number_locale')
-def _jinja2_filter_format_number_locale(value: float) -> str:
-    "Formats for example 4000.10 to the local locale default of 4,000.10"
-    # Format the number with two decimal places (locale format string will return 6 decimal)
-    formatted_value = locale.format_string("%.2f", value, grouping=True)
-
-    return formatted_value
-
-# We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
-# running or something similar.
-@app.template_filter('format_last_checked_time')
-def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
-    # Worker thread tells us which UUID it is currently processing.
-    for t in running_update_threads:
-        if t.current_uuid == watch_obj['uuid']:
-            return '<span class="spinner"></span><span> Checking now</span>'
-
-    if watch_obj['last_checked'] == 0:
-        return 'Not yet'
-
-    return timeago.format(int(watch_obj['last_checked']), time.time())
-
-@app.template_filter('format_timestamp_timeago')
-def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
-    if not timestamp:
-        return 'Not yet'
-
-    return timeago.format(int(timestamp), time.time())
-
-
-@app.template_filter('pagination_slice')
-def _jinja2_filter_pagination_slice(arr, skip):
-    per_page = datastore.data['settings']['application'].get('pager_size', 50)
-    if per_page:
-        return arr[skip:skip + per_page]
-
-    return arr
-
-@app.template_filter('format_seconds_ago')
-def _jinja2_filter_seconds_precise(timestamp):
-    if timestamp == False:
-        return 'Not yet'
-
-    return format(int(time.time()-timestamp), ',d')
 
 # When nobody is logged in Flask-Login's current_user is set to an AnonymousUser object.
 class User(flask_login.UserMixin):
@@ -186,7 +101,7 @@ class User(flask_login.UserMixin):
         return str(self.id)
 
     # Compare given password against JSON store or Env var
-    def check_password(self, password):
+    def check_password(self, password, *, datastore):
         import base64
         import hashlib
 
@@ -216,39 +131,64 @@ def login_optionally_required(func):
     @wraps(func)
     def decorated_view(*args, **kwargs):
 
-        has_password_enabled = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
+        has_password_enabled = g.datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
 
         # Permitted
-        if request.endpoint == 'static_content' and request.view_args['group'] == 'styles':
+        if request.endpoint == 'static_content' and request.view_args and request.view_args['group'] == 'styles':
             return func(*args, **kwargs)
         # Permitted
-        elif request.endpoint == 'diff_history_page' and datastore.data['settings']['application'].get('shared_diff_access'):
+        elif request.endpoint == 'diff_history_page' and g.datastore.data['settings']['application'].get('shared_diff_access'):
             return func(*args, **kwargs)
         elif request.method in flask_login.config.EXEMPT_METHODS:
             return func(*args, **kwargs)
-        elif app.config.get('LOGIN_DISABLED'):
+        elif current_app.config.get('LOGIN_DISABLED'):
             return func(*args, **kwargs)
         elif has_password_enabled and not current_user.is_authenticated:
-            return app.login_manager.unauthorized()
+            return current_app.login_manager.unauthorized()
 
         return func(*args, **kwargs)
 
     return decorated_view
 
-def changedetection_app(config=None, datastore_o=None):
+def changedetection_app(config, datastore):
     logger.trace("TRACE log is enabled")
 
-    global datastore
-    datastore = datastore_o
+    app = Flask(__name__,
+                static_url_path="",
+                static_folder="static",
+                template_folder="templates")
 
-    # so far just for read-only via tests, but this will be moved eventually to be the main source
-    # (instead of the global var)
-    app.config['DATASTORE'] = datastore_o
+    # Enable CORS, especially useful for the Chrome extension to operate from anywhere
+    CORS(app)
+
+    # Super handy for compressing large BrowserSteps responses and others
+    FlaskCompress(app)
+
+    # Stop browser caching of assets
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+    exit_event = Event()
+    app.config.exit = exit_event
+
+    app.config['NEW_VERSION_AVAILABLE'] = False
+
+    if os.getenv('FLASK_SERVER_NAME'):
+        app.config['SERVER_NAME'] = os.getenv('FLASK_SERVER_NAME')
+
+    #app.config["EXPLAIN_TEMPLATE_LOADING"] = True
+
+    # Disables caching of the templates
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
+    app.jinja_env.add_extension('jinja2.ext.loopcontrols')
+    csrf = CSRFProtect()
+    csrf.init_app(app)
+    
+    app.config["notification_debug_log"] = []
 
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
     app.secret_key = init_app_secret(config['datastore_path'])
 
+    watch_api = Api(app, decorators=[csrf.exempt])
 
     watch_api.add_resource(api_v1.WatchSingleHistory,
                            '/api/v1/watch/<string:uuid>/history/<string:timestamp>',
@@ -271,12 +211,61 @@ def changedetection_app(config=None, datastore_o=None):
                            '/api/v1/import',
                            resource_class_kwargs={'datastore': datastore})
 
-    # Setup cors headers to allow all domains
-    # https://flask-cors.readthedocs.io/en/latest/
-    #    CORS(app)
+    # Flask Templates
+    @app.template_global()
+    def get_darkmode_state():
+        css_dark_mode = request.cookies.get('css_dark_mode', 'false')
+        return 'true' if css_dark_mode and strtobool(css_dark_mode) else 'false'
 
+    @app.template_global()
+    def get_css_version():
+        return __version__
 
+    @app.template_filter('format_number_locale')
+    def _jinja2_filter_format_number_locale(value: float) -> str:
+        "Formats for example 4000.10 to the local locale default of 4,000.10"
+        # Format the number with two decimal places (locale format string will return 6 decimal)
+        formatted_value = locale.format_string("%.2f", value, grouping=True)
 
+        return formatted_value
+
+    # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
+    # running or something similar.
+    @app.template_filter('format_last_checked_time')
+    def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
+        # Worker thread tells us which UUID it is currently processing.
+        for t in running_update_threads:
+            if t.current_uuid == watch_obj['uuid']:
+                return '<span class="spinner"></span><span> Checking now</span>'
+
+        if watch_obj['last_checked'] == 0:
+            return 'Not yet'
+
+        return timeago.format(int(watch_obj['last_checked']), time.time())
+
+    @app.template_filter('format_timestamp_timeago')
+    def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
+        if not timestamp:
+            return 'Not yet'
+
+        return timeago.format(int(timestamp), time.time())
+
+    @app.template_filter('pagination_slice')
+    def _jinja2_filter_pagination_slice(arr, skip):
+        per_page = datastore.data['settings']['application'].get('pager_size', 50)
+        if per_page:
+            return arr[skip:skip + per_page]
+
+        return arr
+
+    @app.template_filter('format_seconds_ago')
+    def _jinja2_filter_seconds_precise(timestamp):
+        if timestamp == False:
+            return 'Not yet'
+
+        return format(int(time.time()-timestamp), ',d')
+
+    # Login Manager
     @login_manager.user_loader
     def user_loader(email):
         user = User()
@@ -311,7 +300,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         password = request.form.get('password')
 
-        if (user.check_password(password)):
+        if (user.check_password(password, datastore=datastore)):
             flask_login.login_user(user, remember=True)
 
             # For now there's nothing else interesting here other than the index/list page
@@ -332,6 +321,10 @@ def changedetection_app(config=None, datastore_o=None):
         return redirect(url_for('login'))
 
     @app.before_request
+    def remember_app_and_datastore():
+        g.datastore = datastore
+
+    @app.before_request
     def before_request_handle_cookie_x_settings():
         # Set the auth cookie path if we're running as X-settings/X-Forwarded-Prefix
         if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Prefix' in request.headers:
@@ -344,7 +337,7 @@ def changedetection_app(config=None, datastore_o=None):
     def rss():
         now = time.time()
         # Always requires token set
-        app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
+        app_rss_token = g.datastore.data['settings']['application'].get('rss_access_token')
         rss_url_token = request.args.get('token')
         if rss_url_token != app_rss_token:
             return "Access denied, bad token", 403
@@ -429,7 +422,6 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/", methods=['GET'])
     @login_optionally_required
     def index():
-        global datastore
         from changedetectionio import forms
 
         active_tag_req = request.args.get('tag', '').lower().strip()
@@ -800,7 +792,7 @@ def changedetection_app(config=None, datastore_o=None):
 
             # Recast it if need be to right data Watch handler
             watch_class = get_custom_watch_obj_for_processor(form.data.get('processor'))
-            datastore.data['watching'][uuid] = watch_class(datastore_path=datastore_o.datastore_path, default=datastore.data['watching'][uuid])
+            datastore.data['watching'][uuid] = watch_class(datastore_path=datastore.datastore_path, default=datastore.data['watching'][uuid])
             flash("Updated watch - unpaused!" if request.args.get('unpause_on_save') else "Updated watch.")
 
             # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
@@ -1117,7 +1109,7 @@ def changedetection_app(config=None, datastore_o=None):
                 extract_regex = request.form.get('extract_regex').strip()
                 output = watch.extract_regex_from_all_history(extract_regex)
                 if output:
-                    watch_dir = os.path.join(datastore_o.datastore_path, uuid)
+                    watch_dir = os.path.join(datastore.datastore_path, uuid)
                     response = make_response(send_from_directory(directory=watch_dir, path=output, as_attachment=True))
                     response.headers['Content-type'] = 'text/csv'
                     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
@@ -1272,7 +1264,8 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/settings/notification-logs", methods=['GET'])
     @login_optionally_required
     def notification_logs():
-        global notification_debug_log
+        notification_debug_log = app.config["notification_debug_log"]
+
         output = render_template("notification-log.html",
                                  logs=notification_debug_log if len(notification_debug_log) else ["Notification logs are empty - no notifications sent yet."])
 
@@ -1292,7 +1285,7 @@ def changedetection_app(config=None, datastore_o=None):
             # These files should be in our subdirectory
             try:
                 # set nocache, set content-type
-                response = make_response(send_from_directory(os.path.join(datastore_o.datastore_path, filename), screenshot_filename))
+                response = make_response(send_from_directory(os.path.join(datastore.datastore_path, filename), screenshot_filename))
                 response.headers['Content-type'] = 'image/png'
                 response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
                 response.headers['Pragma'] = 'no-cache'
@@ -1312,7 +1305,7 @@ def changedetection_app(config=None, datastore_o=None):
             try:
                 # set nocache, set content-type,
                 # `filename` is actually directory UUID of the watch
-                watch_directory = str(os.path.join(datastore_o.datastore_path, filename))
+                watch_directory = str(os.path.join(datastore.datastore_path, filename))
                 response = None
                 if os.path.isfile(os.path.join(watch_directory, "elements.deflate")):
                     response = make_response(send_from_directory(watch_directory, "elements.deflate"))
@@ -1372,7 +1365,6 @@ def changedetection_app(config=None, datastore_o=None):
         from .processors.text_json_diff import prepare_filter_prevew
         return prepare_filter_prevew(watch_uuid=uuid, datastore=datastore)
 
-
     @app.route("/form/add/quickwatch", methods=['POST'])
     @login_optionally_required
     def form_quick_watch_add():
@@ -1402,8 +1394,6 @@ def changedetection_app(config=None, datastore_o=None):
                 flash("Watch added.")
 
         return redirect(url_for('index'))
-
-
 
     @app.route("/api/delete", methods=['GET'])
     @login_optionally_required
@@ -1672,25 +1662,25 @@ def changedetection_app(config=None, datastore_o=None):
     app.register_blueprint(backups.construct_blueprint(datastore), url_prefix='/backups')
 
     # @todo handle ctrl break
-    ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
-    threading.Thread(target=notification_runner).start()
+    threading.Thread(target=ticker_thread_check_time_launch_checks, kwargs={'app': app, 'datastore': datastore, 'exit_event': exit_event}).start()
+    threading.Thread(target=notification_runner, kwargs={'app': app, 'datastore': datastore, 'exit_event': exit_event}).start()
 
     # Check for new release version, but not when running in test/build or pytest
     if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')):
-        threading.Thread(target=check_for_new_version).start()
+        threading.Thread(target=check_for_new_version, kwargs={'app': app, 'datastore': datastore, 'exit_event': exit_event}).start()
 
     return app
 
 
 # Check for new version and anonymous stats
-def check_for_new_version():
+def check_for_new_version(*, app, datastore, exit_event, url="https://changedetection.io/check-ver.php", delay_time=86400):
     import requests
     import urllib3
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-    while not app.config.exit.is_set():
+    while not exit_event.is_set():
         try:
-            r = requests.post("https://changedetection.io/check-ver.php",
+            r = requests.post(url,
                               data={'version': __version__,
                                     'app_guid': datastore.data['app_guid'],
                                     'watch_count': len(datastore.data['watching'])
@@ -1707,14 +1697,13 @@ def check_for_new_version():
             pass
 
         # Check daily
-        app.config.exit.wait(86400)
+        exit_event.wait(delay_time)
 
 
-def notification_runner():
-    global notification_debug_log
+def notification_runner(*, app, datastore, exit_event):
     from datetime import datetime
     import json
-    while not app.config.exit.is_set():
+    while not exit_event.is_set():
         try:
             # At the moment only one thread runs (single runner)
             n_object = notification_q.get(block=False)
@@ -1725,6 +1714,8 @@ def notification_runner():
 
             now = datetime.now()
             sent_obj = None
+
+            notification_debug_log = app.config["notification_debug_log"]
 
             try:
                 from changedetectionio import notification
@@ -1757,9 +1748,10 @@ def notification_runner():
             notification_debug_log = notification_debug_log[-100:]
 
 # Threaded runner, look for new watches to feed into the Queue.
-def ticker_thread_check_time_launch_checks():
+def ticker_thread_check_time_launch_checks(*, app, datastore, exit_event):
     import random
     from changedetectionio import update_worker
+
     proxy_last_called_time = {}
 
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
@@ -1773,7 +1765,7 @@ def ticker_thread_check_time_launch_checks():
         running_update_threads.append(new_worker)
         new_worker.start()
 
-    while not app.config.exit.is_set():
+    while not exit_event.is_set():
 
         # Get a list of watches by UUID that are currently fetching data
         running_uuids = []
@@ -1891,4 +1883,4 @@ def ticker_thread_check_time_launch_checks():
         time.sleep(1)
 
         # Should be low so we can break this out in testing
-        app.config.exit.wait(1)
+        exit_event.wait(1)

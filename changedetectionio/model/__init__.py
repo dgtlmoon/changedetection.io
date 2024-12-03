@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from changedetectionio import strtobool
+from changedetectionio.strtobool import strtobool
 from changedetectionio.notification import default_notification_format_for_watch
 
 class watch_base(dict):

@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from flask import url_for
+from flask import url_for, g
 from . util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
 def test_setup(live_server):
@@ -73,13 +73,13 @@ def test_headers_in_request(client, live_server, measure_memory_usage):
 
     # Re #137 -  It should have only one set of headers entered
     watches_with_headers = 0
-    for k, watch in client.application.config.get('DATASTORE').data.get('watching').items():
+    for k, watch in g.datastore.data.get('watching').items():
             if (len(watch['headers'])):
                 watches_with_headers += 1
     assert watches_with_headers == 1
 
     # 'server' http header was automatically recorded
-    for k, watch in client.application.config.get('DATASTORE').data.get('watching').items():
+    for k, watch in g.datastore.data.get('watching').items():
         assert 'custom' in watch.get('remote_server_reply') # added in util.py
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import time
-from flask import url_for
+from flask import url_for, g
 from .util import live_server_setup, extract_UUID_from_client, extract_api_key_from_UI, wait_for_all_checks
 
 
@@ -154,7 +154,7 @@ def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
 
-    for k,v in client.application.config.get('DATASTORE').data['watching'].items():
+    for k,v in g.datastore.data['watching'].items():
         assert v.get('last_error') == False
         assert v.get('has_ldjson_price_data') == has_ldjson_price_data, f"Detected LDJSON data? should be {has_ldjson_price_data}"
 
