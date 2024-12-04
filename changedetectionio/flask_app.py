@@ -841,7 +841,7 @@ def changedetection_app(config=None, datastore_o=None):
             if request.args.get("next") and request.args.get("next") == 'diff':
                 return redirect(url_for('diff_history_page', uuid=uuid))
 
-            return redirect(url_for('index'))
+            return redirect(url_for('index', tag=request.args.get("tag",'')))
 
         else:
             if request.method == 'POST' and not form.validate():
@@ -1395,13 +1395,13 @@ def changedetection_app(config=None, datastore_o=None):
         if new_uuid:
             if add_paused:
                 flash('Watch added in Paused state, saving will unpause.')
-                return redirect(url_for('edit_page', uuid=new_uuid, unpause_on_save=1))
+                return redirect(url_for('edit_page', uuid=new_uuid, unpause_on_save=1, tag=request.args.get('tag')))
             else:
                 # Straight into the queue.
                 update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
                 flash("Watch added.")
 
-        return redirect(url_for('index'))
+        return redirect(url_for('index', tag=request.args.get('tag','')))
 
 
 
