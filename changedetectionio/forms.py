@@ -308,8 +308,12 @@ class ValidateAppRiseServers(object):
         # so that the custom endpoints are registered
         from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
         for server_url in field.data:
-            if not apobj.add(server_url):
-                message = field.gettext('\'%s\' is not a valid AppRise URL.' % (server_url))
+            url = server_url.strip()
+            if url.startswith("#"):
+                continue
+
+            if not apobj.add(url):
+                message = field.gettext('\'%s\' is not a valid AppRise URL.' % (url))
                 raise ValidationError(message)
 
 class ValidateJinja2Template(object):
