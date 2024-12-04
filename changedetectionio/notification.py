@@ -79,6 +79,10 @@ def process_notification(n_object, datastore):
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
 
             url = url.strip()
+            if url.startswith('#'):
+                logger.trace(f"Skipping commented out notification URL - {url}")
+                continue
+
             if not url:
                 logger.warning(f"Process Notification: skipping empty notification URL.")
                 continue
