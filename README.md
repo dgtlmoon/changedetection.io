@@ -105,6 +105,15 @@ We [recommend and use Bright Data](https://brightdata.grsm.io/n0r16zf7eivq) glob
 
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
 
+### Schedule web page watches in any timezone, limit by day of week and time.
+
+Easily set a re-check schedule, for example you could limit the web page change detection to only operate during business hours.
+Or perhaps based on a foreign timezone (for example, you want to check for the latest news-headlines in a foreign country at 0900 AM),
+
+<img src="./docs/scheduler.png" style="max-width:80%;" alt="How to monitor web page changes according to a schedule"  title="How to monitor web page changes according to a schedule"  />
+
+Includes quick short-cut buttons to setup a schedule for **business hours only**, or **weekends**.
+
 ### We have a Chrome extension!
 
 Easily add the current web page to your changedetection.io tool, simply install the extension and click "Sync" to connect it to your existing changedetection.io install.
