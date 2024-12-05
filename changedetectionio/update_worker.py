@@ -469,6 +469,16 @@ class update_worker(threading.Thread):
                                                                            'last_check_status': e.status_code,
                                                                            'has_ldjson_price_data': None})
                         process_changedetection_results = False
+                    except content_fetchers_exceptions.PaginatedContentMisconfigured as e:
+                        err_text = "Paginated content fetching is not configured properly. Did you fill in all fields?"
+
+                        if e.screenshot:
+                            watch.save_screenshot(screenshot=e.screenshot, as_error=True)
+
+                        self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                           'last_check_status': e.status_code,
+                                                                           'has_ldjson_price_data': None})
+                        process_changedetection_results = False
                     except content_fetchers_exceptions.BrowserStepsInUnsupportedFetcher as e:
                         err_text = "This watch has Browser Steps configured and so it cannot run with the 'Basic fast Plaintext/HTTP Client', either remove the Browser Steps or select a Chrome fetcher."
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
