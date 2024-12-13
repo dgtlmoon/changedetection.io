@@ -12,11 +12,12 @@ def customSequenceMatcher(
     include_removed: bool = True,
     include_added: bool = True,
     include_replaced: bool = True,
-    include_change_type_prefix: bool = True
+    include_change_type_prefix: bool = True,
+    html_colour: bool = False
 ) -> Iterator[List[str]]:
     """
     Compare two sequences and yield differences based on specified parameters.
-    
+
     Args:
         before (List[str]): Original sequence
         after (List[str]): Modified sequence
@@ -25,26 +26,33 @@ def customSequenceMatcher(
         include_added (bool): Include added parts
         include_replaced (bool): Include replaced parts
         include_change_type_prefix (bool): Add prefixes to indicate change types
-    
+        html_colour (bool): Use HTML background colors for differences
+
     Yields:
         List[str]: Differences between sequences
     """
     cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \t", a=before, b=after)
-    
+
     for tag, alo, ahi, blo, bhi in cruncher.get_opcodes():
         if include_equal and tag == 'equal':
             yield before[alo:ahi]
         elif include_removed and tag == 'delete':
-            prefix = "(removed) " if include_change_type_prefix else ''
-            yield [f"{prefix}{line}" for line in same_slicer(before, alo, ahi)]
+            if html_colour:
+                yield [f'<span style="background-color: #ffcecb;">{line}</span>' for line in same_slicer(before, alo, ahi)]
+            else:
+                yield [f"(removed) {line}" for line in same_slicer(before, alo, ahi)] if include_change_type_prefix else same_slicer(before, alo, ahi)
         elif include_replaced and tag == 'replace':
-            prefix_changed = "(changed) " if include_change_type_prefix else ''
-            prefix_into = "(into) " if include_change_type_prefix else ''
-            yield [f"{prefix_changed}{line}" for line in same_slicer(before, alo, ahi)] + \
-                  [f"{prefix_into}{line}" for line in same_slicer(after, blo, bhi)]
+            if html_colour:
+                yield [f'<span style="background-color: #ffcecb;">{line}</span>' for line in same_slicer(before, alo, ahi)] + \
+                      [f'<span style="background-color: #dafbe1;">{line}</span>' for line in same_slicer(after, blo, bhi)]
+            else:
+                yield [f"(changed) {line}" for line in same_slicer(before, alo, ahi)] + \
+                      [f"(into) {line}" for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(before, alo, ahi) + same_slicer(after, blo, bhi)
         elif include_added and tag == 'insert':
-            prefix = "(added) " if include_change_type_prefix else ''
-            yield [f"{prefix}{line}" for line in same_slicer(after, blo, bhi)]
+            if html_colour:
+                yield [f'<span style="background-color: #dafbe1;">{line}</span>' for line in same_slicer(after, blo, bhi)]
+            else:
+                yield [f"(added) {line}" for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(after, blo, bhi)
 
 def render_diff(
     previous_version_file_contents: str,
@@ -55,11 +63,12 @@ def render_diff(
     include_replaced: bool = True,
     line_feed_sep: str = "\n",
     include_change_type_prefix: bool = True,
-    patch_format: bool = False
+    patch_format: bool = False,
+    html_colour: bool = False
 ) -> str:
     """
     Render the difference between two file contents.
-    
+
     Args:
         previous_version_file_contents (str): Original file contents
         newest_version_file_contents (str): Modified file contents
@@ -70,7 +79,8 @@ def render_diff(
         line_feed_sep (str): Separator for lines in output
         include_change_type_prefix (bool): Add prefixes to indicate change types
         patch_format (bool): Use patch format for output
-    
+        html_colour (bool): Use HTML background colors for differences
+
     Returns:
         str: Rendered difference
     """
@@ -88,7 +98,8 @@ def render_diff(
         include_removed=include_removed,
         include_added=include_added,
         include_replaced=include_replaced,
-        include_change_type_prefix=include_change_type_prefix
+        include_change_type_prefix=include_change_type_prefix,
+        html_colour=html_colour
     )
 
     def flatten(lst: List[Union[str, List[str]]]) -> str:
