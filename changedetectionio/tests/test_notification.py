@@ -445,7 +445,9 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
 def test_html_color_notifications(client, live_server, measure_memory_usage):
 
     #live_server_setup(live_server)
+
     set_original_response()
+
     if os.path.isfile("test-datastore/notification.txt"):
         os.unlink("test-datastore/notification.txt")
 
@@ -459,7 +461,7 @@ def test_html_color_notifications(client, live_server, measure_memory_usage):
         data={
             "application-fetch_backend": "html_requests",
             "application-minutes_between_check": 180,
-            #"application-notification_body": '{{diff}}',
+            "application-notification_body": '{{diff}}',
             "application-notification_format": "HTML Color",
             "application-notification_urls": test_notification_url,
             "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
