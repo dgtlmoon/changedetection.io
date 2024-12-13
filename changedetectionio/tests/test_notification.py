@@ -442,7 +442,6 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
     assert b"Error: You must have atleast one watch configured for 'test notification' to work" in res.data
 
 
-#2510
 def test_html_color_notifications(client, live_server, measure_memory_usage):
 
     #live_server_setup(live_server)
