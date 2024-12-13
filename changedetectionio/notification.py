@@ -31,6 +31,7 @@ valid_notification_formats = {
     'Text': NotifyFormat.TEXT,
     'Markdown': NotifyFormat.MARKDOWN,
     'HTML': NotifyFormat.HTML,
+    'HTML Color': 'htmlcolor',
     # Used only for editing a watch (not for global)
     default_notification_format_for_watch: default_notification_format_for_watch
 }
