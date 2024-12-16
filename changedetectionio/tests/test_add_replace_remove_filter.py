@@ -113,7 +113,8 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     res = client.post(
         url_for("settings_page"),
         data={"application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
-              "application-notification_body": 'triggered text was -{{triggered_text}}- 网站监测 内容更新了',
+              # triggered_text will contain multiple lines
+              "application-notification_body": 'triggered text was -{{triggered_text}}- ### 网站监测 内容更新了 ####',
               # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
               "application-notification_urls": test_notification_url,
               "application-minutes_between_check": 180,
@@ -171,7 +172,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     assert os.path.isfile("test-datastore/notification.txt"), "Notification fired because I can see the output file"
     with open("test-datastore/notification.txt", 'rb') as f:
         response = f.read()
-        assert b'-Oh yes please-' in response
+        assert b'-Oh yes please' in response
         assert '网站监测 内容更新了'.encode('utf-8') in response
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
