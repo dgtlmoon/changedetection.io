@@ -49,9 +49,6 @@ def measure_memory_usage(request):
     s = f"Peak memory used by the test {request.node.fspath} - '{request.node.name}': {max_memory_used:.2f} MB"
     logger.debug(s)
 
-    with open("test-memory.log", 'a') as f:
-        f.write(f"{s}\n")
-
     # Assert that the memory usage is less than 200MB
 #    assert max_memory_used < 150, f"Memory usage exceeded 200MB: {max_memory_used:.2f} MB"
 
@@ -109,6 +106,6 @@ def app(request):
         app.config.exit.set()
         cleanup(app_config['datastore_path'])
 
-       
+
     request.addfinalizer(teardown)
     yield app
