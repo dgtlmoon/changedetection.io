@@ -28,6 +28,8 @@ class update_worker(threading.Thread):
 
     def queue_notification_for_watch(self, notification_q, n_object, watch):
         from changedetectionio import diff
+        from changedetectionio.notification import default_notification_format_for_watch
+
         dates = []
         trigger_text = ''
 
@@ -43,6 +45,10 @@ class update_worker(threading.Thread):
             snapshot_contents = watch.get_history_snapshot(dates[-1])
         else:
             snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
+
+        # If we ended up here with "System default"
+        if n_object.get('notification_format') == default_notification_format_for_watch:
+            n_object['notification_format'] = self.datastore.data['settings']['application'].get('notification_format')
 
         html_colour_enable = False
         # HTML needs linebreak, but MarkDown and Text can use a linefeed
