@@ -1,0 +1,14 @@
+Source: changedetection.io
+Section: web
+Priority: optional
+Maintainer: Your Name <your.email@example.com>
+Build-Depends: debhelper-compat (= 13), dh-virtualenv, dh-python, python3-all (>= 3.10), python3-all (<< 3.13), python3.10, python3.10-venv
+Standards-Version: 4.6.0
+Rules-Requires-Root: no
+Homepage: https://github.com/dgtlmoon/changedetection.io
+
+Package: changedetection.io
+Architecture: all
+Depends: ${misc:Depends}, python3 (>= 3.10), python3 (<< 3.13)
+Description: Web page change detection - Python application
+ A web-based application for monitoring web pages for changes.
