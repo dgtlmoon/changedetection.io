@@ -16,7 +16,6 @@ class TestDiffBuilder(unittest.TestCase):
         watch = Watch.model(datastore_path='/tmp', default={})
         watch.ensure_data_dir_exists()
 
-        watch['last_viewed'] = 110
 
         # Contents from the browser are always returned from the browser/requests/etc as str, str is basically UTF-16 in python
         watch.save_history_text(contents="hello world", timestamp=100, snapshot_id=str(uuid_builder.uuid4()))
@@ -25,31 +24,38 @@ class TestDiffBuilder(unittest.TestCase):
         watch.save_history_text(contents="hello world", timestamp=112, snapshot_id=str(uuid_builder.uuid4()))
         watch.save_history_text(contents="hello world", timestamp=115, snapshot_id=str(uuid_builder.uuid4()))
         watch.save_history_text(contents="hello world", timestamp=117, snapshot_id=str(uuid_builder.uuid4()))
+    
+        p = watch.get_from_version_based_on_last_viewed
+        assert p == "100", "Correct 'last viewed' timestamp was detected"
 
-        p = watch.get_next_snapshot_key_to_last_viewed
-        assert p == "112", "Correct last-viewed timestamp was detected"
+        watch['last_viewed'] = 110
+        p = watch.get_from_version_based_on_last_viewed
+        assert p == "109", "Correct 'last viewed' timestamp was detected"
 
-        # When there is only one step of difference from the end of the list, it should return second-last change
         watch['last_viewed'] = 116
-        p = watch.get_next_snapshot_key_to_last_viewed
-        assert p == "115", "Correct 'second last' last-viewed timestamp was detected when using the last timestamp"
+        p = watch.get_from_version_based_on_last_viewed
+        assert p == "115", "Correct 'last viewed' timestamp was detected"
 
         watch['last_viewed'] = 99
-        p = watch.get_next_snapshot_key_to_last_viewed
-        assert p == "100"
+        p = watch.get_from_version_based_on_last_viewed
+        assert p == "100", "When the 'last viewed' timestamp is less than the oldest snapshot, return oldest"
 
         watch['last_viewed'] = 200
-        p = watch.get_next_snapshot_key_to_last_viewed
-        assert p == "115", "When the 'last viewed' timestamp is greater than the newest snapshot, return second last "
+        p = watch.get_from_version_based_on_last_viewed
+        assert p == "115", "When the 'last viewed' timestamp is greater than the newest snapshot, return second newest"
 
         watch['last_viewed'] = 109
-        p = watch.get_next_snapshot_key_to_last_viewed
+        p = watch.get_from_version_based_on_last_viewed
         assert p == "109", "Correct when its the same time"
 
         # new empty one
         watch = Watch.model(datastore_path='/tmp', default={})
-        p = watch.get_next_snapshot_key_to_last_viewed
+        p = watch.get_from_version_based_on_last_viewed
         assert p == None, "None when no history available"
+
+        watch.save_history_text(contents="hello world", timestamp=100, snapshot_id=str(uuid_builder.uuid4()))
+        p = watch.get_from_version_based_on_last_viewed
+        assert p == "100", "Correct with only one history snapshot"
 
 if __name__ == '__main__':
     unittest.main()

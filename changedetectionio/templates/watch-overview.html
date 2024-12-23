@@ -191,7 +191,7 @@
                     {% if watch.history_n >= 2 %}
 
                         {%  if is_unviewed %}
-                           <a href="{{ url_for('diff_history_page', uuid=watch.uuid, from_version=watch.get_next_snapshot_key_to_last_viewed) }}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">History</a>
+                           <a href="{{ url_for('diff_history_page', uuid=watch.uuid, from_version=watch.get_from_version_based_on_last_viewed) }}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">History</a>
                         {% else %}
                            <a href="{{ url_for('diff_history_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">History</a>
                         {% endif %}
