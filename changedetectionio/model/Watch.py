@@ -255,6 +255,8 @@ class model(watch_base):
         keys = list(self.history.keys())
         if not keys:
             return None
+        if len(keys) == 1:
+            return keys[0]
 
         last_viewed = int(self.get('last_viewed'))
         sorted_keys = sorted(keys, key=lambda x: int(x))
@@ -264,15 +266,12 @@ class model(watch_base):
         if last_viewed >= int(sorted_keys[0]):
             return sorted_keys[1]
         
-        # When the 'last viewed' timestamp is less than or equal the oldest snapshot, return oldest
-        if last_viewed <= int(sorted_keys[-1]):
-            return sorted_keys[-1]
-
+        # When the 'last viewed' timestamp is between snapshots, return the older snapshot
         for newer, older in list(zip(sorted_keys[0:], sorted_keys[1:])):
             if last_viewed < int(newer) and last_viewed >= int(older):
                 return older
 
-        # Unreachable, return oldest
+        # When the 'last viewed' timestamp is less than the oldest snapshot, return oldest
         return sorted_keys[-1]
 
     def get_history_snapshot(self, timestamp):

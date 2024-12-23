@@ -57,5 +57,9 @@ class TestDiffBuilder(unittest.TestCase):
         p = watch.get_from_version_based_on_last_viewed
         assert p == "100", "Correct with only one history snapshot"
 
+        watch['last_viewed'] = 200
+        p = watch.get_from_version_based_on_last_viewed
+        assert p == "100", "Correct with only one history snapshot"
+
 if __name__ == '__main__':
     unittest.main()
