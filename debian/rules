@@ -3,11 +3,8 @@
 %:
 	dh $@ --with python-virtualenv --buildsystem=pybuild
 
-PYTHON_VERSION := $(shell py3versions -r '>= 3.10 << 3.13' -i)
-
 override_dh_virtualenv:
 	dh_virtualenv --sourcedirectory=. \
 	              --install-suffix='' \
-	              --destdir=/tmp/changedetection.io \
 	              --requirements=requirements.txt \
-	              --python=/usr/bin/$(PYTHON_VERSION)
+	              --python=/usr/bin/python3.11
