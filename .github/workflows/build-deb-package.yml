@@ -34,6 +34,7 @@ jobs:
 
       - name: Build the Debian Package
         run: |
+          tar cvzf changedetection.io_1.0.orig.tar.gz .
           debuild -us -uc
 
       - name: Upload Debian Package Artifact
