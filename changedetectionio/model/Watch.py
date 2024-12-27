@@ -247,37 +247,32 @@ class model(watch_base):
         bump = self.history
         return self.__newest_history_key
 
-    # Given an arbitrary timestamp, find the closest next key
-    # For example, last_viewed = 1000 so it should return the next 1001 timestamp
-    #
-    # used for the [diff] button so it can preset a smarter from_version
+    # Given an arbitrary timestamp, find the best history key for the [diff] button so it can preset a smarter from_version
     @property
-    def get_next_snapshot_key_to_last_viewed(self):
+    def get_from_version_based_on_last_viewed(self):
 
         """Unfortunately for now timestamp is stored as string key"""
         keys = list(self.history.keys())
         if not keys:
             return None
+        if len(keys) == 1:
+            return keys[0]
 
         last_viewed = int(self.get('last_viewed'))
-        prev_k = keys[0]
         sorted_keys = sorted(keys, key=lambda x: int(x))
         sorted_keys.reverse()
 
-        # When the 'last viewed' timestamp is greater than the newest snapshot, return second last
-        if last_viewed > int(sorted_keys[0]):
+        # When the 'last viewed' timestamp is greater than or equal the newest snapshot, return second newest
+        if last_viewed >= int(sorted_keys[0]):
             return sorted_keys[1]
+        
+        # When the 'last viewed' timestamp is between snapshots, return the older snapshot
+        for newer, older in list(zip(sorted_keys[0:], sorted_keys[1:])):
+            if last_viewed < int(newer) and last_viewed >= int(older):
+                return older
 
-        for k in sorted_keys:
-            if int(k) < last_viewed:
-                if prev_k == sorted_keys[0]:
-                    # Return the second last one so we dont recommend the same version compares itself
-                    return sorted_keys[1]
-
-                return prev_k
-            prev_k = k
-
-        return keys[0]
+        # When the 'last viewed' timestamp is less than the oldest snapshot, return oldest
+        return sorted_keys[-1]
 
     def get_history_snapshot(self, timestamp):
         import brotli
