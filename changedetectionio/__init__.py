@@ -2,7 +2,7 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.47.03'
+__version__ = '0.48.05'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
@@ -160,11 +160,10 @@ def main():
                     )
 
     # Monitored websites will not receive a Referer header when a user clicks on an outgoing link.
-    # @Note: Incompatible with password login (and maybe other features) for now, submit a PR!
     @app.after_request
     def hide_referrer(response):
         if strtobool(os.getenv("HIDE_REFERER", 'false')):
-            response.headers["Referrer-Policy"] = "no-referrer"
+            response.headers["Referrer-Policy"] = "same-origin"
 
         return response
 

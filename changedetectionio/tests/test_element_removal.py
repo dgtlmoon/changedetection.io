@@ -11,6 +11,35 @@ from .util import live_server_setup, wait_for_all_checks
 def test_setup(live_server):
     live_server_setup(live_server)
 
+def set_response_with_multiple_index():
+    data= """<!DOCTYPE html>
+<html>
+<body>
+
+<!-- NOTE!! CHROME WILL ADD TBODY HERE IF ITS NOT THERE!! -->
+<table style="width:100%">
+  <tr>
+    <th>Person 1</th>
+    <th>Person 2</th>
+    <th>Person 3</th>
+  </tr>
+  <tr>
+    <td>Emil</td>
+    <td>Tobias</td>
+    <td>Linus</td>
+  </tr>
+  <tr>
+    <td>16</td>
+    <td>14</td>
+    <td>10</td>
+  </tr>
+</table>
+</body>
+</html>
+"""
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(data)
+
 
 def set_original_response():
     test_return_data = """<html>
@@ -177,3 +206,61 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
     # There should not be an unviewed change, as changes should be removed
     res = client.get(url_for("index"))
     assert b"unviewed" not in res.data
+
+# Re #2752
+def test_element_removal_nth_offset_no_shift(client, live_server, measure_memory_usage):
+    #live_server_setup(live_server)
+
+    set_response_with_multiple_index()
+    subtractive_selectors_data = ["""
+body > table > tr:nth-child(1) > th:nth-child(2)
+body > table >  tr:nth-child(2) > td:nth-child(2)
+body > table > tr:nth-child(3) > td:nth-child(2)
+body > table > tr:nth-child(1) > th:nth-child(3)
+body > table >  tr:nth-child(2) > td:nth-child(3)
+body > table > tr:nth-child(3) > td:nth-child(3)""",
+"""//body/table/tr[1]/th[2]
+//body/table/tr[2]/td[2]
+//body/table/tr[3]/td[2]
+//body/table/tr[1]/th[3]
+//body/table/tr[2]/td[3]
+//body/table/tr[3]/td[3]"""]
+
+    for selector_list in subtractive_selectors_data:
+
+        res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+        assert b'Deleted' in res.data
+
+        # Add our URL to the import page
+        test_url = url_for("test_endpoint", _external=True)
+        res = client.post(
+            url_for("import_page"), data={"urls": test_url}, follow_redirects=True
+        )
+        assert b"1 Imported" in res.data
+        wait_for_all_checks(client)
+
+        res = client.post(
+            url_for("edit_page", uuid="first"),
+            data={
+                "subtractive_selectors": selector_list,
+                "url": test_url,
+                "tags": "",
+                "fetch_backend": "html_requests",
+            },
+            follow_redirects=True,
+        )
+        assert b"Updated watch." in res.data
+        wait_for_all_checks(client)
+
+        res = client.get(
+            url_for("preview_page", uuid="first"),
+            follow_redirects=True
+        )
+
+        assert b"Tobias" not in res.data
+        assert b"Linus" not in res.data
+        assert b"Person 2" not in res.data
+        assert b"Person 3" not in res.data
+        # First column should exist
+        assert b"Emil" in res.data
+

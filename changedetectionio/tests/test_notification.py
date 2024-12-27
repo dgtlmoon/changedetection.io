@@ -284,7 +284,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     # CUSTOM JSON BODY CHECK for POST://
     set_original_response()
     # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#header-manipulation
-    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}&+custom-header=123"
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}&+custom-header=123&+second=hello+world%20%22space%22"
 
     res = client.post(
         url_for("settings_page"),
@@ -326,6 +326,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
         assert j['secret'] == 444
         assert j['somebug'] == '网站监测 内容更新了'
 
+
     # URL check, this will always be converted to lowercase
     assert os.path.isfile("test-datastore/notification-url.txt")
     with open("test-datastore/notification-url.txt", 'r') as f:
@@ -337,6 +338,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     with open("test-datastore/notification-headers.txt", 'r') as f:
         notification_headers = f.read()
         assert 'custom-header: 123' in notification_headers.lower()
+        assert 'second: hello world "space"' in notification_headers.lower()
 
 
     # Should always be automatically detected as JSON content type even when we set it as 'Text' (default)
@@ -429,24 +431,78 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
         follow_redirects=True
     )
 
-    #2727 - be sure a test notification when there are zero watches works ( should all be deleted now)
-
-    os.unlink("test-datastore/notification.txt")
-
-
-    ######### Test global/system settings
+    ######### Test global/system settings - When everything is deleted it should give a helpful error
+    # See #2727
     res = client.post(
         url_for("ajax_callback_send_notification_test")+"?mode=global-settings",
         data={"notification_urls": test_notification_url},
         follow_redirects=True
     )
+    assert res.status_code == 400
+    assert b"Error: You must have atleast one watch configured for 'test notification' to work" in res.data
 
-    assert res.status_code != 400
-    assert res.status_code != 500
 
-    # Give apprise time to fire
-    time.sleep(4)
+def _test_color_notifications(client, notification_body_token):
+
+    from changedetectionio.diff import ADDED_STYLE, REMOVED_STYLE
+
+    set_original_response()
+
+    if os.path.isfile("test-datastore/notification.txt"):
+        os.unlink("test-datastore/notification.txt")
+
+
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}&+custom-header=123"
+
+
+    # otherwise other settings would have already existed from previous tests in this file
+    res = client.post(
+        url_for("settings_page"),
+        data={
+            "application-fetch_backend": "html_requests",
+            "application-minutes_between_check": 180,
+            "application-notification_body": notification_body_token,
+            "application-notification_format": "HTML Color",
+            "application-notification_urls": test_notification_url,
+            "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
+        },
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": test_url, "tags": 'nice one'},
+        follow_redirects=True
+    )
+
+    assert b"Watch added" in res.data
+
+    wait_for_all_checks(client)
+
+    set_modified_response()
+
+
+    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    assert b'1 watches queued for rechecking.' in res.data
+
+    wait_for_all_checks(client)
+    time.sleep(3)
 
     with open("test-datastore/notification.txt", 'r') as f:
         x = f.read()
-        assert 'change detection is cool 网站监测 内容更新了' in x
+        assert f'<span style="{REMOVED_STYLE}">Which is across multiple lines' in x
+
+
+    client.get(
+        url_for("form_delete", uuid="all"),
+        follow_redirects=True
+    )
+
+def test_html_color_notifications(client, live_server, measure_memory_usage):
+
+    #live_server_setup(live_server)
+    _test_color_notifications(client, '{{diff}}')
+    _test_color_notifications(client, '{{diff_full}}')
+    

@@ -31,14 +31,14 @@ class difference_detection_processor():
 
         from requests.structures import CaseInsensitiveDict
 
-        # Protect against file:// access
-        if re.search(r'^file://', self.watch.get('url', '').strip(), re.IGNORECASE):
+        url = self.watch.link
+
+        # Protect against file:, file:/, file:// access, check the real "link" without any meta "source:" etc prepended.
+        if re.search(r'^file:', url.strip(), re.IGNORECASE):
             if not strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
                 raise Exception(
                     "file:// type access is denied for security reasons."
                 )
-
-        url = self.watch.link
 
         # Requests, playwright, other browser via wss:// etc, fetch_extra_something
         prefer_fetch_backend = self.watch.get('fetch_backend', 'system')
@@ -102,6 +102,7 @@ class difference_detection_processor():
             self.fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, self.watch.get('uuid'))
 
         # Tweak the base config with the per-watch ones
+        from changedetectionio.safe_jinja import render as jinja_render
         request_headers = CaseInsensitiveDict()
 
         ua = self.datastore.data['settings']['requests'].get('default_ua')
@@ -118,9 +119,15 @@ class difference_detection_processor():
         if 'Accept-Encoding' in request_headers and "br" in request_headers['Accept-Encoding']:
             request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
 
+        for header_name in request_headers:
+            request_headers.update({header_name: jinja_render(template_str=request_headers.get(header_name))})
+
         timeout = self.datastore.data['settings']['requests'].get('timeout')
 
         request_body = self.watch.get('body')
+        if request_body:
+            request_body = jinja_render(template_str=self.watch.get('body'))
+        
         request_method = self.watch.get('method')
         ignore_status_codes = self.watch.get('ignore_status_codes', False)
 

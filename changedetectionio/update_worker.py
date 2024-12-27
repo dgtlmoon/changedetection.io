@@ -28,6 +28,8 @@ class update_worker(threading.Thread):
 
     def queue_notification_for_watch(self, notification_q, n_object, watch):
         from changedetectionio import diff
+        from changedetectionio.notification import default_notification_format_for_watch
+
         dates = []
         trigger_text = ''
 
@@ -44,11 +46,21 @@ class update_worker(threading.Thread):
         else:
             snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
 
+        # If we ended up here with "System default"
+        if n_object.get('notification_format') == default_notification_format_for_watch:
+            n_object['notification_format'] = self.datastore.data['settings']['application'].get('notification_format')
+
+        html_colour_enable = False
         # HTML needs linebreak, but MarkDown and Text can use a linefeed
         if n_object.get('notification_format') == 'HTML':
             line_feed_sep = "<br>"
             # Snapshot will be plaintext on the disk, convert to some kind of HTML
             snapshot_contents = snapshot_contents.replace('\n', line_feed_sep)
+        elif n_object.get('notification_format') == 'HTML Color':
+            line_feed_sep = "<br>"
+            # Snapshot will be plaintext on the disk, convert to some kind of HTML
+            snapshot_contents = snapshot_contents.replace('\n', line_feed_sep)
+            html_colour_enable = True
         else:
             line_feed_sep = "\n"
 
@@ -69,9 +81,9 @@ class update_worker(threading.Thread):
 
         n_object.update({
             'current_snapshot': snapshot_contents,
-            'diff': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep),
+            'diff': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, html_colour=html_colour_enable),
             'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False, line_feed_sep=line_feed_sep),
-            'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=line_feed_sep),
+            'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=line_feed_sep, html_colour=html_colour_enable),
             'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, patch_format=True),
             'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=line_feed_sep),
             'notification_timestamp': now,

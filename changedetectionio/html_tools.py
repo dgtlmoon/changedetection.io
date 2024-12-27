@@ -54,29 +54,64 @@ def include_filters(include_filters, html_content, append_pretty_line_formatting
 def subtractive_css_selector(css_selector, html_content):
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(html_content, "html.parser")
-    for item in soup.select(css_selector):
+
+    # So that the elements dont shift their index, build a list of elements here which will be pointers to their place in the DOM
+    elements_to_remove = soup.select(css_selector)
+
+    # Then, remove them in a separate loop
+    for item in elements_to_remove:
         item.decompose()
+
     return str(soup)
 
-def subtractive_xpath_selector(xpath_selector, html_content): 
+def subtractive_xpath_selector(selectors: List[str], html_content: str) -> str:
+    # Parse the HTML content using lxml
     html_tree = etree.HTML(html_content)
-    elements_to_remove = html_tree.xpath(xpath_selector)
 
+    # First, collect all elements to remove
+    elements_to_remove = []
+
+    # Iterate over the list of XPath selectors
+    for selector in selectors:
+        # Collect elements for each selector
+        elements_to_remove.extend(html_tree.xpath(selector))
+
+    # Then, remove them in a separate loop
     for element in elements_to_remove:
-        element.getparent().remove(element)
+        if element.getparent() is not None:  # Ensure the element has a parent before removing
+            element.getparent().remove(element)
 
+    # Convert the modified HTML tree back to a string
     modified_html = etree.tostring(html_tree, method="html").decode("utf-8")
     return modified_html
 
+
 def element_removal(selectors: List[str], html_content):
-    """Removes elements that match a list of CSS or xPath selectors."""
+    """Removes elements that match a list of CSS or XPath selectors."""
     modified_html = html_content
+    css_selectors = []
+    xpath_selectors = []
+
     for selector in selectors:
         if selector.startswith(('xpath:', 'xpath1:', '//')):
+            # Handle XPath selectors separately
             xpath_selector = selector.removeprefix('xpath:').removeprefix('xpath1:')
-            modified_html = subtractive_xpath_selector(xpath_selector, modified_html)
+            xpath_selectors.append(xpath_selector)
         else:
-            modified_html = subtractive_css_selector(selector, modified_html)
+            # Collect CSS selectors as one "hit", see comment in subtractive_css_selector
+            css_selectors.append(selector.strip().strip(","))
+
+    if xpath_selectors:
+        modified_html = subtractive_xpath_selector(xpath_selectors, modified_html)
+
+    if css_selectors:
+        # Remove duplicates, then combine all CSS selectors into one string, separated by commas
+        # This stops the elements index shifting
+        unique_selectors = list(set(css_selectors))  # Ensure uniqueness
+        combined_css_selector = " , ".join(unique_selectors)
+        modified_html = subtractive_css_selector(combined_css_selector, modified_html)
+
+
     return modified_html
 
 def elementpath_tostring(obj):

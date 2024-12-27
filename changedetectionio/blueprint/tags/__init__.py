@@ -13,6 +13,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def tags_overview_page():
         from .form import SingleTag
         add_form = SingleTag(request.form)
+
         sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
 
         from collections import Counter
@@ -104,9 +105,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         default = datastore.data['settings']['application']['tags'].get(uuid)
 
-        form = group_restock_settings_form(formdata=request.form if request.method == 'POST' else None,
+        form = group_restock_settings_form(
+                                       formdata=request.form if request.method == 'POST' else None,
                                        data=default,
-                                       extra_notification_tokens=datastore.get_unique_notification_tokens_available()
+                                       extra_notification_tokens=datastore.get_unique_notification_tokens_available(),
+                                       default_system_settings = datastore.data['settings'],
                                        )
 
         template_args = {

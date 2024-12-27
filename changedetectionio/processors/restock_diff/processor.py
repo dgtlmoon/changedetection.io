@@ -40,7 +40,7 @@ def _deduplicate_prices(data):
 
         if isinstance(datum.value, list):
             # Process each item in the list
-            normalized_value = set([float(re.sub(r'[^\d.]', '', str(item))) for item in datum.value])
+            normalized_value = set([float(re.sub(r'[^\d.]', '', str(item))) for item in datum.value if str(item).strip()])
             unique_data.update(normalized_value)
         else:
             # Process single value

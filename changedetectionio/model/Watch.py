@@ -89,6 +89,10 @@ class model(watch_base):
 
         if ready_url.startswith('source:'):
             ready_url=ready_url.replace('source:', '')
+
+        # Also double check it after any Jinja2 formatting just incase
+        if not is_safe_url(ready_url):
+            return 'DISABLED'
         return ready_url
 
     def clear_watch(self):
@@ -336,7 +340,6 @@ class model(watch_base):
         return snapshot_fname
 
     @property
-    @property
     def has_empty_checktime(self):
         # using all() + dictionary comprehension
         # Check if all values are 0 in dictionary
@@ -534,16 +537,17 @@ class model(watch_base):
 
     def save_xpath_data(self, data, as_error=False):
         import json
+        import zlib
 
         if as_error:
-            target_path = os.path.join(self.watch_data_dir, "elements-error.json")
+            target_path = os.path.join(str(self.watch_data_dir), "elements-error.deflate")
         else:
-            target_path = os.path.join(self.watch_data_dir, "elements.json")
+            target_path = os.path.join(str(self.watch_data_dir), "elements.deflate")
 
         self.ensure_data_dir_exists()
 
-        with open(target_path, 'w') as f:
-            f.write(json.dumps(data))
+        with open(target_path, 'wb') as f:
+            f.write(zlib.compress(json.dumps(data).encode()))
             f.close()
 
     # Save as PNG, PNG is larger but better for doing visual diff in the future

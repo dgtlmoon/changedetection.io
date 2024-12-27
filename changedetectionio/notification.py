@@ -23,7 +23,7 @@ valid_tokens = {
 }
 
 default_notification_format_for_watch = 'System default'
-default_notification_format = 'Text'
+default_notification_format = 'HTML Color'
 default_notification_body = '{{watch_url}} had a change.\n---\n{{diff}}\n---\n'
 default_notification_title = 'ChangeDetection.io Notification - {{watch_url}}'
 
@@ -31,6 +31,7 @@ valid_notification_formats = {
     'Text': NotifyFormat.TEXT,
     'Markdown': NotifyFormat.MARKDOWN,
     'HTML': NotifyFormat.HTML,
+    'HTML Color': 'htmlcolor',
     # Used only for editing a watch (not for global)
     default_notification_format_for_watch: default_notification_format_for_watch
 }
@@ -76,9 +77,16 @@ def process_notification(n_object, datastore):
 
             # Get the notification body from datastore
             n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
+            if n_object.get('notification_format', '').startswith('HTML'):
+                n_body = n_body.replace("\n", '<br>')
+
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
 
             url = url.strip()
+            if url.startswith('#'):
+                logger.trace(f"Skipping commented out notification URL - {url}")
+                continue
+
             if not url:
                 logger.warning(f"Process Notification: skipping empty notification URL.")
                 continue

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+    {% from '_helpers.html' import render_simple_field, render_field %}
+    <div class="edit-form">
+        <div class="box-wrap inner">
+            <h4>Backups</h4>
+            {% if backup_running %}
+                <p>
+                    <strong>A backup is running!</strong>
+                </p>
+            {% endif %}
+            <p>
+                Here you can download and request a new backup, when a backup is completed you will see it listed below.
+            </p>
+            <br>
+                {% if available_backups %}
+                    <ul>
+                    {% for backup in available_backups %}
+                        <li><a href="{{ url_for('backups.download_backup', filename=backup["filename"]) }}">{{ backup["filename"] }}</a> {{  backup["filesize"] }} Mb</li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>
+                    <strong>No backups found.</strong>
+                    </p>
+                {% endif %}
+
+            <a class="pure-button pure-button-primary" href="{{ url_for('backups.request_backup') }}">Create backup</a>
+            {% if available_backups %}
+                <a class="pure-button button-small button-error " href="{{ url_for('backups.remove_backups') }}">Remove backups</a>
+            {% endif %}
+        </div>
+    </div>
+
+
+{% endblock %}
