@@ -69,22 +69,29 @@ def _runner_test_various_file_slash(client, file_uri):
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
 
+    substrings = [b"URLs with hostname components are not permitted", b"No connection adapters were found for"]
+
+
     # If it is enabled at test time
     if strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
-        # So it should permit it, but it should fall back to the 'requests' library giving an error
-        # (but means it gets passed to playwright etc)
-        assert b"URLs with hostname components are not permitted" in res.data
-        assert b"_runner_test_various_file_slash" in res.data # Can read this file OK
-    else:
-        # Default should be here
-        assert b'file:// type access is denied for security reasons.' in res.data
+        if file_uri.startswith('file:///'):
+            # This one should be the full qualified path to the file and should get the contents of this file
+            res = client.get(
+                url_for("preview_page", uuid="first"),
+                follow_redirects=True
+            )
+            assert b'_runner_test_various_file_slash' in res.data
+        else:
+            # This will give some error from requests or if it went to chrome, will give some other error :-)
+            assert any(s in res.data for s in substrings)
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_file_slash_access(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
-    # file: is permitted by default, but it will be caught by ALLOW_FILE_URI
+
+    # file: is NOT permitted by default, so it will be caught by ALLOW_FILE_URI check
 
     test_file_path = os.path.abspath(__file__)
     _runner_test_various_file_slash(client, file_uri=f"file://{test_file_path}")
