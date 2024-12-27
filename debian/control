@@ -6,6 +6,7 @@ Build-Depends: debhelper-compat (= 13), dh-virtualenv, dh-python, python3-all (>
 Standards-Version: 4.6.0
 Rules-Requires-Root: no
 Homepage: https://github.com/dgtlmoon/changedetection.io
+X-Python3-Version: >= 3.10
 
 Package: changedetection.io
 Architecture: all

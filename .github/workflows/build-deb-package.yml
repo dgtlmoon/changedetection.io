@@ -7,10 +7,14 @@ jobs:
   build-deb:
     runs-on: ubuntu-latest
     name: Build and Package changedetection.io
+    env:
+      PACKAGE_VERSION: 0.48.5  # or load from somewhere else
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          path: changedetection.io-${{ env.PACKAGE_VERSION }}
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
@@ -33,8 +37,11 @@ jobs:
             debhelper-compat
 
       - name: Build the Debian Package
+        # Build it the same as the pypi way, then use the same package tar
         run: |
-          tar cvzf changedetection.io_1.0.orig.tar.gz .
+          mkdir /tmp/changedetection.io
+          python3 -m build
+          mv dist/*gz .
           debuild -us -uc
 
       - name: Upload Debian Package Artifact

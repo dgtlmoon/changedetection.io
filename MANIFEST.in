@@ -10,6 +10,8 @@ recursive-include changedetectionio/tests *
 prune changedetectionio/static/package-lock.json
 prune changedetectionio/static/styles/node_modules
 prune changedetectionio/static/styles/package-lock.json
+prune changedetectionio/tests/test-datastore
+
 include changedetection.py
 include requirements.txt
 include README-pip.md
@@ -18,5 +20,6 @@ global-exclude node_modules
 global-exclude venv
 
 global-exclude test-datastore
+global-exclude changedetectionio/tests/test-datastore
 global-exclude changedetection.io*dist-info
 global-exclude changedetectionio/tests/proxy_socks5/test-datastore

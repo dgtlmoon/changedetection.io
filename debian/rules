@@ -8,5 +8,6 @@ PYTHON_VERSION := $(shell py3versions -r '>= 3.10 << 3.13' -i)
 override_dh_virtualenv:
 	dh_virtualenv --sourcedirectory=. \
 	              --install-suffix='' \
+	              --destdir=/tmp/changedetection.io \
 	              --requirements=requirements.txt \
 	              --python=/usr/bin/$(PYTHON_VERSION)
