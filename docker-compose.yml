@@ -12,9 +12,6 @@ services:
   #    environment:
   #        Default listening port, can also be changed with the -p option
   #      - PORT=5000
-
-  #      - PUID=1000
-  #      - PGID=1000
   #
   #        Log levels are in descending order. (TRACE is the most detailed one)
   #        Log output levels: TRACE, DEBUG(default), INFO, SUCCESS, WARNING, ERROR, CRITICAL
