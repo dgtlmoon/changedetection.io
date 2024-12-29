@@ -215,8 +215,8 @@ def live_server_setup(live_server):
     def test_method():
         return request.method
 
-    # Where we POST to as a notification
-    @live_server.app.route('/test_notification_endpoint', methods=['POST', 'GET'])
+    # Where we POST to as a notification, also use a space here to test URL escaping is OK across all tests that use this. ( #2868 )
+    @live_server.app.route('/test_notification endpoint', methods=['POST', 'GET'])
     def test_notification_endpoint():
         with open("test-datastore/notification.txt", "wb") as f:
             # Debug method, dump all POST to file also, used to prove #65
