@@ -5,7 +5,7 @@ from flask import (
 )
 
 from .html_tools import TRANSLATE_WHITESPACE_TABLE
-from . model import App, Watch
+from .model import App, Watch, WatchBase
 from copy import deepcopy, copy
 from os import path, unlink
 from threading import Lock
@@ -25,6 +25,13 @@ from .processors.restock_diff import Restock
 BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
 
 dictfilt = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
+
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, WatchBase):
+            return obj.internal_dict
+        # Add more custom type handlers here
+        return super().default(obj)
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
@@ -397,7 +404,7 @@ class ChangeDetectionStore:
                 # This is a fairly basic strategy to deal with the case that the file is corrupted,
                 # system was out of memory, out of RAM etc
                 with open(self.json_store_path+".tmp", 'w') as json_file:
-                    json.dump(data.as_dict(), json_file, indent=4)
+                    json.dump(data, json_file, indent=2, cls=CustomEncoder)
                 os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
                 logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")
