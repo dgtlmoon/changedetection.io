@@ -54,6 +54,7 @@ class Watch(Resource):
         """
         from copy import deepcopy
         watch = deepcopy(self.datastore.data['watching'].get(uuid))
+
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
 
@@ -75,10 +76,11 @@ class Watch(Resource):
 
         # Return without history, get that via another API call
         # Properties are not returned as a JSON, so add the required props manually
-        watch['history_n'] = watch.history_n
-        watch['last_changed'] = watch.last_changed
-        watch['viewed'] = watch.viewed
-        return watch
+        result = watch.as_dict()
+        result['history_n'] = watch.history_n
+        result['last_changed'] = watch.last_changed
+        result['viewed'] = watch.viewed
+        return result
 
     @auth.check_token
     def delete(self, uuid):
