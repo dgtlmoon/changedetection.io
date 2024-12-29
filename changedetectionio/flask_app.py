@@ -43,6 +43,7 @@ from loguru import logger
 from changedetectionio import html_tools, __version__
 from changedetectionio import queuedWatchMetaData
 from changedetectionio.api import api_v1
+from .store import CustomEncoder
 from .time_handler import is_within_schedule
 
 datastore = None
@@ -1613,7 +1614,7 @@ def changedetection_app(config=None, datastore_o=None):
         watch['ignore_text'] += datastore.data['settings']['application']['global_ignore_text']
         watch['subtractive_selectors'] += datastore.data['settings']['application']['global_subtractive_selectors']
 
-        watch_json = json.dumps(watch)
+        watch_json = json.dumps(watch, cls=CustomEncoder)
 
         try:
             r = requests.request(method="POST",
