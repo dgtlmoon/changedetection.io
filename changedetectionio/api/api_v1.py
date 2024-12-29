@@ -52,8 +52,7 @@ class Watch(Resource):
         @apiSuccess (200) {String} OK When paused/muted/recheck operation OR full JSON object of the watch
         @apiSuccess (200) {JSON} WatchJSON JSON Full JSON object of the watch
         """
-        from copy import deepcopy
-        watch = deepcopy(self.datastore.data['watching'].get(uuid))
+        watch = self.datastore.data['watching'].get(uuid)
 
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
