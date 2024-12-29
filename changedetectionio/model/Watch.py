@@ -1,11 +1,11 @@
 from changedetectionio.strtobool import strtobool
 from changedetectionio.safe_jinja import render as jinja_render
-from . import watch_base
 import os
 import re
 from pathlib import Path
 from loguru import logger
 
+from . import WatchBase
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 
 # Allowable protocols, protects against javascript: etc
@@ -32,7 +32,7 @@ def is_safe_url(test_url):
     return True
 
 
-class model(watch_base):
+class model(WatchBase):
     __newest_history_key = None
     __history_n = 0
     jitter_seconds = 0

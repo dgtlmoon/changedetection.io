@@ -1,13 +1,13 @@
 import os
 import uuid
+from collections.abc import MutableMapping
 
 from changedetectionio import strtobool
 from changedetectionio.notification import default_notification_format_for_watch
 
-class watch_base(dict):
-
-    def __init__(self, *arg, **kw):
-        self.update({
+class WatchBase(MutableMapping):
+    def __init__(self, *args, **kwargs):
+        self.internal_dict = {
             # Custom notification content
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
@@ -127,9 +127,52 @@ class watch_base(dict):
             'uuid': str(uuid.uuid4()),
             'webdriver_delay': None,
             'webdriver_js_execute_code': None,  # Run before change-detection
-        })
+        }
 
-        super(watch_base, self).__init__(*arg, **kw)
+        # Update with any provided arguments
+        self.update(*args, **kwargs)
 
         if self.get('default'):
             del self['default']
+
+    # Implement abstract methods required by MutableMapping
+    def __getitem__(self, key):
+        return self.internal_dict[key]
+
+    def __setitem__(self, key, value):
+        self.internal_dict[key] = value
+
+    def __delitem__(self, key):
+        del self.internal_dict[key]
+
+    def __iter__(self):
+        return iter(self.internal_dict)
+
+    def __len__(self):
+        return len(self.internal_dict)
+
+    # Optional: Implement additional methods for convenience
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.internal_dict})"
+
+    def as_dict(self):
+        return self.internal_dict
+
+#    def __getattr__(self, attr):
+        # Allow attribute-style access
+#        try:
+#            return self.internal_dict[attr]
+#        except KeyError:
+#            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{attr}'")
+
+#    def __setattr__(self, attr, value):
+#        if attr == 'internal_dict':
+#            super().__setattr__(attr, value)
+#        else:
+#            self.internal_dict[attr] = value
+
+#    def __delattr__(self, attr):
+#        if attr == 'internal_dict':
+#            super().__delattr__(attr)
+#        else:
+#            del self.internal_dict[attr]

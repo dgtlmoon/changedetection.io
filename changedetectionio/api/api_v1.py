@@ -12,10 +12,10 @@ import copy
 # See docs/README.md for rebuilding the docs/apidoc information
 
 from . import api_schema
-from ..model import watch_base
+from ..model import WatchBase
 
 # Build a JSON Schema atleast partially based on our Watch model
-watch_base_config = watch_base()
+watch_base_config = WatchBase()
 schema = api_schema.build_watch_json_schema(watch_base_config)
 
 schema_create_watch = copy.deepcopy(schema)
