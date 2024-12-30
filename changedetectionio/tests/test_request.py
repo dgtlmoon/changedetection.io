@@ -2,7 +2,7 @@ import json
 import os
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
 def test_setup(live_server):
     live_server_setup(live_server)
@@ -74,8 +74,8 @@ def test_headers_in_request(client, live_server, measure_memory_usage):
     # Re #137 -  It should have only one set of headers entered
     watches_with_headers = 0
     for k, watch in client.application.config.get('DATASTORE').data.get('watching').items():
-            if (len(watch['headers'])):
-                watches_with_headers += 1
+        if (len(watch['headers'])):
+            watches_with_headers += 1
     assert watches_with_headers == 1
 
     # 'server' http header was automatically recorded
@@ -156,11 +156,10 @@ def test_body_in_request(client, live_server, measure_memory_usage):
     assert b"1 Imported" in res.data
 
     watches_with_body = 0
-    with open('test-datastore/url-watches.json') as f:
-        app_struct = json.load(f)
-        for uuid in app_struct['watching']:
-            if app_struct['watching'][uuid]['body']==body_value:
-                watches_with_body += 1
+
+    for k, watch in client.application.config.get('DATASTORE').data.get('watching').items():
+        if watch['body'] == body_value:
+            watches_with_body += 1
 
     # Should be only one with body set
     assert watches_with_body==1
