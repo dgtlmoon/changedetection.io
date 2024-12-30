@@ -282,6 +282,7 @@ class update_worker(threading.Thread):
                             print(f"Processor module '{processor}' not found.")
                             raise e
 
+                        # Can pass just the watch here?
                         update_handler = processor_module.perform_site_check(datastore=self.datastore,
                                                                              watch_uuid=uuid
                                                                              )

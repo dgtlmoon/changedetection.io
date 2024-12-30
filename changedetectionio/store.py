@@ -432,7 +432,6 @@ class ChangeDetectionStore:
 
             # Write each watch to the disk (data in their own subdir) if it changed
             for watch_uuid, watch in self.__data['watching'].items():
-                logger.debug(f"Saving watch {watch_uuid}")
                 watch.save_data()
 
             self.needs_write = False

@@ -531,11 +531,18 @@ class model(WatchBase):
 
     def save_data(self):
         import json
-        # @todo some tmp trick first, if it wrote OK
         # @todo dict change?
-        with open(os.path.join(self.watch_data_dir, WATCH_DB_JSON_FILENAME), 'w') as json_file:
-            json.dump(self.as_dict(), json_file, indent=2)
-        return False
+        # Save it to a temp file first so that if the disk is full or other error it wont corrupt (hopefully).
+
+        dest = os.path.join(self.watch_data_dir, WATCH_DB_JSON_FILENAME)
+        logger.debug(f"Saving watch {dest}")
+        try:
+            with open(dest + '.tmp', 'w') as json_file:
+                json.dump(self.as_dict(), json_file, indent=2)
+            os.replace(dest + '.tmp', dest)
+
+        except Exception as e:
+            logger.critical(f"Exception saving watch JSON {dest} - {e}")
 
 
     def save_error_text(self, contents):
