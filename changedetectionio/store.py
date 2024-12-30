@@ -52,9 +52,10 @@ class ChangeDetectionStore:
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         # Should only be active for docker
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
+        from os.path import join
         self.__data = App.model()
         self.datastore_path = datastore_path
-        self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
+        self.json_store_path = join(self.datastore_path, 'url-watches.json')
         logger.info(f"Datastore path is '{self.json_store_path}'")
         self.needs_write = False
         self.start_time = time.time()
@@ -72,10 +73,6 @@ class ChangeDetectionStore:
                 from_disk = json.load(json_file)
 
                 # @todo isnt there a way todo this dict.update recursively?
-                # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
-                if 'watching' in from_disk:
-                    self.__data['watching'].update(from_disk['watching'])
-
                 if 'app_guid' in from_disk:
                     self.__data['app_guid'] = from_disk['app_guid']
 
@@ -88,7 +85,6 @@ class ChangeDetectionStore:
 
                     if 'application' in from_disk['settings']:
                         self.__data['settings']['application'].update(from_disk['settings']['application'])
-
 
                 self.scan_and_load_watches()
 
@@ -956,3 +952,25 @@ class ChangeDetectionStore:
                         f_d.write(zlib.compress(f_j.read()))
                         os.unlink(json_path)
 
+    # Move each 'watching' from a big JSON file to their own datafile in their data subdirectory
+    def update_20(self):
+        with open(self.json_store_path) as json_file:
+            data = json.load(json_file)
+            if data.get('watching'):
+                for uuid, watch in data['watching'].items():
+                    watch_data_dir = os.path.join(self.datastore_path, uuid)
+                    dest = os.path.join(watch_data_dir, WATCH_DB_JSON_FILENAME)
+
+                    try:
+                        if not os.path.isdir(watch_data_dir):
+                            logger.debug(f"> Creating data dir {watch_data_dir}")
+                            os.mkdir(watch_data_dir)
+                        with open(dest + '.tmp', 'w') as json_file:
+                            json.dump(watch, json_file, indent=2)
+                        os.replace(dest + '.tmp', dest)
+                        logger.info(f"Saved watch to {dest}")
+                    except Exception as e:
+                        logger.critical(f"Exception saving watch JSON {dest} - {e}")
+
+            self.data['watching'] = {}
+            self.scan_and_load_watches()
