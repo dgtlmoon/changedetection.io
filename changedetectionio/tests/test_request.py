@@ -2,7 +2,7 @@ import json
 import os
 import time
 from flask import url_for
-from . util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_UUID_from_client
+from .util import live_server_setup, wait_for_all_checks
 
 def test_setup(live_server):
     live_server_setup(live_server)
@@ -244,11 +244,9 @@ def test_method_in_request(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     watches_with_method = 0
-    with open('test-datastore/url-watches.json') as f:
-        app_struct = json.load(f)
-        for uuid in app_struct['watching']:
-            if app_struct['watching'][uuid]['method'] == 'PATCH':
-                watches_with_method += 1
+    for k, watch in client.application.config.get('DATASTORE').data.get('watching').items():
+        if watch['method'] == 'PATCH':
+            watches_with_method += 1
 
     # Should be only one with method set to PATCH
     assert watches_with_method == 1
