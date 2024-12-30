@@ -6,6 +6,7 @@
 import unittest
 import os
 
+from changedetectionio import store
 from changedetectionio.model import Watch
 
 # mostly
@@ -13,7 +14,8 @@ class TestDiffBuilder(unittest.TestCase):
 
     def test_watch_get_suggested_from_diff_timestamp(self):
         import uuid as uuid_builder
-        watch = Watch.model(datastore_path='/tmp', default={})
+        datastore = store.ChangeDetectionStore(datastore_path='/tmp')
+        watch = Watch.model(__datastore=datastore, default={})
         watch.ensure_data_dir_exists()
 
 
@@ -49,7 +51,7 @@ class TestDiffBuilder(unittest.TestCase):
         assert p == "109", "Correct when its the same time"
 
         # new empty one
-        watch = Watch.model(datastore_path='/tmp', default={})
+        watch = Watch.model(__datastore=datastore, default={})
         p = watch.get_from_version_based_on_last_viewed
         assert p == None, "None when no history available"
 
@@ -61,5 +63,6 @@ class TestDiffBuilder(unittest.TestCase):
         p = watch.get_from_version_based_on_last_viewed
         assert p == "100", "Correct with only one history snapshot"
 
+        datastore.stop_thread = True
 if __name__ == '__main__':
     unittest.main()
