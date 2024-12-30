@@ -6,6 +6,7 @@ from changedetectionio import strtobool
 from changedetectionio.notification import default_notification_format_for_watch
 
 class WatchBase(MutableMapping):
+    __data_checksum = None
     def __init__(self, *args, **kwargs):
         self.__internal_dict = {
             # Custom notification content
@@ -134,6 +135,7 @@ class WatchBase(MutableMapping):
 
         if self.get('default'):
             del self['default']
+
 
     # Implement abstract methods required by MutableMapping
     def __getitem__(self, key):

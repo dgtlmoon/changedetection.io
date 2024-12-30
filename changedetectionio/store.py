@@ -1,3 +1,5 @@
+import glob
+
 from changedetectionio.strtobool import strtobool
 
 from flask import (
@@ -18,6 +20,7 @@ import time
 import uuid as uuid_builder
 from loguru import logger
 
+from .model.Watch import WATCH_DB_JSON_FILENAME
 from .processors import get_custom_watch_obj_for_processor
 from .processors.restock_diff import Restock
 
@@ -86,10 +89,8 @@ class ChangeDetectionStore:
                     if 'application' in from_disk['settings']:
                         self.__data['settings']['application'].update(from_disk['settings']['application'])
 
-                # Convert each existing watch back to the Watch.model object
-                for uuid, watch in self.__data['watching'].items():
-                    self.__data['watching'][uuid] = self.rehydrate_entity(uuid, watch)
-                    logger.info(f"Watching: {uuid} {watch['url']}")
+
+                self.scan_and_load_watches()
 
                 # And for Tags also, should be Restock type because it has extra settings
                 for uuid, tag in self.__data['settings']['application']['tags'].items():
@@ -164,6 +165,26 @@ class ChangeDetectionStore:
 
         entity = watch_class(__datastore=self, default=entity)
         return entity
+
+    def scan_and_load_watches(self):
+
+        # Use glob to find all occurrences of 'watch.json' in subdirectories
+        # @todo move to some other function so we can trigger a rescan in a thread
+        for file_path in glob.glob(f"{self.datastore_path}/*/{WATCH_DB_JSON_FILENAME}", recursive=True):
+            try:
+                with open(file_path, 'r') as json_file:
+                    data = json.load(json_file)
+                    # So that we can always move it to another UUID by renaming the dir
+                    directory_path = os.path.dirname(file_path)
+                    uuid = os.path.basename(directory_path)
+                    if data.get('uuid'):
+                        del data['uuid']
+                    self.__data['watching'][uuid] = self.rehydrate_entity(uuid, data)
+
+            except json.JSONDecodeError as e:
+                logger.error(f"Error decoding JSON in file {file_path}: {e}")
+            except Exception as e:
+                logger.critical(f"Exception decoding JSON in file {file_path}: {e}")
 
     def set_last_viewed(self, uuid, timestamp):
         logger.debug(f"Setting watch UUID: {uuid} last viewed to {int(timestamp)}")
@@ -389,7 +410,8 @@ class ChangeDetectionStore:
     def sync_to_json(self):
         logger.info("Saving JSON..")
         try:
-            data = deepcopy(self.__data)
+            data = {key: deepcopy(value) for key, value in self.__data.items() if key != 'watching'}
+
         except RuntimeError as e:
             # Try again in 15 seconds
             time.sleep(15)
@@ -407,6 +429,11 @@ class ChangeDetectionStore:
                 os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
                 logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")
+
+            # Write each watch to the disk (data in their own subdir) if it changed
+            for watch_uuid, watch in self.__data['watching'].items():
+                logger.debug(f"Saving watch {watch_uuid}")
+                watch.save_data()
 
             self.needs_write = False
             self.needs_write_urgent = False

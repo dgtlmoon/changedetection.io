@@ -11,7 +11,7 @@ from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 # Allowable protocols, protects against javascript: etc
 # file:// is further checked by ALLOW_FILE_URI
 SAFE_PROTOCOL_REGEX='^(http|https|ftp|file):'
-
+WATCH_DB_JSON_FILENAME = 'watch.json'
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
 
@@ -34,6 +34,8 @@ def is_safe_url(test_url):
 
 class model(WatchBase):
     __datastore = None
+    __datastore_checksum = None
+
     __history_n = 0
     __newest_history_key = None
     jitter_seconds = 0
@@ -526,6 +528,15 @@ class model(WatchBase):
 
         # None is set
         return False
+
+    def save_data(self):
+        import json
+        # @todo some tmp trick first, if it wrote OK
+        # @todo dict change?
+        with open(os.path.join(self.watch_data_dir, WATCH_DB_JSON_FILENAME), 'w') as json_file:
+            json.dump(self.as_dict(), json_file, indent=2)
+        return False
+
 
     def save_error_text(self, contents):
         self.ensure_data_dir_exists()
