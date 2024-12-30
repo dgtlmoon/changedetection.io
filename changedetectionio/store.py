@@ -28,8 +28,8 @@ dictfilt = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
 
 class CustomEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, WatchBase):
-            return obj.internal_dict
+        if obj and isinstance(obj, WatchBase):
+            return obj.as_dict()
         # Add more custom type handlers here
         return super().default(obj)
 
@@ -56,9 +56,6 @@ class ChangeDetectionStore:
         self.needs_write = False
         self.start_time = time.time()
         self.stop_thread = False
-        # Base definition for all watchers
-        # deepcopy part of #569 - not sure why its needed exactly
-        self.generic_definition = deepcopy(Watch.model(datastore_path = datastore_path, default={}))
 
         if path.isfile('changedetectionio/source.txt'):
             with open('changedetectionio/source.txt') as f:
@@ -165,7 +162,7 @@ class ChangeDetectionStore:
         if entity.get('uuid') != 'text_json_diff':
             logger.trace(f"Loading Watch object '{watch_class.__module__}.{watch_class.__name__}' for UUID {uuid}")
 
-        entity = watch_class(datastore_path=self.datastore_path, default=entity)
+        entity = watch_class(__datastore=self, default=entity)
         return entity
 
     def set_last_viewed(self, uuid, timestamp):
@@ -184,13 +181,15 @@ class ChangeDetectionStore:
             return
 
         with self.lock:
+            # deepcopy part of #569 - not sure why its needed exactly
+#            self.generic_definition = deepcopy(Watch.model(default={}))
 
-            # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
-            for dict_key, d in self.generic_definition.items():
-                if isinstance(d, dict):
-                    if update_obj is not None and dict_key in update_obj:
-                        self.__data['watching'][uuid][dict_key].update(update_obj[dict_key])
-                        del (update_obj[dict_key])
+#            # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
+#            for dict_key, d in self.generic_definition.items():
+#                if isinstance(d, dict):
+#                    if update_obj is not None and dict_key in update_obj:
+#                        self.__data['watching'][uuid][dict_key].update(update_obj[dict_key])
+#                        del (update_obj[dict_key])
 
             self.__data['watching'][uuid].update(update_obj)
         self.needs_write = True
@@ -353,7 +352,7 @@ class ChangeDetectionStore:
 
         # If the processor also has its own Watch implementation
         watch_class = get_custom_watch_obj_for_processor(apply_extras.get('processor'))
-        new_watch = watch_class(datastore_path=self.datastore_path, url=url)
+        new_watch = watch_class(__datastore=self, url=url)
 
         new_uuid = new_watch.get('uuid')
 

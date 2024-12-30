@@ -33,14 +33,17 @@ def is_safe_url(test_url):
 
 
 class model(WatchBase):
-    __newest_history_key = None
+    __datastore = None
     __history_n = 0
+    __newest_history_key = None
     jitter_seconds = 0
-
+    
     def __init__(self, *arg, **kw):
-        self.__datastore_path = kw.get('datastore_path')
-        if kw.get('datastore_path'):
-            del kw['datastore_path']
+        if not kw.get('__datastore'):
+            logger.critical('No __datastore reference was set!')
+
+        self.__datastore = kw.get('__datastore')
+
         super(model, self).__init__(*arg, **kw)
         if kw.get('default'):
             self.update(kw['default'])
@@ -419,7 +422,7 @@ class model(WatchBase):
     @property
     def watch_data_dir(self):
         # The base dir of the watch data
-        return os.path.join(self.__datastore_path, self['uuid']) if self.__datastore_path else None
+        return os.path.join(self.__datastore.datastore_path, self['uuid']) if self.__datastore.datastore_path else None
 
     def get_error_text(self):
         """Return the text saved from a previous request that resulted in a non-200 error"""
