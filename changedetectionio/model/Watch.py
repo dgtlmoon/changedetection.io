@@ -184,7 +184,7 @@ class model(WatchBase):
         tmp_history = {}
 
         # In the case we are only using the watch for processing without history
-        if not self.watch_data_dir:
+        if not self.__datastore or not self.watch_data_dir:
             return []
 
         # Read the history file as a dict
