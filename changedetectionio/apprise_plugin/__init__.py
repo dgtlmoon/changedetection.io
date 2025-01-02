@@ -14,7 +14,7 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     import requests
     import json
     from urllib.parse import unquote_plus
-    from apprise.utils import parse_url as apprise_parse_url
+    from apprise.utils.parse import parse_url as apprise_parse_url
     from apprise import URLBase
 
     url = kwargs['meta'].get('url')
