@@ -310,6 +310,9 @@ class ChangeDetectionStore:
                     'trigger_text',
                     'url',
                     'webdriver_js_execute_code',
+                    'webdriver_enable_pagination',
+                    'webdriver_paginated_js_execute_each_page',
+                    'webdriver_paginated_next_selector',
                 ]:
                     if res.get(k):
                         if k != 'css_filter':
