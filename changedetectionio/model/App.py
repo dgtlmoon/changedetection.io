@@ -10,7 +10,7 @@ _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT = 6
 DEFAULT_SETTINGS_HEADERS_USERAGENT='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36'
 
 class model(dict):
-    base_config = {
+    __base_config = {
             'note': "Hello! If you change this file manually, please be sure to restart your changedetection.io instance!",
             'watching': {},
             'settings': {
@@ -60,7 +60,7 @@ class model(dict):
 
     def __init__(self, *arg, **kw):
         super(model, self).__init__(*arg, **kw)
-        self.update(self.base_config)
+        self.update(self.__base_config)
 
 
 def parse_headers_from_text_file(filepath):

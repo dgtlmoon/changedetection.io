@@ -41,6 +41,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         now = time.time()
         try:
             processor_module = importlib.import_module("changedetectionio.processors.text_json_diff.processor")
+            # @todo can now just pass the watch here?
             update_handler = processor_module.perform_site_check(datastore=datastore,
                                                                  watch_uuid=uuid
                                                                  )

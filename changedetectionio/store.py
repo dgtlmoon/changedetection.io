@@ -1,3 +1,5 @@
+import glob
+
 from changedetectionio.strtobool import strtobool
 
 from flask import (
@@ -5,8 +7,8 @@ from flask import (
 )
 
 from .html_tools import TRANSLATE_WHITESPACE_TABLE
-from . model import App, Watch
-from copy import deepcopy, copy
+from .model import App, Watch, WatchBase
+from copy import deepcopy
 from os import path, unlink
 from threading import Lock
 import json
@@ -18,6 +20,7 @@ import time
 import uuid as uuid_builder
 from loguru import logger
 
+from .model.Watch import WATCH_DB_JSON_FILENAME
 from .processors import get_custom_watch_obj_for_processor
 from .processors.restock_diff import Restock
 
@@ -25,6 +28,13 @@ from .processors.restock_diff import Restock
 BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
 
 dictfilt = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
+
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if obj and isinstance(obj, WatchBase):
+            return obj.as_dict()
+        # Add more custom type handlers here
+        return super().default(obj)
 
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
@@ -42,16 +52,14 @@ class ChangeDetectionStore:
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         # Should only be active for docker
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
+        from os.path import join
         self.__data = App.model()
         self.datastore_path = datastore_path
-        self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
+        self.json_store_path = join(self.datastore_path, 'url-watches.json')
         logger.info(f"Datastore path is '{self.json_store_path}'")
         self.needs_write = False
         self.start_time = time.time()
         self.stop_thread = False
-        # Base definition for all watchers
-        # deepcopy part of #569 - not sure why its needed exactly
-        self.generic_definition = deepcopy(Watch.model(datastore_path = datastore_path, default={}))
 
         if path.isfile('changedetectionio/source.txt'):
             with open('changedetectionio/source.txt') as f:
@@ -65,10 +73,6 @@ class ChangeDetectionStore:
                 from_disk = json.load(json_file)
 
                 # @todo isnt there a way todo this dict.update recursively?
-                # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
-                if 'watching' in from_disk:
-                    self.__data['watching'].update(from_disk['watching'])
-
                 if 'app_guid' in from_disk:
                     self.__data['app_guid'] = from_disk['app_guid']
 
@@ -82,10 +86,7 @@ class ChangeDetectionStore:
                     if 'application' in from_disk['settings']:
                         self.__data['settings']['application'].update(from_disk['settings']['application'])
 
-                # Convert each existing watch back to the Watch.model object
-                for uuid, watch in self.__data['watching'].items():
-                    self.__data['watching'][uuid] = self.rehydrate_entity(uuid, watch)
-                    logger.info(f"Watching: {uuid} {watch['url']}")
+                self.scan_and_load_watches()
 
                 # And for Tags also, should be Restock type because it has extra settings
                 for uuid, tag in self.__data['settings']['application']['tags'].items():
@@ -158,8 +159,28 @@ class ChangeDetectionStore:
         if entity.get('uuid') != 'text_json_diff':
             logger.trace(f"Loading Watch object '{watch_class.__module__}.{watch_class.__name__}' for UUID {uuid}")
 
-        entity = watch_class(datastore_path=self.datastore_path, default=entity)
+        entity = watch_class(__datastore=self, default=entity)
         return entity
+
+    def scan_and_load_watches(self):
+
+        # Use glob to find all occurrences of 'watch.json' in subdirectories
+        # @todo move to some other function so we can trigger a rescan in a thread
+        for file_path in glob.glob(f"{self.datastore_path}/*/{WATCH_DB_JSON_FILENAME}", recursive=True):
+            try:
+                with open(file_path, 'r') as json_file:
+                    data = json.load(json_file)
+                    # So that we can always move it to another UUID by renaming the dir
+                    directory_path = os.path.dirname(file_path)
+                    uuid = os.path.basename(directory_path)
+                    if data.get('uuid'):
+                        del data['uuid']
+                    self.__data['watching'][uuid] = self.rehydrate_entity(uuid, data)
+
+            except json.JSONDecodeError as e:
+                logger.error(f"Error decoding JSON in file {file_path}: {e}")
+            except Exception as e:
+                logger.critical(f"Exception decoding JSON in file {file_path}: {e}")
 
     def set_last_viewed(self, uuid, timestamp):
         logger.debug(f"Setting watch UUID: {uuid} last viewed to {int(timestamp)}")
@@ -177,13 +198,15 @@ class ChangeDetectionStore:
             return
 
         with self.lock:
+            # deepcopy part of #569 - not sure why its needed exactly
+#            self.generic_definition = deepcopy(Watch.model(default={}))
 
-            # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
-            for dict_key, d in self.generic_definition.items():
-                if isinstance(d, dict):
-                    if update_obj is not None and dict_key in update_obj:
-                        self.__data['watching'][uuid][dict_key].update(update_obj[dict_key])
-                        del (update_obj[dict_key])
+#            # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
+#            for dict_key, d in self.generic_definition.items():
+#                if isinstance(d, dict):
+#                    if update_obj is not None and dict_key in update_obj:
+#                        self.__data['watching'][uuid][dict_key].update(update_obj[dict_key])
+#                        del (update_obj[dict_key])
 
             self.__data['watching'][uuid].update(update_obj)
         self.needs_write = True
@@ -346,7 +369,7 @@ class ChangeDetectionStore:
 
         # If the processor also has its own Watch implementation
         watch_class = get_custom_watch_obj_for_processor(apply_extras.get('processor'))
-        new_watch = watch_class(datastore_path=self.datastore_path, url=url)
+        new_watch = watch_class(__datastore=self, url=url)
 
         new_uuid = new_watch.get('uuid')
 
@@ -383,7 +406,8 @@ class ChangeDetectionStore:
     def sync_to_json(self):
         logger.info("Saving JSON..")
         try:
-            data = deepcopy(self.__data)
+            data = {key: deepcopy(value) for key, value in self.__data.items() if key != 'watching'}
+
         except RuntimeError as e:
             # Try again in 15 seconds
             time.sleep(15)
@@ -397,10 +421,14 @@ class ChangeDetectionStore:
                 # This is a fairly basic strategy to deal with the case that the file is corrupted,
                 # system was out of memory, out of RAM etc
                 with open(self.json_store_path+".tmp", 'w') as json_file:
-                    json.dump(data, json_file, indent=4)
+                    json.dump(data, json_file, indent=2, cls=CustomEncoder)
                 os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
                 logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")
+
+            # Write each watch to the disk (data in their own subdir) if it changed
+            for watch_uuid, watch in self.__data['watching'].items():
+                watch.save_data()
 
             self.needs_write = False
             self.needs_write_urgent = False
@@ -924,3 +952,25 @@ class ChangeDetectionStore:
                         f_d.write(zlib.compress(f_j.read()))
                         os.unlink(json_path)
 
+    # Move each 'watching' from a big JSON file to their own datafile in their data subdirectory
+    def update_20(self):
+        with open(self.json_store_path) as json_file:
+            data = json.load(json_file)
+            if data.get('watching'):
+                for uuid, watch in data['watching'].items():
+                    watch_data_dir = os.path.join(self.datastore_path, uuid)
+                    dest = os.path.join(watch_data_dir, WATCH_DB_JSON_FILENAME)
+
+                    try:
+                        if not os.path.isdir(watch_data_dir):
+                            logger.debug(f"> Creating data dir {watch_data_dir}")
+                            os.mkdir(watch_data_dir)
+                        with open(dest + '.tmp', 'w') as json_file:
+                            json.dump(watch, json_file, indent=2)
+                        os.replace(dest + '.tmp', dest)
+                        logger.info(f"Saved watch to {dest}")
+                    except Exception as e:
+                        logger.critical(f"Exception saving watch JSON {dest} - {e}")
+
+            self.data['watching'] = {}
+            self.scan_and_load_watches()

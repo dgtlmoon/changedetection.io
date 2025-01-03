@@ -1,8 +1,8 @@
 
-from changedetectionio.model import watch_base
+from changedetectionio.model import WatchBase
 
 
-class model(watch_base):
+class model(WatchBase):
 
     def __init__(self, *arg, **kw):
         super(model, self).__init__(*arg, **kw)
