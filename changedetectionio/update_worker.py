@@ -554,12 +554,11 @@ class update_worker(threading.Thread):
                                     # attribute .last_changed is then based on this data
                                     watch.save_last_fetched_html(contents=update_handler.fetcher.content, timestamp=fetch_start_time)
 
-                                # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
-                                if watch.history_n >= 2:
-                                    logger.info(f"Change detected in UUID {uuid} - {watch['url']}")
-                                    if not watch.get('notification_muted'):
-                                        # @todo only run this if notifications exist
-                                        self.send_content_changed_notification(watch_uuid=uuid)
+                                    # Notifications should only trigger on the second time (first time, we gather the initial snapshot)
+                                    if watch.history_n >= 2:
+                                        logger.info(f"Change detected in UUID {uuid} - {watch['url']}")
+                                        if not watch.get('notification_muted'):
+                                            self.send_content_changed_notification(watch_uuid=uuid)
 
                         except Exception as e:
                             # Catch everything possible here, so that if a worker crashes, we don't lose it until restart!
