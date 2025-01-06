@@ -253,7 +253,7 @@ class update_worker(threading.Thread):
                 pass
 
             else:
-                fetch_start_time = time.time()  # Also used a key in history.txt
+                fetch_start_time = time.time()
                 uuid = queued_item_data.item.get('uuid')
                 self.current_uuid = uuid
                 if uuid in list(self.datastore.data['watching'].keys()) and self.datastore.data['watching'][uuid].get('url'):
@@ -289,7 +289,7 @@ class update_worker(threading.Thread):
 
                         # In reality, the actual time of when the change was detected could be a few seconds after this
                         # For example it should include when the page stopped rendering if using a playwright/chrome type fetch
-                        fetch_start_time = time.time()  # Also used a key in history.txt
+                        fetch_start_time = time.time()
 
                         changed_detected, update_obj, contents = update_handler.run_changedetection(watch=watch)
 
