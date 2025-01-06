@@ -44,7 +44,6 @@ def set_modified_response():
 
     return None
 
-
 def is_valid_uuid(val):
     try:
         uuid.UUID(str(val))
@@ -56,8 +55,9 @@ def is_valid_uuid(val):
 def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
+
 def test_api_simple(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+#    live_server_setup(live_server)
 
     api_key = extract_api_key_from_UI(client)
 
@@ -128,6 +128,9 @@ def test_api_simple(client, live_server, measure_memory_usage):
     after_recheck_info = res.json[watch_uuid]
     assert after_recheck_info['last_checked'] != before_recheck_info['last_checked']
     assert after_recheck_info['last_changed'] != 0
+
+    # #2877 When run in a slow fetcher like playwright etc
+    assert after_recheck_info['last_changed'] ==  after_recheck_info['last_checked']
 
     # Check history index list
     res = client.get(
