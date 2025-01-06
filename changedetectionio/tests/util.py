@@ -76,6 +76,14 @@ def set_more_modified_response():
     return None
 
 
+def set_empty_text_response():
+    test_return_data = """<html><body></body></html>"""
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+
+    return None
+
 def wait_for_notification_endpoint_output():
     '''Apprise can take a few seconds to fire'''
     #@todo - could check the apprise object directly instead of looking for this file
