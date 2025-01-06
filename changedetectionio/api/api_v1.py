@@ -76,6 +76,7 @@ class Watch(Resource):
         # Return without history, get that via another API call
         # Properties are not returned as a JSON, so add the required props manually
         watch['history_n'] = watch.history_n
+        # attr .last_changed will check for the last written text snapshot on change
         watch['last_changed'] = watch.last_changed
         watch['viewed'] = watch.viewed
         return watch

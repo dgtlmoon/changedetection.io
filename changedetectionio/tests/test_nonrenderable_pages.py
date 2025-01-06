@@ -48,7 +48,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     #####################
     client.post(
         url_for("settings_page"),
-        data={"application-empty_pages_are_a_change": "",
+        data={"application-empty_pages_are_a_change": "", # default, OFF, they are NOT a change
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_requests"},
         follow_redirects=True
@@ -65,6 +65,14 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
+
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
+    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+
+    assert watch.last_changed == 0
+    assert watch['last_checked'] != 0
+
+
 
 
     # ok now do the opposite
@@ -92,6 +100,10 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # A totally zero byte (#2528) response should also not trigger an error
     set_zero_byte_response()
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
+
+    # 2877
+    assert watch.last_changed == watch['last_checked']
+
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data # A change should have registered because empty_pages_are_a_change is ON
