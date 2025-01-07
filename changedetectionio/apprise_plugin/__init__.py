@@ -2,6 +2,8 @@
 from apprise.decorators import notify
 from loguru import logger
 
+
+
 @notify(on="delete")
 @notify(on="deletes")
 @notify(on="get")
@@ -10,25 +12,17 @@ from loguru import logger
 @notify(on="posts")
 @notify(on="put")
 @notify(on="puts")
+
 def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     import requests
     import json
     from urllib.parse import unquote_plus
     from apprise.utils.parse import parse_url as apprise_parse_url
-    from apprise import URLBase
 
     url = kwargs['meta'].get('url')
+    schema = kwargs['meta'].get('schema').strip('s')
+    requests_method = getattr(requests, schema)
 
-    if url.startswith('post'):
-        r = requests.post
-    elif url.startswith('get'):
-        r = requests.get
-    elif url.startswith('put'):
-        r = requests.put
-    elif url.startswith('delete'):
-        r = requests.delete
-
-    url = url.replace('post://', 'http://')
     url = url.replace('posts://', 'https://')
     url = url.replace('put://', 'http://')
     url = url.replace('puts://', 'https://')
@@ -42,6 +36,8 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     headers = {}
     params = {}
     auth = None
+    has_error = False
+
 
     # Convert /foobar?+some-header=hello to proper header dictionary
     results = apprise_parse_url(url)
@@ -65,18 +61,40 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
         elif results.get('user'):
             auth = (unquote_plus(results.get('user')))
 
-    # Try to auto-guess if it's JSON
-    h = 'application/json; charset=utf-8'
-    try:
-        json.loads(body)
-        headers['Content-Type'] = h
-    except ValueError as e:
-        logger.warning(f"Could not automatically add '{h}' header to the {kwargs['meta'].get('schema')}:// notification because the document failed to parse as JSON: {e}")
-        pass
+    if '{' in body[:100]:
+        try:
+            # Try to auto-guess if it's JSON
+            h = 'application/json; charset=utf-8'
+            json.loads(body)
+            headers['Content-Type'] = h
+        except ValueError as e:
+            logger.warning(f"Could not automatically add '{h}' header to the notification because the document failed to parse as JSON: {e}")
+            pass
+    status_str = ''
 
-    r(results.get('url'),
-      auth=auth,
-      data=body.encode('utf-8') if type(body) is str else body,
-      headers=headers,
-      params=params
-      )
+    try:
+
+        r = requests_method(results.get('url'),
+          auth=auth,
+          data=body.encode('utf-8') if type(body) is str else body,
+          headers=headers,
+          params=params
+        )
+
+        if r.status_code not in (requests.codes.created, requests.codes.ok):
+            status_str = f"Error sending '{schema}' request to {url} - Status: {r.status_code}: '{r.reason}'"
+            logger.error(status_str)
+            has_error = True
+        else:
+            logger.info(f"Sent '{schema}' request to {url}")
+            has_error = False
+
+    except requests.RequestException as e:
+        status_str = f"Error sending '{schema}' request to {url} - {str(e)}"
+        logger.error(status_str)
+        has_error = True
+
+    if has_error:
+        raise TypeError(status_str)
+
+    return True
