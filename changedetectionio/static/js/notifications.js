@@ -35,8 +35,17 @@ $(document).ready(function () {
             }
         }).done(function (data) {
             $("#notification-test-log>span").text(data);
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            // Handle connection refused or other errors
+            if (textStatus === "error" && errorThrown === "") {
+                console.error("Connection refused or server unreachable");
+                $("#notification-test-log>span").text("Error: Connection refused or server is unreachable.");
+            } else {
+                console.error("Error:", textStatus, errorThrown);
+                $("#notification-test-log>span").text("An error occurred: " + textStatus);
+            }
         }).always(function () {
-          $('.notifications-wrapper .spinner').hide();
+            $('.notifications-wrapper .spinner').hide();
         })
     });
 });
