@@ -617,7 +617,10 @@ def changedetection_app(config=None, datastore_o=None):
 
         except Exception as e:
             e_str = str(e)
-            e_str=e_str.replace("DEBUG - <class 'apprise.decorators.base.CustomNotifyPlugin.instantiate_plugin.<locals>.CustomNotifyPluginWrapper'>",'')
+            # Remove this text which is not important and floods the container
+            e_str = e_str.replace(
+                "DEBUG - <class 'apprise.decorators.base.CustomNotifyPlugin.instantiate_plugin.<locals>.CustomNotifyPluginWrapper'>",
+                '')
 
             return make_response(e_str, 400)
 
