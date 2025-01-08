@@ -27,38 +27,33 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     method =  re.sub(rf's$', '', schema)
     requests_method = getattr(requests, method)
 
-    if schema.lower().endswith('s'):
-        url = re.sub(rf'^{schema}', 'https', url)
-    else:
-        url = re.sub(rf'^{schema}', 'http', url)
-
     headers = CaseInsensitiveDict({})
-    params = {}
+    params = CaseInsensitiveDict({}) # Added to requests
     auth = None
     has_error = False
 
 
     # Convert /foobar?+some-header=hello to proper header dictionary
     results = apprise_parse_url(url)
-    if results:
-        # Add our headers that the user can potentially over-ride if they wish
-        # to to our returned result set and tidy entries by unquoting them
-        headers = {unquote_plus(x): unquote_plus(y)
-                   for x, y in results['qsd+'].items()}
 
-        # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
-        # In Apprise, it relies on prefixing each request arg with "-", because it uses say &method=update as a flag for apprise
-        # but here we are making straight requests, so we need todo convert this against apprise's logic
-        for k, v in results['qsd'].items():
-            if not k.strip('+-') in results['qsd+'].keys():
-                params[unquote_plus(k)] = unquote_plus(v)
+    # Add our headers that the user can potentially over-ride if they wish
+    # to to our returned result set and tidy entries by unquoting them
+    headers = {unquote_plus(x): unquote_plus(y)
+               for x, y in results['qsd+'].items()}
 
-        # Determine Authentication
-        auth = ''
-        if results.get('user') and results.get('password'):
-            auth = (unquote_plus(results.get('user')), unquote_plus(results.get('user')))
-        elif results.get('user'):
-            auth = (unquote_plus(results.get('user')))
+    # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
+    # In Apprise, it relies on prefixing each request arg with "-", because it uses say &method=update as a flag for apprise
+    # but here we are making straight requests, so we need todo convert this against apprise's logic
+    for k, v in results['qsd'].items():
+        if not k.strip('+-') in results['qsd+'].keys():
+            params[unquote_plus(k)] = unquote_plus(v)
+
+    # Determine Authentication
+    auth = ''
+    if results.get('user') and results.get('password'):
+        auth = (unquote_plus(results.get('user')), unquote_plus(results.get('user')))
+    elif results.get('user'):
+        auth = (unquote_plus(results.get('user')))
 
     # If it smells like it could be JSON and no content-type was already set, offer a default content type.
     if body and '{' in body[:100] and not headers.get('Content-Type'):
@@ -70,6 +65,12 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
         except ValueError as e:
             logger.warning(f"Could not automatically add '{json_header}' header to the notification because the document failed to parse as JSON: {e}")
             pass
+
+    # POSTS -> HTTPS etc
+    if schema.lower().endswith('s'):
+        url = re.sub(rf'^{schema}', 'https', results.get('url'))
+    else:
+        url = re.sub(rf'^{schema}', 'http', results.get('url'))
 
     status_str = ''
     try:
