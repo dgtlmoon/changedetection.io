@@ -23,7 +23,8 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     schema = kwargs['meta'].get('schema').lower().strip()
 
     # Choose POST, GET etc from requests
-    requests_method = getattr(requests, re.sub(rf's$', '', schema))
+    method =  re.sub(rf's$', '', schema)
+    requests_method = getattr(requests, method)
 
     if schema.lower().endswith('s'):
         url = re.sub(rf'^{schema}', 'https', url)
@@ -59,18 +60,17 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
             auth = (unquote_plus(results.get('user')))
 
     if '{' in body[:100]:
+        json_header = 'application/json; charset=utf-8'
         try:
-            # Try to auto-guess if it's JSON
-            h = 'application/json; charset=utf-8'
+            # Try if it's JSON
             json.loads(body)
-            headers['Content-Type'] = h
+            headers['Content-Type'] = json_header
         except ValueError as e:
-            logger.warning(f"Could not automatically add '{h}' header to the notification because the document failed to parse as JSON: {e}")
+            logger.warning(f"Could not automatically add '{json_header}' header to the notification because the document failed to parse as JSON: {e}")
             pass
+
     status_str = ''
-
     try:
-
         r = requests_method(url,
           auth=auth,
           data=body.encode('utf-8') if type(body) is str else body,
@@ -79,15 +79,15 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
         )
 
         if r.status_code not in (requests.codes.created, requests.codes.ok):
-            status_str = f"Error sending '{schema}' request to {url} - Status: {r.status_code}: '{r.reason}'"
+            status_str = f"Error sending '{method.upper()}' request to {url} - Status: {r.status_code}: '{r.reason}'"
             logger.error(status_str)
             has_error = True
         else:
-            logger.info(f"Sent '{schema}' request to {url}")
+            logger.info(f"Sent '{method.upper()}' request to {url}")
             has_error = False
 
     except requests.RequestException as e:
-        status_str = f"Error sending '{schema}' request to {url} - {str(e)}"
+        status_str = f"Error sending '{method.upper()}' request to {url} - {str(e)}"
         logger.error(status_str)
         has_error = True
 
