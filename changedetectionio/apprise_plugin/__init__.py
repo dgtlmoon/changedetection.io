@@ -59,7 +59,7 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
         elif results.get('user'):
             auth = (unquote_plus(results.get('user')))
 
-    if '{' in body[:100]:
+    if body and '{' in body[:100]:
         json_header = 'application/json; charset=utf-8'
         try:
             # Try if it's JSON
