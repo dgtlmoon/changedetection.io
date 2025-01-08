@@ -598,17 +598,28 @@ def changedetection_app(config=None, datastore_o=None):
 
             if 'notification_title' in request.form and request.form['notification_title'].strip():
                 n_object['notification_title'] = request.form.get('notification_title', '').strip()
+            elif datastore.data['settings']['application'].get('notification_title'):
+                n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
+            else:
+                n_object['notification_title'] = "Test title"
 
             if 'notification_body' in request.form and request.form['notification_body'].strip():
                 n_object['notification_body'] = request.form.get('notification_body', '').strip()
+            elif datastore.data['settings']['application'].get('notification_body'):
+                n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
+            else:
+                n_object['notification_body'] = "Test body"
 
+            n_object['as_async'] = False
             n_object.update(watch.extra_notification_token_values())
+            from .notification import process_notification
+            sent_obj = process_notification(n_object, datastore)
 
-            from . import update_worker
-            new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
-            new_worker.queue_notification_for_watch(notification_q=notification_q, n_object=n_object, watch=watch)
         except Exception as e:
-            return make_response(f"Error: str(e)", 400)
+            e_str = str(e)
+            e_str=e_str.replace("DEBUG - <class 'apprise.decorators.base.CustomNotifyPlugin.instantiate_plugin.<locals>.CustomNotifyPluginWrapper'>",'')
+
+            return make_response(e_str, 400)
 
         return 'OK - Sent test notifications'
 
