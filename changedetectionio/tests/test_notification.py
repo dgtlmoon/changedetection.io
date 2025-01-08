@@ -360,7 +360,10 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
     #live_server_setup(live_server)
     set_original_response()
     if os.path.isfile("test-datastore/notification.txt"):
-        os.unlink("test-datastore/notification.txt")
+        os.unlink("test-datastore/notification.txt") \
+
+    # 1995 UTF-8 content should be encoded
+    test_body = 'change detection is cool 网站监测 内容更新了'
 
     # otherwise other settings would have already existed from previous tests in this file
     res = client.post(
@@ -368,8 +371,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
         data={
             "application-fetch_backend": "html_requests",
             "application-minutes_between_check": 180,
-            #1995 UTF-8 content should be encoded
-            "application-notification_body": 'change detection is cool 网站监测 内容更新了',
+            "application-notification_body": test_body,
             "application-notification_format": default_notification_format,
             "application-notification_urls": "",
             "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
@@ -399,12 +401,10 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
     assert res.status_code != 400
     assert res.status_code != 500
 
-    # Give apprise time to fire
-    time.sleep(4)
 
     with open("test-datastore/notification.txt", 'r') as f:
         x = f.read()
-        assert 'change detection is cool 网站监测 内容更新了' in x
+        assert test_body in x
 
     os.unlink("test-datastore/notification.txt")
 

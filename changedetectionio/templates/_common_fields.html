@@ -24,11 +24,13 @@
                               </ul>
                             </div>
                             <div class="notifications-wrapper">
-                              <a id="send-test-notification" class="pure-button button-secondary button-xsmall" >Send test notification</a>
+                              <a id="send-test-notification" class="pure-button button-secondary button-xsmall" >Send test notification</a> <div class="spinner"  style="display: none;"></div>
                             {% if emailprefix %}
                               <a id="add-email-helper" class="pure-button button-secondary button-xsmall" >Add email <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='email.svg')}}" alt="Add an email address"> </a>
                             {% endif %}
                               <a href="{{url_for('notification_logs')}}" class="pure-button button-secondary button-xsmall" >Notification debug logs</a>
+                              <br>
+                                <div id="notification-test-log" style="display: none;"><span class="pure-form-message-inline">Processing..</span></div>
                             </div>
                         </div>
                         <div id="notification-customisation" class="pure-control-group">

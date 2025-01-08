@@ -380,7 +380,15 @@ a.pure-button-selected {
 }
 
 .notifications-wrapper {
-  padding: 0.5rem 0 1rem 0;
+  padding-top: 0.5rem;
+  #notification-test-log {
+    padding-top: 1rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 label {
