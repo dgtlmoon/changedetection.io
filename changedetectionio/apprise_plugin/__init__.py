@@ -3,7 +3,6 @@ from apprise.decorators import notify
 from loguru import logger
 
 
-
 @notify(on="delete")
 @notify(on="deletes")
 @notify(on="get")
@@ -12,26 +11,24 @@ from loguru import logger
 @notify(on="posts")
 @notify(on="put")
 @notify(on="puts")
-
 def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     import requests
     import json
+    import re
+
     from urllib.parse import unquote_plus
     from apprise.utils.parse import parse_url as apprise_parse_url
 
     url = kwargs['meta'].get('url')
-    schema = kwargs['meta'].get('schema').strip('s')
-    requests_method = getattr(requests, schema)
+    schema = kwargs['meta'].get('schema').lower().strip()
 
-    url = url.replace('posts://', 'https://')
-    url = url.replace('put://', 'http://')
-    url = url.replace('puts://', 'https://')
-    url = url.replace('get://', 'http://')
-    url = url.replace('gets://', 'https://')
-    url = url.replace('put://', 'http://')
-    url = url.replace('puts://', 'https://')
-    url = url.replace('delete://', 'http://')
-    url = url.replace('deletes://', 'https://')
+    # Choose POST, GET etc from requests
+    requests_method = getattr(requests, re.sub(rf's$', '', schema))
+
+    if schema.lower().endswith('s'):
+        url = re.sub(rf'^{schema}', 'https', url)
+    else:
+        url = re.sub(rf'^{schema}', 'http', url)
 
     headers = {}
     params = {}
@@ -74,7 +71,7 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
 
     try:
 
-        r = requests_method(results.get('url'),
+        r = requests_method(url,
           auth=auth,
           data=body.encode('utf-8') if type(body) is str else body,
           headers=headers,
