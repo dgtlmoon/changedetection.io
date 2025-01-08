@@ -1,6 +1,7 @@
 # include the decorator
 from apprise.decorators import notify
 from loguru import logger
+from requests.structures import CaseInsensitiveDict
 
 
 @notify(on="delete")
@@ -31,7 +32,7 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     else:
         url = re.sub(rf'^{schema}', 'http', url)
 
-    headers = {}
+    headers = CaseInsensitiveDict({})
     params = {}
     auth = None
     has_error = False
@@ -59,7 +60,8 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
         elif results.get('user'):
             auth = (unquote_plus(results.get('user')))
 
-    if body and '{' in body[:100]:
+    # If it smells like it could be JSON and no content-type was already set, offer a default content type.
+    if body and '{' in body[:100] and not headers.get('Content-Type'):
         json_header = 'application/json; charset=utf-8'
         try:
             # Try if it's JSON
