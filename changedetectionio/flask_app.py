@@ -12,6 +12,7 @@ import threading
 import time
 import timeago
 
+from .html_tools import escape_mixed_content
 from .processors import find_processors, get_parent_module, get_custom_watch_obj_for_processor
 from .safe_jinja import render as jinja_render
 from changedetectionio.strtobool import strtobool
@@ -539,6 +540,7 @@ def changedetection_app(config=None, datastore_o=None):
         import apprise
         import random
         from .apprise_asset import asset
+        from .update_worker import build_notification_object_for_watch
         apobj = apprise.Apprise(asset=asset)
 
         # so that the custom endpoints are registered
@@ -610,9 +612,14 @@ def changedetection_app(config=None, datastore_o=None):
             else:
                 n_object['notification_body'] = "Test body"
 
-            n_object['as_async'] = False
-            n_object.update(watch.extra_notification_token_values())
+            n_object = build_notification_object_for_watch(watch, n_object, datastore.data['settings']['application'].get('notification_body'))
+
+            if n_object['notification_format'].startswith('HTML'):
+                n_object['notification_body'] = escape_mixed_content(n_object['notification_body'])
+
             from .notification import process_notification
+            n_object['as_async'] = False
+            # Now we send the notification_body after everything is compiled
             sent_obj = process_notification(n_object, datastore)
 
         except Exception as e:
