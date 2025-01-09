@@ -27,7 +27,7 @@ RUN \
     poppler-utils \
     python3 && \
   echo "**** pip3 install test of changedetection.io ****" && \
-  pip3 install -U pip wheel setuptools && \
-  pip3 install -U --no-cache-dir --find-links https://wheel-index.linuxserver.io/alpine-3.21/ -r /requirements.txt && \
+  pip install -U pip wheel setuptools && \
+  pip install -U --no-cache-dir --find-links https://wheel-index.linuxserver.io/alpine-3.21/ -r /requirements.txt && \
   apk del --purge \
     build-dependencies
