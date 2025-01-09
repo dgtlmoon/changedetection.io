@@ -26,7 +26,6 @@ RUN \
     nodejs \
     poppler-utils \
     python3 && \
-    py3-pip && \
   echo "**** pip3 install test of changedetection.io ****" && \
   pip3 install -U pip wheel setuptools && \
   pip3 install -U --no-cache-dir --find-links https://wheel-index.linuxserver.io/alpine-3.21/ -r /requirements.txt && \
