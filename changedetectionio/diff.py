@@ -43,19 +43,19 @@ def customSequenceMatcher(
             yield before[alo:ahi]
         elif include_removed and tag == 'delete':
             if html_colour:
-                yield [f'<span style="{REMOVED_STYLE}">{line}</span>' for line in same_slicer(before, alo, ahi)]
+                yield [f'<span class="cdio" style="{REMOVED_STYLE}">{line}</span>' for line in same_slicer(before, alo, ahi)]
             else:
                 yield [f"(removed) {line}" for line in same_slicer(before, alo, ahi)] if include_change_type_prefix else same_slicer(before, alo, ahi)
         elif include_replaced and tag == 'replace':
             if html_colour:
-                yield [f'<span style="{REMOVED_STYLE}">{line}</span>' for line in same_slicer(before, alo, ahi)] + \
-                      [f'<span style="{ADDED_STYLE}">{line}</span>' for line in same_slicer(after, blo, bhi)]
+                yield [f'<span  class="cdio" style="{REMOVED_STYLE}">{line}</span>' for line in same_slicer(before, alo, ahi)] + \
+                      [f'<span  class="cdio" style="{ADDED_STYLE}">{line}</span>' for line in same_slicer(after, blo, bhi)]
             else:
                 yield [f"(changed) {line}" for line in same_slicer(before, alo, ahi)] + \
                       [f"(into) {line}" for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(before, alo, ahi) + same_slicer(after, blo, bhi)
         elif include_added and tag == 'insert':
             if html_colour:
-                yield [f'<span style="{ADDED_STYLE}">{line}</span>' for line in same_slicer(after, blo, bhi)]
+                yield [f'<span class="cdio" style="{ADDED_STYLE}">{line}</span>' for line in same_slicer(after, blo, bhi)]
             else:
                 yield [f"(added) {line}" for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(after, blo, bhi)
 

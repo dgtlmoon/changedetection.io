@@ -500,3 +500,40 @@ def get_triggered_text(content, trigger_text):
         i += 1
 
     return triggered_text
+
+
+from bs4 import BeautifulSoup
+import html
+
+
+def escape_mixed_content(document):
+    import uuid
+    # Parse the document as HTML
+
+    # Generate a single random hash for placeholders
+    random_hash = f"__PLACEHOLDER_{uuid.uuid4().hex}__"
+    placeholder_map = []
+
+    # <br> to something else so we can preserve them
+    random_hash_br = f"__BR_{uuid.uuid4().hex}__"
+    document = document.replace('<br>', random_hash_br)
+
+    soup = BeautifulSoup(document, 'html.parser')
+
+    # Find all <span class="cdio"> and <br>/<br/>
+    for tag in soup.find_all("span", class_="cdio"):
+        placeholder_map.append(str(tag))  # Save the tag as a string
+        tag.replace_with(random_hash)  # Replace tag with the placeholder
+
+
+
+    # Escape the entire document
+    escaped_html = html.escape(str(soup))
+
+    # Restore all occurrences of placeholders with the original tags
+    for original_tag in placeholder_map:
+        escaped_html = escaped_html.replace(random_hash, original_tag, 1)  # Replace one occurrence at a time
+
+    escaped_html = escaped_html.replace( random_hash_br, "<br>")
+    return escaped_html
+
