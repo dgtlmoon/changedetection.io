@@ -48,8 +48,8 @@ def customSequenceMatcher(
                 yield [f"(removed) {line}" for line in same_slicer(before, alo, ahi)] if include_change_type_prefix else same_slicer(before, alo, ahi)
         elif include_replaced and tag == 'replace':
             if html_colour:
-                yield [f'<span  class="cdio" style="{REMOVED_STYLE}">{line}</span>' for line in same_slicer(before, alo, ahi)] + \
-                      [f'<span  class="cdio" style="{ADDED_STYLE}">{line}</span>' for line in same_slicer(after, blo, bhi)]
+                yield [f'<span class="cdio" style="{REMOVED_STYLE}">{line}</span>' for line in same_slicer(before, alo, ahi)] + \
+                      [f'<span class="cdio" style="{ADDED_STYLE}">{line}</span>' for line in same_slicer(after, blo, bhi)]
             else:
                 yield [f"(changed) {line}" for line in same_slicer(before, alo, ahi)] + \
                       [f"(into) {line}" for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(before, alo, ahi) + same_slicer(after, blo, bhi)
