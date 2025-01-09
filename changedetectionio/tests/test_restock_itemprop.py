@@ -214,7 +214,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
 
 
 def test_restock_itemprop_minmax(client, live_server):
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
     extras = {
         "restock_settings-follow_price_changes": "y",
         "restock_settings-price_change_min": 900.0,
