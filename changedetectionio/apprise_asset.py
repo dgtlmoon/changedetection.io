@@ -1,3 +1,4 @@
+from changedetectionio import apprise_plugin
 import apprise
 
 # Create our AppriseAsset and populate it with some of our new values:
