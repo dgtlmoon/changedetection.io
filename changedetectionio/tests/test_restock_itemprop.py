@@ -189,6 +189,17 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
 
     client.get(url_for("mark_all_viewed"))
 
+
+    # 2715 - Price detection (once it crosses the "lower" threshold) again with a lower price - should trigger again!
+    set_original_response(props_markup=instock_props[0], price='820.45')
+    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    assert b'1 watches queued for rechecking.' in res.data
+    wait_for_all_checks(client)
+    res = client.get(url_for("index"))
+    assert b'820.45' in res.data
+    assert b'unviewed' in res.data
+    client.get(url_for("mark_all_viewed"))
+
     # price changed to something MORE than max (1100.10), SHOULD be a change
     set_original_response(props_markup=instock_props[0], price='1890.45')
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
@@ -203,7 +214,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
 
 
 def test_restock_itemprop_minmax(client, live_server):
-#    live_server_setup(live_server)
+    live_server_setup(live_server)
     extras = {
         "restock_settings-follow_price_changes": "y",
         "restock_settings-price_change_min": 900.0,
