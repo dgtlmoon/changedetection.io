@@ -81,7 +81,7 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
           params=params
         )
 
-        if r.status_code not in (requests.codes.created, requests.codes.ok):
+        if not (200 <= r.status_code < 300):
             status_str = f"Error sending '{method.upper()}' request to {url} - Status: {r.status_code}: '{r.reason}'"
             logger.error(status_str)
             has_error = True
