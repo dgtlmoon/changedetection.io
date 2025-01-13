@@ -27,19 +27,17 @@ def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
     method =  re.sub(rf's$', '', schema)
     requests_method = getattr(requests, method)
 
-    headers = CaseInsensitiveDict({})
     params = CaseInsensitiveDict({}) # Added to requests
     auth = None
     has_error = False
-
 
     # Convert /foobar?+some-header=hello to proper header dictionary
     results = apprise_parse_url(url)
 
     # Add our headers that the user can potentially over-ride if they wish
     # to to our returned result set and tidy entries by unquoting them
-    headers = {unquote_plus(x): unquote_plus(y)
-               for x, y in results['qsd+'].items()}
+    headers = CaseInsensitiveDict({unquote_plus(x): unquote_plus(y)
+               for x, y in results['qsd+'].items()})
 
     # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
     # In Apprise, it relies on prefixing each request arg with "-", because it uses say &method=update as a flag for apprise
