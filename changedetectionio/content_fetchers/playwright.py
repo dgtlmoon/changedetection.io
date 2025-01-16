@@ -59,7 +59,7 @@ class fetcher(Fetcher):
 
     def screenshot_step(self, step_n=''):
         super().screenshot_step(step_n=step_n)
-        screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
+        screenshot = self.page.screenshot(type='jpeg', full_page=os.getenv("SCREENSHOT_FULLPAGE", "True").strip('"'), quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
 
         if self.browser_steps_screenshot_path is not None:
             destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.jpeg'.format(step_n))
@@ -162,7 +162,7 @@ class fetcher(Fetcher):
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
 
             if self.status_code != 200 and not ignore_status_codes:
-                screenshot = self.page.screenshot(type='jpeg', full_page=True,
+                screenshot = self.page.screenshot(type='jpeg', full_page=os.getenv("SCREENSHOT_FULLPAGE", "True").strip('"'),
                                                   quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
 
                 raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
@@ -200,7 +200,7 @@ class fetcher(Fetcher):
             try:
                 # The actual screenshot - this always base64 and needs decoding! horrible! huge CPU usage
                 self.screenshot = self.page.screenshot(type='jpeg',
-                                                       full_page=True,
+                                                       full_page=os.getenv("SCREENSHOT_FULLPAGE", "True").strip('"'),
                                                        quality=int(os.getenv("SCREENSHOT_QUALITY", 72)),
                                                        )
             except Exception as e:
