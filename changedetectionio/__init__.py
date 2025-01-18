@@ -24,6 +24,9 @@ from loguru import logger
 app = None
 datastore = None
 
+def get_version():
+    return __version__
+
 # Parent wrapper or OS sends us a SIGTERM/SIGINT, do everything required for a clean shutdown
 def sigshutdown_handler(_signo, _stack_frame):
     global app
