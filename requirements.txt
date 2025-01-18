@@ -95,5 +95,8 @@ babel
 # Needed for > 3.10, https://github.com/microsoft/playwright-python/issues/2096
 greenlet >= 3.0.3
 
+# Pinned or it causes problems with flask_expects_json which seems unmaintained
+referencing==0.35.1
+
 # Scheduler - Windows seemed to miss a lot of default timezone info (even "UTC" !)
 tzdata
