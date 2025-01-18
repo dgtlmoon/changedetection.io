@@ -38,24 +38,26 @@ class TestSemver(unittest.TestCase):
             "0.48.06",
             "1.0",
             "1.0.0-",
-            "1.0.0-alpha-",
+# Seems to pass the semver.org regex?
+#            "1.0.0-alpha-",
             "1.0.0+",
             "1.0.0-alpha+",
+            "1.0.0-",
             "01.0.0",
             "1.01.0",
             "1.0.01",
-            "1.0.0-",
             ".1.0.0",
             "1..0.0"
         ]
         for version in invalid_versions:
             with self.subTest(version=version):
-                self.assertIsNone(semver_pattern.match(version), f"Version {version} should be invalid")
+                res = semver_pattern.match(version)
+                self.assertIsNone(res, f"Version '{version}' should be invalid")
 
     def test_our_version(self):
         from changedetectionio import get_version
         our_version = get_version()
-        self.assertIsNotNone(semver_pattern.match("1.0.0"), f"Our version '{our_version}' should be a valid SEMVER string")
+        self.assertIsNotNone(semver_pattern.match(our_version), f"Our version '{our_version}' should be a valid SEMVER string")
 
 
 if __name__ == '__main__':
