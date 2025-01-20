@@ -285,11 +285,21 @@ def live_server_setup(live_server):
             <p id="remove">This text should be removed</p>
               <form onsubmit="event.preventDefault();">
             <!-- obfuscated text so that we dont accidentally get a false positive due to conversion of the source :) --->
-                <button name="test-button" onclick="getElementById('remove').remove();getElementById('some-content').innerHTML = atob('SSBzbWVsbCBKYXZhU2NyaXB0IGJlY2F1c2UgdGhlIGJ1dHRvbiB3YXMgcHJlc3NlZCE=')">Click here</button>
+                <button name="test-button" onclick="
+                getElementById('remove').remove();
+                getElementById('some-content').innerHTML = atob('SSBzbWVsbCBKYXZhU2NyaXB0IGJlY2F1c2UgdGhlIGJ1dHRvbiB3YXMgcHJlc3NlZCE=');
+                getElementById('reflect-text').innerHTML = getElementById('test-input-text');
+                ">Click here</button>
                 <div id=some-content></div>
                 <pre>
                 {header_text.lower()}
                 </pre>
+                <br>
+                <!-- used for testing that the jinja2 compiled here --->
+                <input type=text value="" id="test-input-text" /><br>
+                <div id=reflect-text>Waiting to reflect text from #test-input-text here</div>
+                </form>
+                
               </body>
          </html>""", 200)
         resp.headers['Content-Type'] = 'text/html'

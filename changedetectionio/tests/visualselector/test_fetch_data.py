@@ -111,6 +111,9 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
             'browser_steps-0-operation': 'Click element',
             'browser_steps-0-selector': 'button[name=test-button]',
             'browser_steps-0-optional_value': '',
+            'browser_steps-1-operation': 'Enter text in field',
+            'browser_steps-1-selector': '#test-input-text',
+            'browser_steps-1-optional_value': "Hello-Jinja2-{% now '%Y-%m-%d' %}",
             # For now, cookies doesnt work in headers because it must be a full cookiejar object
             'headers': "testheader: yes\buser-agent: MyCustomAgent",
         },
