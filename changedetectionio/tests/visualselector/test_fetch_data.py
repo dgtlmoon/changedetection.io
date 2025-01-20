@@ -135,6 +135,8 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
     assert b"This text should be removed" not in res.data
     assert b"I smell JavaScript because the button was pressed" in res.data
 
+    assert b'Hello-Jinja2-20' in res.data
+
     assert b"testheader: yes" in res.data
     assert b"user-agent: mycustomagent" in res.data
 
