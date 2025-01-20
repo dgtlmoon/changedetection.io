@@ -290,17 +290,20 @@ def live_server_setup(live_server):
                 getElementById('some-content').innerHTML = atob('SSBzbWVsbCBKYXZhU2NyaXB0IGJlY2F1c2UgdGhlIGJ1dHRvbiB3YXMgcHJlc3NlZCE=');
                 getElementById('reflect-text').innerHTML = getElementById('test-input-text');
                 ">Click here</button>
-                <div id=some-content></div>
+                
+                <div id="some-content"></div>
+                
                 <pre>
                 {header_text.lower()}
                 </pre>
+                
                 <br>
                 <!-- used for testing that the jinja2 compiled here --->
-                <input type=text value="" id="test-input-text" /><br>
-                <div id=reflect-text>Waiting to reflect text from #test-input-text here</div>
-                </form>
+                <input type="text" value="" id="test-input-text" /><br>
+                <div id="reflect-text">Waiting to reflect text from #test-input-text here</div>
+              </form>
                 
-              </body>
+           </body>
          </html>""", 200)
         resp.headers['Content-Type'] = 'text/html'
         return resp
