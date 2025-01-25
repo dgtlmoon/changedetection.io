@@ -69,7 +69,7 @@ def parse_headers_from_text_file(filepath):
         for l in f.readlines():
             l = l.strip()
             if not l.startswith('#') and ':' in l:
-                (k, v) = l.split(':')
+                (k, v) = l.split(':', 1)  # Split only on the first colon
                 headers[k.strip()] = v.strip()
 
     return headers

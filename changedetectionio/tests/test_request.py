@@ -373,13 +373,13 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     with open('test-datastore/headers-testtag.txt', 'w') as f:
-        f.write("tag-header: test")
+        f.write("tag-header: test\r\nurl-header: http://example.com")
 
     with open('test-datastore/headers.txt', 'w') as f:
-        f.write("global-header: nice\r\nnext-global-header: nice")
+        f.write("global-header: nice\r\nnext-global-header: nice\r\nurl-header-global: http://example.com/global")
 
     with open('test-datastore/' + extract_UUID_from_client(client) + '/headers.txt', 'w') as f:
-        f.write("watch-header: nice")
+        f.write("watch-header: nice\r\nurl-header-watch: http://example.com/watch")
 
     wait_for_all_checks(client)
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
@@ -410,6 +410,9 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
     assert b"Xxx:ooo" in res.data
     assert b"Watch-Header:nice" in res.data
     assert b"Tag-Header:test" in res.data
+    assert b"Url-Header:http://example.com" in res.data
+    assert b"Url-Header-Global:http://example.com/global" in res.data
+    assert b"Url-Header-Watch:http://example.com/watch" in res.data
 
     # Check the custom UA from system settings page made it through
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
