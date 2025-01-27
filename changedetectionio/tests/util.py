@@ -288,7 +288,7 @@ def live_server_setup(live_server):
                 <button name="test-button" onclick="
                 getElementById('remove').remove();
                 getElementById('some-content').innerHTML = atob('SSBzbWVsbCBKYXZhU2NyaXB0IGJlY2F1c2UgdGhlIGJ1dHRvbiB3YXMgcHJlc3NlZCE=');
-                getElementById('reflect-text').innerHTML = getElementById('test-input-text');
+                getElementById('reflect-text').innerHTML = getElementById('test-input-text').value;
                 ">Click here</button>
                 
                 <div id="some-content"></div>
