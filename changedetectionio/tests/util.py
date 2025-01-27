@@ -244,8 +244,11 @@ def live_server_setup(live_server):
                 f.write(request.content_type)
 
         print("\n>> Test notification endpoint was hit.\n", data)
-        return "Text was set"
 
+        content = "Text was set"
+        status_code = request.args.get('status_code',200)
+        resp = make_response(content, status_code)
+        return resp
 
     # Just return the verb in the request
     @live_server.app.route('/test-basicauth', methods=['GET'])

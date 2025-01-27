@@ -45,7 +45,6 @@ jobs:
     - name: Test that the basic pip built package runs without error
       run: |
         set -ex
-        sudo pip3 install --upgrade pip 
         pip3 install dist/changedetection.io*.whl
         changedetection.io -d /tmp -p 10000 &
         sleep 3
