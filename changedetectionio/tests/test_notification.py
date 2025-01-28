@@ -454,7 +454,17 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
     assert b"Error: You must have atleast one watch configured for 'test notification' to work" in res.data
 
 
+    client.get(
+        url_for("form_delete", uuid="all"),
+        follow_redirects=True
+    )
+
 def _test_color_notifications(client, notification_body_token):
+
+    client.get(
+        url_for("form_delete", uuid="all"),
+        follow_redirects=True
+    )
 
     from changedetectionio.diff import ADDED_STYLE, REMOVED_STYLE
 
@@ -494,9 +504,9 @@ def _test_color_notifications(client, notification_body_token):
     wait_for_all_checks(client)
 
     set_modified_response()
-
-
+    
     res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
+
     assert b'1 watches queued for rechecking.' in res.data
 
     wait_for_all_checks(client)
