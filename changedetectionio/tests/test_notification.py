@@ -283,7 +283,7 @@ def test_notification_validation(client, live_server, measure_memory_usage):
 
 
 def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
 
     # test_endpoint - that sends the contents of a file
     # test_notification_endpoint - that takes a POST and writes it to file (test-datastore/notification.txt)
