@@ -29,7 +29,7 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage):
         data={"url": test_url, "tags": ''},
         follow_redirects=True
     )
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.post(
         url_for("edit_page", uuid=uuid),
         data={

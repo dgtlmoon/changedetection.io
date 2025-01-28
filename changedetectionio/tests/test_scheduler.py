@@ -39,7 +39,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
 
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     # Setup all the days of the weeks using XXX as the placeholder for monday/tuesday/etc
 
@@ -104,7 +104,7 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
 
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     # Setup all the days of the weeks using XXX as the placeholder for monday/tuesday/etc
 

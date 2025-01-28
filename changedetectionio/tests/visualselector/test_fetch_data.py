@@ -2,14 +2,16 @@
 
 import os
 from flask import url_for
-from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
+from ..util import live_server_setup, wait_for_all_checks, get_index
 
-def test_setup(client, live_server, measure_memory_usage):
+def test_setup(client, live_server):
     live_server_setup(live_server)
 
 
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready
 def test_visual_selector_content_ready(client, live_server, measure_memory_usage):
+    live_server.stop()
+    live_server.start()
 
     import os
     import json
@@ -27,7 +29,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
         follow_redirects=True
     )
     assert b"Watch added in Paused state, saving will unpause" in res.data
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.post(
         url_for("edit_page", uuid=uuid, unpause_on_save=1),
         data={
@@ -87,7 +89,9 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
 
 def test_basic_browserstep(client, live_server, measure_memory_usage):
 
-    #live_server_setup(live_server)
+    live_server.stop()
+    live_server.start()
+
     assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
 
     test_url = url_for('test_interactive_html_endpoint', _external=True)
@@ -108,9 +112,13 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
             "url": test_url,
             "tags": "",
             'fetch_backend': "html_webdriver",
-            'browser_steps-0-operation': 'Click element',
-            'browser_steps-0-selector': 'button[name=test-button]',
-            'browser_steps-0-optional_value': '',
+            'browser_steps-0-operation': 'Enter text in field',
+            'browser_steps-0-selector': '#test-input-text',
+            # Should get set to the actual text (jinja2 rendered)
+            'browser_steps-0-optional_value': "Hello-Jinja2-{% now  'Europe/Berlin', '%Y-%m-%d' %}",
+            'browser_steps-1-operation': 'Click element',
+            'browser_steps-1-selector': 'button[name=test-button]',
+            'browser_steps-1-optional_value': '',
             # For now, cookies doesnt work in headers because it must be a full cookiejar object
             'headers': "testheader: yes\buser-agent: MyCustomAgent",
         },
@@ -119,7 +127,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
     assert b"unpaused" in res.data
     wait_for_all_checks(client)
 
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     assert live_server.app.config['DATASTORE'].data['watching'][uuid].history_n >= 1, "Watch history had atleast 1 (everything fetched OK)"
 
     assert b"This text should be removed" not in res.data
@@ -132,12 +140,31 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
     assert b"This text should be removed" not in res.data
     assert b"I smell JavaScript because the button was pressed" in res.data
 
+    assert b'Hello-Jinja2-20' in res.data
+
     assert b"testheader: yes" in res.data
     assert b"user-agent: mycustomagent" in res.data
+    live_server.stop()
+
+def test_non_200_errors_report_browsersteps(client, live_server):
+
+    live_server.stop()
+    live_server.start()
 
     four_o_four_url =  url_for('test_endpoint', status_code=404, _external=True)
     four_o_four_url = four_o_four_url.replace('localhost.localdomain', 'cdio')
     four_o_four_url = four_o_four_url.replace('localhost', 'cdio')
+
+    res = client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": four_o_four_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
+        follow_redirects=True
+    )
+
+    assert b"Watch added in Paused state, saving will unpause" in res.data
+    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
+
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     # now test for 404 errors
     res = client.post(
@@ -153,9 +180,11 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
     assert b"unpaused" in res.data
+
     wait_for_all_checks(client)
 
-    res = client.get(url_for("index"))
+    res = get_index(client)
+
     assert b'Error - 404' in res.data
 
     client.get(

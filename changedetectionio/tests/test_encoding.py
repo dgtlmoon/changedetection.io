@@ -40,7 +40,7 @@ def test_check_encoding_detection(client, live_server, measure_memory_usage):
 
 
     # Content type recording worked
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['content-type'] == "text/html"
 
     res = client.get(

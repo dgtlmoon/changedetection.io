@@ -48,7 +48,7 @@ def test_noproxy_option(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
     assert b"Watch added in Paused state, saving will unpause" in res.data
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.get(
         url_for("edit_page", uuid=uuid, unpause_on_save=1))
     assert b'No proxy' in res.data

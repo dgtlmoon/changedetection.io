@@ -51,7 +51,7 @@ def run_filter_test(client, live_server, content_filter):
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
 
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['consecutive_filter_failures'] == 0, "No filter = No filter failure"
 
