@@ -141,9 +141,15 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
     assert b"testheader: yes" in res.data
     assert b"user-agent: mycustomagent" in res.data
 
+def test_non_200_errors_report_browsersteps(client, live_server, measure_memory_usage):
+
+    # live_server_setup(live_server)
+    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
+
     four_o_four_url =  url_for('test_endpoint', status_code=404, _external=True)
     four_o_four_url = four_o_four_url.replace('localhost.localdomain', 'cdio')
     four_o_four_url = four_o_four_url.replace('localhost', 'cdio')
+    uuid = extract_UUID_from_client(client)
 
     # now test for 404 errors
     res = client.post(
@@ -159,6 +165,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
     assert b"unpaused" in res.data
+
     wait_for_all_checks(client)
 
     res = client.get(url_for("index"))
