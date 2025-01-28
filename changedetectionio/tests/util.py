@@ -285,15 +285,43 @@ def live_server_setup(live_server):
             <p id="remove">This text should be removed</p>
               <form onsubmit="event.preventDefault();">
             <!-- obfuscated text so that we dont accidentally get a false positive due to conversion of the source :) --->
-                <button name="test-button" onclick="getElementById('remove').remove();getElementById('some-content').innerHTML = atob('SSBzbWVsbCBKYXZhU2NyaXB0IGJlY2F1c2UgdGhlIGJ1dHRvbiB3YXMgcHJlc3NlZCE=')">Click here</button>
-                <div id=some-content></div>
+                <button name="test-button" onclick="
+                getElementById('remove').remove();
+                getElementById('some-content').innerHTML = atob('SSBzbWVsbCBKYXZhU2NyaXB0IGJlY2F1c2UgdGhlIGJ1dHRvbiB3YXMgcHJlc3NlZCE=');
+                getElementById('reflect-text').innerHTML = getElementById('test-input-text').value;
+                ">Click here</button>
+                
+                <div id="some-content"></div>
+                
                 <pre>
                 {header_text.lower()}
                 </pre>
-              </body>
+                
+                <br>
+                <!-- used for testing that the jinja2 compiled here --->
+                <input type="text" value="" id="test-input-text" /><br>
+                <div id="reflect-text">Waiting to reflect text from #test-input-text here</div>
+              </form>
+                
+           </body>
          </html>""", 200)
         resp.headers['Content-Type'] = 'text/html'
         return resp
 
     live_server.start()
 
+def get_index(client):
+    import inspect
+    # Get the caller's frame (parent function)
+    frame = inspect.currentframe()
+    caller_frame = frame.f_back  # Go back to the caller's frame
+    caller_name = caller_frame.f_code.co_name
+    caller_line = caller_frame.f_lineno
+
+    print(f"Called by: {caller_name}, Line: {caller_line}")
+
+    res = client.get(url_for("index"))
+    with open(f"test-datastore/index-{caller_name}-{caller_line}.html", 'wb') as f:
+        f.write(res.data)
+
+    return res

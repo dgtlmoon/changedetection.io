@@ -288,7 +288,7 @@ def test_clone_tag_on_import(client, live_server, measure_memory_usage):
     assert b'test-tag' in res.data
     assert b'another-tag' in res.data
 
-    watch_uuid = extract_UUID_from_client(client)
+    watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.get(url_for("form_clone", uuid=watch_uuid), follow_redirects=True)
 
     assert b'Cloned' in res.data
@@ -315,7 +315,7 @@ def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usa
     assert b'test-tag' in res.data
     assert b'another-tag' in res.data
 
-    watch_uuid = extract_UUID_from_client(client)
+    watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.get(url_for("form_clone", uuid=watch_uuid), follow_redirects=True)
 
     assert b'Cloned' in res.data

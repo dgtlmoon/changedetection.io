@@ -378,7 +378,8 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
     with open('test-datastore/headers.txt', 'w') as f:
         f.write("global-header: nice\r\nnext-global-header: nice\r\nurl-header-global: http://example.com/global")
 
-    with open('test-datastore/' + extract_UUID_from_client(client) + '/headers.txt', 'w') as f:
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
+    with open(f'test-datastore/{uuid}/headers.txt', 'w') as f:
         f.write("watch-header: nice\r\nurl-header-watch: http://example.com/watch")
 
     wait_for_all_checks(client)

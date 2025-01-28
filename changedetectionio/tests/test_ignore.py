@@ -36,7 +36,7 @@ def test_ignore(client, live_server, measure_memory_usage):
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     # use the highlighter endpoint
     res = client.post(
         url_for("highlight_submit_ignore_url", uuid=uuid),

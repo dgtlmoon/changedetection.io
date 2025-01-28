@@ -68,7 +68,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     wait_for_all_checks(client)
 
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     # Check the 'get latest snapshot works'
     res = client.get(url_for("watch_get_latest_html", uuid=uuid))
