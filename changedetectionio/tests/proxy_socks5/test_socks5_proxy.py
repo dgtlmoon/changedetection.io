@@ -81,7 +81,7 @@ def test_socks5(client, live_server, measure_memory_usage):
     assert "Awesome, you made it".encode('utf-8') in res.data
 
     # PROXY CHECKER WIDGET CHECK - this needs more checking
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     res = client.get(
         url_for("check_proxies.start_check", uuid=uuid),

@@ -99,7 +99,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     assert b'ldjson-price-track-offer' in res.data
 
     # Accept it
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     #time.sleep(1)
     client.get(url_for('price_data_follower.accept', uuid=uuid, follow_redirects=True))
     client.get(url_for("form_watch_checknow"), follow_redirects=True)

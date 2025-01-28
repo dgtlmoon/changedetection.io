@@ -380,7 +380,7 @@ def test_change_with_notification_values(client, live_server):
 
     ## Now test the "SEND TEST NOTIFICATION" is working
     os.unlink("test-datastore/notification.txt")
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.post(url_for("ajax_callback_send_notification_test", watch_uuid=uuid), data={}, follow_redirects=True)
     time.sleep(5)
     assert os.path.isfile("test-datastore/notification.txt"), "Notification received"

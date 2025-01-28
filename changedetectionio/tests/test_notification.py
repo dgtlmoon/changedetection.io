@@ -6,7 +6,7 @@ from flask import url_for
 from loguru import logger
 
 from .util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, wait_for_all_checks, \
-    set_longer_modified_response
+    set_longer_modified_response, get_index
 from . util import  extract_UUID_from_client
 import logging
 import base64
@@ -76,7 +76,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
     testimage_png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 
 
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     datastore = 'test-datastore'
     with open(os.path.join(datastore, str(uuid), 'last-screenshot.png'), 'wb') as f:
         f.write(base64.b64decode(testimage_png))
@@ -283,7 +283,7 @@ def test_notification_validation(client, live_server, measure_memory_usage):
 
 
 def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    live_server_setup(live_server)
 
     # test_endpoint - that sends the contents of a file
     # test_notification_endpoint - that takes a POST and writes it to file (test-datastore/notification.txt)
@@ -328,7 +328,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
 
 
     # Check no errors were recorded, because we asked for 204 which is slightly uncommon but is still OK
-    res = client.get(url_for("index"))
+    res = get_index(client)
     assert b'notification-error' not in res.data
 
     with open("test-datastore/notification.txt", 'r') as f:
