@@ -2,7 +2,7 @@
 
 import os
 from flask import url_for
-from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
+from ..util import live_server_setup, wait_for_all_checks
 
 def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
@@ -27,7 +27,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
         follow_redirects=True
     )
     assert b"Watch added in Paused state, saving will unpause" in res.data
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.post(
         url_for("edit_page", uuid=uuid, unpause_on_save=1),
         data={
@@ -123,7 +123,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
     assert b"unpaused" in res.data
     wait_for_all_checks(client)
 
-    uuid = extract_UUID_from_client(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     assert live_server.app.config['DATASTORE'].data['watching'][uuid].history_n >= 1, "Watch history had atleast 1 (everything fetched OK)"
 
     assert b"This text should be removed" not in res.data
@@ -141,15 +141,24 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
     assert b"testheader: yes" in res.data
     assert b"user-agent: mycustomagent" in res.data
 
-def test_non_200_errors_report_browsersteps(client, live_server, measure_memory_usage):
+def test_non_200_errors_report_browsersteps(client, live_server):
 
     # live_server_setup(live_server)
-    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
 
     four_o_four_url =  url_for('test_endpoint', status_code=404, _external=True)
     four_o_four_url = four_o_four_url.replace('localhost.localdomain', 'cdio')
     four_o_four_url = four_o_four_url.replace('localhost', 'cdio')
-    uuid = extract_UUID_from_client(client)
+
+    res = client.post(
+        url_for("form_quick_watch_add"),
+        data={"url": four_o_four_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
+        follow_redirects=True
+    )
+
+    assert b"Watch added in Paused state, saving will unpause" in res.data
+    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
+
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     # now test for 404 errors
     res = client.post(
