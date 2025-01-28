@@ -2,7 +2,8 @@
 
 import os
 from flask import url_for
-from ..util import live_server_setup, wait_for_all_checks
+from ..util import live_server_setup, wait_for_all_checks, get_index
+
 
 def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
@@ -177,7 +178,8 @@ def test_non_200_errors_report_browsersteps(client, live_server):
 
     wait_for_all_checks(client)
 
-    res = client.get(url_for("index"))
+    res = get_index(client)
+
     assert b'Error - 404' in res.data
 
     client.get(

@@ -310,3 +310,18 @@ def live_server_setup(live_server):
 
     live_server.start()
 
+def get_index(client):
+    import inspect
+    # Get the caller's frame (parent function)
+    frame = inspect.currentframe()
+    caller_frame = frame.f_back  # Go back to the caller's frame
+    caller_name = caller_frame.f_code.co_name
+    caller_line = caller_frame.f_lineno
+
+    print(f"Called by: {caller_name}, Line: {caller_line}")
+
+    res = client.get(url_for("index"))
+    with open(f"test-datastore/index-{caller_name}-{caller_line}.html", 'wb') as f:
+        f.write(res.data)
+
+    return res
