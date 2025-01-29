@@ -540,7 +540,9 @@ def changedetection_app(config=None, datastore_o=None):
         import apprise
         import random
         from .apprise_asset import asset
+        from .notification import default_notification_format
         from .update_worker import build_notification_object_for_watch
+
         apobj = apprise.Apprise(asset=asset)
 
         # so that the custom endpoints are registered
@@ -597,6 +599,8 @@ def changedetection_app(config=None, datastore_o=None):
             # Only use if present, if not set in n_object it should use the default system value
             if 'notification_format' in request.form and request.form['notification_format'].strip():
                 n_object['notification_format'] = request.form.get('notification_format', '').strip()
+            else:
+                n_object['notification_format'] = default_notification_format
 
             if 'notification_title' in request.form and request.form['notification_title'].strip():
                 n_object['notification_title'] = request.form.get('notification_title', '').strip()
