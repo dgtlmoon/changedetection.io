@@ -108,7 +108,11 @@
                     {% else %}
                     <a class="state-on" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="UnPause checks" title="UnPause checks" class="icon icon-unpause" ></a>
                     {% endif %}
-                    <a class="link-mute state-{{'on' if watch.notification_muted else 'off'}}" href="{{url_for('index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="Mute notifications" title="Mute notifications" class="icon icon-mute" ></a>
+                    {% if not watch.notification_muted %}
+                    <a class="link-mute state-off" href="{{url_for('index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="Mute notifications" title="Mute notifications" class="icon icon-mute" ></a>
+                    {% else %}
+                    <a class="link-mute state-on" href="{{url_for('index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="UnMute notifications" title="UnMute notifications" class="icon icon-mute" ></a>
+                    {% endif %}
                 </td>
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
                     <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}"></a>
