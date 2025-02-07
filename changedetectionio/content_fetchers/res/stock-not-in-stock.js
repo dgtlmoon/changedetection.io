@@ -52,6 +52,7 @@ function isItemInStock() {
         'niet leverbaar',
         'niet op voorraad',
         'no disponible',
+        'non disponibile',
         'no longer in stock',
         'no tickets available',
         'not available',
