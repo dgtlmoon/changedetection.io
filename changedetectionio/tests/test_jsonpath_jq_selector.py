@@ -514,3 +514,15 @@ def test_check_jq_ext_filter(client, live_server, measure_memory_usage):
 def test_check_jqraw_ext_filter(client, live_server, measure_memory_usage):
     if jq_support:
         check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server)
+
+def test_jsonpath_BOM_utf8(client, live_server, measure_memory_usage):
+    from .. import html_tools
+
+    # JSON string with BOM and correct double-quoted keys
+    json_str = '\ufeff{"name": "José", "emoji": "😊", "language": "中文", "greeting": "Привет"}'
+
+    # See that we can find the second <script> one, which is not broken, and matches our filter
+    text = html_tools.extract_json_as_string(json_str, "json:$.name")
+    assert text == '"José"'
+
+    

@@ -1,5 +1,6 @@
-from typing import List
+from loguru import logger
 from lxml import etree
+from typing import List
 import json
 import re
 
@@ -298,8 +299,10 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
 # https://github.com/dgtlmoon/changedetection.io/pull/2041#issuecomment-1848397161w
     # Try to parse/filter out the JSON, if we get some parser error, then maybe it's embedded within HTML tags
     try:
-        stripped_text_from_html = _parse_json(json.loads(content), json_filter)
-    except json.JSONDecodeError:
+        # .lstrip("\ufeff") strings ByteOrderMark from UTF8 and still lets the UTF work
+        stripped_text_from_html = _parse_json(json.loads(content.lstrip("\ufeff") ), json_filter)
+    except json.JSONDecodeError as e:
+        logger.warning(str(e))
 
         # Foreach <script json></script> blob.. just return the first that matches json_filter
         # As a last resort, try to parse the whole <body>
