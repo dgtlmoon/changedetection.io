@@ -15,6 +15,8 @@ operator_choices = [
     ("contains_regex", "Text Matches Regex"),
     ("!contains_regex", "Text Does NOT Match Regex"),
     ("changed > minutes", "Changed more than X minutes ago"),
+    ("watch_uuid_unviewed_change", "Watch UUID had an unviewed change"),
+    ("watch_uuid_not_unviewed_change", "Watch UUID NOT had an unviewed change")
 #    ("watch_uuid_changed", "Watch UUID had unviewed change"),
 #    ("watch_uuid_not_changed", "Watch UUID did NOT have unviewed change"),
 #    ("!!", "Is Truthy"),
@@ -42,7 +44,9 @@ field_choices = [
     ("watch_uuid", "Watch UUID"),
     ("watch_history_length", "History Length"),
     ("watch_history", "All Watch Text History"),
-    ("watch_check_count", "Watch Check Count")
+    ("watch_check_count", "Watch Check Count"),
+    ("watch_uuid", "Other Watch by UUID"),
+    #("requests_get", "Web GET requests (https://..)")
 ]
 
 
