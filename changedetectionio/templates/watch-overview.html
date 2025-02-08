@@ -108,7 +108,7 @@
                     {% else %}
                     <a class="state-on" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="UnPause checks" title="UnPause checks" class="icon icon-unpause" ></a>
                     {% endif %}
-                    {% set mute_label = 'Mute notification' if watch.notification_muted else 'UnMute notification' %}
+                    {% set mute_label = 'UnMute notification' if watch.notification_muted else 'Mute notification' %}
                     <a class="link-mute state-{{'on' if watch.notification_muted else 'off'}}" href="{{url_for('index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{{ mute_label }}" title="{{ mute_label }}" class="icon icon-mute" ></a>
                 </td>
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
