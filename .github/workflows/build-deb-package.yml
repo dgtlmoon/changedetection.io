@@ -1,0 +1,53 @@
+name: Build Debian Package
+# Check status: systemctl status changedetection.io.service
+# Get logs: journalctl -u changedetection.io.service
+on: [push, pull_request]
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-latest
+    name: Build and Package changedetection.io
+    env:
+      PACKAGE_VERSION: 0.48.5  # or load from somewhere else
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          path: changedetection.io-${{ env.PACKAGE_VERSION }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            devscripts \
+            dh-virtualenv \
+            dh-python \
+            python3-all \
+            python3-all-dev \
+            python3.10 \
+            python3.10-venv \
+            python3.10-dev \
+            debhelper-compat
+
+      - name: Build the Debian Package
+        # Build it the same as the pypi way, then use the same package tar
+        run: |
+          mkdir /tmp/changedetection.io
+          python3 -m build
+          mv dist/*gz .
+          debuild -us -uc
+
+      - name: Upload Debian Package Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: changedetection.io-deb-package
+          path: ../*.deb
+
+#@todo install and test that some basic content appears
