@@ -40,7 +40,7 @@ field_choices = [
     ("page_filtered_text", "Page text After Filters"),
     ("page_title", "Page Title"), # actual page title <title>
     ("watch_uuid", "Watch UUID"),
-    ("watch_history_length", "History Length"),
+    #("watch_history_length", "History Length"),  # Would never equate
     ("watch_history", "All Watch Text History"),
     ("watch_check_count", "Watch Check Count"),
     ("watch_uuid", "Other Watch by UUID"), # (Maybe this is 'if' ??)
