@@ -6,6 +6,39 @@
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='scheduler.js')}}" defer></script>
+
+<script>
+    function addRuleRow() {
+        let rulesContainer = document.getElementById("rules-container");
+        let lastRule = document.querySelector(".rule-row:last-child");
+        let newRule = lastRule.cloneNode(true);
+
+        // Get the new unique index for the added row
+        let ruleCount = document.querySelectorAll(".rule-row").length;
+
+        // Update all IDs, names, and labels to have the correct index
+        newRule.querySelectorAll("select, input, label").forEach(element => {
+            if (element.id) {
+                element.id = element.id.replace(/\d+/, ruleCount);
+            }
+            if (element.name) {
+                element.name = element.name.replace(/\d+/, ruleCount);
+            }
+            if (element.hasAttribute("for")) {
+                element.setAttribute("for", element.getAttribute("for").replace(/\d+/, ruleCount));
+            }
+            if (element.tagName === "INPUT") {
+                element.value = ""; // Clear input field value
+            }
+        });
+
+        // Append the new rule to the grid container
+        rulesContainer.appendChild(newRule);
+    }
+</script>
+
+
+
 <script>
     const browser_steps_available_screenshots=JSON.parse('{{ watch.get_browsersteps_available_screenshots|tojson }}');
     const browser_steps_config=JSON.parse('{{ browser_steps_config|tojson }}');
@@ -48,9 +81,11 @@
             {% if playwright_enabled %}
             <li class="tab"><a id="browsersteps-tab" href="#browser-steps">Browser Steps</a></li>
             {% endif %}
+        <!-- should goto extra forms? -->
             {% if watch['processor'] == 'text_json_diff' %}
             <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
             <li class="tab" id="filters-and-triggers-tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
+            <li class="tab" id="conditions-tab"><a href="#conditions">Conditions</a></li>
             {% endif %}
             <li class="tab"><a href="#notifications">Notifications</a></li>
             <li class="tab"><a href="#stats">Stats</a></li>
@@ -271,6 +306,36 @@ Math: {{ 1 + 1 }}") }}
             </div>
 
             {% if watch['processor'] == 'text_json_diff' %}
+
+            <div class="tab-pane-inner" id="conditions">
+                <!-- Grid Header -->
+                <table>
+                    <thead>
+                    <td>In Value</td>
+                    <td>Operator</td>
+                    <td>Value</td>
+                    <td></td>
+
+                    </thead>
+                    <tbody>
+                    <!-- Rule Rows (Dynamic Content) -->
+
+                    {% for rule in form.conditions %}
+                        <tr>
+                            <td>{{ rule.field() }}</td>
+
+                            <td>{{ rule.operator() }}</td>
+                            <td>{{ rule.value() }}</td>
+
+                            <td>
+                                <button type="button" onclick="addRuleRow()">AND +</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
             <div class="tab-pane-inner" id="filters-and-triggers">
                 <span id="activate-text-preview" class="pure-button pure-button-primary button-xsmall">Activate preview</span>
               <div>

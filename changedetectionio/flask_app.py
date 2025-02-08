@@ -758,6 +758,25 @@ def changedetection_app(config=None, datastore_o=None):
             for p in datastore.proxy_list:
                 form.proxy.choices.append(tuple((p, datastore.proxy_list[p]['label'])))
 
+        # Example JSON Rule
+        DEFAULT_RULE = {
+            "and": [
+                {">": [{"var": "extracted_number"}, 5000]},
+                {"<": [{"var": "extracted_number"}, 80000]},
+                {"in": ["rock", {"var": "page_text"}]}
+            ]
+        }
+        form.conditions.pop_entry()  # Remove the default empty row
+        for condition in DEFAULT_RULE["and"]:
+            operator, values = list(condition.items())[0]
+            field = values[0]["var"] if isinstance(values[0], dict) else values[1]["var"]
+            value = values[1] if isinstance(values[1], (str, int)) else values[0]
+
+            form.conditions.append_entry({
+                "operator": operator,
+                "field": field,
+                "value": value
+            })
 
         if request.method == 'POST' and form.validate():
 
@@ -792,6 +811,19 @@ def changedetection_app(config=None, datastore_o=None):
                 extra_update_obj['filter_text_added'] = True
                 extra_update_obj['filter_text_replaced'] = True
                 extra_update_obj['filter_text_removed'] = True
+
+            # Convert form input into JSON Logic format
+            extra_update_obj["conditions"] = {
+                "and": [
+                    {
+                        form.conditions[i].operator.data: [
+                            {"var": form.conditions[i].field.data},
+                            form.conditions[i].value.data
+                        ]
+                    }
+                    for i in range(len(form.conditions))
+                ]
+            }
 
             # Because wtforms doesn't support accessing other data in process_ , but we convert the CSV list of tags back to a list of UUIDs
             tag_uuids = []

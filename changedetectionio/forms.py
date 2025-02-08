@@ -4,6 +4,10 @@ from loguru import logger
 from wtforms.widgets.core import TimeInput
 
 from changedetectionio.strtobool import strtobool
+from flask_wtf import FlaskForm
+from wtforms import SelectField, StringField, SubmitField, FieldList, FormField
+from wtforms.validators import DataRequired, URL
+from flask_wtf.file import FileField
 
 from wtforms import (
     BooleanField,
@@ -509,6 +513,23 @@ class quickWatchForm(Form):
     edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
 
 
+
+# Condition Rule Form (for each rule row)
+class ConditionForm(FlaskForm):
+    from .conditions import operator_choices, field_choices
+
+    operator = SelectField(
+        "Operator",
+        choices=operator_choices,
+        validators=[DataRequired()]
+    )
+    field = SelectField(
+        "Field",
+        choices=field_choices,
+        validators=[DataRequired()]
+    )
+    value = StringField("Value", validators=[DataRequired()])
+
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
     from . import processors
@@ -595,6 +616,9 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     notification_muted = BooleanField('Notifications Muted / Off', default=False)
     notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
+
+    conditions = FieldList(FormField(ConditionForm), min_entries=1)  # Add rule logic here
+
 
     def extra_tab_content(self):
         return None

@@ -98,5 +98,7 @@ greenlet >= 3.0.3
 # Pinned or it causes problems with flask_expects_json which seems unmaintained
 referencing==0.35.1
 
+panzi-json-logic
+
 # Scheduler - Windows seemed to miss a lot of default timezone info (even "UTC" !)
 tzdata
