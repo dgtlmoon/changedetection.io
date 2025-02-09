@@ -78,9 +78,7 @@
             {% if extra_tab_content %}
             <li class="tab"><a href="#extras_tab">{{ extra_tab_content }}</a></li>
             {% endif %}
-            {% if playwright_enabled %}
             <li class="tab"><a id="browsersteps-tab" href="#browser-steps">Browser Steps</a></li>
-            {% endif %}
         <!-- should goto extra forms? -->
             {% if watch['processor'] == 'text_json_diff' %}
             <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
@@ -234,8 +232,15 @@ Math: {{ 1 + 1 }}") }}
                     </div>
             </fieldset>
             </div>
-            {% if playwright_enabled %}
+
             <div class="tab-pane-inner" id="browser-steps">
+                            <span class="pure-form-message-inline">
+                                <p>Sorry, this functionality only works with Playwright/Chrome enabled watches.</p>
+                                <p>Enable the Playwright Chrome fetcher, or alternatively try our <a href="https://lemonade.changedetection.io/start">very affordable subscription based service</a>.</p>
+                                <p>This is because Selenium/WebDriver can not extract full page screenshots reliably.</p>
+                            </span>
+
+            {% if playwright_enabled %}
                 <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}" alt="New beta functionality">
                 <fieldset>
                     <div class="pure-control-group">
@@ -275,8 +280,9 @@ Math: {{ 1 + 1 }}") }}
                         </div>
                     </div>
                 </fieldset>
+                {% endif %}
             </div>
-            {% endif %}
+
 
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
