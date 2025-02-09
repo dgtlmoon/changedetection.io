@@ -521,14 +521,14 @@ class ConditionForm(FlaskForm):
     operator = SelectField(
         "Operator",
         choices=operator_choices,
-        validators=[DataRequired()]
+        validators=[validators.Optional()]
     )
     field = SelectField(
         "Field",
         choices=field_choices,
-        validators=[DataRequired()]
+        validators=[validators.Optional()]
     )
-    value = StringField("Value", validators=[DataRequired()])
+    value = StringField("Value", validators=[validators.Optional()])
 
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
