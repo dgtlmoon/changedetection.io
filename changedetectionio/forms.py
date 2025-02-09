@@ -5,9 +5,6 @@ from wtforms.widgets.core import TimeInput
 
 from changedetectionio.strtobool import strtobool
 from flask_wtf import FlaskForm
-from wtforms import SelectField, StringField, SubmitField, FieldList, FormField
-from wtforms.validators import DataRequired, URL
-from flask_wtf.file import FileField
 
 from wtforms import (
     BooleanField,
@@ -310,7 +307,6 @@ class ValidateAppRiseServers(object):
         import apprise
         apobj = apprise.Apprise()
         # so that the custom endpoints are registered
-        from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
         for server_url in field.data:
             url = server_url.strip()
             if url.startswith("#"):
@@ -516,7 +512,7 @@ class quickWatchForm(Form):
 
 # Condition Rule Form (for each rule row)
 class ConditionForm(FlaskForm):
-    from .conditions import operator_choices, field_choices
+    from changedetectionio.conditions import operator_choices, field_choices
 
     operator = SelectField(
         "Operator",
