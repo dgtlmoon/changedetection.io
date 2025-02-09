@@ -815,15 +815,10 @@ def changedetection_app(config=None, datastore_o=None):
             # Convert form input into JSON Logic format
             extra_update_obj["conditions"] = {
                 "and": [
-                    {
-                        form.conditions[i].operator.data: [
-                            {"var": form.conditions[i].field.data},
-                            form.conditions[i].value.data
-                        ]
-                    }
-                    for i in range(len(form.conditions))
+                    {c.operator.data: [{"var": c.field.data}, c.value.data]}
+                    for c in getattr(form, "conditions", []) or []
                 ]
-            }
+            } if getattr(form, "conditions", None) else {}
 
             # Because wtforms doesn't support accessing other data in process_ , but we convert the CSV list of tags back to a list of UUIDs
             tag_uuids = []
