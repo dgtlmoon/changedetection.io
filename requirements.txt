@@ -102,3 +102,10 @@ panzi-json-logic
 
 # Scheduler - Windows seemed to miss a lot of default timezone info (even "UTC" !)
 tzdata
+
+#typing_extensions ==4.8.0
+
+pluggy ~= 1.5
+
+
+
