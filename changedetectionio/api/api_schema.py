@@ -128,8 +128,7 @@ def build_watch_json_schema(d):
                 }
             },
             {"type": "null"},  # Allows null
-            {"type": "array", "maxItems": 0},  # Allows empty array []
-            {"type": "string", "enum": ["none"]}  # Allows string "none"
+            {"type": "array", "maxItems": 0}  # Allows empty array []
         ]
     }
 
