@@ -112,6 +112,35 @@ def build_watch_json_schema(d):
 
     schema['properties']['time_between_check'] = build_time_between_check_json_schema()
 
+    schema['properties']['browser_steps'] = {
+        "anyOf": [
+            {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "operation": {
+                            "type": ["string", "null"],
+                            "maxLength": 5000  # Allows null and any string up to 5000 chars (including "")
+                        },
+                        "selector": {
+                            "type": ["string", "null"],
+                            "maxLength": 5000
+                        },
+                        "optional_value": {
+                            "type": ["string", "null"],
+                            "maxLength": 5000
+                        }
+                    },
+                    "required": ["operation", "selector", "optional_value"],
+                    "additionalProperties": False  # No extra keys allowed
+                }
+            },
+            {"type": "null"},  # Allows null for `browser_steps`
+            {"type": "array", "maxItems": 0}  # Allows empty array []
+        ]
+    }
+
     # headers ?
     return schema
 
