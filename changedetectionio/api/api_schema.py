@@ -119,15 +119,24 @@ def build_watch_json_schema(d):
                 "items": {
                     "type": "object",
                     "properties": {
-                        "operation": {"type": ["string", "null"]},
-                        "selector": {"type": "string"},
-                        "optional_value": {"type": "string"}
+                        "operation": {
+                            "type": ["string", "null"],
+                            "maxLength": 5000  # Allows null and any string up to 5000 chars (including "")
+                        },
+                        "selector": {
+                            "type": ["string", "null"],
+                            "maxLength": 5000
+                        },
+                        "optional_value": {
+                            "type": ["string", "null"],
+                            "maxLength": 5000
+                        }
                     },
                     "required": ["operation", "selector", "optional_value"],
-                    "additionalProperties": False  # Ensures no extra keys are allowed
+                    "additionalProperties": False  # No extra keys allowed
                 }
             },
-            {"type": "null"},  # Allows null
+            {"type": "null"},  # Allows null for `browser_steps`
             {"type": "array", "maxItems": 0}  # Allows empty array []
         ]
     }
