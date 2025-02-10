@@ -52,6 +52,8 @@ class steppable_browser_interface():
     page = None
     start_url = None
 
+    action_timeout = 10 * 1000
+
     def __init__(self, start_url):
         self.start_url = start_url
 
@@ -102,7 +104,7 @@ class steppable_browser_interface():
             return
         elem = self.page.get_by_text(value)
         if elem.count():
-            elem.first.click(delay=randint(200, 500), timeout=3000)
+            elem.first.click(delay=randint(200, 500), timeout=self.action_timeout)
 
     def action_click_element_containing_text_if_exists(self, selector=None, value=''):
         logger.debug("Clicking element containing text if exists")
@@ -111,7 +113,7 @@ class steppable_browser_interface():
         elem = self.page.get_by_text(value)
         logger.debug(f"Clicking element containing text - {elem.count()} elements found")
         if elem.count():
-            elem.first.click(delay=randint(200, 500), timeout=3000)
+            elem.first.click(delay=randint(200, 500), timeout=self.action_timeout)
         else:
             return
 
@@ -119,7 +121,7 @@ class steppable_browser_interface():
         if not len(selector.strip()):
             return
 
-        self.page.fill(selector, value, timeout=10 * 1000)
+        self.page.fill(selector, value, timeout=self.action_timeout)
 
     def action_execute_js(self, selector, value):
         response = self.page.evaluate(value)
@@ -130,7 +132,7 @@ class steppable_browser_interface():
         if not len(selector.strip()):
             return
 
-        self.page.click(selector=selector, timeout=30 * 1000, delay=randint(200, 500))
+        self.page.click(selector=selector, timeout=self.action_timeout + 20 * 1000, delay=randint(200, 500))
 
     def action_click_element_if_exists(self, selector, value):
         import playwright._impl._errors as _api_types
@@ -138,7 +140,7 @@ class steppable_browser_interface():
         if not len(selector.strip()):
             return
         try:
-            self.page.click(selector, timeout=10 * 1000, delay=randint(200, 500))
+            self.page.click(selector, timeout=self.action_timeout, delay=randint(200, 500))
         except _api_types.TimeoutError as e:
             return
         except _api_types.Error as e:
@@ -185,10 +187,10 @@ class steppable_browser_interface():
         self.page.keyboard.press("PageDown", delay=randint(200, 500))
 
     def action_check_checkbox(self, selector, value):
-        self.page.locator(selector).check(timeout=1000)
+        self.page.locator(selector).check(timeout=self.action_timeout)
 
     def action_uncheck_checkbox(self, selector, value):
-        self.page.locator(selector).uncheck(timeout=1000)
+        self.page.locator(selector).uncheck(timeout=self.action_timeout)
 
 
 # Responsible for maintaining a live 'context' with the chrome CDP
