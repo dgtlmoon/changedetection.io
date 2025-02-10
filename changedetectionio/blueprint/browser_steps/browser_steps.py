@@ -188,7 +188,7 @@ class steppable_browser_interface():
         self.page.locator(selector).check(timeout=1000)
 
     def action_uncheck_checkbox(self, selector, value):
-        self.page.locator(selector, timeout=1000).uncheck(timeout=1000)
+        self.page.locator(selector).uncheck(timeout=1000)
 
 
 # Responsible for maintaining a live 'context' with the chrome CDP
