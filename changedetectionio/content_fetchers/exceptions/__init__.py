@@ -95,3 +95,8 @@ class ReplyWithContentButNoText(Exception):
         self.html_content = html_content
         self.xpath_data = xpath_data
         return
+
+
+class PaginatedContentMisconfigured(Exception):
+    def __init__(self):
+        return
