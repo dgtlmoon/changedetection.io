@@ -16,6 +16,77 @@ import time
 
 from loguru import logger
 
+def build_notification_object_for_watch(watch, n_object, default_app_settings_notification_format):
+    from changedetectionio import diff
+    from changedetectionio.notification import default_notification_format_for_watch
+
+    dates = []
+    trigger_text = ''
+
+    if watch:
+        watch_history = watch.history
+        dates = list(watch_history.keys())
+        trigger_text = watch.get('trigger_text', [])
+
+    # Add text that was triggered
+    if len(dates):
+        snapshot_contents = watch.get_history_snapshot(dates[-1])
+    else:
+        snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
+
+    # If we ended up here with "System default"
+    if n_object.get('notification_format') == default_notification_format_for_watch:
+        n_object['notification_format'] = default_app_settings_notification_format
+
+    html_colour_enable = False
+    # HTML needs linebreak, but MarkDown and Text can use a linefeed
+    if n_object.get('notification_format') == 'HTML':
+        line_feed_sep = "<br>"
+        # Snapshot will be plaintext on the disk, convert to some kind of HTML
+        snapshot_contents = snapshot_contents.replace('\n', line_feed_sep)
+    elif n_object.get('notification_format') == 'HTML Color':
+        line_feed_sep = "<br>"
+        # Snapshot will be plaintext on the disk, convert to some kind of HTML
+        snapshot_contents = snapshot_contents.replace('\n', line_feed_sep)
+        html_colour_enable = True
+    else:
+        line_feed_sep = "\n"
+
+    triggered_text = ''
+    if len(trigger_text):
+        from . import html_tools
+        triggered_text = html_tools.get_triggered_text(content=snapshot_contents, trigger_text=trigger_text)
+        if triggered_text:
+            triggered_text = line_feed_sep.join(triggered_text)
+
+    # Could be called as a 'test notification' with only 1 snapshot available
+    prev_snapshot = "Example text: example test\nExample text: change detection is cool\nExample text: some more examples\n"
+    current_snapshot = "Example text: example test\nExample text: change detection is fantastic\nExample text: even more examples\nExample text: a lot more examples"
+
+    if len(dates) > 1:
+        prev_snapshot = watch.get_history_snapshot(dates[-2])
+        current_snapshot = watch.get_history_snapshot(dates[-1])
+
+    n_object.update({
+        'current_snapshot': snapshot_contents,
+        'diff': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, html_colour=html_colour_enable),
+        'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False, line_feed_sep=line_feed_sep),
+        'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=line_feed_sep,
+                                      html_colour=html_colour_enable),
+        'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, patch_format=True),
+        'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=line_feed_sep),
+        'notification_timestamp': time.time(),
+        'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
+        'triggered_text': triggered_text,
+        'uuid': watch.get('uuid') if watch else None,
+        'watch_url': watch.get('url') if watch else None,
+    })
+
+    if watch:
+        n_object.update(watch.extra_notification_token_values())
+
+    return n_object
+
 class update_worker(threading.Thread):
     current_uuid = None
 
@@ -27,75 +98,8 @@ class update_worker(threading.Thread):
         super().__init__(*args, **kwargs)
 
     def queue_notification_for_watch(self, notification_q, n_object, watch):
-        from changedetectionio import diff
-        from changedetectionio.notification import default_notification_format_for_watch
-
-        dates = []
-        trigger_text = ''
-
         now = time.time()
-
-        if watch:
-            watch_history = watch.history
-            dates = list(watch_history.keys())
-            trigger_text = watch.get('trigger_text', [])
-
-        # Add text that was triggered
-        if len(dates):
-            snapshot_contents = watch.get_history_snapshot(dates[-1])
-        else:
-            snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
-
-        # If we ended up here with "System default"
-        if n_object.get('notification_format') == default_notification_format_for_watch:
-            n_object['notification_format'] = self.datastore.data['settings']['application'].get('notification_format')
-
-        html_colour_enable = False
-        # HTML needs linebreak, but MarkDown and Text can use a linefeed
-        if n_object.get('notification_format') == 'HTML':
-            line_feed_sep = "<br>"
-            # Snapshot will be plaintext on the disk, convert to some kind of HTML
-            snapshot_contents = snapshot_contents.replace('\n', line_feed_sep)
-        elif n_object.get('notification_format') == 'HTML Color':
-            line_feed_sep = "<br>"
-            # Snapshot will be plaintext on the disk, convert to some kind of HTML
-            snapshot_contents = snapshot_contents.replace('\n', line_feed_sep)
-            html_colour_enable = True
-        else:
-            line_feed_sep = "\n"
-
-        triggered_text = ''
-        if len(trigger_text):
-            from . import html_tools
-            triggered_text = html_tools.get_triggered_text(content=snapshot_contents, trigger_text=trigger_text)
-            if triggered_text:
-                triggered_text = line_feed_sep.join(triggered_text)
-
-        # Could be called as a 'test notification' with only 1 snapshot available
-        prev_snapshot = "Example text: example test\nExample text: change detection is cool\nExample text: some more examples\n"
-        current_snapshot = "Example text: example test\nExample text: change detection is fantastic\nExample text: even more examples\nExample text: a lot more examples"
-
-        if len(dates) > 1:
-            prev_snapshot = watch.get_history_snapshot(dates[-2])
-            current_snapshot = watch.get_history_snapshot(dates[-1])
-
-        n_object.update({
-            'current_snapshot': snapshot_contents,
-            'diff': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, html_colour=html_colour_enable),
-            'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False, line_feed_sep=line_feed_sep),
-            'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=line_feed_sep, html_colour=html_colour_enable),
-            'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, patch_format=True),
-            'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=line_feed_sep),
-            'notification_timestamp': now,
-            'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
-            'triggered_text': triggered_text,
-            'uuid': watch.get('uuid') if watch else None,
-            'watch_url': watch.get('url') if watch else None,
-        })
-
-        if watch:
-            n_object.update(watch.extra_notification_token_values())
-
+        n_object = build_notification_object_for_watch(watch, n_object, self.datastore.data['settings']['application'].get('notification_format'))
         logger.trace(f"Main rendered notification placeholders (diff_added etc) calculated in {time.time()-now:.3f}s")
         logger.debug("Queued notification for sending")
         notification_q.put(n_object)
