@@ -4,6 +4,7 @@ from loguru import logger
 from wtforms.widgets.core import TimeInput
 
 from changedetectionio.strtobool import strtobool
+from flask_wtf import FlaskForm
 
 from wtforms import (
     BooleanField,
@@ -306,7 +307,6 @@ class ValidateAppRiseServers(object):
         import apprise
         apobj = apprise.Apprise()
         # so that the custom endpoints are registered
-        from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
         for server_url in field.data:
             url = server_url.strip()
             if url.startswith("#"):
@@ -509,6 +509,23 @@ class quickWatchForm(Form):
     edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
 
 
+
+# Condition Rule Form (for each rule row)
+class ConditionForm(FlaskForm):
+    from changedetectionio.conditions import operator_choices, field_choices
+
+    operator = SelectField(
+        "Operator",
+        choices=operator_choices,
+        validators=[validators.Optional()]
+    )
+    field = SelectField(
+        "Field",
+        choices=field_choices,
+        validators=[validators.Optional()]
+    )
+    value = StringField("Value", validators=[validators.Optional()])
+
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
     from . import processors
@@ -595,6 +612,9 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     notification_muted = BooleanField('Notifications Muted / Off', default=False)
     notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
+
+    conditions = FieldList(FormField(ConditionForm), min_entries=1)  # Add rule logic here
+
 
     def extra_tab_content(self):
         return None
