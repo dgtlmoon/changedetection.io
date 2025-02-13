@@ -3,6 +3,8 @@
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
+from ..safe_jinja import render
+import arrow
 
 
 def test_setup(client, live_server, measure_memory_usage):
@@ -56,3 +58,75 @@ def test_jinja2_security_url_query(client, live_server, measure_memory_usage):
     assert b'is invalid and cannot be used' in res.data
     # Some of the spewed output from the subclasses
     assert b'dict_values' not in res.data
+
+def test_timezone(mocker):
+    """Verify that timezone is parsed."""
+
+    timezone = 'America/Buenos Aires'
+    currentDate = arrow.now(timezone)
+    arrowNowMock = mocker.patch("arrow.now")
+    arrowNowMock.return_value = currentDate
+    finalRender = render(f"{{% now '{timezone}' %}}")
+
+    assert finalRender == currentDate.strftime("%Y-%m-%d")
+
+def test_format(mocker):
+    """Verify that format is parsed."""
+
+    timezone = 'utc'
+    format = '%d %b %Y %H:%M:%S'
+    currentDate = arrow.now(timezone)
+    arrowNowMock = mocker.patch("arrow.now")
+    arrowNowMock.return_value = currentDate
+    finalRender = render(f"{{% now '{timezone}', '{format}' %}}")
+
+    assert finalRender == currentDate.strftime(format)
+
+def test_add_time(mocker):
+    """Verify that added time offset can be parsed."""
+
+    timezone = 'utc'
+    currentDate = arrow.now(timezone)
+    arrowNowMock = mocker.patch("arrow.now")
+    arrowNowMock.return_value = currentDate
+    finalRender = render(f"{{% now '{timezone}' + 'hours=2,seconds=30' %}}")
+
+    assert finalRender == currentDate.strftime("%Y-%m-%d")
+
+def test_add_weekday(mocker):
+    """Verify that added weekday offset can be parsed."""
+
+    timezone = 'utc'
+    currentDate = arrow.now(timezone)
+    arrowNowMock = mocker.patch("arrow.now")
+    arrowNowMock.return_value = currentDate
+    finalRender = render(f"{{% now '{timezone}' + 'weekday=1' %}}")
+
+    assert finalRender == currentDate.shift(weekday=1).strftime('%Y-%m-%d')
+
+
+def test_substract_time(mocker):
+    """Verify that substracted time offset can be parsed."""
+
+    timezone = 'utc'
+    currentDate = arrow.now(timezone)
+    arrowNowMock = mocker.patch("arrow.now")
+    arrowNowMock.return_value = currentDate
+    finalRender = render(f"{{% now '{timezone}' - 'minutes=11' %}}")
+
+    assert finalRender == currentDate.shift(minutes=-11).strftime("%Y-%m-%d")
+
+
+def test_offset_with_format(mocker):
+    """Verify that offset works together with datetime format."""
+
+    timezone = 'utc'
+    currentDate = arrow.now(timezone)
+    arrowNowMock = mocker.patch("arrow.now")
+    arrowNowMock.return_value = currentDate
+    format = '%d %b %Y %H:%M:%S'
+    finalRender = render(
+        f"{{% now '{timezone}' - 'days=2,minutes=33,seconds=1', '{format}' %}}"
+    )
+
+    assert finalRender == currentDate.shift(days=-2, minutes=-33, seconds=-1).strftime(format)
