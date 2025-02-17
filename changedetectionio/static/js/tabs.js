@@ -1,48 +1,66 @@
-// Rewrite this is a plugin.. is all this JS really 'worth it?'
+(function ($) {
+    $.fn.hashTabs = function (options) {
+        var settings = $.extend({
+            tabContainer: ".tabs ul",
+            tabSelector: "li a",
+            tabContent: ".tab-pane-inner",
+            activeClass: "active",
+            errorClass: ".messages .error",
+            bodyClassToggle: "full-width"
+        }, options);
 
-window.addEventListener('hashchange', function () {
-    var tabs = document.getElementsByClassName('active');
-    while (tabs[0]) {
-        tabs[0].classList.remove('active');
-        document.body.classList.remove('full-width');
-    }
-    set_active_tab();
-}, false);
+        var $tabs = $(settings.tabContainer).find(settings.tabSelector);
 
-var has_errors = document.querySelectorAll(".messages .error");
-if (!has_errors.length) {
-    if (document.location.hash == "") {
-        location.replace(document.querySelector(".tabs ul li:first-child a").hash);
-    } else {
-        set_active_tab();
-    }
-} else {
-    focus_error_tab();
-}
+        function setActiveTab() {
+            var hash = window.location.hash;
+            var $activeTab = $tabs.filter("[href='" + hash + "']");
 
-function set_active_tab() {
-    document.body.classList.remove('full-width');
-    var tab = document.querySelectorAll("a[href='" + location.hash + "']");
-    if (tab.length) {
-        tab[0].parentElement.className = "active";
-    }
+            // Remove active class from all tabs
+            $(settings.tabContainer).find("li").removeClass(settings.activeClass);
 
-}
+            // Add active class to selected tab
+            if ($activeTab.length) {
+                $activeTab.parent().addClass(settings.activeClass);
+            }
 
-function focus_error_tab() {
-    // time to use jquery or vuejs really,
-    // activate the tab with the error
-    var tabs = document.querySelectorAll('.tabs li a'), i;
-    for (i = 0; i < tabs.length; ++i) {
-        var tab_name = tabs[i].hash.replace('#', '');
-        var pane_errors = document.querySelectorAll('#' + tab_name + ' .error')
-        if (pane_errors.length) {
-            document.location.hash = '#' + tab_name;
-            return true;
+            // Show the correct content
+            $(settings.tabContent).hide();
+            if (hash) {
+                $(hash).show();
+            }
         }
-    }
-    return false;
-}
+
+        function focusErrorTab() {
+            $tabs.each(function () {
+                var tabName = this.hash.replace("#", "");
+                if ($("#" + tabName).find(settings.errorClass).length) {
+                    window.location.hash = "#" + tabName;
+                    return false; // Stop loop on first error tab
+                }
+            });
+        }
+
+        function initializeTabs() {
+            if ($(settings.errorClass).length) {
+                focusErrorTab();
+            } else if (!window.location.hash) {
+                window.location.replace($tabs.first().attr("href"));
+            } else {
+                setActiveTab();
+            }
+        }
+
+        // Listen for hash changes
+        $(window).on("hashchange", setActiveTab);
+
+        // Initialize on page load
+        initializeTabs();
+
+        return this; // Enable jQuery chaining
+    };
+})(jQuery);
 
 
-
+$(document).ready(function () {
+    $(".tabs").hashTabs();
+});

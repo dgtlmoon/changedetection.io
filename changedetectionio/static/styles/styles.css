@@ -1159,11 +1159,8 @@ textarea::placeholder {
   border-radius: 5px; }
 
 .tab-pane-inner {
+  display: none;
   padding: 0px; }
-  .tab-pane-inner:not(:target) {
-    display: none; }
-  .tab-pane-inner:target {
-    display: block; }
 
 .beta-logo {
   height: 50px;

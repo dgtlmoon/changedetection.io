@@ -945,15 +945,7 @@ $form-edge-padding: 20px;
 }
 
 .tab-pane-inner {
-
-  &:not(:target) {
-    display: none;
-  }
-
-  &:target {
-    display: block;
-  }
-
+  display: none;
   // doesnt need padding because theres another row of buttons/activity
   padding: 0px;
 }
