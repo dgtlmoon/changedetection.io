@@ -6,7 +6,7 @@
     const notification_base_url="{{url_for('ajax_callback_send_notification_test', mode="group-settings")}}";
 </script>
 
-<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" ></script>
+<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script>
 
 /*{% if emailprefix %}*/

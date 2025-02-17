@@ -12,7 +12,7 @@
     <script src="{{url_for('static_content', group='js', filename='plugins.js')}}"></script>
     <script src="{{ url_for('static_content', group='js', filename='diff-overview.js') }}" defer></script>
     <script src="{{ url_for('static_content', group='js', filename='preview.js') }}" defer></script>
-    <script src="{{ url_for('static_content', group='js', filename='tabs.js') }}" ></script>
+    <script src="{{ url_for('static_content', group='js', filename='tabs.js') }}" defer></script>
     {% if versions|length >= 2 %}
         <div id="settings" style="text-align: center;">
             <form class="pure-form " action="" method="POST">
