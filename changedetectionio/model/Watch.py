@@ -352,7 +352,7 @@ class model(watch_base):
     # Iterate over all history texts and see if something new exists
     # Always applying .strip() to start/end but optionally replace any other whitespace
     def lines_contain_something_unique_compared_to_history(self, lines: list, ignore_whitespace=False):
-        local_lines = []
+        local_lines = set([])
         if lines:
             if ignore_whitespace:
                 if isinstance(lines[0], str): # Can be either str or bytes depending on what was on the disk
