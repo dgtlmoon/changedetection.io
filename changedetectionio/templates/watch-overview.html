@@ -119,7 +119,7 @@
                          or (  watch.get_fetch_backend == "system" and system_default_fetcher == 'html_webdriver'  )
                          or "extra_browser_" in watch.get_fetch_backend
                     %}
-                    <img class="status-icon" src="{{url_for('static_content', group='images', filename='Google-Chrome-icon.png')}}" title="Using a Chrome browser" >
+                    <img class="status-icon" src="{{url_for('static_content', group='images', filename='Google-Chrome-icon.png')}}" alt="Using a Chrome browser" title="Using a Chrome browser" >
                     {% endif %}
 
                     {%if watch.is_pdf  %}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" title="Converting PDF to text" >{% endif %}
