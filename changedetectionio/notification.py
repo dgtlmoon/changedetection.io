@@ -4,6 +4,7 @@ from apprise import NotifyFormat
 import apprise
 from loguru import logger
 
+from changedetectionio.html_tools import escape_mixed_content
 
 valid_tokens = {
     'base_url': '',
@@ -85,6 +86,8 @@ def process_notification(n_object, datastore):
                 n_body = n_body.replace("\n", '<br>')
 
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
+            if n_object['notification_format'].startswith('HTML'):
+                n_body = escape_mixed_content(n_body)
 
             url = url.strip()
             if url.startswith('#'):
@@ -160,7 +163,6 @@ def process_notification(n_object, datastore):
             # False is not an option for AppRise, must be type None
             attach=n_object.get('screenshot', None)
         )
-
 
         # Returns empty string if nothing found, multi-line string otherwise
         log_value = logs.getvalue()
