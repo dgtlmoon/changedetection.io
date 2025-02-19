@@ -175,6 +175,9 @@ class steppable_browser_interface():
         v = json.dumps(value)
         self.page.wait_for_function(f'document.querySelector({s}).innerText.includes({v});', timeout=30000)
 
+    def action_wait_for_load_state(self, selector, value='networkidle'):
+        self.page.wait_for_load_state(value)
+
     # @todo - in the future make some popout interface to capture what needs to be set
     # https://playwright.dev/python/docs/api/class-keyboard
     def action_press_enter(self, selector, value):
@@ -191,6 +194,9 @@ class steppable_browser_interface():
 
     def action_uncheck_checkbox(self, selector, value):
         self.page.locator(selector).uncheck(timeout=self.action_timeout)
+
+    def get_locator(self, selector):
+       return self.page.locator(selector)
 
 
 # Responsible for maintaining a live 'context' with the chrome CDP

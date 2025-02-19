@@ -599,6 +599,10 @@ footer {
   .pure-controls {
     padding-bottom: 1em;
 
+    &.spacing-top {
+      padding-top: 1rem;
+    }
+
     div {
       margin: 0px;
     }
@@ -616,6 +620,10 @@ footer {
 
     legend {
       color: var(--color-text-legend);
+    }
+
+    pre {
+      margin-bottom: 0;
     }
   }
 
