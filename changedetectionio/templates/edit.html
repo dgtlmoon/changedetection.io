@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_webdriver_type_watches_warning %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
@@ -200,7 +200,7 @@ Math: {{ 1 + 1 }}") }}
             </div>
 
             <div class="tab-pane-inner" id="browser-steps">
-            {% if playwright_enabled %}
+            {% if playwright_enabled and watch_uses_webdriver %}
                 <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}" alt="New beta functionality">
                 <fieldset>
                     <div class="pure-control-group">
@@ -242,10 +242,12 @@ Math: {{ 1 + 1 }}") }}
                 </fieldset>
                 {% else %}
                     <span class="pure-form-message-inline">
-                        <p>Sorry, this functionality only works with Playwright/Chrome enabled watches.</p>
-                        <p>Enable the Playwright Chrome fetcher, or alternatively try our <a href="https://lemonade.changedetection.io/start">very affordable subscription based service</a>.</p>
-                        <p>This is because Selenium/WebDriver can not extract full page screenshots reliably.</p>
-                        <p>You may need to <a href="https://github.com/dgtlmoon/changedetection.io/blob/09ebc6ec6338545bdd694dc6eee57f2e9d2b8075/docker-compose.yml#L31">Enable playwright environment variable</a> and uncomment the <strong>sockpuppetbrowser</strong> from the docker-compose.yml file.</p>
+                        {% if not watch_uses_webdriver %}
+                            {{ only_webdriver_type_watches_warning() }}
+                        {% endif %}
+                        {%  if not playwright_enabled %}
+                            {{ playwright_warning() }}
+                        {% endif %}
                     </span>
                 {% endif %}
             </div>
@@ -256,7 +258,7 @@ Math: {{ 1 + 1 }}") }}
                     <div  class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_muted) }}
                     </div>
-                    {% if is_html_webdriver %}
+                    {% if watch_uses_webdriver %}
                     <div class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_screenshot) }}
                         <span class="pure-form-message-inline">
@@ -479,7 +481,7 @@ keyword") }}
 
                 <fieldset>
                     <div class="pure-control-group">
-                        {% if visualselector_enabled %}
+                        {% if playwright_enabled and watch_uses_webdriver %}
                             <span class="pure-form-message-inline" id="visual-selector-heading">
                                 The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection. It automatically fills-in the filters in the "CSS/JSONPath/JQ/XPath Filters" box of the <a href="#filters-and-triggers">Filters & Triggers</a> tab. Use <strong>Shift+Click</strong> to select multiple items.
                             </span>
@@ -497,12 +499,12 @@ keyword") }}
                             </div>
                             <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
                         {% else %}
-                            <span class="pure-form-message-inline">
-                                <p>Sorry, this functionality only works with Playwright/Chrome enabled watches.</p>
-                                <p>Enable the Playwright Chrome fetcher, or alternatively try our <a href="https://lemonade.changedetection.io/start">very affordable subscription based service</a>.</p>
-                                <p>This is because Selenium/WebDriver can not extract full page screenshots reliably.</p>
-                                <p>You may need to <a href="https://github.com/dgtlmoon/changedetection.io/blob/09ebc6ec6338545bdd694dc6eee57f2e9d2b8075/docker-compose.yml#L31">Enable playwright environment variable</a> and uncomment the <strong>sockpuppetbrowser</strong> from the docker-compose.yml file.</p>
-                            </span>
+                            {% if not watch_uses_webdriver %}
+                                {{ only_webdriver_type_watches_warning() }}
+                            {% endif %}
+                            {% if not playwright_enabled %}
+                                {{ playwright_warning() }}
+                            {% endif %}
                         {% endif %}
                     </div>
                 </fieldset>
