@@ -38,6 +38,7 @@ browser_step_ui_config = {'Choose one': '0 0',
                           'Wait for seconds': '0 1',
                           'Wait for text': '0 1',
                           'Wait for text in element': '1 1',
+                          'Remove elements': '1 0',
                           #                          'Press Page Down': '0 0',
                           #                          'Press Page Up': '0 0',
                           # weird bug, come back to it later
@@ -191,6 +192,10 @@ class steppable_browser_interface():
 
     def action_uncheck_checkbox(self, selector, value):
         self.page.locator(selector).uncheck(timeout=self.action_timeout)
+
+    def action_remove_elements(self, selector, value):
+        """Removes all elements matching the given selector from the DOM."""
+        self.page.locator(selector).evaluate_all("els => els.forEach(el => el.remove())")
 
 
 # Responsible for maintaining a live 'context' with the chrome CDP
