@@ -31,6 +31,7 @@ browser_step_ui_config = {'Choose one': '0 0',
 #                          'Extract text and use as filter': '1 0',
                           'Goto site': '0 0',
                           'Goto URL': '0 1',
+                          'Make all child elements visible': '1 0',
                           'Press Enter': '0 0',
                           'Select by label': '1 1',
                           'Scroll down': '0 0',
@@ -197,6 +198,20 @@ class steppable_browser_interface():
         """Removes all elements matching the given selector from the DOM."""
         self.page.locator(selector).evaluate_all("els => els.forEach(el => el.remove())")
 
+    def action_make_all_child_elements_visible(self, selector, value):
+        """Recursively makes all child elements inside the given selector fully visible."""
+        self.page.locator(selector).locator("*").evaluate_all("""
+            els => els.forEach(el => {
+                el.style.display = 'block';   // Forces it to be displayed
+                el.style.visibility = 'visible';   // Ensures it's not hidden
+                el.style.opacity = '1';   // Fully opaque
+                el.style.position = 'relative';   // Avoids 'absolute' hiding
+                el.style.height = 'auto';   // Expands collapsed elements
+                el.style.width = 'auto';   // Ensures full visibility
+                el.removeAttribute('hidden');   // Removes hidden attribute
+                el.classList.remove('hidden', 'd-none');  // Removes common CSS hidden classes
+            })
+        """)
 
 # Responsible for maintaining a live 'context' with the chrome CDP
 # @todo - how long do contexts live for anyway?
