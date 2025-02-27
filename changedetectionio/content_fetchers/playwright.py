@@ -90,6 +90,7 @@ class fetcher(Fetcher):
         from playwright.sync_api import sync_playwright
         import playwright._impl._errors
         from changedetectionio.content_fetchers import visualselector_xpath_selectors
+        import time
         self.delete_browser_steps_screenshots()
         response = None
 
@@ -180,6 +181,7 @@ class fetcher(Fetcher):
 
             self.page.wait_for_timeout(extra_wait * 1000)
 
+            now = time.time()
             # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
             if current_include_filters is not None:
                 self.page.evaluate("var include_filters={}".format(json.dumps(current_include_filters)))
@@ -191,6 +193,8 @@ class fetcher(Fetcher):
             self.instock_data = self.page.evaluate("async () => {" + self.instock_data_js + "}")
 
             self.content = self.page.content()
+            logger.debug(f"Time to scrape xpath element data in browser {time.time() - now:.2f}s")
+
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
             # JPEG is better here because the screenshots can be very very large
