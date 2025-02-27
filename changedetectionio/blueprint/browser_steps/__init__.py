@@ -88,7 +88,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         browsersteps_start_session['browserstepper'] = browser_steps.browsersteps_live_ui(
             playwright_browser=browsersteps_start_session['browser'],
             proxy=proxy,
-            start_url=datastore.data['watching'][watch_uuid].get('url'),
+            start_url=datastore.data['watching'][watch_uuid].link,
             headers=datastore.data['watching'][watch_uuid].get('headers')
         )
 
