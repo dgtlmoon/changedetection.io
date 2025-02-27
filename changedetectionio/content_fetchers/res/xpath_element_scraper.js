@@ -41,7 +41,7 @@ const findUpTag = (el) => {
 
     //  Strategy 1: If it's an input, with name, and there's only one, prefer that
     if (el.name !== undefined && el.name.length) {
-        var proposed = el.tagName + "[name=" + el.name + "]";
+        var proposed = el.tagName + "[name=\"" + CSS.escape(el.name) + "\"]";
         var proposed_element = window.document.querySelectorAll(proposed);
         if (proposed_element.length) {
             if (proposed_element.length === 1) {
