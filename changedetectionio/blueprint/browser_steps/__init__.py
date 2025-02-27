@@ -22,7 +22,10 @@ from loguru import logger
 
 browsersteps_sessions = {}
 io_interface_context = None
-
+import json
+import base64
+import hashlib
+from flask import Response
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     browser_steps_blueprint = Blueprint('browser_steps', __name__, template_folder="templates")
@@ -202,27 +205,21 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return make_response("Error fetching screenshot and element data - " + str(e), 401)
 
         # SEND THIS BACK TO THE BROWSER
-        # Use send_file() which is way faster than read/write loop on bytes
-        import json
-        from tempfile import mkstemp
-        from flask import send_file
-        tmp_fd, tmp_file = mkstemp(text=True, suffix=".json", prefix="changedetectionio-")
 
-        output = json.dumps({'screenshot': "data:image/jpeg;base64,{}".format(
-            base64.b64encode(screenshot).decode('ascii')),
-            'xpath_data': xpath_data,
-            'session_age_start': browsersteps_sessions[browsersteps_session_id]['browserstepper'].age_start,
-            'browser_time_remaining': round(remaining)
-        })
+        output = {
+            "screenshot": f"data:image/jpeg;base64,{base64.b64encode(screenshot).decode('ascii')}",
+            "xpath_data": xpath_data,
+            "session_age_start": browsersteps_sessions[browsersteps_session_id]['browserstepper'].age_start,
+            "browser_time_remaining": round(remaining)
+        }
+        json_data = json.dumps(output)
 
-        with os.fdopen(tmp_fd, 'w') as f:
-            f.write(output)
+        # Generate an ETag (hash of the response body)
+        etag_hash = hashlib.md5(json_data.encode('utf-8')).hexdigest()
 
-        response = make_response(send_file(path_or_file=tmp_file,
-                                           mimetype='application/json; charset=UTF-8',
-                                           etag=True))
-        # No longer needed
-        os.unlink(tmp_file)
+        # Create the response with ETag
+        response = Response(json_data, mimetype="application/json; charset=UTF-8")
+        response.set_etag(etag_hash)
 
         return response
 
