@@ -22,7 +22,10 @@ from loguru import logger
 
 browsersteps_sessions = {}
 io_interface_context = None
-
+import json
+import base64
+import hashlib
+from flask import Response
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     browser_steps_blueprint = Blueprint('browser_steps', __name__, template_folder="templates")
@@ -160,14 +163,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if not browsersteps_sessions.get(browsersteps_session_id):
             return make_response('No session exists under that ID', 500)
 
-
+        is_last_step = False
         # Actions - step/apply/etc, do the thing and return state
         if request.method == 'POST':
             # @todo - should always be an existing session
             step_operation = request.form.get('operation')
             step_selector = request.form.get('selector')
             step_optional_value = request.form.get('optional_value')
-            step_n = int(request.form.get('step_n'))
             is_last_step = strtobool(request.form.get('is_last_step'))
 
             # @todo try.. accept.. nice errors not popups..
@@ -182,16 +184,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 # Try to find something of value to give back to the user
                 return make_response(str(e).splitlines()[0], 401)
 
-            # Get visual selector ready/update its data (also use the current filter info from the page?)
-            # When the last 'apply' button was pressed
-            # @todo this adds overhead because the xpath selection is happening twice
-            u = browsersteps_sessions[browsersteps_session_id]['browserstepper'].page.url
-            if is_last_step and u:
-                (screenshot, xpath_data) = browsersteps_sessions[browsersteps_session_id]['browserstepper'].request_visualselector_data()
-                watch = datastore.data['watching'].get(uuid)
-                if watch:
-                    watch.save_screenshot(screenshot=screenshot)
-                    watch.save_xpath_data(data=xpath_data)
 
 #        if not this_session.page:
 #            cleanup_playwright_session()
@@ -199,31 +191,35 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Screenshots and other info only needed on requesting a step (POST)
         try:
-            state = browsersteps_sessions[browsersteps_session_id]['browserstepper'].get_current_state()
+            (screenshot, xpath_data) = browsersteps_sessions[browsersteps_session_id]['browserstepper'].get_current_state()
+            if is_last_step:
+                watch = datastore.data['watching'].get(uuid)
+                u = browsersteps_sessions[browsersteps_session_id]['browserstepper'].page.url
+                if watch and u:
+                    watch.save_screenshot(screenshot=screenshot)
+                    watch.save_xpath_data(data=xpath_data)
+
         except playwright._impl._api_types.Error as e:
             return make_response("Browser session ran out of time :( Please reload this page."+str(e), 401)
+        except Exception as e:
+            return make_response("Error fetching screenshot and element data - " + str(e), 401)
 
-        # Use send_file() which is way faster than read/write loop on bytes
-        import json
-        from tempfile import mkstemp
-        from flask import send_file
-        tmp_fd, tmp_file = mkstemp(text=True, suffix=".json", prefix="changedetectionio-")
+        # SEND THIS BACK TO THE BROWSER
 
-        output = json.dumps({'screenshot': "data:image/jpeg;base64,{}".format(
-            base64.b64encode(state[0]).decode('ascii')),
-            'xpath_data': state[1],
-            'session_age_start': browsersteps_sessions[browsersteps_session_id]['browserstepper'].age_start,
-            'browser_time_remaining': round(remaining)
-        })
+        output = {
+            "screenshot": f"data:image/jpeg;base64,{base64.b64encode(screenshot).decode('ascii')}",
+            "xpath_data": xpath_data,
+            "session_age_start": browsersteps_sessions[browsersteps_session_id]['browserstepper'].age_start,
+            "browser_time_remaining": round(remaining)
+        }
+        json_data = json.dumps(output)
 
-        with os.fdopen(tmp_fd, 'w') as f:
-            f.write(output)
+        # Generate an ETag (hash of the response body)
+        etag_hash = hashlib.md5(json_data.encode('utf-8')).hexdigest()
 
-        response = make_response(send_file(path_or_file=tmp_file,
-                                           mimetype='application/json; charset=UTF-8',
-                                           etag=True))
-        # No longer needed
-        os.unlink(tmp_file)
+        # Create the response with ETag
+        response = Response(json_data, mimetype="application/json; charset=UTF-8")
+        response.set_etag(etag_hash)
 
         return response
 

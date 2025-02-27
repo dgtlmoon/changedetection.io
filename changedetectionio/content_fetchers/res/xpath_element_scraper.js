@@ -41,7 +41,7 @@ const findUpTag = (el) => {
 
     //  Strategy 1: If it's an input, with name, and there's only one, prefer that
     if (el.name !== undefined && el.name.length) {
-        var proposed = el.tagName + "[name=" + el.name + "]";
+        var proposed = el.tagName + "[name=\"" + CSS.escape(el.name) + "\"]";
         var proposed_element = window.document.querySelectorAll(proposed);
         if (proposed_element.length) {
             if (proposed_element.length === 1) {
@@ -102,13 +102,15 @@ function collectVisibleElements(parent, visibleElements) {
     const children = parent.children;
     for (let i = 0; i < children.length; i++) {
         const child = children[i];
+        const computedStyle = window.getComputedStyle(child);
+
         if (
             child.nodeType === Node.ELEMENT_NODE &&
-            window.getComputedStyle(child).display !== 'none' &&
-            window.getComputedStyle(child).visibility !== 'hidden' &&
+            computedStyle.display !== 'none' &&
+            computedStyle.visibility !== 'hidden' &&
             child.offsetWidth >= 0 &&
             child.offsetHeight >= 0 &&
-            window.getComputedStyle(child).contentVisibility !== 'hidden'
+            computedStyle.contentVisibility !== 'hidden'
         ) {
             // If the child is an element and is visible, recursively collect visible elements
             collectVisibleElements(child, visibleElements);
@@ -173,6 +175,7 @@ visibleElementsArray.forEach(function (element) {
 
     // Try to identify any possible currency amounts "Sale: 4000" or "Sale now 3000 Kc", can help with the training.
     const hasDigitCurrency = (/\d/.test(text.slice(0, 6)) || /\d/.test(text.slice(-6)) ) &&  /([€£$¥₩₹]|USD|AUD|EUR|Kč|kr|SEK|,–)/.test(text) ;
+    const computedStyle = window.getComputedStyle(element);
 
     size_pos.push({
         xpath: xpath_result,
@@ -184,10 +187,10 @@ visibleElementsArray.forEach(function (element) {
         tagName: (element.tagName) ? element.tagName.toLowerCase() : '',
         // tagtype used by Browser Steps
         tagtype: (element.tagName.toLowerCase() === 'input' && element.type) ? element.type.toLowerCase() : '',
-        isClickable: window.getComputedStyle(element).cursor === "pointer",
+        isClickable: computedStyle.cursor === "pointer",
         // Used by the keras trainer
-        fontSize: window.getComputedStyle(element).getPropertyValue('font-size'),
-        fontWeight: window.getComputedStyle(element).getPropertyValue('font-weight'),
+        fontSize: computedStyle.getPropertyValue('font-size'),
+        fontWeight: computedStyle.getPropertyValue('font-weight'),
         hasDigitCurrency: hasDigitCurrency,
         label: label,
     });

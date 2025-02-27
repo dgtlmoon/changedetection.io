@@ -1,13 +1,14 @@
-#!/usr/bin/env python3
-
 import os
 import time
 import re
 from random import randint
 from loguru import logger
 
+from changedetectionio.content_fetchers.helpers import capture_stitched_together_full_page, SCREENSHOT_SIZE_STITCH_THRESHOLD
 from changedetectionio.content_fetchers.base import manage_user_agent
 from changedetectionio.safe_jinja import render as jinja_render
+
+
 
 # Two flags, tell the JS which of the "Selector" or "Value" field should be enabled in the front end
 # 0- off, 1- on
@@ -279,6 +280,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         logger.debug(f"Time to browser setup {time.time()-now:.2f}s")
         self.page.wait_for_timeout(1 * 1000)
 
+
     def mark_as_closed(self):
         logger.debug("Page closed, cleaning up..")
 
@@ -296,39 +298,30 @@ class browsersteps_live_ui(steppable_browser_interface):
         now = time.time()
         self.page.wait_for_timeout(1 * 1000)
 
-        # The actual screenshot
-        screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=40)
 
+        full_height = self.page.evaluate("document.documentElement.scrollHeight")
+
+        if full_height >= SCREENSHOT_SIZE_STITCH_THRESHOLD:
+            logger.warning(f"Page full Height: {full_height}px longer than {SCREENSHOT_SIZE_STITCH_THRESHOLD}px, using 'stitched screenshot method'.")
+            screenshot = capture_stitched_together_full_page(self.page)
+        else:
+            screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=40)
+
+        logger.debug(f"Time to get screenshot from browser {time.time() - now:.2f}s")
+
+        now = time.time()
         self.page.evaluate("var include_filters=''")
         # Go find the interactive elements
         # @todo in the future, something smarter that can scan for elements with .click/focus etc event handlers?
         elements = 'a,button,input,select,textarea,i,th,td,p,li,h1,h2,h3,h4,div,span'
         xpath_element_js = xpath_element_js.replace('%ELEMENTS%', elements)
+
         xpath_data = self.page.evaluate("async () => {" + xpath_element_js + "}")
         # So the JS will find the smallest one first
         xpath_data['size_pos'] = sorted(xpath_data['size_pos'], key=lambda k: k['width'] * k['height'], reverse=True)
-        logger.debug(f"Time to complete get_current_state of browser {time.time()-now:.2f}s")
-        # except
+        logger.debug(f"Time to scrape xpath element data in browser {time.time()-now:.2f}s")
+
         # playwright._impl._api_types.Error: Browser closed.
         # @todo show some countdown timer?
         return (screenshot, xpath_data)
 
-    def request_visualselector_data(self):
-        """
-        Does the same that the playwright operation in content_fetcher does
-        This is used to just bump the VisualSelector data so it' ready to go if they click on the tab
-        @todo refactor and remove duplicate code, add include_filters
-        :param xpath_data:
-        :param screenshot:
-        :param current_include_filters:
-        :return:
-        """
-        import importlib.resources
-        self.page.evaluate("var include_filters=''")
-        xpath_element_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text()
-        from changedetectionio.content_fetchers import visualselector_xpath_selectors
-        xpath_element_js = xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
-        xpath_data = self.page.evaluate("async () => {" + xpath_element_js + "}")
-        screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
-
-        return (screenshot, xpath_data)
