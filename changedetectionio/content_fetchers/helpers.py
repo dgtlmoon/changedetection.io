@@ -5,7 +5,10 @@
 # - If a page is taller than ~8000–10000px, it risks exceeding GPU memory limits.
 # - This is especially important on headless Chromium, where Playwright may fail to allocate a massive full-page buffer.
 
-SCREENSHOT_SIZE_STITCH_THRESHOLD=16000
+
+# The size at which we will switch to stitching method
+SCREENSHOT_SIZE_STITCH_THRESHOLD=8000
+
 from loguru import logger
 
 def capture_stitched_together_full_page(page):
@@ -14,9 +17,9 @@ def capture_stitched_together_full_page(page):
     import time
     from PIL import Image, ImageDraw, ImageFont
 
-    MAX_TOTAL_HEIGHT = 12000  # Maximum total height for the final image
-    MAX_CHUNK_HEIGHT = 5000  # Height per screenshot chunk
-    WARNING_HEIGHT = 20  # Height of the warning text overlay
+    MAX_TOTAL_HEIGHT = SCREENSHOT_SIZE_STITCH_THRESHOLD*4  # Maximum total height for the final image (When in stitch mode)
+    MAX_CHUNK_HEIGHT = 4000  # Height per screenshot chunk
+    WARNING_TEXT_HEIGHT = 20  # Height of the warning text overlay
 
     # Save the original viewport size
     original_viewport = page.viewport_size
@@ -70,7 +73,7 @@ def capture_stitched_together_full_page(page):
 
             # Load font (default system font if Arial is unavailable)
             try:
-                font = ImageFont.truetype("arial.ttf", 21)  # Arial (Windows/Mac)
+                font = ImageFont.truetype("arial.ttf", WARNING_TEXT_HEIGHT)  # Arial (Windows/Mac)
             except IOError:
                 font = ImageFont.load_default()  # Default font if Arial not found
 
@@ -80,11 +83,11 @@ def capture_stitched_together_full_page(page):
             text_height = text_bbox[3] - text_bbox[1]  # Calculate text height
 
             # Define background rectangle (top of the image)
-            draw.rectangle([(0, 0), (viewport["width"], WARNING_HEIGHT)], fill="white")
+            draw.rectangle([(0, 0), (viewport["width"], WARNING_TEXT_HEIGHT)], fill="white")
 
             # Center text horizontally within the warning area
             text_x = (viewport["width"] - text_width) // 2
-            text_y = (WARNING_HEIGHT - text_height) // 2
+            text_y = (WARNING_TEXT_HEIGHT - text_height) // 2
 
             # Draw the warning text in red
             draw.text((text_x, text_y), warning_text, fill="red", font=font)
