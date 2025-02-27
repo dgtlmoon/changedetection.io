@@ -46,11 +46,11 @@ jobs:
       run: |
         set -ex
         ls -alR 
-        find .
-        ls -al dist
         
-        pip3 install dist/changedetection.io*.whl
+        # Find and install the first .whl file
+        find dist -type f -name "*.whl" -exec pip3 install {} \; -quit
         changedetection.io -d /tmp -p 10000 &
+        
         sleep 3
         curl --retry-connrefused --retry 6 http://127.0.0.1:10000/static/styles/pure-min.css >/dev/null
         curl --retry-connrefused --retry 6 http://127.0.0.1:10000/ >/dev/null
