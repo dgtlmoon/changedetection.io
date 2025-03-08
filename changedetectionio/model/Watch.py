@@ -527,7 +527,7 @@ class model(watch_base):
     def save_error_text(self, contents):
         self.ensure_data_dir_exists()
         target_path = os.path.join(self.watch_data_dir, "last-error.txt")
-        with open(target_path, 'w') as f:
+        with open(target_path, 'w', encoding='utf-8') as f:
             f.write(contents)
 
     def save_xpath_data(self, data, as_error=False):
