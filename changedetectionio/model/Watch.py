@@ -98,8 +98,10 @@ class model(watch_base):
     def clear_watch(self):
         import pathlib
 
-        # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
+        # Screenshots, Textfiles (history index and snapshots), HTML in the future etc
         for item in pathlib.Path(str(self.watch_data_dir)).rglob("*.*"):
+            if str(item).endswith('.json'):
+                continue
             os.unlink(item)
 
         # Force the attr to recalculate
