@@ -12,6 +12,7 @@ import threading
 import time
 import timeago
 
+from .html_tools import escape_mixed_content
 from .processors import find_processors, get_parent_module, get_custom_watch_obj_for_processor
 from .safe_jinja import render as jinja_render
 from changedetectionio.strtobool import strtobool
@@ -539,6 +540,9 @@ def changedetection_app(config=None, datastore_o=None):
         import apprise
         import random
         from .apprise_asset import asset
+        from .notification import default_notification_format
+        from .update_worker import build_notification_object_for_watch
+
         apobj = apprise.Apprise(asset=asset)
 
         # so that the custom endpoints are registered
@@ -595,6 +599,8 @@ def changedetection_app(config=None, datastore_o=None):
             # Only use if present, if not set in n_object it should use the default system value
             if 'notification_format' in request.form and request.form['notification_format'].strip():
                 n_object['notification_format'] = request.form.get('notification_format', '').strip()
+            else:
+                n_object['notification_format'] = default_notification_format
 
             if 'notification_title' in request.form and request.form['notification_title'].strip():
                 n_object['notification_title'] = request.form.get('notification_title', '').strip()
@@ -610,9 +616,14 @@ def changedetection_app(config=None, datastore_o=None):
             else:
                 n_object['notification_body'] = "Test body"
 
-            n_object['as_async'] = False
-            n_object.update(watch.extra_notification_token_values())
+            n_object = build_notification_object_for_watch(watch, n_object, datastore.data['settings']['application'].get('notification_body'))
+
+            if n_object['notification_format'].startswith('HTML'):
+                n_object['notification_body'] = escape_mixed_content(n_object['notification_body'])
+
             from .notification import process_notification
+            n_object['as_async'] = False
+            # Now we send the notification_body after everything is compiled
             sent_obj = process_notification(n_object, datastore)
 
         except Exception as e:
