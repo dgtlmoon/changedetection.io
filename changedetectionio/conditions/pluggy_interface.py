@@ -2,7 +2,7 @@ import pluggy
 from . import default_plugin  # Import the default plugin
 
 # ✅ Ensure that the namespace in HookspecMarker matches PluginManager
-PLUGIN_NAMESPACE = "conditions"
+PLUGIN_NAMESPACE = "changedetectionio_conditions"
 
 hookspec = pluggy.HookspecMarker(PLUGIN_NAMESPACE)
 hookimpl = pluggy.HookimplMarker(PLUGIN_NAMESPACE)

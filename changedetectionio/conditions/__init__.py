@@ -1,4 +1,3 @@
-from json_logic import jsonLogic
 from json_logic.builtins import BUILTINS
 from .pluggy_interface import plugin_manager  # Import the pluggy plugin manager
 from . import default_plugin

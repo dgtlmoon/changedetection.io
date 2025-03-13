@@ -2,7 +2,7 @@ import pluggy
 from price_parser import Price
 from loguru import logger
 
-hookimpl = pluggy.HookimplMarker("conditions")
+hookimpl = pluggy.HookimplMarker("changedetectionio_conditions")
 
 
 @hookimpl
@@ -51,7 +51,7 @@ def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
         price = Price.fromstring(ephemeral_data.get('text'))
         if price:
             res['extracted_number'] = float(price.amount)
-        logger.debug(f"Extracted price result: '{price}'")
+        logger.debug(f"Extracted price result: '{price}' - returning float({res['extracted_number']})")
 
 
     return res
