@@ -352,7 +352,7 @@ class model(watch_base):
     # Iterate over all history texts and see if something new exists
     # Always applying .strip() to start/end but optionally replace any other whitespace
     def lines_contain_something_unique_compared_to_history(self, lines: list, ignore_whitespace=False):
-        local_lines = []
+        local_lines = set([])
         if lines:
             if ignore_whitespace:
                 if isinstance(lines[0], str): # Can be either str or bytes depending on what was on the disk
@@ -527,7 +527,7 @@ class model(watch_base):
     def save_error_text(self, contents):
         self.ensure_data_dir_exists()
         target_path = os.path.join(self.watch_data_dir, "last-error.txt")
-        with open(target_path, 'w') as f:
+        with open(target_path, 'w', encoding='utf-8') as f:
             f.write(contents)
 
     def save_xpath_data(self, data, as_error=False):

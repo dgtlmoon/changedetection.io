@@ -221,7 +221,7 @@ $(document).ready(function () {
                     // If you switch to "Click X,y" after an element here is setup, it will give the last co-ords anyway
                     //if (x['isClickable'] || x['tagName'].startsWith('h') || x['tagName'] === 'a' || x['tagName'] === 'button' || x['tagtype'] === 'submit' || x['tagtype'] === 'checkbox' || x['tagtype'] === 'radio' || x['tagtype'] === 'li') {
                         $('select', first_available).val('Click element').change();
-                        $('input[type=text]', first_available).first().val(x['xpath']);
+                        $('input[type=text]', first_available).first().val(x['xpath']).focus();
                         found_something = true;
                     //}
                 }
@@ -305,7 +305,7 @@ $(document).ready(function () {
 
         if ($(this).val() === 'Click X,Y' && last_click_xy['x'] > 0 && $(elem_value).val().length === 0) {
             // @todo handle scale
-            $(elem_value).val(last_click_xy['x'] + ',' + last_click_xy['y']);
+            $(elem_value).val(last_click_xy['x'] + ',' + last_click_xy['y']).focus();
         }
     }).change();
 

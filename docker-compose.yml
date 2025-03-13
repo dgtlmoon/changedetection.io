@@ -1,4 +1,3 @@
-version: '3.2'
 services:
     changedetection:
       image: ghcr.io/dgtlmoon/changedetection.io
@@ -82,7 +81,7 @@ services:
 
 
      # Sockpuppetbrowser is basically chrome wrapped in an API for allowing fast fetching of web-pages.
-     # RECOMMENDED FOR FETCHING PAGES WITH CHROME
+     # RECOMMENDED FOR FETCHING PAGES WITH CHROME, be sure to enable the "PLAYWRIGHT_DRIVER_URL" env variable in the main changedetection container
 #    sockpuppetbrowser:
 #        hostname: sockpuppetbrowser
 #        image: dgtlmoon/sockpuppetbrowser:latest

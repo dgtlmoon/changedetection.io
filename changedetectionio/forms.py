@@ -172,7 +172,7 @@ class validateTimeZoneName(object):
 
 class ScheduleLimitDaySubForm(Form):
     enabled = BooleanField("not set", default=True)
-    start_time = TimeStringField("Start At", default="00:00", render_kw={"placeholder": "HH:MM"}, validators=[validators.Optional()])
+    start_time = TimeStringField("Start At", default="00:00", validators=[validators.Optional()])
     duration = FormField(TimeDurationForm, label="Run duration")
 
 class ScheduleLimitForm(Form):

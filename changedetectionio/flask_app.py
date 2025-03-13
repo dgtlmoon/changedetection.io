@@ -902,14 +902,14 @@ def changedetection_app(config=None, datastore_o=None):
 
             system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
 
-            is_html_webdriver = False
+            watch_uses_webdriver = False
             if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
-                is_html_webdriver = True
+                watch_uses_webdriver = True
 
             from zoneinfo import available_timezones
 
             # Only works reliably with Playwright
-            visualselector_enabled = os.getenv('PLAYWRIGHT_DRIVER_URL', False) and is_html_webdriver
+
             template_args = {
                 'available_processors': processors.available_processors(),
                 'available_timezones': sorted(available_timezones()),
@@ -922,14 +922,13 @@ def changedetection_app(config=None, datastore_o=None):
                 'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,
                 'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
                 'has_special_tag_options': _watch_has_tag_options_set(watch=watch),
-                'is_html_webdriver': is_html_webdriver,
+                'watch_uses_webdriver': watch_uses_webdriver,
                 'jq_support': jq_support,
                 'playwright_enabled': os.getenv('PLAYWRIGHT_DRIVER_URL', False),
                 'settings_application': datastore.data['settings']['application'],
                 'timezone_default_config': datastore.data['settings']['application'].get('timezone'),
                 'using_global_webdriver_wait': not default['webdriver_delay'],
                 'uuid': uuid,
-                'visualselector_enabled': visualselector_enabled,
                 'watch': watch
             }
 

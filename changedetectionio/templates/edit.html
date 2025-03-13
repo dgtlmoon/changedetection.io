@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_webdriver_type_watches_warning %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
@@ -73,7 +73,7 @@
 
     <div class="tabs collapsable">
         <ul>
-            <li class="tab" id=""><a href="#general">General</a></li>
+            <li class="tab"><a href="#general">General</a></li>
             <li class="tab"><a href="#request">Request</a></li>
             {% if extra_tab_content %}
             <li class="tab"><a href="#extras_tab">{{ extra_tab_content }}</a></li>
@@ -234,7 +234,7 @@ Math: {{ 1 + 1 }}") }}
             </div>
 
             <div class="tab-pane-inner" id="browser-steps">
-            {% if playwright_enabled %}
+            {% if playwright_enabled and watch_uses_webdriver %}
                 <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}" alt="New beta functionality">
                 <fieldset>
                     <div class="pure-control-group">
@@ -258,7 +258,7 @@ Math: {{ 1 + 1 }}") }}
                                     <span class="loader" >
                                         <span id="browsersteps-click-start">
                                             <h2 >Click here to Start</h2>
-                                            <svg style="height: 3.5rem;" version="1.1" viewBox="0 0 32 32"  xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="Layer_1"/><g id="play_x5F_alt"><path d="M16,0C7.164,0,0,7.164,0,16s7.164,16,16,16s16-7.164,16-16S24.836,0,16,0z M10,24V8l16.008,8L10,24z" style="fill: var(--color-grey-400);"/></g></svg><br>
+                                            <svg style="height: 3.5rem;" version="1.1" viewBox="0 0 32 32"  xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="start"/><g id="play_x5F_alt"><path d="M16,0C7.164,0,0,7.164,0,16s7.164,16,16,16s16-7.164,16-16S24.836,0,16,0z M10,24V8l16.008,8L10,24z" style="fill: var(--color-grey-400);"/></g></svg><br>
                                             Please allow 10-15 seconds for the browser to connect.<br>
                                         </span>
                                         <div class="spinner"  style="display: none;"></div>
@@ -268,7 +268,7 @@ Math: {{ 1 + 1 }}") }}
                                 </div>
                             </div>
                             <div id="browser-steps-fieldlist" >
-                                <span id="browser-seconds-remaining">Loading</span> <span style="font-size: 80%;"> (<a target=_new href="https://github.com/dgtlmoon/changedetection.io/pull/478/files#diff-1a79d924d1840c485238e66772391268a89c95b781d69091384cf1ea1ac146c9R4">?</a>) </span>
+                                <span id="browser-seconds-remaining">Loading</span> <span style="font-size: 80%;"> (<a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/pull/478/files#diff-1a79d924d1840c485238e66772391268a89c95b781d69091384cf1ea1ac146c9R4">?</a>) </span>
                                 {{ render_field(form.browser_steps) }}
                             </div>
                         </div>
@@ -276,10 +276,12 @@ Math: {{ 1 + 1 }}") }}
                 </fieldset>
                 {% else %}
                     <span class="pure-form-message-inline">
-                        <p>Sorry, this functionality only works with Playwright/Chrome enabled watches.</p>
-                        <p>Enable the Playwright Chrome fetcher, or alternatively try our <a href="https://lemonade.changedetection.io/start">very affordable subscription based service</a>.</p>
-                        <p>This is because Selenium/WebDriver can not extract full page screenshots reliably.</p>
-                        <p>You may need to <a href="https://github.com/dgtlmoon/changedetection.io/blob/09ebc6ec6338545bdd694dc6eee57f2e9d2b8075/docker-compose.yml#L31">Enable playwright environment variable</a> and uncomment the <strong>sockpuppetbrowser</strong> from the docker-compose.yml file.</p>
+                        {% if not watch_uses_webdriver %}
+                            {{ only_webdriver_type_watches_warning() }}
+                        {% endif %}
+                        {%  if not playwright_enabled %}
+                            {{ playwright_warning() }}
+                        {% endif %}
                     </span>
                 {% endif %}
             </div>
@@ -290,7 +292,7 @@ Math: {{ 1 + 1 }}") }}
                     <div  class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_muted) }}
                     </div>
-                    {% if is_html_webdriver %}
+                    {% if watch_uses_webdriver %}
                     <div class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_screenshot) }}
                         <span class="pure-form-message-inline">
@@ -370,7 +372,7 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                           <span class="pure-form-message-inline"><strong>Note!: //text() function does not work where the &lt;element&gt; contains &lt;![CDATA[]]&gt;</strong></span><br>
                         {% endif %}
                         <span class="pure-form-message-inline">One CSS, xPath, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used.<br>
-<p><div data-target="#advanced-help-selectors" class="toggle-show pure-button button-tag button-xsmall">Show advanced help and tips</div><br></p>
+                        <span data-target="#advanced-help-selectors" class="toggle-show pure-button button-tag button-xsmall">Show advanced help and tips</span><br>
                     <ul id="advanced-help-selectors" style="display: none;">
                         <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
                         <li>JSON - Limit text to this JSON rule, using either <a href="https://pypi.org/project/jsonpath-ng/" target="new">JSONPath</a> or <a href="https://stedolan.github.io/jq/" target="new">jq</a> (if installed).
@@ -543,7 +545,7 @@ keyword") }}
 
                 <fieldset>
                     <div class="pure-control-group">
-                        {% if visualselector_enabled %}
+                        {% if playwright_enabled and watch_uses_webdriver %}
                             <span class="pure-form-message-inline" id="visual-selector-heading">
                                 The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection. It automatically fills-in the filters in the "CSS/JSONPath/JQ/XPath Filters" box of the <a href="#filters-and-triggers">Filters & Triggers</a> tab. Use <strong>Shift+Click</strong> to select multiple items.
                             </span>
@@ -561,12 +563,12 @@ keyword") }}
                             </div>
                             <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
                         {% else %}
-                            <span class="pure-form-message-inline">
-                                <p>Sorry, this functionality only works with Playwright/Chrome enabled watches.</p>
-                                <p>Enable the Playwright Chrome fetcher, or alternatively try our <a href="https://lemonade.changedetection.io/start">very affordable subscription based service</a>.</p>
-                                <p>This is because Selenium/WebDriver can not extract full page screenshots reliably.</p>
-                                <p>You may need to <a href="https://github.com/dgtlmoon/changedetection.io/blob/09ebc6ec6338545bdd694dc6eee57f2e9d2b8075/docker-compose.yml#L31">Enable playwright environment variable</a> and uncomment the <strong>sockpuppetbrowser</strong> from the docker-compose.yml file.</p>
-                            </span>
+                            {% if not watch_uses_webdriver %}
+                                {{ only_webdriver_type_watches_warning() }}
+                            {% endif %}
+                            {% if not playwright_enabled %}
+                                {{ playwright_warning() }}
+                            {% endif %}
                         {% endif %}
                     </div>
                 </fieldset>
