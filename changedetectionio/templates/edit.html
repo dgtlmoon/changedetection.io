@@ -308,7 +308,6 @@ Math: {{ 1 + 1 }}") }}
                         </div>
                         {% endif %}
                         <a href="#notifications" id="notification-setting-reset-to-default" class="pure-button button-xsmall" style="right: 20px; top: 20px; position: absolute; background-color: #5f42dd; border-radius: 4px; font-size: 70%; color: #fff">Use system defaults</a>
-
                         {{ render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                     </div>
                 </fieldset>
@@ -317,33 +316,36 @@ Math: {{ 1 + 1 }}") }}
             {% if watch['processor'] == 'text_json_diff' %}
 
             <div class="tab-pane-inner" id="conditions">
-                <!-- Grid Header -->
-                <table>
-                    <thead>
-                    <td>In Value</td>
-                    <td>Operator</td>
-                    <td>Value</td>
-                    <td></td>
+                <div class="pure-control-group">
+                    <a id="conditions-delete-all" class="pure-button button-secondary button-xsmall" >Reset all conditions</a>
+                </div>
 
-                    </thead>
-                    <tbody>
-                    <!-- Rule Rows (Dynamic Content) -->
+                <div class="pure-control-group">
+                    <!-- Grid Header -->
+                    {{ render_field(form.conditions_match_logic) }}
+                    <table class="pure-table">
+                        <thead>
+                        <td>In Value</td>
+                        <td>Operator</td>
+                        <td>Value</td>
+                        <td></td>
 
-                    {% for rule in form.conditions %}
-                        <tr>
-                            <td>{{ rule.field() }}</td>
-
-                            <td>{{ rule.operator() }}</td>
-                            <td>{{ rule.value() }}</td>
-
-                            <td>
-                                <button type="button" onclick="addRuleRow()">AND +</button>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-
+                        </thead>
+                        <tbody>
+                        <!-- Rule Rows (Dynamic Content) -->
+                        {% for rule in form.conditions %}
+                            <tr>
+                                <td>{{ rule.field() }}</td>
+                                <td>{{ rule.operator() }}</td>
+                                <td>{{ rule.value() }}</td>
+                                <td>
+                                    <button type="button" onclick="addRuleRow()">ADD +</button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <div class="tab-pane-inner" id="filters-and-triggers">
                 <span id="activate-text-preview" class="pure-button pure-button-primary button-xsmall">Activate preview</span>

@@ -7,6 +7,7 @@ import re
 
 # List of all supported JSON Logic operators
 operator_choices = [
+    (None, "Choose one"),
     (">", "Greater Than"),
     ("<", "Less Than"),
     (">=", "Greater Than or Equal To"),
@@ -18,36 +19,12 @@ operator_choices = [
     ("contains_regex", "Text Matches Regex"),
     ("!contains_regex", "Text Does NOT Match Regex"),
     ("changed > minutes", "Changed more than X minutes ago"),
-#    ("watch_uuid_unviewed_change", "Watch UUID had an unviewed change"),  #('if'? )
-#    ("watch_uuid_not_unviewed_change", "Watch UUID NOT had an unviewed change") #('if'? )
-#    ("watch_uuid_changed", "Watch UUID had unviewed change"),
-#    ("watch_uuid_not_changed", "Watch UUID did NOT have unviewed change"),
-#    ("!!", "Is Truthy"),
-#    ("!", "Is Falsy"),
-#    ("and", "All Conditions Must Be True"),
-#    ("or", "At Least One Condition Must Be True"),
-#    ("max", "Maximum of Values"),
-#    ("min", "Minimum of Values"),
-#    ("+", "Addition"),
-#    ("-", "Subtraction"),
-#    ("*", "Multiplication"),
-#    ("/", "Division"),
-#    ("%", "Modulo"),
-#    ("log", "Logarithm"),
-#    ("if", "Conditional If-Else")
 ]
 
 # Fields available in the rules
 field_choices = [
-    ("extracted_number", "Extracted Number"),
-    ("page_filtered_text", "Page text After Filters"),
-    ("page_title", "Page Title"), # actual page title <title>
-    ("watch_uuid", "Watch UUID"),
-    #("watch_history_length", "History Length"),  # Would never equate
-    ("watch_history", "All Watch Text History"),
-    ("watch_check_count", "Watch Check Count"),
-    ("watch_uuid", "Other Watch by UUID"), # (Maybe this is 'if' ??)
-    #("requests_get", "Web GET requests (https://..)")
+    (None, "Choose one"),
+
 ]
 
 

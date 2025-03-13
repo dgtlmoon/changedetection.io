@@ -1,8 +1,11 @@
 import pluggy
+from . import default_plugin  # Import the default plugin
 
-# Define `pluggy` hookspecs (Specifications for Plugins)
-hookspec = pluggy.HookspecMarker("conditions")
-hookimpl = pluggy.HookimplMarker("conditions")
+# ✅ Ensure that the namespace in HookspecMarker matches PluginManager
+PLUGIN_NAMESPACE = "conditions"
+
+hookspec = pluggy.HookspecMarker(PLUGIN_NAMESPACE)
+hookimpl = pluggy.HookimplMarker(PLUGIN_NAMESPACE)
 
 
 class ConditionsSpec:
@@ -24,9 +27,14 @@ class ConditionsSpec:
         pass
 
 
-# ✅ Set up `pluggy` Plugin Manager
-plugin_manager = pluggy.PluginManager("conditions")
+# ✅ Set up Pluggy Plugin Manager
+plugin_manager = pluggy.PluginManager(PLUGIN_NAMESPACE)
+
+# ✅ Register hookspecs (Ensures they are detected)
 plugin_manager.add_hookspecs(ConditionsSpec)
 
-# Discover installed plugins
-plugin_manager.load_setuptools_entrypoints("conditions")
+# ✅ Register built-in plugins manually
+plugin_manager.register(default_plugin, "default_plugin")
+
+# ✅ Discover installed plugins from external packages (if any)
+plugin_manager.load_setuptools_entrypoints(PLUGIN_NAMESPACE)
