@@ -26,6 +26,10 @@ class ConditionsSpec:
         """Return a list of new field choices."""
         pass
 
+    @hookspec
+    def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
+        """Add to the datadict"""
+        pass
 
 # ✅ Set up Pluggy Plugin Manager
 plugin_manager = pluggy.PluginManager(PLUGIN_NAMESPACE)

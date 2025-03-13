@@ -24,9 +24,10 @@ operator_choices = [
 # Fields available in the rules
 field_choices = [
     (None, "Choose one"),
-
 ]
 
+# The data we will feed the JSON Rules to see if it passes the test/conditions or not
+EXECUTE_DATA = {}
 
 # ✅ Custom function for case-insensitive regex matching
 def contains_regex(_, text, pattern):
@@ -39,26 +40,82 @@ def not_contains_regex(_, text, pattern):
     return not bool(re.search(pattern, text, re.IGNORECASE))
 
 
-# ✅ Custom function to check if "watch_uuid" has changed
-def watch_uuid_changed(_, previous_uuid, current_uuid):
-    """Returns True if the watch UUID has changed."""
-    return previous_uuid != current_uuid
-
-# ✅ Custom function to check if "watch_uuid" has NOT changed
-def watch_uuid_not_changed(_, previous_uuid, current_uuid):
-    """Returns True if the watch UUID has NOT changed."""
-    return previous_uuid == current_uuid
-
 # Define the extended operations dictionary
 CUSTOM_OPERATIONS = {
     **BUILTINS,  # Include all standard operators
-    "watch_uuid_changed": watch_uuid_changed,
-    "watch_uuid_not_changed": watch_uuid_not_changed,
     "contains_regex": contains_regex,
     "!contains_regex": not_contains_regex
 }
 
-# ✅ Load plugins dynamically
+def convert_to_jsonlogic(rule_dict):
+    """
+    Convert a structured rule dict into a JSON Logic rule.
+
+    :param rule_dict: Dictionary containing conditions.
+    :return: JSON Logic rule as a dictionary.
+    """
+    if not rule_dict.get("conditions"):
+        return {}  # Return an empty rule if no conditions exist
+
+    # Determine the logical operator ("ALL" -> "and", "ANY" -> "or")
+    logic_operator = "and" if rule_dict.get("conditions_match_logic", "ALL") == "ALL" else "or"
+
+    json_logic_conditions = []
+
+    for condition in rule_dict["conditions"]:
+        operator = condition["operator"]
+        field = condition["field"]
+        value = condition["value"]
+
+        # Convert value to int/float if possible
+        try:
+            if isinstance(value, str) and "." in value:
+                value = float(value)
+            else:
+                value = int(value)
+        except (ValueError, TypeError):
+            pass  # Keep as a string if conversion fails
+
+        # Handle different JSON Logic operators properly
+        if operator == "in":
+            json_logic_conditions.append({"in": [value, {"var": field}]})  # value first
+        elif operator in ("!", "!!", "-"):
+            json_logic_conditions.append({operator: [{"var": field}]})  # Unary operators
+        elif operator in ("min", "max", "cat"):
+            json_logic_conditions.append({operator: value})  # Multi-argument operators
+        else:
+            json_logic_conditions.append({operator: [{"var": field}, value]})  # Standard binary operators
+
+    return {logic_operator: json_logic_conditions} if len(json_logic_conditions) > 1 else json_logic_conditions[0]
+
+
+def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_datastruct, ephemeral_data={} ):
+    """
+    Build our data and options by calling our plugins then pass it to jsonlogic and see if the conditions pass
+
+    :param ruleset: JSON Logic rule dictionary.
+    :param extracted_data: Dictionary containing the facts.   <-- maybe the app struct+uuid
+    :return: Dictionary of plugin results.
+    """
+    from json_logic import jsonLogic
+
+    # Give all plugins a chance to update the data dict again (that we will test the conditions against)
+    for plugin in plugin_manager.get_plugins():
+        new_execute_data = plugin.add_data(current_watch_uuid=current_watch_uuid,
+                                           application_datastruct=application_datastruct,
+                                           ephemeral_data=ephemeral_data)
+        if isinstance(new_execute_data, dict):
+            EXECUTE_DATA = {}
+            EXECUTE_DATA.update(new_execute_data)
+
+    ruleset_settings = application_datastruct['watching'].get(current_watch_uuid)
+    ruleset = convert_to_jsonlogic(ruleset_settings)
+    result = jsonLogic(logic=ruleset, data=EXECUTE_DATA)
+
+    return result
+
+
+# Load plugins dynamically
 for plugin in plugin_manager.get_plugins():
     new_ops = plugin.register_operators()
     if isinstance(new_ops, dict):
@@ -72,19 +129,3 @@ for plugin in plugin_manager.get_plugins():
     if isinstance(new_field_choices, list):
         field_choices.extend(new_field_choices)
 
-def run(ruleset, data):
-    """
-    Execute a JSON Logic rule against given data.
-
-    :param ruleset: JSON Logic rule dictionary.
-    :param data: Dictionary containing the facts.
-    :return: Boolean result of rule evaluation.
-    """
-
-
-    try:
-        return jsonLogic(ruleset, data, CUSTOM_OPERATIONS)
-    except Exception as e:
-        # raise some custom nice handler
-        print(f"❌ Error evaluating JSON Logic: {e}")
-        return False
