@@ -1,13 +1,8 @@
 from changedetectionio.conditions import execute_ruleset_against_all_plugins
-from changedetectionio.model import Watch
 from changedetectionio.store import ChangeDetectionStore
-import os
-import re
 import shutil
 import tempfile
 import time
-import time
-import unittest
 import unittest
 import uuid
 
@@ -69,6 +64,7 @@ class TestTriggerConditions(unittest.TestCase):
                     {"operator": ">=", "field": "extracted_number", "value": "10"},
                     {"operator": "<=", "field": "extracted_number", "value": "5000"},
                     {"operator": "in", "field": "page_text", "value": "rock"},
+                    #{"operator": "starts_with", "field": "page_text", "value": "I saw"},
                 ]
             }
         )

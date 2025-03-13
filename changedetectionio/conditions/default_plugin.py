@@ -13,13 +13,9 @@ def register_operators():
     def ends_with(_, text, suffix):
         return text.lower().strip().endswith(suffix.lower())
 
-    def extracted_number(_, text, suffix):
-        return 1
-
     return {
         "starts_with": starts_with,
-        "ends_with": ends_with,
-        "extracted_number": extracted_number
+        "ends_with": ends_with
     }
 
 @hookimpl
@@ -42,7 +38,6 @@ def register_field_choices():
 @hookimpl
 def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
 
-
     res = {}
     if 'text' in ephemeral_data:
         res['page_text'] = ephemeral_data['text']
@@ -52,6 +47,5 @@ def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
         if price:
             res['extracted_number'] = float(price.amount)
         logger.debug(f"Extracted price result: '{price}' - returning float({res['extracted_number']})")
-
 
     return res
