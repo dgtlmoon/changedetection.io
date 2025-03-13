@@ -100,3 +100,6 @@ referencing==0.35.1
 
 # Scheduler - Windows seemed to miss a lot of default timezone info (even "UTC" !)
 tzdata
+
+pymongo>=4.3.3
+boto3>=1.26.0
