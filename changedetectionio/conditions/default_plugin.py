@@ -44,7 +44,7 @@ def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
 
         # Better to not wrap this in try/except so that the UI can see any errors
         price = Price.fromstring(ephemeral_data.get('text'))
-        if price:
+        if price and price.amount != None:
             res['extracted_number'] = float(price.amount)
         logger.debug(f"Extracted price result: '{price}' - returning float({res['extracted_number']})")
 

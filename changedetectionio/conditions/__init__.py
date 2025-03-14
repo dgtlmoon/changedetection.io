@@ -74,7 +74,7 @@ def convert_to_jsonlogic(rule_dict):
 
         # Convert value to int/float if possible
         try:
-            if isinstance(value, str) and "." in value:
+            if isinstance(value, str) and "." in value and str != "None":
                 value = float(value)
             else:
                 value = int(value)
