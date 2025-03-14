@@ -6,37 +6,7 @@
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='scheduler.js')}}" defer></script>
-
-<script>
-    function addRuleRow() {
-        let rulesContainer = document.getElementById("rules-container");
-        let lastRule = document.querySelector(".rule-row:last-child");
-        let newRule = lastRule.cloneNode(true);
-
-        // Get the new unique index for the added row
-        let ruleCount = document.querySelectorAll(".rule-row").length;
-
-        // Update all IDs, names, and labels to have the correct index
-        newRule.querySelectorAll("select, input, label").forEach(element => {
-            if (element.id) {
-                element.id = element.id.replace(/\d+/, ruleCount);
-            }
-            if (element.name) {
-                element.name = element.name.replace(/\d+/, ruleCount);
-            }
-            if (element.hasAttribute("for")) {
-                element.setAttribute("for", element.getAttribute("for").replace(/\d+/, ruleCount));
-            }
-            if (element.tagName === "INPUT") {
-                element.value = ""; // Clear input field value
-            }
-        });
-
-        // Append the new rule to the grid container
-        rulesContainer.appendChild(newRule);
-    }
-</script>
-
+<script src="{{url_for('static_content', group='js', filename='conditions.js')}}" defer></script>
 
 
 <script>

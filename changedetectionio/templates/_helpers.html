@@ -61,8 +61,8 @@
   {{ field(**kwargs)|safe }}
 {% endmacro %}
 
-{% macro render_fieldlist_of_formfields_as_table(fieldlist) %}
-  <table class="fieldlist_formfields pure-table">
+{% macro render_fieldlist_of_formfields_as_table(fieldlist, table_id="rulesTable") %}
+  <table class="fieldlist_formfields pure-table" id="{{ table_id }}">
     <thead>
       <tr>
         {% for subfield in fieldlist[0] %}
@@ -87,7 +87,8 @@
             </td>
           {% endfor %}
           <td>
-            <button type="button" onclick="addRuleRow()">ADD +</button>
+            <button type="button" class="addRuleRow">+</button>
+            <button type="button" class="removeRuleRow">-</button>
           </td>
         </tr>
       {% endfor %}
