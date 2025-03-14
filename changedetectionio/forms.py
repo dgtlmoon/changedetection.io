@@ -3,8 +3,8 @@ import re
 from loguru import logger
 from wtforms.widgets.core import TimeInput
 
+from changedetectionio.conditions.form import ConditionFormRow
 from changedetectionio.strtobool import strtobool
-from flask_wtf import FlaskForm
 
 from wtforms import (
     BooleanField,
@@ -513,25 +513,6 @@ class quickWatchForm(Form):
 
 
 
-# Condition Rule Form (for each rule row)
-class ConditionForm(FlaskForm):
-    from changedetectionio.conditions import plugin_manager
-
-    # ✅ Ensure Plugins Are Loaded BEFORE Importing Choices
-    from changedetectionio.conditions import operator_choices, field_choices
-
-    operator = SelectField(
-        "Operator",
-        choices=operator_choices,
-        validators=[validators.Optional()]
-    )
-    field = SelectField(
-        "Field",
-        choices=field_choices,
-        validators=[validators.Optional()]
-    )
-    value = StringField("Value", validators=[validators.Optional()])
-
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
     from . import processors
@@ -620,7 +601,7 @@ class processor_text_json_diff_form(commonSettingsForm):
     notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
 
     conditions_match_logic = RadioField(u'Match', choices=[('ALL', 'Match all of the following'),('ANY', 'Match any of the following')], default='ALL')
-    conditions = FieldList(FormField(ConditionForm), min_entries=1)  # Add rule logic here
+    conditions = FieldList(FormField(ConditionFormRow), min_entries=1)  # Add rule logic here
 
 
     def extra_tab_content(self):

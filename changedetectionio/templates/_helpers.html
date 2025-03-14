@@ -61,6 +61,41 @@
   {{ field(**kwargs)|safe }}
 {% endmacro %}
 
+{% macro render_fieldlist_of_formfields_as_table(fieldlist) %}
+  <table class="fieldlist_formfields pure-table">
+    <thead>
+      <tr>
+        {% for subfield in fieldlist[0] %}
+          <th>{{ subfield.label }}</th>
+        {% endfor %}
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for form_row in fieldlist %}
+        <tr {% if form_row.errors %} class="error-row" {% endif %}>
+          {% for subfield in form_row %}
+            <td>
+              {{ subfield()|safe }}
+              {% if subfield.errors %}
+                <ul class="errors">
+                  {% for error in subfield.errors %}
+                    <li class="error">{{ error }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </td>
+          {% endfor %}
+          <td>
+            <button type="button" onclick="addRuleRow()">ADD +</button>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endmacro %}
+
+
 {% macro playwright_warning() %}
     <p><strong>Error - Playwright support for Chrome based fetching is not enabled.</strong> Alternatively try our <a href="https://changedetection.io">very affordable subscription based service which has all this setup for you</a>.</p>
     <p>You may need to <a href="https://github.com/dgtlmoon/changedetection.io/blob/09ebc6ec6338545bdd694dc6eee57f2e9d2b8075/docker-compose.yml#L31">Enable playwright environment variable</a> and uncomment the <strong>sockpuppetbrowser</strong> in the <a href="https://github.com/dgtlmoon/changedetection.io/blob/master/docker-compose.yml">docker-compose.yml</a> file.</p>

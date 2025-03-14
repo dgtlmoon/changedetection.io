@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_webdriver_type_watches_warning %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_webdriver_type_watches_warning, render_fieldlist_of_formfields_as_table %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
@@ -323,28 +323,8 @@ Math: {{ 1 + 1 }}") }}
                 <div class="pure-control-group">
                     <!-- Grid Header -->
                     {{ render_field(form.conditions_match_logic) }}
-                    <table class="pure-table">
-                        <thead>
-                        <td>In Value</td>
-                        <td>Operator</td>
-                        <td>Value</td>
-                        <td></td>
+                    {{ render_fieldlist_of_formfields_as_table(form.conditions) }}
 
-                        </thead>
-                        <tbody>
-                        <!-- Rule Rows (Dynamic Content) -->
-                        {% for rule in form.conditions %}
-                            <tr>
-                                <td>{{ rule.field() }}</td>
-                                <td>{{ rule.operator() }}</td>
-                                <td>{{ rule.value() }}</td>
-                                <td>
-                                    <button type="button" onclick="addRuleRow()">ADD +</button>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
                 </div>
             </div>
             <div class="tab-pane-inner" id="filters-and-triggers">

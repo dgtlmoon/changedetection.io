@@ -1,4 +1,6 @@
 from json_logic.builtins import BUILTINS
+
+from .exceptions import EmptyConditionRuleRowNotUsable
 from .pluggy_interface import plugin_manager  # Import the pluggy plugin manager
 from . import default_plugin
 
@@ -46,6 +48,7 @@ CUSTOM_OPERATIONS = {
     "!contains_regex": not_contains_regex
 }
 
+
 def convert_to_jsonlogic(rule_dict):
     """
     Convert a structured rule dict into a JSON Logic rule.
@@ -65,6 +68,9 @@ def convert_to_jsonlogic(rule_dict):
         operator = condition["operator"]
         field = condition["field"]
         value = condition["value"]
+
+        if not operator or operator == 'None' or not value or not field:
+            raise EmptyConditionRuleRowNotUsable()
 
         # Convert value to int/float if possible
         try:
@@ -97,6 +103,7 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
     :return: Dictionary of plugin results.
     """
     from json_logic import jsonLogic
+
 
     # Give all plugins a chance to update the data dict again (that we will test the conditions against)
     for plugin in plugin_manager.get_plugins():
