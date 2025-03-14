@@ -287,14 +287,8 @@ Math: {{ 1 + 1 }}") }}
 
             <div class="tab-pane-inner" id="conditions">
                 <div class="pure-control-group">
-                    <a id="conditions-delete-all" class="pure-button button-secondary button-xsmall" >Reset all conditions</a>
-                </div>
-
-                <div class="pure-control-group">
-                    <!-- Grid Header -->
                     {{ render_field(form.conditions_match_logic) }}
                     {{ render_fieldlist_of_formfields_as_table(form.conditions) }}
-
                 </div>
             </div>
             <div class="tab-pane-inner" id="filters-and-triggers">

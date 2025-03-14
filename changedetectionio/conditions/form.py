@@ -7,17 +7,18 @@ class ConditionFormRow(Form):
     # ✅ Ensure Plugins Are Loaded BEFORE Importing Choices
     from changedetectionio.conditions import plugin_manager
     from changedetectionio.conditions import operator_choices, field_choices
+    field = SelectField(
+        "Field",
+        choices=field_choices,
+        validators=[validators.Optional()]
+    )
 
     operator = SelectField(
         "Operator",
         choices=operator_choices,
         validators=[validators.Optional()]
     )
-    field = SelectField(
-        "Field",
-        choices=field_choices,
-        validators=[validators.Optional()]
-    )
+
     value = StringField("Value", validators=[validators.Optional()])
 
     def validate(self, extra_validators=None):
