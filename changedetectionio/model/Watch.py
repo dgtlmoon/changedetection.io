@@ -299,34 +299,17 @@ class model(watch_base):
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
     def save_history_text(self, contents, timestamp, snapshot_id):
-        import brotli
+        from changedetectionio.store import ChangeDetectionStore
+        from changedetectionio.storage.filesystem_storage import FileSystemStorage
 
         logger.trace(f"{self.get('uuid')} - Updating history.txt with timestamp {timestamp}")
 
-        self.ensure_data_dir_exists()
-
-        threshold = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024))
-        skip_brotli = strtobool(os.getenv('DISABLE_BROTLI_TEXT_SNAPSHOT', 'False'))
-
-        if not skip_brotli and len(contents) > threshold:
-            snapshot_fname = f"{snapshot_id}.txt.br"
-            dest = os.path.join(self.watch_data_dir, snapshot_fname)
-            if not os.path.exists(dest):
-                with open(dest, 'wb') as f:
-                    f.write(brotli.compress(contents.encode('utf-8'), mode=brotli.MODE_TEXT))
-        else:
-            snapshot_fname = f"{snapshot_id}.txt"
-            dest = os.path.join(self.watch_data_dir, snapshot_fname)
-            if not os.path.exists(dest):
-                with open(dest, 'wb') as f:
-                    f.write(contents.encode('utf-8'))
-
-        # Append to index
-        # @todo check last char was \n
-        index_fname = os.path.join(self.watch_data_dir, "history.txt")
-        with open(index_fname, 'a') as f:
-            f.write("{},{}\n".format(timestamp, snapshot_fname))
-            f.close()
+        # Get storage from singleton store or create a filesystem storage as default
+        store = ChangeDetectionStore.instance if hasattr(ChangeDetectionStore, 'instance') else None
+        storage = store.storage if store and hasattr(store, 'storage') else FileSystemStorage(self.__datastore_path)
+        
+        # Use the storage backend to save the history text
+        snapshot_fname = storage.save_history_text(self.get('uuid'), contents, timestamp, snapshot_id)
 
         self.__newest_history_key = timestamp
         self.__history_n += 1

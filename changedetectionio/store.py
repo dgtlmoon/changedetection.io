@@ -20,6 +20,7 @@ from loguru import logger
 
 from .processors import get_custom_watch_obj_for_processor
 from .processors.restock_diff import Restock
+from .storage.storage_factory import create_storage
 
 # Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
 BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
@@ -38,20 +39,28 @@ class ChangeDetectionStore:
     needs_write_urgent = False
 
     __version_check = True
+    
+    # Singleton instance for access from Watch class methods
+    instance = None
 
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         # Should only be active for docker
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
         self.__data = App.model()
         self.datastore_path = datastore_path
-        self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
-        logger.info(f"Datastore path is '{self.json_store_path}'")
+        
+        # Create the appropriate storage backend based on the datastore path
+        self.storage = create_storage(datastore_path, include_default_watches, version_tag)
+        
         self.needs_write = False
         self.start_time = time.time()
         self.stop_thread = False
         # Base definition for all watchers
         # deepcopy part of #569 - not sure why its needed exactly
-        self.generic_definition = deepcopy(Watch.model(datastore_path = datastore_path, default={}))
+        self.generic_definition = deepcopy(Watch.model(datastore_path=datastore_path, default={}))
+        
+        # Set singleton instance
+        ChangeDetectionStore.instance = self
 
         if path.isfile('changedetectionio/source.txt'):
             with open('changedetectionio/source.txt') as f:
@@ -60,10 +69,9 @@ class ChangeDetectionStore:
                 self.__data['build_sha'] = f.read()
 
         try:
-            # @todo retest with ", encoding='utf-8'"
-            with open(self.json_store_path) as json_file:
-                from_disk = json.load(json_file)
-
+            # Load data from storage
+            from_disk = self.storage.load_data()
+            if from_disk:
                 # @todo isnt there a way todo this dict.update recursively?
                 # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
                 if 'watching' in from_disk:
@@ -91,22 +99,24 @@ class ChangeDetectionStore:
                 for uuid, tag in self.__data['settings']['application']['tags'].items():
                     self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(uuid, tag, processor_override='restock_diff')
                     logger.info(f"Tag: {uuid} {tag['title']}")
+            else:
+                # First time ran, Create the datastore.
+                if include_default_watches:
+                    logger.critical(f"No data store found, creating new store")
+                    self.add_watch(url='https://news.ycombinator.com/',
+                                  tag='Tech news',
+                                  extras={'fetch_backend': 'html_requests'})
 
-        # First time ran, Create the datastore.
-        except (FileNotFoundError):
-            if include_default_watches:
-                logger.critical(f"No JSON DB found at {self.json_store_path}, creating JSON store at {self.datastore_path}")
-                self.add_watch(url='https://news.ycombinator.com/',
-                               tag='Tech news',
-                               extras={'fetch_backend': 'html_requests'})
+                    self.add_watch(url='https://changedetection.io/CHANGELOG.txt',
+                                  tag='changedetection.io',
+                                  extras={'fetch_backend': 'html_requests'})
 
-                self.add_watch(url='https://changedetection.io/CHANGELOG.txt',
-                               tag='changedetection.io',
-                               extras={'fetch_backend': 'html_requests'})
+                updates_available = self.get_updates_available()
+                self.__data['settings']['application']['schema_version'] = updates_available.pop()
 
-            updates_available = self.get_updates_available()
-            self.__data['settings']['application']['schema_version'] = updates_available.pop()
-
+        except Exception as e:
+            logger.error(f"Error loading data from storage: {str(e)}")
+            raise e
         else:
             # Bump the update version by running updates
             self.run_updates()
@@ -227,23 +237,15 @@ class ChangeDetectionStore:
 
     # Delete a single watch by UUID
     def delete(self, uuid):
-        import pathlib
-        import shutil
-
         with self.lock:
             if uuid == 'all':
+                # Delete all watches
+                for watch_uuid in list(self.data['watching'].keys()):
+                    self.storage.delete_watch(watch_uuid)
                 self.__data['watching'] = {}
-
-                # GitHub #30 also delete history records
-                for uuid in self.data['watching']:
-                    path = pathlib.Path(os.path.join(self.datastore_path, uuid))
-                    if os.path.exists(path):
-                        shutil.rmtree(path)
-
             else:
-                path = pathlib.Path(os.path.join(self.datastore_path, uuid))
-                if os.path.exists(path):
-                    shutil.rmtree(path)
+                # Delete a single watch
+                self.storage.delete_watch(uuid)
                 del self.data['watching'][uuid]
 
         self.needs_write_urgent = True
@@ -266,6 +268,7 @@ class ChangeDetectionStore:
 
     # Remove a watchs data but keep the entry (URL etc)
     def clear_watch_history(self, uuid):
+        self.storage.clear_watch_history(uuid)
         self.__data['watching'][uuid].clear_watch()
         self.needs_write_urgent = True
 
@@ -372,43 +375,30 @@ class ChangeDetectionStore:
         return new_uuid
 
     def visualselector_data_is_ready(self, watch_uuid):
-        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
-        screenshot_filename = "{}/last-screenshot.png".format(output_path)
-        elements_index_filename = "{}/elements.deflate".format(output_path)
-        if path.isfile(screenshot_filename) and  path.isfile(elements_index_filename) :
-            return True
-
-        return False
+        return self.storage.visualselector_data_is_ready(watch_uuid)
 
     def sync_to_json(self):
-        logger.info("Saving JSON..")
+        logger.info("Saving data to storage backend...")
         try:
             data = deepcopy(self.__data)
         except RuntimeError as e:
             # Try again in 15 seconds
             time.sleep(15)
-            logger.error(f"! Data changed when writing to JSON, trying again.. {str(e)}")
+            logger.error(f"! Data changed when writing to storage, trying again.. {str(e)}")
             self.sync_to_json()
             return
         else:
-
             try:
-                # Re #286  - First write to a temp file, then confirm it looks OK and rename it
-                # This is a fairly basic strategy to deal with the case that the file is corrupted,
-                # system was out of memory, out of RAM etc
-                with open(self.json_store_path+".tmp", 'w') as json_file:
-                    json.dump(data, json_file, indent=4)
-                os.replace(self.json_store_path+".tmp", self.json_store_path)
+                self.storage.save_data(data)
             except Exception as e:
-                logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")
+                logger.error(f"Error writing to storage backend: {str(e)}")
 
             self.needs_write = False
             self.needs_write_urgent = False
 
-    # Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
+    # Thread runner, this helps with thread/write issues when there are many operations that want to update the data
     # by just running periodically in one thread, according to python, dict updates are threadsafe.
     def save_datastore(self):
-
         while True:
             if self.stop_thread:
                 # Suppressing "Logging error in Loguru Handler #0" during CICD.
