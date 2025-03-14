@@ -26,7 +26,6 @@ function set_active_tab() {
     if (tab.length) {
         tab[0].parentElement.className = "active";
     }
-
 }
 
 function focus_error_tab() {

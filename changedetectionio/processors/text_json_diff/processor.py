@@ -6,6 +6,7 @@ import os
 import re
 import urllib3
 
+from changedetectionio.conditions import execute_ruleset_against_all_plugins
 from changedetectionio.processors import difference_detection_processor
 from changedetectionio.html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text, TRANSLATE_WHITESPACE_TABLE
 from changedetectionio import html_tools, content_fetchers
@@ -331,6 +332,16 @@ class perform_site_check(difference_detection_processor):
             if result:
                 blocked = True
 
+        # And check if 'conditions' will let this pass through
+        if watch.get('conditions') and watch.get('conditions_match_logic'):
+            if not execute_ruleset_against_all_plugins(current_watch_uuid=watch.get('uuid'),
+                                                application_datastruct=self.datastore.data,
+                                                ephemeral_data={
+                                                    'text': stripped_text_from_html
+                                                }
+                                                ):
+                # Conditions say "Condition not met" so we block it.
+                blocked = True
 
         # Looks like something changed, but did it match all the rules?
         if blocked:
