@@ -27,16 +27,18 @@ class ConditionFormRow(Form):
             return False
 
         # Custom validation logic
-        if not self.operator.data or self.operator.data == 'None':
-            self.operator.errors.append("Operator is required.")
-            return False
+        # If any of the operator/field/value is set, then they must be all set
+        if any(value not in ("", False, "None", None) for value in [self.operator.data, self.field.data, self.value.data]):
+            if not self.operator.data or self.operator.data == 'None':
+                self.operator.errors.append("Operator is required.")
+                return False
 
-        if not self.field.data or self.field.data == 'None':
-            self.field.errors.append("Field is required.")
-            return False
+            if not self.field.data or self.field.data == 'None':
+                self.field.errors.append("Field is required.")
+                return False
 
-        if not self.value.data:
-            self.value.errors.append("Value is required.")
-            return False
+            if not self.value.data:
+                self.value.errors.append("Value is required.")
+                return False
 
         return True  # Only return True if all conditions pass

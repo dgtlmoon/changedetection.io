@@ -19,7 +19,7 @@ operator_choices = [
     ("!in", "Does Not Contain"),
     ("contains_regex", "Text Matches Regex"),
     ("!contains_regex", "Text Does NOT Match Regex"),
-    ("changed > minutes", "Changed more than X minutes ago"),
+#    ("changed > minutes", "Changed more than X minutes ago"),
 ]
 
 # Fields available in the rules
