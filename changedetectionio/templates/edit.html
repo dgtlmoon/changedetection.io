@@ -286,9 +286,24 @@ Math: {{ 1 + 1 }}") }}
             {% if watch['processor'] == 'text_json_diff' %}
 
             <div class="tab-pane-inner" id="conditions">
+                <style>
+                    .verifyRuleRow {
+                        background-color: #4caf50;
+                        color: white;
+                        border: none;
+                        cursor: pointer;
+                        font-weight: bold;
+                    }
+                    .verifyRuleRow:hover {
+                        background-color: #45a049;
+                    }
+                </style>
                 <div class="pure-control-group">
                     {{ render_field(form.conditions_match_logic) }}
                     {{ render_fieldlist_of_formfields_as_table(form.conditions) }}
+                    <div class="pure-form-message-inline">
+                        Use the verify (✓) button to test if a condition passes against the current snapshot.
+                    </div>
                 </div>
             </div>
             <div class="tab-pane-inner" id="filters-and-triggers">

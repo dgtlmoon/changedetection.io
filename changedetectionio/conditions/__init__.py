@@ -1,3 +1,5 @@
+from flask import Blueprint, request, jsonify, Response
+from flask_login import current_user
 from json_logic.builtins import BUILTINS
 
 from .exceptions import EmptyConditionRuleRowNotUsable
@@ -5,6 +7,7 @@ from .pluggy_interface import plugin_manager  # Import the pluggy plugin manager
 from . import default_plugin
 
 import re
+import json
 
 # List of all supported JSON Logic operators
 operator_choices = [
@@ -130,6 +133,76 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
                     result = False
 
     return result
+
+# Flask Blueprint Definition
+def construct_blueprint(datastore):
+    from changedetectionio.flask_app import login_optionally_required
+    
+    conditions_blueprint = Blueprint('conditions', __name__, template_folder="templates")
+    
+    @conditions_blueprint.route("/<string:watch_uuid>/verify-condition-single-rule", methods=['POST'])
+    @login_optionally_required
+    def verify_condition_single_rule(watch_uuid):
+        """Verify a single condition rule against the current snapshot"""
+        
+        # Get the watch data
+        watch = datastore.data['watching'].get(watch_uuid)
+        if not watch:
+            return jsonify({'status': 'error', 'message': 'Watch not found'}), 404
+        
+        # Get the rule data from the request
+        rule_data = request.json
+        if not rule_data:
+            return jsonify({'status': 'error', 'message': 'No rule data provided'}), 400
+        
+        # Create ephemeral data with the current snapshot
+        ephemeral_data = {}
+        
+        # Get the current snapshot if available
+        if watch.history_n and watch.get_last_fetched_text_before_filters():
+            ephemeral_data['text'] = watch.get_last_fetched_text_before_filters()
+        else:
+            return jsonify({
+                'status': 'error', 
+                'message': 'No snapshot available for verification. Please fetch content first.'
+            }), 400
+        
+        # Test the rule
+        result = False
+        try:
+            # Create a temporary structure with just this rule
+            temp_watch_data = {
+                "conditions": [rule_data],
+                "conditions_match_logic": "ALL"  # Single rule, so use ALL
+            }
+            
+            # Create a temporary application data structure
+            temp_app_data = {
+                'watching': {
+                    watch_uuid: temp_watch_data
+                }
+            }
+            
+            # Execute the rule against the current snapshot
+            result = execute_ruleset_against_all_plugins(
+                current_watch_uuid=watch_uuid,
+                application_datastruct=temp_app_data,
+                ephemeral_data=ephemeral_data
+            )
+            
+            return jsonify({
+                'status': 'success',
+                'result': result,
+                'message': 'Condition passes' if result else 'Condition does not pass'
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'status': 'error',
+                'message': f'Error verifying condition: {str(e)}'
+            }), 500
+    
+    return conditions_blueprint
 
 # Load plugins dynamically
 for plugin in plugin_manager.get_plugins():

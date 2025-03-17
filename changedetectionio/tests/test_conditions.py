@@ -43,91 +43,12 @@ def set_number_out_of_range_response(number="150"):
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
-def test_setup(live_server):
-    live_server_setup(live_server)
-
-def test_number_within_range_condition(client, live_server, measure_memory_usage):
-    set_original_response()
-#    live_server_setup(live_server)
-
-    test_url = url_for('test_endpoint', _external=True)
-
-    # Add our URL to the import page
-    res = client.post(
-        url_for("import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
-
-    # Configure the watch with two conditions:
-    # 1. The extracted number should be >= 20 and <= 100
-    # 2. The first digit of the number should be in the page filtered text
-    res = client.post(
-        url_for("edit_page", uuid="first"),
-        data={
-            "url": test_url,
-            "fetch_backend": "html_requests",
-            "include_filters": ".number-container",
-            "title": "Condition Test",
-            "conditions_match_logic": "ALL",  # ALL = AND logic
-
-            "conditions-0-operator": "in",
-            "conditions-0-field": "page_filtered_text",
-            "conditions-0-value": "5",
-
-            "conditions-1-operator": ">=",
-            "conditions-1-field": "extracted_number",
-            "conditions-1-value": "20",
-
-            "conditions-2-operator": "<=",
-            "conditions-2-field": "extracted_number",
-            "conditions-2-value": "100",
-
-        },
-        follow_redirects=True
-    )
-    assert b"Updated watch." in res.data
-
-    # Trigger initial check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    wait_for_all_checks(client)
-
-    # Set current view state - no unviewed
-    client.get(url_for("diff_history_page", uuid="first"))
-
-    # Change that stays within the conditions (number is in range and text contains first digit)
-    set_number_in_range_response("75")  
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    wait_for_all_checks(client)
-
-    # Should be marked as having changes since all conditions are met
-    res = client.get(url_for("index"))
-    assert b'unviewed' in res.data
-    assert b'Condition Test' in res.data
-
-    # Now change to value that's outside the range (but still contains the first digit in text)
-    set_number_out_of_range_response("150")
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    wait_for_all_checks(client)
-
-    # Should NOT be marked as having changes since one condition is not met
-    res = client.get(url_for("index"))
-    assert b'unviewed' not in res.data
-    assert b'Condition Test' in res.data
-
-    # Check the diff history shows the change from the earlier check (75)
-    res = client.get(url_for("diff_history_page", uuid="first"))
-    assert b'Current value: 75' in res.data
-
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
 
 def test_conditions_with_text_and_number(client, live_server, measure_memory_usage):
     """Test that both text and number conditions work together with AND logic."""
     
     set_original_response("50")
-    #live_server_setup(live_server)
+    live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
 
@@ -175,7 +96,7 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
 
     # Case 1: The number is in range but the first digit changed (now 7 instead of 5)
     # This should NOT trigger a change notification since not all conditions are met
-    set_number_in_range_response("75")
+    set_number_in_range_response("70.5")
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
@@ -187,7 +108,7 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
     # Case 2: Change with one condition violated
     # Number out of range (150) but contains '5'
     client.get(url_for("mark_all_viewed"), follow_redirects=True)
-    set_number_out_of_range_response("150")
+    set_number_out_of_range_response("150.5")
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 

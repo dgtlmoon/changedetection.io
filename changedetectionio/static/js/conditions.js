@@ -2,7 +2,7 @@ $(document).ready(function () {
     // Function to set up button event handlers
     function setupButtonHandlers() {
         // Unbind existing handlers first to prevent duplicates
-        $(".addRuleRow, .removeRuleRow").off("click");
+        $(".addRuleRow, .removeRuleRow, .verifyRuleRow").off("click");
         
         // Add row button handler
         $(".addRuleRow").on("click", function(e) {
@@ -34,12 +34,78 @@ $(document).ready(function () {
                 reindexRules();
             }
         });
+        
+        // Verify rule button handler
+        $(".verifyRuleRow").on("click", function(e) {
+            e.preventDefault();
+            
+            let row = $(this).closest("tr");
+            let field = row.find("select[name$='field']").val();
+            let operator = row.find("select[name$='operator']").val();
+            let value = row.find("input[name$='value']").val();
+            
+            // Validate that all fields are filled
+            if (!field || field === "None" || !operator || operator === "None" || !value) {
+                alert("Please fill in all fields (Field, Operator, and Value) before verifying.");
+                return;
+            }
+            
+            // Extract the watch UUID from the URL
+            const url = window.location.pathname;
+            const uuidMatch = url.match(/\/edit\/([^\/]+)/);
+            if (!uuidMatch || !uuidMatch[1]) {
+                alert("Could not determine the watch UUID. Please save your changes first.");
+                return;
+            }
+            
+            const watchUuid = uuidMatch[1];
+            
+            // Create a rule object
+            const rule = {
+                field: field,
+                operator: operator,
+                value: value
+            };
+            
+            // Show a spinner or some indication that verification is in progress
+            const $button = $(this);
+            const originalHTML = $button.html();
+            $button.html("⌛").prop("disabled", true);
+            
+            // Send the request to verify the rule
+            $.ajax({
+                url: `/conditions/${watchUuid}/verify-condition-single-rule`,
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(rule),
+                success: function(response) {
+                    if (response.status === "success") {
+                        if (response.result) {
+                            alert("✅ Condition PASSES verification against current snapshot!");
+                        } else {
+                            alert("❌ Condition FAILS verification against current snapshot.");
+                        }
+                    } else {
+                        alert("Error: " + response.message);
+                    }
+                    $button.html(originalHTML).prop("disabled", false);
+                },
+                error: function(xhr) {
+                    let errorMsg = "Error verifying condition.";
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    alert(errorMsg);
+                    $button.html(originalHTML).prop("disabled", false);
+                }
+            });
+        });
     }
 
     // Function to reindex form elements and re-setup event handlers
     function reindexRules() {
         // Unbind all button handlers first
-        $(".addRuleRow, .removeRuleRow").off("click");
+        $(".addRuleRow, .removeRuleRow, .verifyRuleRow").off("click");
         
         // Reindex all form elements
         $("#rulesTable tbody tr").each(function(index) {

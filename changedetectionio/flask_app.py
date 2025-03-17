@@ -1684,6 +1684,9 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.backups as backups
     app.register_blueprint(backups.construct_blueprint(datastore), url_prefix='/backups')
 
+    import changedetectionio.conditions as conditions
+    app.register_blueprint(conditions.construct_blueprint(datastore), url_prefix='/conditions')
+
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
     threading.Thread(target=notification_runner).start()
