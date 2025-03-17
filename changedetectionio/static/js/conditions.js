@@ -49,16 +49,7 @@ $(document).ready(function () {
                 alert("Please fill in all fields (Field, Operator, and Value) before verifying.");
                 return;
             }
-            
-            // Extract the watch UUID from the URL
-            const url = window.location.pathname;
-            const uuidMatch = url.match(/\/edit\/([^\/]+)/);
-            if (!uuidMatch || !uuidMatch[1]) {
-                alert("Could not determine the watch UUID. Please save your changes first.");
-                return;
-            }
-            
-            const watchUuid = uuidMatch[1];
+
             
             // Create a rule object
             const rule = {
@@ -72,13 +63,38 @@ $(document).ready(function () {
             const originalHTML = $button.html();
             $button.html("⌛").prop("disabled", true);
             
+            // Collect form data - similar to request_textpreview_update() in watch-settings.js
+            let formData = new FormData();
+            $('#edit-text-filter textarea, #edit-text-filter input').each(function() {
+                const $element = $(this);
+                const name = $element.attr('name');
+                if (name) {
+                    if ($element.is(':checkbox')) {
+                        formData.append(name, $element.is(':checked') ? $element.val() : false);
+                    } else {
+                        formData.append(name, $element.val());
+                    }
+                }
+            });
+            
+            // Also collect select values
+            $('#edit-text-filter select').each(function() {
+                const $element = $(this);
+                const name = $element.attr('name');
+                if (name) {
+                    formData.append(name, $element.val());
+                }
+            });
+
+
             // Send the request to verify the rule
             $.ajax({
-                url: `/conditions/${watchUuid}/verify-condition-single-rule`,
+                url: verify_condition_rule_url+"?"+ new URLSearchParams({ rule: JSON.stringify(rule) }).toString(),
                 type: "POST",
-                contentType: "application/json",
-                data: JSON.stringify(rule),
-                success: function(response) {
+                data: formData,
+                processData: false, // Prevent jQuery from converting FormData to a string
+                contentType: false, // Let the browser set the correct content type
+                success: function (response) {
                     if (response.status === "success") {
                         if (response.result) {
                             alert("✅ Condition PASSES verification against current snapshot!");
@@ -90,7 +106,7 @@ $(document).ready(function () {
                     }
                     $button.html(originalHTML).prop("disabled", false);
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     let errorMsg = "Error verifying condition.";
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         errorMsg = xhr.responseJSON.message;

@@ -144,46 +144,49 @@ def construct_blueprint(datastore):
     @login_optionally_required
     def verify_condition_single_rule(watch_uuid):
         """Verify a single condition rule against the current snapshot"""
-        
+        from changedetectionio.processors.text_json_diff import prepare_filter_prevew
+        from flask import request, jsonify
+        from copy import deepcopy
+
+        ephemeral_data = {}
+
         # Get the watch data
         watch = datastore.data['watching'].get(watch_uuid)
         if not watch:
             return jsonify({'status': 'error', 'message': 'Watch not found'}), 404
-        
-        # Get the rule data from the request
-        rule_data = request.json
-        if not rule_data:
-            return jsonify({'status': 'error', 'message': 'No rule data provided'}), 400
-        
-        # Create ephemeral data with the current snapshot
-        ephemeral_data = {}
-        
-        # Get the current snapshot if available
-        if watch.history_n and watch.get_last_fetched_text_before_filters():
-            ephemeral_data['text'] = watch.get_last_fetched_text_before_filters()
-        else:
-            return jsonify({
-                'status': 'error', 
-                'message': 'No snapshot available for verification. Please fetch content first.'
-            }), 400
-        
-        # Test the rule
-        result = False
-        try:
-            # Create a temporary structure with just this rule
-            temp_watch_data = {
-                "conditions": [rule_data],
-                "conditions_match_logic": "ALL"  # Single rule, so use ALL
-            }
             
-            # Create a temporary application data structure
+        # First use prepare_filter_prevew to process the form data
+        # This will return text_after_filter which is after all current form settings are applied
+        # Create ephemeral data with the text from the current snapshot
+
+        try:
+            # Call prepare_filter_prevew to get a processed version of the content with current form settings
+            # We'll ignore the returned response and just use the datastore which is modified by the function
+
+            # this should apply all filters etc so then we can run the CONDITIONS against the final output text
+            result = prepare_filter_prevew(datastore=datastore,
+                                           form_data=request.form,
+                                           watch_uuid=watch_uuid)
+
+            ephemeral_data['text'] = result.get('after_filter', '')
+            # Create a temporary watch data structure with this single rule
+            tmp_watch_data = deepcopy(datastore.data['watching'].get(watch_uuid))
+
+            # Override the conditions in the temporary watch
+            rule_json = request.args.get("rule")
+            rule = json.loads(rule_json) if rule_json else None
+            tmp_watch_data['conditions'] = [rule]
+            tmp_watch_data['conditions_match_logic'] = "ALL"  # Single rule, so use ALL
+            
+
+            # Create a temporary application data structure for the rule check
             temp_app_data = {
                 'watching': {
-                    watch_uuid: temp_watch_data
+                    watch_uuid: tmp_watch_data
                 }
             }
             
-            # Execute the rule against the current snapshot
+            # Execute the rule against the current snapshot with form data
             result = execute_ruleset_against_all_plugins(
                 current_watch_uuid=watch_uuid,
                 application_datastruct=temp_app_data,

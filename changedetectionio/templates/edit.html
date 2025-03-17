@@ -286,6 +286,9 @@ Math: {{ 1 + 1 }}") }}
             {% if watch['processor'] == 'text_json_diff' %}
 
             <div class="tab-pane-inner" id="conditions">
+                    <script>
+                        const verify_condition_rule_url="{{url_for('conditions.verify_condition_single_rule', watch_uuid=uuid)}}";
+                    </script>
                 <style>
                     .verifyRuleRow {
                         background-color: #4caf50;
