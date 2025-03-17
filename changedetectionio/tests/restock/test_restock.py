@@ -62,7 +62,7 @@ def test_restock_detection(client, live_server, measure_memory_usage):
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,
               "application-notification_title": "fallback-title "+default_notification_title,
               "application-notification_body": "fallback-body "+default_notification_body,

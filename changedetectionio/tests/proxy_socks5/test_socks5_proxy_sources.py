@@ -28,7 +28,7 @@ def test_socks5_from_proxiesjson_file(client, live_server, measure_memory_usage)
     test_url = test_url.replace('localhost.localdomain', 'cdio')
     test_url = test_url.replace('localhost', 'cdio')
 
-    res = client.get(url_for("settings_page"))
+    res = client.get(url_for("settings.settings_page"))
     assert b'name="requests-proxy" type="radio" value="socks5proxy"' in res.data
 
     res = client.post(

@@ -259,7 +259,7 @@ def test_access_denied(client, live_server, measure_memory_usage):
 
     # Disable config_api_token_enabled and it should work
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-fetch_backend": "html_requests",
@@ -280,7 +280,7 @@ def test_access_denied(client, live_server, measure_memory_usage):
     assert b'Deleted' in res.data
 
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-fetch_backend": "html_requests",

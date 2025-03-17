@@ -47,7 +47,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     #####################
     client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "", # default, OFF, they are NOT a change
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_requests"},
@@ -78,7 +78,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # ok now do the opposite
 
     client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "y",
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_requests"},

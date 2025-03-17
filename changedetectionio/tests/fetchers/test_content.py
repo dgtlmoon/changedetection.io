@@ -11,7 +11,7 @@ def test_fetch_webdriver_content(client, live_server, measure_memory_usage):
 
     #####################
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "",
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_webdriver"},

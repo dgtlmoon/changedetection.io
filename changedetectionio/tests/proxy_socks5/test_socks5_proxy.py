@@ -25,7 +25,7 @@ def test_socks5(client, live_server, measure_memory_usage):
 
     # Setup a proxy
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",

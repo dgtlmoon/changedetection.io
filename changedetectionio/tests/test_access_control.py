@@ -8,7 +8,7 @@ def test_check_access_control(app, client, live_server):
 
     with app.test_client(use_cookies=True) as c:
         # Check we don't have any password protection enabled yet.
-        res = c.get(url_for("settings_page"))
+        res = c.get(url_for("settings.settings_page"))
         assert b"Remove password" not in res.data
 
         # add something that we can hit via diff page later
@@ -32,7 +32,7 @@ def test_check_access_control(app, client, live_server):
 
         # Enable password check and diff page access bypass
         res = c.post(
-            url_for("settings_page"),
+            url_for("settings.settings_page"),
             data={"application-password": "foobar",
                   "application-shared_diff_access": "True",
                   "requests-time_between_check-minutes": 180,
@@ -79,7 +79,7 @@ def test_check_access_control(app, client, live_server):
 
         # 598 - Password should be set and not accidently removed
         res = c.post(
-            url_for("settings_page"),
+            url_for("settings.settings_page"),
             data={
                   "requests-time_between_check-minutes": 180,
                   'application-fetch_backend': "html_requests"},
@@ -91,7 +91,7 @@ def test_check_access_control(app, client, live_server):
 
         assert b"Login" in res.data
 
-        res = c.get(url_for("settings_page"),
+        res = c.get(url_for("settings.settings_page"),
             follow_redirects=True)
 
 
@@ -110,7 +110,7 @@ def test_check_access_control(app, client, live_server):
         # Yes we are correctly logged in
         assert b"LOG OUT" in res.data
 
-        res = c.get(url_for("settings_page"))
+        res = c.get(url_for("settings.settings_page"))
 
         # Menu should be available now
         assert b"SETTINGS" in res.data
@@ -124,7 +124,7 @@ def test_check_access_control(app, client, live_server):
         # Remove password button, and check that it worked
         ##################################################
         res = c.post(
-            url_for("settings_page"),
+            url_for("settings.settings_page"),
             data={
                 "requests-time_between_check-minutes": 180,
                 "application-fetch_backend": "html_webdriver",
@@ -139,7 +139,7 @@ def test_check_access_control(app, client, live_server):
         # Be sure a blank password doesnt setup password protection
         ############################################################
         res = c.post(
-            url_for("settings_page"),
+            url_for("settings.settings_page"),
             data={"application-password": "",
                   "requests-time_between_check-minutes": 180,
                   'application-fetch_backend': "html_requests"},
@@ -151,7 +151,7 @@ def test_check_access_control(app, client, live_server):
         # Now checking the diff access
         # Enable password check and diff page access bypass
         res = c.post(
-            url_for("settings_page"),
+            url_for("settings.settings_page"),
             data={"application-password": "foobar",
                   # Should be disabled
 #                  "application-shared_diff_access": "True",

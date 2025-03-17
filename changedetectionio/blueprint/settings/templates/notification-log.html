@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="edit-form">
+     <div class="inner">
+
+         <h4 style="margin-top: 0px;">Notification debug log</h4>
+                <div id="notification-error-log">
+                <ul style="font-size: 80%; margin:0px; padding: 0 0 0 7px">
+                {% for log in logs|reverse %}
+                    <li>{{log}}</li>
+                {% endfor %}
+                </ul>
+                </div>
+
+     </div>
+</div>
+
+{% endblock %}

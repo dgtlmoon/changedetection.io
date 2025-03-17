@@ -49,7 +49,7 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server, me
 
     # Goto the settings page, add our ignore text
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_status_codes": "y",

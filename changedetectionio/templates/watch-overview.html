@@ -129,9 +129,9 @@
 
                         {% if '403' in watch.last_error %}
                             {% if has_proxies %}
-                                <a href="{{ url_for('settings_page', uuid=watch.uuid) }}#proxies">Try other proxies/location</a>&nbsp;
+                                <a href="{{ url_for('settings.settings_page', uuid=watch.uuid) }}#proxies">Try other proxies/location</a>&nbsp;
                             {% endif %}
-                            <a href="{{ url_for('settings_page', uuid=watch.uuid) }}#proxies">Try adding external proxies/locations</a>
+                            <a href="{{ url_for('settings.settings_page', uuid=watch.uuid) }}#proxies">Try adding external proxies/locations</a>
                         
                         {% endif %}
                         {% if 'empty result or contain only an image' in watch.last_error %}
@@ -140,7 +140,7 @@
                     </div>
                     {% endif %}
                     {% if watch.last_notification_error is defined and watch.last_notification_error != False %}
-                    <div class="fetch-error notification-error"><a href="{{url_for('notification_logs')}}">{{ watch.last_notification_error }}</a></div>
+                    <div class="fetch-error notification-error"><a href="{{url_for('settings.notification_logs')}}">{{ watch.last_notification_error }}</a></div>
                     {% endif %}
 
                     {% if watch['processor'] == 'text_json_diff'  %}

@@ -18,7 +18,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     # The rest of the actual functionality should be covered in the unit-test  unit/test_scheduler.py
     #####################
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "",
               "requests-time_between_check-seconds": 1,
               "application-timezone": "Pacific/Kiritimati",  # Most Forward Time Zone (UTC+14:00)
@@ -28,7 +28,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
 
     assert b"Settings updated." in res.data
 
-    res = client.get(url_for("settings_page"))
+    res = client.get(url_for("settings.settings_page"))
     assert b'Pacific/Kiritimati' in res.data
 
     res = client.post(
@@ -135,14 +135,14 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
 
     #####################
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data=data,
         follow_redirects=True
     )
 
     assert b"Settings updated." in res.data
 
-    res = client.get(url_for("settings_page"))
+    res = client.get(url_for("settings.settings_page"))
     assert b'Pacific/Kiritimati' in res.data
 
     wait_for_all_checks(client)

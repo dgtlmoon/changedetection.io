@@ -59,7 +59,7 @@ def test_check_ignore_whitespace(client, live_server, measure_memory_usage):
 
     # Goto the settings page, add our ignore text
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",

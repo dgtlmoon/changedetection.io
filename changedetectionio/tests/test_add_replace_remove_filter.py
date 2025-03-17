@@ -111,7 +111,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://') + "?xxx={{ watch_url }}"
 
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
               # triggered_text will contain multiple lines
               "application-notification_body": 'triggered text was -{{triggered_text}}- ### 网站监测 内容更新了 ####',

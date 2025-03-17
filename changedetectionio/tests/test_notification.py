@@ -28,7 +28,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
     set_original_response()
 
     # Re 360 - new install should have defaults set
-    res = client.get(url_for("settings_page"))
+    res = client.get(url_for("settings.settings_page"))
     notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')+"?status_code=204"
 
     assert default_notification_body.encode() in res.data
@@ -37,7 +37,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,
               "application-notification_title": "fallback-title "+default_notification_title,
               "application-notification_body": "fallback-body "+default_notification_body,
@@ -53,7 +53,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
     env_base_url = os.getenv('BASE_URL', '').strip()
     if len(env_base_url):
         logging.debug(">>> BASE_URL enabled, looking for %s", env_base_url)
-        res = client.get(url_for("settings_page"))
+        res = client.get(url_for("settings.settings_page"))
         assert bytes(env_base_url.encode('utf-8')) in res.data
     else:
         logging.debug(">>> SKIPPING BASE_URL check")
@@ -209,7 +209,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
     assert os.path.exists("test-datastore/notification.txt") == False
 
-    res = client.get(url_for("notification_logs"))
+    res = client.get(url_for("settings.notification_logs"))
     # be sure we see it in the output log
     assert b'New ChangeDetection.io Notification - ' + test_url.encode('utf-8') in res.data
 
@@ -294,7 +294,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?status_code=204&xxx={{ watch_url }}&+custom-header=123&+second=hello+world%20%22space%22"
 
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
               "application-fetch_backend": "html_requests",
               "application-minutes_between_check": 180,
@@ -379,7 +379,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
 
     # otherwise other settings would have already existed from previous tests in this file
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "application-fetch_backend": "html_requests",
             "application-minutes_between_check": 180,
@@ -469,7 +469,7 @@ def _test_color_notifications(client, notification_body_token):
 
     # otherwise other settings would have already existed from previous tests in this file
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "application-fetch_backend": "html_requests",
             "application-minutes_between_check": 180,

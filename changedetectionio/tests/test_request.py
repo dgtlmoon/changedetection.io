@@ -262,7 +262,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage):
     test_url = url_for('test_headers', _external=True)
 
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "application-fetch_backend": "html_requests",
             "application-minutes_between_check": 180,
@@ -334,13 +334,13 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
         form_data["requests-default_ua-html_webdriver"] = webdriver_ua
 
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data=form_data,
         follow_redirects=True
     )
     assert b'Settings updated' in res.data
 
-    res = client.get(url_for("settings_page"))
+    res = client.get(url_for("settings.settings_page"))
 
     # Only when some kind of real browser is setup
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):

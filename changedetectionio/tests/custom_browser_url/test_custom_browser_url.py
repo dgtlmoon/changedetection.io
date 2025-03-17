@@ -16,7 +16,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
 
     #####################
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "",
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_webdriver",

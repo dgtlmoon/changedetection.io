@@ -18,7 +18,7 @@ def test_noproxy_option(client, live_server, measure_memory_usage):
 
     # Setup a proxy
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
@@ -37,7 +37,7 @@ def test_noproxy_option(client, live_server, measure_memory_usage):
 
     # Should be available as an option
     res = client.get(
-        url_for("settings_page", unpause_on_save=1))
+        url_for("settings.settings_page", unpause_on_save=1))
     assert b'No proxy' in res.data
 
 

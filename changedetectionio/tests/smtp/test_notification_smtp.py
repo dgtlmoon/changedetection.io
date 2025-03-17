@@ -50,7 +50,7 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,
               "application-notification_title": "fallback-title " + default_notification_title,
               "application-notification_body": "fallback-body<br> " + default_notification_body,
@@ -116,7 +116,7 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,
               "application-notification_title": "fallback-title " + default_notification_title,
               "application-notification_body": notification_body,

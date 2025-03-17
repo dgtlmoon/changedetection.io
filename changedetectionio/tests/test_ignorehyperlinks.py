@@ -53,7 +53,7 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
 
     # Goto the settings page, choose to ignore links (dont select/send "application-render_anchor_tag_content")
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-fetch_backend": "html_requests",
@@ -90,7 +90,7 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
 
     # Goto the settings page, ENABLE render anchor tag
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-render_anchor_tag_content": "true",
