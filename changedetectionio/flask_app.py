@@ -542,39 +542,6 @@ def changedetection_app(config=None, datastore_o=None):
         return 'OK - Sent test notifications'
 
 
-    @app.route("/clear_history/<string:uuid>", methods=['GET'])
-    @login_optionally_required
-    def clear_watch_history(uuid):
-        try:
-            datastore.clear_watch_history(uuid)
-        except KeyError:
-            flash('Watch not found', 'error')
-        else:
-            flash("Cleared snapshot history for watch {}".format(uuid))
-
-        return redirect(url_for('index'))
-
-    @app.route("/clear_history", methods=['GET', 'POST'])
-    @login_optionally_required
-    def clear_all_history():
-
-        if request.method == 'POST':
-            confirmtext = request.form.get('confirmtext')
-
-            if confirmtext == 'clear':
-                changes_removed = 0
-                for uuid in datastore.data['watching'].keys():
-                    datastore.clear_watch_history(uuid)
-                    #TODO: KeyError not checked, as it is above
-
-                flash("Cleared snapshot history for all watches")
-            else:
-                flash('Incorrect confirmation text.', 'error')
-
-            return redirect(url_for('index'))
-
-        output = render_template("clear_all_history.html")
-        return output
 
     def _watch_has_tag_options_set(watch):
         """This should be fixed better so that Tag is some proper Model, a tag is just a Watch also"""
@@ -904,19 +871,6 @@ def changedetection_app(config=None, datastore_o=None):
                                  )
         return output
 
-    # Clear all statuses, so we do not see the 'unviewed' class
-    @app.route("/form/mark-all-viewed", methods=['GET'])
-    @login_optionally_required
-    def mark_all_viewed():
-
-        # Save the current newest history as the most recently viewed
-        with_errors = request.args.get('with_errors') == "1"
-        for watch_uuid, watch in datastore.data['watching'].items():
-            if with_errors and not watch.get('last_error'):
-                continue
-            datastore.set_last_viewed(watch_uuid, int(time.time()))
-
-        return redirect(url_for('index'))
 
     @app.route("/diff/<string:uuid>", methods=['GET', 'POST'])
     @login_optionally_required
@@ -1227,181 +1181,9 @@ def changedetection_app(config=None, datastore_o=None):
 
 
 
-    @app.route("/api/delete", methods=['GET'])
-    @login_optionally_required
-    def form_delete():
-        uuid = request.args.get('uuid')
 
-        if uuid != 'all' and not uuid in datastore.data['watching'].keys():
-            flash('The watch by UUID {} does not exist.'.format(uuid), 'error')
-            return redirect(url_for('index'))
 
-        # More for testing, possible to return the first/only
-        if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
-        datastore.delete(uuid)
-        flash('Deleted.')
 
-        return redirect(url_for('index'))
-
-    @app.route("/api/clone", methods=['GET'])
-    @login_optionally_required
-    def form_clone():
-        uuid = request.args.get('uuid')
-        # More for testing, possible to return the first/only
-        if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
-
-        new_uuid = datastore.clone(uuid)
-        if new_uuid:
-            if not datastore.data['watching'].get(uuid).get('paused'):
-                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid}))
-            flash('Cloned.')
-
-        return redirect(url_for('index'))
-
-    @app.route("/api/checknow", methods=['GET'])
-    @login_optionally_required
-    def form_watch_checknow():
-        # Forced recheck will skip the 'skip if content is the same' rule (, 'reprocess_existing_data': True})))
-        tag = request.args.get('tag')
-        uuid = request.args.get('uuid')
-        with_errors = request.args.get('with_errors') == "1"
-
-        i = 0
-
-        running_uuids = []
-        for t in running_update_threads:
-            running_uuids.append(t.current_uuid)
-
-        if uuid:
-            if uuid not in running_uuids:
-                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-            i = 1
-
-        elif tag:
-            # Items that have this current tag
-            for watch_uuid, watch in datastore.data['watching'].items():
-                if tag in watch.get('tags', {}):
-                    if with_errors and not watch.get('last_error'):
-                        continue
-                    if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
-                        update_q.put(
-                            queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid})
-                        )
-                        i += 1
-
-        else:
-            # No tag, no uuid, add everything.
-            for watch_uuid, watch in datastore.data['watching'].items():
-                if watch_uuid not in running_uuids and not datastore.data['watching'][watch_uuid]['paused']:
-                    if with_errors and not watch.get('last_error'):
-                        continue
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
-                    i += 1
-        flash(f"{i} watches queued for rechecking.")
-        return redirect(url_for('index', tag=tag))
-
-    @app.route("/form/checkbox-operations", methods=['POST'])
-    @login_optionally_required
-    def form_watch_list_checkbox_operations():
-        op = request.form['op']
-        uuids = request.form.getlist('uuids')
-
-        if (op == 'delete'):
-            for uuid in uuids:
-                uuid = uuid.strip()
-                if datastore.data['watching'].get(uuid):
-                    datastore.delete(uuid.strip())
-            flash("{} watches deleted".format(len(uuids)))
-
-        elif (op == 'pause'):
-            for uuid in uuids:
-                uuid = uuid.strip()
-                if datastore.data['watching'].get(uuid):
-                    datastore.data['watching'][uuid.strip()]['paused'] = True
-            flash("{} watches paused".format(len(uuids)))
-
-        elif (op == 'unpause'):
-            for uuid in uuids:
-                uuid = uuid.strip()
-                if datastore.data['watching'].get(uuid):
-                    datastore.data['watching'][uuid.strip()]['paused'] = False
-            flash("{} watches unpaused".format(len(uuids)))
-
-        elif (op == 'mark-viewed'):
-            for uuid in uuids:
-                uuid = uuid.strip()
-                if datastore.data['watching'].get(uuid):
-                    datastore.set_last_viewed(uuid, int(time.time()))
-            flash("{} watches updated".format(len(uuids)))
-
-        elif (op == 'mute'):
-            for uuid in uuids:
-                uuid = uuid.strip()
-                if datastore.data['watching'].get(uuid):
-                    datastore.data['watching'][uuid.strip()]['notification_muted'] = True
-            flash("{} watches muted".format(len(uuids)))
-
-        elif (op == 'unmute'):
-            for uuid in uuids:
-                uuid = uuid.strip()
-                if datastore.data['watching'].get(uuid):
-                    datastore.data['watching'][uuid.strip()]['notification_muted'] = False
-            flash("{} watches un-muted".format(len(uuids)))
-
-        elif (op == 'recheck'):
-            for uuid in uuids:
-                uuid = uuid.strip()
-                if datastore.data['watching'].get(uuid):
-                    # Recheck and require a full reprocessing
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-            flash("{} watches queued for rechecking".format(len(uuids)))
-
-        elif (op == 'clear-errors'):
-            for uuid in uuids:
-                uuid = uuid.strip()
-                if datastore.data['watching'].get(uuid):
-                    datastore.data['watching'][uuid]["last_error"] = False
-            flash(f"{len(uuids)} watches errors cleared")
-
-        elif (op == 'clear-history'):
-            for uuid in uuids:
-                uuid = uuid.strip()
-                if datastore.data['watching'].get(uuid):
-                    datastore.clear_watch_history(uuid)
-            flash("{} watches cleared/reset.".format(len(uuids)))
-
-        elif (op == 'notification-default'):
-            from changedetectionio.notification import (
-                default_notification_format_for_watch
-            )
-            for uuid in uuids:
-                uuid = uuid.strip()
-                if datastore.data['watching'].get(uuid):
-                    datastore.data['watching'][uuid.strip()]['notification_title'] = None
-                    datastore.data['watching'][uuid.strip()]['notification_body'] = None
-                    datastore.data['watching'][uuid.strip()]['notification_urls'] = []
-                    datastore.data['watching'][uuid.strip()]['notification_format'] = default_notification_format_for_watch
-            flash("{} watches set to use default notification settings".format(len(uuids)))
-
-        elif (op == 'assign-tag'):
-            op_extradata = request.form.get('op_extradata', '').strip()
-            if op_extradata:
-                tag_uuid = datastore.add_tag(name=op_extradata)
-                if op_extradata and tag_uuid:
-                    for uuid in uuids:
-                        uuid = uuid.strip()
-                        if datastore.data['watching'].get(uuid):
-                            # Bug in old versions caused by bad edit page/tag handler
-                            if isinstance(datastore.data['watching'][uuid]['tags'], str):
-                                datastore.data['watching'][uuid]['tags'] = []
-
-                            datastore.data['watching'][uuid]['tags'].append(tag_uuid)
-
-            flash(f"{len(uuids)} watches were tagged")
-
-        return redirect(url_for('index'))
 
     @app.route("/api/share-url", methods=['GET'])
     @login_optionally_required
@@ -1501,6 +1283,20 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.rss as rss
     app.register_blueprint(rss.construct_blueprint(datastore), url_prefix='/rss')
+    
+    import changedetectionio.blueprint.ui as ui
+    app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData), url_prefix='/ui')
+    
+    # Route aliases for backward compatibility (especially for tests)
+    app.add_url_rule('/clear_history/<string:uuid>', view_func=lambda uuid: redirect(url_for('ui.clear_watch_history', uuid=uuid)), endpoint='clear_watch_history')
+    app.add_url_rule('/clear_history', view_func=lambda: redirect(url_for('ui.clear_all_history')), endpoint='clear_all_history')
+    app.add_url_rule('/form/mark-all-viewed', view_func=lambda: redirect(url_for('ui.mark_all_viewed', **request.args)), endpoint='mark_all_viewed')
+    app.add_url_rule('/api/delete', view_func=lambda: redirect(url_for('ui.form_delete', **request.args)), endpoint='form_delete')
+    app.add_url_rule('/api/clone', view_func=lambda: redirect(url_for('ui.form_clone', **request.args)), endpoint='form_clone')
+    app.add_url_rule('/api/checknow', view_func=lambda: redirect(url_for('ui.form_watch_checknow', **request.args)), endpoint='form_watch_checknow')
+    app.add_url_rule('/form/checkbox-operations', methods=['POST'], 
+                    view_func=lambda: redirect(url_for('ui.form_watch_list_checkbox_operations')), 
+                    endpoint='form_watch_list_checkbox_operations')
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()

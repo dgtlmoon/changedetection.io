@@ -3,7 +3,7 @@
   <div class="box-wrap inner">
     <form
       class="pure-form pure-form-stacked"
-      action="{{url_for('clear_all_history')}}"
+      action="{{url_for('ui.clear_all_history')}}"
       method="POST"
     >
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >

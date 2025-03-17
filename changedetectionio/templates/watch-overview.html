@@ -25,7 +25,7 @@
         <span style="color:#eee; font-size: 80%;"><img alt="Create a shareable link" style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread-white.svg')}}" > Tip: You can also add 'shared' watches. <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">More info</a></span>
     </form>
 
-    <form class="pure-form" action="{{ url_for('form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
+    <form class="pure-form" action="{{ url_for('ui.form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
     <input type="hidden" id="op_extradata" name="op_extradata" value="" >
     <div id="checkbox-operations">
@@ -186,7 +186,7 @@
                     {% endif %}
                 </td>
                 <td>
-                    <a {% if watch.uuid in queued_uuids %}disabled="true"{% endif %} href="{{ url_for('form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
+                    <a {% if watch.uuid in queued_uuids %}disabled="true"{% endif %} href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
                        class="recheck pure-button pure-button-primary">{% if watch.uuid in queued_uuids %}Queued{% else %}Recheck{% endif %}</a>
                     <a href="{{ url_for('edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="pure-button pure-button-primary">Edit</a>
                     {% if watch.history_n >= 2 %}
@@ -215,11 +215,11 @@
             {% endif %}
             {% if has_unviewed %}
             <li>
-                <a href="{{url_for('mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Mark all viewed</a>
+                <a href="{{url_for('ui.mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Mark all viewed</a>
             </li>
             {% endif %}
             <li>
-               <a href="{{ url_for('form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Recheck
+               <a href="{{ url_for('ui.form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Recheck
                 all {% if active_tag_uuid %} in "{{active_tag.title}}"{%endif%}</a>
             </li>
             <li>
