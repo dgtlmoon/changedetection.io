@@ -94,13 +94,12 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
     client.get(url_for("mark_all_viewed"), follow_redirects=True)
 
 
-    # Case 1: The number is in range but the first digit changed (now 7 instead of 5)
-    # This should NOT trigger a change notification since not all conditions are met
+    # Case 1
     set_number_in_range_response("70.5")
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-
-    # 75 > 20 and < 100 and contains "5"
+    time.sleep(1)
+    # 75 is > 20 and < 100 and contains "5"
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
@@ -109,6 +108,8 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
     # Number out of range (150) but contains '5'
     client.get(url_for("mark_all_viewed"), follow_redirects=True)
     set_number_out_of_range_response("150.5")
+    time.sleep(1)
+
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
