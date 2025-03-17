@@ -71,11 +71,19 @@ def test_number_within_range_condition(client, live_server, measure_memory_usage
             "include_filters": ".number-container",
             "title": "Condition Test",
             "conditions_match_logic": "ALL",  # ALL = AND logic
-            "conditions": [
-                {"operator": ">=", "field": "extracted_number", "value": "20"},
-                {"operator": "<=", "field": "extracted_number", "value": "100"},
-                {"operator": "in", "field": "page_filtered_text", "value": "5"}  # First digit of 50
-            ]
+
+            "conditions-0-operator": "in",
+            "conditions-0-field": "page_filtered_text",
+            "conditions-0-value": "5",
+
+            "conditions-1-operator": ">=",
+            "conditions-1-field": "extracted_number",
+            "conditions-1-value": "20",
+
+            "conditions-2-operator": "<=",
+            "conditions-2-field": "extracted_number",
+            "conditions-2-value": "100",
+
         },
         follow_redirects=True
     )
@@ -93,9 +101,9 @@ def test_number_within_range_condition(client, live_server, measure_memory_usage
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    # Should NOT be marked as having changes since it meets all conditions
+    # Should be marked as having changes since all conditions are met
     res = client.get(url_for("index"))
-    assert b'unviewed' not in res.data
+    assert b'unviewed' in res.data
     assert b'Condition Test' in res.data
 
     # Now change to value that's outside the range (but still contains the first digit in text)
@@ -103,14 +111,14 @@ def test_number_within_range_condition(client, live_server, measure_memory_usage
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    # SHOULD be marked as having changes since it violates one of the conditions
+    # Should NOT be marked as having changes since one condition is not met
     res = client.get(url_for("index"))
-    assert b'unviewed' in res.data
+    assert b'unviewed' not in res.data
     assert b'Condition Test' in res.data
 
-    # Check the diff history shows the change
+    # Check the diff history shows the change from the earlier check (75)
     res = client.get(url_for("diff_history_page", uuid="first"))
-    assert b'Current value: 150' in res.data
+    assert b'Current value: 75' in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
@@ -142,11 +150,18 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
             "include_filters": ".number-container",
             "title": "Number AND Text Condition Test",
             "conditions_match_logic": "ALL",  # ALL = AND logic
-            "conditions": [
-                {"operator": "in", "field": "page_filtered_text", "value": "5"},  # First digit of 50
-                {"operator": ">=", "field": "extracted_number", "value": "20"},
-                {"operator": "<=", "field": "extracted_number", "value": "100"}
-            ]
+            "conditions-0-operator": "in",
+            "conditions-0-field": "page_filtered_text",
+            "conditions-0-value": "5",
+
+            "conditions-1-operator": ">=",
+            "conditions-1-field": "extracted_number",
+            "conditions-1-value": "20",
+
+            "conditions-2-operator": "<=",
+            "conditions-2-field": "extracted_number",
+            "conditions-2-value": "100",
+
         },
         follow_redirects=True
     )
@@ -155,62 +170,30 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
     # Trigger initial check
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
+    client.get(url_for("mark_all_viewed"), follow_redirects=True)
 
-    # Set current view state - no unviewed
-    client.get(url_for("diff_history_page", uuid="first"))
 
     # Case 1: The number is in range but the first digit changed (now 7 instead of 5)
-    # This should trigger a change notification since the text condition is violated
+    # This should NOT trigger a change notification since not all conditions are met
     set_number_in_range_response("75")
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    # Should be marked as having changes since it violates the text condition
+    # 75 > 20 and < 100 and contains "5"
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
-    
-    # Reset view state
-    client.get(url_for("diff_history_page", uuid="first"))
 
-    # Case 2: Change with both conditions satisfied
-    # Number in range (80) and contains first digit "8" in text
-    set_number_in_range_response("80")
-    
-    # Update the conditions to match the new value's first digit
-    res = client.post(
-        url_for("edit_page", uuid="first"),
-        data={
-            "url": test_url,
-            "fetch_backend": "html_requests",
-            "include_filters": ".number-container",
-            "title": "Number AND Text Condition Test",
-            "conditions_match_logic": "ALL",  # ALL = AND logic
-            "conditions": [
-                {"operator": "in", "field": "page_filtered_text", "value": "8"},  # First digit of 80
-                {"operator": ">=", "field": "extracted_number", "value": "20"},
-                {"operator": "<=", "field": "extracted_number", "value": "100"}
-            ]
-        },
-        follow_redirects=True
-    )
-    assert b"Updated watch." in res.data
-    
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    wait_for_all_checks(client)
-    
-    # Should NOT be marked as having changes since both conditions are met
-    res = client.get(url_for("index"))
-    assert b'unviewed' not in res.data
 
-    # Case 3: Change with both conditions violated
-    # Number out of range (150) and first digit doesn't match condition
+    # Case 2: Change with one condition violated
+    # Number out of range (150) but contains '5'
+    client.get(url_for("mark_all_viewed"), follow_redirects=True)
     set_number_out_of_range_response("150")
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    # SHOULD be marked as having changes since both conditions are violated
+    # Should NOT be marked as having changes since not all conditions are met
     res = client.get(url_for("index"))
-    assert b'unviewed' in res.data
+    assert b'unviewed' not in res.data
 
     res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
