@@ -1686,7 +1686,7 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.backups as backups
     app.register_blueprint(backups.construct_blueprint(datastore), url_prefix='/backups')
 
-    import changedetectionio.conditions as conditions
+    import changedetectionio.conditions.blueprint as conditions
     app.register_blueprint(conditions.construct_blueprint(datastore), url_prefix='/conditions')
 
     # @todo handle ctrl break
