@@ -44,7 +44,7 @@ def set_number_out_of_range_response(number="150"):
         f.write(test_return_data)
 
 
-def test_conditions_with_text_and_number(client, live_server, measure_memory_usage):
+def test_conditions_with_text_and_number(client, live_server):
     """Test that both text and number conditions work together with AND logic."""
     
     set_original_response("50")
@@ -59,6 +59,7 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
+    wait_for_all_checks(client)
 
     # Configure the watch with two conditions connected with AND:
     # 1. The page filtered text must contain "5" (first digit of value)
@@ -88,17 +89,15 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
     )
     assert b"Updated watch." in res.data
 
-    # Trigger initial check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     client.get(url_for("mark_all_viewed"), follow_redirects=True)
-
+    wait_for_all_checks(client)
 
     # Case 1
     set_number_in_range_response("70.5")
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    time.sleep(1)
+
     # 75 is > 20 and < 100 and contains "5"
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
@@ -108,7 +107,7 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
     # Number out of range (150) but contains '5'
     client.get(url_for("mark_all_viewed"), follow_redirects=True)
     set_number_out_of_range_response("150.5")
-    time.sleep(1)
+
 
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
