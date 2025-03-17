@@ -134,15 +134,17 @@ def perform_site_check(datastore, watch_uuid):
     """Create and return a processor instance ready to perform site check"""
     return WhoisProcessor(datastore=datastore, watch_uuid=watch_uuid)
 
-@hookimpl
+@hookimpl(trylast=True)  # Use trylast to ensure this runs last in case of conflicts
 def get_processor_name():
     """Return the name of this processor"""
+    from loguru import logger
+    logger.debug("whois_plugin.get_processor_name() called")
     return "whois"
 
 @hookimpl
 def get_processor_description():
     """Return the description of this processor"""
-    return "WHOIS Domain Information Changes"
+    return "WHOIS Domain Information Changes Detector"
 
 @hookimpl
 def get_processor_class():
@@ -153,8 +155,13 @@ def get_processor_class():
 def get_processor_form():
     """Return the processor form class"""
     # Import here to avoid circular imports
-    from changedetectionio.forms import processor_text_json_diff_form
-    return processor_text_json_diff_form
+    try:
+        from changedetectionio.forms import processor_text_json_diff_form
+        return processor_text_json_diff_form
+    except Exception as e:
+        from loguru import logger
+        logger.error(f"Error importing form for whois plugin: {str(e)}")
+        return None
 
 @hookimpl
 def get_processor_watch_model():

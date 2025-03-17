@@ -716,8 +716,15 @@ def changedetection_app(config=None, datastore_o=None):
         # If it's not found in traditional processors, check if it's a pluggy plugin
         if not processor_classes:
             try:
-                from changedetectionio.processors.processor_registry import get_processor_form
+                from changedetectionio.processors.processor_registry import get_processor_form, _get_plugin_name_map
+                
+                # Get all available plugins for debugging
+                available_plugins = list(_get_plugin_name_map().keys())
+                logger.debug(f"Available processor plugins: {available_plugins}")
+                
+                # Try to get the processor form
                 plugin_form_class = get_processor_form(processor_name)
+                
                 if plugin_form_class:
                     # Use default text_json_diff_form as parent module for plugins
                     from changedetectionio.processors.text_json_diff import processor as text_json_diff_processor
@@ -726,11 +733,23 @@ def changedetection_app(config=None, datastore_o=None):
                     
                     # Skip the normal form loading code path
                     use_plugin_form = True
+                    logger.debug(f"Successfully loaded form for plugin '{processor_name}'")
                 else:
-                    flash(f"Cannot load the edit form for processor/plugin '{processor_name}', plugin missing?", 'error')
+                    # Check if the plugin is registered but doesn't have a form
+                    if processor_name in available_plugins:
+                        logger.error(f"Plugin '{processor_name}' is registered but has no form class")
+                        flash(f"Plugin '{processor_name}' is registered but has no form class", 'error')
+                    else:
+                        logger.error(f"Cannot find plugin '{processor_name}'. Available plugins: {available_plugins}")
+                        flash(f"Cannot load the edit form for processor/plugin '{processor_name}', plugin missing?", 'error')
                     return redirect(url_for('index'))
-            except ImportError:
+            except ImportError as e:
+                logger.error(f"Import error when loading plugin form: {str(e)}")
                 flash(f"Cannot load the edit form for processor/plugin '{processor_name}', plugin system not available?", 'error')
+                return redirect(url_for('index'))
+            except Exception as e:
+                logger.error(f"Unexpected error loading plugin form: {str(e)}")
+                flash(f"Error loading plugin form: {str(e)}", 'error')
                 return redirect(url_for('index'))
         else:
             # Traditional processor - continue with normal flow
