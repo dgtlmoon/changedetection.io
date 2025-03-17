@@ -1,4 +1,4 @@
-from .util import live_server_setup, extract_UUID_from_client, wait_for_all_checks
+from .util import live_server_setup
 from flask import url_for
 import time
 
@@ -23,8 +23,9 @@ def test_check_access_control(app, client, live_server):
         # causes a 'Popped wrong request context.' error when client. is accessed?
         #wait_for_all_checks(client)
 
-        res = c.get(url_for("form_watch_checknow"), follow_redirects=True)
-        assert b'1 watches queued for rechecking.' in res.data
+        res = c.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        assert b'Queued 1 watch for rechecking.' in res.data
+
         time.sleep(3)
         # causes a 'Popped wrong request context.' error when client. is accessed?
         #wait_for_all_checks(client)

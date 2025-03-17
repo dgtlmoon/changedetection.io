@@ -75,7 +75,7 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
     set_longer_modified_response()
     time.sleep(2)
 
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     time.sleep(3)
@@ -88,7 +88,7 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
     assert '(added) So let\'s see what happens.\r\n' in msg  # The plaintext part with \r\n
     assert 'Content-Type: text/html' in msg
     assert '(added) So let\'s see what happens.<br>' in msg  # the html part
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
@@ -140,7 +140,7 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
     wait_for_all_checks(client)
     set_longer_modified_response()
     time.sleep(2)
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     time.sleep(3)
@@ -182,5 +182,5 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
     assert '&lt;' not in msg
     assert 'Content-Type: text/html' in msg
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

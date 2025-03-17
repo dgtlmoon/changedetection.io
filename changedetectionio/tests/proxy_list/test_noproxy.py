@@ -67,7 +67,7 @@ def test_noproxy_option(client, live_server, measure_memory_usage):
     )
     assert b"unpaused" in res.data
     wait_for_all_checks(client)
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     # Now the request should NOT appear in the second-squid logs (handled by the run_test_proxies.sh script)
 

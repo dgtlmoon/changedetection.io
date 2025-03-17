@@ -88,7 +88,7 @@ def test_restock_detection(client, live_server, measure_memory_usage):
 
     # Is it correctly shown as in stock
     set_back_in_stock_response()
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'not-in-stock' not in res.data
@@ -101,7 +101,7 @@ def test_restock_detection(client, live_server, measure_memory_usage):
     # Default behaviour is to only fire notification when it goes OUT OF STOCK -> IN STOCK
     # So here there should be no file, because we go IN STOCK -> OUT OF STOCK
     set_original_response()
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     time.sleep(5)
     assert not os.path.isfile("test-datastore/notification.txt"), "No notification should have fired when it went OUT OF STOCK by default"

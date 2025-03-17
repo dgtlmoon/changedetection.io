@@ -72,14 +72,14 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
 
     time.sleep(sleep_time_for_fetch_thread)
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # set a new html text with a modified link
     set_modified_ignore_response()
     time.sleep(sleep_time_for_fetch_thread)
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
@@ -101,7 +101,7 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
     assert b"Settings updated." in res.data
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
@@ -119,7 +119,7 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
     assert b"/test-endpoint" in res.data
 
     # Cleanup everything
-    res = client.get(url_for("form_delete", uuid="all"),
+    res = client.get(url_for("ui.form_delete", uuid="all"),
                      follow_redirects=True)
     assert b'Deleted' in res.data
 

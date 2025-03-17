@@ -44,8 +44,8 @@ def test_fetch_pdf(client, live_server, measure_memory_usage):
 
     shutil.copy("tests/test2.pdf", "test-datastore/endpoint-test.pdf")
     changed_md5 = hashlib.md5(open("test-datastore/endpoint-test.pdf", 'rb').read()).hexdigest().upper()
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches queued for rechecking.' in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
 

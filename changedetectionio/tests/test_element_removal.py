@@ -185,8 +185,8 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
     assert bytes(subtractive_selectors_data.encode("utf-8")) in res.data
 
     # Trigger a check
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches queued for rechecking.' in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
 
@@ -197,8 +197,8 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
     set_modified_response()
 
     # Trigger a check
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches queued for rechecking.' in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -228,7 +228,7 @@ body > table > tr:nth-child(3) > td:nth-child(3)""",
 
     for selector_list in subtractive_selectors_data:
 
-        res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+        res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
         assert b'Deleted' in res.data
 
         # Add our URL to the import page

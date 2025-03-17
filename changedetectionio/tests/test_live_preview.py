@@ -74,5 +74,5 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage):
     assert reply.get('ignore_line_numbers') == [2]  # Ignored - "socks" on line 2
     assert reply.get('trigger_line_numbers') == [1]  # Triggers "Awesome" in line 1
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

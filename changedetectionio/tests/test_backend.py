@@ -33,7 +33,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # Do this a few times.. ensures we dont accidently set the status
     for n in range(3):
-        client.get(url_for("form_watch_checknow"), follow_redirects=True)
+        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
         # Give the thread time to pick it up
         wait_for_all_checks(client)
@@ -63,8 +63,8 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     set_modified_response()
 
     # Force recheck
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches queued for rechecking.' in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
 
@@ -106,7 +106,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # Do this a few times.. ensures we dont accidently set the status
     for n in range(2):
-        client.get(url_for("form_watch_checknow"), follow_redirects=True)
+        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
         # Give the thread time to pick it up
         wait_for_all_checks(client)
@@ -128,7 +128,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
         follow_redirects=True
     )
 
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("index"))
@@ -142,19 +142,19 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     time.sleep(1)
 
     # hit the mark all viewed link
-    res = client.get(url_for("mark_all_viewed"), follow_redirects=True)
+    res = client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
 
     assert b'Mark all viewed' not in res.data
     assert b'unviewed' not in res.data
 
     # #2458 "clear history" should make the Watch object update its status correctly when the first snapshot lands again
-    client.get(url_for("clear_watch_history", uuid=uuid))
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.clear_watch_history", uuid=uuid))
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'preview/' in res.data
 
     #
     # Cleanup everything
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

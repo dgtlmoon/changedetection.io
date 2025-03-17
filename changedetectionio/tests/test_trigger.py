@@ -73,7 +73,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
     assert b"1 Imported" in res.data
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -99,7 +99,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
     client.get(url_for("diff_history_page", uuid="first"))
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -112,7 +112,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
     set_modified_original_ignore_response()
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
@@ -122,7 +122,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
     # Now set the content which contains the trigger text
     set_modified_with_trigger_text_response()
 
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data

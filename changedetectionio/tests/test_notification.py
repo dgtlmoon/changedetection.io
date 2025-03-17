@@ -134,7 +134,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
     set_modified_response()
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     time.sleep(3)
 
@@ -188,7 +188,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
 
     # This should insert the {current_snapshot}
     set_more_modified_response()
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     time.sleep(3)
     # Verify what was sent as a notification, this file should exist
     with open("test-datastore/notification.txt", "r") as f:
@@ -201,11 +201,11 @@ def test_check_notification(client, live_server, measure_memory_usage):
     os.unlink("test-datastore/notification.txt")
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     assert os.path.exists("test-datastore/notification.txt") == False
 
@@ -239,7 +239,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
 
     # cleanup for the next
     client.get(
-        url_for("form_delete", uuid="all"),
+        url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
 
@@ -276,7 +276,7 @@ def test_notification_validation(client, live_server, measure_memory_usage):
 
     # cleanup for the next
     client.get(
-        url_for("form_delete", uuid="all"),
+        url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
 
@@ -321,7 +321,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     wait_for_all_checks(client)
     set_modified_response()
 
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     time.sleep(2) # plus extra delay for notifications to fire
@@ -361,7 +361,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     os.unlink("test-datastore/notification-url.txt")
 
     client.get(
-        url_for("form_delete", uuid="all"),
+        url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
 
@@ -439,7 +439,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
         assert 'change detection is cool 网站监测 内容更新了' in x
 
     client.get(
-        url_for("form_delete", uuid="all"),
+        url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
 
@@ -496,8 +496,8 @@ def _test_color_notifications(client, notification_body_token):
     set_modified_response()
 
 
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches queued for rechecking.' in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
     time.sleep(3)
@@ -508,7 +508,7 @@ def _test_color_notifications(client, notification_body_token):
 
 
     client.get(
-        url_for("form_delete", uuid="all"),
+        url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
 

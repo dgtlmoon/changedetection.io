@@ -10,6 +10,9 @@ from changedetectionio.safe_jinja import render as jinja_render
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     rss_blueprint = Blueprint('rss', __name__)
+    
+    # Import the login decorator if needed
+    # from changedetectionio.auth_decorator import login_optionally_required
 
     @rss_blueprint.route("/", methods=['GET'])
     def feed():

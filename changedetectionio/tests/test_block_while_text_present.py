@@ -101,7 +101,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     assert bytes(ignore_text.encode('utf-8')) in res.data
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -115,7 +115,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     set_modified_original_ignore_response()
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
@@ -127,7 +127,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     # 2548
     # Going back to the ORIGINAL should NOT trigger a change
     set_original_ignore_response()
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
@@ -135,7 +135,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
 
     # Now we set a change where the text is gone AND its different content, it should now trigger
     set_modified_response_minus_block_text()
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
@@ -143,5 +143,5 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
 
 
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

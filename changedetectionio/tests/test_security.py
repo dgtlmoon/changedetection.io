@@ -85,7 +85,7 @@ def _runner_test_various_file_slash(client, file_uri):
             # This will give some error from requests or if it went to chrome, will give some other error :-)
             assert any(s in res.data for s in substrings)
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_file_slash_access(client, live_server, measure_memory_usage):

@@ -117,7 +117,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
     set_modified_response()
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     rss_token = extract_rss_token_from_UI(client)
     res = client.get(
@@ -127,7 +127,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     assert b"should-be-excluded" not in res.data
     assert res.status_code == 200
     assert b"first-imported=1" in res.data
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_tag_import_singular(client, live_server, measure_memory_usage):
@@ -147,7 +147,7 @@ def test_tag_import_singular(client, live_server, measure_memory_usage):
     )
     # Should be only 1 tag because they both had the same
     assert res.data.count(b'test-tag') == 1
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_tag_add_in_ui(client, live_server, measure_memory_usage):
@@ -164,7 +164,7 @@ def test_tag_add_in_ui(client, live_server, measure_memory_usage):
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_group_tag_notification(client, live_server, measure_memory_usage):
@@ -211,7 +211,7 @@ def test_group_tag_notification(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     set_modified_response()
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     time.sleep(3)
 
     assert os.path.isfile("test-datastore/notification.txt")
@@ -232,7 +232,7 @@ def test_group_tag_notification(client, live_server, measure_memory_usage):
 
     #@todo Test that multiple notifications fired
     #@todo Test that each of multiple notifications with different settings
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_limit_tag_ui(client, live_server, measure_memory_usage):
@@ -269,7 +269,7 @@ def test_limit_tag_ui(client, live_server, measure_memory_usage):
     assert b'test-tag' in res.data
     assert res.data.count(b'processor-text_json_diff') == 20
     assert b"object at" not in res.data
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
@@ -289,13 +289,13 @@ def test_clone_tag_on_import(client, live_server, measure_memory_usage):
     assert b'another-tag' in res.data
 
     watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
-    res = client.get(url_for("form_clone", uuid=watch_uuid), follow_redirects=True)
+    res = client.get(url_for("ui.form_clone", uuid=watch_uuid), follow_redirects=True)
 
     assert b'Cloned' in res.data
     # 2 times plus the top link to tag
     assert res.data.count(b'test-tag') == 3
     assert res.data.count(b'another-tag') == 3
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usage):
@@ -316,13 +316,13 @@ def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usa
     assert b'another-tag' in res.data
 
     watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
-    res = client.get(url_for("form_clone", uuid=watch_uuid), follow_redirects=True)
+    res = client.get(url_for("ui.form_clone", uuid=watch_uuid), follow_redirects=True)
 
     assert b'Cloned' in res.data
     # 2 times plus the top link to tag
     assert res.data.count(b'test-tag') == 3
     assert res.data.count(b'another-tag') == 3
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
@@ -476,5 +476,5 @@ the {test} appeared before. {test in res.data[:n]=}
         """
         n += t_index + len(test)
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

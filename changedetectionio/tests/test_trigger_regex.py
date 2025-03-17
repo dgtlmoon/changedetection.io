@@ -59,7 +59,7 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage):
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("some new noise")
 
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # It should report nothing found (nothing should match the regex)
@@ -69,11 +69,11 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage):
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("regex test123<br>\nsomething 123")
 
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
     # Cleanup everything
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

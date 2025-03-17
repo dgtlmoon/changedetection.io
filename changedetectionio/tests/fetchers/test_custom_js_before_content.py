@@ -51,6 +51,6 @@ def test_execute_custom_js(client, live_server, measure_memory_usage):
     assert b"user-agent: mycustomagent" in res.data
 
     client.get(
-        url_for("form_delete", uuid="all"),
+        url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )

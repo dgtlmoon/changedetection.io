@@ -276,7 +276,7 @@ def test_access_denied(client, live_server, measure_memory_usage):
     assert res.status_code == 200
 
     # Cleanup everything
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
     res = client.post(
@@ -368,7 +368,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
     assert b'Additional properties are not allowed' in res.data
 
     # Cleanup everything
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 

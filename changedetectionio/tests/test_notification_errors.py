@@ -69,4 +69,4 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     os.unlink("test-datastore/notification.txt")
     assert 'xxxxx' in notification_submission
 
-    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)

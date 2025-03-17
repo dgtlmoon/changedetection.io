@@ -83,7 +83,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     )
     assert b'notification_screenshot' in res.data
     client.get(
-        url_for("form_delete", uuid="all"),
+        url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
 
@@ -188,6 +188,6 @@ def test_non_200_errors_report_browsersteps(client, live_server):
     assert b'Error - 404' in res.data
 
     client.get(
-        url_for("form_delete", uuid="all"),
+        url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )

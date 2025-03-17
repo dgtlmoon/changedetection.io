@@ -103,12 +103,12 @@ def test_conditions_with_text_and_number(client, live_server):
     assert b"Updated watch." in res.data
 
     wait_for_all_checks(client)
-    client.get(url_for("mark_all_viewed"), follow_redirects=True)
+    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Case 1
     set_number_in_range_response("70.5")
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # 75 is > 20 and < 100 and contains "5"
@@ -118,16 +118,16 @@ def test_conditions_with_text_and_number(client, live_server):
 
     # Case 2: Change with one condition violated
     # Number out of range (150) but contains '5'
-    client.get(url_for("mark_all_viewed"), follow_redirects=True)
+    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
     set_number_out_of_range_response("150.5")
 
 
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Should NOT be marked as having changes since not all conditions are met
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

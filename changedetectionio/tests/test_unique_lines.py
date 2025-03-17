@@ -102,7 +102,7 @@ def test_unique_lines_functionality(client, live_server, measure_memory_usage):
     set_modified_swapped_lines()
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -113,11 +113,11 @@ def test_unique_lines_functionality(client, live_server, measure_memory_usage):
 
     # Now set the content which contains the new text and re-ordered existing text
     set_modified_with_trigger_text_response()
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_sort_lines_functionality(client, live_server, measure_memory_usage):
@@ -147,7 +147,7 @@ def test_sort_lines_functionality(client, live_server, measure_memory_usage):
 
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -166,7 +166,7 @@ def test_sort_lines_functionality(client, live_server, measure_memory_usage):
     assert res.data.find(b'A uppercase') < res.data.find(b'Z last')
     assert res.data.find(b'Some initial text') < res.data.find(b'Which is across multiple lines')
     
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
@@ -199,7 +199,7 @@ def test_extra_filters(client, live_server, measure_memory_usage):
     # Give the thread time to pick it up
     wait_for_all_checks(client)
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -213,5 +213,5 @@ def test_extra_filters(client, live_server, measure_memory_usage):
     # still should remain unsorted ('A - sortable line') stays at the end
     assert res.data.find(b'A - sortable line') > res.data.find(b'Which is across multiple lines')
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

@@ -80,12 +80,12 @@ def test_check_ignore_whitespace(client, live_server, measure_memory_usage):
 
     time.sleep(sleep_time_for_fetch_thread)
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     set_original_ignore_response_but_with_whitespace()
     time.sleep(sleep_time_for_fetch_thread)
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)

@@ -87,7 +87,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked'] != last_check
 
     # Cleanup everything
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
@@ -175,5 +175,5 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked'] != last_check
 
     # Cleanup everything
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

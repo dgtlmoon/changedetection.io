@@ -168,6 +168,8 @@ def _jinja2_filter_seconds_precise(timestamp):
 
     return format(int(time.time()-timestamp), ',d')
 
+# Import login_optionally_required from auth_decorator
+from changedetectionio.auth_decorator import login_optionally_required
 
 # When nobody is logged in Flask-Login's current_user is set to an AnonymousUser object.
 class User(flask_login.UserMixin):
@@ -213,27 +215,6 @@ class User(flask_login.UserMixin):
 
     pass
 
-def login_optionally_required(func):
-    @wraps(func)
-    def decorated_view(*args, **kwargs):
-
-        has_password_enabled = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
-
-        # Permitted
-        if request.endpoint == 'static_content' and request.view_args['group'] == 'styles':
-            return func(*args, **kwargs)
-        # Permitted
-        elif request.endpoint == 'diff_history_page' and datastore.data['settings']['application'].get('shared_diff_access'):
-            return func(*args, **kwargs)
-        elif request.method in flask_login.config.EXEMPT_METHODS:
-            return func(*args, **kwargs)
-        elif app.config.get('LOGIN_DISABLED'):
-            return func(*args, **kwargs)
-        elif has_password_enabled and not current_user.is_authenticated:
-            return app.login_manager.unauthorized()
-
-        return func(*args, **kwargs)
-    return decorated_view
 
 def changedetection_app(config=None, datastore_o=None):
     logger.trace("TRACE log is enabled")
@@ -248,6 +229,30 @@ def changedetection_app(config=None, datastore_o=None):
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
     app.secret_key = init_app_secret(config['datastore_path'])
+    
+    # Set up a request hook to check authentication for all routes
+    @app.before_request
+    def check_authentication():
+        has_password_enabled = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
+
+        if has_password_enabled and not flask_login.current_user.is_authenticated:
+            # Permitted
+            if request.endpoint and 'static_content' in request.endpoint and request.view_args and request.view_args.get('group') == 'styles':
+                return None
+            # Permitted
+            elif request.endpoint and 'login' in request.endpoint:
+                return None
+            elif request.endpoint and 'diff_history_page' in request.endpoint and datastore.data['settings']['application'].get('shared_diff_access'):
+                return None
+            elif request.method in flask_login.config.EXEMPT_METHODS:
+                return None
+            elif app.config.get('LOGIN_DISABLED'):
+                return None
+            # RSS access with token is allowed
+            elif request.endpoint and 'rss.feed' in request.endpoint:
+                return None
+            else:
+                return login_manager.unauthorized()
 
 
     watch_api.add_resource(api_v1.WatchSingleHistory,
@@ -1285,18 +1290,8 @@ def changedetection_app(config=None, datastore_o=None):
     app.register_blueprint(rss.construct_blueprint(datastore), url_prefix='/rss')
     
     import changedetectionio.blueprint.ui as ui
-    app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData), url_prefix='/ui')
-    
-    # Route aliases for backward compatibility (especially for tests)
-    app.add_url_rule('/clear_history/<string:uuid>', view_func=lambda uuid: redirect(url_for('ui.clear_watch_history', uuid=uuid)), endpoint='clear_watch_history')
-    app.add_url_rule('/clear_history', view_func=lambda: redirect(url_for('ui.clear_all_history')), endpoint='clear_all_history')
-    app.add_url_rule('/form/mark-all-viewed', view_func=lambda: redirect(url_for('ui.mark_all_viewed', **request.args)), endpoint='mark_all_viewed')
-    app.add_url_rule('/api/delete', view_func=lambda: redirect(url_for('ui.form_delete', **request.args)), endpoint='form_delete')
-    app.add_url_rule('/api/clone', view_func=lambda: redirect(url_for('ui.form_clone', **request.args)), endpoint='form_clone')
-    app.add_url_rule('/api/checknow', view_func=lambda: redirect(url_for('ui.form_watch_checknow', **request.args)), endpoint='form_watch_checknow')
-    app.add_url_rule('/form/checkbox-operations', methods=['POST'], 
-                    view_func=lambda: redirect(url_for('ui.form_watch_list_checkbox_operations')), 
-                    endpoint='form_watch_list_checkbox_operations')
+    app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData))
+
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()

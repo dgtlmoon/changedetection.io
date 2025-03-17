@@ -23,7 +23,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
 
 
     res = client.get(
-        url_for("form_clone", uuid="first"),
+        url_for("ui.form_clone", uuid="first"),
         follow_redirects=True
     )
 

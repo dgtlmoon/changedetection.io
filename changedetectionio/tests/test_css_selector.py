@@ -113,7 +113,7 @@ def test_check_markup_include_filters_restriction(client, live_server, measure_m
     set_modified_response()
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
@@ -236,7 +236,7 @@ def test_filter_is_empty_help_suggestion(client, live_server, measure_memory_usa
          </html>
         """)
 
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(

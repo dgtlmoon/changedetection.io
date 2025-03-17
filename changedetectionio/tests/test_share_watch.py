@@ -54,7 +54,7 @@ def test_share_watch(client, live_server, measure_memory_usage):
 
     # Now delete what we have, we will try to re-import it
     # Cleanup everything
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
     # Add our URL to the import page

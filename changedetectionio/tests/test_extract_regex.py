@@ -168,7 +168,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
     set_modified_response()
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
@@ -228,5 +228,5 @@ def test_regex_error_handling(client, live_server, measure_memory_usage):
 
     assert b'is not a valid regular expression.' in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

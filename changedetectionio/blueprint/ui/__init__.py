@@ -8,8 +8,8 @@ from changedetectionio.store import ChangeDetectionStore
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_update_threads, queuedWatchMetaData):
     ui_blueprint = Blueprint('ui', __name__, template_folder="templates")
     
-    # Import this here to avoid circular imports
-    from changedetectionio.flask_app import login_optionally_required
+    # Import the login decorator
+    from changedetectionio.auth_decorator import login_optionally_required
 
     @ui_blueprint.route("/clear_history/<string:uuid>", methods=['GET'])
     @login_optionally_required

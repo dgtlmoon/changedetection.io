@@ -97,6 +97,6 @@ def test_socks5(client, live_server, measure_memory_usage):
     )
     assert b"OK" in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 

@@ -82,7 +82,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage):
     for k, watch in client.application.config.get('DATASTORE').data.get('watching').items():
         assert 'custom' in watch.get('remote_server_reply') # added in util.py
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_body_in_request(client, live_server, measure_memory_usage):
@@ -177,7 +177,7 @@ def test_body_in_request(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
     assert b"Body must be empty when Request Method is set to GET" in res.data
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_method_in_request(client, live_server, measure_memory_usage):
@@ -253,7 +253,7 @@ def test_method_in_request(client, live_server, measure_memory_usage):
     # Should be only one with method set to PATCH
     assert watches_with_method == 1
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 # Re #2408 - user-agent override test, also should handle case-insensitive header deduplication
@@ -309,7 +309,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage):
     )
     assert b"agent-from-watch" in res.data
     assert b"html-requests-user-agent" not in res.data
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
@@ -383,7 +383,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
         f.write("watch-header: nice\r\nurl-header-watch: http://example.com/watch")
 
     wait_for_all_checks(client)
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up, this actually is not super reliable and pytest can terminate before the check is ran
     wait_for_all_checks(client)
@@ -422,5 +422,5 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
         assert "User-Agent:".encode('utf-8') + requests_ua.encode('utf-8') in res.data
 
     # unlink headers.txt on start/stop
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

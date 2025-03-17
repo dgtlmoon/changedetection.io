@@ -50,7 +50,7 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text):
     #assert b'Error Screenshot' in res.data
 
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
@@ -59,7 +59,7 @@ def test_http_error_handler(client, live_server, measure_memory_usage):
     _runner_test_http_errors(client, live_server, 404, 'Page not found')
     _runner_test_http_errors(client, live_server, 500, '(Internal server error) received')
     _runner_test_http_errors(client, live_server, 400, 'Error - Request returned a HTTP error code 400')
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 # Just to be sure error text is properly handled
@@ -83,7 +83,7 @@ def test_DNS_errors(client, live_server, measure_memory_usage):
     assert found_name_resolution_error
     # Should always record that we tried
     assert bytes("just now".encode('utf-8')) in res.data
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 # Re 1513
@@ -126,5 +126,5 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
     found_name_resolution_error = b"Temporary failure in name resolution" in res.data or b"Name or service not known" in res.data
     assert not found_name_resolution_error
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

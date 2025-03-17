@@ -7,14 +7,14 @@ import flask_login
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
 from changedetectionio.store import ChangeDetectionStore
-from changedetectionio.flask_app import login_optionally_required
+from changedetectionio.auth_decorator import login_optionally_required
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     settings_blueprint = Blueprint('settings', __name__, template_folder="templates")
 
-    @login_optionally_required
     @settings_blueprint.route("/", methods=['GET', "POST"])
+    @login_optionally_required
     def settings_page():
         from changedetectionio import forms
 
@@ -100,8 +100,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return output
 
-    @login_optionally_required
     @settings_blueprint.route("/reset-api-key", methods=['GET'])
+    @login_optionally_required
     def settings_reset_api_key():
         secret = secrets.token_hex(16)
         datastore.data['settings']['application']['api_access_token'] = secret
@@ -109,8 +109,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         flash("API Key was regenerated.")
         return redirect(url_for('settings.settings_page')+'#api')
         
-    @login_optionally_required
     @settings_blueprint.route("/notification-logs", methods=['GET'])
+    @login_optionally_required
     def notification_logs():
         from changedetectionio.flask_app import notification_debug_log
         output = render_template("notification-log.html",

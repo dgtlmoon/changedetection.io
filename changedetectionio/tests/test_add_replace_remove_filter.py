@@ -69,8 +69,8 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     set_original(excluding='Something irrelevant')
 
     # A line thats not the trigger should not trigger anything
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches queued for rechecking.' in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
@@ -79,28 +79,28 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     set_original(excluding='The golden line')
 
     # Check in the processor here what's going on, its triggering empty-reply and no change.
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
 
     # Now add it back, and we should not get a trigger
-    client.get(url_for("mark_all_viewed"), follow_redirects=True)
+    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
     set_original(excluding=None)
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
 
     # Remove it again, and we should get a trigger
     set_original(excluding='The golden line')
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
@@ -153,8 +153,8 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     set_original(excluding='Something irrelevant')
 
     # A line thats not the trigger should not trigger anything
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches queued for rechecking.' in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
@@ -162,7 +162,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
 
     # The trigger line is ADDED,  this should trigger
     set_original(add_line='<p>Oh yes please</p>')
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
 
@@ -176,5 +176,5 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
         assert b'-Oh yes please' in response
         assert '网站监测 内容更新了'.encode('utf-8') in response
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

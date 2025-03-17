@@ -63,7 +63,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("<html>some new noise with cool stuff2 ok</html>")
 
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     time.sleep(sleep_time_for_fetch_thread)
 
     # It should report nothing found (nothing should match the regex and filter)
@@ -74,11 +74,11 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("<html>some new noise with <span id=in-here>cool stuff6</span> ok</html>")
 
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     time.sleep(sleep_time_for_fetch_thread)
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
 # Cleanup everything
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
