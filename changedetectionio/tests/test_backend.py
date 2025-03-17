@@ -80,7 +80,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # #75, and it should be in the RSS feed
     rss_token = extract_rss_token_from_UI(client)
-    res = client.get(url_for("rss", token=rss_token, _external=True))
+    res = client.get(url_for("rss.feed", token=rss_token, _external=True))
     expected_url = url_for('test_endpoint', _external=True)
     assert b'<rss' in res.data
 

@@ -223,7 +223,7 @@
                 all {% if active_tag_uuid %} in "{{active_tag.title}}"{%endif%}</a>
             </li>
             <li>
-                <a href="{{ url_for('rss', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>
+                <a href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>
             </li>
         </ul>
         {{ pagination.links }}

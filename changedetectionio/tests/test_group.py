@@ -121,7 +121,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
     rss_token = extract_rss_token_from_UI(client)
     res = client.get(
-        url_for("rss", token=rss_token, tag="extra-import-tag", _external=True),
+        url_for("rss.feed", token=rss_token, tag="extra-import-tag", _external=True),
         follow_redirects=True
     )
     assert b"should-be-excluded" not in res.data
