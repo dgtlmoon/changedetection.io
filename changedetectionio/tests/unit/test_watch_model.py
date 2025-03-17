@@ -61,5 +61,22 @@ class TestDiffBuilder(unittest.TestCase):
         p = watch.get_from_version_based_on_last_viewed
         assert p == "100", "Correct with only one history snapshot"
 
+    def test_watch_link_property_with_processor(self):
+        """Test the link property with a processor that customizes the link"""
+        from unittest.mock import patch
+        
+        watch = Watch.model(datastore_path='/tmp', default={})
+        watch['url'] = 'https://example.com'
+        watch['processor'] = 'whois'
+        
+        # Mock the processor registry's get_display_link function
+        with patch('changedetectionio.processors.processor_registry.get_display_link') as mock_get_display_link:
+            mock_get_display_link.return_value = "WHOIS - example.com"
+            
+            # The link property should use the customized link from the processor
+            assert watch.link == "WHOIS - example.com"
+            mock_get_display_link.assert_called_once_with(url='https://example.com', processor_name='whois')
+
+
 if __name__ == '__main__':
     unittest.main()

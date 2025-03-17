@@ -712,23 +712,44 @@ def changedetection_app(config=None, datastore_o=None):
         # Does it use some custom form? does one exist?
         processor_name = datastore.data['watching'][uuid].get('processor', '')
         processor_classes = next((tpl for tpl in find_processors() if tpl[1] == processor_name), None)
+        
+        # If it's not found in traditional processors, check if it's a pluggy plugin
         if not processor_classes:
-            flash(f"Cannot load the edit form for processor/plugin '{processor_classes[1]}', plugin missing?", 'error')
-            return redirect(url_for('index'))
-
-        parent_module = get_parent_module(processor_classes[0])
-
-        try:
-            # Get the parent of the "processor.py" go up one, get the form (kinda spaghetti but its reusing existing code)
-            forms_module = importlib.import_module(f"{parent_module.__name__}.forms")
-            # Access the 'processor_settings_form' class from the 'forms' module
-            form_class = getattr(forms_module, 'processor_settings_form')
-        except ModuleNotFoundError as e:
-            # .forms didnt exist
-            form_class = forms.processor_text_json_diff_form
-        except AttributeError as e:
-            # .forms exists but no useful form
-            form_class = forms.processor_text_json_diff_form
+            try:
+                from changedetectionio.processors.processor_registry import get_processor_form
+                plugin_form_class = get_processor_form(processor_name)
+                if plugin_form_class:
+                    # Use default text_json_diff_form as parent module for plugins
+                    from changedetectionio.processors.text_json_diff import processor as text_json_diff_processor
+                    form_class = forms.processor_text_json_diff_form
+                    parent_module = get_parent_module(text_json_diff_processor)
+                    
+                    # Skip the normal form loading code path
+                    use_plugin_form = True
+                else:
+                    flash(f"Cannot load the edit form for processor/plugin '{processor_name}', plugin missing?", 'error')
+                    return redirect(url_for('index'))
+            except ImportError:
+                flash(f"Cannot load the edit form for processor/plugin '{processor_name}', plugin system not available?", 'error')
+                return redirect(url_for('index'))
+        else:
+            # Traditional processor - continue with normal flow
+            parent_module = get_parent_module(processor_classes[0])
+            use_plugin_form = False
+        
+        # Only follow this path for traditional processors
+        if not use_plugin_form:
+            try:
+                # Get the parent of the "processor.py" go up one, get the form (kinda spaghetti but its reusing existing code)
+                forms_module = importlib.import_module(f"{parent_module.__name__}.forms")
+                # Access the 'processor_settings_form' class from the 'forms' module
+                form_class = getattr(forms_module, 'processor_settings_form')
+            except ModuleNotFoundError as e:
+                # .forms didnt exist
+                form_class = forms.processor_text_json_diff_form
+            except AttributeError as e:
+                # .forms exists but no useful form
+                form_class = forms.processor_text_json_diff_form
 
         form = form_class(formdata=request.form if request.method == 'POST' else None,
                           data=default,

@@ -271,19 +271,38 @@ class update_worker(threading.Thread):
 
                     try:
                         # Processor is what we are using for detecting the "Change"
-                        processor = watch.get('processor', 'text_json_diff')
+                        processor_name = watch.get('processor', 'text_json_diff')
 
-                        # Init a new 'difference_detection_processor', first look in processors
-                        processor_module_name = f"changedetectionio.processors.{processor}.processor"
+                        
+
+                        # First, try to get the processor from our plugin registry
                         try:
-                            processor_module = importlib.import_module(processor_module_name)
-                        except ModuleNotFoundError as e:
-                            print(f"Processor module '{processor}' not found.")
-                            raise e
-
-                        update_handler = processor_module.perform_site_check(datastore=self.datastore,
-                                                                             watch_uuid=uuid
-                                                                             )
+                            from changedetectionio.processors.processor_registry import get_processor_site_check
+                            update_handler = get_processor_site_check(processor_name, self.datastore, uuid)
+                            
+                            if update_handler:
+                                # We found the processor in our plugin registry
+                                logger.info(f"Using processor '{processor_name}' from plugin registry")
+                            else:
+                                # Fall back to the traditional file-based approach
+                                processor_module_name = f"changedetectionio.processors.{processor_name}.processor"
+                                try:
+                                    processor_module = importlib.import_module(processor_module_name)
+                                    update_handler = processor_module.perform_site_check(datastore=self.datastore,
+                                                                                        watch_uuid=uuid)
+                                except ModuleNotFoundError as e:
+                                    print(f"Processor module '{processor_name}' not found in both plugin registry and file system.")
+                                    raise e
+                        except ImportError as e:
+                            # If processor_registry.py cannot be imported, fall back to the traditional approach
+                            processor_module_name = f"changedetectionio.processors.{processor_name}.processor"
+                            try:
+                                processor_module = importlib.import_module(processor_module_name)
+                                update_handler = processor_module.perform_site_check(datastore=self.datastore,
+                                                                                    watch_uuid=uuid)
+                            except ModuleNotFoundError as e:
+                                print(f"Processor module '{processor_name}' not found.")
+                                raise e
 
                         update_handler.call_browser()
 
