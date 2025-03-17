@@ -48,23 +48,28 @@ CUSTOM_OPERATIONS = {
     "!contains_regex": not_contains_regex
 }
 
+def filter_complete_rules(ruleset):
+    rules = [
+        rule for rule in ruleset
+        if all(value not in ("", False, "None", None) for value in [rule["operator"], rule["field"], rule["value"]])
+    ]
+    return rules
 
-def convert_to_jsonlogic(rule_dict):
+def convert_to_jsonlogic(rule_dict: list):
     """
     Convert a structured rule dict into a JSON Logic rule.
 
     :param rule_dict: Dictionary containing conditions.
     :return: JSON Logic rule as a dictionary.
     """
-    if not rule_dict.get("conditions"):
-        return {}  # Return an empty rule if no conditions exist
+
 
     # Determine the logical operator ("ALL" -> "and", "ANY" -> "or")
     logic_operator = "and" if rule_dict.get("conditions_match_logic", "ALL") == "ALL" else "or"
 
     json_logic_conditions = []
 
-    for condition in rule_dict["conditions"]:
+    for condition in rule_dict:
         operator = condition["operator"]
         field = condition["field"]
         value = condition["value"]
@@ -104,22 +109,27 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
     """
     from json_logic import jsonLogic
 
-
-    # Give all plugins a chance to update the data dict again (that we will test the conditions against)
-    for plugin in plugin_manager.get_plugins():
-        new_execute_data = plugin.add_data(current_watch_uuid=current_watch_uuid,
-                                           application_datastruct=application_datastruct,
-                                           ephemeral_data=ephemeral_data)
-        if isinstance(new_execute_data, dict):
-            EXECUTE_DATA = {}
-            EXECUTE_DATA.update(new_execute_data)
-
+    EXECUTE_DATA = {}
+    result = True
+    
     ruleset_settings = application_datastruct['watching'].get(current_watch_uuid)
-    ruleset = convert_to_jsonlogic(ruleset_settings)
-    result = jsonLogic(logic=ruleset, data=EXECUTE_DATA)
+
+    if ruleset_settings.get("conditions"):
+        complete_rules = filter_complete_rules(ruleset_settings['conditions'])
+        if complete_rules:
+            # Give all plugins a chance to update the data dict again (that we will test the conditions against)
+            for plugin in plugin_manager.get_plugins():
+                new_execute_data = plugin.add_data(current_watch_uuid=current_watch_uuid,
+                                                   application_datastruct=application_datastruct,
+                                                   ephemeral_data=ephemeral_data)
+
+                if new_execute_data and isinstance(new_execute_data, dict):
+                    EXECUTE_DATA.update(new_execute_data)
+
+                ruleset = convert_to_jsonlogic(rule_dict=complete_rules)
+                result = jsonLogic(logic=ruleset, data=EXECUTE_DATA)
 
     return result
-
 
 # Load plugins dynamically
 for plugin in plugin_manager.get_plugins():
