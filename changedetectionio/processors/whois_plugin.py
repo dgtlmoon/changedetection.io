@@ -44,7 +44,7 @@ class WhoisProcessor(TextJsonDiffProcessor):
         
         # Ensure we have a valid domain
         if not domain:
-            error_msg = f"Could not extract domain from URL: {url}"
+            error_msg = f"Could not extract domain from URL: '{url}'"
             self.fetcher.content = error_msg
             self.fetcher.status_code = 400
             logger.error(error_msg)
@@ -107,6 +107,8 @@ class WhoisProcessor(TextJsonDiffProcessor):
             self.fetcher.get_last_status_code = lambda: self.fetcher.status_code
             self.fetcher.quit = lambda: None
             logger.error(error_msg)
+
+        return
     
     def run_changedetection(self, watch):
         """Use the parent's run_changedetection which will use our overridden call_browser method"""
@@ -126,30 +128,6 @@ class WhoisProcessor(TextJsonDiffProcessor):
         """Factory method to create a WhoisProcessor instance - for compatibility with legacy code"""
         processor = WhoisProcessor(datastore=datastore, watch_uuid=watch_uuid)
         return processor
-
-@hookimpl
-def get_display_link(url, processor_name):
-    """Return a custom display link for WHOIS processor
-    
-    Extract the domain from the URL and return a formatted link that shows
-    this is a WHOIS lookup rather than a regular web page.
-    """
-    if processor_name == 'whois':
-        try:
-            # Extract domain from URL
-            parsed_url = urllib.parse.urlparse(url)
-            domain = parsed_url.netloc
-            
-            # Remove www. prefix if present
-            domain = re.sub(r'^www\.', '', domain)
-            
-            if domain:
-                return f"WHOIS - {domain}"
-        except Exception as e:
-            logger.error(f"Error generating WHOIS display link: {str(e)}")
-            return url
-    
-    return None
 
 @hookimpl
 def perform_site_check(datastore, watch_uuid):
