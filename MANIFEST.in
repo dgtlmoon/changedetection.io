@@ -5,9 +5,11 @@ recursive-include changedetectionio/content_fetchers *
 recursive-include changedetectionio/conditions *
 recursive-include changedetectionio/model *
 recursive-include changedetectionio/processors *
+recursive-include changedetectionio/rss *
 recursive-include changedetectionio/static *
 recursive-include changedetectionio/templates *
 recursive-include changedetectionio/tests *
+recursive-include changedetectionio/UI *
 prune changedetectionio/static/package-lock.json
 prune changedetectionio/static/styles/node_modules
 prune changedetectionio/static/styles/package-lock.json
