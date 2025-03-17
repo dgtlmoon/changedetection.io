@@ -127,10 +127,12 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
                 if new_execute_data and isinstance(new_execute_data, dict):
                     EXECUTE_DATA.update(new_execute_data)
 
-                ruleset = convert_to_jsonlogic(logic_operator=logic_operator, rule_dict=complete_rules)
-
-                if not jsonLogic(logic=ruleset, data=EXECUTE_DATA):
-                    result = False
+            # Create the ruleset
+            ruleset = convert_to_jsonlogic(logic_operator=logic_operator, rule_dict=complete_rules)
+            
+            # Pass the custom operations dictionary to jsonLogic
+            if not jsonLogic(logic=ruleset, data=EXECUTE_DATA, operations=CUSTOM_OPERATIONS):
+                result = False
 
     return result
 
