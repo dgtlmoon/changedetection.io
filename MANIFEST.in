@@ -2,6 +2,7 @@ recursive-include changedetectionio/api *
 recursive-include changedetectionio/apprise_plugin *
 recursive-include changedetectionio/blueprint *
 recursive-include changedetectionio/content_fetchers *
+recursive-include changedetectionio/conditions *
 recursive-include changedetectionio/model *
 recursive-include changedetectionio/processors *
 recursive-include changedetectionio/static *
