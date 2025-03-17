@@ -523,6 +523,13 @@ body.preview-text-enabled {
   z-index: 3;
   box-shadow: 1px 1px 4px var(--color-shadow-jump); }
 
+ul#conditions_match_logic {
+  list-style: none; }
+  ul#conditions_match_logic input, ul#conditions_match_logic label, ul#conditions_match_logic li {
+    display: inline-block; }
+  ul#conditions_match_logic li {
+    padding-right: 1em; }
+
 body {
   color: var(--color-text);
   background: var(--color-background-page);

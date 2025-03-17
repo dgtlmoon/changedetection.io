@@ -28,13 +28,13 @@ def _task(watch, update_handler):
     return text_after_filter
 
 
-def prepare_filter_prevew(datastore, watch_uuid):
+def prepare_filter_prevew(datastore, watch_uuid, form_data):
     '''Used by @app.route("/edit/<string:uuid>/preview-rendered", methods=['POST'])'''
     from changedetectionio import forms, html_tools
     from changedetectionio.model.Watch import model as watch_model
     from concurrent.futures import ProcessPoolExecutor
     from copy import deepcopy
-    from flask import request, jsonify
+    from flask import request
     import brotli
     import importlib
     import os
@@ -50,12 +50,12 @@ def prepare_filter_prevew(datastore, watch_uuid):
 
     if tmp_watch and tmp_watch.history and os.path.isdir(tmp_watch.watch_data_dir):
         # Splice in the temporary stuff from the form
-        form = forms.processor_text_json_diff_form(formdata=request.form if request.method == 'POST' else None,
-                                                   data=request.form
+        form = forms.processor_text_json_diff_form(formdata=form_data if request.method == 'POST' else None,
+                                                   data=form_data
                                                    )
 
         # Only update vars that came in via the AJAX post
-        p = {k: v for k, v in form.data.items() if k in request.form.keys()}
+        p = {k: v for k, v in form.data.items() if k in form_data.keys()}
         tmp_watch.update(p)
         blank_watch_no_filters = watch_model()
         blank_watch_no_filters['url'] = tmp_watch.get('url')
@@ -103,13 +103,12 @@ def prepare_filter_prevew(datastore, watch_uuid):
 
     logger.trace(f"Parsed in {time.time() - now:.3f}s")
 
-    return jsonify(
-        {
+    return ({
             'after_filter': text_after_filter,
             'before_filter': text_before_filter.decode('utf-8') if isinstance(text_before_filter, bytes) else text_before_filter,
             'duration': time.time() - now,
             'trigger_line_numbers': trigger_line_numbers,
             'ignore_line_numbers': ignore_line_numbers,
-        }
-    )
+        })
+
 

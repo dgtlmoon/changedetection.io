@@ -165,6 +165,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     client.get(url_for("form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
+
     assert b'unviewed' in res.data
 
     # Takes a moment for apprise to fire

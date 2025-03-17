@@ -3,6 +3,7 @@ import re
 from loguru import logger
 from wtforms.widgets.core import TimeInput
 
+from changedetectionio.conditions.form import ConditionFormRow
 from changedetectionio.strtobool import strtobool
 
 from wtforms import (
@@ -305,8 +306,10 @@ class ValidateAppRiseServers(object):
     def __call__(self, form, field):
         import apprise
         apobj = apprise.Apprise()
+
         # so that the custom endpoints are registered
-        from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
+        from .apprise_asset import asset
+
         for server_url in field.data:
             url = server_url.strip()
             if url.startswith("#"):
@@ -509,6 +512,7 @@ class quickWatchForm(Form):
     edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
 
 
+
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
     from . import processors
@@ -595,6 +599,10 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     notification_muted = BooleanField('Notifications Muted / Off', default=False)
     notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
+
+    conditions_match_logic = RadioField(u'Match', choices=[('ALL', 'Match all of the following'),('ANY', 'Match any of the following')], default='ALL')
+    conditions = FieldList(FormField(ConditionFormRow), min_entries=1)  # Add rule logic here
+
 
     def extra_tab_content(self):
         return None

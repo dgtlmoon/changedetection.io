@@ -1,11 +1,14 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_webdriver_type_watches_warning %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_webdriver_type_watches_warning, render_fieldlist_of_formfields_as_table %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='scheduler.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='conditions.js')}}" defer></script>
+
+
 <script>
     const browser_steps_available_screenshots=JSON.parse('{{ watch.get_browsersteps_available_screenshots|tojson }}');
     const browser_steps_config=JSON.parse('{{ browser_steps_config|tojson }}');
@@ -50,6 +53,7 @@
             {% if watch['processor'] == 'text_json_diff' %}
             <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
             <li class="tab" id="filters-and-triggers-tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
+            <li class="tab" id="conditions-tab"><a href="#conditions">Conditions</a></li>
             {% endif %}
             <li class="tab"><a href="#notifications">Notifications</a></li>
             <li class="tab"><a href="#stats">Stats</a></li>
@@ -274,13 +278,39 @@ Math: {{ 1 + 1 }}") }}
                         </div>
                         {% endif %}
                         <a href="#notifications" id="notification-setting-reset-to-default" class="pure-button button-xsmall" style="right: 20px; top: 20px; position: absolute; background-color: #5f42dd; border-radius: 4px; font-size: 70%; color: #fff">Use system defaults</a>
-
                         {{ render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                     </div>
                 </fieldset>
             </div>
 
             {% if watch['processor'] == 'text_json_diff' %}
+
+            <div class="tab-pane-inner" id="conditions">
+                    <script>
+                        const verify_condition_rule_url="{{url_for('conditions.verify_condition_single_rule', watch_uuid=uuid)}}";
+                    </script>
+                <style>
+                    .verifyRuleRow {
+                        background-color: #4caf50;
+                        color: white;
+                        border: none;
+                        cursor: pointer;
+                        font-weight: bold;
+                    }
+                    .verifyRuleRow:hover {
+                        background-color: #45a049;
+                    }
+                </style>
+                <div class="pure-control-group">
+                    {{ render_field(form.conditions_match_logic) }}
+                    {{ render_fieldlist_of_formfields_as_table(form.conditions) }}
+                    <div class="pure-form-message-inline">
+                        <br>
+                        Use the verify (✓) button to test if a condition passes against the current snapshot.<br><br>
+                        Did you know that <strong>conditions</strong> can be extended with your own custom plugin? tutorials coming soon!<br>
+                    </div>
+                </div>
+            </div>
             <div class="tab-pane-inner" id="filters-and-triggers">
                 <span id="activate-text-preview" class="pure-button pure-button-primary button-xsmall">Activate preview</span>
               <div>
