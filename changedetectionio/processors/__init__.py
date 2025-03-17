@@ -3,12 +3,17 @@ from changedetectionio.content_fetchers.base import Fetcher
 from changedetectionio.strtobool import strtobool
 from copy import deepcopy
 from loguru import logger
+
 import hashlib
 import importlib
 import inspect
 import os
 import pkgutil
 import re
+
+# Import the plugin manager
+from .pluggy_interface import plugin_manager
+
 
 class difference_detection_processor():
 
@@ -26,9 +31,95 @@ class difference_detection_processor():
         self.watch = deepcopy(self.datastore.data['watching'].get(watch_uuid))
         # Generic fetcher that should be extended (requests, playwright etc)
         self.fetcher = Fetcher()
+        
+    def _get_proxy_for_watch(self, preferred_proxy_id=None):
+        """Get proxy configuration based on watch settings and preferred proxy ID
+        
+        Args:
+            preferred_proxy_id: Optional explicit proxy ID to use
+            
+        Returns:
+            dict: Proxy configuration or None if no proxy should be used
+            str: Proxy URL or None if no proxy should be used
+        """
+        # Default to no proxy config
+        proxy_config = None
+        proxy_url = None
+        
+        # Check if datastore is available and has get_preferred_proxy_for_watch method
+        if hasattr(self, 'datastore') and self.datastore:
+            try:
+                # Get preferred proxy ID if not provided
+                if not preferred_proxy_id and hasattr(self.datastore, 'get_preferred_proxy_for_watch'):
+                    # Get the watch UUID if available
+                    watch_uuid = None
+                    if hasattr(self.watch, 'get'):
+                        watch_uuid = self.watch.get('uuid')
+                    elif hasattr(self.watch, 'uuid'):
+                        watch_uuid = self.watch.uuid
+                    
+                    if watch_uuid:
+                        preferred_proxy_id = self.datastore.get_preferred_proxy_for_watch(uuid=watch_uuid)
+                
+                # Check if we have a proxy list and a valid proxy ID
+                if preferred_proxy_id and hasattr(self.datastore, 'proxy_list') and self.datastore.proxy_list:
+                    proxy_info = self.datastore.proxy_list.get(preferred_proxy_id)
+                    
+                    if proxy_info and 'url' in proxy_info:
+                        proxy_url = proxy_info.get('url')
+                        logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{proxy_url}'")
+                        
+                        # Parse the proxy URL to build a proxy dict for requests
+                        import urllib.parse
+                        parsed_proxy = urllib.parse.urlparse(proxy_url)
+                        proxy_type = parsed_proxy.scheme
+                        
+                        # Extract credentials if present
+                        username = None
+                        password = None
+                        if parsed_proxy.username:
+                            username = parsed_proxy.username
+                            if parsed_proxy.password:
+                                password = parsed_proxy.password
+                        
+                        # Build the proxy URL without credentials for the proxy dict
+                        netloc = parsed_proxy.netloc
+                        if '@' in netloc:
+                            netloc = netloc.split('@')[1]
+                        
+                        proxy_addr = f"{proxy_type}://{netloc}"
+                        
+                        # Create the proxy configuration
+                        proxy_config = {
+                            'http': proxy_addr,
+                            'https': proxy_addr
+                        }
+                        
+                        # Add credentials if present
+                        if username:
+                            proxy_config['username'] = username
+                            if password:
+                                proxy_config['password'] = password
+            except Exception as e:
+                # Log the error but continue without a proxy
+                logger.error(f"Error setting up proxy: {str(e)}")
+                proxy_config = None
+                proxy_url = None
+                
+        return proxy_config, proxy_url
 
     def call_browser(self, preferred_proxy_id=None):
-
+        """Fetch content using the appropriate browser/fetcher
+        
+        This method will:
+        1. Determine the appropriate fetcher to use based on watch settings
+        2. Set up proxy configuration if needed
+        3. Initialize the fetcher with the correct parameters
+        4. Configure any browser steps if needed
+        
+        Args:
+            preferred_proxy_id: Optional explicit proxy ID to use
+        """
         from requests.structures import CaseInsensitiveDict
 
         url = self.watch.link
@@ -43,8 +134,8 @@ class difference_detection_processor():
         # Requests, playwright, other browser via wss:// etc, fetch_extra_something
         prefer_fetch_backend = self.watch.get('fetch_backend', 'system')
 
-        # Proxy ID "key"
-        preferred_proxy_id = preferred_proxy_id if preferred_proxy_id else self.datastore.get_preferred_proxy_for_watch(uuid=self.watch.get('uuid'))
+        # Get proxy configuration
+        proxy_config, proxy_url = self._get_proxy_for_watch(preferred_proxy_id)
 
         # Pluggable content self.fetcher
         if not prefer_fetch_backend or prefer_fetch_backend == 'system':
@@ -82,14 +173,10 @@ class difference_detection_processor():
             # What it referenced doesnt exist, Just use a default
             fetcher_obj = getattr(content_fetchers, "html_requests")
 
-        proxy_url = None
-        if preferred_proxy_id:
-            # Custom browser endpoints should NOT have a proxy added
-            if not prefer_fetch_backend.startswith('extra_browser_'):
-                proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
-                logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{proxy_url}' for {url}")
-            else:
-                logger.debug(f"Skipping adding proxy data when custom Browser endpoint is specified. ")
+        # Custom browser endpoints should NOT have a proxy added
+        if proxy_url and prefer_fetch_backend.startswith('extra_browser_'):
+            logger.debug(f"Skipping adding proxy data when custom Browser endpoint is specified.")
+            proxy_url = None
 
         # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
         # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
@@ -185,9 +272,9 @@ def find_sub_packages(package_name):
 
 def find_processors():
     """
-    Find all subclasses of DifferenceDetectionProcessor in the specified package.
+    Find all subclasses of DifferenceDetectionProcessor in the specified package
+    and also include processors from the plugin system.
 
-    :param package_name: The name of the package to scan for processor modules.
     :return: A list of (module, class) tuples.
     """
     package_name = "changedetectionio.processors"  # Name of the current package/module
@@ -195,6 +282,7 @@ def find_processors():
     processors = []
     sub_packages = find_sub_packages(package_name)
 
+    # Find traditional processors
     for sub_package in sub_packages:
         module_name = f"{package_name}.{sub_package}.processor"
         try:
@@ -206,6 +294,15 @@ def find_processors():
                     processors.append((module, sub_package))
         except (ModuleNotFoundError, ImportError) as e:
             logger.warning(f"Failed to import module {module_name}: {e} (find_processors())")
+
+    # Also include processors from the plugin system
+    try:
+        from .processor_registry import get_plugin_processor_modules
+        plugin_modules = get_plugin_processor_modules()
+        if plugin_modules:
+            processors.extend(plugin_modules)
+    except (ImportError, ModuleNotFoundError) as e:
+        logger.warning(f"Failed to import plugin modules: {e} (find_processors())")
 
     return processors
 
@@ -223,8 +320,22 @@ def get_parent_module(module):
     return False
 
 
-
 def get_custom_watch_obj_for_processor(processor_name):
+    """
+    Get the custom watch object for a processor
+    :param processor_name: Name of the processor
+    :return: Watch class or None
+    """
+    # First, try to get the watch model from the pluggy system
+    try:
+        from .processor_registry import get_processor_watch_model
+        watch_model = get_processor_watch_model(processor_name)
+        if watch_model:
+            return watch_model
+    except Exception as e:
+        logger.warning(f"Error getting processor watch model from pluggy: {e}")
+
+    # Fall back to the traditional approach
     from changedetectionio.model import Watch
     watch_class = Watch.model
     processor_classes = find_processors()
@@ -241,14 +352,47 @@ def get_custom_watch_obj_for_processor(processor_name):
 def available_processors():
     """
     Get a list of processors by name and description for the UI elements
-    :return: A list :)
+    :return: A list of tuples (processor_name, description)
     """
-
-    processor_classes = find_processors()
-
-    available = []
-    for package, processor_class in processor_classes:
-        available.append((processor_class, package.name))
-
-    return available
-
+    # Get processors from the pluggy system
+    pluggy_processors = []
+    try:
+        from .processor_registry import get_all_processors
+        pluggy_processors = get_all_processors()
+    except Exception as e:
+        logger.error(f"Error getting processors from pluggy: {str(e)}")
+    
+    # Get processors from the traditional file-based system
+    traditional_processors = []
+    try:
+        # Let's not use find_processors() directly since it now also includes pluggy processors
+        package_name = "changedetectionio.processors"
+        sub_packages = find_sub_packages(package_name)
+        
+        for sub_package in sub_packages:
+            module_name = f"{package_name}.{sub_package}.processor"
+            try:
+                module = importlib.import_module(module_name)
+                # Get the name and description from the module if available
+                name = getattr(module, 'name', f"Traditional processor: {sub_package}")
+                description = getattr(module, 'description', sub_package)
+                traditional_processors.append((sub_package, name))
+            except (ModuleNotFoundError, ImportError, AttributeError) as e:
+                logger.warning(f"Failed to import module {module_name}: {e} (available_processors())")
+    except Exception as e:
+        logger.error(f"Error getting traditional processors: {str(e)}")
+    
+    # Combine the lists, ensuring no duplicates
+    # Pluggy processors take precedence
+    all_processors = []
+    
+    # Add all pluggy processors
+    all_processors.extend(pluggy_processors)
+    
+    # Add traditional processors that aren't already registered via pluggy
+    pluggy_processor_names = [name for name, _ in pluggy_processors]
+    for processor_class, name in traditional_processors:
+        if processor_class not in pluggy_processor_names:
+            all_processors.append((processor_class, name))
+    
+    return all_processors

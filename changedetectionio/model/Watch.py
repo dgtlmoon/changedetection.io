@@ -67,7 +67,6 @@ class model(watch_base):
 
     @property
     def link(self):
-
         url = self.get('url', '')
         if not is_safe_url(url):
             return 'DISABLED'
@@ -93,6 +92,19 @@ class model(watch_base):
         # Also double check it after any Jinja2 formatting just incase
         if not is_safe_url(ready_url):
             return 'DISABLED'
+            
+        # Check if a processor wants to customize the display link
+        processor_name = self.get('processor')
+        if processor_name:
+            try:
+                # Import here to avoid circular imports
+                from changedetectionio.processors.processor_registry import get_display_link
+                custom_link = get_display_link(url=ready_url, processor_name=processor_name)
+                if custom_link:
+                    return custom_link
+            except Exception as e:
+                logger.error(f"Error getting custom display link for processor {processor_name}: {str(e)}")
+                
         return ready_url
 
     def clear_watch(self):
