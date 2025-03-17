@@ -84,6 +84,15 @@ def test_conditions_with_text_and_number(client, live_server):
             "conditions-2-field": "extracted_number",
             "conditions-2-value": "100",
 
+            # So that 'operations' from pluggy discovery are tested
+            "conditions-3-operator": "length_min",
+            "conditions-3-field": "page_filtered_text",
+            "conditions-3-value": "1",
+
+            # So that 'operations' from pluggy discovery are tested
+            "conditions-4-operator": "length_max",
+            "conditions-4-field": "page_filtered_text",
+            "conditions-4-value": "100",
         },
         follow_redirects=True
     )

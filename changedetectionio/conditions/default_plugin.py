@@ -13,9 +13,17 @@ def register_operators():
     def ends_with(_, text, suffix):
         return text.lower().strip().endswith(str(suffix).strip().lower())
 
+    def length_min(_, text, strlen):
+        return len(text) >= int(strlen)
+
+    def length_max(_, text, strlen):
+        return len(text) <= int(strlen)
+
     return {
         "starts_with": starts_with,
-        "ends_with": ends_with
+        "ends_with": ends_with,
+        "length_min": length_min,
+        "length_max": length_max
     }
 
 @hookimpl
@@ -23,6 +31,8 @@ def register_operator_choices():
     return [
         ("starts_with", "Text Starts With"),
         ("ends_with", "Text Ends With"),
+        ("length_min", "Length minimum"),
+        ("length_max", "Length maximum"),
     ]
 
 @hookimpl
