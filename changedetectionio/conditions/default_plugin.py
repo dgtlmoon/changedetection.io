@@ -1,3 +1,5 @@
+import re
+
 import pluggy
 from price_parser import Price
 from loguru import logger
@@ -19,11 +21,23 @@ def register_operators():
     def length_max(_, text, strlen):
         return len(text) <= int(strlen)
 
+    # ✅ Custom function for case-insensitive regex matching
+    def contains_regex(_, text, pattern):
+        """Returns True if `text` contains `pattern` (case-insensitive regex match)."""
+        return bool(re.search(pattern, str(text), re.IGNORECASE))
+
+    # ✅ Custom function for NOT matching case-insensitive regex
+    def not_contains_regex(_, text, pattern):
+        """Returns True if `text` does NOT contain `pattern` (case-insensitive regex match)."""
+        return not bool(re.search(pattern, str(text), re.IGNORECASE))
+
     return {
-        "starts_with": starts_with,
+        "!contains_regex": not_contains_regex,
+        "contains_regex": contains_regex,
         "ends_with": ends_with,
+        "length_max": length_max,
         "length_min": length_min,
-        "length_max": length_max
+        "starts_with": starts_with,
     }
 
 @hookimpl

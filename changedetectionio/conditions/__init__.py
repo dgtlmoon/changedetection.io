@@ -6,9 +6,6 @@ from .exceptions import EmptyConditionRuleRowNotUsable
 from .pluggy_interface import plugin_manager  # Import the pluggy plugin manager
 from . import default_plugin
 
-import re
-import json
-
 # List of all supported JSON Logic operators
 operator_choices = [
     (None, "Choose one"),
@@ -33,22 +30,10 @@ field_choices = [
 # The data we will feed the JSON Rules to see if it passes the test/conditions or not
 EXECUTE_DATA = {}
 
-# ✅ Custom function for case-insensitive regex matching
-def contains_regex(_, text, pattern):
-    """Returns True if `text` contains `pattern` (case-insensitive regex match)."""
-    return bool(re.search(pattern, text, re.IGNORECASE))
-
-# ✅ Custom function for NOT matching case-insensitive regex
-def not_contains_regex(_, text, pattern):
-    """Returns True if `text` does NOT contain `pattern` (case-insensitive regex match)."""
-    return not bool(re.search(pattern, text, re.IGNORECASE))
-
 
 # Define the extended operations dictionary
 CUSTOM_OPERATIONS = {
     **BUILTINS,  # Include all standard operators
-    "contains_regex": contains_regex,
-    "!contains_regex": not_contains_regex
 }
 
 def filter_complete_rules(ruleset):
