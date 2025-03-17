@@ -55,7 +55,7 @@ def filter_complete_rules(ruleset):
     ]
     return rules
 
-def convert_to_jsonlogic(rule_dict: list):
+def convert_to_jsonlogic(logic_operator: str, rule_dict: list):
     """
     Convert a structured rule dict into a JSON Logic rule.
 
@@ -63,9 +63,6 @@ def convert_to_jsonlogic(rule_dict: list):
     :return: JSON Logic rule as a dictionary.
     """
 
-
-    # Determine the logical operator ("ALL" -> "and", "ANY" -> "or")
-    logic_operator = "and" if rule_dict.get("conditions_match_logic", "ALL") == "ALL" else "or"
 
     json_logic_conditions = []
 
@@ -115,6 +112,7 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
     ruleset_settings = application_datastruct['watching'].get(current_watch_uuid)
 
     if ruleset_settings.get("conditions"):
+        logic_operator = "and" if ruleset_settings.get("conditions_match_logic", "ALL") == "ALL" else "or"
         complete_rules = filter_complete_rules(ruleset_settings['conditions'])
         if complete_rules:
             # Give all plugins a chance to update the data dict again (that we will test the conditions against)
@@ -126,8 +124,10 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
                 if new_execute_data and isinstance(new_execute_data, dict):
                     EXECUTE_DATA.update(new_execute_data)
 
-                ruleset = convert_to_jsonlogic(rule_dict=complete_rules)
-                result = jsonLogic(logic=ruleset, data=EXECUTE_DATA)
+                ruleset = convert_to_jsonlogic(logic_operator=logic_operator, rule_dict=complete_rules)
+
+                if not jsonLogic(logic=ruleset, data=EXECUTE_DATA):
+                    result = False
 
     return result
 

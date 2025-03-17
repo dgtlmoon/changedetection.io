@@ -40,12 +40,13 @@ def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
 
     res = {}
     if 'text' in ephemeral_data:
-        res['page_text'] = ephemeral_data['text']
+        res['page_filtered_text'] = ephemeral_data['text']
 
         # Better to not wrap this in try/except so that the UI can see any errors
         price = Price.fromstring(ephemeral_data.get('text'))
         if price and price.amount != None:
+            # This is slightly misleading, it's extracting a PRICE not a Number..
             res['extracted_number'] = float(price.amount)
-        logger.debug(f"Extracted price result: '{price}' - returning float({res['extracted_number']})")
+            logger.debug(f"Extracted number result: '{price}' - returning float({res['extracted_number']})")
 
     return res
