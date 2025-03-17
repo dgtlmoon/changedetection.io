@@ -1403,8 +1403,10 @@ def changedetection_app(config=None, datastore_o=None):
     @login_optionally_required
     def watch_get_preview_rendered(uuid):
         '''For when viewing the "preview" of the rendered text from inside of Edit'''
+        from flask import jsonify
         from .processors.text_json_diff import prepare_filter_prevew
-        return prepare_filter_prevew(watch_uuid=uuid, datastore=datastore)
+        result = prepare_filter_prevew(watch_uuid=uuid, form_data=request.form, datastore=datastore)
+        return jsonify(result)
 
 
     @app.route("/form/add/quickwatch", methods=['POST'])
@@ -1704,6 +1706,9 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.backups as backups
     app.register_blueprint(backups.construct_blueprint(datastore), url_prefix='/backups')
+
+    import changedetectionio.conditions.blueprint as conditions
+    app.register_blueprint(conditions.construct_blueprint(datastore), url_prefix='/conditions')
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()

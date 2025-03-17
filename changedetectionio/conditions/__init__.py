@@ -1,10 +1,10 @@
+from flask import Blueprint
+
 from json_logic.builtins import BUILTINS
 
 from .exceptions import EmptyConditionRuleRowNotUsable
 from .pluggy_interface import plugin_manager  # Import the pluggy plugin manager
 from . import default_plugin
-
-import re
 
 # List of all supported JSON Logic operators
 operator_choices = [
@@ -30,22 +30,10 @@ field_choices = [
 # The data we will feed the JSON Rules to see if it passes the test/conditions or not
 EXECUTE_DATA = {}
 
-# ✅ Custom function for case-insensitive regex matching
-def contains_regex(_, text, pattern):
-    """Returns True if `text` contains `pattern` (case-insensitive regex match)."""
-    return bool(re.search(pattern, text, re.IGNORECASE))
-
-# ✅ Custom function for NOT matching case-insensitive regex
-def not_contains_regex(_, text, pattern):
-    """Returns True if `text` does NOT contain `pattern` (case-insensitive regex match)."""
-    return not bool(re.search(pattern, text, re.IGNORECASE))
-
 
 # Define the extended operations dictionary
 CUSTOM_OPERATIONS = {
     **BUILTINS,  # Include all standard operators
-    "contains_regex": contains_regex,
-    "!contains_regex": not_contains_regex
 }
 
 def filter_complete_rules(ruleset):
@@ -55,7 +43,7 @@ def filter_complete_rules(ruleset):
     ]
     return rules
 
-def convert_to_jsonlogic(rule_dict: list):
+def convert_to_jsonlogic(logic_operator: str, rule_dict: list):
     """
     Convert a structured rule dict into a JSON Logic rule.
 
@@ -63,9 +51,6 @@ def convert_to_jsonlogic(rule_dict: list):
     :return: JSON Logic rule as a dictionary.
     """
 
-
-    # Determine the logical operator ("ALL" -> "and", "ANY" -> "or")
-    logic_operator = "and" if rule_dict.get("conditions_match_logic", "ALL") == "ALL" else "or"
 
     json_logic_conditions = []
 
@@ -115,6 +100,7 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
     ruleset_settings = application_datastruct['watching'].get(current_watch_uuid)
 
     if ruleset_settings.get("conditions"):
+        logic_operator = "and" if ruleset_settings.get("conditions_match_logic", "ALL") == "ALL" else "or"
         complete_rules = filter_complete_rules(ruleset_settings['conditions'])
         if complete_rules:
             # Give all plugins a chance to update the data dict again (that we will test the conditions against)
@@ -126,10 +112,15 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
                 if new_execute_data and isinstance(new_execute_data, dict):
                     EXECUTE_DATA.update(new_execute_data)
 
-                ruleset = convert_to_jsonlogic(rule_dict=complete_rules)
-                result = jsonLogic(logic=ruleset, data=EXECUTE_DATA)
+            # Create the ruleset
+            ruleset = convert_to_jsonlogic(logic_operator=logic_operator, rule_dict=complete_rules)
+            
+            # Pass the custom operations dictionary to jsonLogic
+            if not jsonLogic(logic=ruleset, data=EXECUTE_DATA, operations=CUSTOM_OPERATIONS):
+                result = False
 
     return result
+
 
 # Load plugins dynamically
 for plugin in plugin_manager.get_plugins():
