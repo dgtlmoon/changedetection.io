@@ -47,6 +47,8 @@ def register_operator_choices():
         ("ends_with", "Text Ends With"),
         ("length_min", "Length minimum"),
         ("length_max", "Length maximum"),
+        ("contains_regex", "Text Matches Regex"),
+        ("!contains_regex", "Text Does NOT Match Regex"),
     ]
 
 @hookimpl
