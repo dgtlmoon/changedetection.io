@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-import datetime
-from zoneinfo import ZoneInfo
 
 import flask_login
 import locale
@@ -12,14 +10,9 @@ import threading
 import time
 import timeago
 
-from .processors import find_processors, get_parent_module, get_custom_watch_obj_for_processor
-from .safe_jinja import render as jinja_render
 from changedetectionio.strtobool import strtobool
-from copy import deepcopy
-from functools import wraps
 from threading import Event
 
-from feedgen.feed import FeedGenerator
 from flask import (
     Flask,
     abort,
@@ -40,7 +33,7 @@ from flask_cors import CORS
 from flask_wtf import CSRFProtect
 from loguru import logger
 
-from changedetectionio import html_tools, __version__
+from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
 from changedetectionio.api import api_v1
 from .time_handler import is_within_schedule
@@ -505,60 +498,6 @@ def changedetection_app(config=None, datastore_o=None):
             return send_from_directory("static/{}".format(group), path=filename)
         except FileNotFoundError:
             abort(404)
-
-    @app.route("/api/share-url", methods=['GET'])
-    @login_optionally_required
-    def form_share_put_watch():
-        """Given a watch UUID, upload the info and return a share-link
-           the share-link can be imported/added"""
-        import requests
-        import json
-        uuid = request.args.get('uuid')
-
-        # more for testing
-        if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
-
-        # copy it to memory as trim off what we dont need (history)
-        watch = deepcopy(datastore.data['watching'][uuid])
-        # For older versions that are not a @property
-        if (watch.get('history')):
-            del (watch['history'])
-
-        # for safety/privacy
-        for k in list(watch.keys()):
-            if k.startswith('notification_'):
-                del watch[k]
-
-        for r in['uuid', 'last_checked', 'last_changed']:
-            if watch.get(r):
-                del (watch[r])
-
-        # Add the global stuff which may have an impact
-        watch['ignore_text'] += datastore.data['settings']['application']['global_ignore_text']
-        watch['subtractive_selectors'] += datastore.data['settings']['application']['global_subtractive_selectors']
-
-        watch_json = json.dumps(watch)
-
-        try:
-            r = requests.request(method="POST",
-                                 data={'watch': watch_json},
-                                 url="https://changedetection.io/share/share",
-                                 headers={'App-Guid': datastore.data['app_guid']})
-            res = r.json()
-
-            session['share-link'] = "https://changedetection.io/share/{}".format(res['share_key'])
-
-
-        except Exception as e:
-            logger.error(f"Error sharing -{str(e)}")
-            flash("Could not share, something went wrong while communicating with the share server - {}".format(str(e)), 'error')
-
-        # https://changedetection.io/share/VrMv05wpXyQa
-        # in the browser - should give you a nice info page - wtf
-        # paste in etc
-        return redirect(url_for('index'))
-
 
 
     import changedetectionio.blueprint.browser_steps as browser_steps

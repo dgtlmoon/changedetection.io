@@ -1,5 +1,5 @@
 import time
-from flask import Blueprint, request, redirect, url_for, flash, render_template
+from flask import Blueprint, request, redirect, url_for, flash, render_template, session
 from loguru import logger
 from functools import wraps
 
@@ -243,6 +243,58 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
                             datastore.data['watching'][uuid]['tags'].append(tag_uuid)
 
             flash(f"{len(uuids)} watches were tagged")
+
+        return redirect(url_for('index'))
+
+
+    @ui_blueprint.route("/share-url/<string:uuid>", methods=['GET'])
+    @login_optionally_required
+    def form_share_put_watch(uuid):
+        """Given a watch UUID, upload the info and return a share-link
+           the share-link can be imported/added"""
+        import requests
+        import json
+        from copy import deepcopy
+
+        # more for testing
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
+        # copy it to memory as trim off what we dont need (history)
+        watch = deepcopy(datastore.data['watching'].get(uuid))
+        # For older versions that are not a @property
+        if (watch.get('history')):
+            del (watch['history'])
+
+        # for safety/privacy
+        for k in list(watch.keys()):
+            if k.startswith('notification_'):
+                del watch[k]
+
+        for r in['uuid', 'last_checked', 'last_changed']:
+            if watch.get(r):
+                del (watch[r])
+
+        # Add the global stuff which may have an impact
+        watch['ignore_text'] += datastore.data['settings']['application']['global_ignore_text']
+        watch['subtractive_selectors'] += datastore.data['settings']['application']['global_subtractive_selectors']
+
+        watch_json = json.dumps(watch)
+
+        try:
+            r = requests.request(method="POST",
+                                 data={'watch': watch_json},
+                                 url="https://changedetection.io/share/share",
+                                 headers={'App-Guid': datastore.data['app_guid']})
+            res = r.json()
+
+            # Add to the flask session
+            session['share-link'] = f"https://changedetection.io/share/{res['share_key']}"
+
+
+        except Exception as e:
+            logger.error(f"Error sharing -{str(e)}")
+            flash(f"Could not share, something went wrong while communicating with the share server - {str(e)}", 'error')
 
         return redirect(url_for('index'))
 
