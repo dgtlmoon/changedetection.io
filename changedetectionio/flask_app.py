@@ -563,8 +563,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.browser_steps as browser_steps
     app.register_blueprint(browser_steps.construct_blueprint(datastore), url_prefix='/browser-steps')
-    
-    # Register the import blueprint
+
     from changedetectionio.blueprint.imports import construct_blueprint as construct_import_blueprint
     app.register_blueprint(construct_import_blueprint(datastore, update_q, queuedWatchMetaData), url_prefix='/imports')
 

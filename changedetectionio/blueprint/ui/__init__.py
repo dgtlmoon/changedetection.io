@@ -70,7 +70,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
 
         return redirect(url_for('index'))
 
-    @ui_blueprint.route("/api/delete", methods=['GET'])
+    @ui_blueprint.route("/delete", methods=['GET'])
     @login_optionally_required
     def form_delete():
         uuid = request.args.get('uuid')
@@ -87,7 +87,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
 
         return redirect(url_for('index'))
 
-    @ui_blueprint.route("/api/clone", methods=['GET'])
+    @ui_blueprint.route("/clone", methods=['GET'])
     @login_optionally_required
     def form_clone():
         uuid = request.args.get('uuid')
@@ -103,7 +103,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
 
         return redirect(url_for('index'))
 
-    @ui_blueprint.route("/api/checknow", methods=['GET'])
+    @ui_blueprint.route("/checknow", methods=['GET'])
     @login_optionally_required
     def form_watch_checknow():
         # Forced recheck will skip the 'skip if content is the same' rule (, 'reprocess_existing_data': True})))
