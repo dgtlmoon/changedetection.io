@@ -32,7 +32,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     assert b'Pacific/Kiritimati' in res.data
 
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -97,7 +97,7 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
     test_url = url_for('test_random_content_endpoint', _external=True)
 
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

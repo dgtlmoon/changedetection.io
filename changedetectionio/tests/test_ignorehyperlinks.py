@@ -65,7 +65,7 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
     # Add our URL to the import page
     test_url = url_for("test_endpoint", _external=True)
     res = client.post(
-        url_for("imports.import_page_page"), data={"urls": test_url},
+        url_for("imports.import_page"), data={"urls": test_url},
         follow_redirects=True
     )
     assert b"1 Imported" in res.data

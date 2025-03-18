@@ -11,7 +11,7 @@ def test_check_watch_field_storage(client, live_server, measure_memory_usage):
     test_url = "http://somerandomsitewewatch.com"
 
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

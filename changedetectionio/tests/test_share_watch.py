@@ -18,7 +18,7 @@ def test_share_watch(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -59,7 +59,7 @@ def test_share_watch(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": share_link_search.group(1)},
         follow_redirects=True
     )

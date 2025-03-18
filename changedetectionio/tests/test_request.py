@@ -19,7 +19,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage):
 
     # Add the test URL twice, we will check
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -28,7 +28,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -94,7 +94,7 @@ def test_body_in_request(client, live_server, measure_memory_usage):
         test_url = test_url.replace('localhost', 'cdio')
 
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -149,7 +149,7 @@ def test_body_in_request(client, live_server, measure_memory_usage):
     ####### data sanity checks
     # Add the test URL twice, we will check
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -189,7 +189,7 @@ def test_method_in_request(client, live_server, measure_memory_usage):
 
     # Add the test URL twice, we will check
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -197,7 +197,7 @@ def test_method_in_request(client, live_server, measure_memory_usage):
 
     wait_for_all_checks(client)
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -273,7 +273,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage):
     assert b'Settings updated' in res.data
 
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -351,7 +351,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
 
     # Add the test URL twice, we will check
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

@@ -85,7 +85,7 @@ def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True, content_type="application/rss+xml;charset=UTF-8")
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -139,7 +139,7 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True, content_type="application/rss+xml;charset=UTF-8")
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -176,7 +176,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -218,7 +218,7 @@ def test_xpath_validation(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -239,7 +239,7 @@ def test_xpath23_prefix_validation(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -289,7 +289,7 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage):
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -323,7 +323,7 @@ def test_xpath1_validation(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -350,7 +350,7 @@ def test_check_with_prefix_include_filters(client, live_server, measure_memory_u
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -400,7 +400,7 @@ def test_various_rules(client, live_server, measure_memory_usage):
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -429,7 +429,7 @@ def test_various_rules(client, live_server, measure_memory_usage):
 def test_xpath_20(client, live_server, measure_memory_usage):
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -469,7 +469,7 @@ def test_xpath_20_function_count(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -505,7 +505,7 @@ def test_xpath_20_function_count2(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -541,7 +541,7 @@ def test_xpath_20_function_string_join_matches(client, live_server, measure_memo
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

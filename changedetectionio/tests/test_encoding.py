@@ -30,7 +30,7 @@ def test_check_encoding_detection(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="text/html", _external=True)
     client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -61,7 +61,7 @@ def test_check_encoding_detection_missing_content_type_header(client, live_serve
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

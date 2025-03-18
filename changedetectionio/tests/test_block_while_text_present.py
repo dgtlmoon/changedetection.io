@@ -71,7 +71,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

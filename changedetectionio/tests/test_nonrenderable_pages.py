@@ -31,7 +31,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # Add our URL to the import page
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": url_for('test_endpoint', _external=True)},
         follow_redirects=True
     )

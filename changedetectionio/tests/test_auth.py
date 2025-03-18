@@ -13,7 +13,7 @@ def test_basic_auth(client, live_server, measure_memory_usage):
     test_url = url_for('test_basicauth_method', _external=True).replace("//","//myuser:mypass@")
 
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

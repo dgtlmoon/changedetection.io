@@ -15,7 +15,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
     test_url = 'source:'+url_for('test_endpoint', _external=True)
     # Add our URL to the import page
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -64,7 +64,7 @@ def test_check_ignore_elements(client, live_server, measure_memory_usage):
     test_url = 'source:'+url_for('test_endpoint', _external=True)
     # Add our URL to the import page
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

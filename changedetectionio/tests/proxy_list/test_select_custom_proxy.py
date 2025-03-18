@@ -26,7 +26,7 @@ def test_select_custom(client, live_server, measure_memory_usage):
     assert b"Settings updated." in res.data
 
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         # Because a URL wont show in squid/proxy logs due it being SSLed
         # Use plain HTTP or a specific domain-name here
         data={"urls": "https://changedetection.io/CHANGELOG.txt"},

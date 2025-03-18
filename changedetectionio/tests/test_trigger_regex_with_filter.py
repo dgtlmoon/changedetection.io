@@ -35,7 +35,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("imports.import_page_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
