@@ -49,7 +49,7 @@ def test_check_access_control(app, client, live_server):
         assert b"Login" in res.data
 
         # The diff page should return something valid when logged out
-        res = c.get(url_for("diff_history_page", uuid="first"))
+        res = c.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
         assert b'Random content' in res.data
 
         # Check wrong password does not let us in
@@ -169,5 +169,5 @@ def test_check_access_control(app, client, live_server):
         assert b"Login" in res.data
 
         # The diff page should return something valid when logged out
-        res = c.get(url_for("diff_history_page", uuid="first"))
+        res = c.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
         assert b'Random content' not in res.data

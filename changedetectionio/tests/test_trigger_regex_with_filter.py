@@ -57,7 +57,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
-    client.get(url_for("diff_history_page", uuid="first"))
+    client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
 
     # Check that we have the expected text.. but it's not in the css filter we want
     with open("test-datastore/endpoint-content.txt", "w") as f:

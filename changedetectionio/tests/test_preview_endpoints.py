@@ -62,7 +62,7 @@ def test_fetch_pdf(client, live_server, measure_memory_usage):
     assert changed_md5.encode('utf-8') in res.data
 
     res = client.get(
-        url_for("diff_history_page", uuid="first"),
+        url_for("ui.ui_views.diff_history_page", uuid="first"),
         follow_redirects=True
     )
 

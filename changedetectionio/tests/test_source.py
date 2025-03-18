@@ -49,7 +49,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
     assert b'unviewed' in res.data
 
     res = client.get(
-        url_for("diff_history_page", uuid="first"),
+        url_for("ui.ui_views.diff_history_page", uuid="first"),
         follow_redirects=True
     )
 

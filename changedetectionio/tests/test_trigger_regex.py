@@ -54,7 +54,7 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage):
     )
     wait_for_all_checks(client)
     # so that we set the state to 'unviewed' after all the edits
-    client.get(url_for("diff_history_page", uuid="first"))
+    client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("some new noise")

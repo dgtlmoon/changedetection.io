@@ -285,7 +285,7 @@ def check_json_filter(json_filter, client, live_server):
     assert b'unviewed' in res.data
 
     # Should not see this, because its not in the JSONPath we entered
-    res = client.get(url_for("diff_history_page", uuid="first"))
+    res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
 
     # But the change should be there, tho its hard to test the change was detected because it will show old and new versions
     # And #462 - check we see the proper utf-8 string there
@@ -345,7 +345,7 @@ def check_json_filter_bool_val(json_filter, client, live_server):
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
-    res = client.get(url_for("diff_history_page", uuid="first"))
+    res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
     # But the change should be there, tho its hard to test the change was detected because it will show old and new versions
     assert b'false' in res.data
 
@@ -420,7 +420,7 @@ def check_json_ext_filter(json_filter, client, live_server):
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
-    res = client.get(url_for("diff_history_page", uuid="first"))
+    res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
 
     # We should never see 'ForSale' because we are selecting on 'Sold' in the rule,
     # But we should know it triggered ('unviewed' assert above)

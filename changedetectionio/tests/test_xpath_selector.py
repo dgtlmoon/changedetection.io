@@ -198,7 +198,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     wait_for_all_checks(client)
 
     # view it/reset state back to viewed
-    client.get(url_for("diff_history_page", uuid="first"), follow_redirects=True)
+    client.get(url_for("ui.ui_views.diff_history_page", uuid="first"), follow_redirects=True)
 
     #  Make a change
     set_modified_response()

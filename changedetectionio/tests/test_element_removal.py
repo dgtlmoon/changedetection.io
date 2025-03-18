@@ -191,7 +191,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     # so that we set the state to 'unviewed' after all the edits
-    client.get(url_for("diff_history_page", uuid="first"))
+    client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
 
     #  Make a change to header/footer/nav
     set_modified_response()
