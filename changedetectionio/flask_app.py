@@ -446,19 +446,6 @@ def changedetection_app(config=None, datastore_o=None):
 
         return resp
 
-
-
-
-
-
-
-
-    # Import function moved to blueprint/import/__init__.py
-
-
-
-
-
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
         from flask import make_response
@@ -579,7 +566,7 @@ def changedetection_app(config=None, datastore_o=None):
     
     # Register the import blueprint
     from changedetectionio.blueprint.imports import construct_blueprint as construct_import_blueprint
-    app.register_blueprint(construct_import_blueprint(datastore, update_q, queuedWatchMetaData), url_prefix='')
+    app.register_blueprint(construct_import_blueprint(datastore, update_q, queuedWatchMetaData), url_prefix='/imports')
 
     import changedetectionio.blueprint.price_data_follower as price_data_follower
     app.register_blueprint(price_data_follower.construct_blueprint(datastore, update_q), url_prefix='/price_data_follower')

@@ -373,10 +373,11 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
 
 
 def test_api_import(client, live_server, measure_memory_usage):
+    #live_server_setup(live_server)
     api_key = extract_api_key_from_UI(client)
 
     res = client.post(
-        url_for("imports.import_page") + "?tag=import-test",
+        url_for("import") + "?tag=import-test",
         data='https://website1.com\r\nhttps://website2.com',
         headers={'x-api-key': api_key},
         follow_redirects=True
