@@ -28,7 +28,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
 
     # Check HTML conversion detected and workd
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -85,7 +85,7 @@ def test_check_ignore_elements(client, live_server, measure_memory_usage):
     time.sleep(sleep_time_for_fetch_thread)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'foobar-detection' not in res.data

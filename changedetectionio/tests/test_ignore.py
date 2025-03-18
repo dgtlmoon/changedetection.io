@@ -52,7 +52,7 @@ def test_ignore(client, live_server, measure_memory_usage):
     assert b'href' in res.data
 
     # It should not be in the preview anymore
-    res = client.get(url_for("preview_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_views.preview_page", uuid=uuid))
     assert b'<div class="ignored">oh yeah 456' not in res.data
 
     # Should be in base.html

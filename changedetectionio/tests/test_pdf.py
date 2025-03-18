@@ -25,7 +25,7 @@ def test_fetch_pdf(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -56,7 +56,7 @@ def test_fetch_pdf(client, live_server, measure_memory_usage):
     # The original checksum should be not be here anymore (cdio adds it to the bottom of the text)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 

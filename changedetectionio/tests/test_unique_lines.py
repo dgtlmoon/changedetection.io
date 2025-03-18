@@ -158,7 +158,7 @@ def test_sort_lines_functionality(client, live_server, measure_memory_usage):
     assert b'unviewed' in res.data
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -205,7 +205,7 @@ def test_extra_filters(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first")
+        url_for("ui.ui_views.preview_page", uuid="first")
     )
 
     assert res.data.count(b"see what happens.") == 1

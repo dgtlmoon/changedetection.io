@@ -44,7 +44,7 @@ def test_check_encoding_detection(client, live_server, measure_memory_usage):
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['content-type'] == "text/html"
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -69,7 +69,7 @@ def test_check_encoding_detection_missing_content_type_header(client, live_serve
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 

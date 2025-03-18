@@ -40,7 +40,7 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text):
 
     # Error viewing tabs should appear
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 

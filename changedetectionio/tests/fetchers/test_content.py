@@ -32,7 +32,7 @@ def test_fetch_webdriver_content(client, live_server, measure_memory_usage):
 
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     logging.getLogger().info("Looking for correct fetched HTML (text) from server")

@@ -28,7 +28,7 @@ def test_jinja2_in_url_query(client, live_server, measure_memory_usage):
 
     # It should report nothing found (no new 'unviewed' class)
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'date=2' in res.data

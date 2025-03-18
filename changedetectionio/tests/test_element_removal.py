@@ -253,7 +253,7 @@ body > table > tr:nth-child(3) > td:nth-child(3)""",
         wait_for_all_checks(client)
 
         res = client.get(
-            url_for("preview_page", uuid="first"),
+            url_for("ui.ui_views.preview_page", uuid="first"),
             follow_redirects=True
         )
 

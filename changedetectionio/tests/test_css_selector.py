@@ -164,7 +164,7 @@ def test_check_multiple_filters(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 

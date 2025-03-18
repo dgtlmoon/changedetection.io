@@ -56,7 +56,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage):
 
     # The service should echo back the request headers
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -136,7 +136,7 @@ def test_body_in_request(client, live_server, measure_memory_usage):
 
     # The service should echo back the body
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -234,7 +234,7 @@ def test_method_in_request(client, live_server, measure_memory_usage):
 
     # The service should echo back the request verb
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -281,7 +281,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage):
 
     wait_for_all_checks(client)
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -304,7 +304,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage):
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b"agent-from-watch" in res.data
@@ -402,7 +402,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
 
     # The service should echo back the request verb
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 

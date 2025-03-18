@@ -133,7 +133,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
     assert b'Add to cart' in res.data
 
     # Check the preview/highlighter, we should be able to see what we triggered on, but it should be highlighted
-    res = client.get(url_for("preview_page", uuid="first"))
+    res = client.get(url_for("ui.ui_views.preview_page", uuid="first"))
 
     # We should be able to see what we triggered on
     # The JS highlighter should tell us which lines (also used in the live-preview)

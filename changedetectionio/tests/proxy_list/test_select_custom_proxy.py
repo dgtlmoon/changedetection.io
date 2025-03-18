@@ -40,7 +40,7 @@ def test_select_custom(client, live_server, measure_memory_usage):
     assert b'Proxy Authentication Required' not in res.data
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     # We should see something via proxy

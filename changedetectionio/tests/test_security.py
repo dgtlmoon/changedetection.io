@@ -77,7 +77,7 @@ def _runner_test_various_file_slash(client, file_uri):
         if file_uri.startswith('file:///'):
             # This one should be the full qualified path to the file and should get the contents of this file
             res = client.get(
-                url_for("preview_page", uuid="first"),
+                url_for("ui.ui_views.preview_page", uuid="first"),
                 follow_redirects=True
             )
             assert b'_runner_test_various_file_slash' in res.data

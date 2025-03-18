@@ -70,7 +70,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'cool it works' in res.data

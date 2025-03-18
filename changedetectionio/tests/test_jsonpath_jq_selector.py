@@ -221,7 +221,7 @@ def test_check_json_without_filter(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -494,7 +494,7 @@ def test_correct_header_detect(client, live_server, measure_memory_usage):
     assert b'No parsable JSON found in this document' not in res.data
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
