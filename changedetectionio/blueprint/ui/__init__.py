@@ -5,6 +5,8 @@ from functools import wraps
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.blueprint.ui.edit import construct_blueprint as construct_edit_blueprint
+from changedetectionio.blueprint.ui.notification import construct_blueprint as construct_notification_blueprint
+from changedetectionio.blueprint.ui.views import construct_blueprint as construct_views_blueprint
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_update_threads, queuedWatchMetaData):
     ui_blueprint = Blueprint('ui', __name__, template_folder="templates")
@@ -12,6 +14,14 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
     # Register the edit blueprint
     edit_blueprint = construct_edit_blueprint(datastore, update_q, queuedWatchMetaData)
     ui_blueprint.register_blueprint(edit_blueprint)
+    
+    # Register the notification blueprint
+    notification_blueprint = construct_notification_blueprint(datastore)
+    ui_blueprint.register_blueprint(notification_blueprint)
+    
+    # Register the views blueprint
+    views_blueprint = construct_views_blueprint(datastore, update_q, queuedWatchMetaData)
+    ui_blueprint.register_blueprint(views_blueprint)
     
     # Import the login decorator
     from changedetectionio.auth_decorator import login_optionally_required

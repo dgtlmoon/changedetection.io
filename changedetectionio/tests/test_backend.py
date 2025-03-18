@@ -22,7 +22,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": url_for('test_endpoint', _external=True)},
         follow_redirects=True
     )
@@ -53,7 +53,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # Check HTML conversion detected and workd
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     # Check this class does not appear (that we didnt see the actual source)
@@ -91,12 +91,12 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     assert expected_url.encode('utf-8') in res.data
 
     # Following the 'diff' link, it should no longer display as 'unviewed' even after we recheck it a few times
-    res = client.get(url_for("diff_history_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_views.diff_history_page", uuid=uuid))
     assert b'selected=""' in res.data, "Confirm diff history page loaded"
 
     # Check the [preview] pulls the right one
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'which has this one new line' in res.data

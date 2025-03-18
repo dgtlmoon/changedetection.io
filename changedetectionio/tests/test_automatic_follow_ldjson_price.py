@@ -87,7 +87,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -130,7 +130,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -147,7 +147,7 @@ def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

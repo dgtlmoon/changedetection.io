@@ -71,7 +71,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url + "?first-imported=1 test-tag, extra-import-tag"},
         follow_redirects=True
     )
@@ -110,7 +110,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     # RSS Group tag filter
     # An extra one that should be excluded
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url + "?should-be-excluded=1 some-tag"},
         follow_redirects=True
     )
@@ -135,7 +135,7 @@ def test_tag_import_singular(client, live_server, measure_memory_usage):
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url + " test-tag, test-tag\r\n"+ test_url + "?x=1 test-tag, test-tag\r\n"},
         follow_redirects=True
     )
@@ -248,7 +248,7 @@ def test_limit_tag_ui(client, live_server, measure_memory_usage):
         urls.append(test_url+"?non-grouped="+str(i))
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": "\r\n".join(urls)},
         follow_redirects=True
     )
@@ -277,7 +277,7 @@ def test_clone_tag_on_import(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url + " test-tag, another-tag\r\n"},
         follow_redirects=True
     )
@@ -387,7 +387,7 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

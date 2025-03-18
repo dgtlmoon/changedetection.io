@@ -9,10 +9,8 @@ def login_optionally_required(func):
     To be used as a decorator for routes that should optionally require login.
     This version is blueprint-friendly as it uses current_app instead of directly accessing app.
     """
-    logger.debug(f"login_optionally_required being applied to {func.__name__}")
     @wraps(func)
     def decorated_view(*args, **kwargs):
-        logger.debug(f"login_optionally_required.decorated_view called for {func.__name__}, endpoint: {request.endpoint}")
         from flask import current_app
         import flask_login
         from flask_login import current_user

@@ -6,7 +6,7 @@
 
 <div class="box">
 
-    <form class="pure-form" action="{{ url_for('form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
+    <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
         <fieldset>
             <legend>Add a new change detection watch</legend>
@@ -86,7 +86,7 @@
             <tbody>
             {% if not watches|length %}
             <tr>
-                <td colspan="{{ cols_required }}" style="text-wrap: wrap;">No website watches configured, please add a URL in the box above, or <a href="{{ url_for('import_page')}}" >import a list</a>.</td>
+                <td colspan="{{ cols_required }}" style="text-wrap: wrap;">No website watches configured, please add a URL in the box above, or <a href="{{ url_for('imports.import_page')}}" >import a list</a>.</td>
             </tr>
             {% endif %}
             {% for watch in (watches|sort(attribute=sort_attribute, reverse=sort_order == 'asc'))|pagination_slice(skip=pagination.skip) %}
@@ -192,14 +192,14 @@
                     {% if watch.history_n >= 2 %}
 
                         {%  if is_unviewed %}
-                           <a href="{{ url_for('diff_history_page', uuid=watch.uuid, from_version=watch.get_from_version_based_on_last_viewed) }}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">History</a>
+                           <a href="{{ url_for('ui.ui_views.diff_history_page', uuid=watch.uuid, from_version=watch.get_from_version_based_on_last_viewed) }}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">History</a>
                         {% else %}
-                           <a href="{{ url_for('diff_history_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">History</a>
+                           <a href="{{ url_for('ui.ui_views.diff_history_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">History</a>
                         {% endif %}
 
                     {% else %}
                         {% if watch.history_n == 1 or (watch.history_n ==0 and watch.error_text_ctime )%}
-                            <a href="{{ url_for('preview_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary">Preview</a>
+                            <a href="{{ url_for('ui.ui_views.preview_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary">Preview</a>
                         {% endif %}
                     {% endif %}
                 </td>

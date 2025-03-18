@@ -1,6 +1,5 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 import time
-import validators
 from wtforms import ValidationError
 from loguru import logger
 
@@ -241,7 +240,7 @@ class import_xlsx_custom(Importer):
             return
 
         # @todo cehck atleast 2 rows, same in other method
-        from .forms import validate_url
+        from changedetectionio.forms import validate_url
         row_i = 1
 
         try:

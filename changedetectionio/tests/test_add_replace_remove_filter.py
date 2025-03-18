@@ -45,7 +45,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -128,7 +128,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

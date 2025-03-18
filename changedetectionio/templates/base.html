@@ -67,7 +67,7 @@
                 <a href="{{ url_for('settings.settings_page')}}" class="pure-menu-link">SETTINGS</a>
               </li>
               <li class="pure-menu-item">
-                <a href="{{ url_for('import_page')}}" class="pure-menu-link">IMPORT</a>
+                <a href="{{ url_for('imports.import_page')}}" class="pure-menu-link">IMPORT</a>
               </li>
               <li class="pure-menu-item">
                 <a href="{{ url_for('backups.index')}}" class="pure-menu-link">BACKUPS</a>
@@ -144,7 +144,7 @@
     {% endif %}
     {% if left_sticky %}
       <div class="sticky-tab" id="left-sticky">
-        <a href="{{url_for('preview_page', uuid=uuid)}}">Show current snapshot</a><br>
+        <a href="{{url_for('ui.ui_views.preview_page', uuid=uuid)}}">Show current snapshot</a><br>
           Visualise <strong>triggers</strong> and <strong>ignored text</strong>
       </div>
     {% endif %}

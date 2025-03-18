@@ -30,7 +30,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
 
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

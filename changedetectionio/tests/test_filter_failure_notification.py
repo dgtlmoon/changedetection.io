@@ -43,7 +43,7 @@ def run_filter_test(client, live_server, content_filter):
         os.unlink("test-datastore/notification.txt")
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

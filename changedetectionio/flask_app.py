@@ -366,7 +366,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Redirect for the old rss path which used the /?rss=true
         if request.args.get('rss'):
-            return redirect(url_for('rss', tag=active_tag_uuid))
+            return redirect(url_for('rss.feed', tag=active_tag_uuid))
 
         op = request.args.get('op')
         if op:
@@ -448,351 +448,15 @@ def changedetection_app(config=None, datastore_o=None):
 
 
 
-    # AJAX endpoint for sending a test
-    @app.route("/notification/send-test/<string:watch_uuid>", methods=['POST'])
-    @app.route("/notification/send-test", methods=['POST'])
-    @app.route("/notification/send-test/", methods=['POST'])
-    @login_optionally_required
-    def ajax_callback_send_notification_test(watch_uuid=None):
 
-        # Watch_uuid could be unset in the case it`s used in tag editor, global settings
-        import apprise
-        import random
-        from .apprise_asset import asset
-        apobj = apprise.Apprise(asset=asset)
 
-        # so that the custom endpoints are registered
-        from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
-        is_global_settings_form = request.args.get('mode', '') == 'global-settings'
-        is_group_settings_form = request.args.get('mode', '') == 'group-settings'
 
-        # Use an existing random one on the global/main settings form
-        if not watch_uuid and (is_global_settings_form or is_group_settings_form) \
-                and datastore.data.get('watching'):
-            logger.debug(f"Send test notification - Choosing random Watch {watch_uuid}")
-            watch_uuid = random.choice(list(datastore.data['watching'].keys()))
 
-        if not watch_uuid:
-            return make_response("Error: You must have atleast one watch configured for 'test notification' to work", 400)
 
-        watch = datastore.data['watching'].get(watch_uuid)
+    # Import function moved to blueprint/import/__init__.py
 
-        notification_urls = None
 
-        if request.form.get('notification_urls'):
-            notification_urls = request.form['notification_urls'].strip().splitlines()
 
-        if not notification_urls:
-            logger.debug("Test notification - Trying by group/tag in the edit form if available")
-            # On an edit page, we should also fire off to the tags if they have notifications
-            if request.form.get('tags') and request.form['tags'].strip():
-                for k in request.form['tags'].split(','):
-                    tag = datastore.tag_exists_by_name(k.strip())
-                    notification_urls = tag.get('notifications_urls') if tag and tag.get('notifications_urls') else None
-
-        if not notification_urls and not is_global_settings_form and not is_group_settings_form:
-            # In the global settings, use only what is typed currently in the text box
-            logger.debug("Test notification - Trying by global system settings notifications")
-            if datastore.data['settings']['application'].get('notification_urls'):
-                notification_urls = datastore.data['settings']['application']['notification_urls']
-
-
-        if not notification_urls:
-            return 'Error: No Notification URLs set/found'
-
-        for n_url in notification_urls:
-            if len(n_url.strip()):
-                if not apobj.add(n_url):
-                    return f'Error:  {n_url} is not a valid AppRise URL.'
-
-        try:
-            # use the same as when it is triggered, but then override it with the form test values
-            n_object = {
-                'watch_url': request.form.get('window_url', "https://changedetection.io"),
-                'notification_urls': notification_urls
-            }
-
-            # Only use if present, if not set in n_object it should use the default system value
-            if 'notification_format' in request.form and request.form['notification_format'].strip():
-                n_object['notification_format'] = request.form.get('notification_format', '').strip()
-
-            if 'notification_title' in request.form and request.form['notification_title'].strip():
-                n_object['notification_title'] = request.form.get('notification_title', '').strip()
-            elif datastore.data['settings']['application'].get('notification_title'):
-                n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
-            else:
-                n_object['notification_title'] = "Test title"
-
-            if 'notification_body' in request.form and request.form['notification_body'].strip():
-                n_object['notification_body'] = request.form.get('notification_body', '').strip()
-            elif datastore.data['settings']['application'].get('notification_body'):
-                n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
-            else:
-                n_object['notification_body'] = "Test body"
-
-            n_object['as_async'] = False
-            n_object.update(watch.extra_notification_token_values())
-            from .notification import process_notification
-            sent_obj = process_notification(n_object, datastore)
-
-        except Exception as e:
-            e_str = str(e)
-            # Remove this text which is not important and floods the container
-            e_str = e_str.replace(
-                "DEBUG - <class 'apprise.decorators.base.CustomNotifyPlugin.instantiate_plugin.<locals>.CustomNotifyPluginWrapper'>",
-                '')
-
-            return make_response(e_str, 400)
-
-        return 'OK - Sent test notifications'
-
-
-
-
-
-    @app.route("/import", methods=['GET', "POST"])
-    @login_optionally_required
-    def import_page():
-        remaining_urls = []
-        from . import forms
-
-        if request.method == 'POST':
-
-            from .importer import import_url_list, import_distill_io_json
-
-            # URL List import
-            if request.values.get('urls') and len(request.values.get('urls').strip()):
-                # Import and push into the queue for immediate update check
-                importer = import_url_list()
-                importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor', 'text_json_diff'))
-                for uuid in importer.new_uuids:
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-
-                if len(importer.remaining_data) == 0:
-                    return redirect(url_for('index'))
-                else:
-                    remaining_urls = importer.remaining_data
-
-            # Distill.io import
-            if request.values.get('distill-io') and len(request.values.get('distill-io').strip()):
-                # Import and push into the queue for immediate update check
-                d_importer = import_distill_io_json()
-                d_importer.run(data=request.values.get('distill-io'), flash=flash, datastore=datastore)
-                for uuid in d_importer.new_uuids:
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-
-            # XLSX importer
-            if request.files and request.files.get('xlsx_file'):
-                file = request.files['xlsx_file']
-                from .importer import import_xlsx_wachete, import_xlsx_custom
-
-                if request.values.get('file_mapping') == 'wachete':
-                    w_importer = import_xlsx_wachete()
-                    w_importer.run(data=file, flash=flash, datastore=datastore)
-                else:
-                    w_importer = import_xlsx_custom()
-                    # Building mapping of col # to col # type
-                    map = {}
-                    for i in range(10):
-                        c = request.values.get(f"custom_xlsx[col_{i}]")
-                        v = request.values.get(f"custom_xlsx[col_type_{i}]")
-                        if c and v:
-                            map[int(c)] = v
-
-                    w_importer.import_profile = map
-                    w_importer.run(data=file, flash=flash, datastore=datastore)
-
-                for uuid in w_importer.new_uuids:
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-
-        # Could be some remaining, or we could be on GET
-        form = forms.importForm(formdata=request.form if request.method == 'POST' else None)
-        output = render_template("import.html",
-                                 form=form,
-                                 import_url_list_remaining="\n".join(remaining_urls),
-                                 original_distill_json=''
-                                 )
-        return output
-
-
-    @app.route("/diff/<string:uuid>", methods=['GET', 'POST'])
-    @login_optionally_required
-    def diff_history_page(uuid):
-
-        from changedetectionio import forms
-
-        # More for testing, possible to return the first/only
-        if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
-
-        extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
-        try:
-            watch = datastore.data['watching'][uuid]
-        except KeyError:
-            flash("No history found for the specified link, bad link?", "error")
-            return redirect(url_for('index'))
-
-        # For submission of requesting an extract
-        extract_form = forms.extractDataForm(request.form)
-        if request.method == 'POST':
-            if not extract_form.validate():
-                flash("An error occurred, please see below.", "error")
-
-            else:
-                extract_regex = request.form.get('extract_regex').strip()
-                output = watch.extract_regex_from_all_history(extract_regex)
-                if output:
-                    watch_dir = os.path.join(datastore_o.datastore_path, uuid)
-                    response = make_response(send_from_directory(directory=watch_dir, path=output, as_attachment=True))
-                    response.headers['Content-type'] = 'text/csv'
-                    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-                    response.headers['Pragma'] = 'no-cache'
-                    response.headers['Expires'] = 0
-                    return response
-
-
-                flash('Nothing matches that RegEx', 'error')
-                redirect(url_for('diff_history_page', uuid=uuid)+'#extract')
-
-        history = watch.history
-        dates = list(history.keys())
-
-        if len(dates) < 2:
-            flash("Not enough saved change detection snapshots to produce a report.", "error")
-            return redirect(url_for('index'))
-
-        # Save the current newest history as the most recently viewed
-        datastore.set_last_viewed(uuid, time.time())
-
-        # Read as binary and force decode as UTF-8
-        # Windows may fail decode in python if we just use 'r' mode (chardet decode exception)
-        from_version = request.args.get('from_version')
-        from_version_index = -2  # second newest
-        if from_version and from_version in dates:
-            from_version_index = dates.index(from_version)
-        else:
-            from_version = dates[from_version_index]
-
-        try:
-            from_version_file_contents = watch.get_history_snapshot(dates[from_version_index])
-        except Exception as e:
-            from_version_file_contents = f"Unable to read to-version at index {dates[from_version_index]}.\n"
-
-        to_version = request.args.get('to_version')
-        to_version_index = -1
-        if to_version and to_version in dates:
-            to_version_index = dates.index(to_version)
-        else:
-            to_version = dates[to_version_index]
-
-        try:
-            to_version_file_contents = watch.get_history_snapshot(dates[to_version_index])
-        except Exception as e:
-            to_version_file_contents = "Unable to read to-version at index{}.\n".format(dates[to_version_index])
-
-        screenshot_url = watch.get_screenshot()
-
-        system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
-
-        is_html_webdriver = False
-        if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
-            is_html_webdriver = True
-
-        password_enabled_and_share_is_off = False
-        if datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False):
-            password_enabled_and_share_is_off = not datastore.data['settings']['application'].get('shared_diff_access')
-
-        output = render_template("diff.html",
-                                 current_diff_url=watch['url'],
-                                 from_version=str(from_version),
-                                 to_version=str(to_version),
-                                 extra_stylesheets=extra_stylesheets,
-                                 extra_title=f" - Diff - {watch.label}",
-                                 extract_form=extract_form,
-                                 is_html_webdriver=is_html_webdriver,
-                                 last_error=watch['last_error'],
-                                 last_error_screenshot=watch.get_error_snapshot(),
-                                 last_error_text=watch.get_error_text(),
-                                 left_sticky=True,
-                                 newest=to_version_file_contents,
-                                 newest_version_timestamp=dates[-1],
-                                 password_enabled_and_share_is_off=password_enabled_and_share_is_off,
-                                 from_version_file_contents=from_version_file_contents,
-                                 to_version_file_contents=to_version_file_contents,
-                                 screenshot=screenshot_url,
-                                 uuid=uuid,
-                                 versions=dates, # All except current/last
-                                 watch_a=watch
-                                 )
-
-        return output
-
-    @app.route("/preview/<string:uuid>", methods=['GET'])
-    @login_optionally_required
-    def preview_page(uuid):
-        content = []
-        versions = []
-        timestamp = None
-
-        # More for testing, possible to return the first/only
-        if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
-
-        try:
-            watch = datastore.data['watching'][uuid]
-        except KeyError:
-            flash("No history found for the specified link, bad link?", "error")
-            return redirect(url_for('index'))
-
-        system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
-        extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
-
-        is_html_webdriver = False
-        if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
-            is_html_webdriver = True
-        triggered_line_numbers = []
-        if datastore.data['watching'][uuid].history_n == 0 and (watch.get_error_text() or watch.get_error_snapshot()):
-            flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
-        else:
-            # So prepare the latest preview or not
-            preferred_version = request.args.get('version')
-            versions = list(watch.history.keys())
-            timestamp = versions[-1]
-            if preferred_version and preferred_version in versions:
-                timestamp = preferred_version
-
-            try:
-                versions = list(watch.history.keys())
-                content = watch.get_history_snapshot(timestamp)
-
-                triggered_line_numbers = html_tools.strip_ignore_text(content=content,
-                                                                      wordlist=watch['trigger_text'],
-                                                                      mode='line numbers'
-                                                                      )
-
-            except Exception as e:
-                content.append({'line': f"File doesnt exist or unable to read timestamp {timestamp}", 'classes': ''})
-
-        output = render_template("preview.html",
-                                 content=content,
-                                 current_version=timestamp,
-                                 history_n=watch.history_n,
-                                 extra_stylesheets=extra_stylesheets,
-                                 extra_title=f" - Diff - {watch.label} @ {timestamp}",
-                                 triggered_line_numbers=triggered_line_numbers,
-                                 current_diff_url=watch['url'],
-                                 screenshot=watch.get_screenshot(),
-                                 watch=watch,
-                                 uuid=uuid,
-                                 is_html_webdriver=is_html_webdriver,
-                                 last_error=watch['last_error'],
-                                 last_error_text=watch.get_error_text(),
-                                 last_error_screenshot=watch.get_error_snapshot(),
-                                 versions=versions
-                                )
-
-
-        return output
 
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
@@ -855,44 +519,6 @@ def changedetection_app(config=None, datastore_o=None):
         except FileNotFoundError:
             abort(404)
 
-
-
-    @app.route("/form/add/quickwatch", methods=['POST'])
-    @login_optionally_required
-    def form_quick_watch_add():
-        from changedetectionio import forms
-        form = forms.quickWatchForm(request.form)
-
-        if not form.validate():
-            for widget, l in form.errors.items():
-                flash(','.join(l), 'error')
-            return redirect(url_for('index'))
-
-        url = request.form.get('url').strip()
-        if datastore.url_exists(url):
-            flash(f'Warning, URL {url} already exists', "notice")
-
-        add_paused = request.form.get('edit_and_watch_submit_button') != None
-        processor = request.form.get('processor', 'text_json_diff')
-        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tags').strip(), extras={'paused': add_paused, 'processor': processor})
-
-        if new_uuid:
-            if add_paused:
-                flash('Watch added in Paused state, saving will unpause.')
-                return redirect(url_for('edit_page', uuid=new_uuid, unpause_on_save=1, tag=request.args.get('tag')))
-            else:
-                # Straight into the queue.
-                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
-                flash("Watch added.")
-
-        return redirect(url_for('index', tag=request.args.get('tag','')))
-
-
-
-
-
-
-
     @app.route("/api/share-url", methods=['GET'])
     @login_optionally_required
     def form_share_put_watch():
@@ -950,6 +576,10 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.browser_steps as browser_steps
     app.register_blueprint(browser_steps.construct_blueprint(datastore), url_prefix='/browser-steps')
+    
+    # Register the import blueprint
+    from changedetectionio.blueprint.imports import construct_blueprint as construct_import_blueprint
+    app.register_blueprint(construct_import_blueprint(datastore, update_q, queuedWatchMetaData), url_prefix='')
 
     import changedetectionio.blueprint.price_data_follower as price_data_follower
     app.register_blueprint(price_data_follower.construct_blueprint(datastore, update_q), url_prefix='/price_data_follower')

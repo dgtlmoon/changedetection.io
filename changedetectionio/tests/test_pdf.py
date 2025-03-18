@@ -14,7 +14,7 @@ def test_fetch_pdf(client, live_server, measure_memory_usage):
     test_url = url_for('test_pdf_endpoint', _external=True)
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

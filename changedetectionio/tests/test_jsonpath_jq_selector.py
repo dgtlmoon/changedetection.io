@@ -212,7 +212,7 @@ def test_check_json_without_filter(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -241,7 +241,7 @@ def check_json_filter(json_filter, client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -314,7 +314,7 @@ def check_json_filter_bool_val(json_filter, client, live_server):
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -377,7 +377,7 @@ def check_json_ext_filter(json_filter, client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -440,7 +440,7 @@ def test_ignore_json_order(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -482,7 +482,7 @@ def test_correct_header_detect(client, live_server, measure_memory_usage):
     # Check weird casing is cleaned up and detected also
     test_url = url_for('test_endpoint', content_type="aPPlication/JSon", uppercase_headers=True, _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

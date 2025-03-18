@@ -405,7 +405,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
 
     ######### Test global/system settings
     res = client.post(
-        url_for("ajax_callback_send_notification_test")+"?mode=global-settings",
+        url_for("ui.ui_notification.ajax_callback_send_notification_test")+"?mode=global-settings",
         data={"notification_urls": test_notification_url},
         follow_redirects=True
     )
@@ -422,7 +422,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
 
     ######### Test group/tag settings
     res = client.post(
-        url_for("ajax_callback_send_notification_test")+"?mode=group-settings",
+        url_for("ui.ui_notification.ajax_callback_send_notification_test")+"?mode=group-settings",
         data={"notification_urls": test_notification_url},
         follow_redirects=True
     )
@@ -446,7 +446,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
     ######### Test global/system settings - When everything is deleted it should give a helpful error
     # See #2727
     res = client.post(
-        url_for("ajax_callback_send_notification_test")+"?mode=global-settings",
+        url_for("ui.ui_notification.ajax_callback_send_notification_test")+"?mode=global-settings",
         data={"notification_urls": test_notification_url},
         follow_redirects=True
     )

@@ -16,7 +16,7 @@ def test_import(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={
             "distill-io": "",
             "urls": """https://example.com
@@ -41,7 +41,7 @@ def xtest_import_skip_url(client, live_server, measure_memory_usage):
     time.sleep(1)
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={
             "distill-io": "",
             "urls": """https://example.com
@@ -84,7 +84,7 @@ def test_import_distillio(client, live_server, measure_memory_usage):
     time.sleep(1)
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={
             "distill-io": distill_data,
             "urls" : ''
@@ -146,7 +146,7 @@ def test_import_custom_xlsx(client, live_server, measure_memory_usage):
         }
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data=data,
         follow_redirects=True,
     )
@@ -186,7 +186,7 @@ def test_import_watchete_xlsx(client, live_server, measure_memory_usage):
         }
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data=data,
         follow_redirects=True,
     )

@@ -83,7 +83,7 @@ def test_check_markup_include_filters_restriction(client, live_server, measure_m
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -140,7 +140,7 @@ def test_check_multiple_filters(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -194,7 +194,7 @@ def test_filter_is_empty_help_suggestion(client, live_server, measure_memory_usa
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

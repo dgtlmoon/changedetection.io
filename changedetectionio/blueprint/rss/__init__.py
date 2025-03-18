@@ -69,7 +69,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 ext_base_url = datastore.data['settings']['application'].get('active_base_url')
 
                 # Because we are called via whatever web server, flask should figure out the right path (
-                diff_link = {'href': url_for('diff_history_page', uuid=watch['uuid'], _external=True)}
+                diff_link = {'href': url_for('ui.ui_views.diff_history_page', uuid=watch['uuid'], _external=True)}
 
                 fe.link(link=diff_link)
 

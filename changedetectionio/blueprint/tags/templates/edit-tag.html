@@ -3,7 +3,7 @@
 {% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script>
-    const notification_base_url="{{url_for('ajax_callback_send_notification_test', mode="group-settings")}}";
+    const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="group-settings")}}";
 </script>
 
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>

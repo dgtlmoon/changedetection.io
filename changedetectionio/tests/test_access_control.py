@@ -13,7 +13,7 @@ def test_check_access_control(app, client, live_server):
 
         # add something that we can hit via diff page later
         res = c.post(
-            url_for("import_page"),
+            url_for("imports.import_page_page"),
             data={"urls": url_for('test_random_content_endpoint', _external=True)},
             follow_redirects=True
         )

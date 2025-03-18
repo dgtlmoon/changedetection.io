@@ -60,7 +60,7 @@ def test_rss_and_token(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": url_for('test_random_content_endpoint', _external=True)},
         follow_redirects=True
     )
@@ -99,7 +99,7 @@ def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

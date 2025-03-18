@@ -18,7 +18,7 @@ def test_check_extract_text_from_diff(client, live_server, measure_memory_usage)
 
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": url_for('test_endpoint', _external=True)},
         follow_redirects=True
     )

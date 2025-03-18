@@ -23,7 +23,7 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text):
                        _external=True)
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -69,7 +69,7 @@ def test_DNS_errors(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": "https://errorfuldomainthatnevereallyexists12356.com"},
         follow_redirects=True
     )
@@ -99,7 +99,7 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
     test_url = url_for('test_endpoint', _external=True)
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": "https://dfkjasdkfjaidjfsdajfksdajfksdjfDOESNTEXIST.com"},
         follow_redirects=True
     )

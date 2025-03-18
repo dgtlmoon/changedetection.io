@@ -28,7 +28,7 @@ def test_ignore(client, live_server, measure_memory_usage):
     set_original_ignore_response()
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

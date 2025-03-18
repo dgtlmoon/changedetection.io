@@ -16,7 +16,7 @@ def test_consistent_history(client, live_server, measure_memory_usage):
     for one in r:
         test_url = url_for('test_endpoint', content_type="text/html", content=str(one), _external=True)
         res = client.post(
-            url_for("import_page"),
+            url_for("imports.import_page_page"),
             data={"urls": test_url},
             follow_redirects=True
         )

@@ -53,7 +53,7 @@ def test_conditions_with_text_and_number(client, live_server):
 
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": test_url},
         follow_redirects=True
     )

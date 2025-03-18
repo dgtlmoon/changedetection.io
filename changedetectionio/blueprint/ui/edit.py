@@ -2,7 +2,7 @@ import time
 from copy import deepcopy
 import os
 import importlib.resources
-from flask import Blueprint, request, redirect, url_for, flash, render_template, make_response, send_from_directory
+from flask import Blueprint, request, redirect, url_for, flash, render_template, make_response, send_from_directory, abort
 from loguru import logger
 from jinja2 import Environment, FileSystemLoader
 
@@ -205,7 +205,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff':
-                return redirect(url_for('diff_history_page', uuid=uuid))
+                return redirect(url_for('ui.ui_views.diff_history_page', uuid=uuid))
 
             return redirect(url_for('index', tag=request.args.get("tag",'')))
 
@@ -328,6 +328,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     s = re.sub(r'[0-9]+', r'\\d+', s)
                     datastore.data["watching"][uuid]['ignore_text'].append('/' + s + '/')
 
-        return f"<a href={url_for('preview_page', uuid=uuid)}>Click to preview</a>"
+        return f"<a href={url_for('ui.ui_views.preview_page', uuid=uuid)}>Click to preview</a>"
     
     return edit_blueprint

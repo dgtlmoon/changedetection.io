@@ -11,7 +11,7 @@ def test_setup(client, live_server, measure_memory_usage):
 def test_bad_access(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page_page"),
         data={"urls": 'https://localhost'},
         follow_redirects=True
     )

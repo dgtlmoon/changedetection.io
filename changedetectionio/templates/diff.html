@@ -125,7 +125,7 @@
      </div>
     <div class="tab-pane-inner" id="extract">
         <form id="extract-data-form" class="pure-form pure-form-stacked edit-form"
-              action="{{ url_for('diff_history_page', uuid=uuid) }}#extract"
+              action="{{ url_for('ui.ui_views.diff_history_page', uuid=uuid) }}#extract"
               method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
