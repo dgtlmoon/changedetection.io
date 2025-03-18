@@ -25,7 +25,7 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage):
     test_url = url_for('test_endpoint', _external=True)
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": ''},
         follow_redirects=True
     )

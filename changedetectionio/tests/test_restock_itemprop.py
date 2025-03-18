@@ -59,7 +59,7 @@ def test_restock_itemprop_basic(client, live_server):
     for p in instock_props:
         set_original_response(props_markup=p)
         client.post(
-            url_for("form_quick_watch_add"),
+            url_for("ui.ui_views.form_quick_watch_add"),
             data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
             follow_redirects=True
         )
@@ -76,7 +76,7 @@ def test_restock_itemprop_basic(client, live_server):
     for p in out_of_stock_props:
         set_original_response(props_markup=p)
         client.post(
-            url_for("form_quick_watch_add"),
+            url_for("ui.ui_views.form_quick_watch_add"),
             data={"url": test_url, "tags": '', 'processor': 'restock_diff'},
             follow_redirects=True
         )
@@ -96,7 +96,7 @@ def test_itemprop_price_change(client, live_server):
 
     set_original_response(props_markup=instock_props[0], price="190.95")
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
@@ -142,7 +142,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
 
     set_original_response(props_markup=instock_props[0], price="950.95")
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
@@ -261,7 +261,7 @@ def test_itemprop_percent_threshold(client, live_server):
 
     set_original_response(props_markup=instock_props[0], price="950.95")
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
@@ -332,7 +332,7 @@ def test_change_with_notification_values(client, live_server):
     ######################
     # You must add a type of 'restock_diff' for its tokens to register as valid in the global settings
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
@@ -396,7 +396,7 @@ def test_data_sanity(client, live_server):
     test_url2 = url_for('test_endpoint2', _external=True)
     set_original_response(props_markup=instock_props[0], price="950.95")
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
@@ -408,7 +408,7 @@ def test_data_sanity(client, live_server):
 
     # Check the restock model object doesnt store the value by mistake and used in a new one
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url2, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
@@ -421,7 +421,7 @@ def test_data_sanity(client, live_server):
     assert b'Deleted' in res.data
 
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url2, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
@@ -450,7 +450,7 @@ def test_special_prop_examples(client, live_server):
 
             # Now fetch it and check the price worked
             client.post(
-                url_for("form_quick_watch_add"),
+                url_for("ui.ui_views.form_quick_watch_add"),
                 data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
                 follow_redirects=True
             )

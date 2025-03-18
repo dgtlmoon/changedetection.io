@@ -11,7 +11,7 @@ def test_preferred_proxy(client, live_server, measure_memory_usage):
 
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
         follow_redirects=True
     )

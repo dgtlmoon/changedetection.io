@@ -12,7 +12,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     # Set a URL and fetch it, then set a notification URL which is going to give errors
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": ''},
         follow_redirects=True
     )

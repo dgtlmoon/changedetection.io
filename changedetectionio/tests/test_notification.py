@@ -62,7 +62,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": ''},
         follow_redirects=True
     )
@@ -251,7 +251,7 @@ def test_notification_validation(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'nice one'},
         follow_redirects=True
     )
@@ -311,7 +311,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     # Add a watch and trigger a HTTP POST
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'nice one'},
         follow_redirects=True
     )
@@ -394,7 +394,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'nice one'},
         follow_redirects=True
     )
@@ -484,7 +484,7 @@ def _test_color_notifications(client, notification_body_token):
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'nice one'},
         follow_redirects=True
     )

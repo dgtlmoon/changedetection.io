@@ -19,7 +19,7 @@ def test_jinja2_in_url_query(client, live_server, measure_memory_usage):
     full_url = "{}?{}".format(test_url,
                               "date={% now 'Europe/Berlin', '%Y' %}.{% now 'Europe/Berlin', '%m' %}.{% now 'Europe/Berlin', '%d' %}", )
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": full_url, "tags": "test"},
         follow_redirects=True
     )
@@ -44,7 +44,7 @@ def test_jinja2_security_url_query(client, live_server, measure_memory_usage):
     full_url = "{}?{}".format(test_url,
                               "date={{ ''.__class__.__mro__[1].__subclasses__()}}", )
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": full_url, "tags": "test"},
         follow_redirects=True
     )

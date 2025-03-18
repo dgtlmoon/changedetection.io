@@ -64,7 +64,7 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
     # Add a watch and trigger a HTTP POST
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'nice one'},
         follow_redirects=True
     )
@@ -130,7 +130,7 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
     # Add a watch and trigger a HTTP POST
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'nice one'},
         follow_redirects=True
     )

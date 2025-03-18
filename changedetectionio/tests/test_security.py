@@ -34,7 +34,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
     assert b'Watch protocol is not permitted by SAFE_PROTOCOL_REGEX' in res.data
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": '            javascript:alert(123)', "tags": ''},
         follow_redirects=True
     )
@@ -42,7 +42,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
     assert b'Watch protocol is not permitted by SAFE_PROTOCOL_REGEX' in res.data
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": '%20%20%20javascript:alert(123)%20%20', "tags": ''},
         follow_redirects=True
     )
@@ -51,7 +51,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
 
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": ' source:javascript:alert(document.domain)', "tags": ''},
         follow_redirects=True
     )
@@ -62,7 +62,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
 def _runner_test_various_file_slash(client, file_uri):
 
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": file_uri, "tags": ''},
         follow_redirects=True
     )

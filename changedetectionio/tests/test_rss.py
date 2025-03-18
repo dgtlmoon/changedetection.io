@@ -126,7 +126,7 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
     test_url = url_for('test_endpoint', content_type="application/xml", _external=True)
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
         follow_redirects=True
     )
