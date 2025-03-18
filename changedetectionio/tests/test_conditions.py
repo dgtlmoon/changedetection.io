@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import json
+import urllib
 
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
@@ -131,3 +133,64 @@ def test_conditions_with_text_and_number(client, live_server):
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
+
+# The 'validate' button next to each rule row
+def test_condition_validate_rule_row(client, live_server):
+
+    set_original_response("50")
+
+    test_url = url_for('test_endpoint', _external=True)
+
+    # Add our URL to the import page
+    res = client.post(
+        url_for("imports.import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    wait_for_all_checks(client)
+
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
+
+    # the front end submits the current form state which should override the watch in a temporary copy
+    res = client.post(
+        url_for("conditions.verify_condition_single_rule", watch_uuid=uuid),  # Base URL
+        query_string={"rule": json.dumps({"field": "extracted_number", "operator": "==", "value": "50"})},
+        data={'include_filter': ""},
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+    assert b'success' in res.data
+
+    # Now a number that does not equal what is found in the last fetch
+    res = client.post(
+        url_for("conditions.verify_condition_single_rule", watch_uuid=uuid),  # Base URL
+        query_string={"rule": json.dumps({"field": "extracted_number", "operator": "==", "value": "111111"})},
+        data={'include_filter': ""},
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+    assert b'false' in res.data
+
+    # Now custom filter that exists
+    res = client.post(
+        url_for("conditions.verify_condition_single_rule", watch_uuid=uuid),  # Base URL
+        query_string={"rule": json.dumps({"field": "extracted_number", "operator": "==", "value": "50"})},
+        data={'include_filter': ".number-container"},
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+    assert b'success' in res.data
+
+    # Now custom filter that DOES NOT exists
+    res = client.post(
+        url_for("conditions.verify_condition_single_rule", watch_uuid=uuid),  # Base URL
+        query_string={"rule": json.dumps({"field": "extracted_number", "operator": "==", "value": "50"})},
+        data={'include_filters': ".NOT-container"},
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+    assert b'false' in res.data
+
+
+
