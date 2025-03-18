@@ -83,7 +83,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"text_should_not_be_present": ignore_text,
               "url": test_url,
               'fetch_backend': "html_requests"
@@ -96,7 +96,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     wait_for_all_checks(client)
     # Check it saved
     res = client.get(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
     )
     assert bytes(ignore_text.encode('utf-8')) in res.data
 

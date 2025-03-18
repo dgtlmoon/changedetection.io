@@ -13,7 +13,7 @@ def test_noproxy_option(client, live_server, measure_memory_usage):
 
     # Should only be available when a proxy is setup
     res = client.get(
-        url_for("edit_page", uuid="first", unpause_on_save=1))
+        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1))
     assert b'No proxy' not in res.data
 
     # Setup a proxy
@@ -50,11 +50,11 @@ def test_noproxy_option(client, live_server, measure_memory_usage):
     assert b"Watch added in Paused state, saving will unpause" in res.data
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.get(
-        url_for("edit_page", uuid=uuid, unpause_on_save=1))
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1))
     assert b'No proxy' in res.data
 
     res = client.post(
-        url_for("edit_page", uuid=uuid, unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
                 "include_filters": "",
                 "fetch_backend": "html_requests",

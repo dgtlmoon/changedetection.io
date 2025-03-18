@@ -134,7 +134,7 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
 
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.post(
-        url_for("edit_page", uuid=uuid, unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
                 "include_filters": "//item/title",
                 "fetch_backend": "html_requests",

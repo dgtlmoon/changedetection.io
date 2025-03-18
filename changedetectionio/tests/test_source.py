@@ -77,7 +77,7 @@ def test_check_ignore_elements(client, live_server, measure_memory_usage):
     # We want <span> and <p> ONLY, but ignore span with .foobar-detection
 
     client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": 'span,p', "url": test_url, "tags": "", "subtractive_selectors": ".foobar-detection", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )

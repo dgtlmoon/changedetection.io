@@ -25,7 +25,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     broken_notification_url = "jsons://broken-url-xxxxxxxx123/test"
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         # A URL with errors should not block the one that is working
         data={"notification_urls": f"{broken_notification_url}\r\n{working_notification_url}",
               "notification_title": "xxx",

@@ -108,7 +108,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"ignore_text": ignore_text, "url": test_url, 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
@@ -116,7 +116,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
 
     # Check it saved
     res = client.get(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
     )
     assert bytes(ignore_text.encode('utf-8')) in res.data
 
@@ -198,7 +198,7 @@ def test_check_global_ignore_text_functionality(client, live_server, measure_mem
 
     #Adding some ignore text should not trigger a change
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"ignore_text": "something irrelevent but just to check", "url": test_url, 'fetch_backend': "html_requests"},
         follow_redirects=True
     )

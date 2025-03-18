@@ -165,7 +165,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
     # Not sure why \r needs to be added - absent of the #changetext this is not necessary
     subtractive_selectors_data = "header\r\nfooter\r\nnav\r\n#changetext"
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "subtractive_selectors": subtractive_selectors_data,
             "url": test_url,
@@ -180,7 +180,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
 
     # Check it saved
     res = client.get(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
     )
     assert bytes(subtractive_selectors_data.encode("utf-8")) in res.data
 
@@ -240,7 +240,7 @@ body > table > tr:nth-child(3) > td:nth-child(3)""",
         wait_for_all_checks(client)
 
         res = client.post(
-            url_for("edit_page", uuid="first"),
+            url_for("ui.ui_edit.edit_page", uuid="first"),
             data={
                 "subtractive_selectors": selector_list,
                 "url": test_url,

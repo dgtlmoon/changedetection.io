@@ -88,7 +88,7 @@ def test_check_filter_multiline(client, live_server, measure_memory_usage):
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": '',
               # Test a regex and a plaintext
               'extract_text': '/something.+?6 billion.+?lines/si\r\nand this should be',
@@ -143,7 +143,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": include_filters,
               'extract_text': '/\d+ online/\r\n/\d+ guests/\r\n/somecase insensitive \d+/i\r\n/somecase insensitive (345\d)/i\r\n/issue1828.+?2022/i',
               "url": test_url,
@@ -219,7 +219,7 @@ def test_regex_error_handling(client, live_server, measure_memory_usage):
 
     ### test regex error handling
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"extract_text": '/something bad\d{3/XYZ',
               "url": test_url,
               "fetch_backend": "html_requests"},

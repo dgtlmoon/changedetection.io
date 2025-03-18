@@ -64,7 +64,7 @@ def test_conditions_with_text_and_number(client, live_server):
     # 1. The page filtered text must contain "5" (first digit of value)
     # 2. The extracted number should be >= 20 and <= 100
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
             "fetch_backend": "html_requests",

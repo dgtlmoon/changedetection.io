@@ -80,7 +80,7 @@ def run_filter_test(client, live_server, content_filter):
                   }
 
     res = client.post(
-        url_for("edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data=watch_data,
         follow_redirects=True
     )
@@ -91,7 +91,7 @@ def run_filter_test(client, live_server, content_filter):
     # Now add a filter, because recheck hours == 5, ONLY pressing of the [edit] or [recheck all] should trigger
     watch_data['include_filters'] = content_filter
     res = client.post(
-        url_for("edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data=watch_data,
         follow_redirects=True
     )

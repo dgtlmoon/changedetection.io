@@ -21,7 +21,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
 
     # Attempt to add a body with a GET method
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
               "url": 'javascript:alert(document.domain)',
               "tags": "",

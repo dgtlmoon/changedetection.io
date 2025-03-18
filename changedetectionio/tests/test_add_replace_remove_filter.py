@@ -57,7 +57,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"trigger_text": 'The golden line',
               "url": test_url,
               'fetch_backend': "html_requests",
@@ -139,7 +139,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"trigger_text": 'Oh yes please',
               "url": test_url,
               'processor': 'text_json_diff',

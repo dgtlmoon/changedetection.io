@@ -4,9 +4,14 @@ from loguru import logger
 from functools import wraps
 
 from changedetectionio.store import ChangeDetectionStore
+from changedetectionio.blueprint.ui.edit import construct_blueprint as construct_edit_blueprint
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_update_threads, queuedWatchMetaData):
     ui_blueprint = Blueprint('ui', __name__, template_folder="templates")
+    
+    # Register the edit blueprint
+    edit_blueprint = construct_edit_blueprint(datastore, update_q, queuedWatchMetaData)
+    ui_blueprint.register_blueprint(edit_blueprint)
     
     # Import the login decorator
     from changedetectionio.auth_decorator import login_optionally_required

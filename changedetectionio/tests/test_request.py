@@ -40,7 +40,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage):
 
     # Add some headers to a request
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
               "url": test_url,
               "tags": "",
@@ -104,7 +104,7 @@ def test_body_in_request(client, live_server, measure_memory_usage):
 
     # add the first 'version'
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
               "url": test_url,
               "tags": "",
@@ -121,7 +121,7 @@ def test_body_in_request(client, live_server, measure_memory_usage):
     body_value = 'Test Body Value {{ 1+1 }}'
     body_value_formatted = 'Test Body Value 2'
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
               "url": test_url,
               "tags": "",
@@ -167,7 +167,7 @@ def test_body_in_request(client, live_server, measure_memory_usage):
 
     # Attempt to add a body with a GET method
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
               "url": test_url,
               "tags": "",
@@ -207,7 +207,7 @@ def test_method_in_request(client, live_server, measure_memory_usage):
 
     # Attempt to add a method which is not valid
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
             "tags": "",
@@ -219,7 +219,7 @@ def test_method_in_request(client, live_server, measure_memory_usage):
 
     # Add a properly formatted body
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
             "tags": "",
@@ -292,7 +292,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage):
 
     # Add some headers to a request
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
             "tags": "testtag",
@@ -361,7 +361,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
 
     # Add some headers to a request
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
             "tags": "testtag",
@@ -393,7 +393,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
     if os.getenv('FAST_PUPPETEER_CHROME_FETCHER'):
         time.sleep(6)
 
-    res = client.get(url_for("edit_page", uuid="first"))
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid="first"))
     assert b"Extra headers file found and will be added to this watch" in res.data
 
     # Not needed anymore

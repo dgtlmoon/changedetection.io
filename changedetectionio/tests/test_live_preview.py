@@ -31,7 +31,7 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage):
     )
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.post(
-        url_for("edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "include_filters": "",
             "fetch_backend": 'html_requests',
@@ -49,7 +49,7 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage):
 
     # DEFAULT OUTPUT WITHOUT ANYTHING UPDATED/CHANGED - SHOULD SEE THE WATCH DEFAULTS
     res = client.post(
-        url_for("watch_get_preview_rendered", uuid=uuid)
+        url_for("ui.ui_edit.watch_get_preview_rendered", uuid=uuid)
     )
     default_return = json.loads(res.data.decode('utf-8'))
     assert default_return.get('after_filter')
@@ -59,7 +59,7 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage):
 
     # SEND AN UPDATE AND WE SHOULD SEE THE OUTPUT CHANGE SO WE KNOW TO HIGHLIGHT NEW STUFF
     res = client.post(
-        url_for("watch_get_preview_rendered", uuid=uuid),
+        url_for("ui.ui_edit.watch_get_preview_rendered", uuid=uuid),
         data={
             "include_filters": "",
             "fetch_backend": 'html_requests',

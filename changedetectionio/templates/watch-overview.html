@@ -188,7 +188,7 @@
                 <td>
                     <a {% if watch.uuid in queued_uuids %}disabled="true"{% endif %} href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
                        class="recheck pure-button pure-button-primary">{% if watch.uuid in queued_uuids %}Queued{% else %}Recheck{% endif %}</a>
-                    <a href="{{ url_for('edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="pure-button pure-button-primary">Edit</a>
+                    <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="pure-button pure-button-primary">Edit</a>
                     {% if watch.history_n >= 2 %}
 
                         {%  if is_unviewed %}

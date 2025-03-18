@@ -113,7 +113,7 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
 
     # Update with what should work
     client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
             "fetch_backend": "html_requests"},

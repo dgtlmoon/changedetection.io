@@ -52,13 +52,13 @@ def test_socks5(client, live_server, measure_memory_usage):
     assert b"Watch added in Paused state, saving will unpause" in res.data
 
     res = client.get(
-        url_for("edit_page", uuid="first", unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
     )
     # check the proxy is offered as expected
     assert b'ui-0socks5proxy' in res.data
 
     res = client.post(
-        url_for("edit_page", uuid="first", unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
         data={
             "include_filters": "",
             "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',

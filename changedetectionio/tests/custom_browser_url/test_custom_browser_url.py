@@ -42,13 +42,13 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
 
         # So the name should appear in the edit page under "Request" > "Fetch Method"
         res = client.get(
-            url_for("edit_page", uuid="first"),
+            url_for("ui.ui_edit.edit_page", uuid="first"),
             follow_redirects=True
         )
         assert b'custom browser URL' in res.data
 
         res = client.post(
-            url_for("edit_page", uuid="first"),
+            url_for("ui.ui_edit.edit_page", uuid="first"),
             data={
                 # 'run_customer_browser_url_tests.sh' will search for this string to know if we hit the right browser container or not
                   "url": f"https://changedetection.io/ci-test.html?custom-browser-search-string=1",

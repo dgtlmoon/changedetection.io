@@ -39,12 +39,12 @@ def test_ignore(client, live_server, measure_memory_usage):
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     # use the highlighter endpoint
     res = client.post(
-        url_for("highlight_submit_ignore_url", uuid=uuid),
+        url_for("ui.ui_edit.highlight_submit_ignore_url", uuid=uuid),
         data={"mode": 'digit-regex', 'selection': 'oh yeah 123'},
         follow_redirects=True
     )
 
-    res = client.get(url_for("edit_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
     # should be a regex now
     assert b'/oh\ yeah\ \d+/' in res.data
 

@@ -321,7 +321,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
 
     # Check in the edit page just to be sure
     res = client.get(
-        url_for("edit_page", uuid=watch_uuid),
+        url_for("ui.ui_edit.edit_page", uuid=watch_uuid),
     )
     assert b"cookie: yum" in res.data, "'cookie: yum' found in 'headers' section"
     assert b"One" in res.data, "Tag 'One' was found"
@@ -344,7 +344,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
 
     # Check in the edit page just to be sure
     res = client.get(
-        url_for("edit_page", uuid=watch_uuid),
+        url_for("ui.ui_edit.edit_page", uuid=watch_uuid),
     )
     assert b"new title" in res.data, "new title found in edit page"
     assert b"552" in res.data, "552 minutes found in edit page"

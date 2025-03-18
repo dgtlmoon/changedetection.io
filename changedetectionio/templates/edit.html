@@ -62,7 +62,7 @@
 
     <div class="box-wrap inner">
         <form class="pure-form pure-form-stacked"
-              action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next'), unpause_on_save = request.args.get('unpause_on_save'), tag = request.args.get('tag')) }}" method="POST">
+              action="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next = request.args.get('next'), unpause_on_save = request.args.get('unpause_on_save'), tag = request.args.get('tag')) }}" method="POST">
              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="tab-pane-inner" id="general">
@@ -480,7 +480,7 @@ keyword") }}
             </div>
               <div id="text-preview" style="display: none;" >
                     <script>
-                        const preview_text_edit_filters_url="{{url_for('watch_get_preview_rendered', uuid=uuid)}}";
+                        const preview_text_edit_filters_url="{{url_for('ui.ui_edit.watch_get_preview_rendered', uuid=uuid)}}";
                     </script>
                     <br>
                     {#<div id="text-preview-controls"><span id="text-preview-refresh" class="pure-button button-xsmall">Refresh</span></div>#}
@@ -577,7 +577,7 @@ keyword") }}
                     </table>
                     {% if watch.history_n %}
                         <p>
-                             <a href="{{url_for('watch_get_latest_html', uuid=uuid)}}" class="pure-button button-small">Download latest HTML snapshot</a>
+                             <a href="{{url_for('ui.ui_edit.watch_get_latest_html', uuid=uuid)}}" class="pure-button button-small">Download latest HTML snapshot</a>
                         </p>
                     {% endif %}
 

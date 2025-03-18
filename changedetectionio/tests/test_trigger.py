@@ -78,7 +78,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"trigger_text": trigger_text,
               "url": test_url,
               "fetch_backend": "html_requests"},
@@ -89,7 +89,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
     # Check it saved
     res = client.get(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
     )
     assert bytes(trigger_text.encode('utf-8')) in res.data
 

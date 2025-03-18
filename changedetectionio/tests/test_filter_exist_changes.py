@@ -97,7 +97,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
         "fetch_backend": "html_requests"})
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data=notification_form_data,
         follow_redirects=True
     )

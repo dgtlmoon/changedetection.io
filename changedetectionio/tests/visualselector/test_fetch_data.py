@@ -31,7 +31,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     assert b"Watch added in Paused state, saving will unpause" in res.data
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.post(
-        url_for("edit_page", uuid=uuid, unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
             "url": test_url,
             "tags": "",
@@ -78,7 +78,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     # Some options should be enabled
     # @todo - in the future, the visibility should be toggled by JS from the request type setting
     res = client.get(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         follow_redirects=True
     )
     assert b'notification_screenshot' in res.data
@@ -107,7 +107,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
     assert b"Watch added in Paused state, saving will unpause" in res.data
 
     res = client.post(
-        url_for("edit_page", uuid="first", unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
         data={
             "url": test_url,
             "tags": "",
@@ -168,7 +168,7 @@ def test_non_200_errors_report_browsersteps(client, live_server):
 
     # now test for 404 errors
     res = client.post(
-        url_for("edit_page", uuid=uuid, unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
               "url": four_o_four_url,
               "tags": "",

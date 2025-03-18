@@ -71,7 +71,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     # Check the 'get latest snapshot works'
-    res = client.get(url_for("watch_get_latest_html", uuid=uuid))
+    res = client.get(url_for("ui.ui_edit.watch_get_latest_html", uuid=uuid))
     assert b'which has this one new line' in res.data
 
     # Now something should be ready, indicated by having a 'unviewed' class

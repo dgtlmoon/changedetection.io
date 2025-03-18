@@ -101,7 +101,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     assert b'And never this' not in res.data
 
     res = client.get(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         follow_redirects=True
     )
     # 2307 the UI notice should appear in the placeholder
@@ -414,7 +414,7 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
             ]
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": '\n'.join(filters),
             "url": test_url,
             "tags": "test-tag-keep-order",

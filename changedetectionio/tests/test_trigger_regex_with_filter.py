@@ -46,7 +46,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
 
     ### test regex with filter
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"trigger_text": "/cool.stuff/",
               "url": test_url,
               "include_filters": '#in-here',

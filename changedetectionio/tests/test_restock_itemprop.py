@@ -118,7 +118,7 @@ def test_itemprop_price_change(client, live_server):
     # turning off price change trigger, but it should show the new price, with no change notification
     set_original_response(props_markup=instock_props[0], price='120.45')
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"restock_settings-follow_price_changes": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
@@ -157,7 +157,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     }
     data.update(extra_watch_edit_form)
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data=data,
         follow_redirects=True
     )
@@ -270,7 +270,7 @@ def test_itemprop_percent_threshold(client, live_server):
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"restock_settings-follow_price_changes": "y",
               "restock_settings-price_change_threshold_percent": 5.0,
               "url": test_url,
@@ -428,7 +428,7 @@ def test_data_sanity(client, live_server):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("edit_page", uuid="first"))
+        url_for("ui.ui_edit.edit_page", uuid="first"))
     assert test_url2.encode('utf-8') in res.data
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)

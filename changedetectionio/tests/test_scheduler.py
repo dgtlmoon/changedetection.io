@@ -66,13 +66,13 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     data.update(scheduler_data)
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data=data,
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
 
-    res = client.get(url_for("edit_page", uuid="first"))
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid="first"))
     assert b"Pacific/Kiritimati" in res.data, "Should be Pacific/Kiritimati in placeholder data"
 
     # "Edit" should not trigger a check because it's not enabled in the schedule.
@@ -149,13 +149,13 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
 
     # UI Sanity check
 
-    res = client.get(url_for("edit_page", uuid="first"))
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid="first"))
     assert b"Pacific/Kiritimati" in res.data, "Should be Pacific/Kiritimati in placeholder data"
 
     #### HITTING SAVE SHOULD NOT TRIGGER A CHECK
     last_check = live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked']
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
             "fetch_backend": "html_requests",

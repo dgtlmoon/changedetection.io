@@ -95,7 +95,7 @@ def test_check_markup_include_filters_restriction(client, live_server, measure_m
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": include_filters, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
@@ -103,7 +103,7 @@ def test_check_markup_include_filters_restriction(client, live_server, measure_m
     time.sleep(1)
     # Check it saved
     res = client.get(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
     )
     assert bytes(include_filters.encode('utf-8')) in res.data
 
@@ -150,7 +150,7 @@ def test_check_multiple_filters(client, live_server, measure_memory_usage):
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": include_filters,
               "url": test_url,
               "tags": "",
@@ -204,7 +204,7 @@ def test_filter_is_empty_help_suggestion(client, live_server, measure_memory_usa
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": include_filters,
               "url": test_url,
               "tags": "",

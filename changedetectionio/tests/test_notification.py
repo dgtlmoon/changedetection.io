@@ -113,7 +113,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
         "fetch_backend": "html_requests"})
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data=notification_form_data,
         follow_redirects=True
     )
@@ -123,7 +123,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
     # Hit the edit page, be sure that we saved it
     # Re #242 - wasnt saving?
     res = client.get(
-        url_for("edit_page", uuid="first"))
+        url_for("ui.ui_edit.edit_page", uuid="first"))
     assert bytes(notification_url.encode('utf-8')) in res.data
     assert bytes("New ChangeDetection.io Notification".encode('utf-8')) in res.data
 
@@ -215,7 +215,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
 
     set_original_response()
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
         "url": test_url,
         "tags": "my tag",
@@ -260,7 +260,7 @@ def test_notification_validation(client, live_server, measure_memory_usage):
 
     # Re #360 some validation
 #    res = client.post(
-#        url_for("edit_page", uuid="first"),
+#        url_for("ui.ui_edit.edit_page", uuid="first"),
 #        data={"notification_urls": 'json://localhost/foobar',
 #              "notification_title": "",
 #              "notification_body": "",

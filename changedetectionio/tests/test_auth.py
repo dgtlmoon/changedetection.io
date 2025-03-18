@@ -22,7 +22,7 @@ def test_basic_auth(client, live_server, measure_memory_usage):
     time.sleep(1)
     # Check form validation
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
