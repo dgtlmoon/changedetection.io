@@ -21,15 +21,15 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             # URL List import
             if request.values.get('urls') and len(request.values.get('urls').strip()):
                 # Import and push into the queue for immediate update check
-                importer = import_url_list()
-                importer.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor', 'text_json_diff'))
-                for uuid in importer.new_uuids:
+                importer_handler = import_url_list()
+                importer_handler.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor', 'text_json_diff'))
+                for uuid in importer_handler.new_uuids:
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
-                if len(importer.remaining_data) == 0:
+                if len(importer_handler.remaining_data) == 0:
                     return redirect(url_for('index'))
                 else:
-                    remaining_urls = importer.remaining_data
+                    remaining_urls = importer_handler.remaining_data
 
             # Distill.io import
             if request.values.get('distill-io') and len(request.values.get('distill-io').strip()):
