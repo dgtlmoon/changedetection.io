@@ -16,7 +16,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
 
     #####################
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "",
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_webdriver",
@@ -30,7 +30,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
 
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -42,13 +42,13 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
 
         # So the name should appear in the edit page under "Request" > "Fetch Method"
         res = client.get(
-            url_for("edit_page", uuid="first"),
+            url_for("ui.ui_edit.edit_page", uuid="first"),
             follow_redirects=True
         )
         assert b'custom browser URL' in res.data
 
         res = client.post(
-            url_for("edit_page", uuid="first"),
+            url_for("ui.ui_edit.edit_page", uuid="first"),
             data={
                 # 'run_customer_browser_url_tests.sh' will search for this string to know if we hit the right browser container or not
                   "url": f"https://changedetection.io/ci-test.html?custom-browser-search-string=1",
@@ -64,13 +64,13 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
         wait_for_all_checks(client)
 
     # Force recheck
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches queued for rechecking.' in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'cool it works' in res.data

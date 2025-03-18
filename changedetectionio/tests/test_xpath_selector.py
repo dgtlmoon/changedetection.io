@@ -85,14 +85,14 @@ def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True, content_type="application/rss+xml;charset=UTF-8")
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": filter, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
@@ -100,7 +100,7 @@ def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'Unicode strings with encoding declaration are not supported.' not in res.data
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
@@ -139,14 +139,14 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True, content_type="application/rss+xml;charset=UTF-8")
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": filter, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
@@ -157,14 +157,14 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
 
     # The service should echo back the request headers
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
     assert b'Stock Alert (UK): RPi CM4' in res.data
     assert b'Stock Alert (UK): Big monitor' in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
@@ -176,7 +176,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -188,7 +188,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": xpath_filter, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
@@ -198,19 +198,19 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     wait_for_all_checks(client)
 
     # view it/reset state back to viewed
-    client.get(url_for("diff_history_page", uuid="first"), follow_redirects=True)
+    client.get(url_for("ui.ui_views.diff_history_page", uuid="first"), follow_redirects=True)
 
     #  Make a change
     set_modified_response()
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
     res = client.get(url_for("index"))
     assert b'unviewed' not in res.data
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
@@ -218,7 +218,7 @@ def test_xpath_validation(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -226,12 +226,12 @@ def test_xpath_validation(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "/something horrible", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"is not a valid XPath expression" in res.data
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
@@ -239,7 +239,7 @@ def test_xpath23_prefix_validation(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -247,12 +247,12 @@ def test_xpath23_prefix_validation(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "xpath:/something horrible", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"is not a valid XPath expression" in res.data
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_xpath1_lxml(client, live_server, measure_memory_usage):
@@ -289,7 +289,7 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage):
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -297,7 +297,7 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "xpath1://title/text()", "url": test_url, "tags": "", "headers": "",
               'fetch_backend': "html_requests"},
         follow_redirects=True
@@ -309,7 +309,7 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage):
     assert b'_ElementStringResult' not in res.data # tested with 5.1.1 when it was removed and 5.1.0
     assert b'Exception' not in res.data
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -323,7 +323,7 @@ def test_xpath1_validation(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -331,18 +331,18 @@ def test_xpath1_validation(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "xpath1:/something horrible", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"is not a valid XPath expression" in res.data
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
 # actually only really used by the distll.io importer, but could be handy too
 def test_check_with_prefix_include_filters(client, live_server, measure_memory_usage):
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
     set_original_response()
@@ -350,7 +350,7 @@ def test_check_with_prefix_include_filters(client, live_server, measure_memory_u
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -358,7 +358,7 @@ def test_check_with_prefix_include_filters(client, live_server, measure_memory_u
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "xpath://*[contains(@class, 'sametext')]", "url": test_url, "tags": "", "headers": "",
               'fetch_backend': "html_requests"},
         follow_redirects=True
@@ -368,14 +368,14 @@ def test_check_with_prefix_include_filters(client, live_server, measure_memory_u
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
     assert b"Some text thats the same" in res.data  # in selector
     assert b"Some text that will change" not in res.data  # not in selector
 
-    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
 def test_various_rules(client, live_server, measure_memory_usage):
@@ -400,7 +400,7 @@ def test_various_rules(client, live_server, measure_memory_usage):
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -409,7 +409,7 @@ def test_various_rules(client, live_server, measure_memory_usage):
 
     for r in ['//div', '//a', 'xpath://div', 'xpath://a']:
         res = client.post(
-            url_for("edit_page", uuid="first"),
+            url_for("ui.ui_edit.edit_page", uuid="first"),
             data={"include_filters": r,
                   "url": test_url,
                   "tags": "",
@@ -422,14 +422,14 @@ def test_various_rules(client, live_server, measure_memory_usage):
         res = client.get(url_for("index"))
         assert b'fetch-error' not in res.data, f"Should not see errors after '{r} filter"
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
 def test_xpath_20(client, live_server, measure_memory_usage):
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -440,7 +440,7 @@ def test_xpath_20(client, live_server, measure_memory_usage):
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "//*[contains(@class, 'sametext')]|//*[contains(@class, 'changetext')]",
               "url": test_url,
               "tags": "",
@@ -453,14 +453,14 @@ def test_xpath_20(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
     assert b"Some text thats the same" in res.data  # in selector
     assert b"Some text that will change" in res.data  # in selector
 
-    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
 def test_xpath_20_function_count(client, live_server, measure_memory_usage):
@@ -469,7 +469,7 @@ def test_xpath_20_function_count(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -477,7 +477,7 @@ def test_xpath_20_function_count(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "xpath:count(//div) * 123456789987654321",
               "url": test_url,
               "tags": "",
@@ -490,13 +490,13 @@ def test_xpath_20_function_count(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
     assert b"246913579975308642" in res.data  # in selector
 
-    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
 def test_xpath_20_function_count2(client, live_server, measure_memory_usage):
@@ -505,7 +505,7 @@ def test_xpath_20_function_count2(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -513,7 +513,7 @@ def test_xpath_20_function_count2(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "/html/body/count(div) * 123456789987654321",
               "url": test_url,
               "tags": "",
@@ -526,13 +526,13 @@ def test_xpath_20_function_count2(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
     assert b"246913579975308642" in res.data  # in selector
 
-    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
 def test_xpath_20_function_string_join_matches(client, live_server, measure_memory_usage):
@@ -541,7 +541,7 @@ def test_xpath_20_function_string_join_matches(client, live_server, measure_memo
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -549,7 +549,7 @@ def test_xpath_20_function_string_join_matches(client, live_server, measure_memo
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "include_filters": "xpath:string-join(//*[contains(@class, 'sametext')]|//*[matches(@class, 'changetext')], 'specialconjunction')",
             "url": test_url,
@@ -563,11 +563,11 @@ def test_xpath_20_function_string_join_matches(client, live_server, measure_memo
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
     assert b"Some text thats the samespecialconjunctionSome text that will change" in res.data  # in selector
 
-    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 

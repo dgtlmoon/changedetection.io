@@ -12,7 +12,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     # Set a URL and fetch it, then set a notification URL which is going to give errors
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": ''},
         follow_redirects=True
     )
@@ -25,7 +25,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     broken_notification_url = "jsons://broken-url-xxxxxxxx123/test"
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         # A URL with errors should not block the one that is working
         data={"notification_urls": f"{broken_notification_url}\r\n{working_notification_url}",
               "notification_title": "xxx",
@@ -59,7 +59,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
 
     # The error should show in the notification logs
     res = client.get(
-        url_for("notification_logs"))
+        url_for("settings.notification_logs"))
     found_name_resolution_error = b"Temporary failure in name resolution" in res.data or b"Name or service not known" in res.data
     assert found_name_resolution_error
 
@@ -69,4 +69,4 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     os.unlink("test-datastore/notification.txt")
     assert 'xxxxx' in notification_submission
 
-    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)

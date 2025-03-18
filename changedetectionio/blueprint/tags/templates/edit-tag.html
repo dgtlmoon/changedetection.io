@@ -3,7 +3,7 @@
 {% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script>
-    const notification_base_url="{{url_for('ajax_callback_send_notification_test', mode="group-settings")}}";
+    const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="group-settings")}}";
 </script>
 
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
@@ -124,7 +124,7 @@ nav
                         {% if has_default_notification_urls %}
                         <div class="inline-warning">
                             <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="Look out!" title="Lookout!" >
-                            There are <a href="{{ url_for('settings_page')}}#notifications">system-wide notification URLs enabled</a>, this form will override notification settings for this watch only &dash; an empty Notification URL list here will still send notifications.
+                            There are <a href="{{ url_for('settings.settings_page')}}#notifications">system-wide notification URLs enabled</a>, this form will override notification settings for this watch only &dash; an empty Notification URL list here will still send notifications.
                         </div>
                         {% endif %}
                         <a href="#notifications" id="notification-setting-reset-to-default" class="pure-button button-xsmall" style="right: 20px; top: 20px; position: absolute; background-color: #5f42dd; border-radius: 4px; font-size: 70%; color: #fff">Use system defaults</a>

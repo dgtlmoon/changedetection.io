@@ -46,6 +46,8 @@ def construct_blueprint(datastore):
             # Override the conditions in the temporary watch
             rule_json = request.args.get("rule")
             rule = json.loads(rule_json) if rule_json else None
+
+            # Should be key/value of field, operator, value
             tmp_watch_data['conditions'] = [rule]
             tmp_watch_data['conditions_match_logic'] = "ALL"  # Single rule, so use ALL
 

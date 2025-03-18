@@ -62,7 +62,7 @@ def test_restock_detection(client, live_server, measure_memory_usage):
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,
               "application-notification_title": "fallback-title "+default_notification_title,
               "application-notification_body": "fallback-body "+default_notification_body,
@@ -76,7 +76,7 @@ def test_restock_detection(client, live_server, measure_memory_usage):
 
 
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": '', 'processor': 'restock_diff'},
         follow_redirects=True
     )
@@ -88,7 +88,7 @@ def test_restock_detection(client, live_server, measure_memory_usage):
 
     # Is it correctly shown as in stock
     set_back_in_stock_response()
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'not-in-stock' not in res.data
@@ -101,7 +101,7 @@ def test_restock_detection(client, live_server, measure_memory_usage):
     # Default behaviour is to only fire notification when it goes OUT OF STOCK -> IN STOCK
     # So here there should be no file, because we go IN STOCK -> OUT OF STOCK
     set_original_response()
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     time.sleep(5)
     assert not os.path.isfile("test-datastore/notification.txt"), "No notification should have fired when it went OUT OF STOCK by default"

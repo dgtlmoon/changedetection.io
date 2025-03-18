@@ -1,4 +1,4 @@
-from .util import live_server_setup, extract_UUID_from_client, wait_for_all_checks
+from .util import live_server_setup
 from flask import url_for
 import time
 
@@ -8,12 +8,12 @@ def test_check_access_control(app, client, live_server):
 
     with app.test_client(use_cookies=True) as c:
         # Check we don't have any password protection enabled yet.
-        res = c.get(url_for("settings_page"))
+        res = c.get(url_for("settings.settings_page"))
         assert b"Remove password" not in res.data
 
         # add something that we can hit via diff page later
         res = c.post(
-            url_for("import_page"),
+            url_for("imports.import_page"),
             data={"urls": url_for('test_random_content_endpoint', _external=True)},
             follow_redirects=True
         )
@@ -23,8 +23,9 @@ def test_check_access_control(app, client, live_server):
         # causes a 'Popped wrong request context.' error when client. is accessed?
         #wait_for_all_checks(client)
 
-        res = c.get(url_for("form_watch_checknow"), follow_redirects=True)
-        assert b'1 watches queued for rechecking.' in res.data
+        res = c.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        assert b'Queued 1 watch for rechecking.' in res.data
+
         time.sleep(3)
         # causes a 'Popped wrong request context.' error when client. is accessed?
         #wait_for_all_checks(client)
@@ -32,7 +33,7 @@ def test_check_access_control(app, client, live_server):
 
         # Enable password check and diff page access bypass
         res = c.post(
-            url_for("settings_page"),
+            url_for("settings.settings_page"),
             data={"application-password": "foobar",
                   "application-shared_diff_access": "True",
                   "requests-time_between_check-minutes": 180,
@@ -48,7 +49,7 @@ def test_check_access_control(app, client, live_server):
         assert b"Login" in res.data
 
         # The diff page should return something valid when logged out
-        res = c.get(url_for("diff_history_page", uuid="first"))
+        res = c.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
         assert b'Random content' in res.data
 
         # Check wrong password does not let us in
@@ -79,7 +80,7 @@ def test_check_access_control(app, client, live_server):
 
         # 598 - Password should be set and not accidently removed
         res = c.post(
-            url_for("settings_page"),
+            url_for("settings.settings_page"),
             data={
                   "requests-time_between_check-minutes": 180,
                   'application-fetch_backend': "html_requests"},
@@ -91,7 +92,7 @@ def test_check_access_control(app, client, live_server):
 
         assert b"Login" in res.data
 
-        res = c.get(url_for("settings_page"),
+        res = c.get(url_for("settings.settings_page"),
             follow_redirects=True)
 
 
@@ -110,7 +111,7 @@ def test_check_access_control(app, client, live_server):
         # Yes we are correctly logged in
         assert b"LOG OUT" in res.data
 
-        res = c.get(url_for("settings_page"))
+        res = c.get(url_for("settings.settings_page"))
 
         # Menu should be available now
         assert b"SETTINGS" in res.data
@@ -124,7 +125,7 @@ def test_check_access_control(app, client, live_server):
         # Remove password button, and check that it worked
         ##################################################
         res = c.post(
-            url_for("settings_page"),
+            url_for("settings.settings_page"),
             data={
                 "requests-time_between_check-minutes": 180,
                 "application-fetch_backend": "html_webdriver",
@@ -139,7 +140,7 @@ def test_check_access_control(app, client, live_server):
         # Be sure a blank password doesnt setup password protection
         ############################################################
         res = c.post(
-            url_for("settings_page"),
+            url_for("settings.settings_page"),
             data={"application-password": "",
                   "requests-time_between_check-minutes": 180,
                   'application-fetch_backend': "html_requests"},
@@ -151,7 +152,7 @@ def test_check_access_control(app, client, live_server):
         # Now checking the diff access
         # Enable password check and diff page access bypass
         res = c.post(
-            url_for("settings_page"),
+            url_for("settings.settings_page"),
             data={"application-password": "foobar",
                   # Should be disabled
 #                  "application-shared_diff_access": "True",
@@ -168,5 +169,5 @@ def test_check_access_control(app, client, live_server):
         assert b"Login" in res.data
 
         # The diff page should return something valid when logged out
-        res = c.get(url_for("diff_history_page", uuid="first"))
+        res = c.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
         assert b'Random content' not in res.data

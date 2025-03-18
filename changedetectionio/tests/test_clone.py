@@ -15,7 +15,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": "https://changedetection.io"},
         follow_redirects=True
     )
@@ -23,7 +23,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
 
 
     res = client.get(
-        url_for("form_clone", uuid="first"),
+        url_for("ui.form_clone", uuid="first"),
         follow_redirects=True
     )
 

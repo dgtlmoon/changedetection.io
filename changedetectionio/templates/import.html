@@ -13,7 +13,7 @@
     </div>
 
     <div class="box-wrap inner">
-        <form class="pure-form" action="{{url_for('import_page')}}" method="POST" enctype="multipart/form-data">
+        <form class="pure-form" action="{{url_for('imports.import_page')}}" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="tab-pane-inner" id="url-list">
                     <legend>

@@ -36,14 +36,14 @@ def run_filter_test(client, live_server, content_filter):
 
     # cleanup for the next
     client.get(
-        url_for("form_delete", uuid="all"),
+        url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
     if os.path.isfile("test-datastore/notification.txt"):
         os.unlink("test-datastore/notification.txt")
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -80,7 +80,7 @@ def run_filter_test(client, live_server, content_filter):
                   }
 
     res = client.post(
-        url_for("edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data=watch_data,
         follow_redirects=True
     )
@@ -91,7 +91,7 @@ def run_filter_test(client, live_server, content_filter):
     # Now add a filter, because recheck hours == 5, ONLY pressing of the [edit] or [recheck all] should trigger
     watch_data['include_filters'] = content_filter
     res = client.post(
-        url_for("edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data=watch_data,
         follow_redirects=True
     )
@@ -111,7 +111,7 @@ def run_filter_test(client, live_server, content_filter):
     ATTEMPT_THRESHOLD_SETTING = live_server.app.config['DATASTORE'].data['settings']['application'].get('filter_failure_notification_threshold_attempts', 0)
     for i in range(0, ATTEMPT_THRESHOLD_SETTING - 2):
         checked += 1
-        client.get(url_for("form_watch_checknow"), follow_redirects=True)
+        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
         res = client.get(url_for("index"))
         assert b'Warning, no filters were found' in res.data
@@ -122,7 +122,7 @@ def run_filter_test(client, live_server, content_filter):
 
     time.sleep(2)
     # One more check should trigger the _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT threshold
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     wait_for_notification_endpoint_output()
 
@@ -141,7 +141,7 @@ def run_filter_test(client, live_server, content_filter):
 
     # Try several times, it should NOT have 'filter not found'
     for i in range(0, ATTEMPT_THRESHOLD_SETTING + 2):
-        client.get(url_for("form_watch_checknow"), follow_redirects=True)
+        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
 
     wait_for_notification_endpoint_output()
@@ -157,7 +157,7 @@ def run_filter_test(client, live_server, content_filter):
 
     # cleanup for the next
     client.get(
-        url_for("form_delete", uuid="all"),
+        url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
     os.unlink("test-datastore/notification.txt")

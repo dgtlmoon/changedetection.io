@@ -25,7 +25,7 @@ def test_socks5(client, live_server, measure_memory_usage):
 
     # Setup a proxy
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
@@ -45,20 +45,20 @@ def test_socks5(client, live_server, measure_memory_usage):
     test_url = test_url.replace('localhost', 'cdio')
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
         follow_redirects=True
     )
     assert b"Watch added in Paused state, saving will unpause" in res.data
 
     res = client.get(
-        url_for("edit_page", uuid="first", unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
     )
     # check the proxy is offered as expected
     assert b'ui-0socks5proxy' in res.data
 
     res = client.post(
-        url_for("edit_page", uuid="first", unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
         data={
             "include_filters": "",
             "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
@@ -73,7 +73,7 @@ def test_socks5(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -97,6 +97,6 @@ def test_socks5(client, live_server, measure_memory_usage):
     )
     assert b"OK" in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 

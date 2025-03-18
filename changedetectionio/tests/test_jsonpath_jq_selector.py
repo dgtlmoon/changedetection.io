@@ -212,7 +212,7 @@ def test_check_json_without_filter(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -221,7 +221,7 @@ def test_check_json_without_filter(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -229,7 +229,7 @@ def test_check_json_without_filter(client, live_server, measure_memory_usage):
     assert b'&#34;html&#34;: &#34;&lt;b&gt;&#34;' in res.data
     assert res.data.count(b'{') >= 2
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def check_json_filter(json_filter, client, live_server):
@@ -241,7 +241,7 @@ def check_json_filter(json_filter, client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -253,7 +253,7 @@ def check_json_filter(json_filter, client, live_server):
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": json_filter,
               "url": test_url,
               "tags": "",
@@ -266,7 +266,7 @@ def check_json_filter(json_filter, client, live_server):
 
     # Check it saved
     res = client.get(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
     )
     assert bytes(escape(json_filter).encode('utf-8')) in res.data
 
@@ -276,7 +276,7 @@ def check_json_filter(json_filter, client, live_server):
     set_modified_response()
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
@@ -285,13 +285,13 @@ def check_json_filter(json_filter, client, live_server):
     assert b'unviewed' in res.data
 
     # Should not see this, because its not in the JSONPath we entered
-    res = client.get(url_for("diff_history_page", uuid="first"))
+    res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
 
     # But the change should be there, tho its hard to test the change was detected because it will show old and new versions
     # And #462 - check we see the proper utf-8 string there
     assert "Örnsköldsvik".encode('utf-8') in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_check_jsonpath_filter(client, live_server, measure_memory_usage):
@@ -314,7 +314,7 @@ def check_json_filter_bool_val(json_filter, client, live_server):
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -324,7 +324,7 @@ def check_json_filter_bool_val(json_filter, client, live_server):
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": json_filter,
               "url": test_url,
               "tags": "",
@@ -341,15 +341,15 @@ def check_json_filter_bool_val(json_filter, client, live_server):
     set_modified_response()
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
-    res = client.get(url_for("diff_history_page", uuid="first"))
+    res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
     # But the change should be there, tho its hard to test the change was detected because it will show old and new versions
     assert b'false' in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_check_jsonpath_filter_bool_val(client, live_server, measure_memory_usage):
@@ -377,7 +377,7 @@ def check_json_ext_filter(json_filter, client, live_server):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -389,7 +389,7 @@ def check_json_ext_filter(json_filter, client, live_server):
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": json_filter,
               "url": test_url,
               "tags": "",
@@ -402,7 +402,7 @@ def check_json_ext_filter(json_filter, client, live_server):
 
     # Check it saved
     res = client.get(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
     )
     assert bytes(escape(json_filter).encode('utf-8')) in res.data
 
@@ -412,7 +412,7 @@ def check_json_ext_filter(json_filter, client, live_server):
     set_modified_ext_response()
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
@@ -420,14 +420,14 @@ def check_json_ext_filter(json_filter, client, live_server):
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
-    res = client.get(url_for("diff_history_page", uuid="first"))
+    res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
 
     # We should never see 'ForSale' because we are selecting on 'Sold' in the rule,
     # But we should know it triggered ('unviewed' assert above)
     assert b'ForSale' not in res.data
     assert b'Sold' in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_ignore_json_order(client, live_server, measure_memory_usage):
@@ -440,7 +440,7 @@ def test_ignore_json_order(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -452,7 +452,7 @@ def test_ignore_json_order(client, live_server, measure_memory_usage):
         f.write('{"world" : 123, "hello": 123}')
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("index"))
@@ -463,13 +463,13 @@ def test_ignore_json_order(client, live_server, measure_memory_usage):
         f.write('{"world" : 123, "hello": 124}')
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("index"))
     assert b'unviewed' in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_correct_header_detect(client, live_server, measure_memory_usage):
@@ -482,7 +482,7 @@ def test_correct_header_detect(client, live_server, measure_memory_usage):
     # Check weird casing is cleaned up and detected also
     test_url = url_for('test_endpoint', content_type="aPPlication/JSon", uppercase_headers=True, _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -494,14 +494,14 @@ def test_correct_header_detect(client, live_server, measure_memory_usage):
     assert b'No parsable JSON found in this document' not in res.data
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
     assert b'&#34;hello&#34;: 123,' in res.data
     assert b'&#34;world&#34;: 123' in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_check_jsonpath_ext_filter(client, live_server, measure_memory_usage):

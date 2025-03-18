@@ -20,7 +20,7 @@
 {% if emailprefix %}
     const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
 {% endif %}
-    const notification_base_url="{{url_for('ajax_callback_send_notification_test', watch_uuid=uuid)}}";
+    const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', watch_uuid=uuid)}}";
     const playwright_enabled={% if playwright_enabled %}true{% else %}false{% endif %};
     const recheck_proxy_start_url="{{url_for('check_proxies.start_check', uuid=uuid)}}";
     const proxy_recheck_status_url="{{url_for('check_proxies.get_recheck_status', uuid=uuid)}}";
@@ -62,7 +62,7 @@
 
     <div class="box-wrap inner">
         <form class="pure-form pure-form-stacked"
-              action="{{ url_for('edit_page', uuid=uuid, next = request.args.get('next'), unpause_on_save = request.args.get('unpause_on_save'), tag = request.args.get('tag')) }}" method="POST">
+              action="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next = request.args.get('next'), unpause_on_save = request.args.get('unpause_on_save'), tag = request.args.get('tag')) }}" method="POST">
              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="tab-pane-inner" id="general">
@@ -274,7 +274,7 @@ Math: {{ 1 + 1 }}") }}
                         {% if has_default_notification_urls %}
                         <div class="inline-warning">
                             <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="Look out!" title="Lookout!" >
-                            There are <a href="{{ url_for('settings_page')}}#notifications">system-wide notification URLs enabled</a>, this form will override notification settings for this watch only &dash; an empty Notification URL list here will still send notifications.
+                            There are <a href="{{ url_for('settings.settings_page')}}#notifications">system-wide notification URLs enabled</a>, this form will override notification settings for this watch only &dash; an empty Notification URL list here will still send notifications.
                         </div>
                         {% endif %}
                         <a href="#notifications" id="notification-setting-reset-to-default" class="pure-button button-xsmall" style="right: 20px; top: 20px; position: absolute; background-color: #5f42dd; border-radius: 4px; font-size: 70%; color: #fff">Use system defaults</a>
@@ -480,7 +480,7 @@ keyword") }}
             </div>
               <div id="text-preview" style="display: none;" >
                     <script>
-                        const preview_text_edit_filters_url="{{url_for('watch_get_preview_rendered', uuid=uuid)}}";
+                        const preview_text_edit_filters_url="{{url_for('ui.ui_edit.watch_get_preview_rendered', uuid=uuid)}}";
                     </script>
                     <br>
                     {#<div id="text-preview-controls"><span id="text-preview-refresh" class="pure-button button-xsmall">Refresh</span></div>#}
@@ -577,7 +577,7 @@ keyword") }}
                     </table>
                     {% if watch.history_n %}
                         <p>
-                             <a href="{{url_for('watch_get_latest_html', uuid=uuid)}}" class="pure-button button-small">Download latest HTML snapshot</a>
+                             <a href="{{url_for('ui.ui_edit.watch_get_latest_html', uuid=uuid)}}" class="pure-button button-small">Download latest HTML snapshot</a>
                         </p>
                     {% endif %}
 
@@ -586,11 +586,11 @@ keyword") }}
             <div id="actions">
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
-                    <a href="{{url_for('form_delete', uuid=uuid)}}"
+                    <a href="{{url_for('ui.form_delete', uuid=uuid)}}"
                        class="pure-button button-small button-error ">Delete</a>
-                    <a href="{{url_for('clear_watch_history', uuid=uuid)}}"
+                    <a href="{{url_for('ui.clear_watch_history', uuid=uuid)}}"
                        class="pure-button button-small button-error ">Clear History</a>
-                    <a href="{{url_for('form_clone', uuid=uuid)}}"
+                    <a href="{{url_for('ui.form_clone', uuid=uuid)}}"
                        class="pure-button button-small ">Create Copy</a>
                 </div>
             </div>

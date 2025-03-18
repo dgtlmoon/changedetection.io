@@ -15,7 +15,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
     test_url = 'source:'+url_for('test_endpoint', _external=True)
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -28,7 +28,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
 
     # Check HTML conversion detected and workd
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -39,8 +39,8 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
     set_modified_response()
 
     # Force recheck
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches queued for rechecking.' in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
 
@@ -49,7 +49,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
     assert b'unviewed' in res.data
 
     res = client.get(
-        url_for("diff_history_page", uuid="first"),
+        url_for("ui.ui_views.diff_history_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -64,7 +64,7 @@ def test_check_ignore_elements(client, live_server, measure_memory_usage):
     test_url = 'source:'+url_for('test_endpoint', _external=True)
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -77,7 +77,7 @@ def test_check_ignore_elements(client, live_server, measure_memory_usage):
     # We want <span> and <p> ONLY, but ignore span with .foobar-detection
 
     client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": 'span,p', "url": test_url, "tags": "", "subtractive_selectors": ".foobar-detection", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
@@ -85,7 +85,7 @@ def test_check_ignore_elements(client, live_server, measure_memory_usage):
     time.sleep(sleep_time_for_fetch_thread)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'foobar-detection' not in res.data

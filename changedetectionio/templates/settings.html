@@ -4,7 +4,7 @@
 {% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script>
-    const notification_base_url="{{url_for('ajax_callback_send_notification_test', mode="global-settings")}}";
+    const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="global-settings")}}";
 {% if emailprefix %}
     const email_notification_prefix=JSON.parse('{{emailprefix|tojson}}');
 {% endif %}
@@ -28,7 +28,7 @@
         </ul>
     </div>
     <div class="box-wrap inner">
-        <form class="pure-form pure-form-stacked settings" action="{{url_for('settings_page')}}" method="POST">
+        <form class="pure-form pure-form-stacked settings" action="{{url_for('settings.settings_page')}}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
             <div class="tab-pane-inner" id="general">
                 <fieldset>
@@ -203,7 +203,7 @@ nav
                     </div>
                 </div>
                 <div class="pure-control-group">
-                    <a href="{{url_for('settings_reset_api_key')}}" class="pure-button button-small button-cancel">Regenerate API key</a>
+                    <a href="{{url_for('settings.settings_reset_api_key')}}" class="pure-button button-small button-cancel">Regenerate API key</a>
                 </div>
                 <div class="pure-control-group">
                     <h4>Chrome Extension</h4>
@@ -300,7 +300,7 @@ nav
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
                     <a href="{{url_for('index')}}" class="pure-button button-small button-cancel">Back</a>
-                    <a href="{{url_for('clear_all_history')}}" class="pure-button button-small button-error">Clear Snapshot History</a>
+                    <a href="{{url_for('ui.clear_all_history')}}" class="pure-button button-small button-error">Clear Snapshot History</a>
                 </div>
             </div>
         </form>

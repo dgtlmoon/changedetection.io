@@ -16,7 +16,7 @@ def test_consistent_history(client, live_server, measure_memory_usage):
     for one in r:
         test_url = url_for('test_endpoint', content_type="text/html", content=str(one), _external=True)
         res = client.post(
-            url_for("import_page"),
+            url_for("imports.import_page"),
             data={"urls": test_url},
             follow_redirects=True
         )
@@ -27,7 +27,7 @@ def test_consistent_history(client, live_server, measure_memory_usage):
 
     # Essentially just triggers the DB write/update
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "",
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_requests"},

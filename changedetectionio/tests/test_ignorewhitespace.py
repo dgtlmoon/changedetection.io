@@ -59,7 +59,7 @@ def test_check_ignore_whitespace(client, live_server, measure_memory_usage):
 
     # Goto the settings page, add our ignore text
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
@@ -72,7 +72,7 @@ def test_check_ignore_whitespace(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -80,12 +80,12 @@ def test_check_ignore_whitespace(client, live_server, measure_memory_usage):
 
     time.sleep(sleep_time_for_fetch_thread)
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     set_original_ignore_response_but_with_whitespace()
     time.sleep(sleep_time_for_fetch_thread)
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)

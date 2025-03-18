@@ -71,7 +71,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url + "?first-imported=1 test-tag, extra-import-tag"},
         follow_redirects=True
     )
@@ -94,14 +94,14 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     assert b'Warning, no filters were found' not in res.data
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'Should be only this' in res.data
     assert b'And never this' not in res.data
 
     res = client.get(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         follow_redirects=True
     )
     # 2307 the UI notice should appear in the placeholder
@@ -110,24 +110,24 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     # RSS Group tag filter
     # An extra one that should be excluded
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url + "?should-be-excluded=1 some-tag"},
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
     set_modified_response()
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     rss_token = extract_rss_token_from_UI(client)
     res = client.get(
-        url_for("rss", token=rss_token, tag="extra-import-tag", _external=True),
+        url_for("rss.feed", token=rss_token, tag="extra-import-tag", _external=True),
         follow_redirects=True
     )
     assert b"should-be-excluded" not in res.data
     assert res.status_code == 200
     assert b"first-imported=1" in res.data
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_tag_import_singular(client, live_server, measure_memory_usage):
@@ -135,7 +135,7 @@ def test_tag_import_singular(client, live_server, measure_memory_usage):
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url + " test-tag, test-tag\r\n"+ test_url + "?x=1 test-tag, test-tag\r\n"},
         follow_redirects=True
     )
@@ -147,7 +147,7 @@ def test_tag_import_singular(client, live_server, measure_memory_usage):
     )
     # Should be only 1 tag because they both had the same
     assert res.data.count(b'test-tag') == 1
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_tag_add_in_ui(client, live_server, measure_memory_usage):
@@ -164,7 +164,7 @@ def test_tag_add_in_ui(client, live_server, measure_memory_usage):
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_group_tag_notification(client, live_server, measure_memory_usage):
@@ -173,7 +173,7 @@ def test_group_tag_notification(client, live_server, measure_memory_usage):
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'test-tag, other-tag'},
         follow_redirects=True
     )
@@ -211,7 +211,7 @@ def test_group_tag_notification(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     set_modified_response()
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     time.sleep(3)
 
     assert os.path.isfile("test-datastore/notification.txt")
@@ -232,7 +232,7 @@ def test_group_tag_notification(client, live_server, measure_memory_usage):
 
     #@todo Test that multiple notifications fired
     #@todo Test that each of multiple notifications with different settings
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_limit_tag_ui(client, live_server, measure_memory_usage):
@@ -248,7 +248,7 @@ def test_limit_tag_ui(client, live_server, measure_memory_usage):
         urls.append(test_url+"?non-grouped="+str(i))
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": "\r\n".join(urls)},
         follow_redirects=True
     )
@@ -269,7 +269,7 @@ def test_limit_tag_ui(client, live_server, measure_memory_usage):
     assert b'test-tag' in res.data
     assert res.data.count(b'processor-text_json_diff') == 20
     assert b"object at" not in res.data
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
@@ -277,7 +277,7 @@ def test_clone_tag_on_import(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url + " test-tag, another-tag\r\n"},
         follow_redirects=True
     )
@@ -289,13 +289,13 @@ def test_clone_tag_on_import(client, live_server, measure_memory_usage):
     assert b'another-tag' in res.data
 
     watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
-    res = client.get(url_for("form_clone", uuid=watch_uuid), follow_redirects=True)
+    res = client.get(url_for("ui.form_clone", uuid=watch_uuid), follow_redirects=True)
 
     assert b'Cloned' in res.data
     # 2 times plus the top link to tag
     assert res.data.count(b'test-tag') == 3
     assert res.data.count(b'another-tag') == 3
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usage):
@@ -304,7 +304,7 @@ def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usa
     test_url = url_for('test_endpoint', _external=True)
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": ' test-tag, another-tag      '},
         follow_redirects=True
     )
@@ -316,13 +316,13 @@ def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usa
     assert b'another-tag' in res.data
 
     watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
-    res = client.get(url_for("form_clone", uuid=watch_uuid), follow_redirects=True)
+    res = client.get(url_for("ui.form_clone", uuid=watch_uuid), follow_redirects=True)
 
     assert b'Cloned' in res.data
     # 2 times plus the top link to tag
     assert res.data.count(b'test-tag') == 3
     assert res.data.count(b'another-tag') == 3
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
@@ -387,7 +387,7 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -414,7 +414,7 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
             ]
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": '\n'.join(filters),
             "url": test_url,
             "tags": "test-tag-keep-order",
@@ -426,7 +426,7 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -476,5 +476,5 @@ the {test} appeared before. {test in res.data[:n]=}
         """
         n += t_index + len(test)
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

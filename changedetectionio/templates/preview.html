@@ -7,7 +7,7 @@
         {% if last_error_screenshot %}
             const error_screenshot_url = "{{url_for('static_content', group='screenshot', filename=uuid, error_screenshot=1) }}";
         {% endif %}
-        const highlight_submit_ignore_url = "{{url_for('highlight_submit_ignore_url', uuid=uuid)}}";
+        const highlight_submit_ignore_url = "{{url_for('ui.ui_edit.highlight_submit_ignore_url', uuid=uuid)}}";
     </script>
     <script src="{{url_for('static_content', group='js', filename='plugins.js')}}"></script>
     <script src="{{ url_for('static_content', group='js', filename='diff-overview.js') }}" defer></script>

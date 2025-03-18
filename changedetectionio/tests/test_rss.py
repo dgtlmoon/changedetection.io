@@ -60,7 +60,7 @@ def test_rss_and_token(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": url_for('test_random_content_endpoint', _external=True)},
         follow_redirects=True
     )
@@ -70,25 +70,25 @@ def test_rss_and_token(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
     set_modified_response()
     time.sleep(1)
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Add our URL to the import page
     res = client.get(
-        url_for("rss", token="bad token", _external=True),
+        url_for("rss.feed", token="bad token", _external=True),
         follow_redirects=True
     )
 
     assert b"Access denied, bad token" in res.data
 
     res = client.get(
-        url_for("rss", token=rss_token, _external=True),
+        url_for("rss.feed", token=rss_token, _external=True),
         follow_redirects=True
     )
     assert b"Access denied, bad token" not in res.data
     assert b"Random content" in res.data
 
-    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
@@ -99,7 +99,7 @@ def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -109,14 +109,14 @@ def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'CDATA' not in res.data
     assert b'<![' not in res.data
     assert b'Hackers can access your computer' in res.data
     assert b'The days of Terminator' in res.data
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
@@ -126,7 +126,7 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
     test_url = url_for('test_endpoint', content_type="application/xml", _external=True)
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
         follow_redirects=True
     )
@@ -134,7 +134,7 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
 
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.post(
-        url_for("edit_page", uuid=uuid, unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
                 "include_filters": "//item/title",
                 "fetch_backend": "html_requests",
@@ -150,7 +150,7 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'CDATA' not in res.data
@@ -163,4 +163,4 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
     assert b'The days of Terminator' not in res.data # Should NOT be selected by the xpath
     assert b'Some other description' not in res.data  # Should NOT be selected by the xpath
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)

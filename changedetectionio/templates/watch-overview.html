@@ -6,7 +6,7 @@
 
 <div class="box">
 
-    <form class="pure-form" action="{{ url_for('form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
+    <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
         <fieldset>
             <legend>Add a new change detection watch</legend>
@@ -25,7 +25,7 @@
         <span style="color:#eee; font-size: 80%;"><img alt="Create a shareable link" style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread-white.svg')}}" > Tip: You can also add 'shared' watches. <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">More info</a></span>
     </form>
 
-    <form class="pure-form" action="{{ url_for('form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
+    <form class="pure-form" action="{{ url_for('ui.form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
     <input type="hidden" id="op_extradata" name="op_extradata" value="" >
     <div id="checkbox-operations">
@@ -86,7 +86,7 @@
             <tbody>
             {% if not watches|length %}
             <tr>
-                <td colspan="{{ cols_required }}" style="text-wrap: wrap;">No website watches configured, please add a URL in the box above, or <a href="{{ url_for('import_page')}}" >import a list</a>.</td>
+                <td colspan="{{ cols_required }}" style="text-wrap: wrap;">No website watches configured, please add a URL in the box above, or <a href="{{ url_for('imports.import_page')}}" >import a list</a>.</td>
             </tr>
             {% endif %}
             {% for watch in (watches|sort(attribute=sort_attribute, reverse=sort_order == 'asc'))|pagination_slice(skip=pagination.skip) %}
@@ -113,7 +113,7 @@
                 </td>
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
                     <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}"></a>
-                    <a class="link-spread" href="{{url_for('form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="Create a link to share watch config with others" ></a>
+                    <a class="link-spread" href="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="Create a link to share watch config with others" ></a>
 
                     {% if watch.get_fetch_backend == "html_webdriver"
                          or (  watch.get_fetch_backend == "system" and system_default_fetcher == 'html_webdriver'  )
@@ -129,9 +129,9 @@
 
                         {% if '403' in watch.last_error %}
                             {% if has_proxies %}
-                                <a href="{{ url_for('settings_page', uuid=watch.uuid) }}#proxies">Try other proxies/location</a>&nbsp;
+                                <a href="{{ url_for('settings.settings_page', uuid=watch.uuid) }}#proxies">Try other proxies/location</a>&nbsp;
                             {% endif %}
-                            <a href="{{ url_for('settings_page', uuid=watch.uuid) }}#proxies">Try adding external proxies/locations</a>
+                            <a href="{{ url_for('settings.settings_page', uuid=watch.uuid) }}#proxies">Try adding external proxies/locations</a>
                         
                         {% endif %}
                         {% if 'empty result or contain only an image' in watch.last_error %}
@@ -140,7 +140,7 @@
                     </div>
                     {% endif %}
                     {% if watch.last_notification_error is defined and watch.last_notification_error != False %}
-                    <div class="fetch-error notification-error"><a href="{{url_for('notification_logs')}}">{{ watch.last_notification_error }}</a></div>
+                    <div class="fetch-error notification-error"><a href="{{url_for('settings.notification_logs')}}">{{ watch.last_notification_error }}</a></div>
                     {% endif %}
 
                     {% if watch['processor'] == 'text_json_diff'  %}
@@ -186,20 +186,20 @@
                     {% endif %}
                 </td>
                 <td>
-                    <a {% if watch.uuid in queued_uuids %}disabled="true"{% endif %} href="{{ url_for('form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
+                    <a {% if watch.uuid in queued_uuids %}disabled="true"{% endif %} href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
                        class="recheck pure-button pure-button-primary">{% if watch.uuid in queued_uuids %}Queued{% else %}Recheck{% endif %}</a>
-                    <a href="{{ url_for('edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="pure-button pure-button-primary">Edit</a>
+                    <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="pure-button pure-button-primary">Edit</a>
                     {% if watch.history_n >= 2 %}
 
                         {%  if is_unviewed %}
-                           <a href="{{ url_for('diff_history_page', uuid=watch.uuid, from_version=watch.get_from_version_based_on_last_viewed) }}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">History</a>
+                           <a href="{{ url_for('ui.ui_views.diff_history_page', uuid=watch.uuid, from_version=watch.get_from_version_based_on_last_viewed) }}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">History</a>
                         {% else %}
-                           <a href="{{ url_for('diff_history_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">History</a>
+                           <a href="{{ url_for('ui.ui_views.diff_history_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">History</a>
                         {% endif %}
 
                     {% else %}
                         {% if watch.history_n == 1 or (watch.history_n ==0 and watch.error_text_ctime )%}
-                            <a href="{{ url_for('preview_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary">Preview</a>
+                            <a href="{{ url_for('ui.ui_views.preview_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary">Preview</a>
                         {% endif %}
                     {% endif %}
                 </td>
@@ -215,15 +215,15 @@
             {% endif %}
             {% if has_unviewed %}
             <li>
-                <a href="{{url_for('mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Mark all viewed</a>
+                <a href="{{url_for('ui.mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Mark all viewed</a>
             </li>
             {% endif %}
             <li>
-               <a href="{{ url_for('form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Recheck
+               <a href="{{ url_for('ui.form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Recheck
                 all {% if active_tag_uuid %} in "{{active_tag.title}}"{%endif%}</a>
             </li>
             <li>
-                <a href="{{ url_for('rss', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>
+                <a href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='Generic_Feed-icon.svg')}}" height="15"></a>
             </li>
         </ul>
         {{ pagination.links }}

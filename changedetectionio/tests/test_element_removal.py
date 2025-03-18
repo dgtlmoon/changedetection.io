@@ -156,7 +156,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for("test_endpoint", _external=True)
     res = client.post(
-        url_for("import_page"), data={"urls": test_url}, follow_redirects=True
+        url_for("imports.import_page"), data={"urls": test_url}, follow_redirects=True
     )
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
@@ -165,7 +165,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
     # Not sure why \r needs to be added - absent of the #changetext this is not necessary
     subtractive_selectors_data = "header\r\nfooter\r\nnav\r\n#changetext"
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "subtractive_selectors": subtractive_selectors_data,
             "url": test_url,
@@ -180,25 +180,25 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
 
     # Check it saved
     res = client.get(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
     )
     assert bytes(subtractive_selectors_data.encode("utf-8")) in res.data
 
     # Trigger a check
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches queued for rechecking.' in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
 
     # so that we set the state to 'unviewed' after all the edits
-    client.get(url_for("diff_history_page", uuid="first"))
+    client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
 
     #  Make a change to header/footer/nav
     set_modified_response()
 
     # Trigger a check
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches queued for rechecking.' in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -228,19 +228,19 @@ body > table > tr:nth-child(3) > td:nth-child(3)""",
 
     for selector_list in subtractive_selectors_data:
 
-        res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+        res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
         assert b'Deleted' in res.data
 
         # Add our URL to the import page
         test_url = url_for("test_endpoint", _external=True)
         res = client.post(
-            url_for("import_page"), data={"urls": test_url}, follow_redirects=True
+            url_for("imports.import_page"), data={"urls": test_url}, follow_redirects=True
         )
         assert b"1 Imported" in res.data
         wait_for_all_checks(client)
 
         res = client.post(
-            url_for("edit_page", uuid="first"),
+            url_for("ui.ui_edit.edit_page", uuid="first"),
             data={
                 "subtractive_selectors": selector_list,
                 "url": test_url,
@@ -253,7 +253,7 @@ body > table > tr:nth-child(3) > td:nth-child(3)""",
         wait_for_all_checks(client)
 
         res = client.get(
-            url_for("preview_page", uuid="first"),
+            url_for("ui.ui_views.preview_page", uuid="first"),
             follow_redirects=True
         )
 

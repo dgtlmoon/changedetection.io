@@ -7,7 +7,7 @@
     <meta name="description" content="Self hosted website change detection." >
     <title>Change Detection{{extra_title}}</title>
     {% if app_rss_token %}
-      <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag_uuid %}- {{active_tag.title}}{% endif %}" href="{{ url_for('rss', tag=active_tag_uuid , token=app_rss_token)}}" >
+      <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag_uuid %}- {{active_tag.title}}{% endif %}" href="{{ url_for('rss.feed', tag=active_tag_uuid , token=app_rss_token)}}" >
     {% endif %}
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}" >
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}?v={{ get_css_version() }}" >
@@ -64,17 +64,17 @@
                 <a href="{{ url_for('tags.tags_overview_page')}}" class="pure-menu-link">GROUPS</a>
               </li>
               <li class="pure-menu-item">
-                <a href="{{ url_for('settings_page')}}" class="pure-menu-link">SETTINGS</a>
+                <a href="{{ url_for('settings.settings_page')}}" class="pure-menu-link">SETTINGS</a>
               </li>
               <li class="pure-menu-item">
-                <a href="{{ url_for('import_page')}}" class="pure-menu-link">IMPORT</a>
+                <a href="{{ url_for('imports.import_page')}}" class="pure-menu-link">IMPORT</a>
               </li>
               <li class="pure-menu-item">
                 <a href="{{ url_for('backups.index')}}" class="pure-menu-link">BACKUPS</a>
               </li>
             {% else %}
               <li class="pure-menu-item">
-                <a href="{{ url_for('edit_page', uuid=uuid, next='diff') }}" class="pure-menu-link">EDIT</a>
+                <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next='diff') }}" class="pure-menu-link">EDIT</a>
               </li>
             {% endif %}
           {% else %}
@@ -144,7 +144,7 @@
     {% endif %}
     {% if left_sticky %}
       <div class="sticky-tab" id="left-sticky">
-        <a href="{{url_for('preview_page', uuid=uuid)}}">Show current snapshot</a><br>
+        <a href="{{url_for('ui.ui_views.preview_page', uuid=uuid)}}">Show current snapshot</a><br>
           Visualise <strong>triggers</strong> and <strong>ignored text</strong>
       </div>
     {% endif %}

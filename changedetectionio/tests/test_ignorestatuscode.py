@@ -49,7 +49,7 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server, me
 
     # Goto the settings page, add our ignore text
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_status_codes": "y",
@@ -62,7 +62,7 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server, me
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -73,7 +73,7 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server, me
     set_some_changed_response()
     wait_for_all_checks(client)
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -96,7 +96,7 @@ def test_403_page_check_works_with_ignore_status_code(client, live_server, measu
     # Add our URL to the import page
     test_url = url_for('test_endpoint', status_code=403, _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -108,7 +108,7 @@ def test_403_page_check_works_with_ignore_status_code(client, live_server, measu
     # Goto the edit page, check our ignore option
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"ignore_status_codes": "y", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
@@ -121,7 +121,7 @@ def test_403_page_check_works_with_ignore_status_code(client, live_server, measu
     set_some_changed_response()
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 

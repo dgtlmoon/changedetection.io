@@ -18,7 +18,7 @@ def test_check_extract_text_from_diff(client, live_server, measure_memory_usage)
 
     # Add our URL to the import page
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": url_for('test_endpoint', _external=True)},
         follow_redirects=True
     )
@@ -36,11 +36,11 @@ def test_check_extract_text_from_diff(client, live_server, measure_memory_usage)
         with open("test-datastore/endpoint-content.txt", "w") as f:
             f.write("Now it's {} seconds since epoch, time flies!".format(last_date))
 
-        client.get(url_for("form_watch_checknow"), follow_redirects=True)
+        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
 
     res = client.post(
-        url_for("diff_history_page", uuid="first"),
+        url_for("ui.ui_views.diff_history_page", uuid="first"),
         data={"extract_regex": "Now it's ([0-9\.]+)",
               "extract_submit_button": "Extract as CSV"},
         follow_redirects=False

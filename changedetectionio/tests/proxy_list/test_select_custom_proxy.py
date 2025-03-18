@@ -11,7 +11,7 @@ def test_select_custom(client, live_server, measure_memory_usage):
 
     # Goto settings, add our custom one
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
@@ -26,7 +26,7 @@ def test_select_custom(client, live_server, measure_memory_usage):
     assert b"Settings updated." in res.data
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         # Because a URL wont show in squid/proxy logs due it being SSLed
         # Use plain HTTP or a specific domain-name here
         data={"urls": "https://changedetection.io/CHANGELOG.txt"},
@@ -40,7 +40,7 @@ def test_select_custom(client, live_server, measure_memory_usage):
     assert b'Proxy Authentication Required' not in res.data
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     # We should see something via proxy

@@ -77,7 +77,7 @@ def test_check_filter_multiline(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -88,7 +88,7 @@ def test_check_filter_multiline(client, live_server, measure_memory_usage):
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": '',
               # Test a regex and a plaintext
               'extract_text': '/something.+?6 billion.+?lines/si\r\nand this should be',
@@ -109,7 +109,7 @@ def test_check_filter_multiline(client, live_server, measure_memory_usage):
     assert b'not at the start of the expression' not in res.data
 
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
     # Plaintext that doesnt look like a regex should match also
@@ -131,7 +131,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -143,7 +143,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": include_filters,
               'extract_text': '/\d+ online/\r\n/\d+ guests/\r\n/somecase insensitive \d+/i\r\n/somecase insensitive (345\d)/i\r\n/issue1828.+?2022/i',
               "url": test_url,
@@ -168,7 +168,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
     set_modified_response()
 
     # Trigger a check
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
@@ -179,7 +179,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
 
     # Check HTML conversion detected and workd
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -211,7 +211,7 @@ def test_regex_error_handling(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -219,7 +219,7 @@ def test_regex_error_handling(client, live_server, measure_memory_usage):
 
     ### test regex error handling
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"extract_text": '/something bad\d{3/XYZ',
               "url": test_url,
               "fetch_backend": "html_requests"},
@@ -228,5 +228,5 @@ def test_regex_error_handling(client, live_server, measure_memory_usage):
 
     assert b'is not a valid regular expression.' in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

@@ -87,7 +87,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -102,7 +102,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     #time.sleep(1)
     client.get(url_for('price_data_follower.accept', uuid=uuid, follow_redirects=True))
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     # Offer should be gone
     res = client.get(url_for("index"))
@@ -121,7 +121,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     # And not this cause its not the ld-json
     assert b"So let's see what happens" not in res.data
 
-    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
     ##########################################################################################
     # And we shouldnt see the offer
@@ -130,7 +130,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -140,14 +140,14 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     assert b'ldjson-price-track-offer' not in res.data
     
     ##########################################################################################
-    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
 def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_data):
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -160,7 +160,7 @@ def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_
 
 
     ##########################################################################################
-    client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
 def test_bad_ldjson_is_correctly_ignored(client, live_server, measure_memory_usage):

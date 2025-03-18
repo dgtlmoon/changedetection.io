@@ -59,7 +59,7 @@ def test_restock_itemprop_basic(client, live_server):
     for p in instock_props:
         set_original_response(props_markup=p)
         client.post(
-            url_for("form_quick_watch_add"),
+            url_for("ui.ui_views.form_quick_watch_add"),
             data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
             follow_redirects=True
         )
@@ -69,14 +69,14 @@ def test_restock_itemprop_basic(client, live_server):
         assert b'has-restock-info' in res.data
         assert b' in-stock' in res.data
         assert b' not-in-stock' not in res.data
-        res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+        res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
         assert b'Deleted' in res.data
 
 
     for p in out_of_stock_props:
         set_original_response(props_markup=p)
         client.post(
-            url_for("form_quick_watch_add"),
+            url_for("ui.ui_views.form_quick_watch_add"),
             data={"url": test_url, "tags": '', 'processor': 'restock_diff'},
             follow_redirects=True
         )
@@ -85,7 +85,7 @@ def test_restock_itemprop_basic(client, live_server):
 
         assert b'has-restock-info not-in-stock' in res.data
 
-        res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+        res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
         assert b'Deleted' in res.data
 
 def test_itemprop_price_change(client, live_server):
@@ -96,7 +96,7 @@ def test_itemprop_price_change(client, live_server):
 
     set_original_response(props_markup=instock_props[0], price="190.95")
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
@@ -108,41 +108,41 @@ def test_itemprop_price_change(client, live_server):
 
     # basic price change, look for notification
     set_original_response(props_markup=instock_props[0], price='180.45')
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'180.45' in res.data
     assert b'unviewed' in res.data
-    client.get(url_for("mark_all_viewed"), follow_redirects=True)
+    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
 
     # turning off price change trigger, but it should show the new price, with no change notification
     set_original_response(props_markup=instock_props[0], price='120.45')
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"restock_settings-follow_price_changes": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'120.45' in res.data
     assert b'unviewed' not in res.data
 
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def _run_test_minmax_limit(client, extra_watch_edit_form):
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
     test_url = url_for('test_endpoint', _external=True)
 
     set_original_response(props_markup=instock_props[0], price="950.95")
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
@@ -157,18 +157,18 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     }
     data.update(extra_watch_edit_form)
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data=data,
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
 
-    client.get(url_for("mark_all_viewed"))
+    client.get(url_for("ui.mark_all_viewed"))
 
     # price changed to something greater than min (900), BUT less than max (1100).. should be no change
     set_original_response(props_markup=instock_props[0], price='1000.45')
-    client.get(url_for("form_watch_checknow"))
+    client.get(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
 
@@ -180,36 +180,36 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     # price changed to something LESS than min (900), SHOULD be a change
     set_original_response(props_markup=instock_props[0], price='890.45')
 
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches queued for rechecking.' in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'890.45' in res.data
     assert b'unviewed' in res.data
 
-    client.get(url_for("mark_all_viewed"))
+    client.get(url_for("ui.mark_all_viewed"))
 
 
     # 2715 - Price detection (once it crosses the "lower" threshold) again with a lower price - should trigger again!
     set_original_response(props_markup=instock_props[0], price='820.45')
-    res = client.get(url_for("form_watch_checknow"), follow_redirects=True)
-    assert b'1 watches queued for rechecking.' in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'820.45' in res.data
     assert b'unviewed' in res.data
-    client.get(url_for("mark_all_viewed"))
+    client.get(url_for("ui.mark_all_viewed"))
 
     # price changed to something MORE than max (1100.10), SHOULD be a change
     set_original_response(props_markup=instock_props[0], price='1890.45')
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     # Depending on the LOCALE it may be either of these (generally for US/default/etc)
     assert b'1,890.45' in res.data or b'1890.45' in res.data
     assert b'unviewed' in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
@@ -254,14 +254,14 @@ def test_restock_itemprop_with_tag(client, live_server):
 def test_itemprop_percent_threshold(client, live_server):
     #live_server_setup(live_server)
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
     test_url = url_for('test_endpoint', _external=True)
 
     set_original_response(props_markup=instock_props[0], price="950.95")
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
@@ -270,7 +270,7 @@ def test_itemprop_percent_threshold(client, live_server):
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"restock_settings-follow_price_changes": "y",
               "restock_settings-price_change_threshold_percent": 5.0,
               "url": test_url,
@@ -286,7 +286,7 @@ def test_itemprop_percent_threshold(client, live_server):
 
     # Basic change should not trigger
     set_original_response(props_markup=instock_props[0], price='960.45')
-    client.get(url_for("form_watch_checknow"))
+    client.get(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'960.45' in res.data
@@ -294,7 +294,7 @@ def test_itemprop_percent_threshold(client, live_server):
 
     # Bigger INCREASE change than the threshold should trigger
     set_original_response(props_markup=instock_props[0], price='1960.45')
-    client.get(url_for("form_watch_checknow"))
+    client.get(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'1,960.45' or b'1960.45' in res.data #depending on locale
@@ -302,9 +302,9 @@ def test_itemprop_percent_threshold(client, live_server):
 
 
     # Small decrease should NOT trigger
-    client.get(url_for("mark_all_viewed"))
+    client.get(url_for("ui.mark_all_viewed"))
     set_original_response(props_markup=instock_props[0], price='1950.45')
-    client.get(url_for("form_watch_checknow"))
+    client.get(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("index"))
     assert b'1,950.45' or b'1950.45' in res.data #depending on locale
@@ -313,7 +313,7 @@ def test_itemprop_percent_threshold(client, live_server):
 
 
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
@@ -332,7 +332,7 @@ def test_change_with_notification_values(client, live_server):
     ######################
     # You must add a type of 'restock_diff' for its tokens to register as valid in the global settings
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
@@ -341,14 +341,14 @@ def test_change_with_notification_values(client, live_server):
     wait_for_all_checks(client)
 
     # Should see new tokens register
-    res = client.get(url_for("settings_page"))
+    res = client.get(url_for("settings.settings_page"))
     assert b'{{restock.original_price}}' in res.data
     assert b'Original price at first check' in res.data
 
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,
               "application-notification_title": "title new price {{restock.price}}",
               "application-notification_body": "new price {{restock.price}}",
@@ -369,7 +369,7 @@ def test_change_with_notification_values(client, live_server):
     set_original_response(props_markup=instock_props[0], price='960.45')
     # A change in price, should trigger a change by default
     set_original_response(props_markup=instock_props[0], price='1950.45')
-    client.get(url_for("form_watch_checknow"))
+    client.get(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     wait_for_notification_endpoint_output()
     assert os.path.isfile("test-datastore/notification.txt"), "Notification received"
@@ -381,7 +381,7 @@ def test_change_with_notification_values(client, live_server):
     ## Now test the "SEND TEST NOTIFICATION" is working
     os.unlink("test-datastore/notification.txt")
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
-    res = client.post(url_for("ajax_callback_send_notification_test", watch_uuid=uuid), data={}, follow_redirects=True)
+    res = client.post(url_for("ui.ui_notification.ajax_callback_send_notification_test", watch_uuid=uuid), data={}, follow_redirects=True)
     time.sleep(5)
     assert os.path.isfile("test-datastore/notification.txt"), "Notification received"
 
@@ -389,14 +389,14 @@ def test_change_with_notification_values(client, live_server):
 def test_data_sanity(client, live_server):
     #live_server_setup(live_server)
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
     test_url = url_for('test_endpoint', _external=True)
     test_url2 = url_for('test_endpoint2', _external=True)
     set_original_response(props_markup=instock_props[0], price="950.95")
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
@@ -408,7 +408,7 @@ def test_data_sanity(client, live_server):
 
     # Check the restock model object doesnt store the value by mistake and used in a new one
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url2, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
@@ -417,21 +417,21 @@ def test_data_sanity(client, live_server):
     assert str(res.data.decode()).count("950.95") == 1, "Price should only show once (for the watch added, no other watches yet)"
 
     ## different test, check the edit page works on an empty request result
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url2, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("edit_page", uuid="first"))
+        url_for("ui.ui_edit.edit_page", uuid="first"))
     assert test_url2.encode('utf-8') in res.data
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 # All examples should give a prive of 666.66
@@ -450,7 +450,7 @@ def test_special_prop_examples(client, live_server):
 
             # Now fetch it and check the price worked
             client.post(
-                url_for("form_quick_watch_add"),
+                url_for("ui.ui_views.form_quick_watch_add"),
                 data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
                 follow_redirects=True
             )

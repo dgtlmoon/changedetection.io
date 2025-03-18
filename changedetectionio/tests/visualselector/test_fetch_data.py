@@ -24,14 +24,14 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     test_url = test_url.replace('localhost', 'cdio')
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
         follow_redirects=True
     )
     assert b"Watch added in Paused state, saving will unpause" in res.data
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.post(
-        url_for("edit_page", uuid=uuid, unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
             "url": test_url,
             "tags": "",
@@ -48,7 +48,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     assert live_server.app.config['DATASTORE'].data['watching'][uuid].history_n >= 1, "Watch history had atleast 1 (everything fetched OK)"
 
     res = client.get(
-        url_for("preview_page", uuid=uuid),
+        url_for("ui.ui_views.preview_page", uuid=uuid),
         follow_redirects=True
     )
     assert b"testheader: yes" in res.data
@@ -78,12 +78,12 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     # Some options should be enabled
     # @todo - in the future, the visibility should be toggled by JS from the request type setting
     res = client.get(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         follow_redirects=True
     )
     assert b'notification_screenshot' in res.data
     client.get(
-        url_for("form_delete", uuid="all"),
+        url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
 
@@ -99,7 +99,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
     test_url = test_url.replace('localhost', 'cdio')
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
         follow_redirects=True
     )
@@ -107,7 +107,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
     assert b"Watch added in Paused state, saving will unpause" in res.data
 
     res = client.post(
-        url_for("edit_page", uuid="first", unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
         data={
             "url": test_url,
             "tags": "",
@@ -134,7 +134,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
 
     # Check HTML conversion detected and workd
     res = client.get(
-        url_for("preview_page", uuid=uuid),
+        url_for("ui.ui_views.preview_page", uuid=uuid),
         follow_redirects=True
     )
     assert b"This text should be removed" not in res.data
@@ -156,7 +156,7 @@ def test_non_200_errors_report_browsersteps(client, live_server):
     four_o_four_url = four_o_four_url.replace('localhost', 'cdio')
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": four_o_four_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
         follow_redirects=True
     )
@@ -168,7 +168,7 @@ def test_non_200_errors_report_browsersteps(client, live_server):
 
     # now test for 404 errors
     res = client.post(
-        url_for("edit_page", uuid=uuid, unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
               "url": four_o_four_url,
               "tags": "",
@@ -188,6 +188,6 @@ def test_non_200_errors_report_browsersteps(client, live_server):
     assert b'Error - 404' in res.data
 
     client.get(
-        url_for("form_delete", uuid="all"),
+        url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )

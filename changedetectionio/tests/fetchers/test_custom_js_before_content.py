@@ -13,7 +13,7 @@ def test_execute_custom_js(client, live_server, measure_memory_usage):
     test_url = test_url.replace('localhost', 'cdio')
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
         follow_redirects=True
     )
@@ -21,7 +21,7 @@ def test_execute_custom_js(client, live_server, measure_memory_usage):
     assert b"Watch added in Paused state, saving will unpause" in res.data
 
     res = client.post(
-        url_for("edit_page", uuid="first", unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
         data={
             "url": test_url,
             "tags": "",
@@ -41,7 +41,7 @@ def test_execute_custom_js(client, live_server, measure_memory_usage):
 
     # Check HTML conversion detected and workd
     res = client.get(
-        url_for("preview_page", uuid=uuid),
+        url_for("ui.ui_views.preview_page", uuid=uuid),
         follow_redirects=True
     )
     assert b"This text should be removed" not in res.data
@@ -51,6 +51,6 @@ def test_execute_custom_js(client, live_server, measure_memory_usage):
     assert b"user-agent: mycustomagent" in res.data
 
     client.get(
-        url_for("form_delete", uuid="all"),
+        url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )

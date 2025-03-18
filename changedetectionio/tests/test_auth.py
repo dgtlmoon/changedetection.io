@@ -13,7 +13,7 @@ def test_basic_auth(client, live_server, measure_memory_usage):
     test_url = url_for('test_basicauth_method', _external=True).replace("//","//myuser:mypass@")
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -22,7 +22,7 @@ def test_basic_auth(client, live_server, measure_memory_usage):
     time.sleep(1)
     # Check form validation
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
@@ -30,7 +30,7 @@ def test_basic_auth(client, live_server, measure_memory_usage):
 
     wait_for_all_checks(client)
     res = client.get(
-        url_for("preview_page", uuid="first"),
+        url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
 

@@ -55,7 +55,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'cinema'},
         follow_redirects=True
     )
@@ -97,7 +97,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
         "fetch_backend": "html_requests"})
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data=notification_form_data,
         follow_redirects=True
     )
@@ -108,7 +108,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
     assert not os.path.isfile("test-datastore/notification.txt")
     # Now the filter should exist
     set_response_with_filter()
-    client.get(url_for("form_watch_checknow"), follow_redirects=True)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_notification_endpoint_output()
 

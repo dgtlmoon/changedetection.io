@@ -11,7 +11,7 @@ def test_setup(client, live_server, measure_memory_usage):
 def test_bad_access(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": 'https://localhost'},
         follow_redirects=True
     )
@@ -21,7 +21,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
 
     # Attempt to add a body with a GET method
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
               "url": 'javascript:alert(document.domain)',
               "tags": "",
@@ -34,7 +34,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
     assert b'Watch protocol is not permitted by SAFE_PROTOCOL_REGEX' in res.data
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": '            javascript:alert(123)', "tags": ''},
         follow_redirects=True
     )
@@ -42,7 +42,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
     assert b'Watch protocol is not permitted by SAFE_PROTOCOL_REGEX' in res.data
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": '%20%20%20javascript:alert(123)%20%20', "tags": ''},
         follow_redirects=True
     )
@@ -51,7 +51,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
 
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": ' source:javascript:alert(document.domain)', "tags": ''},
         follow_redirects=True
     )
@@ -62,7 +62,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
 def _runner_test_various_file_slash(client, file_uri):
 
     client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": file_uri, "tags": ''},
         follow_redirects=True
     )
@@ -77,7 +77,7 @@ def _runner_test_various_file_slash(client, file_uri):
         if file_uri.startswith('file:///'):
             # This one should be the full qualified path to the file and should get the contents of this file
             res = client.get(
-                url_for("preview_page", uuid="first"),
+                url_for("ui.ui_views.preview_page", uuid="first"),
                 follow_redirects=True
             )
             assert b'_runner_test_various_file_slash' in res.data
@@ -85,7 +85,7 @@ def _runner_test_various_file_slash(client, file_uri):
             # This will give some error from requests or if it went to chrome, will give some other error :-)
             assert any(s in res.data for s in substrings)
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 def test_file_slash_access(client, live_server, measure_memory_usage):
@@ -105,7 +105,7 @@ def test_xss(client, live_server, measure_memory_usage):
     )
     # the template helpers were named .jinja which meant they were not having jinja2 autoescape enabled.
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-notification_urls": '"><img src=x onerror=alert(document.domain)>',
               "application-notification_title": '"><img src=x onerror=alert(document.domain)>',
               "application-notification_body": '"><img src=x onerror=alert(document.domain)>',

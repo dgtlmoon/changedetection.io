@@ -100,7 +100,7 @@ def wait_for_notification_endpoint_output():
 def extract_api_key_from_UI(client):
     import re
     res = client.get(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
     )
     # <span id="api-key">{{api_key}}</span>
 

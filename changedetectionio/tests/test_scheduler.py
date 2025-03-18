@@ -18,7 +18,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     # The rest of the actual functionality should be covered in the unit-test  unit/test_scheduler.py
     #####################
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "",
               "requests-time_between_check-seconds": 1,
               "application-timezone": "Pacific/Kiritimati",  # Most Forward Time Zone (UTC+14:00)
@@ -28,11 +28,11 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
 
     assert b"Settings updated." in res.data
 
-    res = client.get(url_for("settings_page"))
+    res = client.get(url_for("settings.settings_page"))
     assert b'Pacific/Kiritimati' in res.data
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -66,13 +66,13 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     data.update(scheduler_data)
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data=data,
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
 
-    res = client.get(url_for("edit_page", uuid="first"))
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid="first"))
     assert b"Pacific/Kiritimati" in res.data, "Should be Pacific/Kiritimati in placeholder data"
 
     # "Edit" should not trigger a check because it's not enabled in the schedule.
@@ -87,7 +87,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked'] != last_check
 
     # Cleanup everything
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
 
@@ -97,7 +97,7 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
     test_url = url_for('test_random_content_endpoint', _external=True)
 
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": test_url},
         follow_redirects=True
     )
@@ -135,27 +135,27 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
 
     #####################
     res = client.post(
-        url_for("settings_page"),
+        url_for("settings.settings_page"),
         data=data,
         follow_redirects=True
     )
 
     assert b"Settings updated." in res.data
 
-    res = client.get(url_for("settings_page"))
+    res = client.get(url_for("settings.settings_page"))
     assert b'Pacific/Kiritimati' in res.data
 
     wait_for_all_checks(client)
 
     # UI Sanity check
 
-    res = client.get(url_for("edit_page", uuid="first"))
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid="first"))
     assert b"Pacific/Kiritimati" in res.data, "Should be Pacific/Kiritimati in placeholder data"
 
     #### HITTING SAVE SHOULD NOT TRIGGER A CHECK
     last_check = live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked']
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
             "fetch_backend": "html_requests",
@@ -175,5 +175,5 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked'] != last_check
 
     # Cleanup everything
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

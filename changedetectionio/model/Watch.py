@@ -83,7 +83,7 @@ class model(watch_base):
                     flash, Markup, url_for
                 )
                 message = Markup('<a href="{}#general">The URL {} is invalid and cannot be used, click to edit</a>'.format(
-                    url_for('edit_page', uuid=self.get('uuid')), self.get('url', '')))
+                    url_for('ui.ui_edit.edit_page', uuid=self.get('uuid')), self.get('url', '')))
                 flash(message, 'error')
                 return ''
 

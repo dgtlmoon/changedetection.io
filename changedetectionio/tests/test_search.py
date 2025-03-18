@@ -12,7 +12,7 @@ def test_basic_search(client, live_server, measure_memory_usage):
             'https://localhost:5000?second-result=1'
             ]
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": "\r\n".join(urls)},
         follow_redirects=True
     )
@@ -27,7 +27,7 @@ def test_basic_search(client, live_server, measure_memory_usage):
     # By Title
 
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"title": "xxx-title", "url": urls[0], "tags": "", "headers": "", 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
@@ -45,7 +45,7 @@ def test_search_in_tag_limit(client, live_server, measure_memory_usage):
             'https://localhost:5000?second-result=1 tag-two'
             ]
     res = client.post(
-        url_for("import_page"),
+        url_for("imports.import_page"),
         data={"urls": "\r\n".join(urls)},
         follow_redirects=True
     )
@@ -61,7 +61,7 @@ def test_search_in_tag_limit(client, live_server, measure_memory_usage):
 
     # By Title
     res = client.post(
-        url_for("edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"title": "xxx-title", "url": urls[0].split(' ')[0], "tags": urls[0].split(' ')[1], "headers": "",
               'fetch_backend': "html_requests"},
         follow_redirects=True

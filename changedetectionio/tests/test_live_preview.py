@@ -25,13 +25,13 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage):
     test_url = url_for('test_endpoint', _external=True)
 
     res = client.post(
-        url_for("form_quick_watch_add"),
+        url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": ''},
         follow_redirects=True
     )
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.post(
-        url_for("edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "include_filters": "",
             "fetch_backend": 'html_requests',
@@ -49,7 +49,7 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage):
 
     # DEFAULT OUTPUT WITHOUT ANYTHING UPDATED/CHANGED - SHOULD SEE THE WATCH DEFAULTS
     res = client.post(
-        url_for("watch_get_preview_rendered", uuid=uuid)
+        url_for("ui.ui_edit.watch_get_preview_rendered", uuid=uuid)
     )
     default_return = json.loads(res.data.decode('utf-8'))
     assert default_return.get('after_filter')
@@ -59,7 +59,7 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage):
 
     # SEND AN UPDATE AND WE SHOULD SEE THE OUTPUT CHANGE SO WE KNOW TO HIGHLIGHT NEW STUFF
     res = client.post(
-        url_for("watch_get_preview_rendered", uuid=uuid),
+        url_for("ui.ui_edit.watch_get_preview_rendered", uuid=uuid),
         data={
             "include_filters": "",
             "fetch_backend": 'html_requests',
@@ -74,5 +74,5 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage):
     assert reply.get('ignore_line_numbers') == [2]  # Ignored - "socks" on line 2
     assert reply.get('trigger_line_numbers') == [1]  # Triggers "Awesome" in line 1
 
-    res = client.get(url_for("form_delete", uuid="all"), follow_redirects=True)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
