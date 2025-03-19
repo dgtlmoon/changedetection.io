@@ -531,10 +531,10 @@ class update_worker(threading.Thread):
                             # Also save the snapshot on the first time checked, "last checked" will always be updated, so we just check history length.
                             if changed_detected or not watch.history_n:
 
-                                if update_handler.screenshot:
+                                if hasattr(update_handler, "screenshot") and update_handler.screenshot:
                                     watch.save_screenshot(screenshot=update_handler.screenshot)
 
-                                if update_handler.xpath_data:
+                                if hasattr(update_handler, "xpath_data") and update_handler.xpath_data:
                                     watch.save_xpath_data(data=update_handler.xpath_data)
 
                                 # Small hack so that we sleep just enough to allow 1 second  between history snapshots
