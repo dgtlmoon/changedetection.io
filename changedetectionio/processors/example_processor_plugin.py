@@ -1,14 +1,20 @@
 """
 Example plugin to demonstrate how to create a new processor plugin
 """
+
 from .pluggy_interface import hookimpl
-import importlib
 
 class ExampleProcessorPlugin:
     """
     Example processor plugin that extends the text_json_diff processor
     """
-    
+
+    def random_string(self, length=50):
+        import random
+        import string
+
+        return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
     @hookimpl
     def get_processor_name(self):
         return "example_processor"

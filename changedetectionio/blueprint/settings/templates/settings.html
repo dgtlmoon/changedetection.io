@@ -26,6 +26,7 @@
             <li class="tab"><a href="#api">API</a></li>
             <li class="tab"><a href="#timedate">Time &amp Date</a></li>
             <li class="tab"><a href="#proxies">CAPTCHA &amp; Proxies</a></li>
+            <li class="tab"><a href="#plugins">Plugins</a></li>
         </ul>
     </div>
     <div class="box-wrap inner">
@@ -297,6 +298,32 @@ nav
                     {{ render_field(form.requests.form.extra_browsers) }}
                 </div>
             </div>
+            <div class="tab-pane-inner" id="plugins">
+              <div class="pure-control-group">
+                <h4>Registered Plugins</h4>
+                  <p>The following plugins are currently registered in the system - <a href="https://changedetection.io/plugins">Get more plugins here</a></p>
+                
+                <table class="pure-table pure-table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Version</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for plugin in plugins_info %}
+                        <tr>
+                            <td>{{ plugin.name }}</td>
+                            <td>{{ plugin.description }}</td>
+                            <td>{{ plugin.version }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+              </div>
+            </div>
+
             <div id="actions">
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}

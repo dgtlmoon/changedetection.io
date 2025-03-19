@@ -330,7 +330,8 @@ class TextJsonDiffPlugin:
         
     @hookimpl
     def get_processor_version(self):
-        return "1.0.0"
+        from changedetectionio import __version__
+        return __version__
 
     @hookimpl
     def perform_site_check(self, datastore, watch_uuid):
@@ -366,7 +367,8 @@ class RestockDiffPlugin:
         
     @hookimpl
     def get_processor_version(self):
-        return "1.0.0"
+        from changedetectionio import __version__
+        return __version__
 
     @hookimpl
     def perform_site_check(self, datastore, watch_uuid):
