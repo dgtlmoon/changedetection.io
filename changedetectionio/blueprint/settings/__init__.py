@@ -88,16 +88,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Get processor plugins info
         from changedetectionio.processors import get_all_plugins_info
         plugins_info = get_all_plugins_info()
-        
-        # Create/update form with plugins info
-        default = deepcopy(datastore.data['settings'])
-        form = forms.globalSettingsForm(
-            formdata=request.form if request.method == 'POST' else None,
-            data=default,
-            extra_notification_tokens=datastore.get_unique_notification_tokens_available(),
-            plugins_info=plugins_info
-        )
-        
+
         # Process settings including plugin toggles
         if request.method == 'POST' and form.validate():
             # Process the main form data
