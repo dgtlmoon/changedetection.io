@@ -218,40 +218,9 @@ def available_processors(datastore=None):
     """
     plugins_info = get_all_plugins_info()
     processor_list = []
-    
-    # If datastore is provided, filter by enabled_plugins
-    if datastore:
-        # Make sure enabled_plugins exists in datastore
-        if 'enabled_plugins' not in datastore.data['settings']['application']:
-            datastore.data['settings']['application']['enabled_plugins'] = {}
-            
-        enabled_plugins = datastore.data['settings']['application']['enabled_plugins']
-        
-        # Scan for any new plugins that aren't in the enabled_plugins dict yet
-        # Default built-in processors to enabled, third-party to disabled
-        plugins_updated = False
-        for plugin in plugins_info:
-            if plugin["name"] not in enabled_plugins:
-                # Built-in processors are enabled by default
-                if plugin["name"] in ["text_json_diff", "restock_diff"]:
-                    enabled_plugins[plugin["name"]] = True
-                else:
-                    # Third-party plugins are disabled by default
-                    enabled_plugins[plugin["name"]] = False
-                plugins_updated = True
-        
-        # Save changes if we added new plugins
-        if plugins_updated:
-            datastore.needs_write = True
-        
-        # Only include enabled plugins
-        for plugin in plugins_info:
-            if enabled_plugins.get(plugin["name"], False):
-                processor_list.append((plugin["name"], plugin["description"]))
-    else:
-        # No datastore provided, include all plugins
-        for plugin in plugins_info:
-            processor_list.append((plugin["name"], plugin["description"]))
+
+    for plugin in plugins_info:
+        processor_list.append((plugin["name"], plugin["description"]))
     
     return processor_list
 

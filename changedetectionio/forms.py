@@ -514,11 +514,8 @@ class quickWatchForm(Form):
     def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
         # Set processor choices based on datastore if available
-        datastore = kwargs.get('datastore')
-        if datastore:
-            self.processor.choices = self.processors.available_processors(datastore)
-        else:
-            self.processor.choices = self.processors.available_processors()
+        #datastore = kwargs.get('datastore')
+        self.processor.choices = self.processors.available_processors()
 
 
 
@@ -774,15 +771,6 @@ class globalSettingsApplicationForm(commonSettingsForm):
                                                                   render_kw={"style": "width: 5em;"},
                                                                   validators=[validators.NumberRange(min=0,
                                                                                                      message="Should contain zero or more attempts")])
-
-    # Create plugins form and add it as an attribute
-#    plugin_form = PluginsManagementForm(
-#        formdata=formdata,
-#        plugins_info=plugins_info,
-#        enabled_plugins=enabled_plugins
-#    )
-
-
 
 class globalSettingsForm(Form):
     # Define these as FormFields/"sub forms", this way it matches the JSON storage
