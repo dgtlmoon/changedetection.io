@@ -109,18 +109,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
             datastore.data['settings']['application'].update(app_update)
             datastore.data['settings']['requests'].update(form.data['requests'])
-            
-            # Update plugin settings from the dynamically created fields
-            enabled_plugins = {}
-            if hasattr(form, 'plugins'):
-                for field_name, field in form.plugins._fields.items():
-                    if field_name.startswith('plugin_'):
-                        plugin_name = field_name.replace('plugin_', '')
-                        enabled_plugins[plugin_name] = field.data
-            
-                # Update the datastore with plugin settings
-                datastore.data['settings']['application']['enabled_plugins'] = enabled_plugins
-            
+
             datastore.needs_write_urgent = True
             flash("Settings updated.")
 
