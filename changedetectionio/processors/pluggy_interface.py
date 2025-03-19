@@ -1,4 +1,5 @@
 import pluggy
+from loguru import logger
 
 # Ensure that the namespace in HookspecMarker matches PluginManager
 PLUGIN_NAMESPACE = "changedetectionio_processors"
@@ -60,5 +61,9 @@ plugin_manager = pluggy.PluginManager(PLUGIN_NAMESPACE)
 # Register hookspecs
 plugin_manager.add_hookspecs(ProcessorSpec)
 
-# Discover installed plugins from external packages (if any)
-plugin_manager.load_setuptools_entrypoints(PLUGIN_NAMESPACE)
+try:
+    # Discover installed plugins from external packages (if any)
+    plugin_manager.load_setuptools_entrypoints(PLUGIN_NAMESPACE)
+    logger.info(f"Loaded plugins: {plugin_manager.get_plugins()}")
+except Exception as e:
+    logger.critical(f"Error loading plugins: {str(e)}")

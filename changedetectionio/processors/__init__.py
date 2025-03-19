@@ -396,8 +396,6 @@ class RestockDiffPlugin:
             return Watch.model
         return None
 
-# Import our example plugins 
-from .example_processor_plugin import ExampleProcessorPlugin
 
 # For backward compatibility
 def get_custom_watch_obj_for_processor(processor_name):
@@ -406,15 +404,3 @@ def get_custom_watch_obj_for_processor(processor_name):
 # Register the built-in processor plugins
 plugin_manager.register(TextJsonDiffPlugin())
 plugin_manager.register(RestockDiffPlugin())
-plugin_manager.register(ExampleProcessorPlugin())
-
-# Check for test plugin and conditionally register it
-try:
-    # This avoids circular imports
-    from .test_plugin_example import ExampleProcessorPlugin as TestExampleProcessorPlugin
-    test_plugin_instance = TestExampleProcessorPlugin()
-    # Only register if it has a different name than the regular example plugin
-    if test_plugin_instance.get_processor_name() != "example_processor":
-        plugin_manager.register(test_plugin_instance)
-except (ImportError, AttributeError):
-    pass
