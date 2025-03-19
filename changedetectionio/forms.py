@@ -23,7 +23,7 @@ from wtforms import (
 from flask_wtf.file import FileField, FileAllowed
 from wtforms.fields import FieldList
 
-from wtforms.validators import ValidationError
+from wtforms.validators import ValidationError, Optional
 
 from validators.url import url as url_validator
 
@@ -508,8 +508,17 @@ class quickWatchForm(Form):
     url = fields.URLField('URL', validators=[validateURL()])
     tags = StringTagUUID('Group tag', [validators.Optional()])
     watch_submit_button = SubmitField('Watch', render_kw={"class": "pure-button pure-button-primary"})
-    processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
+    processor = RadioField(u'Processor', default="text_json_diff")
     edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
+    
+    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        # Set processor choices based on datastore if available
+        datastore = kwargs.get('datastore')
+        if datastore:
+            self.processor.choices = self.processors.available_processors(datastore)
+        else:
+            self.processor.choices = self.processors.available_processors()
 
 
 
@@ -522,6 +531,13 @@ class commonSettingsForm(Form):
         self.notification_body.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
         self.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
         self.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
+        
+        # Set processor choices based on datastore if available
+        datastore = kwargs.get('datastore')
+        if datastore:
+            self.processor.choices = self.processors.available_processors(datastore)
+        else:
+            self.processor.choices = self.processors.available_processors()
 
     extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
@@ -529,17 +545,26 @@ class commonSettingsForm(Form):
     notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
-    processor = RadioField( label=u"Processor - What do you want to achieve?", choices=processors.available_processors(), default="text_json_diff")
+    processor = RadioField( label=u"Processor - What do you want to achieve?", default="text_json_diff")
     timezone = StringField("Timezone for watch schedule", render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")])
 
 
 class importForm(Form):
     from . import processors
-    processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
+    processor = RadioField(u'Processor', default="text_json_diff")
     urls = TextAreaField('URLs')
     xlsx_file = FileField('Upload .xlsx file', validators=[FileAllowed(['xlsx'], 'Must be .xlsx file!')])
     file_mapping = SelectField('File mapping', [validators.DataRequired()], choices={('wachete', 'Wachete mapping'), ('custom','Custom mapping')})
+    
+    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        # Set processor choices based on datastore if available
+        datastore = kwargs.get('datastore')
+        if datastore:
+            self.processor.choices = self.processors.available_processors(datastore)
+        else:
+            self.processor.choices = self.processors.available_processors()
 
 class SingleBrowserStep(Form):
 
@@ -714,11 +739,12 @@ class globalSettingsRequestForm(Form):
     default_ua = FormField(DefaultUAInputForm, label="Default User-Agent overrides")
 
     def validate_extra_proxies(self, extra_validators=None):
-        for e in self.data['extra_proxies']:
-            if e.get('proxy_name') or e.get('proxy_url'):
-                if not e.get('proxy_name','').strip() or not e.get('proxy_url','').strip():
-                    self.extra_proxies.errors.append('Both a name, and a Proxy URL is required.')
-                    return False
+        if self.data.get('extra_proxies'):
+            for e in self.data['extra_proxies']:
+                if e.get('proxy_name') or e.get('proxy_url'):
+                    if not e.get('proxy_name','').strip() or not e.get('proxy_url','').strip():
+                        self.extra_proxies.errors.append('Both a name, and a Proxy URL is required.')
+                        return False
 
 
 # datastore.data['settings']['application']..
@@ -748,6 +774,14 @@ class globalSettingsApplicationForm(commonSettingsForm):
                                                                   render_kw={"style": "width: 5em;"},
                                                                   validators=[validators.NumberRange(min=0,
                                                                                                      message="Should contain zero or more attempts")])
+
+    # Create plugins form and add it as an attribute
+#    plugin_form = PluginsManagementForm(
+#        formdata=formdata,
+#        plugins_info=plugins_info,
+#        enabled_plugins=enabled_plugins
+#    )
+
 
 
 class globalSettingsForm(Form):

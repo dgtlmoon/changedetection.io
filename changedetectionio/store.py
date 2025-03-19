@@ -6,7 +6,7 @@ from flask import (
 
 from .html_tools import TRANSLATE_WHITESPACE_TABLE
 from . model import App, Watch
-from copy import deepcopy, copy
+from copy import deepcopy
 from os import path, unlink
 from threading import Lock
 import json

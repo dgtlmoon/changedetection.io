@@ -1,0 +1,3 @@
+
+PRICE_DATA_TRACK_ACCEPT = 'accepted'
+PRICE_DATA_TRACK_REJECT = 'rejected'

@@ -270,20 +270,16 @@ class update_worker(threading.Thread):
                     logger.info(f"Processing watch UUID {uuid} Priority {queued_item_data.priority} URL {watch['url']}")
 
                     try:
+                        # Get processor handler from pluggy plugin system
+                        from changedetectionio.processors import get_processor_handler
+                        
                         # Processor is what we are using for detecting the "Change"
-                        processor = watch.get('processor', 'text_json_diff')
-
-                        # Init a new 'difference_detection_processor', first look in processors
-                        processor_module_name = f"changedetectionio.processors.{processor}.processor"
-                        try:
-                            processor_module = importlib.import_module(processor_module_name)
-                        except ModuleNotFoundError as e:
-                            print(f"Processor module '{processor}' not found.")
-                            raise e
-
-                        update_handler = processor_module.perform_site_check(datastore=self.datastore,
-                                                                             watch_uuid=uuid
-                                                                             )
+                        processor_name = watch.get('processor', 'text_json_diff')
+                        
+                        # Get the handler via the plugin system
+                        update_handler = get_processor_handler(processor_name=processor_name, 
+                                                              datastore=self.datastore,
+                                                              watch_uuid=uuid)
 
                         update_handler.call_browser()
 

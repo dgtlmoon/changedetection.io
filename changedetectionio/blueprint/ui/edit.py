@@ -24,7 +24,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
     # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
     # https://wtforms.readthedocs.io/en/3.0.x/forms/#wtforms.form.Form.populate_obj ?
     def edit_page(uuid):
-        from changedetectionio import forms
         from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
         from changedetectionio import processors
         import importlib
@@ -43,7 +42,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         switch_processor = request.args.get('switch_processor')
         if switch_processor:
-            for p in processors.available_processors():
+            for p in processors.available_processors(datastore):
                 if p[0] == switch_processor:
                     datastore.data['watching'][uuid]['processor'] = switch_processor
                     flash(f"Switched to mode - {p[1]}.")
@@ -61,31 +60,19 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 default['proxy'] = ''
         # proxy_override set to the json/text list of the items
 
-        # Does it use some custom form? does one exist?
-        processor_name = datastore.data['watching'][uuid].get('processor', '')
-        processor_classes = next((tpl for tpl in processors.find_processors() if tpl[1] == processor_name), None)
-        if not processor_classes:
-            flash(f"Cannot load the edit form for processor/plugin '{processor_classes[1]}', plugin missing?", 'error')
+        # Get the appropriate form class for this processor using the pluggy system
+        processor_name = datastore.data['watching'][uuid].get('processor', 'text_json_diff')
+        form_class = processors.get_form_class_for_processor(processor_name)
+        
+        if not form_class:
+            flash(f"Cannot load the edit form for processor/plugin '{processor_name}', plugin missing?", 'error')
             return redirect(url_for('index'))
-
-        parent_module = processors.get_parent_module(processor_classes[0])
-
-        try:
-            # Get the parent of the "processor.py" go up one, get the form (kinda spaghetti but its reusing existing code)
-            forms_module = importlib.import_module(f"{parent_module.__name__}.forms")
-            # Access the 'processor_settings_form' class from the 'forms' module
-            form_class = getattr(forms_module, 'processor_settings_form')
-        except ModuleNotFoundError as e:
-            # .forms didnt exist
-            form_class = forms.processor_text_json_diff_form
-        except AttributeError as e:
-            # .forms exists but no useful form
-            form_class = forms.processor_text_json_diff_form
 
         form = form_class(formdata=request.form if request.method == 'POST' else None,
                           data=default,
                           extra_notification_tokens=default.extra_notification_token_values(),
-                          default_system_settings=datastore.data['settings']
+                          default_system_settings=datastore.data['settings'],
+                          datastore=datastore
                           )
 
         # For the form widget tag UUID back to "string name" for the field
@@ -165,7 +152,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 datastore.data['watching'][uuid]['tags'] = []
 
             # Recast it if need be to right data Watch handler
-            watch_class = processors.get_custom_watch_obj_for_processor(form.data.get('processor'))
+            processor_name = form.data.get('processor')
+            watch_class = processors.get_watch_model_for_processor(processor_name)
             datastore.data['watching'][uuid] = watch_class(datastore_path=datastore.datastore_path, default=datastore.data['watching'][uuid])
             flash("Updated watch - unpaused!" if request.args.get('unpause_on_save') else "Updated watch.")
 
@@ -236,7 +224,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             # Only works reliably with Playwright
 
             template_args = {
-                'available_processors': processors.available_processors(),
+                'available_processors': processors.available_processors(datastore),
                 'available_timezones': sorted(available_timezones()),
                 'browser_steps_config': browser_step_ui_config,
                 'emailprefix': os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),

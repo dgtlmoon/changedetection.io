@@ -75,6 +75,7 @@ if os.getenv('FLASK_SERVER_NAME'):
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.add_extension('jinja2.ext.loopcontrols')
+app.jinja_env.globals.update(hasattr=hasattr)
 csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log=[]
@@ -343,7 +344,7 @@ def changedetection_app(config=None, datastore_o=None):
     @login_optionally_required
     def index():
         global datastore
-        from changedetectionio import forms
+        from changedetectionio.forms import quickWatchForm
 
         active_tag_req = request.args.get('tag', '').lower().strip()
         active_tag_uuid = active_tag = None
@@ -394,7 +395,7 @@ def changedetection_app(config=None, datastore_o=None):
             else:
                 sorted_watches.append(watch)
 
-        form = forms.quickWatchForm(request.form)
+        form = quickWatchForm(request.form, datastore=datastore)
         page = request.args.get(get_page_parameter(), type=int, default=1)
         total_count = len(sorted_watches)
 

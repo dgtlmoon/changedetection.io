@@ -1,18 +1,14 @@
 
-from changedetectionio.strtobool import strtobool
 from flask import Blueprint, flash, redirect, url_for
 from flask_login import login_required
-from changedetectionio.store import ChangeDetectionStore
-from changedetectionio import queuedWatchMetaData
 from queue import PriorityQueue
+from changedetectionio import queuedWatchMetaData
+from changedetectionio.processors.constants import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
 
-PRICE_DATA_TRACK_ACCEPT = 'accepted'
-PRICE_DATA_TRACK_REJECT = 'rejected'
 
-def construct_blueprint(datastore: ChangeDetectionStore, update_q: PriorityQueue):
+def construct_blueprint(datastore, update_q: PriorityQueue):
 
     price_data_follower_blueprint = Blueprint('price_data_follower', __name__)
-
     @login_required
     @price_data_follower_blueprint.route("/<string:uuid>/accept", methods=['GET'])
     def accept(uuid):

@@ -3,7 +3,6 @@ import time
 from wtforms import ValidationError
 from loguru import logger
 
-from changedetectionio.forms import validate_url
 
 
 class Importer():
@@ -151,6 +150,7 @@ class import_xlsx_wachete(Importer):
         self.new_uuids = []
 
         from openpyxl import load_workbook
+        from changedetectionio.forms import validate_url
 
         try:
             wb = load_workbook(data)

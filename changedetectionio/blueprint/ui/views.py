@@ -191,7 +191,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
     @login_optionally_required
     def form_quick_watch_add():
         from changedetectionio import forms
-        form = forms.quickWatchForm(request.form)
+        form = forms.quickWatchForm(request.form, datastore=datastore)
 
         if not form.validate():
             for widget, l in form.errors.items():

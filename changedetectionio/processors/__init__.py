@@ -9,6 +9,8 @@ import inspect
 import os
 import pkgutil
 import re
+import sys
+from .pluggy_interface import plugin_manager, hookimpl
 
 class difference_detection_processor():
 
@@ -172,83 +174,245 @@ class difference_detection_processor():
         return changed_detected, update_obj, ''.encode('utf-8')
 
 
-def find_sub_packages(package_name):
+def get_all_plugins_info():
     """
-    Find all sub-packages within the given package.
-
-    :param package_name: The name of the base package to scan for sub-packages.
-    :return: A list of sub-package names.
+    Get information about all registered processor plugins
+    :return: A list of dictionaries with plugin info
     """
-    package = importlib.import_module(package_name)
-    return [name for _, name, is_pkg in pkgutil.iter_modules(package.__path__) if is_pkg]
+    plugins_info = []
+    
+    # Collect from all registered plugins
+    for plugin in plugin_manager.get_plugins():
+        if hasattr(plugin, "get_processor_name") and hasattr(plugin, "get_processor_description"):
+            processor_name = plugin.get_processor_name()
+            description = plugin.get_processor_description()
+            
+            # Get version if available
+            version = "N/A"
+            if hasattr(plugin, "get_processor_version"):
+                plugin_version = plugin.get_processor_version()
+                if plugin_version:
+                    version = plugin_version
+            
+            if processor_name and description:
+                plugins_info.append({
+                    "name": processor_name,
+                    "description": description,
+                    "version": version
+                })
+    
+    # Fallback if no plugins registered
+    if not plugins_info:
+        plugins_info = [
+            {"name": "text_json_diff", "description": "Webpage Text/HTML, JSON and PDF changes", "version": "1.0.0"},
+            {"name": "restock_diff", "description": "Re-stock & Price detection for single product pages", "version": "1.0.0"}
+        ]
+    
+    return plugins_info
 
-
-def find_processors():
-    """
-    Find all subclasses of DifferenceDetectionProcessor in the specified package.
-
-    :param package_name: The name of the package to scan for processor modules.
-    :return: A list of (module, class) tuples.
-    """
-    package_name = "changedetectionio.processors"  # Name of the current package/module
-
-    processors = []
-    sub_packages = find_sub_packages(package_name)
-
-    for sub_package in sub_packages:
-        module_name = f"{package_name}.{sub_package}.processor"
-        try:
-            module = importlib.import_module(module_name)
-
-            # Iterate through all classes in the module
-            for name, obj in inspect.getmembers(module, inspect.isclass):
-                if issubclass(obj, difference_detection_processor) and obj is not difference_detection_processor:
-                    processors.append((module, sub_package))
-        except (ModuleNotFoundError, ImportError) as e:
-            logger.warning(f"Failed to import module {module_name}: {e} (find_processors())")
-
-    return processors
-
-
-def get_parent_module(module):
-    module_name = module.__name__
-    if '.' not in module_name:
-        return None  # Top-level module has no parent
-    parent_module_name = module_name.rsplit('.', 1)[0]
-    try:
-        return importlib.import_module(parent_module_name)
-    except Exception as e:
-        pass
-
-    return False
-
-
-
-def get_custom_watch_obj_for_processor(processor_name):
-    from changedetectionio.model import Watch
-    watch_class = Watch.model
-    processor_classes = find_processors()
-    custom_watch_obj = next((tpl for tpl in processor_classes if tpl[1] == processor_name), None)
-    if custom_watch_obj:
-        # Parent of .processor.py COULD have its own Watch implementation
-        parent_module = get_parent_module(custom_watch_obj[0])
-        if hasattr(parent_module, 'Watch'):
-            watch_class = parent_module.Watch
-
-    return watch_class
-
-
-def available_processors():
+def available_processors(datastore=None):
     """
     Get a list of processors by name and description for the UI elements
-    :return: A list :)
+    Filtered by enabled_plugins setting if datastore is provided
+    :return: A list of tuples (processor_name, description)
     """
+    plugins_info = get_all_plugins_info()
+    processor_list = []
+    
+    # If datastore is provided, filter by enabled_plugins
+    if datastore:
+        # Make sure enabled_plugins exists in datastore
+        if 'enabled_plugins' not in datastore.data['settings']['application']:
+            datastore.data['settings']['application']['enabled_plugins'] = {}
+            
+        enabled_plugins = datastore.data['settings']['application']['enabled_plugins']
+        
+        # Scan for any new plugins that aren't in the enabled_plugins dict yet
+        # Default built-in processors to enabled, third-party to disabled
+        plugins_updated = False
+        for plugin in plugins_info:
+            if plugin["name"] not in enabled_plugins:
+                # Built-in processors are enabled by default
+                if plugin["name"] in ["text_json_diff", "restock_diff"]:
+                    enabled_plugins[plugin["name"]] = True
+                else:
+                    # Third-party plugins are disabled by default
+                    enabled_plugins[plugin["name"]] = False
+                plugins_updated = True
+        
+        # Save changes if we added new plugins
+        if plugins_updated:
+            datastore.needs_write = True
+        
+        # Only include enabled plugins
+        for plugin in plugins_info:
+            if enabled_plugins.get(plugin["name"], False):
+                processor_list.append((plugin["name"], plugin["description"]))
+    else:
+        # No datastore provided, include all plugins
+        for plugin in plugins_info:
+            processor_list.append((plugin["name"], plugin["description"]))
+    
+    return processor_list
 
-    processor_classes = find_processors()
+def get_processor_handler(processor_name, datastore, watch_uuid):
+    """
+    Get the processor handler for the specified processor name
+    :return: The processor handler instance
+    """
+    # Try each plugin in turn
+    for plugin in plugin_manager.get_plugins():
+        if hasattr(plugin, "perform_site_check"):
+            handler = plugin.perform_site_check(datastore=datastore, watch_uuid=watch_uuid)
+            if handler:
+                return handler
+    
+    # If no plugins handled it, use the appropriate built-in processor
+    watch = datastore.data['watching'].get(watch_uuid)
+    if watch and watch.get('processor') == 'restock_diff':
+        from .restock_diff.processor import perform_site_check
+        return perform_site_check(datastore=datastore, watch_uuid=watch_uuid)
+    else:
+        # Default to text_json_diff
+        from .text_json_diff.processor import perform_site_check
+        return perform_site_check(datastore=datastore, watch_uuid=watch_uuid)
 
-    available = []
-    for package, processor_class in processor_classes:
-        available.append((processor_class, package.name))
+def get_form_class_for_processor(processor_name):
+    """
+    Get the form class for the specified processor name
+    :return: The form class
+    """
+    # Try each plugin in turn
+    for plugin in plugin_manager.get_plugins():
+        if hasattr(plugin, "get_form_class"):
+            form_class = plugin.get_form_class(processor_name=processor_name)
+            if form_class:
+                return form_class
+    
+    # If no plugins provided a form class, use the appropriate built-in form
+    if processor_name == 'restock_diff':
+        try:
+            from .restock_diff.forms import processor_settings_form
+            return processor_settings_form
+        except ImportError:
+            pass
+    
+    # Default to text_json_diff form
+    from changedetectionio import forms
+    return forms.processor_text_json_diff_form
 
-    return available
+def get_watch_model_for_processor(processor_name):
+    """
+    Get the Watch model class for the specified processor name
+    :return: The Watch model class
+    """
+    # Try each plugin in turn
+    for plugin in plugin_manager.get_plugins():
+        if hasattr(plugin, "get_watch_model_class"):
+            model_class = plugin.get_watch_model_class(processor_name=processor_name)
+            if model_class:
+                return model_class
+    
+    # Default to standard Watch model
+    from changedetectionio.model import Watch
+    return Watch.model
 
+# Define plugin implementations for the built-in processors
+class TextJsonDiffPlugin:
+    @hookimpl
+    def get_processor_name(self):
+        return "text_json_diff"
+
+    @hookimpl
+    def get_processor_description(self):
+        from .text_json_diff.processor import name
+        return name
+        
+    @hookimpl
+    def get_processor_version(self):
+        return "1.0.0"
+
+    @hookimpl
+    def perform_site_check(self, datastore, watch_uuid):
+        watch = datastore.data['watching'].get(watch_uuid)
+        if watch and watch.get('processor', 'text_json_diff') == 'text_json_diff':
+            from .text_json_diff.processor import perform_site_check
+            return perform_site_check(datastore=datastore, watch_uuid=watch_uuid)
+        return None
+
+    @hookimpl
+    def get_form_class(self, processor_name):
+        if processor_name == 'text_json_diff':
+            from changedetectionio import forms
+            return forms.processor_text_json_diff_form
+        return None
+
+    @hookimpl
+    def get_watch_model_class(self, processor_name):
+        if processor_name == 'text_json_diff':
+            from changedetectionio.model import Watch
+            return Watch.model
+        return None
+
+class RestockDiffPlugin:
+    @hookimpl
+    def get_processor_name(self):
+        return "restock_diff"
+
+    @hookimpl
+    def get_processor_description(self):
+        from .restock_diff.processor import name
+        return name
+        
+    @hookimpl
+    def get_processor_version(self):
+        return "1.0.0"
+
+    @hookimpl
+    def perform_site_check(self, datastore, watch_uuid):
+        watch = datastore.data['watching'].get(watch_uuid)
+        if watch and watch.get('processor') == 'restock_diff':
+            from .restock_diff.processor import perform_site_check
+            return perform_site_check(datastore=datastore, watch_uuid=watch_uuid)
+        return None
+
+    @hookimpl
+    def get_form_class(self, processor_name):
+        if processor_name == 'restock_diff':
+            try:
+                from .restock_diff.forms import processor_settings_form
+                return processor_settings_form
+            except ImportError:
+                pass
+        return None
+
+    @hookimpl
+    def get_watch_model_class(self, processor_name):
+        if processor_name == 'restock_diff':
+            # Currently uses default watch model, could be customized in the future
+            from changedetectionio.model import Watch
+            return Watch.model
+        return None
+
+# Import our example plugins 
+from .example_processor_plugin import ExampleProcessorPlugin
+
+# For backward compatibility
+def get_custom_watch_obj_for_processor(processor_name):
+    return get_watch_model_for_processor(processor_name)
+
+# Register the built-in processor plugins
+plugin_manager.register(TextJsonDiffPlugin())
+plugin_manager.register(RestockDiffPlugin())
+plugin_manager.register(ExampleProcessorPlugin())
+
+# Check for test plugin and conditionally register it
+try:
+    # This avoids circular imports
+    from .test_plugin_example import ExampleProcessorPlugin as TestExampleProcessorPlugin
+    test_plugin_instance = TestExampleProcessorPlugin()
+    # Only register if it has a different name than the regular example plugin
+    if test_plugin_instance.get_processor_name() != "example_processor":
+        plugin_manager.register(test_plugin_instance)
+except (ImportError, AttributeError):
+    pass
