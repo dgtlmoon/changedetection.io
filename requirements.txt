@@ -13,6 +13,7 @@ flask_cors # For the Chrome extension to operate
 flask_wtf~=1.2
 flask~=2.3
 inscriptis~=2.2
+cssselect~=1.3.0
 pytz
 timeago~=1.0
 validators~=0.21

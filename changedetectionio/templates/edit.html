@@ -432,6 +432,25 @@ nav
                     {{ render_checkbox_field(form.trim_text_whitespace) }}
                     <span class="pure-form-message-inline">Remove any whitespace before and after each line of text</span>
                 </fieldset>
+                <fieldset class="pure-control-group" data-visible-for="extraction_method=ANNOTATED_TEXT" >
+                    <div class="pure-control-group">
+                    {{ render_field(form.annotated_sort_selectors, rows=4, placeholder='{<Element-to-Sort Selector>}({<Sort-Identifier Selector>})
+{item}{item-price}
+{title}
+{submission}{time}') }}
+                    <div class="pure-form-message">Sort tags in annotated text based on its contents or child tag contents.</div>
+                    <span data-target="#advanced-help-annotated-sort" class="toggle-show pure-button button-tag button-xsmall">Show advanced help and tips</span><br>
+                    <div id="advanced-help-annotated-sort" class="pure-form-message-inline" style="display: none;">
+                         <ul>
+                             <li> Syntax per Line: <code>{&lt;Element-to-Sort Selector&gt;}({&lt;Sort-Identifier Selector&gt;})</code></li>
+                             <li> <strong>Element-to-Sort</strong> CSS or XPath Selector matching the annotated tag <strong>to be sorted</strong>. </li>
+                             <li> Optional: <strong>Sort-Identifier</strong> CSS or XPath Selector relative to Element-to-Sort matching a child annotated tag <strong>containing the text to base the sorting on.</strong> </li>
+                             <li> Elements are sorted in ascending order. </li>
+                             <li> XPath: Begin selector with forward-slashes or explicitly prefix with <code>xpath:</code>. </li>
+                         </ul>
+                     </div>
+                    </div>
+                </fieldset>
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.trigger_text, rows=5, placeholder="Some text to wait for in a line
