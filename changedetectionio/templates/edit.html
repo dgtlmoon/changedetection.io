@@ -381,6 +381,30 @@ nav
                         </ul>
                       </span>
                 </fieldset>
+                <fieldset class="pure-control-group">
+                    <div class="pure-control-group inline-radio" class="extraction_method">
+                    {{ render_field(form.extraction_method) }}
+                    </div>
+                </fieldset>
+              <fieldset class="pure-control-group" data-visible-for="extraction_method=ANNOTATED_TEXT" >
+                     <div class="pure-control-group">
+                    {{ render_field(form.annotation_rules, rows=4, placeholder='{<CSS Selector>} <Comma-separated list of tags>
+{#example} example
+{tr[class*=\'submission\']} submission, tablerow
+{span.age > a} time') }}
+                     <div class="pure-form-message">Pair CSS selector and tag to annotate matches in the text per line.</div>
+                     <span data-target="#advanced-help-annotation-rules" class="toggle-show pure-button button-tag button-xsmall">Show advanced help and tips</span><br>
+                     <div id="advanced-help-annotation-rules" class="pure-form-message-inline" style="display: none;">
+                         <ul>
+                             <li> Syntax per Line: <code>{&lt;CSS Selector&gt;} &lt;Comma-separated list of tags&gt;</code> </li>
+                             <li> Each element matched by the CSS selector will be tagged in the text with all listed tags <code>&lt;foo&gt;&lt;bar&gt;Matched Text&lt;/bar&gt;&lt;/foo&gt;</code> </li>
+                             <li> Matched elements without any text will not be tagged. </li>
+                             <li> Tags will be matched after Include Filters were applied and elements were removed. </li>
+                             <li> Only available for HTML (no Json or pdf). </li>
+                         </ul>
+                     </div>
+                    </div>
+                </fieldset>
                 <div class="text-filtering border-fieldset">
                 <fieldset class="pure-group" id="text-filtering-type-options">
                     <h3>Text filtering</h3>
