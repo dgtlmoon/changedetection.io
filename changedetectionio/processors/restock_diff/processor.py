@@ -152,7 +152,8 @@ class perform_site_check(difference_detection_processor):
 
         # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False, 'restock':  Restock()}
-
+        if not 'restock_settings' in watch.keys():
+            raise Exception("Restock settings not found in watch.")
         self.screenshot = self.fetcher.screenshot
         self.xpath_data = self.fetcher.xpath_data
 

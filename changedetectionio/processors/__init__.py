@@ -4,12 +4,10 @@ from changedetectionio.strtobool import strtobool
 from copy import deepcopy
 from loguru import logger
 import hashlib
-import importlib
-import inspect
 import os
-import pkgutil
 import re
-import sys
+
+
 from .pluggy_interface import plugin_manager, hookimpl
 
 class difference_detection_processor():
@@ -275,13 +273,14 @@ def get_watch_model_for_processor(processor_name):
     Get the Watch model class for the specified processor name
     :return: The Watch model class
     """
+
     # Try each plugin in turn
     for plugin in plugin_manager.get_plugins():
         if hasattr(plugin, "get_watch_model_class"):
             model_class = plugin.get_watch_model_class(processor_name=processor_name)
             if model_class:
                 return model_class
-    
+
     # Default to standard Watch model
     from changedetectionio.model import Watch
     return Watch.model
@@ -360,15 +359,10 @@ class RestockDiffPlugin:
     @hookimpl
     def get_watch_model_class(self, processor_name):
         if processor_name == 'restock_diff':
-            # Currently uses default watch model, could be customized in the future
-            from changedetectionio.model import Watch
-            return Watch.model
+            from . import restock_diff
+            return restock_diff.Watch
         return None
 
-
-# For backward compatibility
-def get_custom_watch_obj_for_processor(processor_name):
-    return get_watch_model_for_processor(processor_name)
 
 # Register the built-in processor plugins
 plugin_manager.register(TextJsonDiffPlugin())

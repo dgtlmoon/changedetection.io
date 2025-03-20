@@ -18,8 +18,7 @@ import time
 import uuid as uuid_builder
 from loguru import logger
 
-from .processors import get_custom_watch_obj_for_processor
-from .processors.restock_diff import Restock
+from .processors import get_watch_model_for_processor
 
 # Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
 BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
@@ -150,10 +149,10 @@ class ChangeDetectionStore:
         entity['uuid'] = uuid
 
         if processor_override:
-            watch_class = get_custom_watch_obj_for_processor(processor_override)
+            watch_class = get_watch_model_for_processor(processor_override)
             entity['processor']=processor_override
         else:
-            watch_class = get_custom_watch_obj_for_processor(entity.get('processor'))
+            watch_class = get_watch_model_for_processor(entity.get('processor'))
 
         if entity.get('uuid') != 'text_json_diff':
             logger.trace(f"Loading Watch object '{watch_class.__module__}.{watch_class.__name__}' for UUID {uuid}")
@@ -345,7 +344,7 @@ class ChangeDetectionStore:
             apply_extras['tags'] = list(set(apply_extras.get('tags')))
 
         # If the processor also has its own Watch implementation
-        watch_class = get_custom_watch_obj_for_processor(apply_extras.get('processor'))
+        watch_class = get_watch_model_for_processor(apply_extras.get('processor'))
         new_watch = watch_class(datastore_path=self.datastore_path, url=url)
 
         new_uuid = new_watch.get('uuid')
@@ -890,6 +889,7 @@ class ChangeDetectionStore:
 
     # Migrate old 'in_stock' values to the new Restock
     def update_17(self):
+        from .processors.restock_diff import Restock
         for uuid, watch in self.data['watching'].items():
             if 'in_stock' in watch:
                 watch['restock'] = Restock({'in_stock': watch.get('in_stock')})

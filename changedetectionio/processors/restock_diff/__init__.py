@@ -1,5 +1,4 @@
 
-from babel.numbers import parse_decimal
 from changedetectionio.model.Watch import model as BaseWatch
 from typing import Union
 import re
@@ -7,6 +6,7 @@ import re
 class Restock(dict):
 
     def parse_currency(self, raw_value: str) -> Union[float, None]:
+        from babel.numbers import parse_decimal
         # Clean and standardize the value (ie 1,400.00 should be 1400.00), even better would be store the whole thing as an integer.
         standardized_value = raw_value
 
