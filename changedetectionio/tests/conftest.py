@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import resource
+import psutil
 import time
 from threading import Thread
 
@@ -28,9 +28,10 @@ def reportlog(pytestconfig):
 
 
 def track_memory(memory_usage, ):
+    process = psutil.Process(os.getpid())
     while not memory_usage["stop"]:
-        max_rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        memory_usage["peak"] = max(memory_usage["peak"], max_rss)
+        current_rss = process.memory_info().rss
+        memory_usage["peak"] = max(memory_usage["peak"], current_rss)
         time.sleep(0.01)  # Adjust the sleep time as needed
 
 @pytest.fixture(scope='function')
