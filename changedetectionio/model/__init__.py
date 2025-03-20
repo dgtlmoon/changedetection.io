@@ -12,6 +12,7 @@ class watch_base(dict):
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
+            'annotation_rules': {},
             'body': None,
             'browser_steps': [],
             'browser_steps_last_error_step': None,
@@ -22,6 +23,7 @@ class watch_base(dict):
             'date_created': None,
             'extract_text': [],  # Extract text by regex after filters
             'extract_title_as_title': False,
+            'extraction_method': 'TEXT',
             'fetch_backend': 'system',  # plaintext, playwright etc
             'fetch_time': 0.0,
             'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
