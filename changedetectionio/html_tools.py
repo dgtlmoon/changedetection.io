@@ -653,6 +653,56 @@ def html_to_annotated_text(
     return "".join(tagged_content)
 
 
+def sort_annotated_text_by_selectors(annotated_xml: str, selector_pairs: List[Tuple[str, str]]) -> str:
+    from lxml.html import fromstring, tostring
+    from collections import defaultdict
+
+    def find_elements(root, selector):
+        if selector.startswith(("xpath:", "xpath1:", "//")):
+            xpath_selector = (selector
+                              .removeprefix("xpath:")
+                              .removeprefix("xpath1:"))
+            return root.xpath(xpath_selector)
+        else:
+            return root.cssselect(selector)
+
+    html_tree = fromstring(annotated_xml.strip())
+
+    for element_to_sort_selector, sort_identifier_selector in selector_pairs:
+        # Find all elements-to-sort
+        elements_to_sort = find_elements(html_tree, element_to_sort_selector)
+
+        # Group by parent
+        parent_map = defaultdict(list)
+        for el in elements_to_sort:
+            parent_map[el.getparent()].append(el)
+
+        # Sort each group's elements-to-sort by the text of the sort-element
+        for parent, elements_to_sort in parent_map.items():
+            def get_sort_key(element):
+                if sort_identifier_selector:
+                    # Use first sort-element matched by `sort_identifier_selector`
+                    sort_element_matches = find_elements(element, sort_identifier_selector)
+                    if sort_element_matches and sort_element_matches[0].text:
+                        return sort_element_matches[0].text.strip()
+                elif element.text:
+                    return element.text.strip()
+                return ""
+
+            sorted_elements = sorted(elements_to_sort, key=get_sort_key)
+
+            # Remove original elements
+            for element in elements_to_sort:
+                parent.remove(element)
+
+            # Reattach elements in sorted order
+            for element in sorted_elements:
+                parent.append(element)
+
+    # Finally, convert the modified DOM back to string maintaining while the input indentation
+    return tostring(html_tree, pretty_print=False, method="xml").decode("utf-8")
+
+
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?
 def has_ldjson_product_info(content):
     try:

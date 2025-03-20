@@ -198,6 +198,10 @@ class perform_site_check(difference_detection_processor):
                     stripped_text_from_html = html_tools.html_to_annotated_text(html_content=html_content,
                                                                                 annotation_rules=annotation_rules)
 
+                    watch_annotated_sort_selectors = watch.get('annotated_sort_selectors', [])
+                    if watch_annotated_sort_selectors:
+                        stripped_text_from_html = html_tools.sort_annotated_text_by_selectors(stripped_text_from_html, watch_annotated_sort_selectors)
+
                 else:
                     # extract text
                     do_anchor = self.datastore.data["settings"]["application"].get("render_anchor_tag_content", False)

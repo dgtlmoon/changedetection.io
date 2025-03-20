@@ -13,6 +13,7 @@ class watch_base(dict):
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
             'annotation_rules': {},
+            'annotated_sort_selectors': [],
             'body': None,
             'browser_steps': [],
             'browser_steps_last_error_step': None,
