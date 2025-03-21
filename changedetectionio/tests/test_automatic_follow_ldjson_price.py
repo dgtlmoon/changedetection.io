@@ -101,7 +101,9 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     # Accept it
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     #time.sleep(1)
-    client.get(url_for('price_data_follower.accept', uuid=uuid, follow_redirects=True))
+    res = client.get(url_for('price_data_follower.accept', uuid=uuid, follow_redirects=True))
+    # should now be switched to restock_mode
+    wait_for_all_checks(client)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     # Offer should be gone
@@ -154,6 +156,7 @@ def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
 
+    assert len(client.application.config.get('DATASTORE').data['watching'])
     for k,v in client.application.config.get('DATASTORE').data['watching'].items():
         assert v.get('last_error') == False
         assert v.get('has_ldjson_price_data') == has_ldjson_price_data, f"Detected LDJSON data? should be {has_ldjson_price_data}"
@@ -163,7 +166,7 @@ def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
-def test_bad_ldjson_is_correctly_ignored(client, live_server, measure_memory_usage):
+def test_bad_ldjson_is_correctly_ignored(client, live_server):
     #live_server_setup(live_server)
     test_return_data = """
             <html>

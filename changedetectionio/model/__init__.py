@@ -7,7 +7,8 @@ from changedetectionio.notification import default_notification_format_for_watch
 class watch_base(dict):
 
     def __init__(self, *arg, **kw):
-        self.update({
+        # Initialize internal data storage
+        self.__data = {
             # Custom notification content
             # Re #110, so then if this is set to None, we know to use the default value instead
             # Requires setting to None on submit if it's the same as the default
@@ -124,12 +125,72 @@ class watch_base(dict):
             'remove_duplicate_lines': False,
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'url': '',
-            'uuid': str(uuid.uuid4()),
+            'uuid': None,
             'webdriver_delay': None,
             'webdriver_js_execute_code': None,  # Run before change-detection
-        })
+        }
 
-        super(watch_base, self).__init__(*arg, **kw)
+        # Initialize as empty dict but maintain dict interface
+        super(watch_base, self).__init__()
+        
+        # Update with provided data
+        if arg or kw:
+            self.update(*arg, **kw)
 
-        if self.get('default'):
-            del self['default']
+        # Generate UUID if needed
+        if not self.__data.get('uuid'):
+            self.__data['uuid'] = str(uuid.uuid4())
+    
+    # Dictionary interface methods to use self.__data
+    def __getitem__(self, key):
+        return self.__data[key]
+    
+    def __setitem__(self, key, value):
+        self.__data[key] = value
+    
+    def __delitem__(self, key):
+        del self.__data[key]
+    
+    def __contains__(self, key):
+        return key in self.__data
+    
+    def __iter__(self):
+        return iter(self.__data)
+    
+    def __len__(self):
+        return len(self.__data)
+    
+    def get(self, key, default=None):
+        return self.__data.get(key, default)
+    
+    def update(self, *args, **kwargs):
+        if args:
+            if len(args) > 1:
+                raise TypeError("update expected at most 1 arguments, got %d" % len(args))
+            other = dict(args[0])
+            for key in other:
+                self.__data[key] = other[key]
+        for key in kwargs:
+            self.__data[key] = kwargs[key]
+
+    def items(self):
+        return self.__data.items()
+    
+    def keys(self):
+        return self.__data.keys()
+        
+    def values(self):
+        return self.__data.values()
+        
+    def pop(self, key, default=None):
+        return self.__data.pop(key, default)
+        
+    def popitem(self):
+        return self.__data.popitem()
+        
+    def clear(self):
+        self.__data.clear()
+        
+    def get_data(self):
+        """Returns the internal data dictionary"""
+        return self.__data

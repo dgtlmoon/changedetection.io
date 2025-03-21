@@ -83,12 +83,12 @@ class ChangeDetectionStore:
 
                 # Convert each existing watch back to the Watch.model object
                 for uuid, watch in self.__data['watching'].items():
-                    self.__data['watching'][uuid] = self.rehydrate_entity(uuid, watch)
+                    self.__data['watching'][uuid] = self.rehydrate_entity(default_dict=watch)
                     logger.info(f"Watching: {uuid} {watch['url']}")
 
                 # And for Tags also, should be Restock type because it has extra settings
                 for uuid, tag in self.__data['settings']['application']['tags'].items():
-                    self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(uuid, tag, processor_override='restock_diff')
+                    self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(default_dict=tag, processor_override='restock_diff')
                     logger.info(f"Tag: {uuid} {tag['title']}")
 
         # First time ran, Create the datastore.
@@ -144,20 +144,11 @@ class ChangeDetectionStore:
         # Finally start the thread that will manage periodic data saves to JSON
         save_data_thread = threading.Thread(target=self.save_datastore).start()
 
-    def rehydrate_entity(self, uuid, entity, processor_override=None):
-        """Set the dict back to the dict Watch object"""
-        entity['uuid'] = uuid
+    def rehydrate_entity(self, default_dict: dict, processor_override='text_json_diff'):
 
-        if processor_override:
-            watch_class = get_watch_model_for_processor(processor_override)
-            entity['processor']=processor_override
-        else:
-            watch_class = get_watch_model_for_processor(entity.get('processor'))
-
-        if entity.get('uuid') != 'text_json_diff':
-            logger.trace(f"Loading Watch object '{watch_class.__module__}.{watch_class.__name__}' for UUID {uuid}")
-
-        entity = watch_class(datastore_path=self.datastore_path, default=entity)
+        watch_class = get_watch_model_for_processor(processor_override)
+        default_dict['processor'] = processor_override
+        entity = watch_class(datastore_path=self.datastore_path, default=default_dict)
         return entity
 
     def set_last_viewed(self, uuid, timestamp):
