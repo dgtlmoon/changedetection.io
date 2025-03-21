@@ -87,6 +87,7 @@ class ChangeDetectionStore:
                     logger.info(f"Watching: {uuid} {watch['url']}")
 
                 # And for Tags also, should be Restock type because it has extra settings
+                # @todo make this smarter!
                 for uuid, tag in self.__data['settings']['application']['tags'].items():
                     self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(default_dict=tag, processor_override='restock_diff')
                     logger.info(f"Tag: {uuid} {tag['title']}")
@@ -144,7 +145,10 @@ class ChangeDetectionStore:
         # Finally start the thread that will manage periodic data saves to JSON
         save_data_thread = threading.Thread(target=self.save_datastore).start()
 
-    def rehydrate_entity(self, default_dict: dict, processor_override='text_json_diff'):
+    def rehydrate_entity(self, default_dict: dict, processor_override=None):
+
+        if not processor_override and default_dict.get('processor'):
+            processor_override = default_dict.get('processor')
 
         watch_class = get_watch_model_for_processor(processor_override)
         default_dict['processor'] = processor_override
