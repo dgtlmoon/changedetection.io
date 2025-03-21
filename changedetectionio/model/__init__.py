@@ -1,6 +1,7 @@
 import os
 import uuid
 from copy import deepcopy
+import time
 
 from changedetectionio import strtobool
 from changedetectionio.notification import default_notification_format_for_watch
@@ -34,6 +35,7 @@ schema = {
     'include_filters': [],
     'last_checked': 0,
     'last_error': False,
+    'last_modified': None,
     'last_viewed': 0,  # history key value of the last viewed via the [diff] link
     'method': 'GET',
     'notification_alert_count': 0,
@@ -152,6 +154,7 @@ class watch_base(dict):
     
     def __setitem__(self, key, value):
         self.__data[key] = value
+        self.__data['last_modified'] = time.time()
     
     def __delitem__(self, key):
         del self.__data[key]
@@ -178,6 +181,8 @@ class watch_base(dict):
         for key in kwargs:
             self.__data[key] = kwargs[key]
 
+        self.__data['last_modified'] = time.time()
+
     def items(self):
         return self.__data.items()
     
@@ -195,6 +200,7 @@ class watch_base(dict):
         
     def clear(self):
         self.__data.clear()
+        self.__data['last_modified'] = time.time()
         
     def get_data(self):
         """Returns the internal data dictionary"""
