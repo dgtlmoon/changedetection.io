@@ -190,8 +190,18 @@ class perform_site_check(difference_detection_processor):
                 if has_subtractive_selectors:
                     html_content = html_tools.element_removal(subtractive_selectors, html_content)
 
+                watch_extraction_method = watch.get('extraction_method', 'TEXT')
                 if watch.is_source_type_url:
                     stripped_text_from_html = html_content
+                elif watch_extraction_method == 'ANNOTATED_TEXT':
+                    annotation_rules = watch.get('annotation_rules', {})
+                    stripped_text_from_html = html_tools.html_to_annotated_text(html_content=html_content,
+                                                                                annotation_rules=annotation_rules)
+
+                    watch_annotated_sort_selectors = watch.get('annotated_sort_selectors', [])
+                    if watch_annotated_sort_selectors:
+                        stripped_text_from_html = html_tools.sort_annotated_text_by_selectors(stripped_text_from_html, watch_annotated_sort_selectors)
+
                 else:
                     # extract text
                     do_anchor = self.datastore.data["settings"]["application"].get("render_anchor_tag_content", False)
