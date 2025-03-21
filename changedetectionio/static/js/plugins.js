@@ -1,4 +1,22 @@
 (function ($) {
+    // Initialize plugin management UI when the DOM is ready
+    $(document).ready(function() {
+        // Add event handlers for plugin checkboxes
+        $("#plugins-table input[type='checkbox']").on('change', function() {
+            const isEnabled = $(this).is(':checked');
+            
+            // For visual feedback, fade the row when disabled
+            if (isEnabled) {
+                $(this).closest('tr').removeClass('disabled-plugin');
+            } else {
+                $(this).closest('tr').addClass('disabled-plugin');
+            }
+            
+            const pluginName = $(this).closest('tr').find('td:nth-child(2)').text().trim();
+            console.log(`Plugin ${pluginName} ${isEnabled ? 'enabled' : 'disabled'}`);
+        });
+    });
+    
     /**
      * debounce
      * @param {integer} milliseconds This param indicates the number of milliseconds

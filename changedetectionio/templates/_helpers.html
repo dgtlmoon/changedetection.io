@@ -1,3 +1,7 @@
+{% macro hasattr(obj, name) -%}
+    {{ obj is defined and name in obj.__dict__ }}
+{%- endmacro %}
+
 {% macro render_field(field) %}
   <div {% if field.errors %} class="error" {% endif %}>{{ field.label }}</div>
   <div {% if field.errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}

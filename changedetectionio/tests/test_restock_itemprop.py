@@ -95,11 +95,13 @@ def test_itemprop_price_change(client, live_server):
     test_url = url_for('test_endpoint', _external=True)
 
     set_original_response(props_markup=instock_props[0], price="190.95")
-    client.post(
+    res = client.post(
         url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
+
+    assert res.status_code == 200
 
     # A change in price, should trigger a change by default
     wait_for_all_checks(client)
@@ -110,6 +112,7 @@ def test_itemprop_price_change(client, live_server):
     set_original_response(props_markup=instock_props[0], price='180.45')
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
+
     res = client.get(url_for("index"))
     assert b'180.45' in res.data
     assert b'unviewed' in res.data
@@ -395,7 +398,7 @@ def test_data_sanity(client, live_server):
     test_url = url_for('test_endpoint', _external=True)
     test_url2 = url_for('test_endpoint2', _external=True)
     set_original_response(props_markup=instock_props[0], price="950.95")
-    client.post(
+    res = client.post(
         url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True

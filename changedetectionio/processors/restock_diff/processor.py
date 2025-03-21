@@ -9,6 +9,7 @@ import time
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 name = 'Re-stock & Price detection for single product pages'
 description = 'Detects if the product goes back to in-stock'
+UI_tag = "Restock"
 
 class UnableToExtractRestockData(Exception):
     def __init__(self, status_code):
@@ -152,7 +153,8 @@ class perform_site_check(difference_detection_processor):
 
         # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False, 'restock':  Restock()}
-
+        if not 'restock_settings' in watch.keys():
+            raise Exception("Restock settings not found in watch.")
         self.screenshot = self.fetcher.screenshot
         self.xpath_data = self.fetcher.xpath_data
 

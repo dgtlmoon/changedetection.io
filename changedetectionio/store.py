@@ -6,7 +6,7 @@ from flask import (
 
 from .html_tools import TRANSLATE_WHITESPACE_TABLE
 from . model import App, Watch
-from copy import deepcopy, copy
+from copy import deepcopy
 from os import path, unlink
 from threading import Lock
 import json
@@ -17,9 +17,9 @@ import threading
 import time
 import uuid as uuid_builder
 from loguru import logger
+from deepmerge import always_merger
 
-from .processors import get_custom_watch_obj_for_processor
-from .processors.restock_diff import Restock
+from .processors import get_watch_model_for_processor
 
 # Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
 BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
@@ -49,9 +49,6 @@ class ChangeDetectionStore:
         self.needs_write = False
         self.start_time = time.time()
         self.stop_thread = False
-        # Base definition for all watchers
-        # deepcopy part of #569 - not sure why its needed exactly
-        self.generic_definition = deepcopy(Watch.model(datastore_path = datastore_path, default={}))
 
         if path.isfile('changedetectionio/source.txt'):
             with open('changedetectionio/source.txt') as f:
@@ -84,12 +81,13 @@ class ChangeDetectionStore:
 
                 # Convert each existing watch back to the Watch.model object
                 for uuid, watch in self.__data['watching'].items():
-                    self.__data['watching'][uuid] = self.rehydrate_entity(uuid, watch)
+                    self.__data['watching'][uuid] = self.rehydrate_entity(default_dict=watch)
                     logger.info(f"Watching: {uuid} {watch['url']}")
 
                 # And for Tags also, should be Restock type because it has extra settings
+                # @todo make this smarter!
                 for uuid, tag in self.__data['settings']['application']['tags'].items():
-                    self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(uuid, tag, processor_override='restock_diff')
+                    self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(default_dict=tag, processor_override='restock_diff')
                     logger.info(f"Tag: {uuid} {tag['title']}")
 
         # First time ran, Create the datastore.
@@ -145,20 +143,15 @@ class ChangeDetectionStore:
         # Finally start the thread that will manage periodic data saves to JSON
         save_data_thread = threading.Thread(target=self.save_datastore).start()
 
-    def rehydrate_entity(self, uuid, entity, processor_override=None):
-        """Set the dict back to the dict Watch object"""
-        entity['uuid'] = uuid
+    def rehydrate_entity(self, default_dict: dict, processor_override=None):
 
-        if processor_override:
-            watch_class = get_custom_watch_obj_for_processor(processor_override)
-            entity['processor']=processor_override
-        else:
-            watch_class = get_custom_watch_obj_for_processor(entity.get('processor'))
-
-        if entity.get('uuid') != 'text_json_diff':
-            logger.trace(f"Loading Watch object '{watch_class.__module__}.{watch_class.__name__}' for UUID {uuid}")
-
-        entity = watch_class(datastore_path=self.datastore_path, default=entity)
+        if not processor_override and default_dict.get('processor'):
+            processor_override = default_dict.get('processor')
+        if not processor_override:
+            processor_override = 'text_json_diff'
+        watch_class = get_watch_model_for_processor(processor_override)
+        default_dict['processor'] = processor_override
+        entity = watch_class(datastore_path=self.datastore_path, default=default_dict)
         return entity
 
     def set_last_viewed(self, uuid, timestamp):
@@ -171,21 +164,27 @@ class ChangeDetectionStore:
         self.needs_write = True
 
     def update_watch(self, uuid, update_obj):
-
+        """
+        Update a watch with new values using the deepmerge library.
+        """
         # It's possible that the watch could be deleted before update
-        if not self.__data['watching'].get(uuid):
+        if not uuid in self.data['watching'].keys() or update_obj is None:
             return
 
         with self.lock:
-
-            # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
-            for dict_key, d in self.generic_definition.items():
-                if isinstance(d, dict):
-                    if update_obj is not None and dict_key in update_obj:
-                        self.__data['watching'][uuid][dict_key].update(update_obj[dict_key])
-                        del (update_obj[dict_key])
-
-            self.__data['watching'][uuid].update(update_obj)
+            # Make sure we're working with a proper Watch object
+            watch = self.data['watching'].get(uuid)
+            
+            # Handle None values - they mean "delete this key"
+            keys_to_remove = [k for k, v in update_obj.items() if v is None]
+            for k in keys_to_remove:
+                if k in watch:
+                    del watch[k]
+                del update_obj[k]
+            
+            # Deep merge with the rest
+            always_merger.merge(watch, update_obj)
+            
         self.needs_write = True
 
     @property
@@ -345,7 +344,7 @@ class ChangeDetectionStore:
             apply_extras['tags'] = list(set(apply_extras.get('tags')))
 
         # If the processor also has its own Watch implementation
-        watch_class = get_custom_watch_obj_for_processor(apply_extras.get('processor'))
+        watch_class = get_watch_model_for_processor(apply_extras.get('processor'))
         new_watch = watch_class(datastore_path=self.datastore_path, url=url)
 
         new_uuid = new_watch.get('uuid')
@@ -420,7 +419,7 @@ class ChangeDetectionStore:
                 logger.remove()
                 logger.add(sys.stderr)
 
-                logger.critical("Shutting down datastore thread")
+                logger.info("Shutting down datastore thread")
                 return
 
             if self.needs_write or self.needs_write_urgent:
@@ -890,6 +889,7 @@ class ChangeDetectionStore:
 
     # Migrate old 'in_stock' values to the new Restock
     def update_17(self):
+        from .processors.restock_diff import Restock
         for uuid, watch in self.data['watching'].items():
             if 'in_stock' in watch:
                 watch['restock'] = Restock({'in_stock': watch.get('in_stock')})

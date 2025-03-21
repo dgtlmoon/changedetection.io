@@ -84,6 +84,25 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Convert to ISO 8601 format, all date/time relative events stored as UTC time
         utc_time = datetime.now(ZoneInfo("UTC")).isoformat()
+        
+        # Get processor plugins info
+        from changedetectionio.processors import get_all_plugins_info
+        plugins_info = get_all_plugins_info()
+
+        # Process settings including plugin toggles
+        if request.method == 'POST' and form.validate():
+            # Process the main form data
+            app_update = dict(deepcopy(form.data['application']))
+            
+            # Don't update password with '' or False (Added by wtforms when not in submission)
+            if 'password' in app_update and not app_update['password']:
+                del (app_update['password'])
+
+            datastore.data['settings']['application'].update(app_update)
+            datastore.data['settings']['requests'].update(form.data['requests'])
+
+            datastore.needs_write_urgent = True
+            flash("Settings updated.")
 
         output = render_template("settings.html",
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
@@ -93,6 +112,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 form=form,
                                 hide_remove_pass=os.getenv("SALTED_PASS", False),
                                 min_system_recheck_seconds=int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3)),
+                                plugins_info=plugins_info,
                                 settings_application=datastore.data['settings']['application'],
                                 timezone_default_config=datastore.data['settings']['application'].get('timezone'),
                                 utc_time=utc_time,
