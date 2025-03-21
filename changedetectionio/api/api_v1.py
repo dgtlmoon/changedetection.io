@@ -12,11 +12,10 @@ import copy
 # See docs/README.md for rebuilding the docs/apidoc information
 
 from . import api_schema
-from ..model import watch_base
+from ..model import schema as watch_schema
 
 # Build a JSON Schema atleast partially based on our Watch model
-watch_base_config = watch_base()
-schema = api_schema.build_watch_json_schema(watch_base_config)
+schema = api_schema.build_watch_json_schema(watch_schema)
 
 schema_create_watch = copy.deepcopy(schema)
 schema_create_watch['required'] = ['url']
@@ -53,9 +52,9 @@ class Watch(Resource):
         @apiSuccess (200) {JSON} WatchJSON JSON Full JSON object of the watch
         """
         from copy import deepcopy
-        watch = deepcopy(self.datastore.data['watching'].get(uuid))
+        watch = self.datastore.data['watching'].get(uuid)
         if not watch:
-            abort(404, message='No watch exists with the UUID of {}'.format(uuid))
+            abort(404, message=f'No watch exists with the UUID of {uuid}')
 
         if request.args.get('recheck'):
             self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
@@ -73,13 +72,16 @@ class Watch(Resource):
             self.datastore.data['watching'].get(uuid).unmute()
             return "OK", 200
 
-        # Return without history, get that via another API call
-        # Properties are not returned as a JSON, so add the required props manually
-        watch['history_n'] = watch.history_n
-        # attr .last_changed will check for the last written text snapshot on change
-        watch['last_changed'] = watch.last_changed
-        watch['viewed'] = watch.viewed
-        return watch
+
+        response = dict(watch.get_data())
+        
+        # Add properties that aren't included in the standard dictionary items (they are properties/attr)
+        response['history_n'] = watch.history_n
+        response['last_changed'] = watch.last_changed
+        response['viewed'] = watch.viewed
+        response['title'] = watch.get('title')
+        
+        return response
 
     @auth.check_token
     def delete(self, uuid):
@@ -114,16 +116,16 @@ class Watch(Resource):
         @apiSuccess (200) {String} OK Was updated
         @apiSuccess (500) {String} ERR Some other error
         """
-        watch = self.datastore.data['watching'].get(uuid)
-        if not watch:
-            abort(404, message='No watch exists with the UUID of {}'.format(uuid))
+
+        if not self.datastore.data['watching'].get(uuid):
+            abort(404, message=f'No watch exists with the UUID of {uuid}')
 
         if request.json.get('proxy'):
             plist = self.datastore.proxy_list
             if not request.json.get('proxy') in plist:
-                return "Invalid proxy choice, currently supported proxies are '{}'".format(', '.join(plist)), 400
+                return f"Invalid proxy choice, currently supported proxies are '{', '.join(plist)}'", 400
 
-        watch.update(request.json)
+        self.datastore.data['watching'][uuid].update(request.json)
 
         return "OK", 200
 

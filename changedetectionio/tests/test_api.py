@@ -57,8 +57,7 @@ def test_setup(client, live_server, measure_memory_usage):
 
 
 def test_api_simple(client, live_server, measure_memory_usage):
-#    live_server_setup(live_server)
-
+    #live_server_setup(live_server)
     api_key = extract_api_key_from_UI(client)
 
     # Create a watch
@@ -291,7 +290,6 @@ def test_access_denied(client, live_server, measure_memory_usage):
     assert b"Settings updated." in res.data
 
 def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
-
     #live_server_setup(live_server)
     api_key = extract_api_key_from_UI(client)
 
@@ -373,7 +371,6 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
 
 
 def test_api_import(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
     api_key = extract_api_key_from_UI(client)
 
     res = client.post(

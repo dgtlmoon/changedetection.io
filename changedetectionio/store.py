@@ -410,7 +410,7 @@ class ChangeDetectionStore:
                 logger.remove()
                 logger.add(sys.stderr)
 
-                logger.critical("Shutting down datastore thread")
+                logger.info("Shutting down datastore thread")
                 return
 
             if self.needs_write or self.needs_write_urgent:
