@@ -149,7 +149,8 @@ class ChangeDetectionStore:
 
         if not processor_override and default_dict.get('processor'):
             processor_override = default_dict.get('processor')
-
+        if not processor_override:
+            processor_override = 'text_json_diff'
         watch_class = get_watch_model_for_processor(processor_override)
         default_dict['processor'] = processor_override
         entity = watch_class(datastore_path=self.datastore_path, default=default_dict)
