@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import json
-import urllib
 
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
@@ -44,12 +43,14 @@ def set_number_out_of_range_response(number="150"):
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
+def test_setup(live_server):
+    live_server_setup(live_server)
 
 def test_conditions_with_text_and_number(client, live_server):
     """Test that both text and number conditions work together with AND logic."""
     
     set_original_response("50")
-    live_server_setup(live_server)
+#    live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
 
@@ -138,6 +139,7 @@ def test_conditions_with_text_and_number(client, live_server):
 def test_condition_validate_rule_row(client, live_server):
 
     set_original_response("50")
+    #live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
 

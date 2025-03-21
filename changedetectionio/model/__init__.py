@@ -128,6 +128,7 @@ schema = {
 }
 
 class watch_base(dict):
+    __data = {}
 
     def __init__(self, *arg, **kw):
         # Initialize internal data storage
@@ -163,7 +164,7 @@ class watch_base(dict):
     
     def __len__(self):
         return len(self.__data)
-    
+
     def get(self, key, default=None):
         return self.__data.get(key, default)
     

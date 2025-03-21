@@ -17,6 +17,7 @@ import threading
 import time
 import uuid as uuid_builder
 from loguru import logger
+from deepmerge import always_merger
 
 from .processors import get_watch_model_for_processor
 
@@ -48,9 +49,6 @@ class ChangeDetectionStore:
         self.needs_write = False
         self.start_time = time.time()
         self.stop_thread = False
-        # Base definition for all watchers
-        # deepcopy part of #569 - not sure why its needed exactly
-        self.generic_definition = deepcopy(Watch.model(datastore_path = datastore_path, default={}))
 
         if path.isfile('changedetectionio/source.txt'):
             with open('changedetectionio/source.txt') as f:
@@ -166,21 +164,27 @@ class ChangeDetectionStore:
         self.needs_write = True
 
     def update_watch(self, uuid, update_obj):
-
+        """
+        Update a watch with new values using the deepmerge library.
+        """
         # It's possible that the watch could be deleted before update
-        if not self.__data['watching'].get(uuid):
+        if not uuid in self.data['watching'].keys() or update_obj is None:
             return
 
         with self.lock:
-
-            # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
-            for dict_key, d in self.generic_definition.items():
-                if isinstance(d, dict):
-                    if update_obj is not None and dict_key in update_obj:
-                        self.__data['watching'][uuid][dict_key].update(update_obj[dict_key])
-                        del (update_obj[dict_key])
-
-            self.__data['watching'][uuid].update(update_obj)
+            # Make sure we're working with a proper Watch object
+            watch = self.data['watching'].get(uuid)
+            
+            # Handle None values - they mean "delete this key"
+            keys_to_remove = [k for k, v in update_obj.items() if v is None]
+            for k in keys_to_remove:
+                if k in watch:
+                    del watch[k]
+                del update_obj[k]
+            
+            # Deep merge with the rest
+            always_merger.merge(watch, update_obj)
+            
         self.needs_write = True
 
     @property
