@@ -9,6 +9,7 @@ import time
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 name = 'Re-stock & Price detection for single product pages'
 description = 'Detects if the product goes back to in-stock'
+UI_tag = "Restock"
 
 class UnableToExtractRestockData(Exception):
     def __init__(self, status_code):

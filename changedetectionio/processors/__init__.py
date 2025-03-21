@@ -300,6 +300,11 @@ class TextJsonDiffPlugin:
     def get_processor_version(self):
         from changedetectionio import __version__
         return __version__
+        
+    @hookimpl
+    def get_processor_ui_tag(self):
+        from .text_json_diff.processor import UI_tag
+        return UI_tag
 
     @hookimpl
     def perform_site_check(self, datastore, watch_uuid):
@@ -337,6 +342,11 @@ class RestockDiffPlugin:
     def get_processor_version(self):
         from changedetectionio import __version__
         return __version__
+        
+    @hookimpl
+    def get_processor_ui_tag(self):
+        from .restock_diff.processor import UI_tag
+        return UI_tag
 
     @hookimpl
     def perform_site_check(self, datastore, watch_uuid):

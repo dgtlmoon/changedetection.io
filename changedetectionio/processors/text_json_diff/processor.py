@@ -17,6 +17,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 name = 'Webpage Text/HTML, JSON and PDF changes'
 description = 'Detects all text changes where possible'
+UI_tag = "Text Diff"
 
 json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
 

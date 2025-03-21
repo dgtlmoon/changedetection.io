@@ -7,6 +7,7 @@ PLUGIN_NAMESPACE = "changedetectionio_processors"
 hookspec = pluggy.HookspecMarker(PLUGIN_NAMESPACE)
 hookimpl = pluggy.HookimplMarker(PLUGIN_NAMESPACE)
 
+UI_tags = {}
 
 class ProcessorSpec:
     """Hook specifications for difference detection processors."""
@@ -24,6 +25,11 @@ class ProcessorSpec:
     @hookspec
     def get_processor_version():
         """Return the processor plugin version."""
+        pass
+    
+    @hookspec
+    def get_processor_ui_tag():
+        """Return the UI tag for the processor (used for categorization in UI)."""
         pass
     
     @hookspec
@@ -61,9 +67,19 @@ plugin_manager = pluggy.PluginManager(PLUGIN_NAMESPACE)
 # Register hookspecs
 plugin_manager.add_hookspecs(ProcessorSpec)
 
+# Initialize by loading plugins and building UI_tags dictionary
 try:
     # Discover installed plugins from external packages (if any)
     plugin_manager.load_setuptools_entrypoints(PLUGIN_NAMESPACE)
     logger.info(f"Loaded plugins: {plugin_manager.get_plugins()}")
+    
+    # Build UI_tags dictionary from all plugins
+    for plugin in plugin_manager.get_plugins():
+        if hasattr(plugin, "get_processor_name") and hasattr(plugin, "get_processor_ui_tag"):
+            plugin_name = plugin.get_processor_name()
+            ui_tag = plugin.get_processor_ui_tag()
+            if plugin_name and ui_tag:
+                UI_tags[plugin_name] = ui_tag
+                logger.info(f"Found UI tag for plugin {plugin_name}: {ui_tag}")
 except Exception as e:
     logger.critical(f"Error loading plugins: {str(e)}")
