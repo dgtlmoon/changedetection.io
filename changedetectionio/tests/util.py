@@ -95,20 +95,6 @@ def wait_for_notification_endpoint_output():
 
     return False
 
-
-# kinda funky, but works for now
-def extract_api_key_from_UI(client):
-    import re
-    res = client.get(
-        url_for("settings.settings_page"),
-    )
-    # <span id="api-key">{{api_key}}</span>
-
-    m = re.search('<span id="api-key">(.+?)</span>', str(res.data))
-    api_key = m.group(1)
-    return api_key.strip()
-
-
 # kinda funky, but works for now
 def get_UUID_for_tag_name(client, name):
     app_config = client.application.config.get('DATASTORE').data

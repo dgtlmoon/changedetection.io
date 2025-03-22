@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, extract_api_key_from_UI, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks
 
 import json
 import uuid
@@ -57,9 +57,9 @@ def test_setup(client, live_server, measure_memory_usage):
 
 
 def test_api_simple(client, live_server, measure_memory_usage):
-#    live_server_setup(live_server)
+    #live_server_setup(live_server)
 
-    api_key = extract_api_key_from_UI(client)
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
     # Create a watch
     set_original_response()
@@ -293,7 +293,7 @@ def test_access_denied(client, live_server, measure_memory_usage):
 def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
 
     #live_server_setup(live_server)
-    api_key = extract_api_key_from_UI(client)
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
     # Create a watch
     set_original_response()
@@ -374,7 +374,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
 
 def test_api_import(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
-    api_key = extract_api_key_from_UI(client)
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
     res = client.post(
         url_for("import") + "?tag=import-test",
@@ -392,4 +392,48 @@ def test_api_import(client, live_server, measure_memory_usage):
     # Should see the new tag in the tag/groups list
     res = client.get(url_for('tags.tags_overview_page'))
     assert b'import-test' in res.data
-    
+
+def test_api_conflict_UI_password(client, live_server, measure_memory_usage):
+
+    #live_server_setup(live_server)
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+
+    # Enable password check and diff page access bypass
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={"application-password": "foobar", # password is now set! API should still work!
+              "application-api_access_token_enabled": "y",
+              "requests-time_between_check-minutes": 180,
+              'application-fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+
+    assert b"Password protection enabled." in res.data
+
+    # Create a watch
+    set_original_response()
+    test_url = url_for('test_endpoint', _external=True)
+
+    # Create new
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({"url": test_url, "title": "My test URL" }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 201
+
+
+    wait_for_all_checks(client)
+    url = url_for("createwatch")
+    # Get a listing, it will be the first one
+    res = client.get(
+        url,
+        headers={'x-api-key': api_key}
+    )
+    assert res.status_code == 200
+
+    assert len(res.json)
+
+

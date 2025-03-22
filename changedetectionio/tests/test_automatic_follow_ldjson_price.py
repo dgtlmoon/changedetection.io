@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, extract_UUID_from_client, extract_api_key_from_UI, wait_for_all_checks
+from .util import live_server_setup, extract_UUID_from_client, wait_for_all_checks
 
 
 def set_response_with_ldjson():
@@ -110,7 +110,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     assert b'tracking-ldjson-price-data' in res.data
 
     # and last snapshop (via API) should be just the price
-    api_key = extract_api_key_from_UI(client)
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
     res = client.get(
         url_for("watchsinglehistory", uuid=uuid, timestamp='latest'),
         headers={'x-api-key': api_key},

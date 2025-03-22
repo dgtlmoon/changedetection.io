@@ -4,7 +4,6 @@
 import flask_login
 import locale
 import os
-import pytz
 import queue
 import threading
 import time
@@ -243,6 +242,9 @@ def changedetection_app(config=None, datastore_o=None):
                 return None
             # RSS access with token is allowed
             elif request.endpoint and 'rss.feed' in request.endpoint:
+                return None
+            # API routes - use their own auth mechanism (@auth.check_token)
+            elif request.path.startswith('/api/'):
                 return None
             else:
                 return login_manager.unauthorized()

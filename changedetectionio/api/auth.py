@@ -12,7 +12,9 @@ def check_token(f):
 
         config_api_token_enabled = datastore.data['settings']['application'].get('api_access_token_enabled')
         if not config_api_token_enabled:
-            return
+            return make_response(
+                jsonify("API Access is disabled"), 403
+            )
 
         try:
             api_key_header = request.headers['x-api-key']
