@@ -50,7 +50,7 @@ def test_conditions_with_text_and_number(client, live_server):
     """Test that both text and number conditions work together with AND logic."""
     
     set_original_response("50")
-#    live_server_setup(live_server)
+    #live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
 

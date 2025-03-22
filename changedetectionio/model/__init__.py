@@ -1,7 +1,9 @@
 import os
 import uuid
 from copy import deepcopy
+from loguru import logger
 import time
+import json
 
 from changedetectionio import strtobool
 from changedetectionio.notification import default_notification_format_for_watch
@@ -49,6 +51,7 @@ schema = {
     'previous_md5': False,
     'previous_md5_before_filters': False,  # Used for skipping changedetection entirely
     'processor': 'text_json_diff',  # could be restock_diff or others from .processors
+    'processor_state': {}, # Extra configs for custom processors/plugins, keyed by processor name
     'price_change_threshold_percent': None,
     'proxy': None,  # Preferred proxy connection
     'remote_server_reply': None,  # From 'server' reply header
@@ -131,12 +134,14 @@ schema = {
 
 class watch_base(dict):
     __data = {}
+    __datastore_path = None
+    __save_enabled = True
 
     def __init__(self, *arg, **kw):
         # Initialize internal data storage
 
         self.__data = deepcopy(schema)
-
+        self.__datastore_path = kw.pop('datastore_path', None)
         # Initialize as empty dict but maintain dict interface
         super(watch_base, self).__init__()
         
@@ -147,7 +152,18 @@ class watch_base(dict):
         # Generate UUID if needed
         if not self.__data.get('uuid'):
             self.__data['uuid'] = str(uuid.uuid4())
-    
+
+        if self.__data.get('default'):
+            del(self.__data['default'])
+
+    @property
+    def watch_data_dir(self):
+        # The base dir of the watch data
+        return os.path.join(self.__datastore_path, self['uuid']) if self.__datastore_path else None
+
+    def enable_saving(self):
+        self.__save_enabled = True
+
     # Dictionary interface methods to use self.__data
     def __getitem__(self, key):
         return self.__data[key]
@@ -155,7 +171,7 @@ class watch_base(dict):
     def __setitem__(self, key, value):
         self.__data[key] = value
         self.__data['last_modified'] = time.time()
-    
+
     def __delitem__(self, key):
         del self.__data[key]
     
@@ -205,3 +221,26 @@ class watch_base(dict):
     def get_data(self):
         """Returns the internal data dictionary"""
         return self.__data
+
+    def save_data(self):
+        if self.__save_enabled:
+            if not self.__data.get('uuid'):
+                # Might have been called when creating the watch
+                return
+
+            logger.debug(f"Saving watch {self['uuid']}")
+            path = os.path.join(self.__datastore_path, self.get('uuid'))
+            filepath = os.path.join(str(path), "watch.json")
+            if not os.path.exists(path):
+                os.mkdir(path)
+
+            try:
+                import tempfile
+                with tempfile.NamedTemporaryFile(mode='wb+', delete=False) as tmp:
+                    tmp.write(json.dumps(self.get_data(), indent=2).encode('utf-8'))
+                    tmp.flush()
+                    os.replace(tmp.name, filepath)
+
+
+            except Exception as e:
+                logger.error(f"Error writing JSON for {self.get('uuid')}!! (JSON file save was skipped) : {str(e)}")

@@ -163,6 +163,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
                 uuid = uuid.strip()
                 if datastore.data['watching'].get(uuid):
                     datastore.data['watching'][uuid.strip()]['paused'] = True
+                    datastore.data['watching'][uuid.strip()].save_data()
             flash("{} watches paused".format(len(uuids)))
 
         elif (op == 'unpause'):
@@ -170,6 +171,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
                 uuid = uuid.strip()
                 if datastore.data['watching'].get(uuid):
                     datastore.data['watching'][uuid.strip()]['paused'] = False
+                    datastore.data['watching'][uuid.strip()].save_data()
             flash("{} watches unpaused".format(len(uuids)))
 
         elif (op == 'mark-viewed'):
@@ -184,6 +186,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
                 uuid = uuid.strip()
                 if datastore.data['watching'].get(uuid):
                     datastore.data['watching'][uuid.strip()]['notification_muted'] = True
+                    datastore.data['watching'][uuid.strip()].save_data()
             flash("{} watches muted".format(len(uuids)))
 
         elif (op == 'unmute'):
@@ -191,6 +194,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
                 uuid = uuid.strip()
                 if datastore.data['watching'].get(uuid):
                     datastore.data['watching'][uuid.strip()]['notification_muted'] = False
+                    datastore.data['watching'][uuid.strip()].save_data()
             flash("{} watches un-muted".format(len(uuids)))
 
         elif (op == 'recheck'):
@@ -206,6 +210,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
                 uuid = uuid.strip()
                 if datastore.data['watching'].get(uuid):
                     datastore.data['watching'][uuid]["last_error"] = False
+                    datastore.data['watching'][uuid].save_data()
             flash(f"{len(uuids)} watches errors cleared")
 
         elif (op == 'clear-history'):
@@ -243,6 +248,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
                             datastore.data['watching'][uuid]['tags'].append(tag_uuid)
 
             flash(f"{len(uuids)} watches were tagged")
+
+        for uuid in uuids:
+            datastore.data['watching'][uuid.strip()].save_data()
 
         return redirect(url_for('index'))
 

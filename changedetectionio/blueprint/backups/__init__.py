@@ -89,8 +89,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash("Maximum number of backups reached, please remove some", "error")
             return redirect(url_for('backups.index'))
 
-        # Be sure we're written fresh
-        datastore.sync_to_json()
         zip_thread = threading.Thread(target=create_backup, args=(datastore.datastore_path, datastore.data.get("watching")))
         zip_thread.start()
         backup_threads.append(zip_thread)

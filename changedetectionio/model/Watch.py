@@ -38,17 +38,12 @@ class model(watch_base):
     jitter_seconds = 0
 
     def __init__(self, *arg, **kw):
-        self.__datastore_path = kw.get('datastore_path')
-        if kw.get('datastore_path'):
-            del kw['datastore_path']
+
         super(model, self).__init__(*arg, **kw)
 
         if kw.get('default'):
             self.update(kw['default'])
             del kw['default']
-
-        if self.get('default'):
-            del self['default']
 
         # Be sure the cached timestamp is ready
         bump = self.history
@@ -301,6 +296,7 @@ class model(watch_base):
     # result_obj from fetch_site_status.run()
     def save_history_text(self, contents, timestamp, snapshot_id):
         import brotli
+        import tempfile
 
         logger.trace(f"{self.get('uuid')} - Updating history.txt with timestamp {timestamp}")
 
@@ -416,11 +412,6 @@ class model(watch_base):
     @property
     def snapshot_error_screenshot_ctime(self):
         return self.__get_file_ctime('last-error-screenshot.png')
-
-    @property
-    def watch_data_dir(self):
-        # The base dir of the watch data
-        return os.path.join(self.__datastore_path, self['uuid']) if self.__datastore_path else None
 
     def get_error_text(self):
         """Return the text saved from a previous request that resulted in a non-200 error"""

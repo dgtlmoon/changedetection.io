@@ -31,11 +31,6 @@ dictfilt = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change
 class ChangeDetectionStore:
     lock = Lock()
-    # For general updates/writes that can wait a few seconds
-    needs_write = False
-
-    # For when we edit, we should write to disk
-    needs_write_urgent = False
 
     __version_check = True
 
@@ -46,7 +41,7 @@ class ChangeDetectionStore:
         self.datastore_path = datastore_path
         self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
         logger.info(f"Datastore path is '{self.json_store_path}'")
-        self.needs_write = False
+
         self.start_time = time.time()
         self.stop_thread = False
 
@@ -56,39 +51,30 @@ class ChangeDetectionStore:
                 # So when someone gives us a backup file to examine, we know exactly what code they were running.
                 self.__data['build_sha'] = f.read()
 
+        self.generic_definition = deepcopy(Watch.model(datastore_path = datastore_path, default={}))
+
         try:
-            # @todo retest with ", encoding='utf-8'"
-            with open(self.json_store_path) as json_file:
-                from_disk = json.load(json_file)
+            import os
+            # First load global settings from the main JSON file if it exists
+            if os.path.isfile(self.json_store_path):
+                with open(self.json_store_path) as json_file:
+                    from_disk = json.load(json_file)
+                    
+                    # Load app_guid and settings from the main JSON file
+                    if 'app_guid' in from_disk:
+                        self.__data['app_guid'] = from_disk['app_guid']
+    
+                    if 'settings' in from_disk:
+                        if 'headers' in from_disk['settings']:
+                            self.__data['settings']['headers'].update(from_disk['settings']['headers'])
+    
+                        if 'requests' in from_disk['settings']:
+                            self.__data['settings']['requests'].update(from_disk['settings']['requests'])
+    
+                        if 'application' in from_disk['settings']:
+                            self.__data['settings']['application'].update(from_disk['settings']['application'])
 
-                # @todo isnt there a way todo this dict.update recursively?
-                # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
-                if 'watching' in from_disk:
-                    self.__data['watching'].update(from_disk['watching'])
 
-                if 'app_guid' in from_disk:
-                    self.__data['app_guid'] = from_disk['app_guid']
-
-                if 'settings' in from_disk:
-                    if 'headers' in from_disk['settings']:
-                        self.__data['settings']['headers'].update(from_disk['settings']['headers'])
-
-                    if 'requests' in from_disk['settings']:
-                        self.__data['settings']['requests'].update(from_disk['settings']['requests'])
-
-                    if 'application' in from_disk['settings']:
-                        self.__data['settings']['application'].update(from_disk['settings']['application'])
-
-                # Convert each existing watch back to the Watch.model object
-                for uuid, watch in self.__data['watching'].items():
-                    self.__data['watching'][uuid] = self.rehydrate_entity(default_dict=watch)
-                    logger.info(f"Watching: {uuid} {watch['url']}")
-
-                # And for Tags also, should be Restock type because it has extra settings
-                # @todo make this smarter!
-                for uuid, tag in self.__data['settings']['application']['tags'].items():
-                    self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(default_dict=tag, processor_override='restock_diff')
-                    logger.info(f"Tag: {uuid} {tag['title']}")
 
         # First time ran, Create the datastore.
         except (FileNotFoundError):
@@ -107,6 +93,8 @@ class ChangeDetectionStore:
 
         else:
             # Bump the update version by running updates
+            self.scan_load_watches()
+            self.scan_load_tags()
             self.run_updates()
 
         self.__data['version_tag'] = version_tag
@@ -138,10 +126,53 @@ class ChangeDetectionStore:
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['api_access_token'] = secret
 
-        self.needs_write = True
+    def scan_load_watches(self):
 
-        # Finally start the thread that will manage periodic data saves to JSON
-        save_data_thread = threading.Thread(target=self.save_datastore).start()
+        # Now scan for individual watch.json files in the datastore directory
+        import pathlib
+        watch_jsons = list(pathlib.Path(self.datastore_path).rglob("*/watch.json"))
+
+        for watch_file in watch_jsons:
+            # Extract UUID from the directory name (parent directory of watch.json)
+            uuid = watch_file.parent.name
+
+            try:
+                with open(watch_file, 'r') as f:
+                    watch_data = json.load(f)
+                    # Create a Watch object and add it to the datastore
+                    self.__data['watching'][uuid] = self.rehydrate_entity(default_dict=watch_data)
+                    logger.info(f"Watching: {uuid} {watch_data.get('url')}")
+
+            except Exception as e:
+                logger.error(f"Error loading watch from {watch_file}: {str(e)}")
+                continue
+        logger.debug(f"{len(self.__data['watching'])} watches loaded.")
+
+    def scan_load_tags(self):
+        import pathlib
+        # Now scan for individual tag.json files in the tags directory
+        tags_path = os.path.join(self.datastore_path, 'tags')
+        if os.path.exists(tags_path):
+            tag_jsons = list(pathlib.Path(tags_path).rglob("*.json"))
+
+            for tag_file in tag_jsons:
+                # Extract UUID from the directory name (parent directory of tag.json)
+
+                try:
+                    with open(tag_file, 'r') as f:
+                        tag_data = json.load(f)
+                        uuid = str(tag_file).replace('.json', '')
+                        tag_data['uuid'] = uuid
+                        # Create a Tag object and add it to the datastore
+                        self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(
+                            default_dict=tag_data,
+                            processor_override='restock_diff'
+                        )
+                        logger.info(f"Tag: {uuid} {tag_data.get('title', 'No title found')}")
+                except Exception as e:
+                    logger.error(f"Error loading tag from {tag_file}: {str(e)}")
+                    continue
+        logger.debug(f"{len(self.__data['settings']['application']['tags'])} tags loaded.")
 
     def rehydrate_entity(self, default_dict: dict, processor_override=None):
 
@@ -152,16 +183,17 @@ class ChangeDetectionStore:
         watch_class = get_watch_model_for_processor(processor_override)
         default_dict['processor'] = processor_override
         entity = watch_class(datastore_path=self.datastore_path, default=default_dict)
+        entity.enable_saving()
         return entity
 
     def set_last_viewed(self, uuid, timestamp):
         logger.debug(f"Setting watch UUID: {uuid} last viewed to {int(timestamp)}")
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
-        self.needs_write = True
+        self.data['watching'][uuid].save_data()
 
     def remove_password(self):
         self.__data['settings']['application']['password'] = False
-        self.needs_write = True
+        self.save_settings()
 
     def update_watch(self, uuid, update_obj):
         """
@@ -171,21 +203,16 @@ class ChangeDetectionStore:
         if not uuid in self.data['watching'].keys() or update_obj is None:
             return
 
-        with self.lock:
-            # Make sure we're working with a proper Watch object
-            watch = self.data['watching'].get(uuid)
-            
-            # Handle None values - they mean "delete this key"
-            keys_to_remove = [k for k, v in update_obj.items() if v is None]
-            for k in keys_to_remove:
-                if k in watch:
-                    del watch[k]
-                del update_obj[k]
-            
-            # Deep merge with the rest
-            always_merger.merge(watch, update_obj)
-            
-        self.needs_write = True
+        # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
+        for dict_key, d in self.generic_definition.items():
+            if isinstance(d, dict):
+                if update_obj is not None and dict_key in update_obj:
+                    self.__data['watching'][uuid][dict_key].update(update_obj[dict_key])
+                    del (update_obj[dict_key])
+
+        self.__data['watching'][uuid].update(update_obj)
+        self.__data['watching'][uuid].save_data()
+
 
     @property
     def threshold_seconds(self):
@@ -245,8 +272,6 @@ class ChangeDetectionStore:
                     shutil.rmtree(path)
                 del self.data['watching'][uuid]
 
-        self.needs_write_urgent = True
-
     # Clone a watch by UUID
     def clone(self, uuid):
         url = self.data['watching'][uuid].get('url')
@@ -266,7 +291,6 @@ class ChangeDetectionStore:
     # Remove a watchs data but keep the entry (URL etc)
     def clear_watch_history(self, uuid):
         self.__data['watching'][uuid].clear_watch()
-        self.needs_write_urgent = True
 
     def add_watch(self, url, tag='', extras=None, tag_uuids=None, write_to_disk_now=True):
         import requests
@@ -357,15 +381,11 @@ class ChangeDetectionStore:
 
         if not apply_extras.get('date_created'):
             apply_extras['date_created'] = int(time.time())
-
-        new_watch.update(apply_extras)
         new_watch.ensure_data_dir_exists()
+        new_watch.update(apply_extras)
+
         self.__data['watching'][new_uuid] = new_watch
-
-
-        if write_to_disk_now:
-            self.sync_to_json()
-
+        self.__data['watching'][new_uuid].save_data()
         logger.debug(f"Added '{url}'")
 
         return new_uuid
@@ -379,58 +399,22 @@ class ChangeDetectionStore:
 
         return False
 
-    def sync_to_json(self):
-        logger.info("Saving JSON..")
+    def save_settings(self):
+        logger.info("Saving application settings...")
         try:
-            data = deepcopy(self.__data)
-        except RuntimeError as e:
-            # Try again in 15 seconds
-            time.sleep(15)
-            logger.error(f"! Data changed when writing to JSON, trying again.. {str(e)}")
-            self.sync_to_json()
-            return
-        else:
-
-            try:
-                # Re #286  - First write to a temp file, then confirm it looks OK and rename it
-                # This is a fairly basic strategy to deal with the case that the file is corrupted,
-                # system was out of memory, out of RAM etc
-                with open(self.json_store_path+".tmp", 'w') as json_file:
-                    json.dump(data, json_file, indent=4)
-                os.replace(self.json_store_path+".tmp", self.json_store_path)
-            except Exception as e:
-                logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")
-
-            self.needs_write = False
-            self.needs_write_urgent = False
-
-    # Thread runner, this helps with thread/write issues when there are many operations that want to update the JSON
-    # by just running periodically in one thread, according to python, dict updates are threadsafe.
-    def save_datastore(self):
-
-        while True:
-            if self.stop_thread:
-                # Suppressing "Logging error in Loguru Handler #0" during CICD.
-                # Not a meaningful difference for a real use-case just for CICD.
-                # the side effect is a "Shutting down datastore thread" message
-                # at the end of each test.
-                # But still more looking better.
-                import sys
-                logger.remove()
-                logger.add(sys.stderr)
-
-                logger.info("Shutting down datastore thread")
-                return
-
-            if self.needs_write or self.needs_write_urgent:
-                self.sync_to_json()
-
-            # Once per minute is enough, more and it can cause high CPU usage
-            # better here is to use something like self.app.config.exit.wait(1), but we cant get to 'app' from here
-            for i in range(120):
-                time.sleep(0.5)
-                if self.stop_thread or self.needs_write_urgent:
-                    break
+            # Only save app settings, not the watches or tags (they're saved individually)
+            data = {'settings': self.__data.get('settings')}
+            #data = deepcopy(self.__data)
+            
+            # Remove the watches from the main JSON file
+            if 'watching' in data:
+                del data['watching']
+                
+            # Remove the tags from the main JSON file since they're saved individually now
+#            if 'settings' in data and 'application' in data['settings'] and 'tags' in data['settings']['application']:
+#                del data['settings']['application']['tags']
+        except Exception as e:
+            x=1
 
     # Go through the datastore path and remove any snapshots that are not mentioned in the index
     # This usually is not used, but can be handy.
@@ -584,16 +568,17 @@ class ChangeDetectionStore:
 
         # Eventually almost everything todo with a watch will apply as a Tag
         # So we use the same model as a Watch
-        with self.lock:
-            from .model import Tag
-            new_tag = Tag.model(datastore_path=self.datastore_path, default={
-                'title': name.strip(),
-                'date_created': int(time.time())
-            })
+        from .model import Tag
+        new_tag = Tag.model(datastore_path=self.datastore_path, default={
+            'title': name.strip(),
+            'date_created': int(time.time())
+        })
 
-            new_uuid = new_tag.get('uuid')
+        new_uuid = new_tag.get('uuid')
 
-            self.__data['settings']['application']['tags'][new_uuid] = new_tag
+        self.__data['settings']['application']['tags'][new_uuid] = new_tag
+        self.__data['settings']['application']['tags'][new_uuid].save_data()
+
 
         return new_uuid
 

@@ -56,6 +56,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def mute(uuid):
         if datastore.data['settings']['application']['tags'].get(uuid):
             datastore.data['settings']['application']['tags'][uuid]['notification_muted'] = not datastore.data['settings']['application']['tags'][uuid]['notification_muted']
+            datastore.data['settings']['application']['tags'][uuid].save_data()
         return redirect(url_for('tags.tags_overview_page'))
 
     @tags_blueprint.route("/delete/<string:uuid>", methods=['GET'])
@@ -176,7 +177,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         datastore.data['settings']['application']['tags'][uuid].update(form.data)
         datastore.data['settings']['application']['tags'][uuid]['processor'] = 'restock_diff'
-        datastore.needs_write_urgent = True
+        datastore.data['settings']['application']['tags'][uuid].save_data()
+
         flash("Updated")
 
         return redirect(url_for('tags.tags_overview_page'))

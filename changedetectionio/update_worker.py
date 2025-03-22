@@ -527,7 +527,6 @@ class update_worker(threading.Thread):
                         try:
                             self.datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
-
                             # Also save the snapshot on the first time checked, "last checked" will always be updated, so we just check history length.
                             if changed_detected or not watch.history_n:
 
@@ -587,6 +586,7 @@ class update_worker(threading.Thread):
                                                                        'check_count': count
                                                                        })
 
+                    watch.save_data()
 
                 self.current_uuid = None  # Done
                 self.q.task_done()

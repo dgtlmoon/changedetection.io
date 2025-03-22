@@ -33,7 +33,6 @@ def sigshutdown_handler(_signo, _stack_frame):
     global datastore
     name = signal.Signals(_signo).name
     logger.critical(f'Shutdown: Got Signal - {name} ({_signo}), Saving DB to disk and calling shutdown')
-    datastore.sync_to_json()
     logger.success('Sync JSON to disk complete.')
     # This will throw a SystemExit exception, because eventlet.wsgi.server doesn't know how to deal with it.
     # Solution: move to gevent or other server in the future (#2014)

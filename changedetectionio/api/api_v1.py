@@ -126,6 +126,7 @@ class Watch(Resource):
                 return f"Invalid proxy choice, currently supported proxies are '{', '.join(plist)}'", 400
 
         self.datastore.data['watching'][uuid].update(request.json)
+        self.datastore.data['watching'][uuid].save_data()
 
         return "OK", 200
 

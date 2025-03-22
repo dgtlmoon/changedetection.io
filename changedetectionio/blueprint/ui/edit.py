@@ -49,8 +49,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     datastore.clear_watch_history(uuid)
                     redirect(url_for('ui_edit.edit_page', uuid=uuid))
 
-        # be sure we update with a copy instead of accidently editing the live object by reference
-        default = deepcopy(datastore.data['watching'][uuid])
+
+        default = datastore.data['watching'][uuid]
 
         # Defaults for proxy choice
         if datastore.proxy_list is not None:  # When enabled
@@ -114,10 +114,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 extra_update_obj['paused'] = False
 
             extra_update_obj['time_between_check'] = form.time_between_check.data
-
-             # Ignore text
-            form_ignore_text = form.ignore_text.data
-            datastore.data['watching'][uuid]['ignore_text'] = form_ignore_text
+            extra_update_obj['ignore_text'] = form.ignore_text.data
 
             # Be sure proxy value is None
             if datastore.proxy_list is not None and form.data['proxy'] == '':
@@ -143,23 +140,23 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                         tag_uuids.append(datastore.add_tag(name=t))
                     extra_update_obj['tags'] = tag_uuids
 
-            datastore.data['watching'][uuid].update(form.data)
-            datastore.data['watching'][uuid].update(extra_update_obj)
+
+
 
             if not datastore.data['watching'][uuid].get('tags'):
                 # Force it to be a list, because form.data['tags'] will be string if nothing found
                 # And del(form.data['tags'] ) wont work either for some reason
                 datastore.data['watching'][uuid]['tags'] = []
 
+            datastore.update_watch(uuid=uuid, update_obj=form.data | extra_update_obj)
+
             # Recast it if need be to right data Watch handler
-            processor_name = form.data.get('processor')
+            processor_name = datastore.data['watching'][uuid].get('processor')
             watch_class = processors.get_watch_model_for_processor(processor_name)
             datastore.data['watching'][uuid] = watch_class(datastore_path=datastore.datastore_path, default=datastore.data['watching'][uuid])
+            datastore.data['watching'][uuid].save_data()
             flash("Updated watch - unpaused!" if request.args.get('unpause_on_save') else "Updated watch.")
 
-            # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
-            # But in the case something is added we should save straight away
-            datastore.needs_write_urgent = True
 
             # Do not queue on edit if its not within the time range
 
@@ -185,6 +182,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     logger.error(
                         f"{uuid} - Recheck scheduler, error handling timezone, check skipped - TZ name '{tz_name}' - {str(e)}")
                     return False
+
 
             #############################
             if not datastore.data['watching'][uuid].get('paused') and is_in_schedule:

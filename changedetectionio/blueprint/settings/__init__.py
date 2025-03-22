@@ -71,12 +71,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 if not os.getenv("SALTED_PASS", False) and len(form.application.form.password.encrypted_password):
                     datastore.data['settings']['application']['password'] = form.application.form.password.encrypted_password
-                    datastore.needs_write_urgent = True
+                    datastore.save_settings()
                     flash("Password protection enabled.", 'notice')
                     flask_login.logout_user()
                     return redirect(url_for('index'))
 
-                datastore.needs_write_urgent = True
+                datastore.save_settings()
                 flash("Settings updated.")
 
             else:
@@ -100,8 +100,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
             datastore.data['settings']['application'].update(app_update)
             datastore.data['settings']['requests'].update(form.data['requests'])
-
-            datastore.needs_write_urgent = True
+            datastore.save_settings()
             flash("Settings updated.")
 
         output = render_template("settings.html",
@@ -125,7 +124,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def settings_reset_api_key():
         secret = secrets.token_hex(16)
         datastore.data['settings']['application']['api_access_token'] = secret
-        datastore.needs_write_urgent = True
         flash("API Key was regenerated.")
         return redirect(url_for('settings.settings_page')+'#api')
         

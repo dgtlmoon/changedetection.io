@@ -56,8 +56,13 @@ class Restock(dict):
         super().__setitem__(key, value)
 
 class Watch(BaseWatch):
+
+    def load_extra_vars(self):
+        # something from disk?
+
     def __init__(self, *arg, **kw):
         super().__init__(*arg, **kw)
+        # Restock Obj helps with the state of the situation
         self['restock'] = Restock(kw['default']['restock']) if kw.get('default') and kw['default'].get('restock') else Restock()
 
         self['restock_settings'] = kw['default']['restock_settings'] if kw.get('default',{}).get('restock_settings') else {

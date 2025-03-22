@@ -50,7 +50,8 @@ def test_restock_settings_persistence(client, live_server):
             "headers": "",
             "restock_settings-price_change_min": 10,
             "restock_settings-price_change_threshold_percent": 5,
-            'fetch_backend': "html_requests"
+            'fetch_backend': "html_requests",
+            "processor" : 'restock_diff'
         },
         follow_redirects=True
     )
@@ -69,8 +70,7 @@ def test_restock_settings_persistence(client, live_server):
     # This simulates shutting down and restarting the app
     datastore = client.application.config.get('DATASTORE')
     datastore.stop_thread = True
-    datastore.sync_to_json()  # Force write to disk before recreating
-    
+
     # Create a new datastore instance that will read from the saved JSON
     from changedetectionio import store
     new_datastore = store.ChangeDetectionStore(datastore_path="./test-datastore", include_default_watches=False)
