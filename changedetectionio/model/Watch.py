@@ -331,15 +331,12 @@ class model(watch_base):
         index_fname = os.path.join(self.watch_data_dir, "history.txt")
         index_line = f"{timestamp},{snapshot_fname}\n"
 
-        with tempfile.NamedTemporaryFile('w', delete=False, dir=self.watch_data_dir, encoding='utf-8') as tmp:
-            if os.path.exists(index_fname):
-                with open(index_fname, 'r', encoding='utf-8') as existing:
-                    tmp.write(existing.read())
-            tmp.write(index_line)
-            tmp.flush()
-            os.fsync(tmp.fileno())
-            tmp_path = tmp.name
-        os.rename(tmp_path, index_fname)
+        # Lets try force flush here since it's usually a very small file
+        # If this still fails in the future then try reading all to memory first, re-writing etc
+        with open(index_fname, 'a', encoding='utf-8') as f:
+            f.write(index_line)
+            f.flush()
+            os.fsync(f.fileno())
 
         # Update internal state
         self.__newest_history_key = timestamp
