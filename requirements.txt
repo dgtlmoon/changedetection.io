@@ -114,3 +114,4 @@ pluggy ~= 1.5
 psutil==7.0.0
 
 ruff >= 0.11.2
+pre_commit >= 4.2.0
