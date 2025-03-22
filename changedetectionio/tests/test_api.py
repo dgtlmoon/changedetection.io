@@ -65,8 +65,7 @@ def test_api_simple(client, live_server, measure_memory_usage):
     set_original_response()
 
     # Validate bad URL
-    test_url = url_for('test_endpoint', _external=True,
-                       headers={'x-api-key': api_key}, )
+    test_url = url_for('test_endpoint', _external=True )
     res = client.post(
         url_for("createwatch"),
         data=json.dumps({"url": "h://xxxxxxxxxom"}),
@@ -297,8 +296,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
 
     # Create a watch
     set_original_response()
-    test_url = url_for('test_endpoint', _external=True,
-                       headers={'x-api-key': api_key}, )
+    test_url = url_for('test_endpoint', _external=True)
 
     # Create new
     res = client.post(
