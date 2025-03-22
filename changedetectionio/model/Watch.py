@@ -296,11 +296,11 @@ class model(watch_base):
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             return f.read()
 
-    # Save some text file to the appropriate path and bump the history
+   # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
     def save_history_text(self, contents, timestamp, snapshot_id):
         import brotli
-
+        import tempfile
         logger.trace(f"{self.get('uuid')} - Updating history.txt with timestamp {timestamp}")
 
         self.ensure_data_dir_exists()
@@ -308,26 +308,40 @@ class model(watch_base):
         threshold = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024))
         skip_brotli = strtobool(os.getenv('DISABLE_BROTLI_TEXT_SNAPSHOT', 'False'))
 
+        # Decide on snapshot filename and destination path
         if not skip_brotli and len(contents) > threshold:
             snapshot_fname = f"{snapshot_id}.txt.br"
-            dest = os.path.join(self.watch_data_dir, snapshot_fname)
-            if not os.path.exists(dest):
-                with open(dest, 'wb') as f:
-                    f.write(brotli.compress(contents.encode('utf-8'), mode=brotli.MODE_TEXT))
+            encoded_data = brotli.compress(contents.encode('utf-8'), mode=brotli.MODE_TEXT)
         else:
             snapshot_fname = f"{snapshot_id}.txt"
-            dest = os.path.join(self.watch_data_dir, snapshot_fname)
-            if not os.path.exists(dest):
-                with open(dest, 'wb') as f:
-                    f.write(contents.encode('utf-8'))
+            encoded_data = contents.encode('utf-8')
 
-        # Append to index
-        # @todo check last char was \n
+        dest = os.path.join(self.watch_data_dir, snapshot_fname)
+
+        # Write snapshot file atomically if it doesn't exist
+        if not os.path.exists(dest):
+            with tempfile.NamedTemporaryFile('wb', delete=False, dir=self.watch_data_dir) as tmp:
+                tmp.write(encoded_data)
+                tmp.flush()
+                os.fsync(tmp.fileno())
+                tmp_path = tmp.name
+            os.rename(tmp_path, dest)
+
+        # Append to history.txt atomically
         index_fname = os.path.join(self.watch_data_dir, "history.txt")
-        with open(index_fname, 'a') as f:
-            f.write("{},{}\n".format(timestamp, snapshot_fname))
-            f.close()
+        index_line = f"{timestamp},{snapshot_fname}\n"
 
+        with tempfile.NamedTemporaryFile('w', delete=False, dir=self.watch_data_dir, encoding='utf-8') as tmp:
+            if os.path.exists(index_fname):
+                with open(index_fname, 'r', encoding='utf-8') as existing:
+                    tmp.write(existing.read())
+            tmp.write(index_line)
+            tmp.flush()
+            os.fsync(tmp.fileno())
+            tmp_path = tmp.name
+        os.rename(tmp_path, index_fname)
+
+        # Update internal state
         self.__newest_history_key = timestamp
         self.__history_n += 1
 
