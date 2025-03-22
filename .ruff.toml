@@ -1,5 +1,5 @@
-# Assume Python 3.11
-target-version = "py311"
+# Minimum supported version
+target-version = "py310"
 
 # Formatting options
 line-length = 100
