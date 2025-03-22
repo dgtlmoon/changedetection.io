@@ -16,26 +16,24 @@
         <form class="pure-form" action="{{url_for('imports.import_page')}}" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="tab-pane-inner" id="url-list">
-                    <legend>
+                <div class="pure-control-group">
                         Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma
                         (,):
                         <br>
-                        <code>https://example.com tag1, tag2, last tag</code>
-                        <br>
+                        <p><strong>Example:  </strong><code>https://example.com tag1, tag2, last tag</code></p>
                         URLs which do not pass validation will stay in the textarea.
-                    </legend>
+                </div>
                 {{ render_field(form.processor, class="processor") }}
-
+                
+                <div class="pure-control-group">
                     <textarea name="urls" class="pure-input-1-2" placeholder="https://"
                               style="width: 100%;
                                 font-family:monospace;
                                 white-space: pre;
                                 overflow-wrap: normal;
                                 overflow-x: scroll;" rows="25">{{ import_url_list_remaining }}</textarea>
-
-<div id="quick-watch-processor-type">
-
-                    </div>
+                 </div>
+                 <div id="quick-watch-processor-type"></div>
 
             </div>
 
@@ -43,7 +41,7 @@
 
 
 
-                    <legend>
+                    <div class="pure-control-group">
                         Copy and Paste your Distill.io watch 'export' file, this should be a JSON file.<br>
                         This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, <code>config:selections</code>, the rest (including <code>schedule</code>) are ignored.
                         <br>
@@ -51,7 +49,7 @@
                         How to export? <a href="https://distill.io/docs/web-monitor/how-export-and-import-monitors/">https://distill.io/docs/web-monitor/how-export-and-import-monitors/</a><br>
                         Be sure to set your default fetcher to Chrome if required.<br>
                         </p>
-                    </legend>
+                    </div>
 
 
                     <textarea name="distill-io" class="pure-input-1-2" style="width: 100%;
