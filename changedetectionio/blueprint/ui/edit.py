@@ -153,7 +153,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     extra_update_obj['tags'] = form.data.get('tags')
                 else:
                     for t in form.data.get('tags').split(','):
-                        tag_uuids.append(datastore.add_tag(name=t))
+                        tag_uuids.append(datastore.add_tag(title=t))
                     extra_update_obj['tags'] = tag_uuids
 
             datastore.data['watching'][uuid].update(form.data)
