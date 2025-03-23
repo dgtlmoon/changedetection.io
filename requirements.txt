@@ -1,6 +1,3 @@
-# Used by Pyppeteer
-pyee ~= 12
-
 eventlet>=0.38.0
 feedgen~=0.9
 flask-compress
