@@ -571,16 +571,16 @@ class ChangeDetectionStore:
 
         return ret
 
-    def add_tag(self, name):
+    def add_tag(self, title):
         # If name exists, return that
-        n = name.strip().lower()
+        n = title.strip().lower()
         logger.debug(f">>> Adding new tag - '{n}'")
         if not n:
             return False
 
         for uuid, tag in self.__data['settings']['application'].get('tags', {}).items():
             if n == tag.get('title', '').lower().strip():
-                logger.warning(f"Tag '{name}' already exists, skipping creation.")
+                logger.warning(f"Tag '{title}' already exists, skipping creation.")
                 return uuid
 
         # Eventually almost everything todo with a watch will apply as a Tag
@@ -588,7 +588,7 @@ class ChangeDetectionStore:
         with self.lock:
             from .model import Tag
             new_tag = Tag.model(datastore_path=self.datastore_path, default={
-                'title': name.strip(),
+                'title': title.strip(),
                 'date_created': int(time.time())
             })
 
@@ -847,7 +847,7 @@ class ChangeDetectionStore:
             if tag:
                 tag_uuids = []
                 for t in tag.split(','):
-                    tag_uuids.append(self.add_tag(name=t))
+                    tag_uuids.append(self.add_tag(title=t))
 
                 self.data['watching'][uuid]['tags'] = tag_uuids
 

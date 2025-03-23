@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 import flask_login
 import locale
 import os
@@ -34,7 +33,7 @@ from loguru import logger
 
 from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
-from changedetectionio.api import api_v1
+from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, CreateWatch, Import, SystemInfo, Tag, Tags
 from .time_handler import is_within_schedule
 
 datastore = None
@@ -250,36 +249,32 @@ def changedetection_app(config=None, datastore_o=None):
                 return login_manager.unauthorized()
 
 
-    watch_api.add_resource(api_v1.WatchSingleHistory,
+    watch_api.add_resource(WatchSingleHistory,
                            '/api/v1/watch/<string:uuid>/history/<string:timestamp>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
-    watch_api.add_resource(api_v1.WatchHistory,
+    watch_api.add_resource(WatchHistory,
                            '/api/v1/watch/<string:uuid>/history',
                            resource_class_kwargs={'datastore': datastore})
 
-    watch_api.add_resource(api_v1.CreateWatch, '/api/v1/watch',
+    watch_api.add_resource(CreateWatch, '/api/v1/watch',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
-    watch_api.add_resource(api_v1.Watch, '/api/v1/watch/<string:uuid>',
+    watch_api.add_resource(Watch, '/api/v1/watch/<string:uuid>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
-    watch_api.add_resource(api_v1.SystemInfo, '/api/v1/systeminfo',
+    watch_api.add_resource(SystemInfo, '/api/v1/systeminfo',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
-    watch_api.add_resource(api_v1.Import,
+    watch_api.add_resource(Import,
                            '/api/v1/import',
                            resource_class_kwargs={'datastore': datastore})
 
-    watch_api.add_resource(api_v1.Tags, '/api/v1/tag',
+    watch_api.add_resource(Tags, '/api/v1/tags',
                            resource_class_kwargs={'datastore': datastore})
 
-    watch_api.add_resource(api_v1.Tag, '/api/v1/tag/<string:uuid>',
+    watch_api.add_resource(Tag, '/api/v1/tag', '/api/v1/tag/<string:uuid>',
                            resource_class_kwargs={'datastore': datastore})
-
-    # Setup cors headers to allow all domains
-    # https://flask-cors.readthedocs.io/en/latest/
-    #    CORS(app)
 
 
 

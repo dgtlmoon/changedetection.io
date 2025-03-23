@@ -231,7 +231,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
         elif (op == 'assign-tag'):
             op_extradata = request.form.get('op_extradata', '').strip()
             if op_extradata:
-                tag_uuid = datastore.add_tag(name=op_extradata)
+                tag_uuid = datastore.add_tag(title=op_extradata)
                 if op_extradata and tag_uuid:
                     for uuid in uuids:
                         uuid = uuid.strip()
