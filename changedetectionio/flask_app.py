@@ -271,6 +271,12 @@ def changedetection_app(config=None, datastore_o=None):
                            '/api/v1/import',
                            resource_class_kwargs={'datastore': datastore})
 
+    watch_api.add_resource(api_v1.Tags, '/api/v1/tag',
+                           resource_class_kwargs={'datastore': datastore})
+
+    watch_api.add_resource(api_v1.Tag, '/api/v1/tag/<string:uuid>',
+                           resource_class_kwargs={'datastore': datastore})
+
     # Setup cors headers to allow all domains
     # https://flask-cors.readthedocs.io/en/latest/
     #    CORS(app)
