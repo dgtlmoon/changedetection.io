@@ -1,5 +1,5 @@
 # Used by Pyppeteer
-pyee
+pyee ~= 12
 
 eventlet>=0.38.0
 feedgen~=0.9
@@ -73,7 +73,8 @@ jq~=1.3; python_version >= "3.8" and sys_platform == "linux"
 
 # playwright is installed at Dockerfile build time because it's not available on all platforms
 
-pyppeteer-ng==2.0.0rc8
+pyppeteer-ng==2.0.0rc9
+
 pyppeteerstealth>=0.0.4
 
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup
