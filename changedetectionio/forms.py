@@ -688,10 +688,10 @@ class processor_text_json_diff_form(commonSettingsForm):
     remove_duplicate_lines = BooleanField('Remove duplicate lines of text', default=False)
     sort_text_alphabetically =  BooleanField('Sort text alphabetically', default=False)
     trim_text_whitespace = BooleanField('Trim whitespace before and after text', default=False)
-    extraction_method = RadioField('Extraction method', choices=[('TEXT', 'Extract text only'),('ANNOTATED_TEXT', 'Extract annotated text')], default='TEXT')
-    annotation_rules = StringSelectorTagDictField('Annotation Rules', [validators.Optional()])
+    extraction_method = RadioField('Extraction method', choices=[('TEXT', 'Extract plain text'),('ANNOTATED_TEXT', 'Extract text with custom annotations')], default='TEXT')
+    annotation_rules = StringSelectorTagDictField('Annotation rules', [validators.Optional()])
 
-    annotated_sort_selectors = StringSelectorPairListField('Sort Annotated text by matched tags', [validators.Optional()])
+    annotated_sort_selectors = StringSelectorPairListField('Sort annotated text', [validators.Optional()])
 
     filter_text_added = BooleanField('Added lines', default=True)
     filter_text_replaced = BooleanField('Replaced/changed lines', default=True)
