@@ -11,22 +11,14 @@ def check_token(f):
         datastore = args[0].datastore
 
         config_api_token_enabled = datastore.data['settings']['application'].get('api_access_token_enabled')
-        if not config_api_token_enabled:
-            return
-
-        try:
-            api_key_header = request.headers['x-api-key']
-        except KeyError:
-            return make_response(
-                jsonify("No authorization x-api-key header."), 403
-            )
-
         config_api_token = datastore.data['settings']['application'].get('api_access_token')
 
-        if api_key_header != config_api_token:
-            return make_response(
-                jsonify("Invalid access - API key invalid."), 403
-            )
+        # config_api_token_enabled - a UI option in settings if access should obey the key or not
+        if config_api_token_enabled:
+            if request.headers.get('x-api-key') != config_api_token:
+                return make_response(
+                    jsonify("Invalid access - API key invalid."), 403
+                )
 
         return f(*args, **kwargs)
 
