@@ -631,6 +631,41 @@ class ChangeDetectionStore:
             if watch.get('processor') == processor_name:
                 return True
         return False
+        
+    def search_watches_for_url(self, query, tag_limit=None, partial=False):
+        """Search watches by URL, title, or error messages
+        
+        Args:
+            query (str): Search term to match against watch URLs, titles, and error messages
+            tag_limit (str, optional): Optional tag name to limit search results
+            partial: (bool, optional): sub-string matching
+
+        Returns:
+            list: List of UUIDs of watches that match the search criteria
+        """
+        matching_uuids = []
+        query = query.lower().strip()
+        tag = self.tag_exists_by_name(tag_limit) if tag_limit else False
+
+        for uuid, watch in self.data['watching'].items():
+            # Filter by tag if requested
+            if tag_limit:
+                if not tag.get('uuid') in watch.get('tags', []):
+                    continue
+
+            # Search in URL, title, or error messages
+            if partial:
+                if ((watch.get('title') and query in watch.get('title').lower()) or
+                    query in watch.get('url', '').lower() or
+                    (watch.get('last_error') and query in watch.get('last_error').lower())):
+                    matching_uuids.append(uuid)
+            else:
+                if ((watch.get('title') and query == watch.get('title').lower()) or
+                        query == watch.get('url', '').lower() or
+                        (watch.get('last_error') and query == watch.get('last_error').lower())):
+                    matching_uuids.append(uuid)
+
+        return matching_uuids
 
     def get_unique_notification_tokens_available(self):
         # Ask each type of watch if they have any extra notification token to add to the validation
