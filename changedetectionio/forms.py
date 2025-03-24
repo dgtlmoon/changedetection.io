@@ -37,6 +37,7 @@ from changedetectionio import html_tools, content_fetchers
 from changedetectionio.notification import (
     valid_notification_formats,
 )
+from changedetectionio.filters import fromjson
 
 from wtforms.fields import FormField
 
@@ -336,6 +337,7 @@ class ValidateJinja2Template(object):
 
         try:
             jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader)
+            jinja2_env.filters['fromjson'] = fromjson
             jinja2_env.globals.update(notification.valid_tokens)
             # Extra validation tokens provided on the form_class(... extra_tokens={}) setup
             if hasattr(field, 'extra_notification_tokens'):
