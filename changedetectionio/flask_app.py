@@ -228,7 +228,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         if has_password_enabled and not flask_login.current_user.is_authenticated:
             # Permitted
-            if request.endpoint and 'static_content' in request.endpoint and request.view_args and request.view_args.get('group') == 'styles':
+            if request.endpoint and request.endpoint == 'static_content' and request.view_args and request.view_args.get('group') in ['styles', 'js', 'images', 'favicons']:
                 return None
             # Permitted
             elif request.endpoint and 'login' in request.endpoint:
