@@ -491,7 +491,7 @@ def get_annotated_text(
     extracted_text_segments = []
     text_char_count = 0
 
-    # Maps (element -> (start_index, end_index)) here for annotation rules
+    # Maps (element_id -> (start_index, end_index)) here for annotation rules
     index_map = {}
 
     # Helper to add text segments, updating index_map for elements
@@ -581,7 +581,8 @@ def get_annotated_text(
         # If this node contributed any text (directly or via children),
         # record (start, end) in index_map
         if any_text and node_start_index is not None:
-            index_map[node] = (node_start_index, node_end_index)
+            node_id = id(node)
+            index_map[node_id] = (node_start_index, node_end_index)
 
         return (node_start_index, node_end_index) if node_start_index is not None else None
 
@@ -590,8 +591,9 @@ def get_annotated_text(
     annotations = []
     for css_selector, labels in annotation_rules.items():
         for element in soup.select(css_selector):
-            if element in index_map:
-                start_index, end_index = index_map[element]
+            elem_id = id(element)
+            if elem_id in index_map:
+                start_index, end_index = index_map[elem_id]
                 # apply each label
                 for label in labels:
                     annotations.append((start_index, end_index, label))
