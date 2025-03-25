@@ -1,18 +1,27 @@
-# include the decorator
 from apprise.decorators import notify
 from loguru import logger
 from requests.structures import CaseInsensitiveDict
 
 
-@notify(on="delete")
-@notify(on="deletes")
 @notify(on="get")
 @notify(on="gets")
 @notify(on="post")
 @notify(on="posts")
 @notify(on="put")
 @notify(on="puts")
-def apprise_custom_api_call_wrapper(body, title, notify_type, *args, **kwargs):
+@notify(on="delete")
+@notify(on="deletes")
+@notify(on="patch")
+@notify(on="patchs")
+@notify(on="head")
+@notify(on="heads")
+def apprise_custom_api_call_wrapper(
+    body: str,
+    title: str,
+    notify_type: str,
+    *args,
+    **kwargs,
+) -> bool:
     import requests
     import json
     import re
