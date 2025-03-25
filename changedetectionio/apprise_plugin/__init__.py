@@ -36,6 +36,8 @@ def _get_auth(parsed_url: dict) -> str | tuple[str, str]:
 @notify(on="heads")
 def apprise_custom_api_call_wrapper(
     body: str,
+    title: str,
+    notify_type: str,
     meta: dict,
     *args,
     **kwargs,
