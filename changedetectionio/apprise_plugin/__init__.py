@@ -27,35 +27,35 @@ def apprise_custom_api_call_wrapper(
     *args,
     **kwargs,
 ) -> bool:
-    url = meta.get("url")
-    schema = meta.get("schema").lower().strip()
-    method = re.sub(r"s$", "", schema).upper()
+    url: str = meta.get("url")
+    schema: str = meta.get("schema").lower().strip()
+    method: str = re.sub(r"s$", "", schema).upper()
 
     params = CaseInsensitiveDict({}) # Added to requests
     auth = None
     has_error = False
 
     # Convert /foobar?+some-header=hello to proper header dictionary
-    results = apprise_parse_url(url)
+    parsed_url: dict[str, str | dict | None] = apprise_parse_url(url)
 
     # Add our headers that the user can potentially over-ride if they wish
     # to to our returned result set and tidy entries by unquoting them
     headers = CaseInsensitiveDict({unquote_plus(x): unquote_plus(y)
-               for x, y in results['qsd+'].items()})
+               for x, y in parsed_url['qsd+'].items()})
 
     # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
     # In Apprise, it relies on prefixing each request arg with "-", because it uses say &method=update as a flag for apprise
     # but here we are making straight requests, so we need todo convert this against apprise's logic
-    for k, v in results['qsd'].items():
-        if not k.strip('+-') in results['qsd+'].keys():
+    for k, v in parsed_url['qsd'].items():
+        if not k.strip('+-') in parsed_url['qsd+'].keys():
             params[unquote_plus(k)] = unquote_plus(v)
 
     # Determine Authentication
     auth = ''
-    if results.get('user') and results.get('password'):
-        auth = (unquote_plus(results.get('user')), unquote_plus(results.get('user')))
-    elif results.get('user'):
-        auth = (unquote_plus(results.get('user')))
+    if parsed_url.get('user') and parsed_url.get('password'):
+        auth = (unquote_plus(parsed_url.get('user')), unquote_plus(parsed_url.get('user')))
+    elif parsed_url.get('user'):
+        auth = (unquote_plus(parsed_url.get('user')))
 
     # If it smells like it could be JSON and no content-type was already set, offer a default content type.
     if body and '{' in body[:100] and not headers.get('Content-Type'):
@@ -70,9 +70,9 @@ def apprise_custom_api_call_wrapper(
 
     # POSTS -> HTTPS etc
     if schema.lower().endswith('s'):
-        url = re.sub(rf'^{schema}', 'https', results.get('url'))
+        url = re.sub(rf'^{schema}', 'https', parsed_url.get('url'))
     else:
-        url = re.sub(rf'^{schema}', 'http', results.get('url'))
+        url = re.sub(rf'^{schema}', 'http', parsed_url.get('url'))
 
     status_str = ''
     try:
