@@ -2,7 +2,7 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.49.7'
+__version__ = '0.49.8'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
