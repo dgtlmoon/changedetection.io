@@ -10,6 +10,7 @@ from changedetectionio.apprise_plugin import (
     _get_headers,
     _get_params,
     apprise_custom_api_call_wrapper,
+    SUPPORTED_HTTP_METHODS,
 )
 
 
@@ -153,12 +154,8 @@ def test_invalid_url_parsing():
 @pytest.mark.parametrize(
     "schema,expected_method",
     [
-        ("get", "GET"),
-        ("post", "POST"),
-        ("put", "PUT"),
-        ("delete", "DELETE"),
-        ("patch", "PATCH"),
-        ("head", "HEAD"),
+        (http_method, http_method.upper())
+        for http_method in SUPPORTED_HTTP_METHODS
     ],
 )
 @patch("requests.request")
@@ -183,19 +180,15 @@ def test_http_methods(mock_request, schema, expected_method):
 
 
 @pytest.mark.parametrize(
-    "input_schema,expected_method,expected_protocol",
+    "input_schema,expected_method",
     [
-        ("gets", "GET", "https"),
-        ("posts", "POST", "https"),
-        ("puts", "PUT", "https"),
-        ("deletes", "DELETE", "https"),
-        ("patchs", "PATCH", "https"),
-        ("heads", "HEAD", "https"),
+        (f"{http_method}s", http_method.upper())
+        for http_method in SUPPORTED_HTTP_METHODS
     ],
 )
 @patch("requests.request")
 def test_https_method_conversion(
-    mock_request, input_schema, expected_method, expected_protocol
+    mock_request, input_schema, expected_method
 ):
     """Validate that methods ending with 's' use HTTPS and correct HTTP method."""
     mock_request.return_value.raise_for_status.return_value = None
@@ -214,8 +207,5 @@ def test_https_method_conversion(
 
     call_args = mock_request.call_args
 
-    # Verify correct HTTP method
     assert call_args[1]["method"] == expected_method
-
-    # Verify URL starts with HTTPS
-    assert call_args[1]["url"].startswith(expected_protocol)
+    assert call_args[1]["url"].startswith("https")
