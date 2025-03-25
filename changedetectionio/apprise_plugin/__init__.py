@@ -56,7 +56,8 @@ def _get_params(parsed_url: dict) -> CaseInsensitiveDict:
         {
             unquote_plus(k): unquote_plus(v)
             for k, v in parsed_url["qsd"].items()
-            if k.strip("+-") not in parsed_url["qsd+"]
+            if k.strip("-") not in parsed_url["qsd-"]
+            and k.strip("+") not in parsed_url["qsd+"]
         }
     )
 
