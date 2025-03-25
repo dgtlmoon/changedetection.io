@@ -8,6 +8,16 @@ from apprise.utils.parse import parse_url as apprise_parse_url
 from loguru import logger
 from requests.structures import CaseInsensitiveDict
 
+SUPPORTED_HTTP_METHODS = {"get", "post", "put", "delete", "patch", "head"}
+
+
+def notify_supported_methods(func):
+    for method in SUPPORTED_HTTP_METHODS:
+        func = notify(on=method)(func)
+        # Add support for https, for each supported http method
+        func = notify(on=f"{method}s")(func)
+    return func
+
 
 def _get_auth(parsed_url: dict) -> str | tuple[str, str]:
     user: str | None = parsed_url.get("user")
@@ -24,7 +34,7 @@ def _get_auth(parsed_url: dict) -> str | tuple[str, str]:
 
 def _get_headers(parsed_url: dict, body: str) -> CaseInsensitiveDict:
     headers = CaseInsensitiveDict(
-        {unquote_plus(k).capitalize(): unquote_plus(v) for k, v in parsed_url["qsd+"].items()}
+        {unquote_plus(k).title(): unquote_plus(v) for k, v in parsed_url["qsd+"].items()}
     )
 
     # If Content-Type is not specified, guess if the body is a valid JSON
@@ -53,18 +63,7 @@ def _get_params(parsed_url: dict) -> CaseInsensitiveDict:
     return params
 
 
-@notify(on="get")
-@notify(on="gets")
-@notify(on="post")
-@notify(on="posts")
-@notify(on="put")
-@notify(on="puts")
-@notify(on="delete")
-@notify(on="deletes")
-@notify(on="patch")
-@notify(on="patchs")
-@notify(on="head")
-@notify(on="heads")
+@notify_supported_methods
 def apprise_custom_api_call_wrapper(
     body: str,
     title: str,
