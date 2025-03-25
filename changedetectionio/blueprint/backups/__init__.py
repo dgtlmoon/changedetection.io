@@ -138,7 +138,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return send_from_directory(os.path.abspath(datastore.datastore_path), filename, as_attachment=True)
 
     @login_optionally_required
-    @backups_blueprint.route("/", methods=['GET'])
+    @backups_blueprint.route("", methods=['GET'])
     def index():
         backups = find_backups()
         output = render_template("overview.html",

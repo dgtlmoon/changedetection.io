@@ -13,7 +13,7 @@ from changedetectionio.auth_decorator import login_optionally_required
 def construct_blueprint(datastore: ChangeDetectionStore):
     settings_blueprint = Blueprint('settings', __name__, template_folder="templates")
 
-    @settings_blueprint.route("/", methods=['GET', "POST"])
+    @settings_blueprint.route("", methods=['GET', "POST"])
     @login_optionally_required
     def settings_page():
         from changedetectionio import forms
