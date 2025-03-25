@@ -10,14 +10,14 @@ from requests.structures import CaseInsensitiveDict
 
 
 def _get_auth(parsed_url: dict) -> str | tuple[str, str]:
-    auth_user: str | None = parsed_url.get("user")
-    auth_password: str | None = parsed_url.get("password")
+    user: str | None = parsed_url.get("user")
+    password: str | None = parsed_url.get("password")
     
-    if auth_user is not None and auth_password is not None:
-        return (unquote_plus(auth_user), unquote_plus(auth_password))
+    if user is not None and password is not None:
+        return (unquote_plus(user), unquote_plus(password))
     
-    if auth_user is not None:
-        return unquote_plus(auth_user)
+    if user is not None:
+        return unquote_plus(user)
     
     return ""
 
@@ -63,22 +63,15 @@ def apprise_custom_api_call_wrapper(
 
     auth = _get_auth(parsed_url=parsed_url)
 
-    # If it smells like it could be JSON and no content-type was already set, offer a default content type.
-    if body and '{' in body[:100] and not headers.get('Content-Type'):
-        json_header = 'application/json; charset=utf-8'
+    # If Content-Type is not specified, guess if it's a JSON body
+    if headers.get("Content-Type") is None:
         try:
-            # Try if it's JSON
             json.loads(body)
-            headers['Content-Type'] = json_header
-        except ValueError as e:
-            logger.warning(f"Could not automatically add '{json_header}' header to the notification because the document failed to parse as JSON: {e}")
+            headers['Content-Type'] = 'application/json; charset=utf-8'
+        except ValueError:
             pass
 
-    # POSTS -> HTTPS etc
-    if schema.lower().endswith('s'):
-        url = re.sub(rf'^{schema}', 'https', parsed_url.get('url'))
-    else:
-        url = re.sub(rf'^{schema}', 'http', parsed_url.get('url'))
+    url = re.sub(rf"^{schema}", "https" if schema.endswith("s") else "http", parsed_url.get("url"))
 
     status_str = ''
     has_error = False
