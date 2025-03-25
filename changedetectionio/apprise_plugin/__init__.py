@@ -1,4 +1,10 @@
+import json
+import re
+from urllib.parse import unquote_plus
+
+import requests
 from apprise.decorators import notify
+from apprise.utils.parse import parse_url as apprise_parse_url
 from loguru import logger
 from requests.structures import CaseInsensitiveDict
 
@@ -21,19 +27,9 @@ def apprise_custom_api_call_wrapper(
     *args,
     **kwargs,
 ) -> bool:
-    import requests
-    import json
-    import re
-
-    from urllib.parse import unquote_plus
-    from apprise.utils.parse import parse_url as apprise_parse_url
-
     url = meta.get("url")
     schema = meta.get("schema").lower().strip()
-
-    # Choose POST, GET etc from requests
-    method =  re.sub(rf's$', '', schema)
-    requests_method = getattr(requests, method)
+    method = re.sub(r"s$", "", schema).upper()
 
     params = CaseInsensitiveDict({}) # Added to requests
     auth = None
@@ -80,11 +76,13 @@ def apprise_custom_api_call_wrapper(
 
     status_str = ''
     try:
-        r = requests_method(url,
-          auth=auth,
-          data=body.encode('utf-8') if type(body) is str else body,
-          headers=headers,
-          params=params
+        r = requests.request(
+            method=method,
+            url=url,
+            auth=auth,
+            data=body.encode("utf-8") if type(body) is str else body,
+            headers=headers,
+            params=params,
         )
 
         if not (200 <= r.status_code < 300):
