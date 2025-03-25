@@ -17,8 +17,7 @@ from requests.structures import CaseInsensitiveDict
 @notify(on="heads")
 def apprise_custom_api_call_wrapper(
     body: str,
-    title: str,
-    notify_type: str,
+    meta: dict,
     *args,
     **kwargs,
 ) -> bool:
@@ -29,8 +28,8 @@ def apprise_custom_api_call_wrapper(
     from urllib.parse import unquote_plus
     from apprise.utils.parse import parse_url as apprise_parse_url
 
-    url = kwargs['meta'].get('url')
-    schema = kwargs['meta'].get('schema').lower().strip()
+    url = meta.get("url")
+    schema = meta.get("schema").lower().strip()
 
     # Choose POST, GET etc from requests
     method =  re.sub(rf's$', '', schema)
