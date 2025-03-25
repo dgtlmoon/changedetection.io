@@ -1,12 +1,11 @@
 import pytest
-
 from apprise import AppriseAsset
 
 from changedetectionio.apprise_asset import (
     APPRISE_APP_DESC,
     APPRISE_APP_ID,
-    APPRISE_AVATAR_URL,
     APPRISE_APP_URL,
+    APPRISE_AVATAR_URL,
 )
 
 
