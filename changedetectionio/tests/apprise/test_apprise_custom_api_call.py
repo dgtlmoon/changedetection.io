@@ -5,11 +5,11 @@ import pytest
 import requests
 from apprise.utils.parse import parse_url as apprise_parse_url
 
-from changedetectionio.apprise_plugin import (
+from ...apprise_plugin.custom_handlers import (
     _get_auth,
     _get_headers,
     _get_params,
-    apprise_custom_api_call_wrapper,
+    apprise_http_custom_handler,
     SUPPORTED_HTTP_METHODS,
 )
 
@@ -84,7 +84,7 @@ def test_apprise_custom_api_call_success(mock_request, url, schema, method):
     mock_request.return_value.raise_for_status.return_value = None
 
     meta = {"url": url, "schema": schema}
-    result = apprise_custom_api_call_wrapper(
+    result = apprise_http_custom_handler(
         body="test body", title="Test Title", notify_type="info", meta=meta
     )
 
@@ -104,7 +104,7 @@ def test_apprise_custom_api_call_with_auth(mock_request):
     url = "get://user:pass@localhost:9999/secure"
     meta = {"url": url, "schema": "get"}
 
-    result = apprise_custom_api_call_wrapper(
+    result = apprise_http_custom_handler(
         body=json.dumps({"key": "value"}),
         title="Secure Test",
         notify_type="info",
@@ -134,7 +134,7 @@ def test_apprise_custom_api_call_failure(mock_request, exception_type, expected_
     # Simulate different types of exceptions
     mock_request.side_effect = exception_type("Error occurred")
 
-    result = apprise_custom_api_call_wrapper(
+    result = apprise_http_custom_handler(
         body="error body", title="Error Test", notify_type="error", meta=meta
     )
 
@@ -144,7 +144,7 @@ def test_apprise_custom_api_call_failure(mock_request, exception_type, expected_
 def test_invalid_url_parsing():
     """Test handling of invalid URL parsing."""
     meta = {"url": "invalid://url", "schema": "invalid"}
-    result = apprise_custom_api_call_wrapper(
+    result = apprise_http_custom_handler(
         body="test", title="Invalid URL", notify_type="info", meta=meta
     )
 
@@ -165,7 +165,7 @@ def test_http_methods(mock_request, schema, expected_method):
 
     url = f"{schema}://localhost:9999"
 
-    result = apprise_custom_api_call_wrapper(
+    result = apprise_http_custom_handler(
         body="test body",
         title="Test Title",
         notify_type="info",
@@ -195,7 +195,7 @@ def test_https_method_conversion(
 
     url = f"{input_schema}://localhost:9999"
 
-    result = apprise_custom_api_call_wrapper(
+    result = apprise_http_custom_handler(
         body="test body",
         title="Test Title",
         notify_type="info",

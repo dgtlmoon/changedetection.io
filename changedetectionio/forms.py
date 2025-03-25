@@ -305,8 +305,8 @@ class ValidateAppRiseServers(object):
 
     def __call__(self, form, field):
         import apprise
-        from .apprise_asset import apprise_asset
-        from .apprise_plugin import apprise_custom_api_call_wrapper  # noqa: F401
+        from .apprise_plugin.assets import apprise_asset
+        from .apprise_plugin.custom_handlers import apprise_http_custom_handler  # noqa: F401
 
         apobj = apprise.Apprise(asset=apprise_asset)
 

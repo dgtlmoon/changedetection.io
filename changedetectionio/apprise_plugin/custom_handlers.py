@@ -65,7 +65,7 @@ def _get_params(parsed_url: dict) -> CaseInsensitiveDict:
 
 
 @notify_supported_methods
-def apprise_custom_api_call_wrapper(
+def apprise_http_custom_handler(
     body: str,
     title: str,
     notify_type: str,

@@ -18,7 +18,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Watch_uuid could be unset in the case it`s used in tag editor, global settings
         import apprise
-        from changedetectionio.apprise_asset import apprise_asset
+        from ...apprise_plugin.assets import apprise_asset
+        from ...apprise_plugin.custom_handlers import apprise_http_custom_handler  # noqa: F401
         apobj = apprise.Apprise(asset=apprise_asset)
 
         is_global_settings_form = request.args.get('mode', '') == 'global-settings'

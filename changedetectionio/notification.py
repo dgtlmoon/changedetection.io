@@ -4,8 +4,8 @@ from apprise import NotifyFormat
 import apprise
 from loguru import logger
 
-from changedetectionio.apprise_asset import APPRISE_AVATAR_URL
-from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper  # noqa: F401
+from .apprise_plugin.assets import APPRISE_AVATAR_URL
+from .apprise_plugin.custom_handlers import apprise_http_custom_handler  # noqa: F401
 from .safe_jinja import render as jinja_render
 
 valid_tokens = {
@@ -65,7 +65,7 @@ def process_notification(n_object, datastore):
     # raise it as an exception
 
     sent_objs = []
-    from .apprise_asset import apprise_asset
+    from .apprise_plugin.assets import apprise_asset
 
     if 'as_async' in n_object:
         apprise_asset.async_mode = n_object.get('as_async')
