@@ -8,7 +8,7 @@ APPRISE_APP_DESC = "ChangeDetection.io best and simplest website monitoring and 
 APPRISE_APP_URL = "https://changedetection.io"
 APPRISE_AVATAR_URL = "https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/changedetectionio/static/images/avatar-256x256.png"
 
-asset = AppriseAsset(
+apprise_asset = AppriseAsset(
     app_id=APPRISE_APP_ID,
     app_desc=APPRISE_APP_DESC,
     app_url=APPRISE_APP_URL,

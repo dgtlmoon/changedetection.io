@@ -308,7 +308,7 @@ class ValidateAppRiseServers(object):
         apobj = apprise.Apprise()
 
         # so that the custom endpoints are registered
-        from .apprise_asset import asset
+        from .apprise_asset import apprise_asset
 
         for server_url in field.data:
             url = server_url.strip()

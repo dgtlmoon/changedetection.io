@@ -12,9 +12,9 @@ from changedetectionio.apprise_asset import (
 
 @pytest.fixture(scope="function")
 def apprise_asset() -> AppriseAsset:
-    from changedetectionio.apprise_asset import asset
+    from changedetectionio.apprise_asset import apprise_asset
 
-    return asset
+    return apprise_asset
 
 
 def test_apprise_asset_init(apprise_asset: AppriseAsset):

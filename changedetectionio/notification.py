@@ -66,12 +66,12 @@ def process_notification(n_object, datastore):
     # raise it as an exception
 
     sent_objs = []
-    from .apprise_asset import asset
+    from .apprise_asset import apprise_asset
 
     if 'as_async' in n_object:
-        asset.async_mode = n_object.get('as_async')
+        apprise_asset.async_mode = n_object.get('as_async')
 
-    apobj = apprise.Apprise(debug=True, asset=asset)
+    apobj = apprise.Apprise(debug=True, asset=apprise_asset)
 
     if not n_object.get('notification_urls'):
         return None

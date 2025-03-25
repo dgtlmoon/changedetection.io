@@ -17,8 +17,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Watch_uuid could be unset in the case it`s used in tag editor, global settings
         import apprise
-        from changedetectionio.apprise_asset import asset
-        apobj = apprise.Apprise(asset=asset)
+        from changedetectionio.apprise_asset import apprise_asset
+        apobj = apprise.Apprise(asset=apprise_asset)
 
         # so that the custom endpoints are registered
         from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
