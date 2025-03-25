@@ -26,7 +26,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             watch = datastore.data['watching'][uuid]
         except KeyError:
             flash("No history found for the specified link, bad link?", "error")
-            return redirect(url_for('index'))
+            return redirect(url_for('watchlist.index'))
 
         system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
         extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
@@ -91,7 +91,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             watch = datastore.data['watching'][uuid]
         except KeyError:
             flash("No history found for the specified link, bad link?", "error")
-            return redirect(url_for('index'))
+            return redirect(url_for('watchlist.index'))
 
         # For submission of requesting an extract
         extract_form = forms.extractDataForm(request.form)
@@ -119,7 +119,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         if len(dates) < 2:
             flash("Not enough saved change detection snapshots to produce a report.", "error")
-            return redirect(url_for('index'))
+            return redirect(url_for('watchlist.index'))
 
         # Save the current newest history as the most recently viewed
         datastore.set_last_viewed(uuid, time.time())
@@ -196,7 +196,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         if not form.validate():
             for widget, l in form.errors.items():
                 flash(','.join(l), 'error')
-            return redirect(url_for('index'))
+            return redirect(url_for('watchlist.index'))
 
         url = request.form.get('url').strip()
         if datastore.url_exists(url):
@@ -215,6 +215,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
                 flash("Watch added.")
 
-        return redirect(url_for('index', tag=request.args.get('tag','')))
+        return redirect(url_for('watchlist.index', tag=request.args.get('tag','')))
 
     return views_blueprint

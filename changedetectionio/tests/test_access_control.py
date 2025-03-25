@@ -44,7 +44,7 @@ def test_check_access_control(app, client, live_server):
         assert b"Password protection enabled." in res.data
 
         # Check we hit the login
-        res = c.get(url_for("index"), follow_redirects=True)
+        res = c.get(url_for("watchlist.index"), follow_redirects=True)
         # Should be logged out
         assert b"Login" in res.data
 
@@ -164,7 +164,7 @@ def test_check_access_control(app, client, live_server):
         assert b"Password protection enabled." in res.data
 
         # Check we hit the login
-        res = c.get(url_for("index"), follow_redirects=True)
+        res = c.get(url_for("watchlist.index"), follow_redirects=True)
         # Should be logged out
         assert b"Login" in res.data
 

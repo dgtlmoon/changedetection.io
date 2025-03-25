@@ -287,12 +287,12 @@ def changedetection_app(config=None, datastore_o=None):
     @login_manager.unauthorized_handler
     def unauthorized_handler():
         flash("You must be logged in, please log in.", 'error')
-        return redirect(url_for('login', next=url_for('index')))
+        return redirect(url_for('login', next=url_for('watchlist.index')))
 
     @app.route('/logout')
     def logout():
         flask_login.logout_user()
-        return redirect(url_for('index'))
+        return redirect(url_for('watchlist.index'))
 
     # https://github.com/pallets/flask/blob/93dd1709d05a1cf0e886df6223377bdab3b077fb/examples/tutorial/flaskr/__init__.py#L39
     # You can divide up the stuff like this
@@ -302,7 +302,7 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'GET':
             if flask_login.current_user.is_authenticated:
                 flash("Already logged in")
-                return redirect(url_for("index"))
+                return redirect(url_for("watchlist.index"))
 
             output = render_template("login.html")
             return output
@@ -319,13 +319,13 @@ def changedetection_app(config=None, datastore_o=None):
             # It's more reliable and safe to ignore the 'next' redirect
             # When we used...
             # next = request.args.get('next')
-            # return redirect(next or url_for('index'))
+            # return redirect(next or url_for('watchlist.index'))
             # We would sometimes get login loop errors on sites hosted in sub-paths
 
             # note for the future:
             #            if not is_safe_url(next):
             #                return flask.abort(400)
-            return redirect(url_for('index'))
+            return redirect(url_for('watchlist.index'))
 
         else:
             flash('Incorrect password', 'error')
@@ -338,18 +338,7 @@ def changedetection_app(config=None, datastore_o=None):
         if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Prefix' in request.headers:
             app.config['REMEMBER_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
             app.config['SESSION_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
-
         return None
-
-
-    # Root route redirects to watchlist blueprint
-    @app.route("/", methods=['GET'])
-    @login_optionally_required
-    def index():
-        # Get all query string parameters
-        args = request.args.copy()
-        # Redirect to watchlist blueprint, keeping all query parameters
-        return redirect(url_for('watchlist.index', **args))
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
@@ -439,12 +428,12 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.rss as rss
     app.register_blueprint(rss.construct_blueprint(datastore), url_prefix='/rss')
 
-    
+    # watchlist UI buttons etc
     import changedetectionio.blueprint.ui as ui
     app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData))
 
     import changedetectionio.blueprint.watchlist as watchlist
-    app.register_blueprint(watchlist.construct_blueprint(datastore, update_q, queuedWatchMetaData), url_prefix='')
+    app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()

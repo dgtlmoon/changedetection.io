@@ -36,7 +36,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
         else:
             flash("Cleared snapshot history for watch {}".format(uuid))
 
-        return redirect(url_for('index'))
+        return redirect(url_for('watchlist.index'))
 
     @ui_blueprint.route("/clear_history", methods=['GET', 'POST'])
     @login_optionally_required
@@ -52,7 +52,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
             else:
                 flash('Incorrect confirmation text.', 'error')
 
-            return redirect(url_for('index'))
+            return redirect(url_for('watchlist.index'))
 
         output = render_template("clear_all_history.html")
         return output
@@ -68,7 +68,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
                 continue
             datastore.set_last_viewed(watch_uuid, int(time.time()))
 
-        return redirect(url_for('index'))
+        return redirect(url_for('watchlist.index'))
 
     @ui_blueprint.route("/delete", methods=['GET'])
     @login_optionally_required
@@ -77,7 +77,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
 
         if uuid != 'all' and not uuid in datastore.data['watching'].keys():
             flash('The watch by UUID {} does not exist.'.format(uuid), 'error')
-            return redirect(url_for('index'))
+            return redirect(url_for('watchlist.index'))
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
@@ -85,7 +85,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
         datastore.delete(uuid)
         flash('Deleted.')
 
-        return redirect(url_for('index'))
+        return redirect(url_for('watchlist.index'))
 
     @ui_blueprint.route("/clone", methods=['GET'])
     @login_optionally_required
@@ -101,7 +101,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
                 update_q.put(queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid}))
             flash('Cloned.')
 
-        return redirect(url_for('index'))
+        return redirect(url_for('watchlist.index'))
 
     @ui_blueprint.route("/checknow", methods=['GET'])
     @login_optionally_required
@@ -143,7 +143,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
         if i == 0:
             flash("No watches available to recheck.")
 
-        return redirect(url_for('index'))
+        return redirect(url_for('watchlist.index'))
 
     @ui_blueprint.route("/form/checkbox-operations", methods=['POST'])
     @login_optionally_required
@@ -244,7 +244,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
 
             flash(f"{len(uuids)} watches were tagged")
 
-        return redirect(url_for('index'))
+        return redirect(url_for('watchlist.index'))
 
 
     @ui_blueprint.route("/share-url/<string:uuid>", methods=['GET'])
@@ -296,6 +296,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
             logger.error(f"Error sharing -{str(e)}")
             flash(f"Could not share, something went wrong while communicating with the share server - {str(e)}", 'error')
 
-        return redirect(url_for('index'))
+        return redirect(url_for('watchlist.index'))
 
     return ui_blueprint

@@ -306,7 +306,7 @@ def get_index(client):
 
     print(f"Called by: {caller_name}, Line: {caller_line}")
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     with open(f"test-datastore/index-{caller_name}-{caller_line}.html", 'wb') as f:
         f.write(res.data)
 

@@ -74,7 +74,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     datastore.needs_write_urgent = True
                     flash("Password protection enabled.", 'notice')
                     flask_login.logout_user()
-                    return redirect(url_for('index'))
+                    return redirect(url_for('watchlist.index'))
 
                 datastore.needs_write_urgent = True
                 flash("Settings updated.")

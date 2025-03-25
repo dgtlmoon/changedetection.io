@@ -77,7 +77,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     )
     assert b"1 Imported" in res.data
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'import-tag' in res.data
     assert b'extra-import-tag' in res.data
 
@@ -90,7 +90,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
 
     wait_for_all_checks(client)
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'Warning, no filters were found' not in res.data
 
     res = client.get(
@@ -255,7 +255,7 @@ def test_limit_tag_ui(client, live_server, measure_memory_usage):
 
     assert b"40 Imported" in res.data
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'test-tag' in res.data
 
     # All should be here
@@ -263,7 +263,7 @@ def test_limit_tag_ui(client, live_server, measure_memory_usage):
 
     tag_uuid = get_UUID_for_tag_name(client, name="test-tag")
 
-    res = client.get(url_for("index", tag=tag_uuid))
+    res = client.get(url_for("watchlist.index", tag=tag_uuid))
 
     # Just a subset should be here
     assert b'test-tag' in res.data
@@ -284,7 +284,7 @@ def test_clone_tag_on_import(client, live_server, measure_memory_usage):
 
     assert b"1 Imported" in res.data
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'test-tag' in res.data
     assert b'another-tag' in res.data
 
@@ -311,7 +311,7 @@ def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usa
 
     assert b"Watch added" in res.data
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'test-tag' in res.data
     assert b'another-tag' in res.data
 

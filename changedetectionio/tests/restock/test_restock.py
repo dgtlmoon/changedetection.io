@@ -83,14 +83,14 @@ def test_restock_detection(client, live_server, measure_memory_usage):
 
     # Is it correctly show as NOT in stock?
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'not-in-stock' in res.data
 
     # Is it correctly shown as in stock
     set_back_in_stock_response()
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'not-in-stock' not in res.data
 
     # We should have a notification
@@ -107,6 +107,6 @@ def test_restock_detection(client, live_server, measure_memory_usage):
     assert not os.path.isfile("test-datastore/notification.txt"), "No notification should have fired when it went OUT OF STOCK by default"
 
     # BUT we should see that it correctly shows "not in stock"
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'not-in-stock' in res.data, "Correctly showing NOT IN STOCK in the list after it changed from IN STOCK"
 

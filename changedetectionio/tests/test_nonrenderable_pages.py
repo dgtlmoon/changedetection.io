@@ -41,7 +41,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
 
 
@@ -63,7 +63,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
 
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
@@ -93,7 +93,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
 
@@ -105,7 +105,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     assert watch.last_changed == watch['last_checked']
 
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data # A change should have registered because empty_pages_are_a_change is ON
     assert b'fetch-error' not in res.data
 

@@ -104,7 +104,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
     assert b'/test-endpoint' in res.data
 
@@ -116,7 +116,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
 
     # Now set the content which contains the trigger text
@@ -124,7 +124,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
     
     # https://github.com/dgtlmoon/changedetection.io/issues/616

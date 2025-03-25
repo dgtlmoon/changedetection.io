@@ -108,14 +108,14 @@ def test_unique_lines_functionality(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
 
     # Now set the content which contains the new text and re-ordered existing text
     set_modified_with_trigger_text_response()
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
@@ -153,7 +153,7 @@ def test_sort_lines_functionality(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     # Should be a change registered
     assert b'unviewed' in res.data
 

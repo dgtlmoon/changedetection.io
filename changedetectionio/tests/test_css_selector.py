@@ -119,7 +119,7 @@ def test_check_markup_include_filters_restriction(client, live_server, measure_m
 
     # It should have 'unviewed' still
     # Because it should be looking at only that 'sametext' id
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
 
@@ -218,7 +218,7 @@ def test_filter_is_empty_help_suggestion(client, live_server, measure_memory_usa
 
 
     res = client.get(
-        url_for("index"),
+        url_for("watchlist.index"),
         follow_redirects=True
     )
 
@@ -240,7 +240,7 @@ def test_filter_is_empty_help_suggestion(client, live_server, measure_memory_usa
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("index"),
+        url_for("watchlist.index"),
         follow_redirects=True
     )
 

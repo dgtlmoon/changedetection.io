@@ -67,7 +67,7 @@ def _runner_test_various_file_slash(client, file_uri):
         follow_redirects=True
     )
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
 
     substrings = [b"URLs with hostname components are not permitted", b"No connection adapters were found for"]
 

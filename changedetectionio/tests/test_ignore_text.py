@@ -127,7 +127,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
     assert b'/test-endpoint' in res.data
 
@@ -140,7 +140,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
     assert b'/test-endpoint' in res.data
 
@@ -151,7 +151,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
     res = client.get(url_for("ui.ui_views.preview_page", uuid="first"))
@@ -214,7 +214,7 @@ def test_check_global_ignore_text_functionality(client, live_server, measure_mem
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     # It should report nothing found (no new 'unviewed' class), adding random ignore text should not cause a change
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
     assert b'/test-endpoint' in res.data
 #####
@@ -229,7 +229,7 @@ def test_check_global_ignore_text_functionality(client, live_server, measure_mem
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
 
     assert b'unviewed' not in res.data
     assert b'/test-endpoint' in res.data
@@ -238,7 +238,7 @@ def test_check_global_ignore_text_functionality(client, live_server, measure_mem
     set_modified_original_ignore_response()
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)

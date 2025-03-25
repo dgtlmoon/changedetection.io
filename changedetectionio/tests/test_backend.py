@@ -39,7 +39,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
         wait_for_all_checks(client)
 
         # It should report nothing found (no new 'unviewed' class)
-        res = client.get(url_for("index"))
+        res = client.get(url_for("watchlist.index"))
         assert b'unviewed' not in res.data
         assert b'test-endpoint' in res.data
 
@@ -75,7 +75,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     assert b'which has this one new line' in res.data
 
     # Now something should be ready, indicated by having a 'unviewed' class
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
     # #75, and it should be in the RSS feed
@@ -112,7 +112,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
         wait_for_all_checks(client)
 
         # It should report nothing found (no new 'unviewed' class)
-        res = client.get(url_for("index"))
+        res = client.get(url_for("watchlist.index"))
         assert b'unviewed' not in res.data
         assert b'Mark all viewed' not in res.data
         assert b'head title' not in res.data  # Should not be present because this is off by default
@@ -131,7 +131,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
     assert b'Mark all viewed' in res.data
 
@@ -151,7 +151,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     client.get(url_for("ui.clear_watch_history", uuid=uuid))
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'preview/' in res.data
 
     #

@@ -139,7 +139,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
     time.sleep(3)
 
     # Check no errors were recorded
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'notification-error' not in res.data
 
 

@@ -383,7 +383,7 @@ def test_api_import(client, live_server, measure_memory_usage):
 
     assert res.status_code == 200
     assert len(res.json) == 2
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b"https://website1.com" in res.data
     assert b"https://website2.com" in res.data
 

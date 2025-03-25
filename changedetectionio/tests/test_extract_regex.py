@@ -103,7 +103,7 @@ def test_check_filter_multiline(client, live_server, measure_memory_usage):
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
 
     # Issue 1828
     assert b'not at the start of the expression' not in res.data
@@ -160,7 +160,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     #issue 1828
     assert b'not at the start of the expression' not in res.data
 
@@ -174,7 +174,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
 
     # It should have 'unviewed' still
     # Because it should be looking at only that 'sametext' id
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
     # Check HTML conversion detected and workd

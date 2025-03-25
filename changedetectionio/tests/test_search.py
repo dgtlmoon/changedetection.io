@@ -20,7 +20,7 @@ def test_basic_search(client, live_server, measure_memory_usage):
     assert b"2 Imported" in res.data
 
     # By URL
-    res = client.get(url_for("index") + "?q=first-res")
+    res = client.get(url_for("watchlist.index") + "?q=first-res")
     assert urls[0].encode('utf-8') in res.data
     assert urls[1].encode('utf-8') not in res.data
 
@@ -33,7 +33,7 @@ def test_basic_search(client, live_server, measure_memory_usage):
     )
     assert b"Updated watch." in res.data
 
-    res = client.get(url_for("index") + "?q=xxx-title")
+    res = client.get(url_for("watchlist.index") + "?q=xxx-title")
     assert urls[0].encode('utf-8') in res.data
     assert urls[1].encode('utf-8') not in res.data
 
@@ -54,7 +54,7 @@ def test_search_in_tag_limit(client, live_server, measure_memory_usage):
 
     # By URL
 
-    res = client.get(url_for("index") + "?q=first-res")
+    res = client.get(url_for("watchlist.index") + "?q=first-res")
     # Split because of the import tag separation
     assert urls[0].split(' ')[0].encode('utf-8') in res.data, urls[0].encode('utf-8')
     assert urls[1].split(' ')[0].encode('utf-8') not in res.data, urls[0].encode('utf-8')
@@ -68,7 +68,7 @@ def test_search_in_tag_limit(client, live_server, measure_memory_usage):
     )
     assert b"Updated watch." in res.data
 
-    res = client.get(url_for("index") + "?q=xxx-title")
+    res = client.get(url_for("watchlist.index") + "?q=xxx-title")
     assert urls[0].split(' ')[0].encode('utf-8') in res.data, urls[0].encode('utf-8')
     assert urls[1].split(' ')[0].encode('utf-8') not in res.data, urls[0].encode('utf-8')
 
