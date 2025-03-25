@@ -21,6 +21,36 @@ def _get_auth(parsed_url: dict) -> str | tuple[str, str]:
     
     return ""
 
+def _get_headers(parsed_url: dict, body: str) -> CaseInsensitiveDict:
+    headers = CaseInsensitiveDict(
+        {unquote_plus(k).capitalize(): unquote_plus(v)
+        for k, v in parsed_url["qsd+"].items()}
+    )
+
+    # If Content-Type is not specified, guess if the body is a valid JSON
+    if headers.get("Content-Type") is None:
+        try:
+            json.loads(body)
+            headers['Content-Type'] = 'application/json; charset=utf-8'
+        except Exception:
+            pass
+
+    return headers
+
+
+def _get_params(parsed_url: dict) -> CaseInsensitiveDict:
+    # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
+    # In Apprise, it relies on prefixing each request arg with "-", because it uses say &method=update as a flag for apprise
+    # but here we are making straight requests, so we need todo convert this against apprise's logic
+    params = CaseInsensitiveDict(
+        {
+            unquote_plus(k): unquote_plus(v)
+            for k, v in parsed_url["qsd"].items()
+            if k.strip("+-") not in parsed_url["qsd+"]
+        }
+    )
+
+    return params
 
 @notify(on="get")
 @notify(on="gets")
@@ -43,41 +73,19 @@ def apprise_custom_api_call_wrapper(
     **kwargs,
 ) -> bool:
     url: str = meta.get("url")
-    schema: str = meta.get("schema").lower().strip()
+    schema: str = meta.get("schema")
+    method: str = re.sub(r"s$", "", schema).upper()
 
     # Convert /foobar?+some-header=hello to proper header dictionary
-    parsed_url: dict[str, str | dict | None] = apprise_parse_url(url)
-
-    headers = CaseInsensitiveDict(
-        {unquote_plus(k): unquote_plus(v) for k, v in parsed_url["qsd+"].items()}
-    )
-
-    # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
-    # In Apprise, it relies on prefixing each request arg with "-", because it uses say &method=update as a flag for apprise
-    # but here we are making straight requests, so we need todo convert this against apprise's logic
-    params = CaseInsensitiveDict(
-        {
-            unquote_plus(k): unquote_plus(v)
-            for k, v in parsed_url["qsd"].items()
-            if k.strip("+-") not in parsed_url["qsd+"]
-        }
-    )
+    parsed_url: dict[str, str | dict | None] | None = apprise_parse_url(url)
+    if parsed_url is None:
+        return False
 
     auth = _get_auth(parsed_url=parsed_url)
-
-    # If Content-Type is not specified, guess if it's a JSON body
-    if headers.get("Content-Type") is None:
-        try:
-            json.loads(body)
-            headers['Content-Type'] = 'application/json; charset=utf-8'
-        except ValueError:
-            pass
+    headers = _get_headers(parsed_url=parsed_url, body=body)
+    params = _get_params(parsed_url=parsed_url)
 
     url = re.sub(rf"^{schema}", "https" if schema.endswith("s") else "http", parsed_url.get("url"))
-
-    status_str = ''
-    has_error = False
-    method: str = re.sub(r"s$", "", schema).upper()
 
     try:
         r = requests.request(
