@@ -32,7 +32,7 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text):
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     # no change
     assert b'unviewed' not in res.data
     assert bytes(expected_text.encode('utf-8')) in res.data
@@ -78,7 +78,7 @@ def test_DNS_errors(client, live_server, measure_memory_usage):
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     found_name_resolution_error = b"Temporary failure in name resolution" in res.data or b"Name or service not known" in res.data
     assert found_name_resolution_error
     # Should always record that we tried
@@ -107,7 +107,7 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
     wait_for_all_checks(client)
 
     # We should see the DNS error
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     found_name_resolution_error = b"Temporary failure in name resolution" in res.data or b"Name or service not known" in res.data
     assert found_name_resolution_error
 
@@ -122,7 +122,7 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
 
     # Now the error should be gone
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     found_name_resolution_error = b"Temporary failure in name resolution" in res.data or b"Name or service not known" in res.data
     assert not found_name_resolution_error
 

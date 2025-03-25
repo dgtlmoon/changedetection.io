@@ -31,8 +31,8 @@ https://example.com tag1, other tag"""
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
     # Clear flask alerts
-    res = client.get( url_for("index"))
-    res = client.get( url_for("index"))
+    res = client.get( url_for("watchlist.index"))
+    res = client.get( url_for("watchlist.index"))
 
 def xtest_import_skip_url(client, live_server, measure_memory_usage):
 
@@ -55,7 +55,7 @@ def xtest_import_skip_url(client, live_server, measure_memory_usage):
     assert b"1 Skipped" in res.data
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     # Clear flask alerts
-    res = client.get( url_for("index"))
+    res = client.get( url_for("watchlist.index"))
 
 def test_import_distillio(client, live_server, measure_memory_usage):
 
@@ -113,7 +113,7 @@ def test_import_distillio(client, live_server, measure_memory_usage):
     assert b"xpath:(//div[@id=&#39;App&#39;]/div[contains(@class,&#39;flex&#39;)]/main[contains(@class,&#39;relative&#39;)]/section[contains(@class,&#39;relative&#39;)]/div[@class=&#39;container&#39;]/div[contains(@class,&#39;flex&#39;)]/div[contains(@class,&#39;w-full&#39;)])[1]" in res.data
 
     # did the tags work?
-    res = client.get( url_for("index"))
+    res = client.get( url_for("watchlist.index"))
 
     # check tags
     assert b"nice stuff" in res.data
@@ -121,7 +121,7 @@ def test_import_distillio(client, live_server, measure_memory_usage):
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     # Clear flask alerts
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
 
 def test_import_custom_xlsx(client, live_server, measure_memory_usage):
     """Test can upload a excel spreadsheet and the watches are created correctly"""
@@ -156,7 +156,7 @@ def test_import_custom_xlsx(client, live_server, measure_memory_usage):
     assert b'Error processing row number 1' in res.data
 
     res = client.get(
-        url_for("index")
+        url_for("watchlist.index")
     )
 
     assert b'Somesite results ABC' in res.data
@@ -194,7 +194,7 @@ def test_import_watchete_xlsx(client, live_server, measure_memory_usage):
     assert b'4 imported from Wachete .xlsx' in res.data
 
     res = client.get(
-        url_for("index")
+        url_for("watchlist.index")
     )
 
     assert b'Somesite results ABC' in res.data

@@ -27,7 +27,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
                 if len(importer_handler.remaining_data) == 0:
-                    return redirect(url_for('index'))
+                    return redirect(url_for('watchlist.index'))
                 else:
                     remaining_urls = importer_handler.remaining_data
 

@@ -64,7 +64,7 @@ def test_restock_itemprop_basic(client, live_server):
             follow_redirects=True
         )
         wait_for_all_checks(client)
-        res = client.get(url_for("index"))
+        res = client.get(url_for("watchlist.index"))
         assert b'more than one price detected' not in res.data
         assert b'has-restock-info' in res.data
         assert b' in-stock' in res.data
@@ -81,7 +81,7 @@ def test_restock_itemprop_basic(client, live_server):
             follow_redirects=True
         )
         wait_for_all_checks(client)
-        res = client.get(url_for("index"))
+        res = client.get(url_for("watchlist.index"))
 
         assert b'has-restock-info not-in-stock' in res.data
 
@@ -103,14 +103,14 @@ def test_itemprop_price_change(client, live_server):
 
     # A change in price, should trigger a change by default
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'190.95' in res.data
 
     # basic price change, look for notification
     set_original_response(props_markup=instock_props[0], price='180.45')
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'180.45' in res.data
     assert b'unviewed' in res.data
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
@@ -125,7 +125,7 @@ def test_itemprop_price_change(client, live_server):
     assert b"Updated watch." in res.data
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'120.45' in res.data
     assert b'unviewed' not in res.data
 
@@ -170,7 +170,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     set_original_response(props_markup=instock_props[0], price='1000.45')
     client.get(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
 
     assert b'more than one price detected' not in res.data
     # BUT the new price should show, even tho its within limits
@@ -183,7 +183,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'890.45' in res.data
     assert b'unviewed' in res.data
 
@@ -195,7 +195,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'820.45' in res.data
     assert b'unviewed' in res.data
     client.get(url_for("ui.mark_all_viewed"))
@@ -204,7 +204,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     set_original_response(props_markup=instock_props[0], price='1890.45')
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     # Depending on the LOCALE it may be either of these (generally for US/default/etc)
     assert b'1,890.45' in res.data or b'1890.45' in res.data
     assert b'unviewed' in res.data
@@ -288,7 +288,7 @@ def test_itemprop_percent_threshold(client, live_server):
     set_original_response(props_markup=instock_props[0], price='960.45')
     client.get(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'960.45' in res.data
     assert b'unviewed' not in res.data
 
@@ -296,7 +296,7 @@ def test_itemprop_percent_threshold(client, live_server):
     set_original_response(props_markup=instock_props[0], price='1960.45')
     client.get(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'1,960.45' or b'1960.45' in res.data #depending on locale
     assert b'unviewed' in res.data
 
@@ -306,7 +306,7 @@ def test_itemprop_percent_threshold(client, live_server):
     set_original_response(props_markup=instock_props[0], price='1950.45')
     client.get(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'1,950.45' or b'1950.45' in res.data #depending on locale
     assert b'unviewed' not in res.data
 
@@ -403,7 +403,7 @@ def test_data_sanity(client, live_server):
 
 
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'950.95' in res.data
 
     # Check the restock model object doesnt store the value by mistake and used in a new one
@@ -413,7 +413,7 @@ def test_data_sanity(client, live_server):
         follow_redirects=True
     )
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert str(res.data.decode()).count("950.95") == 1, "Price should only show once (for the watch added, no other watches yet)"
 
     ## different test, check the edit page works on an empty request result
@@ -455,6 +455,6 @@ def test_special_prop_examples(client, live_server):
                 follow_redirects=True
             )
             wait_for_all_checks(client)
-            res = client.get(url_for("index"))
+            res = client.get(url_for("watchlist.index"))
             assert b'ception' not in res.data
             assert b'155.55' in res.data

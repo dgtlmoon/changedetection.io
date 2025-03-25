@@ -79,7 +79,7 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server, me
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
     assert b'/test-endpoint' in res.data
 
@@ -127,6 +127,6 @@ def test_403_page_check_works_with_ignore_status_code(client, live_server, measu
 
     # It should have 'unviewed' still
     # Because it should be looking at only that 'sametext' id
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 

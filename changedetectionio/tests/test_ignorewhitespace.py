@@ -91,6 +91,6 @@ def test_check_ignore_whitespace(client, live_server, measure_memory_usage):
     time.sleep(sleep_time_for_fetch_thread)
 
     # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
     assert b'/test-endpoint' in res.data

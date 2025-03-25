@@ -107,7 +107,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
     assert b'/test-endpoint' in res.data
 
@@ -120,7 +120,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
     assert b'/test-endpoint' in res.data
 
@@ -129,7 +129,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     set_original_ignore_response()
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
 
 
@@ -137,7 +137,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     set_modified_response_minus_block_text()
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
 

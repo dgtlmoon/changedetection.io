@@ -32,14 +32,14 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         # More for testing, possible to return the first/only
         if not datastore.data['watching'].keys():
             flash("No watches to edit", "error")
-            return redirect(url_for('index'))
+            return redirect(url_for('watchlist.index'))
 
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
         if not uuid in datastore.data['watching']:
             flash("No watch with the UUID %s found." % (uuid), "error")
-            return redirect(url_for('index'))
+            return redirect(url_for('watchlist.index'))
 
         switch_processor = request.args.get('switch_processor')
         if switch_processor:
@@ -66,7 +66,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         processor_classes = next((tpl for tpl in processors.find_processors() if tpl[1] == processor_name), None)
         if not processor_classes:
             flash(f"Cannot load the edit form for processor/plugin '{processor_classes[1]}', plugin missing?", 'error')
-            return redirect(url_for('index'))
+            return redirect(url_for('watchlist.index'))
 
         parent_module = processors.get_parent_module(processor_classes[0])
 
@@ -207,7 +207,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             if request.args.get("next") and request.args.get("next") == 'diff':
                 return redirect(url_for('ui.ui_views.diff_history_page', uuid=uuid))
 
-            return redirect(url_for('index', tag=request.args.get("tag",'')))
+            return redirect(url_for('watchlist.index', tag=request.args.get("tag",'')))
 
         else:
             if request.method == 'POST' and not form.validate():

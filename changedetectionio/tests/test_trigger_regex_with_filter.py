@@ -67,7 +67,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
     time.sleep(sleep_time_for_fetch_thread)
 
     # It should report nothing found (nothing should match the regex and filter)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
 
     # now this should trigger something
@@ -76,7 +76,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     time.sleep(sleep_time_for_fetch_thread)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
 # Cleanup everything

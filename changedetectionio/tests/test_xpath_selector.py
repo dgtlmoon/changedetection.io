@@ -98,7 +98,7 @@ def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage):
     )
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'Unicode strings with encoding declaration are not supported.' not in res.data
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
@@ -152,7 +152,7 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
     )
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'Unicode strings with encoding declaration are not supported.' not in res.data
 
     # The service should echo back the request headers
@@ -208,7 +208,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
@@ -305,7 +305,7 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage):
 
     ##### #2312
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'_ElementStringResult' not in res.data # tested with 5.1.1 when it was removed and 5.1.0
     assert b'Exception' not in res.data
     res = client.get(
@@ -419,7 +419,7 @@ def test_various_rules(client, live_server, measure_memory_usage):
         )
         wait_for_all_checks(client)
         assert b"Updated watch." in res.data
-        res = client.get(url_for("index"))
+        res = client.get(url_for("watchlist.index"))
         assert b'fetch-error' not in res.data, f"Should not see errors after '{r} filter"
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)

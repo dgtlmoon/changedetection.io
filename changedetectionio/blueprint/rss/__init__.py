@@ -13,8 +13,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     
     # Import the login decorator if needed
     # from changedetectionio.auth_decorator import login_optionally_required
-
-    @rss_blueprint.route("/", methods=['GET'])
+    @rss_blueprint.route("", methods=['GET'])
     def feed():
         now = time.time()
         # Always requires token set

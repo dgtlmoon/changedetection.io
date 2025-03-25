@@ -45,7 +45,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
     wait_for_all_checks(client)
 
     # Now something should be ready, indicated by having a 'unviewed' class
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
     res = client.get(

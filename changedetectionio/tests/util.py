@@ -108,7 +108,7 @@ def get_UUID_for_tag_name(client, name):
 def extract_rss_token_from_UI(client):
     import re
     res = client.get(
-        url_for("index"),
+        url_for("watchlist.index"),
     )
     m = re.search('token=(.+?)"', str(res.data))
     token_key = m.group(1)
@@ -118,7 +118,7 @@ def extract_rss_token_from_UI(client):
 def extract_UUID_from_client(client):
     import re
     res = client.get(
-        url_for("index"),
+        url_for("watchlist.index"),
     )
     # <span id="api-key">{{api_key}}</span>
 
@@ -133,7 +133,7 @@ def wait_for_all_checks(client):
     # because sub-second rechecks are problematic in testing, use lots of delays
     time.sleep(1)
     while attempt < 60:
-        res = client.get(url_for("index"))
+        res = client.get(url_for("watchlist.index"))
         if not b'Checking now' in res.data:
             break
         logging.getLogger().info("Waiting for watch-list to not say 'Checking now'.. {}".format(attempt))
@@ -306,7 +306,7 @@ def get_index(client):
 
     print(f"Called by: {caller_name}, Line: {caller_line}")
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     with open(f"test-datastore/index-{caller_name}-{caller_line}.html", 'wb') as f:
         f.write(res.data)
 

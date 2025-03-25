@@ -48,7 +48,7 @@ def test_fetch_pdf(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     # Now something should be ready, indicated by having a 'unviewed' class
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
     # The original checksum should be not be here anymore (cdio adds it to the bottom of the text)

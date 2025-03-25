@@ -229,7 +229,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         if has_password_enabled and not flask_login.current_user.is_authenticated:
             # Permitted
-            if request.endpoint and 'static_content' in request.endpoint and request.view_args and request.view_args.get('group') == 'styles':
+            if request.endpoint and request.endpoint == 'static_content' and request.view_args and request.view_args.get('group') in ['styles', 'js', 'images', 'favicons']:
                 return None
             # Permitted
             elif request.endpoint and 'login' in request.endpoint:
@@ -291,12 +291,12 @@ def changedetection_app(config=None, datastore_o=None):
     @login_manager.unauthorized_handler
     def unauthorized_handler():
         flash("You must be logged in, please log in.", 'error')
-        return redirect(url_for('login', next=url_for('index')))
+        return redirect(url_for('login', next=url_for('watchlist.index')))
 
     @app.route('/logout')
     def logout():
         flask_login.logout_user()
-        return redirect(url_for('index'))
+        return redirect(url_for('watchlist.index'))
 
     # https://github.com/pallets/flask/blob/93dd1709d05a1cf0e886df6223377bdab3b077fb/examples/tutorial/flaskr/__init__.py#L39
     # You can divide up the stuff like this
@@ -306,7 +306,7 @@ def changedetection_app(config=None, datastore_o=None):
         if request.method == 'GET':
             if flask_login.current_user.is_authenticated:
                 flash("Already logged in")
-                return redirect(url_for("index"))
+                return redirect(url_for("watchlist.index"))
 
             output = render_template("login.html")
             return output
@@ -323,13 +323,13 @@ def changedetection_app(config=None, datastore_o=None):
             # It's more reliable and safe to ignore the 'next' redirect
             # When we used...
             # next = request.args.get('next')
-            # return redirect(next or url_for('index'))
+            # return redirect(next or url_for('watchlist.index'))
             # We would sometimes get login loop errors on sites hosted in sub-paths
 
             # note for the future:
             #            if not is_safe_url(next):
             #                return flask.abort(400)
-            return redirect(url_for('index'))
+            return redirect(url_for('watchlist.index'))
 
         else:
             flash('Incorrect password', 'error')
@@ -342,109 +342,7 @@ def changedetection_app(config=None, datastore_o=None):
         if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Prefix' in request.headers:
             app.config['REMEMBER_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
             app.config['SESSION_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
-
         return None
-
-
-    @app.route("/", methods=['GET'])
-    @login_optionally_required
-    def index():
-        global datastore
-        from changedetectionio import forms
-
-        active_tag_req = request.args.get('tag', '').lower().strip()
-        active_tag_uuid = active_tag = None
-
-        # Be sure limit_tag is a uuid
-        if active_tag_req:
-            for uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
-                if active_tag_req == tag.get('title', '').lower().strip() or active_tag_req == uuid:
-                    active_tag = tag
-                    active_tag_uuid = uuid
-                    break
-
-
-        # Redirect for the old rss path which used the /?rss=true
-        if request.args.get('rss'):
-            return redirect(url_for('rss.feed', tag=active_tag_uuid))
-
-        op = request.args.get('op')
-        if op:
-            uuid = request.args.get('uuid')
-            if op == 'pause':
-                datastore.data['watching'][uuid].toggle_pause()
-            elif op == 'mute':
-                datastore.data['watching'][uuid].toggle_mute()
-
-            datastore.needs_write = True
-            return redirect(url_for('index', tag = active_tag_uuid))
-
-        # Sort by last_changed and add the uuid which is usually the key..
-        sorted_watches = []
-        with_errors = request.args.get('with_errors') == "1"
-        errored_count = 0
-        search_q = request.args.get('q').strip().lower() if request.args.get('q') else False
-        for uuid, watch in datastore.data['watching'].items():
-            if with_errors and not watch.get('last_error'):
-                continue
-
-            if active_tag_uuid and not active_tag_uuid in watch['tags']:
-                    continue
-            if watch.get('last_error'):
-                errored_count += 1
-
-            if search_q:
-                if (watch.get('title') and search_q in watch.get('title').lower()) or search_q in watch.get('url', '').lower():
-                    sorted_watches.append(watch)
-                elif watch.get('last_error') and search_q in watch.get('last_error').lower():
-                    sorted_watches.append(watch)
-            else:
-                sorted_watches.append(watch)
-
-        form = forms.quickWatchForm(request.form)
-        page = request.args.get(get_page_parameter(), type=int, default=1)
-        total_count = len(sorted_watches)
-
-        pagination = Pagination(page=page,
-                                total=total_count,
-                                per_page=datastore.data['settings']['application'].get('pager_size', 50), css_framework="semantic")
-
-        sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
-        output = render_template(
-            "watch-overview.html",
-                                 # Don't link to hosting when we're on the hosting environment
-                                 active_tag=active_tag,
-                                 active_tag_uuid=active_tag_uuid,
-                                 app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
-                                 datastore=datastore,
-                                 errored_count=errored_count,
-                                 form=form,
-                                 guid=datastore.data['app_guid'],
-                                 has_proxies=datastore.proxy_list,
-                                 has_unviewed=datastore.has_unviewed,
-                                 hosted_sticky=os.getenv("SALTED_PASS", False) == False,
-                                 pagination=pagination,
-                                 queued_uuids=[q_uuid.item['uuid'] for q_uuid in update_q.queue],
-                                 search_q=request.args.get('q','').strip(),
-                                 sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
-                                 sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
-                                 system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),
-                                 tags=sorted_tags,
-                                 watches=sorted_watches
-                                 )
-
-        if session.get('share-link'):
-            del(session['share-link'])
-
-        resp = make_response(output)
-
-        # The template can run on cookie or url query info
-        if request.args.get('sort'):
-            resp.set_cookie('sort', request.args.get('sort'))
-        if request.args.get('order'):
-            resp.set_cookie('order', request.args.get('order'))
-
-        return resp
 
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
@@ -533,10 +431,13 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.rss as rss
     app.register_blueprint(rss.construct_blueprint(datastore), url_prefix='/rss')
-    
+
+    # watchlist UI buttons etc
     import changedetectionio.blueprint.ui as ui
     app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData))
 
+    import changedetectionio.blueprint.watchlist as watchlist
+    app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()

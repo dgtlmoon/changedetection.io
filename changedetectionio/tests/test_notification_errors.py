@@ -46,7 +46,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
 
         logging.debug("Fetching watch overview....")
         res = client.get(
-            url_for("index"))
+            url_for("watchlist.index"))
 
         if bytes("Notification error detected".encode('utf-8')) in res.data:
             found=True

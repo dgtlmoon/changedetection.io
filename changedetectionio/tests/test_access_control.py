@@ -1,4 +1,4 @@
-from .util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 from flask import url_for
 import time
 
@@ -44,13 +44,21 @@ def test_check_access_control(app, client, live_server):
         assert b"Password protection enabled." in res.data
 
         # Check we hit the login
-        res = c.get(url_for("index"), follow_redirects=True)
+        res = c.get(url_for("watchlist.index"), follow_redirects=True)
         # Should be logged out
         assert b"Login" in res.data
 
         # The diff page should return something valid when logged out
         res = c.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
         assert b'Random content' in res.data
+
+        # access to assets should work (check_authentication)
+        res = c.get(url_for('static_content', group='js', filename='jquery-3.6.0.min.js'))
+        assert res.status_code == 200
+        res = c.get(url_for('static_content', group='styles', filename='styles.css'))
+        assert res.status_code == 200
+        res = c.get(url_for('static_content', group='styles', filename='404-testetest.css'))
+        assert res.status_code == 404
 
         # Check wrong password does not let us in
         res = c.post(
@@ -164,7 +172,7 @@ def test_check_access_control(app, client, live_server):
         assert b"Password protection enabled." in res.data
 
         # Check we hit the login
-        res = c.get(url_for("index"), follow_redirects=True)
+        res = c.get(url_for("watchlist.index"), follow_redirects=True)
         # Should be logged out
         assert b"Login" in res.data
 

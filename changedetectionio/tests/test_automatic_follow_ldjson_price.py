@@ -95,7 +95,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     wait_for_all_checks(client)
 
     # Should get a notice that it's available
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'ldjson-price-track-offer' in res.data
 
     # Accept it
@@ -105,7 +105,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     # Offer should be gone
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'Embedded price data' not in res.data
     assert b'tracking-ldjson-price-data' in res.data
 
@@ -136,7 +136,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     )
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'ldjson-price-track-offer' not in res.data
     
     ##########################################################################################

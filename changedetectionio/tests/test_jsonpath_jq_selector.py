@@ -281,7 +281,7 @@ def check_json_filter(json_filter, client, live_server):
     wait_for_all_checks(client)
 
     # It should have 'unviewed' still
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
     # Should not see this, because its not in the JSONPath we entered
@@ -417,7 +417,7 @@ def check_json_ext_filter(json_filter, client, live_server):
     wait_for_all_checks(client)
 
     # It should have 'unviewed'
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
     res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
@@ -455,7 +455,7 @@ def test_ignore_json_order(client, live_server, measure_memory_usage):
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
 
     # Just to be sure it still works
@@ -466,7 +466,7 @@ def test_ignore_json_order(client, live_server, measure_memory_usage):
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
@@ -488,7 +488,7 @@ def test_correct_header_detect(client, live_server, measure_memory_usage):
     )
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
 
     # Fixed in #1593
     assert b'No parsable JSON found in this document' not in res.data

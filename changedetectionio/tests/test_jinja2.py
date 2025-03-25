@@ -52,7 +52,7 @@ def test_jinja2_security_url_query(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'is invalid and cannot be used' in res.data
     # Some of the spewed output from the subclasses
     assert b'dict_values' not in res.data

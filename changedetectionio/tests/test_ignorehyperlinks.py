@@ -114,7 +114,7 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
 
     # since the link has changed, and we chose to render anchor tag content,
     # we should detect a change (new 'unviewed' class)
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b"unviewed" in res.data
     assert b"/test-endpoint" in res.data
 

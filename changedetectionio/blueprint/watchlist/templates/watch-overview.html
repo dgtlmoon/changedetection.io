@@ -46,12 +46,12 @@
     {% endif %}
     {% if search_q %}<div id="search-result-info">Searching "<strong><i>{{search_q}}</i></strong>"</div>{% endif %}
     <div>
-        <a href="{{url_for('index')}}" class="pure-button button-tag {{'active' if not active_tag_uuid }}">All</a>
+        <a href="{{url_for('watchlist.index')}}" class="pure-button button-tag {{'active' if not active_tag_uuid }}">All</a>
 
     <!-- tag list -->
     {% for uuid, tag in tags %}
         {% if tag != "" %}
-            <a href="{{url_for('index', tag=uuid) }}" class="pure-button button-tag {{'active' if active_tag_uuid == uuid }}">{{ tag.title }}</a>
+            <a href="{{url_for('watchlist.index', tag=uuid) }}" class="pure-button button-tag {{'active' if active_tag_uuid == uuid }}">{{ tag.title }}</a>
         {% endif %}
     {% endfor %}
     </div>
@@ -72,14 +72,14 @@
             <tr>
                 {% set link_order = "desc" if sort_order  == 'asc' else "asc" %}
                 {% set arrow_span = "" %}
-                <th><input style="vertical-align: middle" type="checkbox" id="check-all" > <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}"  href="{{url_for('index', sort='date_created', order=link_order, tag=active_tag_uuid)}}"># <span class='arrow {{link_order}}'></span></a></th>
+                <th><input style="vertical-align: middle" type="checkbox" id="check-all" > <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}"  href="{{url_for('watchlist.index', sort='date_created', order=link_order, tag=active_tag_uuid)}}"># <span class='arrow {{link_order}}'></span></a></th>
                 <th class="empty-cell"></th>
-                <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('index', sort='label', order=link_order, tag=active_tag_uuid)}}">Website <span class='arrow {{link_order}}'></span></a></th>
+                <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('watchlist.index', sort='label', order=link_order, tag=active_tag_uuid)}}">Website <span class='arrow {{link_order}}'></span></a></th>
              {% if any_has_restock_price_processor %}
                 <th>Restock &amp; Price</th>
              {% endif %}
-                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('index', sort='last_checked', order=link_order, tag=active_tag_uuid)}}"><span class="hide-on-mobile">Last</span> Checked <span class='arrow {{link_order}}'></span></a></th>
-                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('index', sort='last_changed', order=link_order, tag=active_tag_uuid)}}"><span class="hide-on-mobile">Last</span> Changed <span class='arrow {{link_order}}'></span></a></th>
+                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_checked', order=link_order, tag=active_tag_uuid)}}"><span class="hide-on-mobile">Last</span> Checked <span class='arrow {{link_order}}'></span></a></th>
+                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_changed', order=link_order, tag=active_tag_uuid)}}"><span class="hide-on-mobile">Last</span> Changed <span class='arrow {{link_order}}'></span></a></th>
                 <th class="empty-cell"></th>
             </tr>
             </thead>
@@ -104,12 +104,12 @@
                 <td class="inline checkbox-uuid" ><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " > <span>{{ loop.index+pagination.skip }}</span></td>
                 <td class="inline watch-controls">
                     {% if not watch.paused %}
-                    <a class="state-off" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause checks" title="Pause checks" class="icon icon-pause" ></a>
+                    <a class="state-off" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause checks" title="Pause checks" class="icon icon-pause" ></a>
                     {% else %}
-                    <a class="state-on" href="{{url_for('index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="UnPause checks" title="UnPause checks" class="icon icon-unpause" ></a>
+                    <a class="state-on" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="UnPause checks" title="UnPause checks" class="icon icon-unpause" ></a>
                     {% endif %}
                     {% set mute_label = 'UnMute notification' if watch.notification_muted else 'Mute notification' %}
-                    <a class="link-mute state-{{'on' if watch.notification_muted else 'off'}}" href="{{url_for('index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{{ mute_label }}" title="{{ mute_label }}" class="icon icon-mute" ></a>
+                    <a class="link-mute state-{{'on' if watch.notification_muted else 'off'}}" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{{ mute_label }}" title="{{ mute_label }}" class="icon icon-mute" ></a>
                 </td>
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
                     <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}"></a>
@@ -210,7 +210,7 @@
         <ul id="post-list-buttons">
             {% if errored_count %}
             <li>
-                <a href="{{url_for('index', with_errors=1, tag=request.args.get('tag')) }}" class="pure-button button-tag button-error ">With errors ({{ errored_count }})</a>
+                <a href="{{url_for('watchlist.index', with_errors=1, tag=request.args.get('tag')) }}" class="pure-button button-tag button-error ">With errors ({{ errored_count }})</a>
             </li>
             {% endif %}
             {% if has_unviewed %}

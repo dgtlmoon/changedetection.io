@@ -36,7 +36,7 @@ def test_select_custom(client, live_server, measure_memory_usage):
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
 
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'Proxy Authentication Required' not in res.data
 
     res = client.get(

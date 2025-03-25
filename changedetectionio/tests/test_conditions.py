@@ -114,7 +114,7 @@ def test_conditions_with_text_and_number(client, live_server):
     wait_for_all_checks(client)
 
     # 75 is > 20 and < 100 and contains "5"
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
 
@@ -128,7 +128,7 @@ def test_conditions_with_text_and_number(client, live_server):
     wait_for_all_checks(client)
 
     # Should NOT be marked as having changes since not all conditions are met
-    res = client.get(url_for("index"))
+    res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
