@@ -4,6 +4,7 @@ from loguru import logger
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
+from changedetectionio.notification import process_notification
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     notification_blueprint = Blueprint('ui_notification', __name__, template_folder="../ui/templates")
@@ -20,8 +21,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from changedetectionio.apprise_asset import apprise_asset
         apobj = apprise.Apprise(asset=apprise_asset)
 
-        # so that the custom endpoints are registered
-        from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
         is_global_settings_form = request.args.get('mode', '') == 'global-settings'
         is_group_settings_form = request.args.get('mode', '') == 'group-settings'
 
@@ -90,7 +89,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
             n_object['as_async'] = False
             n_object.update(watch.extra_notification_token_values())
-            from changedetectionio.notification import process_notification
             sent_obj = process_notification(n_object, datastore)
 
         except Exception as e:

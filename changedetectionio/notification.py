@@ -5,6 +5,8 @@ import apprise
 from loguru import logger
 
 from changedetectionio.apprise_asset import APPRISE_AVATAR_URL
+from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper  # noqa: F401
+from .safe_jinja import render as jinja_render
 
 valid_tokens = {
     'base_url': '',
@@ -40,10 +42,6 @@ valid_notification_formats = {
 
 
 def process_notification(n_object, datastore):
-    # so that the custom endpoints are registered
-    from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
-
-    from .safe_jinja import render as jinja_render
     now = time.time()
     if n_object.get('notification_timestamp'):
         logger.trace(f"Time since queued {now-n_object['notification_timestamp']:.3f}s")
