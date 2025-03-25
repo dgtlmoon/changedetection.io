@@ -50,10 +50,9 @@ def apprise_custom_api_call_wrapper(
         if not k.strip('+-') in parsed_url['qsd+'].keys():
             params[unquote_plus(k)] = unquote_plus(v)
 
-    # Determine Authentication
-    auth = ''
+    auth = ""
     if parsed_url.get('user') and parsed_url.get('password'):
-        auth = (unquote_plus(parsed_url.get('user')), unquote_plus(parsed_url.get('user')))
+        auth = (unquote_plus(parsed_url.get('user')), unquote_plus(parsed_url.get('password')))
     elif parsed_url.get('user'):
         auth = (unquote_plus(parsed_url.get('user')))
 
