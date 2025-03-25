@@ -4,6 +4,7 @@ from apprise import NotifyFormat
 import apprise
 from loguru import logger
 
+from changedetectionio.apprise_asset import APPRISE_AVATAR_URL
 
 valid_tokens = {
     'base_url': '',
@@ -112,7 +113,7 @@ def process_notification(n_object, datastore):
                     and not url.startswith('get') \
                     and not url.startswith('delete') \
                     and not url.startswith('put'):
-                url += k + 'avatar_url=https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/changedetectionio/static/images/avatar-256x256.png'
+                url += k + f"avatar_url={APPRISE_AVATAR_URL}"
 
             if url.startswith('tgram://'):
                 # Telegram only supports a limit subset of HTML, remove the '<br>' we place in.
