@@ -12,26 +12,26 @@ from requests.structures import CaseInsensitiveDict
 def _get_auth(parsed_url: dict) -> str | tuple[str, str]:
     user: str | None = parsed_url.get("user")
     password: str | None = parsed_url.get("password")
-    
+
     if user is not None and password is not None:
         return (unquote_plus(user), unquote_plus(password))
-    
+
     if user is not None:
         return unquote_plus(user)
-    
+
     return ""
+
 
 def _get_headers(parsed_url: dict, body: str) -> CaseInsensitiveDict:
     headers = CaseInsensitiveDict(
-        {unquote_plus(k).capitalize(): unquote_plus(v)
-        for k, v in parsed_url["qsd+"].items()}
+        {unquote_plus(k).capitalize(): unquote_plus(v) for k, v in parsed_url["qsd+"].items()}
     )
 
     # If Content-Type is not specified, guess if the body is a valid JSON
     if headers.get("Content-Type") is None:
         try:
             json.loads(body)
-            headers['Content-Type'] = 'application/json; charset=utf-8'
+            headers["Content-Type"] = "application/json; charset=utf-8"
         except Exception:
             pass
 
@@ -51,6 +51,7 @@ def _get_params(parsed_url: dict) -> CaseInsensitiveDict:
     )
 
     return params
+
 
 @notify(on="get")
 @notify(on="gets")
@@ -88,29 +89,24 @@ def apprise_custom_api_call_wrapper(
     url = re.sub(rf"^{schema}", "https" if schema.endswith("s") else "http", parsed_url.get("url"))
 
     try:
-        r = requests.request(
+        response = requests.request(
             method=method,
             url=url,
             auth=auth,
-            data=body.encode("utf-8") if type(body) is str else body,
             headers=headers,
             params=params,
+            data=body.encode("utf-8") if isinstance(body, str) else body,
         )
 
-        if not (200 <= r.status_code < 300):
-            status_str = f"Error sending '{method.upper()}' request to {url} - Status: {r.status_code}: '{r.reason}'"
-            logger.error(status_str)
-            has_error = True
-        else:
-            logger.info(f"Sent '{method.upper()}' request to {url}")
-            has_error = False
+        response.raise_for_status()
+
+        logger.info(f"Successfully sent custom notification to {url}")
+        return True
 
     except requests.RequestException as e:
-        status_str = f"Error sending '{method.upper()}' request to {url} - {str(e)}"
-        logger.error(status_str)
-        has_error = True
+        logger.error(f"Remote host error while sending custom notification to {url}: {e}")
+        return False
 
-    if has_error:
-        raise TypeError(status_str)
-
-    return True
+    except Exception as e:
+        logger.error(f"Unexpected error occurred while sending custom notification to {url}: {e}")
+        return False
