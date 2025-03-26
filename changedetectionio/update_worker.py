@@ -255,7 +255,7 @@ class update_worker(threading.Thread):
             else:
 
                 uuid = queued_item_data.item.get('uuid')
-                fetch_start_time = time.time()  # Also used for a unique history key for now
+                fetch_start_time = round(time.time())  # Also used for a unique history key for now
                 self.current_uuid = uuid
                 if uuid in list(self.datastore.data['watching'].keys()) and self.datastore.data['watching'][uuid].get('url'):
                     changed_detected = False
