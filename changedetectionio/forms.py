@@ -3,6 +3,7 @@ import re
 from loguru import logger
 from wtforms.widgets.core import TimeInput
 
+from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES
 from changedetectionio.conditions.form import ConditionFormRow
 from changedetectionio.strtobool import strtobool
 
@@ -739,6 +740,9 @@ class globalSettingsApplicationForm(commonSettingsForm):
                               render_kw={"style": "width: 5em;"},
                               validators=[validators.NumberRange(min=0,
                                                                  message="Should be atleast zero (disabled)")])
+
+    rss_content_format = SelectField('RSS Content format', choices=RSS_FORMAT_TYPES)
+
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
     shared_diff_access = BooleanField('Allow access to view diff page when password is enabled', default=False, validators=[validators.Optional()])
