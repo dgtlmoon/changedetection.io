@@ -2,7 +2,7 @@
 from changedetectionio.safe_jinja import render as jinja_render
 from changedetectionio.store import ChangeDetectionStore
 from feedgen.feed import FeedGenerator
-from flask import Blueprint, make_response, request, url_for
+from flask import Blueprint, make_response, request, url_for, redirect
 from loguru import logger
 import datetime
 import pytz
@@ -36,6 +36,11 @@ def clean_entry_content(content):
 def construct_blueprint(datastore: ChangeDetectionStore):
     rss_blueprint = Blueprint('rss', __name__)
 
+    # Some RSS reader situations ended up with rss/ (forward slash after RSS) due
+    # to some earlier blueprint rerouting work, it should goto feed.
+    @rss_blueprint.route("/", methods=['GET'])
+    def extraslash():
+        return redirect(url_for('rss.feed'))
 
     # Import the login decorator if needed
     # from changedetectionio.auth_decorator import login_optionally_required
