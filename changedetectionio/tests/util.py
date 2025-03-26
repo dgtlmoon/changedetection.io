@@ -173,7 +173,7 @@ def live_server_setup(live_server):
                 return resp
 
             # Tried using a global var here but didn't seem to work, so reading from a file instead.
-            with open("test-datastore/endpoint-content.txt", "r") as f:
+            with open("test-datastore/endpoint-content.txt", "rb") as f:
                 resp = make_response(f.read(), status_code)
                 if uppercase_headers:
                     resp.headers['CONTENT-TYPE'] = ctype if ctype else 'text/html'

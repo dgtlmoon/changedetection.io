@@ -1,16 +1,40 @@
-import time
-import datetime
-import pytz
+
+from changedetectionio.safe_jinja import render as jinja_render
+from changedetectionio.store import ChangeDetectionStore
+from feedgen.feed import FeedGenerator
 from flask import Blueprint, make_response, request, url_for
 from loguru import logger
-from feedgen.feed import FeedGenerator
+import datetime
+import pytz
+import re
+import time
 
-from changedetectionio.store import ChangeDetectionStore
-from changedetectionio.safe_jinja import render as jinja_render
+
+# Anything that is not text/UTF-8 should be stripped before it breaks feedgen (such as binary data etc)
+def scan_invalid_chars_in_rss(content):
+    for match in re.finditer(r'[\x00-\x08\x0B\x0C\x0E-\x1F]', content):
+        i = match.start()
+        bad_char = content[i]
+        hex_value = f"0x{ord(bad_char):02x}"
+        # Grab context
+        start = max(0, i - 20)
+        end = min(len(content), i + 21)
+        context = content[start:end].replace('\n', '\\n').replace('\r', '\\r')
+        logger.warning(f"Invalid char {hex_value} at pos {i}: ...{context}...")
+        # First match is enough
+        return True
+
+    return False
+
+
+def clean_entry_content(content):
+    cleaned = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F]', '', content)
+    return cleaned
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     rss_blueprint = Blueprint('rss', __name__)
-    
+
+
     # Import the login decorator if needed
     # from changedetectionio.auth_decorator import login_optionally_required
     @rss_blueprint.route("", methods=['GET'])
@@ -66,6 +90,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 # Description is the page you watch, link takes you to the diff JS UI page
                 # Dict val base_url will get overriden with the env var if it is set.
                 ext_base_url = datastore.data['settings']['application'].get('active_base_url')
+                # @todo fix
 
                 # Because we are called via whatever web server, flask should figure out the right path (
                 diff_link = {'href': url_for('ui.ui_views.diff_history_page', uuid=watch['uuid'], _external=True)}
@@ -76,19 +101,25 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 watch_title = watch.get('title') if watch.get('title') else watch.get('url')
                 fe.title(title=watch_title)
-
-                html_diff = diff.render_diff(previous_version_file_contents=watch.get_history_snapshot(dates[-2]),
-                                             newest_version_file_contents=watch.get_history_snapshot(dates[-1]),
-                                             include_equal=False,
-                                             line_feed_sep="<br>")
+                try:
+                    html_diff = diff.render_diff(previous_version_file_contents=watch.get_history_snapshot(dates[-2]),
+                                                 newest_version_file_contents=watch.get_history_snapshot(dates[-1]),
+                                                 include_equal=False,
+                                                 line_feed_sep="<br>")
+                except FileNotFoundError as e:
+                    html_diff = f"History snapshot file for watch {watch.get('uuid')}@{watch.last_changed} - '{watch.get('title')} not found."
 
                 # @todo Make this configurable and also consider html-colored markup
                 # @todo User could decide if <link> goes to the diff page, or to the watch link
                 rss_template = "<html><body>\n<h4><a href=\"{{watch_url}}\">{{watch_title}}</a></h4>\n<p>{{html_diff}}</p>\n</body></html>\n"
+
                 content = jinja_render(template_str=rss_template, watch_title=watch_title, html_diff=html_diff, watch_url=watch.link)
 
-                fe.content(content=content, type='CDATA')
+                # Out of range chars could also break feedgen
+                if scan_invalid_chars_in_rss(content):
+                    content = clean_entry_content(content)
 
+                fe.content(content=content, type='CDATA')
                 fe.guid(guid, permalink=False)
                 dt = datetime.datetime.fromtimestamp(int(watch.newest_history_key))
                 dt = dt.replace(tzinfo=pytz.UTC)
