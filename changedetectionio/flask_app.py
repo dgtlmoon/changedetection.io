@@ -429,7 +429,7 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.conditions.blueprint as conditions
     app.register_blueprint(conditions.construct_blueprint(datastore), url_prefix='/conditions')
 
-    import changedetectionio.blueprint.rss as rss
+    import changedetectionio.blueprint.rss.blueprint as rss
     app.register_blueprint(rss.construct_blueprint(datastore), url_prefix='/rss')
 
     # watchlist UI buttons etc

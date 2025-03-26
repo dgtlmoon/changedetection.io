@@ -78,7 +78,10 @@
                         {{ render_field(form.application.form.pager_size) }}
                         <span class="pure-form-message-inline">Number of items per page in the watch overview list, 0 to disable.</span>
                     </div>
-
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.rss_content_format) }}
+                        <span class="pure-form-message-inline">Love RSS? Does your reader support HTML? Set it here</span>
+                    </div>
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.application.form.extract_title_as_title) }}
                         <span class="pure-form-message-inline">Note: This will automatically apply to all existing watches.</span>
