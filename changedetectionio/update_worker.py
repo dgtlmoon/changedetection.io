@@ -253,8 +253,9 @@ class update_worker(threading.Thread):
                 pass
 
             else:
-                fetch_start_time = time.time()
+
                 uuid = queued_item_data.item.get('uuid')
+                fetch_start_time = round(time.time())  # Also used for a unique history key for now
                 self.current_uuid = uuid
                 if uuid in list(self.datastore.data['watching'].keys()) and self.datastore.data['watching'][uuid].get('url'):
                     changed_detected = False
@@ -262,8 +263,10 @@ class update_worker(threading.Thread):
                     process_changedetection_results = True
                     update_obj = {}
 
+
                     # Clear last errors (move to preflight func?)
                     self.datastore.data['watching'][uuid]['browser_steps_last_error_step'] = None
+                    self.datastore.data['watching'][uuid]['last_checked'] = fetch_start_time
 
                     watch = self.datastore.data['watching'].get(uuid)
 
@@ -286,10 +289,6 @@ class update_worker(threading.Thread):
                                                                              )
 
                         update_handler.call_browser()
-
-                        # In reality, the actual time of when the change was detected could be a few seconds after this
-                        # For example it should include when the page stopped rendering if using a playwright/chrome type fetch
-                        fetch_start_time = time.time()
 
                         changed_detected, update_obj, contents = update_handler.run_changedetection(watch=watch)
 
@@ -587,7 +586,6 @@ class update_worker(threading.Thread):
                         pass
 
                     self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - fetch_start_time, 3),
-                                                                       'last_checked': int(fetch_start_time),
                                                                        'check_count': count
                                                                        })
 
