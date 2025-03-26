@@ -3,7 +3,16 @@
 {% from '_helpers.html' import render_simple_field, render_field, render_nolabel_field, sort_by_title %}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
+<script>let nowtimeserver={{ now_time_server }};</script>
 
+<style>
+.checking-now .last-checked {
+    background-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.1) 100%);
+    background-size: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 0.9s ease
+}
+</style>
 <div class="box">
 
     <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
@@ -91,8 +100,8 @@
             {% endif %}
             {% for watch in (watches|sort(attribute=sort_attribute, reverse=sort_order == 'asc'))|pagination_slice(skip=pagination.skip) %}
 
-                {% set is_unviewed =  watch.newest_history_key| int > watch.last_viewed and watch.history_n>=2 %}
-
+                {% set is_unviewed = watch.newest_history_key| int > watch.last_viewed and watch.history_n>=2 %}
+                {% set checking_now = is_checking_now(watch) %}
             <tr id="{{ watch.uuid }}"
                 class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }} processor-{{ watch['processor'] }}
                 {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
@@ -100,7 +109,9 @@
                 {% if watch.paused is defined and watch.paused != False %}paused{% endif %}
                 {% if is_unviewed %}unviewed{% endif %}
                 {% if watch.has_restock_info %} has-restock-info {% if watch['restock']['in_stock'] %}in-stock{% else %}not-in-stock{% endif %} {% else %}no-restock-info{% endif %}
-                {% if watch.uuid in queued_uuids %}queued{% endif %}">
+                {% if watch.uuid in queued_uuids %}queued{% endif %}
+                {% if checking_now %}checking-now{% endif %}
+                ">
                 <td class="inline checkbox-uuid" ><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " > <span>{{ loop.index+pagination.skip }}</span></td>
                 <td class="inline watch-controls">
                     {% if not watch.paused %}
@@ -178,7 +189,14 @@
                     {% endif %}
                 </td>
 {% endif %}
-                <td class="last-checked" data-timestamp="{{ watch.last_checked }}">{{watch|format_last_checked_time|safe}}</td>
+            {#last_checked becomes fetch-start-time#}
+                <td class="last-checked" data-timestamp="{{ watch.last_checked }}" {% if checking_now %} data-fetchduration={{ watch.fetch_time }} data-eta_complete="{{ watch.last_checked+watch.fetch_time }}" {% endif %} >
+                    {% if checking_now %}
+                        <span class="spinner"></span><span> Checking now</span>
+                    {% else %}
+                        {{watch|format_last_checked_time|safe}}</td>
+                    {% endif %}
+
                 <td class="last-changed" data-timestamp="{{ watch.last_changed }}">{% if watch.history_n >=2 and watch.last_changed >0 %}
                     {{watch.last_changed|format_timestamp_timeago}}
                     {% else %}

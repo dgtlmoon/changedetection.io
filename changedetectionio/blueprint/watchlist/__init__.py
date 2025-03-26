@@ -1,7 +1,5 @@
-import flask_login
 import os
 import time
-import timeago
 
 from flask import Blueprint, request, make_response, render_template, redirect, url_for, flash, session
 from flask_login import current_user
@@ -10,7 +8,6 @@ from flask_paginate import Pagination, get_page_parameter
 from changedetectionio import forms
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
-from changedetectionio.strtobool import strtobool
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     watchlist_blueprint = Blueprint('watchlist', __name__, template_folder="templates")
@@ -77,7 +74,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
         output = render_template(
             "watch-overview.html",
-                                 # Don't link to hosting when we're on the hosting environment
                                  active_tag=active_tag,
                                  active_tag_uuid=active_tag_uuid,
                                  app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
@@ -88,9 +84,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                  has_proxies=datastore.proxy_list,
                                  has_unviewed=datastore.has_unviewed,
                                  hosted_sticky=os.getenv("SALTED_PASS", False) == False,
+                                 now_time_server=time.time(),
                                  pagination=pagination,
                                  queued_uuids=[q_uuid.item['uuid'] for q_uuid in update_q.queue],
-                                 search_q=request.args.get('q','').strip(),
+                                 search_q=request.args.get('q', '').strip(),
                                  sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
                                  sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
                                  system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),

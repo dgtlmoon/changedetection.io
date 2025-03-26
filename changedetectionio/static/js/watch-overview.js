@@ -48,6 +48,8 @@ $(function () {
         $('input[type=checkbox]').not(this).prop('checked', this.checked);
     });
 
+    const time_check_step_size_seconds=1;
+
     // checkboxes - show/hide buttons
     $("input[type=checkbox]").click(function (e) {
         if ($('input[type=checkbox]:checked').length) {
@@ -57,5 +59,30 @@ $(function () {
         }
     });
 
+    setInterval(function () {
+        // Background ETA completion for 'checking now'
+        $(".watch-table .checking-now .last-checked").each(function () {
+            const eta_complete = parseFloat($(this).data('eta_complete'));
+            const fetch_duration = parseInt($(this).data('fetchduration'));
+
+            if (eta_complete + 2 > nowtimeserver && fetch_duration > 3) {
+                const remaining_seconds = Math.abs(eta_complete) - nowtimeserver - 1;
+
+                let r = (1.0 - (remaining_seconds / fetch_duration)) * 100;
+                if (r < 10) {
+                    r = 10;
+                }
+                if (r >= 90) {
+                    r = 100;
+                }
+                $(this).css('background-size', `${r}% 100%`);
+                //$(this).text(`${r}% remain ${remaining_seconds}`);
+            } else {
+                $(this).css('background-size', `100% 100%`);
+            }
+        });
+
+        nowtimeserver = nowtimeserver + time_check_step_size_seconds;
+    }, time_check_step_size_seconds * 1000);
 });
 

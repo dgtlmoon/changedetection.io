@@ -123,14 +123,18 @@ def _jinja2_filter_format_number_locale(value: float) -> str:
 
     return formatted_value
 
+@app.template_global('is_checking_now')
+def _watch_is_checking_now(watch_obj, format="%Y-%m-%d %H:%M:%S"):
+    # Worker thread tells us which UUID it is currently processing.
+    for t in running_update_threads:
+        if t.current_uuid == watch_obj['uuid']:
+            return True
+
+
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
 # running or something similar.
 @app.template_filter('format_last_checked_time')
 def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
-    # Worker thread tells us which UUID it is currently processing.
-    for t in running_update_threads:
-        if t.current_uuid == watch_obj['uuid']:
-            return '<span class="spinner"></span><span> Checking now</span>'
 
     if watch_obj['last_checked'] == 0:
         return 'Not yet'
