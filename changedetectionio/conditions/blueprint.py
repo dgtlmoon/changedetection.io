@@ -67,7 +67,8 @@ def construct_blueprint(datastore):
 
             return jsonify({
                 'status': 'success',
-                'result': result,
+                'result': result.get('result'),
+                'data': result.get('executed_data'),
                 'message': 'Condition passes' if result else 'Condition does not pass'
             })
 
