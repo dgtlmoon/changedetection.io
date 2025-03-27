@@ -273,6 +273,7 @@ def test_limit_tag_ui(client, live_server, measure_memory_usage):
     assert b'Deleted' in res.data
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
+
 def test_clone_tag_on_import(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     test_url = url_for('test_endpoint', _external=True)
@@ -292,6 +293,7 @@ def test_clone_tag_on_import(client, live_server, measure_memory_usage):
     res = client.get(url_for("ui.form_clone", uuid=watch_uuid), follow_redirects=True)
 
     assert b'Cloned' in res.data
+    res = client.get(url_for("watchlist.index"))
     # 2 times plus the top link to tag
     assert res.data.count(b'test-tag') == 3
     assert res.data.count(b'another-tag') == 3
@@ -317,8 +319,9 @@ def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usa
 
     watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.get(url_for("ui.form_clone", uuid=watch_uuid), follow_redirects=True)
-
     assert b'Cloned' in res.data
+
+    res = client.get(url_for("watchlist.index"))
     # 2 times plus the top link to tag
     assert res.data.count(b'test-tag') == 3
     assert res.data.count(b'another-tag') == 3
