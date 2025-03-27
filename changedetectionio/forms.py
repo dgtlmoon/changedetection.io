@@ -246,6 +246,114 @@ class StringDictKeyValue(StringField):
         else:
             self.data = {}
 
+
+class StringSelectorPairListField(StringField):
+    """
+    A StringField that expects each non-empty line in its input to be:
+        {first_selector}{second_selector}
+    or just:
+        {first_selector}
+    and stores them as a list of (first_selector, second_selector) tuples in self.data.
+    If the second selector is omitted, it is set to an empty string.
+    """
+    widget = widgets.TextArea()
+
+    # Convert self.data (the list of tuples) back into textarea lines
+    def _value(self):
+        if self.data:
+            lines = []
+            for (first_selector, second_selector) in self.data:
+                if second_selector:
+                    line = f"{{{first_selector}}}{{{second_selector}}}"
+                else:
+                    line = f"{{{first_selector}}}"
+                lines.append(line)
+            return "\r\n".join(lines)
+        else:
+            return u''
+
+    # Parse the raw textarea input into a list of (first_selector, second_selector) tuples
+    def process_formdata(self, valuelist):
+        if valuelist:
+            self.data = []
+            # Split the textarea into lines
+            lines = valuelist[0].split("\n")
+
+            # Filter out empty or whitespace-only lines
+            cleaned = [line.strip() for line in lines if line.strip()]
+
+            for line in cleaned:
+                # Use regex to capture:
+                #   { first_selector } and optionally { second_selector }
+                match = re.match(r'^\{([^}]*)\}(?:\{([^}]*)\})?$', line)
+                if match:
+                    first_selector = match.group(1).strip()
+                    second_selector = match.group(2).strip() if match.group(2) is not None else ""
+                    self.data.append((first_selector, second_selector))
+        else:
+            self.data = []
+            
+
+class StringSelectorTagDictField(StringField):
+    """
+    A StringField that expects each non-empty line in its input to be:
+        {css_selector} tag1, tag2, tag3
+    and stores them as a dictionary mapping css_selector (str) to a list of tags (List[str]) in self.data.
+    Tags must be comma-separated.
+    Tags are stripped of all whitespace.
+    There must be at least one tag.
+    """
+    widget = widgets.TextArea()
+
+    # Convert self.data (the dictionary) back into textarea lines.
+    def _value(self):
+        if self.data:
+            lines = []
+            for css_selector, tags in self.data.items():
+                # Only output the line if there's at least one tag.
+                if tags:
+                    line = f"{{{css_selector}}} " + ", ".join(tags)
+                    lines.append(line)
+            return "\r\n".join(lines)
+        else:
+            return u''
+
+    # Parse the raw textarea input into a dictionary mapping css_selector to a list of tags.
+    def process_formdata(self, valuelist):
+        if valuelist:
+            self.data = {}
+            # Split the textarea into lines.
+            lines = valuelist[0].split("\n")
+
+            # Filter out empty or whitespace-only lines.
+            cleaned = [line.strip() for line in lines if line.strip()]
+
+            for line in cleaned:
+                # Use regex to capture:
+                #   {css_selector} {tags}
+                match = re.match(r'^\{([^}]*)\}(.+)$', line)
+                if match:
+                    css_selector = match.group(1).strip()
+                    tags_part = match.group(2).strip()
+                    # Split tags by comma.
+                    raw_tags = tags_part.split(',')
+                    tags = []
+                    for tag in raw_tags:
+                        # Remove all whitespace (leading, trailing, and internal).
+                        processed_tag = ''.join(tag.split())
+                        if processed_tag:
+                            tags.append(processed_tag)
+
+                    # Only record the line if there is at least one valid tag.
+                    if tags:
+                        if css_selector in self.data:
+                            self.data[css_selector].extend(tags)
+                        else:
+                            self.data[css_selector] = tags
+        else:
+            self.data = {}
+
+
 class ValidateContentFetcherIsReady(object):
     """
     Validates that anything that looks like a regex passes as a regex
@@ -581,6 +689,10 @@ class processor_text_json_diff_form(commonSettingsForm):
     remove_duplicate_lines = BooleanField('Remove duplicate lines of text', default=False)
     sort_text_alphabetically =  BooleanField('Sort text alphabetically', default=False)
     trim_text_whitespace = BooleanField('Trim whitespace before and after text', default=False)
+    extraction_method = RadioField('Extraction method', choices=[('TEXT', 'Extract plain text'),('ANNOTATED_TEXT', 'Extract text with custom annotations')], default='TEXT')
+    annotation_rules = StringSelectorTagDictField('Annotation rules', [validators.Optional()])
+
+    annotated_sort_selectors = StringSelectorPairListField('Sort annotated text', [validators.Optional()])
 
     filter_text_added = BooleanField('Added lines', default=True)
     filter_text_replaced = BooleanField('Replaced/changed lines', default=True)

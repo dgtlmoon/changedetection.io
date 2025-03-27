@@ -9,7 +9,15 @@ function request_textpreview_update() {
     $('textarea:visible, input:visible').each(function () {
         const $element = $(this); // Cache the jQuery object for the current element
         const name = $element.attr('name'); // Get the name attribute of the element
-        data[name] = $element.is(':checkbox') ? ($element.is(':checked') ? $element.val() : false) : $element.val();
+        if ($element.is(':radio') || $element.is(':checkbox')) {
+            // Only set data[name] if it’s checked
+            if ($element.is(':checked')) {
+                data[name] = $element.val();
+            }
+        } else {
+            // For regular text inputs, textareas, etc., just set the value
+            data[name] = $element.val();
+        }
     });
 
     $('body').toggleClass('spinner-active', 1);
