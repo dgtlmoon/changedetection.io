@@ -96,12 +96,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
             uuid = list(datastore.data['watching'].keys()).pop()
 
         new_uuid = datastore.clone(uuid)
-        if new_uuid:
-            if not datastore.data['watching'].get(uuid).get('paused'):
-                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid}))
-            flash('Cloned.')
 
-        return redirect(url_for('watchlist.index'))
+        if not datastore.data['watching'].get(uuid).get('paused'):
+            update_q.put(queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid}))
+
+        flash('Cloned, you are editing the new watch.')
+
+        return redirect(url_for("ui.ui_edit.edit_page", uuid=new_uuid))
 
     @ui_blueprint.route("/checknow", methods=['GET'])
     @login_optionally_required
