@@ -116,8 +116,7 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
             if not jsonLogic(logic=ruleset, data=EXECUTE_DATA, operations=CUSTOM_OPERATIONS):
                 result = False
 
-    return result
-
+    return {'executed_data': EXECUTE_DATA, 'result': result}
 
 # Load plugins dynamically
 for plugin in plugin_manager.get_plugins():

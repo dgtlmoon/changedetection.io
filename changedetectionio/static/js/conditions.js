@@ -52,7 +52,7 @@ $(document).ready(function () {
 
             
             // Create a rule object
-            const rule = {
+            let rule = {
                 field: field,
                 operator: operator,
                 value: value
@@ -96,6 +96,10 @@ $(document).ready(function () {
                 contentType: false, // Let the browser set the correct content type
                 success: function (response) {
                     if (response.status === "success") {
+                        if(rule['field'] !== "page_filtered_text") {
+                            // A little debug helper for the user
+                            $('#verify-state-text').text(`${rule['field']} was value "${response.data[rule['field']]}"`)
+                        }
                         if (response.result) {
                             alert("✅ Condition PASSES verification against current snapshot!");
                         } else {

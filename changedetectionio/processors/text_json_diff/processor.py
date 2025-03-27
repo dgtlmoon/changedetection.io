@@ -334,12 +334,14 @@ class perform_site_check(difference_detection_processor):
 
         # And check if 'conditions' will let this pass through
         if watch.get('conditions') and watch.get('conditions_match_logic'):
-            if not execute_ruleset_against_all_plugins(current_watch_uuid=watch.get('uuid'),
-                                                application_datastruct=self.datastore.data,
-                                                ephemeral_data={
-                                                    'text': stripped_text_from_html
-                                                }
-                                                ):
+            conditions_result = execute_ruleset_against_all_plugins(current_watch_uuid=watch.get('uuid'),
+                                                                    application_datastruct=self.datastore.data,
+                                                                    ephemeral_data={
+                                                                        'text': stripped_text_from_html
+                                                                    }
+                                                                    )
+
+            if not conditions_result.get('result'):
                 # Conditions say "Condition not met" so we block it.
                 blocked = True
 

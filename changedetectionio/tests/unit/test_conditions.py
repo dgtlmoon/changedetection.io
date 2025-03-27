@@ -75,7 +75,7 @@ class TestTriggerConditions(unittest.TestCase):
                                                      ephemeral_data={'text': "I saw 500 people at a rock show"})
 
         # @todo - now we can test that 'Extract number' increased more than X since last time
-        self.assertTrue(result)
+        self.assertTrue(result.get('result'))
 
 
 if __name__ == '__main__':

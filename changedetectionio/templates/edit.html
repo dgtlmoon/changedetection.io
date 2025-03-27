@@ -305,8 +305,8 @@ Math: {{ 1 + 1 }}") }}
                     {{ render_field(form.conditions_match_logic) }}
                     {{ render_fieldlist_of_formfields_as_table(form.conditions) }}
                     <div class="pure-form-message-inline">
-                        <br>
-                        Use the verify (✓) button to test if a condition passes against the current snapshot.<br><br>
+
+                        <p id="verify-state-text">Use the verify (✓) button to test if a condition passes against the current snapshot.</p>
                         Did you know that <strong>conditions</strong> can be extended with your own custom plugin? tutorials coming soon!<br>
                     </div>
                 </div>
