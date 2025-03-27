@@ -588,10 +588,10 @@ keyword") }}
                     {{ render_button(form.save_button) }}
                     <a href="{{url_for('ui.form_delete', uuid=uuid)}}"
                        class="pure-button button-small button-error ">Delete</a>
-                    <a href="{{url_for('ui.clear_watch_history', uuid=uuid)}}"
-                       class="pure-button button-small button-error ">Clear History</a>
+                    {% if watch.history_n %}<a href="{{url_for('ui.clear_watch_history', uuid=uuid)}}"
+                       class="pure-button button-small button-error ">Clear History</a>{% endif %}
                     <a href="{{url_for('ui.form_clone', uuid=uuid)}}"
-                       class="pure-button button-small ">Create Copy</a>
+                       class="pure-button button-small ">Clone &amp; Edit</a>
                 </div>
             </div>
         </form>

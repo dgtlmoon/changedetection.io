@@ -251,7 +251,7 @@ class ChangeDetectionStore:
     # Clone a watch by UUID
     def clone(self, uuid):
         url = self.data['watching'][uuid].get('url')
-        extras = self.data['watching'][uuid]
+        extras = deepcopy(self.data['watching'][uuid])
         new_uuid = self.add_watch(url=url, extras=extras)
         return new_uuid
 
@@ -362,7 +362,6 @@ class ChangeDetectionStore:
         new_watch.update(apply_extras)
         new_watch.ensure_data_dir_exists()
         self.__data['watching'][new_uuid] = new_watch
-
 
         if write_to_disk_now:
             self.sync_to_json()
