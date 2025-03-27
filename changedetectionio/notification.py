@@ -4,6 +4,9 @@ from apprise import NotifyFormat
 import apprise
 from loguru import logger
 
+from .apprise_plugin.assets import APPRISE_AVATAR_URL
+from .apprise_plugin.custom_handlers import apprise_http_custom_handler  # noqa: F401
+from .safe_jinja import render as jinja_render
 
 valid_tokens = {
     'base_url': '',
@@ -39,10 +42,6 @@ valid_notification_formats = {
 
 
 def process_notification(n_object, datastore):
-    # so that the custom endpoints are registered
-    from changedetectionio.apprise_plugin import apprise_custom_api_call_wrapper
-
-    from .safe_jinja import render as jinja_render
     now = time.time()
     if n_object.get('notification_timestamp'):
         logger.trace(f"Time since queued {now-n_object['notification_timestamp']:.3f}s")
@@ -66,12 +65,12 @@ def process_notification(n_object, datastore):
     # raise it as an exception
 
     sent_objs = []
-    from .apprise_asset import asset
+    from .apprise_plugin.assets import apprise_asset
 
     if 'as_async' in n_object:
-        asset.async_mode = n_object.get('as_async')
+        apprise_asset.async_mode = n_object.get('as_async')
 
-    apobj = apprise.Apprise(debug=True, asset=asset)
+    apobj = apprise.Apprise(debug=True, asset=apprise_asset)
 
     if not n_object.get('notification_urls'):
         return None
@@ -112,7 +111,7 @@ def process_notification(n_object, datastore):
                     and not url.startswith('get') \
                     and not url.startswith('delete') \
                     and not url.startswith('put'):
-                url += k + 'avatar_url=https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/changedetectionio/static/images/avatar-256x256.png'
+                url += k + f"avatar_url={APPRISE_AVATAR_URL}"
 
             if url.startswith('tgram://'):
                 # Telegram only supports a limit subset of HTML, remove the '<br>' we place in.

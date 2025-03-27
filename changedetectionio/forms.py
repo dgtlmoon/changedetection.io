@@ -306,10 +306,10 @@ class ValidateAppRiseServers(object):
 
     def __call__(self, form, field):
         import apprise
-        apobj = apprise.Apprise()
+        from .apprise_plugin.assets import apprise_asset
+        from .apprise_plugin.custom_handlers import apprise_http_custom_handler  # noqa: F401
 
-        # so that the custom endpoints are registered
-        from .apprise_asset import asset
+        apobj = apprise.Apprise(asset=apprise_asset)
 
         for server_url in field.data:
             url = server_url.strip()
