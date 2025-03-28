@@ -575,7 +575,7 @@ class model(watch_base):
         import brotli
         filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
 
-        if not os.path.isfile(filepath):
+        if not os.path.isfile(filepath) or os.path.getsize(filepath) == 0:
             # If a previous attempt doesnt yet exist, just snarf the previous snapshot instead
             dates = list(self.history.keys())
             if len(dates):
