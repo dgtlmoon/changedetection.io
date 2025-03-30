@@ -60,6 +60,7 @@ class model(dict):
                     'webdriver_delay': None , # Extra delay in seconds before extracting text
                     'tags': {}, #@todo use Tag.model initialisers
                     'timezone': None, # Default IANA timezone name
+                    'open_diff_in_new_tab': True,
                 }
             }
         }

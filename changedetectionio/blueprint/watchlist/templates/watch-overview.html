@@ -209,15 +209,18 @@
                     <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="pure-button pure-button-primary">Edit</a>
                     {% if watch.history_n >= 2 %}
 
+                        {% set open_diff_in_new_tab = datastore.data['settings']['application'].get('open_diff_in_new_tab') %}
+                        {% set target_attr = ' target="' ~ watch.uuid ~ '"' if open_diff_in_new_tab else '' %}
+
                         {%  if is_unviewed %}
-                           <a href="{{ url_for('ui.ui_views.diff_history_page', uuid=watch.uuid, from_version=watch.get_from_version_based_on_last_viewed) }}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">History</a>
+                           <a href="{{ url_for('ui.ui_views.diff_history_page', uuid=watch.uuid, from_version=watch.get_from_version_based_on_last_viewed) }}" {{target_attr}} class="pure-button pure-button-primary diff-link">History</a>
                         {% else %}
-                           <a href="{{ url_for('ui.ui_views.diff_history_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary diff-link">History</a>
+                           <a href="{{ url_for('ui.ui_views.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="pure-button pure-button-primary diff-link">History</a>
                         {% endif %}
 
                     {% else %}
                         {% if watch.history_n == 1 or (watch.history_n ==0 and watch.error_text_ctime )%}
-                            <a href="{{ url_for('ui.ui_views.preview_page', uuid=watch.uuid)}}" target="{{watch.uuid}}" class="pure-button pure-button-primary">Preview</a>
+                            <a href="{{ url_for('ui.ui_views.preview_page', uuid=watch.uuid)}}" {{target_attr}} class="pure-button pure-button-primary">Preview</a>
                         {% endif %}
                     {% endif %}
                 </td>
