@@ -381,6 +381,29 @@ nav
                         </ul>
                       </span>
                 </fieldset>
+                <fieldset class="pure-control-group">
+                    <div class="pure-control-group inline-radio" class="extraction_method">
+                    {{ render_field(form.extraction_method) }}
+                    <span class="pure-form-message-inline">Plain text produces raw text, while annotated text can preserve semantics found in original HTML source.</span>
+                    </div>
+                </fieldset>
+              <fieldset class="pure-control-group" data-visible-for="extraction_method=ANNOTATED_TEXT" >
+                     <div class="pure-control-group">
+                    {{ render_field(form.annotation_rules, rows=4, placeholder='{#example} example
+{tr[class*=\'news-article\']} article
+{span.title} title
+{span.age > a} date') }}
+                     <span class="pure-form-message-inline">Annotations map HTML elements to XML tags in the extracted text, preserving semantics found in the original HTML source (like title, author, price, or dates) that allow more effective downstream processing.<br>
+                        <span data-target="#advanced-help-annotation-rules" class="toggle-show pure-button button-tag button-xsmall">Show advanced help and tips</span><br>
+                         <ul id="advanced-help-annotation-rules" style="display: none;">
+                             <li> Enter one rule per line: <code>{&lt;CSS Selector&gt;} &lt;Comma-separated list of tags&gt;</code> </li>
+                             <li> Each matched element's text is wrapped in tags e.g <code>&lt;example&gt;Text&lt;/example&gt;</code> </li>
+                             <li> Annotations happen after filters to include or remove elements. </li>
+                             <li> Available only for HTML extraction. </li>
+                         </ul>
+                     </span>
+                    </div>
+                </fieldset>
                 <div class="text-filtering border-fieldset">
                 <fieldset class="pure-group" id="text-filtering-type-options">
                     <h3>Text filtering</h3>
@@ -407,6 +430,28 @@ nav
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.trim_text_whitespace) }}
                     <span class="pure-form-message-inline">Remove any whitespace before and after each line of text</span>
+                </fieldset>
+                <fieldset class="pure-control-group" data-visible-for="extraction_method=ANNOTATED_TEXT" >
+                    <div class="pure-control-group">
+                    {{ render_field(form.annotated_sort_selectors, rows=4, placeholder='{example}
+{article}{date}
+{article}{title}') }}
+                        <span class="pure-form-message-inline">Sorting annotated text allows reordering annotated XML elements, e.g. sorting a list of articles by title or date <code>&lt;article&gt;&lt;title&gt;Title&lt;/title&gt;&lt;date&gt;1970-01-01&lt;/date&gt;&lt;/article&gt;</code>.<br>
+                            <span data-target="#advanced-help-annotated-sort" class="toggle-show pure-button button-tag button-xsmall">Show advanced help and tips</span><br>
+                             <ul id="advanced-help-annotated-sort" style="display: none;">
+                                 <li> Enter one rule per line:</li>
+                                 <ul>
+                                     <li><code>{&lt;Element-to-Sort Selector&gt;}</code> sorts annotated XML element by its own text. </li>
+                                     <li><code>{&lt;Element-to-Sort Selector&gt;}{&lt;Sort-Identifier Selector&gt;}</code> sorts annotated XML element by a child element's text. </li>
+                                 </ul>
+                                 <li> Use CSS or XPath selectors to match annotated tags. </li>
+                                 <ul>
+                                     <li>XPath: Begin selector with forward-slashes or explicitly prefix with <code>xpath:</code></li>
+                                 </ul>
+                                 <li> Elements are sorted in ascending order of the matched element's text. </li>
+                             </ul>
+                        </span>
+                    </div>
                 </fieldset>
                 <fieldset>
                     <div class="pure-control-group">
