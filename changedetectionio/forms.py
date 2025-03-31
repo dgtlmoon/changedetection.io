@@ -721,6 +721,8 @@ class globalSettingsRequestForm(Form):
                     self.extra_proxies.errors.append('Both a name, and a Proxy URL is required.')
                     return False
 
+class globalSettingsApplicationUIForm(Form):
+    open_diff_in_new_tab = BooleanField('Open diff page in a new tab', default=True, validators=[validators.Optional()])
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
@@ -752,7 +754,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
                                                                   render_kw={"style": "width: 5em;"},
                                                                   validators=[validators.NumberRange(min=0,
                                                                                                      message="Should contain zero or more attempts")])
-    open_diff_in_new_tab = BooleanField('Open diff page in a new tab', default=True, validators=[validators.Optional()])
+    ui = FormField(globalSettingsApplicationUIForm)
 
 
 class globalSettingsForm(Form):
