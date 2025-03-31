@@ -25,7 +25,6 @@ def test_setup(live_server):
 
 def get_last_message_from_smtp_server():
     import socket
-    global smtp_test_server
     port = 11080  # socket server port number
 
     client_socket = socket.socket()  # instantiate
@@ -44,7 +43,6 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
     # live_server_setup(live_server)
     set_original_response()
 
-    global smtp_test_server
     notification_url = f'mailto://changedetection@{smtp_test_server}:11025/?to=fff@home.com'
 
     #####################
@@ -99,7 +97,6 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
     # https://github.com/caronc/apprise/issues/633
 
     set_original_response()
-    global smtp_test_server
     notification_url = f'mailto://changedetection@{smtp_test_server}:11025/?to=fff@home.com'
     notification_body = f"""<!DOCTYPE html>
 <html lang="en">
