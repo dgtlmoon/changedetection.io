@@ -23,7 +23,6 @@ from loguru import logger
 browsersteps_sessions = {}
 io_interface_context = None
 import json
-import base64
 import hashlib
 from flask import Response
 
@@ -34,9 +33,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from . import nonContext
         from . import browser_steps
         import time
-        global browsersteps_sessions
         global io_interface_context
-
 
         # We keep the playwright session open for many minutes
         keepalive_seconds = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
@@ -104,8 +101,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # A new session was requested, return sessionID
 
         import uuid
-        global browsersteps_sessions
-
         browsersteps_session_id = str(uuid.uuid4())
         watch_uuid = request.args.get('uuid')
 
@@ -149,7 +144,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def browsersteps_ui_update():
         import base64
         import playwright._impl._errors
-        global browsersteps_sessions
         from changedetectionio.blueprint.browser_steps import browser_steps
 
         remaining =0
