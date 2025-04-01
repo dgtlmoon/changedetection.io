@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import json
-import urllib
+import time
 
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
@@ -113,6 +113,7 @@ def test_conditions_with_text_and_number(client, live_server):
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
+    time.sleep(2)
     # 75 is > 20 and < 100 and contains "5"
     res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
