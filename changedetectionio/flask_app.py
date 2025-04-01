@@ -447,6 +447,16 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
+    
+    # Memory cleanup endpoint
+    @app.route('/gc-cleanup', methods=['GET'])
+    @login_optionally_required
+    def gc_cleanup():
+        from changedetectionio.gc_cleanup import memory_cleanup
+        from flask import jsonify
+
+        result = memory_cleanup(app)
+        return jsonify({"status": "success", "message": "Memory cleanup completed", "result": result})
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
