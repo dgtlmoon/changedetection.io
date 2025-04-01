@@ -20,10 +20,7 @@ def login_optionally_required(func):
         has_password_enabled = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
 
         # Permitted
-        if request.endpoint and 'static_content' in request.endpoint and request.view_args and request.view_args.get('group') == 'styles':
-            return func(*args, **kwargs)
-        # Permitted
-        elif request.endpoint and 'diff_history_page' in request.endpoint and datastore.data['settings']['application'].get('shared_diff_access'):
+        if request.endpoint and 'diff_history_page' in request.endpoint and datastore.data['settings']['application'].get('shared_diff_access'):
             return func(*args, **kwargs)
         elif request.method in flask_login.config.EXEMPT_METHODS:
             return func(*args, **kwargs)

@@ -60,6 +60,11 @@ def test_check_access_control(app, client, live_server):
         res = c.get(url_for('static_content', group='styles', filename='404-testetest.css'))
         assert res.status_code == 404
 
+        # Access to screenshots should be limited by 'shared_diff_access'
+        path = url_for('static_content', group='screenshot', filename='random-uuid-that-will-404.png', _external=True)
+        res = c.get(path)
+        assert res.status_code == 404
+
         # Check wrong password does not let us in
         res = c.post(
             url_for("login"),
@@ -163,7 +168,7 @@ def test_check_access_control(app, client, live_server):
             url_for("settings.settings_page"),
             data={"application-password": "foobar",
                   # Should be disabled
-#                  "application-shared_diff_access": "True",
+                  "application-shared_diff_access": "",
                   "requests-time_between_check-minutes": 180,
                   'application-fetch_backend': "html_requests"},
             follow_redirects=True
@@ -175,6 +180,10 @@ def test_check_access_control(app, client, live_server):
         res = c.get(url_for("watchlist.index"), follow_redirects=True)
         # Should be logged out
         assert b"Login" in res.data
+
+        # Access to screenshots should be limited by 'shared_diff_access'
+        res = c.get(url_for('static_content', group='screenshot', filename='random-uuid-that-will-403.png'))
+        assert res.status_code == 403
 
         # The diff page should return something valid when logged out
         res = c.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
