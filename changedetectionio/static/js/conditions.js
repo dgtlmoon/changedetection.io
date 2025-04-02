@@ -8,7 +8,7 @@ $(document).ready(function () {
         $(".addRuleRow").on("click", function(e) {
             e.preventDefault();
             
-            let currentRow = $(this).closest("tr");
+            let currentRow = $(this).closest(".fieldlist-row");
             
             // Clone without events
             let newRow = currentRow.clone(false);
@@ -29,8 +29,8 @@ $(document).ready(function () {
             e.preventDefault();
             
             // Only remove if there's more than one row
-            if ($("#rulesTable tbody tr").length > 1) {
-                $(this).closest("tr").remove();
+            if ($("#rulesTable .fieldlist-row").length > 1) {
+                $(this).closest(".fieldlist-row").remove();
                 reindexRules();
             }
         });
@@ -39,7 +39,7 @@ $(document).ready(function () {
         $(".verifyRuleRow").on("click", function(e) {
             e.preventDefault();
             
-            let row = $(this).closest("tr");
+            let row = $(this).closest(".fieldlist-row");
             let field = row.find("select[name$='field']").val();
             let operator = row.find("select[name$='operator']").val();
             let value = row.find("input[name$='value']").val();
@@ -128,7 +128,7 @@ $(document).ready(function () {
         $(".addRuleRow, .removeRuleRow, .verifyRuleRow").off("click");
         
         // Reindex all form elements
-        $("#rulesTable tbody tr").each(function(index) {
+        $("#rulesTable .fieldlist-row").each(function(index) {
             $(this).find("select, input").each(function() {
                 let oldName = $(this).attr("name");
                 let oldId = $(this).attr("id");
