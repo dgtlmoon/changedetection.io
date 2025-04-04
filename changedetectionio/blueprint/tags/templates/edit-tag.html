@@ -13,6 +13,7 @@
     /*const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');*/
 /*{% endif %}*/
 
+{% set has_tag_filters_extra='' %}
 
 </script>
 
@@ -47,8 +48,11 @@
 
             <div class="tab-pane-inner" id="filters-and-triggers">
                 <p>These settings are <strong><i>added</i></strong> to any existing watch configurations.</p>
-
-                {% include "edit-text-options.html" %}
+                {% include "edit/include_subtract.html" %}
+                <div class="text-filtering border-fieldset">
+                    <h3>Text filtering</h3>
+                    {% include "edit/text-options.html" %}
+                </div>
             </div>
 
         {# rendered sub Template #}
