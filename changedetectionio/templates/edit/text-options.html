@@ -1,0 +1,69 @@
+
+                <fieldset>
+                    <div class="pure-control-group">
+                        {{ render_field(form.trigger_text, rows=5, placeholder="Some text to wait for in a line
+/some.regex\d{2}/ for case-INsensitive regex
+") }}
+                        <span class="pure-form-message-inline">
+                    <ul>
+                        <li>Text to wait for before triggering a change/notification, all text and regex are tested <i>case-insensitive</i>.</li>
+                        <li>Trigger text is processed from the result-text that comes out of any CSS/JSON Filters for this watch</li>
+                        <li>Each line is processed separately (think of each line as "OR")</li>
+                        <li>Note: Wrap in forward slash / to use regex  example: <code>/foo\d/</code></li>
+                    </ul>
+                        </span>
+                    </div>
+                </fieldset>
+                <fieldset class="pure-group">
+                    {{ render_field(form.ignore_text, rows=5, placeholder="Some text to ignore in a line
+/some.regex\d{2}/ for case-INsensitive regex
+") }}
+                    <span class="pure-form-message-inline">
+                        <ul>
+                            <li>Matching text will be <strong>ignored</strong> in the text snapshot (you can still see it but it wont trigger a change)</li>
+                            <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
+                            <li>Regular Expression support, wrap the entire line in forward slash <code>/regex/</code></li>
+                            <li>Changing this will affect the comparison checksum which may trigger an alert</li>
+                        </ul>
+                </span>
+
+                </fieldset>
+
+                <fieldset>
+                    <div class="pure-control-group">
+                        {{ render_field(form.text_should_not_be_present, rows=5, placeholder="For example: Out of stock
+Sold out
+Not in stock
+Unavailable") }}
+                        <span class="pure-form-message-inline">
+                            <ul>
+                                <li>Block change-detection while this text is on the page, all text and regex are tested <i>case-insensitive</i>, good for waiting for when a product is available again</li>
+                                <li>Block text is processed from the result-text that comes out of any CSS/JSON Filters for this watch</li>
+                                <li>All lines here must not exist (think of each line as "OR")</li>
+                                <li>Note: Wrap in forward slash / to use regex  example: <code>/foo\d/</code></li>
+                            </ul>
+                        </span>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <div class="pure-control-group">
+                        {{ render_field(form.extract_text, rows=5, placeholder="/.+?\d+ comments.+?/
+ or
+keyword") }}
+                        <span class="pure-form-message-inline">
+                    <ul>
+                        <li>Extracts text in the final output (line by line) after other filters using regular expressions or string match;
+                            <ul>
+                                <li>Regular expression &dash; example <code>/reports.+?2022/i</code></li>
+                                <li>Don't forget to consider the white-space at the start of a line <code>/.+?reports.+?2022/i</code></li>
+                                <li>Use <code>//(?aiLmsux))</code> type flags (more <a href="https://docs.python.org/3/library/re.html#index-15">information here</a>)<br></li>
+                                <li>Keyword example &dash; example <code>Out of stock</code></li>
+                                <li>Use groups to extract just that text &dash; example <code>/reports.+?(\d+)/i</code> returns a list of years only</li>
+                                <li>Example - match lines containing a keyword <code>/.*icecream.*/</code></li>
+                            </ul>
+                        </li>
+                        <li>One line per regular-expression/string match</li>
+                    </ul>
+                        </span>
+                    </div>
+                </fieldset>
