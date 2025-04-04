@@ -22,6 +22,7 @@
             <li class="tab"><a href="#notifications">Notifications</a></li>
             <li class="tab"><a href="#fetching">Fetching</a></li>
             <li class="tab"><a href="#filters">Global Filters</a></li>
+            <li class="tab"><a href="#ui-options">UI Options</a></li>
             <li class="tab"><a href="#api">API</a></li>
             <li class="tab"><a href="#timedate">Time &amp Date</a></li>
             <li class="tab"><a href="#proxies">CAPTCHA &amp; Proxies</a></li>
@@ -238,6 +239,12 @@ nav
                             {% endfor %}
                         </datalist>
                     </p>
+                </div>
+            </div>
+            <div class="tab-pane-inner" id="ui-options">
+                <div class="pure-control-group">
+                    {{ render_checkbox_field(form.application.form.ui.form.open_diff_in_new_tab, class="open_diff_in_new_tab") }}
+                    <span class="pure-form-message-inline">Enable this setting to open the diff page in a new tab. If disabled, the diff page will open in the current tab.</span>
                 </div>
             </div>
             <div class="tab-pane-inner" id="proxies">
