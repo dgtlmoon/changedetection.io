@@ -63,6 +63,7 @@ def capture_stitched_together_full_page(page):
         for img in images:
             stitched_image.paste(img, (0, y_offset))
             y_offset += img.height
+            img.close()
 
         logger.debug(f"Screenshot stitched together in {time.time()-now:.2f}s")
 
@@ -96,6 +97,7 @@ def capture_stitched_together_full_page(page):
         output = io.BytesIO()
         stitched_image.save(output, format="JPEG", quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
         screenshot = output.getvalue()
+        output.close()
 
     finally:
         # Restore the original viewport size
