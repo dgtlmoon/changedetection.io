@@ -15,6 +15,7 @@ def capture_stitched_together_full_page(page):
     import io
     import os
     import time
+    import gc
     from PIL import Image, ImageDraw, ImageFont
 
     MAX_TOTAL_HEIGHT = SCREENSHOT_SIZE_STITCH_THRESHOLD*4  # Maximum total height for the final image (When in stitch mode)
@@ -47,7 +48,9 @@ def capture_stitched_together_full_page(page):
 
             # Capture screenshot chunk
             screenshot_bytes = page.screenshot(type='jpeg', quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
-            images.append(Image.open(io.BytesIO(screenshot_bytes)))
+            img = Image.open(io.BytesIO(screenshot_bytes))
+            img.load()
+            images.append(img)
 
             total_captured_height += chunk_height
 
@@ -64,6 +67,8 @@ def capture_stitched_together_full_page(page):
             stitched_image.paste(img, (0, y_offset))
             y_offset += img.height
             img.close()
+            del img
+            gc.collect()
 
         logger.debug(f"Screenshot stitched together in {time.time()-now:.2f}s")
 
