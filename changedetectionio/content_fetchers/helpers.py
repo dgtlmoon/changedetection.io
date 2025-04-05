@@ -15,10 +15,11 @@ def capture_stitched_together_full_page(page):
     import io
     import os
     import time
+    import gc
     from PIL import Image, ImageDraw, ImageFont
 
     MAX_TOTAL_HEIGHT = SCREENSHOT_SIZE_STITCH_THRESHOLD*4  # Maximum total height for the final image (When in stitch mode)
-    MAX_CHUNK_HEIGHT = 4000  # Height per screenshot chunk
+    MAX_CHUNK_HEIGHT = 2000  # Height per screenshot chunk
     WARNING_TEXT_HEIGHT = 20  # Height of the warning text overlay
 
     # Save the original viewport size
@@ -32,12 +33,12 @@ def capture_stitched_together_full_page(page):
         # Limit the total capture height
         capture_height = min(page_height, MAX_TOTAL_HEIGHT)
 
-        images = []
-        total_captured_height = 0
+        # Create the final image upfront to avoid holding all chunks in memory
+        stitched_image = Image.new('RGB', (viewport["width"], capture_height))
 
         for offset in range(0, capture_height, MAX_CHUNK_HEIGHT):
             # Ensure we do not exceed the total height limit
-            chunk_height = min(MAX_CHUNK_HEIGHT, MAX_TOTAL_HEIGHT - total_captured_height)
+            chunk_height = min(MAX_CHUNK_HEIGHT, capture_height - offset)
 
             # Adjust viewport size for this chunk
             page.set_viewport_size({"width": viewport["width"], "height": chunk_height})
@@ -45,24 +46,18 @@ def capture_stitched_together_full_page(page):
             # Scroll to the correct position
             page.evaluate(f"window.scrollTo(0, {offset})")
 
-            # Capture screenshot chunk
-            screenshot_bytes = page.screenshot(type='jpeg', quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
-            images.append(Image.open(io.BytesIO(screenshot_bytes)))
+            # Capture and process immediately
+            with io.BytesIO(page.screenshot(type='jpeg', quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))) as buf:
+                with Image.open(buf) as img:
+                    img.load()
+                    stitched_image.paste(img, (0, offset))
+                    img.close()
 
-            total_captured_height += chunk_height
-
-            # Stop if we reached the maximum total height
-            if total_captured_height >= MAX_TOTAL_HEIGHT:
-                break
-
-        # Create the final stitched image
-        stitched_image = Image.new('RGB', (viewport["width"], total_captured_height))
-        y_offset = 0
-
-        # Stitch the screenshot chunks together
-        for img in images:
-            stitched_image.paste(img, (0, y_offset))
-            y_offset += img.height
+            # Explicit cleanup
+            del buf
+            gc.collect()
+            # Prevents Playwright from accumulating graphics buffers for different viewport sizes.
+            page.set_viewport_size(original_viewport)
 
         logger.debug(f"Screenshot stitched together in {time.time()-now:.2f}s")
 
@@ -92,13 +87,15 @@ def capture_stitched_together_full_page(page):
             # Draw the warning text in red
             draw.text((text_x, text_y), warning_text, fill="red", font=font)
 
-        # Save or return the final image
-        output = io.BytesIO()
-        stitched_image.save(output, format="JPEG", quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
-        screenshot = output.getvalue()
+        # Save final image
+        with io.BytesIO() as output:
+            stitched_image.save(output, format="JPEG", quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
+            screenshot = output.getvalue()
 
     finally:
         # Restore the original viewport size
         page.set_viewport_size(original_viewport)
+        if 'stitched_image' in locals():
+            stitched_image.close()
 
     return screenshot
