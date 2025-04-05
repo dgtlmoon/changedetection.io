@@ -46,15 +46,16 @@ def capture_stitched_together_full_page(page):
             # Scroll to the correct position
             page.evaluate(f"window.scrollTo(0, {offset})")
 
-            # Capture and process each chunk immediately
-            screenshot_bytes = page.screenshot(type='jpeg', quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
-            with Image.open(io.BytesIO(screenshot_bytes)) as img:
-                img.load()
-                stitched_image.paste(img, (0, offset))
+            # Capture and process immediately
+            with io.BytesIO(page.screenshot(type='jpeg', quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))) as buf:
+                with Image.open(buf) as img:
+                    img.load()
+                    stitched_image.paste(img, (0, offset))
 
-            # Explicit cleanup to minimize memory footprint
-            del screenshot_bytes
-            gc.collect()
+            # Explicit cleanup
+            del buf
+            # Prevents Playwright from accumulating graphics buffers for different viewport sizes.
+            page.set_viewport_size(original_viewport)
 
         logger.debug(f"Screenshot stitched together in {time.time()-now:.2f}s")
 
@@ -84,15 +85,15 @@ def capture_stitched_together_full_page(page):
             # Draw the warning text in red
             draw.text((text_x, text_y), warning_text, fill="red", font=font)
 
-        # Save or return the final image
-        output = io.BytesIO()
-        stitched_image.save(output, format="JPEG", quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
-        screenshot = output.getvalue()
-        output.close()
-        stitched_image.close()
+        # Save final image
+        with io.BytesIO() as output:
+            stitched_image.save(output, format="JPEG", quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
+            screenshot = output.getvalue()
 
     finally:
         # Restore the original viewport size
         page.set_viewport_size(original_viewport)
+        if 'stitched_image' in locals():
+            stitched_image.close()
 
     return screenshot
