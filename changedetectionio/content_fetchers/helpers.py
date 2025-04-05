@@ -103,6 +103,7 @@ def capture_stitched_together_full_page(page):
         stitched_image.save(output, format="JPEG", quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
         screenshot = output.getvalue()
         output.close()
+        stitched_image.close()
 
     finally:
         # Restore the original viewport size
