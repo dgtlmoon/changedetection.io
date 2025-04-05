@@ -19,7 +19,7 @@ def capture_stitched_together_full_page(page):
     from PIL import Image, ImageDraw, ImageFont
 
     MAX_TOTAL_HEIGHT = SCREENSHOT_SIZE_STITCH_THRESHOLD*4  # Maximum total height for the final image (When in stitch mode)
-    MAX_CHUNK_HEIGHT = 4000  # Height per screenshot chunk
+    MAX_CHUNK_HEIGHT = 2000  # Height per screenshot chunk
     WARNING_TEXT_HEIGHT = 20  # Height of the warning text overlay
 
     # Save the original viewport size
@@ -51,9 +51,11 @@ def capture_stitched_together_full_page(page):
                 with Image.open(buf) as img:
                     img.load()
                     stitched_image.paste(img, (0, offset))
+                    img.close()
 
             # Explicit cleanup
             del buf
+            gc.collect()
             # Prevents Playwright from accumulating graphics buffers for different viewport sizes.
             page.set_viewport_size(original_viewport)
 
