@@ -1,0 +1,55 @@
+                    <div class="pure-control-group">
+                        {% set field = render_field(form.include_filters,
+                            rows=5,
+                            placeholder=has_tag_filters_extra+"#example
+xpath://body/div/span[contains(@class, 'example-class')]",
+                            class="m-d")
+                        %}
+                        {{ field }}
+                        {% if '/text()' in  field %}
+                          <span class="pure-form-message-inline"><strong>Note!: //text() function does not work where the &lt;element&gt; contains &lt;![CDATA[]]&gt;</strong></span><br>
+                        {% endif %}
+                        <span class="pure-form-message-inline">One CSS, xPath 1 &amp; 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used.<br>
+                        <span data-target="#advanced-help-selectors" class="toggle-show pure-button button-tag button-xsmall">Show advanced help and tips</span><br>
+                    <ul id="advanced-help-selectors" style="display: none;">
+                        <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
+                        <li>JSON - Limit text to this JSON rule, using either <a href="https://pypi.org/project/jsonpath-ng/" target="new">JSONPath</a> or <a href="https://stedolan.github.io/jq/" target="new">jq</a> (if installed).
+                            <ul>
+                                <li>JSONPath: Prefix with <code>json:</code>, use <code>json:$</code> to force re-formatting if required,  <a href="https://jsonpath.com/" target="new">test your JSONPath here</a>.</li>
+                                {% if jq_support %}
+                                <li>jq: Prefix with <code>jq:</code> and <a href="https://jqplay.org/" target="new">test your jq here</a>. Using <a href="https://stedolan.github.io/jq/" target="new">jq</a> allows for complex filtering and processing of JSON data with built-in functions, regex, filtering, and more. See examples and documentation <a href="https://stedolan.github.io/jq/manual/" target="new">here</a>. Prefix <code>jqraw:</code> outputs the results as text instead of a JSON list.</li>
+                                {% else %}
+                                <li>jq support not installed</li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash. To specify XPath to be used explicitly or the XPath rule starts with an XPath function: Prefix with <code>xpath:</code>
+                            <ul>
+                                <li>Example:  <code>//*[contains(@class, 'sametext')]</code> or <code>xpath:count(//*[contains(@class, 'sametext')])</code>, <a
+                                href="http://xpather.com/" target="new">test your XPath here</a></li>
+                                <li>Example: Get all titles from an RSS feed <code>//title/text()</code></li>
+                                <li>To use XPath1.0: Prefix with <code>xpath1:</code></li>
+                            </ul>
+                            </li>
+                    <li>
+                        Please be sure that you thoroughly understand how to write CSS, JSONPath, XPath{% if jq_support %}, or jq selector{%endif%} rules before filing an issue on GitHub! <a
+                                href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br>
+                    </li>
+                    </ul>
+
+                </span>
+                    </div>
+                <fieldset class="pure-control-group">
+                    {{ render_field(form.subtractive_selectors, rows=5, placeholder=has_tag_filters_extra+"header
+footer
+nav
+.stockticker
+//*[contains(text(), 'Advertisement')]") }}
+                    <span class="pure-form-message-inline">
+                        <ul>
+                          <li> Remove HTML element(s) by CSS and XPath selectors before text conversion. </li>
+                          <li> Don't paste HTML here, use only CSS and XPath selectors </li>
+                          <li> Add multiple elements, CSS or XPath selectors per line to ignore multiple parts of the HTML. </li>
+                        </ul>
+                      </span>
+                </fieldset>

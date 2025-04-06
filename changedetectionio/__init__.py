@@ -2,7 +2,7 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.49.9'
+__version__ = '0.49.12'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
@@ -11,6 +11,7 @@ os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
 import eventlet
 import eventlet.wsgi
 import getopt
+import platform
 import signal
 import socket
 import sys
@@ -144,6 +145,19 @@ def main():
 
     signal.signal(signal.SIGTERM, sigshutdown_handler)
     signal.signal(signal.SIGINT, sigshutdown_handler)
+    
+    # Custom signal handler for memory cleanup
+    def sigusr_clean_handler(_signo, _stack_frame):
+        from changedetectionio.gc_cleanup import memory_cleanup
+        logger.info('SIGUSR1 received: Running memory cleanup')
+        return memory_cleanup(app)
+
+    # Register the SIGUSR1 signal handler
+    # Only register the signal handler if running on Linux
+    if platform.system() == "Linux":
+        signal.signal(signal.SIGUSR1, sigusr_clean_handler)
+    else:
+        logger.info("SIGUSR1 handler only registered on Linux, skipped.")
 
     # Go into cleanup mode
     if do_cleanup:

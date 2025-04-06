@@ -1,0 +1,135 @@
+/* Styles for the flexbox-based table replacement for conditions */
+.fieldlist_formfields {
+  width: 100%;
+  background-color: var(--color-background, #fff);
+  border-radius: 4px;
+  border: 1px solid var(--color-border-table-cell, #cbcbcb);
+  
+  /* Header row */
+  .fieldlist-header {
+    display: flex;
+    background-color: var(--color-background-table-thead, #e0e0e0);
+    font-weight: bold;
+    border-bottom: 1px solid var(--color-border-table-cell, #cbcbcb);
+  }
+  
+  .fieldlist-header-cell {
+    flex: 1;
+    padding: 0.5em 1em;
+    text-align: left;
+    
+    &:last-child {
+      flex: 0 0 120px; /* Fixed width for actions column */
+    }
+  }
+  
+  /* Body rows */
+  .fieldlist-body {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .fieldlist-row {
+    display: flex;
+    border-bottom: 1px solid var(--color-border-table-cell, #cbcbcb);
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    &:nth-child(2n-1) {
+      background-color: var(--color-table-stripe, #f2f2f2);
+    }
+    
+    &.error-row {
+      background-color: var(--color-error-input, #ffdddd);
+    }
+  }
+  
+  .fieldlist-cell {
+    flex: 1;
+    padding: 0.5em 1em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
+    /* Make inputs take up full width of their cell */
+    input, select {
+      width: 100%;
+    }
+    
+    &.fieldlist-actions {
+      flex: 0 0 120px; /* Fixed width for actions column */
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 4px;
+    }
+  }
+  
+  /* Error styling */
+  ul.errors {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+    padding: 0.5em;
+    background-color: var(--color-error-background-snapshot-age, #ffdddd);
+    border-radius: 4px;
+    list-style-position: inside;
+  }
+  
+  /* Responsive styles */
+  @media only screen and (max-width: 760px) {
+    .fieldlist-header, .fieldlist-row {
+      flex-direction: column;
+    }
+    
+    .fieldlist-header-cell {
+      display: none;
+    }
+    
+    .fieldlist-row {
+      padding: 0.5em 0;
+      border-bottom: 2px solid var(--color-border-table-cell, #cbcbcb);
+    }
+    
+    .fieldlist-cell {
+      padding: 0.25em 0.5em;
+      
+      &.fieldlist-actions {
+        flex: 1;
+        justify-content: flex-start;
+        padding-top: 0.5em;
+      }
+    }
+    
+    /* Add some spacing between fields on mobile */
+    .fieldlist-cell:not(:last-child) {
+      margin-bottom: 0.5em;
+    }
+    
+    /* Label each cell on mobile view */
+    .fieldlist-cell::before {
+      content: attr(data-label);
+      font-weight: bold;
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+/* Button styling */
+.fieldlist_formfields {
+  .addRuleRow, .removeRuleRow, .verifyRuleRow {
+    cursor: pointer;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-weight: bold;
+    background-color: #aaa;
+    color: var(--color-foreground-text, #fff);
+
+    &:hover {
+      background-color: #999;
+    }
+  }
+
+}

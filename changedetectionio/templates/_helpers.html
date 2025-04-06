@@ -61,21 +61,20 @@
   {{ field(**kwargs)|safe }}
 {% endmacro %}
 
-{% macro render_fieldlist_of_formfields_as_table(fieldlist, table_id="rulesTable") %}
-  <table class="fieldlist_formfields pure-table" id="{{ table_id }}">
-    <thead>
-      <tr>
-        {% for subfield in fieldlist[0] %}
-          <th>{{ subfield.label }}</th>
-        {% endfor %}
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
+{% macro render_conditions_fieldlist_of_formfields_as_table(fieldlist, table_id="rulesTable") %}
+  <div class="fieldlist_formfields" id="{{ table_id }}">
+    <div class="fieldlist-header">
+      {% for subfield in fieldlist[0] %}
+        <div class="fieldlist-header-cell">{{ subfield.label }}</div>
+      {% endfor %}
+      <div class="fieldlist-header-cell">Actions</div>
+    </div>
+    <div class="fieldlist-body">
       {% for form_row in fieldlist %}
-        <tr {% if form_row.errors %} class="error-row" {% endif %}>
+        <div class="fieldlist-row {% if form_row.errors %}error-row{% endif %}">
           {% for subfield in form_row %}
-            <td>
+            <div class="fieldlist-cell">
+
               {{ subfield()|safe }}
               {% if subfield.errors %}
                 <ul class="errors">
@@ -84,17 +83,17 @@
                   {% endfor %}
                 </ul>
               {% endif %}
-            </td>
+            </div>
           {% endfor %}
-          <td>
-            <button type="button" class="addRuleRow">+</button>
-            <button type="button" class="removeRuleRow">-</button>
+          <div class="fieldlist-cell fieldlist-actions">
+            <button type="button" class="addRuleRow" title="Add a row/rule after">+</button>
+            <button type="button" class="removeRuleRow" title="Remove this row/rule">-</button>
             <button type="button" class="verifyRuleRow" title="Verify this rule against current snapshot">✓</button>
-          </td>
-        </tr>
+          </div>
+        </div>
       {% endfor %}
-    </tbody>
-  </table>
+    </div>
+  </div>
 {% endmacro %}
 
 

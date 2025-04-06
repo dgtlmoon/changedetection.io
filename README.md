@@ -89,7 +89,7 @@ _Need an actual Chrome runner with Javascript support? We support fetching via W
 #### Key Features
 
 - Lots of trigger filters, such as "Trigger on text", "Remove text by selector", "Ignore text", "Extract text", also using regular-expressions!
-- Target elements with xPath(1.0) and CSS Selectors, Easily monitor complex JSON with JSONPath or jq
+- Target elements with xPath 1 and xPath 2, CSS Selectors, Easily monitor complex JSON with JSONPath or jq
 - Switch between fast non-JS and Chrome JS based "fetchers"
 - Track changes in PDF files (Monitor text changed in the PDF, Also monitor PDF filesize and checksums)
 - Easily specify how often a site should be checked

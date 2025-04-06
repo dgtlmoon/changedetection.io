@@ -125,7 +125,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
 
         else:
             # Recheck all, including muted
-            for watch_uuid, watch in datastore.data['watching'].items():
+            # Get most overdue first
+            for k in sorted(datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked', 0)):
+                watch_uuid = k[0]
+                watch = k[1]
                 if not watch['paused']:
                     if watch_uuid not in running_uuids:
                         if with_errors and not watch.get('last_error'):
@@ -140,7 +143,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
         if i == 1:
             flash("Queued 1 watch for rechecking.")
         if i > 1:
-            flash("Queued {} watches for rechecking.".format(i))
+            flash(f"Queued {i} watches for rechecking.")
         if i == 0:
             flash("No watches available to recheck.")
 

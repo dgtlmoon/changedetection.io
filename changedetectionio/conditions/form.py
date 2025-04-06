@@ -19,7 +19,7 @@ class ConditionFormRow(Form):
         validators=[validators.Optional()]
     )
 
-    value = StringField("Value", validators=[validators.Optional()])
+    value = StringField("Value", validators=[validators.Optional()], render_kw={"placeholder": "A value"})
 
     def validate(self, extra_validators=None):
         # First, run the default validators

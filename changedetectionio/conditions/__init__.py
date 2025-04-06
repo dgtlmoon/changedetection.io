@@ -8,7 +8,7 @@ from . import default_plugin
 
 # List of all supported JSON Logic operators
 operator_choices = [
-    (None, "Choose one"),
+    (None, "Choose one - Operator"),
     (">", "Greater Than"),
     ("<", "Less Than"),
     (">=", "Greater Than or Equal To"),
@@ -21,7 +21,7 @@ operator_choices = [
 
 # Fields available in the rules
 field_choices = [
-    (None, "Choose one"),
+    (None, "Choose one - Field"),
 ]
 
 # The data we will feed the JSON Rules to see if it passes the test/conditions or not

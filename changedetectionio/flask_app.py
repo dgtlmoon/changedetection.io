@@ -233,7 +233,8 @@ def changedetection_app(config=None, datastore_o=None):
 
         if has_password_enabled and not flask_login.current_user.is_authenticated:
             # Permitted
-            if request.endpoint and request.endpoint == 'static_content' and request.view_args and request.view_args.get('group') in ['styles', 'js', 'images', 'favicons']:
+            if request.endpoint and request.endpoint == 'static_content' and request.view_args:
+                # Handled by static_content handler
                 return None
             # Permitted
             elif request.endpoint and 'login' in request.endpoint:
@@ -351,11 +352,15 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
         from flask import make_response
+        import re
+        group = re.sub(r'[^\w.-]+', '', group.lower())
+        filename = re.sub(r'[^\w.-]+', '', filename.lower())
 
         if group == 'screenshot':
             # Could be sensitive, follow password requirements
             if datastore.data['settings']['application']['password'] and not flask_login.current_user.is_authenticated:
-                abort(403)
+                if not datastore.data['settings']['application'].get('shared_diff_access'):
+                    abort(403)
 
             screenshot_filename = "last-screenshot.png" if not request.args.get('error_screenshot') else "last-error-screenshot.png"
 
@@ -404,7 +409,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         # These files should be in our subdirectory
         try:
-            return send_from_directory("static/{}".format(group), path=filename)
+            return send_from_directory(f"static/{group}", path=filename)
         except FileNotFoundError:
             abort(404)
 
@@ -442,6 +447,16 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
+    
+    # Memory cleanup endpoint
+    @app.route('/gc-cleanup', methods=['GET'])
+    @login_optionally_required
+    def gc_cleanup():
+        from changedetectionio.gc_cleanup import memory_cleanup
+        from flask import jsonify
+
+        result = memory_cleanup(app)
+        return jsonify({"status": "success", "message": "Memory cleanup completed", "result": result})
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()

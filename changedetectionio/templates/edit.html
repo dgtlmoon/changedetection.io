@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_webdriver_type_watches_warning, render_fieldlist_of_formfields_as_table %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_webdriver_type_watches_warning, render_conditions_fieldlist_of_formfields_as_table %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
@@ -289,25 +289,13 @@ Math: {{ 1 + 1 }}") }}
                     <script>
                         const verify_condition_rule_url="{{url_for('conditions.verify_condition_single_rule', watch_uuid=uuid)}}";
                     </script>
-                <style>
-                    .verifyRuleRow {
-                        background-color: #4caf50;
-                        color: white;
-                        border: none;
-                        cursor: pointer;
-                        font-weight: bold;
-                    }
-                    .verifyRuleRow:hover {
-                        background-color: #45a049;
-                    }
-                </style>
                 <div class="pure-control-group">
                     {{ render_field(form.conditions_match_logic) }}
-                    {{ render_fieldlist_of_formfields_as_table(form.conditions) }}
+                    {{ render_conditions_fieldlist_of_formfields_as_table(form.conditions) }}
                     <div class="pure-form-message-inline">
 
                         <p id="verify-state-text">Use the verify (✓) button to test if a condition passes against the current snapshot.</p>
-                        Did you know that <strong>conditions</strong> can be extended with your own custom plugin? tutorials coming soon!<br>
+                       Read a quick tutorial about <a href="https://changedetection.io/tutorial/conditional-actions-web-page-changes">using conditional web page changes here</a>.<br>
                     </div>
                 </div>
             </div>
@@ -326,61 +314,8 @@ Math: {{ 1 + 1 }}") }}
                                 </li>
                             </ul>
                     </div>
-                    <div class="pure-control-group">
-                        {% set field = render_field(form.include_filters,
-                            rows=5,
-                            placeholder=has_tag_filters_extra+"#example
-xpath://body/div/span[contains(@class, 'example-class')]",
-                            class="m-d")
-                        %}
-                        {{ field }}
-                        {% if '/text()' in  field %}
-                          <span class="pure-form-message-inline"><strong>Note!: //text() function does not work where the &lt;element&gt; contains &lt;![CDATA[]]&gt;</strong></span><br>
-                        {% endif %}
-                        <span class="pure-form-message-inline">One CSS, xPath 1 &amp; 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used.<br>
-                        <span data-target="#advanced-help-selectors" class="toggle-show pure-button button-tag button-xsmall">Show advanced help and tips</span><br>
-                    <ul id="advanced-help-selectors" style="display: none;">
-                        <li>CSS - Limit text to this CSS rule, only text matching this CSS rule is included.</li>
-                        <li>JSON - Limit text to this JSON rule, using either <a href="https://pypi.org/project/jsonpath-ng/" target="new">JSONPath</a> or <a href="https://stedolan.github.io/jq/" target="new">jq</a> (if installed).
-                            <ul>
-                                <li>JSONPath: Prefix with <code>json:</code>, use <code>json:$</code> to force re-formatting if required,  <a href="https://jsonpath.com/" target="new">test your JSONPath here</a>.</li>
-                                {% if jq_support %}
-                                <li>jq: Prefix with <code>jq:</code> and <a href="https://jqplay.org/" target="new">test your jq here</a>. Using <a href="https://stedolan.github.io/jq/" target="new">jq</a> allows for complex filtering and processing of JSON data with built-in functions, regex, filtering, and more. See examples and documentation <a href="https://stedolan.github.io/jq/manual/" target="new">here</a>. Prefix <code>jqraw:</code> outputs the results as text instead of a JSON list.</li>
-                                {% else %}
-                                <li>jq support not installed</li>
-                                {% endif %}
-                            </ul>
-                        </li>
-                        <li>XPath - Limit text to this XPath rule, simply start with a forward-slash. To specify XPath to be used explicitly or the XPath rule starts with an XPath function: Prefix with <code>xpath:</code>
-                            <ul>
-                                <li>Example:  <code>//*[contains(@class, 'sametext')]</code> or <code>xpath:count(//*[contains(@class, 'sametext')])</code>, <a
-                                href="http://xpather.com/" target="new">test your XPath here</a></li>
-                                <li>Example: Get all titles from an RSS feed <code>//title/text()</code></li>
-                                <li>To use XPath1.0: Prefix with <code>xpath1:</code></li>
-                            </ul>
-                            </li>
-                    <li>
-                        Please be sure that you thoroughly understand how to write CSS, JSONPath, XPath{% if jq_support %}, or jq selector{%endif%} rules before filing an issue on GitHub! <a
-                                href="https://github.com/dgtlmoon/changedetection.io/wiki/CSS-Selector-help">here for more CSS selector help</a>.<br>
-                    </li>
-                    </ul>
 
-                </span>
-                    </div>
-                <fieldset class="pure-control-group">
-                    {{ render_field(form.subtractive_selectors, rows=5, placeholder=has_tag_filters_extra+"header
-footer
-nav
-.stockticker
-//*[contains(text(), 'Advertisement')]") }}
-                    <span class="pure-form-message-inline">
-                        <ul>
-                          <li> Remove HTML element(s) by CSS and XPath selectors before text conversion. </li>
-                          <li> Don't paste HTML here, use only CSS and XPath selectors </li>
-                          <li> Add multiple elements, CSS or XPath selectors per line to ignore multiple parts of the HTML. </li>
-                        </ul>
-                      </span>
-                </fieldset>
+{% include "edit/include_subtract.html" %}
                 <div class="text-filtering border-fieldset">
                 <fieldset class="pure-group" id="text-filtering-type-options">
                     <h3>Text filtering</h3>
@@ -408,76 +343,9 @@ nav
                     {{ render_checkbox_field(form.trim_text_whitespace) }}
                     <span class="pure-form-message-inline">Remove any whitespace before and after each line of text</span>
                 </fieldset>
-                <fieldset>
-                    <div class="pure-control-group">
-                        {{ render_field(form.trigger_text, rows=5, placeholder="Some text to wait for in a line
-/some.regex\d{2}/ for case-INsensitive regex
-") }}
-                        <span class="pure-form-message-inline">
-                    <ul>
-                        <li>Text to wait for before triggering a change/notification, all text and regex are tested <i>case-insensitive</i>.</li>
-                        <li>Trigger text is processed from the result-text that comes out of any CSS/JSON Filters for this watch</li>
-                        <li>Each line is processed separately (think of each line as "OR")</li>
-                        <li>Note: Wrap in forward slash / to use regex  example: <code>/foo\d/</code></li>
-                    </ul>
-                        </span>
-                    </div>
-                </fieldset>
-                <fieldset class="pure-group">
-                    {{ render_field(form.ignore_text, rows=5, placeholder="Some text to ignore in a line
-/some.regex\d{2}/ for case-INsensitive regex
-") }}
-                    <span class="pure-form-message-inline">
-                        <ul>
-                            <li>Matching text will be <strong>ignored</strong> in the text snapshot (you can still see it but it wont trigger a change)</li>
-                            <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
-                            <li>Regular Expression support, wrap the entire line in forward slash <code>/regex/</code></li>
-                            <li>Changing this will affect the comparison checksum which may trigger an alert</li>
-                        </ul>
-                </span>
-
-                </fieldset>
-
-                <fieldset>
-                    <div class="pure-control-group">
-                        {{ render_field(form.text_should_not_be_present, rows=5, placeholder="For example: Out of stock
-Sold out
-Not in stock
-Unavailable") }}
-                        <span class="pure-form-message-inline">
-                            <ul>
-                                <li>Block change-detection while this text is on the page, all text and regex are tested <i>case-insensitive</i>, good for waiting for when a product is available again</li>
-                                <li>Block text is processed from the result-text that comes out of any CSS/JSON Filters for this watch</li>
-                                <li>All lines here must not exist (think of each line as "OR")</li>
-                                <li>Note: Wrap in forward slash / to use regex  example: <code>/foo\d/</code></li>
-                            </ul>
-                        </span>
-                    </div>
-                </fieldset>
-                <fieldset>
-                    <div class="pure-control-group">
-                        {{ render_field(form.extract_text, rows=5, placeholder="/.+?\d+ comments.+?/
- or
-keyword") }}
-                        <span class="pure-form-message-inline">
-                    <ul>
-                        <li>Extracts text in the final output (line by line) after other filters using regular expressions or string match;
-                            <ul>
-                                <li>Regular expression &dash; example <code>/reports.+?2022/i</code></li>
-                                <li>Don't forget to consider the white-space at the start of a line <code>/.+?reports.+?2022/i</code></li>
-                                <li>Use <code>//(?aiLmsux))</code> type flags (more <a href="https://docs.python.org/3/library/re.html#index-15">information here</a>)<br></li>
-                                <li>Keyword example &dash; example <code>Out of stock</code></li>
-                                <li>Use groups to extract just that text &dash; example <code>/reports.+?(\d+)/i</code> returns a list of years only</li>
-                                <li>Example - match lines containing a keyword <code>/.*icecream.*/</code></li>
-                            </ul>
-                        </li>
-                        <li>One line per regular-expression/string match</li>
-                    </ul>
-                        </span>
-                    </div>
-                </fieldset>
+                {% include "edit/text-options.html" %}
                 </div>
-            </div>
+              </div>
               <div id="text-preview" style="display: none;" >
                     <script>
                         const preview_text_edit_filters_url="{{url_for('ui.ui_edit.watch_get_preview_rendered', uuid=uuid)}}";

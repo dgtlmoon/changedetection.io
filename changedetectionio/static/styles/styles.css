@@ -530,6 +530,99 @@ ul#conditions_match_logic {
   ul#conditions_match_logic li {
     padding-right: 1em; }
 
+/* Styles for the flexbox-based table replacement for conditions */
+.fieldlist_formfields {
+  width: 100%;
+  background-color: var(--color-background, #fff);
+  border-radius: 4px;
+  border: 1px solid var(--color-border-table-cell, #cbcbcb);
+  /* Header row */
+  /* Body rows */
+  /* Error styling */
+  /* Responsive styles */ }
+  .fieldlist_formfields .fieldlist-header {
+    display: flex;
+    background-color: var(--color-background-table-thead, #e0e0e0);
+    font-weight: bold;
+    border-bottom: 1px solid var(--color-border-table-cell, #cbcbcb); }
+  .fieldlist_formfields .fieldlist-header-cell {
+    flex: 1;
+    padding: 0.5em 1em;
+    text-align: left; }
+    .fieldlist_formfields .fieldlist-header-cell:last-child {
+      flex: 0 0 120px;
+      /* Fixed width for actions column */ }
+  .fieldlist_formfields .fieldlist-body {
+    display: flex;
+    flex-direction: column; }
+  .fieldlist_formfields .fieldlist-row {
+    display: flex;
+    border-bottom: 1px solid var(--color-border-table-cell, #cbcbcb); }
+    .fieldlist_formfields .fieldlist-row:last-child {
+      border-bottom: none; }
+    .fieldlist_formfields .fieldlist-row:nth-child(2n-1) {
+      background-color: var(--color-table-stripe, #f2f2f2); }
+    .fieldlist_formfields .fieldlist-row.error-row {
+      background-color: var(--color-error-input, #ffdddd); }
+  .fieldlist_formfields .fieldlist-cell {
+    flex: 1;
+    padding: 0.5em 1em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* Make inputs take up full width of their cell */ }
+    .fieldlist_formfields .fieldlist-cell input, .fieldlist_formfields .fieldlist-cell select {
+      width: 100%; }
+    .fieldlist_formfields .fieldlist-cell.fieldlist-actions {
+      flex: 0 0 120px;
+      /* Fixed width for actions column */
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 4px; }
+  .fieldlist_formfields ul.errors {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+    padding: 0.5em;
+    background-color: var(--color-error-background-snapshot-age, #ffdddd);
+    border-radius: 4px;
+    list-style-position: inside; }
+  @media only screen and (max-width: 760px) {
+    .fieldlist_formfields {
+      /* Add some spacing between fields on mobile */
+      /* Label each cell on mobile view */ }
+      .fieldlist_formfields .fieldlist-header, .fieldlist_formfields .fieldlist-row {
+        flex-direction: column; }
+      .fieldlist_formfields .fieldlist-header-cell {
+        display: none; }
+      .fieldlist_formfields .fieldlist-row {
+        padding: 0.5em 0;
+        border-bottom: 2px solid var(--color-border-table-cell, #cbcbcb); }
+      .fieldlist_formfields .fieldlist-cell {
+        padding: 0.25em 0.5em; }
+        .fieldlist_formfields .fieldlist-cell.fieldlist-actions {
+          flex: 1;
+          justify-content: flex-start;
+          padding-top: 0.5em; }
+      .fieldlist_formfields .fieldlist-cell:not(:last-child) {
+        margin-bottom: 0.5em; }
+      .fieldlist_formfields .fieldlist-cell::before {
+        content: attr(data-label);
+        font-weight: bold;
+        margin-bottom: 0.25em; } }
+
+/* Button styling */
+.fieldlist_formfields .addRuleRow, .fieldlist_formfields .removeRuleRow, .fieldlist_formfields .verifyRuleRow {
+  cursor: pointer;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-weight: bold;
+  background-color: #aaa;
+  color: var(--color-foreground-text, #fff); }
+  .fieldlist_formfields .addRuleRow:hover, .fieldlist_formfields .removeRuleRow:hover, .fieldlist_formfields .verifyRuleRow:hover {
+    background-color: #999; }
+
 body {
   color: var(--color-text);
   background: var(--color-background-page);

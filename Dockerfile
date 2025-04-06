@@ -1,8 +1,5 @@
 # pip dependencies install stage
 
-# @NOTE! I would love to move to 3.11 but it breaks the async handler in changedetectionio/content_fetchers/puppeteer.py
-#        If you know how to fix it, please do! and test it for both 3.10 and 3.11
-
 ARG PYTHON_VERSION=3.11
 
 FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
