@@ -63,6 +63,10 @@ services:
   #
   #        A valid timezone name to run as (for scheduling watch checking) see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   #      - TZ=America/Los_Angeles
+  #
+  #        Maximum height of screenshots, default is 16000 px, screenshots will be clipped to this if exceeded.
+  #        RAM usage will be higher if you increase this.
+  #      - SCREENSHOT_MAX_HEIGHT=16000
   
       # Comment out ports: when using behind a reverse proxy , enable networks: etc.
       ports:
