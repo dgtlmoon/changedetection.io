@@ -4,10 +4,6 @@
 # - If a page is taller than ~8000–10000px, it risks exceeding GPU memory limits.
 # - This is especially important on headless Chromium, where Playwright may fail to allocate a massive full-page buffer.
 
-
-# The size at which we will switch to stitching method
-SCREENSHOT_SIZE_STITCH_THRESHOLD = 8000
-
 from loguru import logger
 
 def capture_stitched_together_full_page(page):

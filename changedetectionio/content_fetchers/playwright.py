@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 
 from loguru import logger
 
-from changedetectionio.content_fetchers.helpers import capture_stitched_together_full_page, SCREENSHOT_SIZE_STITCH_THRESHOLD
+from changedetectionio.content_fetchers.helpers import capture_stitched_together_full_page
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
 
@@ -204,14 +204,7 @@ class fetcher(Fetcher):
             # acceptable screenshot quality here
             try:
                 # The actual screenshot - this always base64 and needs decoding! horrible! huge CPU usage
-                full_height = self.page.evaluate("document.documentElement.scrollHeight")
-
-                if full_height >= SCREENSHOT_SIZE_STITCH_THRESHOLD:
-                    logger.warning(
-                        f"Page full Height: {full_height}px longer than {SCREENSHOT_SIZE_STITCH_THRESHOLD}px, using 'stitched screenshot method'.")
-                    self.screenshot = capture_stitched_together_full_page(self.page)
-                else:
-                    self.screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
+                self.screenshot = capture_stitched_together_full_page(self.page)
 
             except Exception as e:
                 # It's likely the screenshot was too long/big and something crashed
