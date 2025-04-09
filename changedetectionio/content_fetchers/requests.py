@@ -96,3 +96,17 @@ class fetcher(Fetcher):
 
 
         self.raw_content = r.content
+
+    def quit(self, watch=None):
+
+        # In case they switched to `requests` fetcher from something else
+        # Then the screenshot could be old, in any case, it's not used here.
+        # REMOVE_REQUESTS_OLD_SCREENSHOTS - Mainly used for testing
+        if strtobool(os.getenv("REMOVE_REQUESTS_OLD_SCREENSHOTS", 'true')):
+            screenshot = watch.get_screenshot()
+            if screenshot:
+                try:
+                    os.unlink(screenshot)
+                except Exception as e:
+                    logger.warning(f"Failed to unlink screenshot: {screenshot} - {e}")
+
