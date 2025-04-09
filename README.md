@@ -105,6 +105,12 @@ We [recommend and use Bright Data](https://brightdata.grsm.io/n0r16zf7eivq) glob
 
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
 
+### Conditional web page changes
+
+Easily [configure conditional actions](https://changedetection.io/tutorial/conditional-actions-web-page-changes), for example, only trigger when a price is above or below a preset amount, or [when a web page includes (or does not include) a keyword](https://changedetection.io/tutorial/how-monitor-keywords-any-website)
+
+<img src="./docs/web-page-change-conditions.png" style="max-width:80%;" alt="Conditional web page changes"  title="Conditional web page changes"  />
+
 ### Schedule web page watches in any timezone, limit by day of week and time.
 
 Easily set a re-check schedule, for example you could limit the web page change detection to only operate during business hours.
