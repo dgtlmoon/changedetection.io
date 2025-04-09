@@ -65,6 +65,7 @@ class fetcher(Fetcher):
         # request_body, request_method unused for now, until some magic in the future happens.
 
         options = ChromeOptions()
+        options.add_argument("--headless")
         if self.proxy:
             options.proxy = self.proxy
 
