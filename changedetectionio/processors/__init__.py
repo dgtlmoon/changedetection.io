@@ -159,7 +159,7 @@ class difference_detection_processor():
                          )
 
         #@todo .quit here could go on close object, so we can run JS if change-detected
-        self.fetcher.quit()
+        self.fetcher.quit(watch=self.watch)
 
         # After init, call run_changedetection() which will do the actual change-detection
 

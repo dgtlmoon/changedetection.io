@@ -112,7 +112,7 @@ class fetcher(Fetcher):
         self.quit()
         return True
 
-    def quit(self):
+    def quit(self, watch=None):
         if self.driver:
             try:
                 self.driver.quit()

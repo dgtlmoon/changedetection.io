@@ -87,7 +87,7 @@ class Fetcher():
         pass
 
     @abstractmethod
-    def quit(self):
+    def quit(self, watch=None):
         return
 
     @abstractmethod
