@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 
 from loguru import logger
 
-from changedetectionio.content_fetchers.helpers import capture_stitched_together_full_page
+from changedetectionio.content_fetchers.helpers import capture_full_page
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
 
@@ -204,7 +204,7 @@ class fetcher(Fetcher):
             # acceptable screenshot quality here
             try:
                 # The actual screenshot - this always base64 and needs decoding! horrible! huge CPU usage
-                self.screenshot = capture_stitched_together_full_page(self.page)
+                self.screenshot = capture_full_page(self.page)
 
             except Exception as e:
                 # It's likely the screenshot was too long/big and something crashed

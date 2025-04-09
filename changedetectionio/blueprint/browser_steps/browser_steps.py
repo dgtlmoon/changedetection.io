@@ -4,7 +4,7 @@ import re
 from random import randint
 from loguru import logger
 
-from changedetectionio.content_fetchers.helpers import capture_stitched_together_full_page
+from changedetectionio.content_fetchers.helpers import capture_full_page
 from changedetectionio.content_fetchers.base import manage_user_agent
 from changedetectionio.safe_jinja import render as jinja_render
 
@@ -298,7 +298,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         now = time.time()
         self.page.wait_for_timeout(1 * 1000)
 
-        screenshot = capture_stitched_together_full_page(self.page)
+        screenshot = capture_full_page(self.page)
 
         logger.debug(f"Time to get screenshot from browser {time.time() - now:.2f}s")
 

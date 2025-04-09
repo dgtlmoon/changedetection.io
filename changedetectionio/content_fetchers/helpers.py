@@ -6,7 +6,7 @@
 
 from loguru import logger
 
-def capture_stitched_together_full_page(page):
+def capture_full_page(page):
     import io
     import os
     import time
@@ -17,11 +17,16 @@ def capture_stitched_together_full_page(page):
     # Example: 16000 × 1400 × 3 = 67,200,000 bytes ≈ 64.1 MB (not including buffers in PIL etc)
     MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", 16000))
 
+    # The size at which we will switch to stitching method, when below this (and
+    # MAX_TOTAL_HEIGHT which can be set by a user) we will use the default
+    # screenshot method.
+    SCREENSHOT_SIZE_STITCH_THRESHOLD = 8000
+
     WARNING_TEXT_HEIGHT = 20  # Height of the warning text overlay
 
     # Save the original viewport size
     original_viewport = page.viewport_size
-    now = time.time()
+    start = time.time()
 
     stitched_image = None
 
@@ -30,6 +35,26 @@ def capture_stitched_together_full_page(page):
         viewport_height = original_viewport["height"]
 
         page_height = page.evaluate("document.documentElement.scrollHeight")
+
+        # Optimization to avoid unnecessary stitching if we can avoid it
+        # Use the default screenshot method for smaller pages to take advantage
+        # of GPU and native playwright screenshot optimizations
+        if (
+            page_height < SCREENSHOT_SIZE_STITCH_THRESHOLD
+            and page_height < MAX_TOTAL_HEIGHT
+        ):
+            logger.debug("Using default screenshot method")
+            screenshot = page.screenshot(
+                type="jpeg",
+                quality=int(os.getenv("SCREENSHOT_QUALITY", 30)),
+                full_page=True,
+            )
+            logger.debug(f"Screenshot captured in {time.time() - start:.2f}s")
+            return screenshot
+
+        logger.debug(
+            "Using stitching method for large screenshot because page height exceeds threshold"
+        )
 
         # Limit the total capture height
         capture_height = min(page_height, MAX_TOTAL_HEIGHT)
@@ -65,7 +90,7 @@ def capture_stitched_together_full_page(page):
                     stitched_image.paste(img, (0, y_offset))
                     y_offset += img.height
 
-        logger.debug(f"Screenshot stitched together in {time.time() - now:.2f}s")
+        logger.debug(f"Screenshot stitched together in {time.time() - start:.2f}s")
 
         # Overlay warning text if the screenshot was trimmed
         if capture_height < page_height:
