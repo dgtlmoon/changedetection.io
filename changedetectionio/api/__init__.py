@@ -24,3 +24,4 @@ from .Watch import Watch, WatchHistory, WatchSingleHistory, CreateWatch
 from .Tags import Tags, Tag
 from .Import import Import
 from .SystemInfo import SystemInfo
+from .Notifications import Notifications
