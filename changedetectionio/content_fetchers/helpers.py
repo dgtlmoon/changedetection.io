@@ -91,7 +91,7 @@ def capture_full_page(page):
                     y_offset += img.height
 
         page.request_gc()
-        logger.debug(f"Screenshot stitched together in {time.time() - start:.2f}s")
+        logger.debug(f"Screenshot - page height: {page_height} capture height: {capture_height} - stitched together in {time.time() - start:.2f}s")
 
         # Overlay warning text if the screenshot was trimmed
         if capture_height < page_height:
