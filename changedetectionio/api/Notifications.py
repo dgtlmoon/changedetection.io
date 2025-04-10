@@ -13,7 +13,7 @@ class Notifications(Resource):
     def get(self):
         """
         @api {get} /api/v1/notifications Return Notification URL List
-        @apiDescription Return some info about the current system state
+        @apiDescription Return the Notification URL List from the configuration
         @apiExample {curl} Example usage:
             curl http://localhost:5000/api/v1/notifications -H"x-api-key:813031b16330fe25e3780cf0325daa45"
             HTTP/1.0 200
@@ -34,6 +34,7 @@ class Notifications(Resource):
     def post(self):
         """
         @api {post} /api/v1/notifications Create a single Notification URL
+        @apiDescription Add a new the notification URL to the configuration
         @apiExample {curl} Example usage:
             curl http://localhost:5000/api/v1/notifications -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"notification_url": "posts://service.com?yes=please&+custom-header=hello"}'
         @apiName Create
