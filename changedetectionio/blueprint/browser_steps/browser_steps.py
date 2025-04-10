@@ -5,7 +5,7 @@ from random import randint
 from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT
-from changedetectionio.content_fetchers.helpers import capture_full_page
+from changedetectionio.content_fetchers.screenshot_handler import capture_full_page
 from changedetectionio.content_fetchers.base import manage_user_agent
 from changedetectionio.safe_jinja import render as jinja_render
 
