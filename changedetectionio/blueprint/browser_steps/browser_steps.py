@@ -4,6 +4,7 @@ import re
 from random import randint
 from loguru import logger
 
+from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT
 from changedetectionio.content_fetchers.helpers import capture_full_page
 from changedetectionio.content_fetchers.base import manage_user_agent
 from changedetectionio.safe_jinja import render as jinja_render
@@ -307,13 +308,21 @@ class browsersteps_live_ui(steppable_browser_interface):
         self.page.evaluate("var include_filters=''")
         # Go find the interactive elements
         # @todo in the future, something smarter that can scan for elements with .click/focus etc event handlers?
-        elements = 'a,button,input,select,textarea,i,th,td,p,li,h1,h2,h3,h4,div,span'
-        xpath_element_js = xpath_element_js.replace('%ELEMENTS%', elements)
 
-        xpath_data = self.page.evaluate("async () => {" + xpath_element_js + "}")
+        self.page.request_gc()
+
+        scan_elements = 'a,button,input,select,textarea,i,th,td,p,li,h1,h2,h3,h4,div,span'
+
+        MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
+        xpath_data = json.loads(self.page.evaluate(xpath_element_js, {
+            "visualselector_xpath_selectors": scan_elements,
+            "max_height": MAX_TOTAL_HEIGHT
+        }))
+        self.page.request_gc()
+
         # So the JS will find the smallest one first
         xpath_data['size_pos'] = sorted(xpath_data['size_pos'], key=lambda k: k['width'] * k['height'], reverse=True)
-        logger.debug(f"Time to scrape xpath element data in browser {time.time()-now:.2f}s")
+        logger.debug(f"Time to scrape xPath element data in browser {time.time()-now:.2f}s")
 
         # playwright._impl._api_types.Error: Browser closed.
         # @todo show some countdown timer?

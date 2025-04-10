@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 from loguru import logger
 
+from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, BrowserConnectError
 
@@ -79,7 +80,6 @@ class fetcher(Fetcher):
                          empty_pages_are_a_change
                          ):
 
-        from changedetectionio.content_fetchers import visualselector_xpath_selectors
         self.delete_browser_steps_screenshots()
         extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
 
@@ -209,9 +209,13 @@ class fetcher(Fetcher):
         else:
             await self.page.evaluate(f"var include_filters=''")
 
-        self.xpath_data = await self.page.evaluate(
-            "async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}")
-        self.instock_data = await self.page.evaluate("async () => {" + self.instock_data_js + "}")
+        MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
+        self.git ata = await self.page.evaluate(self.xpath_element_js, {
+            "visualselector_xpath_selectors": visualselector_xpath_selectors,
+            "max_height": MAX_TOTAL_HEIGHT
+        })
+
+        self.instock_data = await self.page.evaluate(self.instock_data_js)
 
         self.content = await self.page.content
         # Bug 3 in Playwright screenshot handling

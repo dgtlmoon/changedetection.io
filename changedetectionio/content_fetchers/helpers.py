@@ -6,6 +6,9 @@
 
 from loguru import logger
 
+from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT
+
+
 def capture_full_page(page):
     import io
     import os
@@ -15,7 +18,7 @@ def capture_full_page(page):
     # Maximum total height for the final image (When in stitch mode).
     # We limit this to 16000px due to the huge amount of RAM that was being used
     # Example: 16000 × 1400 × 3 = 67,200,000 bytes ≈ 64.1 MB (not including buffers in PIL etc)
-    MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", 16000))
+    MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
 
     # The size at which we will switch to stitching method, when below this (and
     # MAX_TOTAL_HEIGHT which can be set by a user) we will use the default
@@ -91,7 +94,7 @@ def capture_full_page(page):
                     y_offset += img.height
 
         page.request_gc()
-        logger.debug(f"Screenshot - page height: {page_height} capture height: {capture_height} - stitched together in {time.time() - start:.2f}s")
+        logger.debug(f"Screenshot - Page height: {page_height} Capture height: {capture_height} - Stitched together in {time.time() - start:.2f}s")
 
         # Overlay warning text if the screenshot was trimmed
         if capture_height < page_height:

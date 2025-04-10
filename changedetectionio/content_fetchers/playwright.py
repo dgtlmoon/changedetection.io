@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 
 from loguru import logger
 
+from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors
 from changedetectionio.content_fetchers.helpers import capture_full_page
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
@@ -89,7 +90,6 @@ class fetcher(Fetcher):
 
         from playwright.sync_api import sync_playwright
         import playwright._impl._errors
-        from changedetectionio.content_fetchers import visualselector_xpath_selectors
         import time
         self.delete_browser_steps_screenshots()
         response = None
@@ -190,16 +190,19 @@ class fetcher(Fetcher):
             self.page.request_gc()
 
             # request_gc before and after evaluate to free up memory
-
-            self.xpath_data = json.loads(self.page.evaluate("async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}"))
+            # @todo browsersteps etc
+            MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
+            self.xpath_data = self.page.evaluate(self.xpath_element_js, {
+                "visualselector_xpath_selectors": visualselector_xpath_selectors,
+                "max_height": MAX_TOTAL_HEIGHT
+            })
             self.page.request_gc()
-            
-            instock_data_js = "async () => {" + self.instock_data_js + "}"
-            self.instock_data = self.page.evaluate(instock_data_js)
+
+            self.instock_data = self.page.evaluate(self.instock_data_js)
             self.page.request_gc()
 
             self.content = self.page.content()
-            logger.debug(f"Time to scrape xpath element data in browser {time.time() - now:.2f}s")
+            logger.debug(f"Scrape xPath element data in browser done in {time.time() - now:.2f}s")
 
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
