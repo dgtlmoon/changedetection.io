@@ -61,7 +61,7 @@ class fetcher(Fetcher):
 
     def screenshot_step(self, step_n=''):
         super().screenshot_step(step_n=step_n)
-        screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
+        screenshot = capture_full_page(self.page)
 
         if self.browser_steps_screenshot_path is not None:
             destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.jpeg'.format(step_n))
@@ -164,9 +164,7 @@ class fetcher(Fetcher):
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
 
             if self.status_code != 200 and not ignore_status_codes:
-                screenshot = self.page.screenshot(type='jpeg', full_page=True,
-                                                  quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
-
+                screenshot = capture_full_page(self.page)
                 raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
 
             if not empty_pages_are_a_change and len(self.page.content().strip()) == 0:

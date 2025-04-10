@@ -163,7 +163,7 @@ def capture_full_page(page):
     p.start()
     result = parent_conn.recv_bytes()
     p.join()
-    
+
     screenshot_chunks = None
     logger.debug(f"Screenshot - Page height: {page_height} Capture height: {capture_height} - Stitched together in {time.time() - start:.2f}s")
 
