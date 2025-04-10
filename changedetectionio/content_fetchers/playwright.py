@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
-    SCREENSHOT_SIZE_STITCH_THRESHOLD, MAX_TOTAL_HEIGHT
+    SCREENSHOT_SIZE_STITCH_THRESHOLD, MAX_TOTAL_HEIGHT, SCREENSHOT_DEFAULT_QUALITY
 from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
@@ -36,7 +36,7 @@ def capture_full_page(page):
         page.request_gc()
         screenshot = page.screenshot(
             type="jpeg",
-            quality=int(os.getenv("SCREENSHOT_QUALITY", 30)),
+            quality=int(os.getenv("SCREENSHOT_QUALITY", SCREENSHOT_DEFAULT_QUALITY)),
             full_page=True,
         )
         page.request_gc()
@@ -80,7 +80,7 @@ def capture_full_page(page):
                     "width": page.viewport_size['width'],
                     "height": h,
                 },
-                quality=int(os.getenv("SCREENSHOT_QUALITY", 30)),
+                quality=int(os.getenv("SCREENSHOT_QUALITY", SCREENSHOT_DEFAULT_QUALITY)),
             ))
 
         y_offset += h # maybe better to inspect the image here?

@@ -6,7 +6,9 @@ import os
 
 # Visual Selector scraper - 'Button' is there because some sites have <button>OUT OF STOCK</button>.
 visualselector_xpath_selectors = 'div,span,form,table,tbody,tr,td,a,p,ul,li,h1,h2,h3,h4,header,footer,section,article,aside,details,main,nav,section,summary,button'
+
 SCREENSHOT_MAX_HEIGHT_DEFAULT = 16000
+SCREENSHOT_DEFAULT_QUALITY = 40
 
 # Maximum total height for the final image (When in stitch mode).
 # We limit this to 16000px due to the huge amount of RAM that was being used

@@ -6,8 +6,7 @@
 
 from loguru import logger
 
-from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT
-
+from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, SCREENSHOT_DEFAULT_QUALITY
 
 
 def stitch_images_worker(pipe_conn, chunks_bytes, original_page_height, capture_height):
@@ -62,7 +61,7 @@ def stitch_images_worker(pipe_conn, chunks_bytes, original_page_height, capture_
 
         # Encode and send image
         output = io.BytesIO()
-        stitched.save(output, format="JPEG", quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
+        stitched.save(output, format="JPEG", quality=int(os.getenv("SCREENSHOT_QUALITY", SCREENSHOT_DEFAULT_QUALITY)))
         pipe_conn.send_bytes(output.getvalue())
 
         stitched.close()
