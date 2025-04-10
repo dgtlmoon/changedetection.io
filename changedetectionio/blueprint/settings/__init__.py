@@ -1,10 +1,13 @@
+import qrcode
+import io
 import os
+import json
 from copy import deepcopy
 from datetime import datetime
 from zoneinfo import ZoneInfo, available_timezones
 import secrets
 import flask_login
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
@@ -116,5 +119,19 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         output = render_template("notification-log.html",
                                logs=notification_debug_log if len(notification_debug_log) else ["Notification logs are empty - no notifications sent yet."])
         return output
+    
+    @settings_blueprint.route("/generate_app_qr_code", methods=['GET'])
+    @login_optionally_required
+    def generate_app_qr_code():
+
+        base_url = request.url_root.rstrip('/')
+        api_access_token = datastore.data['settings']['application'].get('api_access_token')
+        data = f"changemonitor://pair?api_access_token={api_access_token}&base_url={base_url}"       
+
+        img = qrcode.make(data)
+        buf = io.BytesIO()
+        img.save(buf, format='PNG')
+        buf.seek(0)
+        return send_file(buf, mimetype='image/png')
 
     return settings_blueprint

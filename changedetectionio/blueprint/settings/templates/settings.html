@@ -26,6 +26,7 @@
             <li class="tab"><a href="#api">API</a></li>
             <li class="tab"><a href="#timedate">Time &amp Date</a></li>
             <li class="tab"><a href="#proxies">CAPTCHA &amp; Proxies</a></li>
+            <li class="tab"><a href="#app">App</a></li>
         </ul>
     </div>
     <div class="box-wrap inner">
@@ -305,7 +306,20 @@ nav
                     </p>
                     {{ render_field(form.requests.form.extra_browsers) }}
                 </div>
+
             </div>
+
+            <div class="tab-pane-inner" id="app">
+                <div class="pure-control-group">
+                    <p><strong>Connect the Changemonitor iOS app.</strong></p>
+                    <p>Download the app. Scan the QR with your iPhone and you are good to go.</p>
+                    <p><strong>Download on the App Store</strong></p>   
+                    <a href="https://apps.apple.com/nl/app/changemonitor/id6473832284" target="_blank"><img style="height: 3em;" src="{{url_for('static_content', group='images', filename='app_store.svg')}}" alt="Download on the App Store"></a>
+                    <p><strong>Scan the QR with your iPhone</strong></p>   
+                    <img src="{{ url_for('settings.generate_app_qr_code') }}" alt="App QR Code" style="width:200px; height:200px;">                                
+                </div>
+            </div>
+
             <div id="actions">
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
