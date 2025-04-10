@@ -90,6 +90,7 @@ def capture_full_page(page):
                     stitched_image.paste(img, (0, y_offset))
                     y_offset += img.height
 
+        page.request_gc()
         logger.debug(f"Screenshot stitched together in {time.time() - start:.2f}s")
 
         # Overlay warning text if the screenshot was trimmed
@@ -132,7 +133,8 @@ def capture_full_page(page):
     finally:
         # Restore the original viewport size
         page.set_viewport_size(original_viewport)
+        page.request_gc()
         if stitched_image is not None:
             stitched_image.close()
-
+    stitched_image = None
     return screenshot

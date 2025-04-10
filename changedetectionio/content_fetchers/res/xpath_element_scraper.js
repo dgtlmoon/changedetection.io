@@ -282,4 +282,5 @@ if (include_filters.length) {
 size_pos.sort((a, b) => (a.width * a.height > b.width * b.height) ? 1 : -1)
 
 // Window.width required for proper scaling in the frontend
-return {'size_pos': size_pos, 'browser_width': window.innerWidth};
+return JSON.stringify({'s': size_pos, 'w': window.innerWidth});
+

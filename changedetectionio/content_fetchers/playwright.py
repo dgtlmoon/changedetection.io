@@ -188,9 +188,17 @@ class fetcher(Fetcher):
             else:
                 self.page.evaluate("var include_filters=''")
 
-            self.xpath_data = self.page.evaluate(
-                "async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}")
-            self.instock_data = self.page.evaluate("async () => {" + self.instock_data_js + "}")
+            # request_gc before and after evaluate to free up memory
+            self.page.request_gc()
+            x =self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
+            self.xpath_data = json.loads(self.page.evaluate("async () => {" + x + "}"))
+            del x
+            self.xpath_data = {}
+            self.page.request_gc()
+            
+            instock_data_js = "async () => {" + self.instock_data_js + "}"
+            self.instock_data = self.page.evaluate(instock_data_js)
+            self.page.request_gc()
 
             self.content = self.page.content()
             logger.debug(f"Time to scrape xpath element data in browser {time.time() - now:.2f}s")
@@ -210,5 +218,12 @@ class fetcher(Fetcher):
                 # It's likely the screenshot was too long/big and something crashed
                 raise ScreenshotUnavailable(url=url, status_code=self.status_code)
             finally:
+                # Request garbage collection one more time before closing
+                try:
+                    self.page.request_gc()
+                except:
+                    pass
+                
+                # Clean up resources properly
                 context.close()
                 browser.close()
