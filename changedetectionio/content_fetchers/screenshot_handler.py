@@ -82,7 +82,7 @@ def capture_full_page(page):
     # The size at which we will switch to stitching method, when below this (and
     # MAX_TOTAL_HEIGHT which can be set by a user) we will use the default
     # screenshot method.
-    SCREENSHOT_SIZE_STITCH_THRESHOLD = 12000
+    SCREENSHOT_SIZE_STITCH_THRESHOLD = 8000
 
     # Save the original viewport size
     original_viewport = page.viewport_size
