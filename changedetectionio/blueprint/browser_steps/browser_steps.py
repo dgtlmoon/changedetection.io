@@ -294,6 +294,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""
         import importlib.resources
         import json
+        # because we for now only run browser steps in playwright mode (not puppeteer mode)
         from changedetectionio.content_fetchers.playwright import capture_full_page
 
         xpath_element_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text()
@@ -301,8 +302,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         now = time.time()
         self.page.wait_for_timeout(1 * 1000)
 
-        original_viewport = self.page.viewport_size
-        screenshot = capture_full_page(page=self.page, viewport_width=original_viewport["width"], viewport_height=original_viewport["height"])
+        screenshot = capture_full_page(page=self.page)
 
         logger.debug(f"Time to get screenshot from browser {time.time() - now:.2f}s")
 

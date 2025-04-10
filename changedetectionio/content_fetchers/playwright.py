@@ -152,9 +152,7 @@ class fetcher(Fetcher):
 
     def screenshot_step(self, step_n=''):
         super().screenshot_step(step_n=step_n)
-        original_viewport = self.page.viewport_size
-        screenshot = capture_full_page(page=self.page, viewport_width=original_viewport["width"], viewport_height=original_viewport["height"])
-
+        screenshot = capture_full_page(page=self.page)
 
         if self.browser_steps_screenshot_path is not None:
             destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.jpeg'.format(step_n))
