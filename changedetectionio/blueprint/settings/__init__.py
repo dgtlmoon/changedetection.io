@@ -1,7 +1,6 @@
 import qrcode
 import io
 import os
-import json
 from copy import deepcopy
 from datetime import datetime
 from zoneinfo import ZoneInfo, available_timezones
