@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
-    SCREENSHOT_SIZE_STITCH_THRESHOLD, MAX_TOTAL_HEIGHT, SCREENSHOT_DEFAULT_QUALITY
+    SCREENSHOT_SIZE_STITCH_THRESHOLD, MAX_TOTAL_HEIGHT, SCREENSHOT_DEFAULT_QUALITY, XPATH_ELEMENT_JS, INSTOCK_DATA_JS
 from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
@@ -282,13 +282,13 @@ class fetcher(Fetcher):
             # request_gc before and after evaluate to free up memory
             # @todo browsersteps etc
             MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
-            self.xpath_data = self.page.evaluate(self.xpath_element_js, {
+            self.xpath_data = self.page.evaluate(XPATH_ELEMENT_JS, {
                 "visualselector_xpath_selectors": visualselector_xpath_selectors,
                 "max_height": MAX_TOTAL_HEIGHT
             })
             self.page.request_gc()
 
-            self.instock_data = self.page.evaluate(self.instock_data_js)
+            self.instock_data = self.page.evaluate(INSTOCK_DATA_JS)
             self.page.request_gc()
 
             self.content = self.page.content()
