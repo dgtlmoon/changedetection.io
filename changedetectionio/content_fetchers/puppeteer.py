@@ -183,7 +183,7 @@ class fetcher(Fetcher):
         if self.status_code != 200 and not ignore_status_codes:
             screenshot = await self.page.screenshot(type_='jpeg',
                                                     fullPage=True,
-                                                    quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
+                                                    quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
 
             raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
         content = await self.page.content
@@ -225,10 +225,11 @@ class fetcher(Fetcher):
         # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
         # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
         # acceptable screenshot quality here
+        #@todo use the screenshot_handler but it must be used as some kind of async process
         try:
             self.screenshot = await self.page.screenshot(type_='jpeg',
                                                          fullPage=True,
-                                                         quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
+                                                         quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
         except Exception as e:
             logger.error("Error fetching screenshot")
             # // May fail on very large pages with 'WARNING: tile memory limits exceeded, some content may not draw'
@@ -237,7 +238,7 @@ class fetcher(Fetcher):
             try:
                 self.screenshot = await self.page.screenshot(type_='jpeg',
                                                              fullPage=False,
-                                                             quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
+                                                             quality=int(os.getenv("SCREENSHOT_QUALITY", 30)))
             except Exception as e:
                 logger.error('ERROR: Failed to get viewport-only reduced screenshot :(')
                 pass
