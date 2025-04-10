@@ -1,14 +1,3 @@
-// Copyright (C) 2021 Leigh Morresi (dgtlmoon@gmail.com)
-// All rights reserved.
-
-// @file Scrape the page looking for elements of concern
-// http://matatk.agrip.org.uk/tests/position-and-width/
-// https://stackoverflow.com/questions/26813480/when-is-element-getboundingclientrect-guaranteed-to-be-updated-accurate
-//
-// Some pages like https://www.londonstockexchange.com/stock/NCCL/ncondezi-energy-limited/analysis
-// will automatically force a scroll somewhere, so include the position offset
-// Lets hope the position doesnt change while we iterate the bbox's, but this is better than nothing
-
 async (options) => {
 
     let visualselector_xpath_selectors = options.visualselector_xpath_selectors
@@ -289,7 +278,8 @@ async (options) => {
 // so that we dont select the wrapping element by mistake and be unable to select what we want
     size_pos.sort((a, b) => (a.width * a.height > b.width * b.height) ? 1 : -1)
 
-// Window.width required for proper scaling in the frontend
+// browser_width required for proper scaling in the frontend
+    // Return as a string to save playwright for juggling thousands of objects
     return JSON.stringify({'size_pos': size_pos, 'browser_width': window.innerWidth});
 }
 

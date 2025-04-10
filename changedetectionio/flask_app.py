@@ -394,7 +394,7 @@ def changedetection_app(config=None, datastore_o=None):
                     response.headers['Content-Type'] = 'application/json'
                     response.headers['Content-Encoding'] = 'deflate'
                 else:
-                    logger.error(f'Request elements.deflate at "{watch_directory}" but was notfound.')
+                    logger.error(f'Request elements.deflate at "{watch_directory}" but was not found.')
                     abort(404)
 
                 if response:

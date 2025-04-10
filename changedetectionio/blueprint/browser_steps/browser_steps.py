@@ -5,7 +5,6 @@ from random import randint
 from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT
-from changedetectionio.content_fetchers.screenshot_handler import capture_full_page
 from changedetectionio.content_fetchers.base import manage_user_agent
 from changedetectionio.safe_jinja import render as jinja_render
 
@@ -295,12 +294,15 @@ class browsersteps_live_ui(steppable_browser_interface):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""
         import importlib.resources
         import json
+        from changedetectionio.content_fetchers.playwright import capture_full_page
+
         xpath_element_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text()
 
         now = time.time()
         self.page.wait_for_timeout(1 * 1000)
 
-        screenshot = capture_full_page(self.page)
+        original_viewport = self.page.viewport_size
+        screenshot = capture_full_page(page=self.page, viewport_width=original_viewport["width"], viewport_height=original_viewport["height"])
 
         logger.debug(f"Time to get screenshot from browser {time.time() - now:.2f}s")
 

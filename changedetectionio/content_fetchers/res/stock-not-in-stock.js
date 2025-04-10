@@ -1,9 +1,3 @@
-// Restock Detector
-// (c) Leigh Morresi dgtlmoon@gmail.com
-//
-// Assumes the product is in stock to begin with, unless the following appears above the fold ;
-// - outOfStockTexts appears above the fold (out of stock)
-// - negateOutOfStockRegex (really is in stock)
 async () => {
 
     function isItemInStock() {
