@@ -143,6 +143,7 @@ class Fetcher():
                 logger.debug(f">> Iterating check - browser Step n {step_n} - {step['operation']}...")
                 self.screenshot_step("before-" + str(step_n))
                 self.save_step_html("before-" + str(step_n))
+
                 try:
                     optional_value = step['optional_value']
                     selector = step['selector']

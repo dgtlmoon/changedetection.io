@@ -187,13 +187,11 @@ class fetcher(Fetcher):
                 self.page.evaluate("var include_filters={}".format(json.dumps(current_include_filters)))
             else:
                 self.page.evaluate("var include_filters=''")
+            self.page.request_gc()
 
             # request_gc before and after evaluate to free up memory
-            self.page.request_gc()
-            x =self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors)
-            self.xpath_data = json.loads(self.page.evaluate("async () => {" + x + "}"))
-            del x
-            self.xpath_data = {}
+
+            self.xpath_data = json.loads(self.page.evaluate("async () => {" + self.xpath_element_js.replace('%ELEMENTS%', visualselector_xpath_selectors) + "}"))
             self.page.request_gc()
             
             instock_data_js = "async () => {" + self.instock_data_js + "}"
