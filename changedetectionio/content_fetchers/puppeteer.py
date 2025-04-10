@@ -210,7 +210,7 @@ class fetcher(Fetcher):
             await self.page.evaluate(f"var include_filters=''")
 
         MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
-        self.git ata = await self.page.evaluate(self.xpath_element_js, {
+        self.xpath_data = await self.page.evaluate(self.xpath_element_js, {
             "visualselector_xpath_selectors": visualselector_xpath_selectors,
             "max_height": MAX_TOTAL_HEIGHT
         })
