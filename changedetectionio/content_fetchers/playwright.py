@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
-    SCREENSHOT_SIZE_STITCH_THRESHOLD, MAX_TOTAL_HEIGHT, SCREENSHOT_DEFAULT_QUALITY, XPATH_ELEMENT_JS, INSTOCK_DATA_JS
+    SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_MAX_TOTAL_HEIGHT, SCREENSHOT_DEFAULT_QUALITY, XPATH_ELEMENT_JS, INSTOCK_DATA_JS
 from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
@@ -31,7 +31,7 @@ def capture_full_page(page):
     # Use the default screenshot method for smaller pages to take advantage
     # of GPU and native playwright screenshot optimizations
     # - No PIL needed here, no danger of memory leaks, no sub process required
-    if (page_height < SCREENSHOT_SIZE_STITCH_THRESHOLD and page_height < MAX_TOTAL_HEIGHT ):
+    if (page_height < SCREENSHOT_SIZE_STITCH_THRESHOLD and page_height < SCREENSHOT_MAX_TOTAL_HEIGHT ):
         logger.debug("Using default screenshot method")
         page.request_gc()
         screenshot = page.screenshot(
@@ -58,7 +58,7 @@ def capture_full_page(page):
     )
 
     # Limit the total capture height
-    capture_height = min(page_height, MAX_TOTAL_HEIGHT)
+    capture_height = min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT)
 
     # Calculate number of chunks needed using ORIGINAL viewport height
     num_chunks = (capture_height + page.viewport_size['height'] - 1) // page.viewport_size['height']
