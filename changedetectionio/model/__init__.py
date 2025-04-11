@@ -2,7 +2,7 @@ import os
 import uuid
 
 from changedetectionio import strtobool
-from changedetectionio.notification import default_notification_format_for_watch
+default_notification_format_for_watch = 'System default'
 
 class watch_base(dict):
 

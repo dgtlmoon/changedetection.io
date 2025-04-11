@@ -167,7 +167,10 @@ def test_check_notification(client, live_server, measure_memory_usage):
     assert ':-)' in notification_submission
     # Check the attachment was added, and that it is a JPEG from the original PNG
     notification_submission_object = json.loads(notification_submission)
+    assert notification_submission_object
+
     # We keep PNG screenshots for now
+    # IF THIS FAILS YOU SHOULD BE TESTING WITH ENV VAR REMOVE_REQUESTS_OLD_SCREENSHOTS=False
     assert notification_submission_object['attachments'][0]['filename'] == 'last-screenshot.png'
     assert len(notification_submission_object['attachments'][0]['base64'])
     assert notification_submission_object['attachments'][0]['mimetype'] == 'image/png'

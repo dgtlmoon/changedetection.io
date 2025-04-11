@@ -553,7 +553,10 @@ class model(watch_base):
         self.ensure_data_dir_exists()
 
         with open(target_path, 'wb') as f:
-            f.write(zlib.compress(json.dumps(data).encode()))
+            if not isinstance(data, str):
+                f.write(zlib.compress(json.dumps(data).encode()))
+            else:
+                f.write(zlib.compress(data.encode()))
             f.close()
 
     # Save as PNG, PNG is larger but better for doing visual diff in the future

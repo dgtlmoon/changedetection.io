@@ -1,47 +1,17 @@
 
 import time
-from apprise import NotifyFormat
 import apprise
 from loguru import logger
 
-from .apprise_plugin.assets import APPRISE_AVATAR_URL
-from .apprise_plugin.custom_handlers import apprise_http_custom_handler  # noqa: F401
-from .safe_jinja import render as jinja_render
-
-valid_tokens = {
-    'base_url': '',
-    'current_snapshot': '',
-    'diff': '',
-    'diff_added': '',
-    'diff_full': '',
-    'diff_patch': '',
-    'diff_removed': '',
-    'diff_url': '',
-    'preview_url': '',
-    'triggered_text': '',
-    'watch_tag': '',
-    'watch_title': '',
-    'watch_url': '',
-    'watch_uuid': '',
-}
-
-default_notification_format_for_watch = 'System default'
-default_notification_format = 'HTML Color'
-default_notification_body = '{{watch_url}} had a change.\n---\n{{diff}}\n---\n'
-default_notification_title = 'ChangeDetection.io Notification - {{watch_url}}'
-
-valid_notification_formats = {
-    'Text': NotifyFormat.TEXT,
-    'Markdown': NotifyFormat.MARKDOWN,
-    'HTML': NotifyFormat.HTML,
-    'HTML Color': 'htmlcolor',
-    # Used only for editing a watch (not for global)
-    default_notification_format_for_watch: default_notification_format_for_watch
-}
-
+from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
 
 
 def process_notification(n_object, datastore):
+    from changedetectionio.safe_jinja import render as jinja_render
+    from . import default_notification_format_for_watch, default_notification_format, valid_notification_formats
+    # be sure its registered
+    from .apprise_plugin.custom_handlers import apprise_http_custom_handler
+
     now = time.time()
     if n_object.get('notification_timestamp'):
         logger.trace(f"Time since queued {now-n_object['notification_timestamp']:.3f}s")
@@ -58,14 +28,13 @@ def process_notification(n_object, datastore):
         # Initially text or whatever
         n_format = datastore.data['settings']['application'].get('notification_format', valid_notification_formats[default_notification_format])
 
-    logger.trace(f"Complete notification body including Jinja and placeholders calculated in  {time.time() - now:.3f}s")
+    logger.trace(f"Complete notification body including Jinja and placeholders calculated in  {time.time() - now:.2f}s")
 
     # https://github.com/caronc/apprise/wiki/Development_LogCapture
     # Anything higher than or equal to WARNING (which covers things like Connection errors)
     # raise it as an exception
 
     sent_objs = []
-    from .apprise_plugin.assets import apprise_asset
 
     if 'as_async' in n_object:
         apprise_asset.async_mode = n_object.get('as_async')
@@ -176,6 +145,7 @@ def process_notification(n_object, datastore):
 # ( Where we prepare the tokens in the notification to be replaced with actual values )
 def create_notification_parameters(n_object, datastore):
     from copy import deepcopy
+    from . import valid_tokens
 
     # in the case we send a test notification from the main settings, there is no UUID.
     uuid = n_object['uuid'] if 'uuid' in n_object else ''
