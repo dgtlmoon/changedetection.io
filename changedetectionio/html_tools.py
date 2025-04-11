@@ -3,6 +3,11 @@ from lxml import etree
 from typing import List
 import json
 import re
+from itertools import chain
+from elementpath import select as elementpath_select
+# xpath 2.0-3.1
+from elementpath.xpath3 import XPath3Parser
+from loguru import logger
 
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
 TEXT_FILTER_LIST_LINE_SUFFIX = "<br>"
@@ -117,7 +122,7 @@ def element_removal(selectors: List[str], html_content):
 
 def elementpath_tostring(obj):
     """
-    change elementpath.select results to string type
+    change elementpath.select results(XDM) to string type
     # The MIT License (MIT), Copyright (c), 2018-2021, SISSA (Scuola Internazionale Superiore di Studi Avanzati)
     # https://github.com/sissaschool/elementpath/blob/dfcc2fd3d6011b16e02bf30459a7924f547b47d0/elementpath/xpath_tokens.py#L1038
     """
@@ -156,12 +161,44 @@ def elementpath_tostring(obj):
 
     return str(obj)
 
+def forest_transplanting(root):
+    """
+    The html parser of libxml2 violates DOM rules. It means there can be
+    multiple root element nodes. So I choose just transplating them to a new
+    root element when the violation happens. See also,
+    https://gitlab.gnome.org/GNOME/libxml2/-/issues/716 This will emulate
+    xpath1 of html of libxml2 like '/html[2]/*'. To make this function work,
+    'fragment=True' in elementpath.select is required. This part is where I
+    violates the spec.
+    """
+    from lxml import etree
+
+    root_siblings_preceding = [s for s in root.itersiblings(preceding=True)]
+    root_siblings = [s for s in root.itersiblings()]
+
+    Is_fragment = False
+    # If element node exsits in root element node's sibilings, it is fragment.
+    for node in chain(root_siblings_preceding, root_siblings):
+        if not hasattr(node.tag, '__name__'):
+            Is_fragment = True
+            # early exit. because the root is already root element.
+            # So, two root element nodes are detected. DOM violation.
+            break
+
+    if Is_fragment:
+        logger.debug("forest_transplanting is triggered.")
+        new_root = etree.Element("new_root")
+        root_siblings_preceding.reverse()
+        for node in chain(root_siblings_preceding, [root], root_siblings):
+            new_root.append(node)
+        return new_root, True
+
+    return root, False
+
+
 # Return str Utf-8 of matched rules
 def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
     from lxml import etree, html
-    import elementpath
-    # xpath 2.0-3.1
-    from elementpath.xpath3 import XPath3Parser
 
     parser = etree.HTMLParser()
     if is_rss:
@@ -169,9 +206,10 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
         parser = etree.XMLParser(strip_cdata=False)
 
     tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
+    tree, is_fragment = forest_transplanting(tree)
     html_block = ""
 
-    r = elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser)
+    r = elementpath_select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser, fragment=is_fragment)
     #@note: //title/text() wont work where <title>CDATA..
 
     if type(r) != list:
