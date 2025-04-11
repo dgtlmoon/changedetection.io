@@ -1,8 +1,12 @@
+from flask_expects_json import expects_json
 from flask_restful import Resource
 from . import auth
 from flask_restful import abort, Resource
 from flask import request
 from . import auth
+
+# Import schemas from __init__.py
+from . import schema_notification_urls, schema_create_notification_url
 
 class Notifications(Resource):
     def __init__(self, **kwargs):
@@ -30,7 +34,8 @@ class Notifications(Resource):
                 'notification_urls': notification_urls,
                }, 200
     
-    @auth.check_token    
+    @auth.check_token
+    @expects_json(schema_create_notification_url)    
     def post(self):
         """
         @api {post} /api/v1/notifications Create a single Notification URL
