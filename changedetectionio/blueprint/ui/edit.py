@@ -19,6 +19,20 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             if tag_uuid in watch.get('tags', []) and (tag.get('include_filters') or tag.get('subtractive_selectors')):
                 return True
 
+    def levenshtein_ratio_recent_history(watch):
+        try:
+            from Levenshtein import ratio, distance
+            k = list(watch.history.keys())
+            if len(k) >= 2:
+                a = watch.get_history_snapshot(timestamp=k[0])
+                b = watch.get_history_snapshot(timestamp=k[1])
+                distance = distance(a, b)
+                return distance
+        except Exception as e:
+            logger.warning("Unable to calc similarity", e)
+            return "Unable to calc similarity"
+        return ''
+
     @edit_blueprint.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     @login_optionally_required
     # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
@@ -247,14 +261,15 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,
                 'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
                 'has_special_tag_options': _watch_has_tag_options_set(watch=watch),
-                'watch_uses_webdriver': watch_uses_webdriver,
                 'jq_support': jq_support,
+                'lev_info': levenshtein_ratio_recent_history(watch),
                 'playwright_enabled': os.getenv('PLAYWRIGHT_DRIVER_URL', False),
                 'settings_application': datastore.data['settings']['application'],
                 'timezone_default_config': datastore.data['settings']['application'].get('timezone'),
                 'using_global_webdriver_wait': not default['webdriver_delay'],
                 'uuid': uuid,
-                'watch': watch
+                'watch': watch,
+                'watch_uses_webdriver': watch_uses_webdriver,
             }
 
             included_content = None
