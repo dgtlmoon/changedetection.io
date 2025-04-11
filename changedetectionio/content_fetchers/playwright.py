@@ -5,12 +5,9 @@ from urllib.parse import urlparse
 from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
-    SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_MAX_TOTAL_HEIGHT, SCREENSHOT_DEFAULT_QUALITY, XPATH_ELEMENT_JS, INSTOCK_DATA_JS
-from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
+    SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_MAX_TOTAL_HEIGHT, XPATH_ELEMENT_JS, INSTOCK_DATA_JS
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
-
-
 
 def capture_full_page(page):
     import os
@@ -20,84 +17,56 @@ def capture_full_page(page):
     start = time.time()
 
     page_height = page.evaluate("document.documentElement.scrollHeight")
+    page_width = page.evaluate("document.documentElement.scrollWidth")
+    original_viewport = page.viewport_size
 
-    logger.debug(f"Playwright viewport size {page.viewport_size}")
+    logger.debug(f"Playwright viewport size {page.viewport_size} page height {page_height} page width {page_width}")
 
-    ############################################################
-    #### SCREENSHOT FITS INTO ONE SNAPSHOT (SMALLER PAGES) #####
-    ############################################################
+    # Use an approach similar to puppeteer: set a larger viewport and take screenshots in chunks
+    step_size = SCREENSHOT_SIZE_STITCH_THRESHOLD # Size that won't cause GPU to overflow
+    screenshot_chunks = []
+    y = 0
+    
+    # If page height is larger than current viewport, use a larger viewport for better capturing
+    if page_height > page.viewport_size['height']:
+        # Set viewport to a larger size to capture more content at once
+        page.set_viewport_size({'width': page.viewport_size['width'], 'height': step_size})
 
-    # Optimization to avoid unnecessary stitching if we can avoid it
-    # Use the default screenshot method for smaller pages to take advantage
-    # of GPU and native playwright screenshot optimizations
-    # - No PIL needed here, no danger of memory leaks, no sub process required
-    if (page_height < SCREENSHOT_SIZE_STITCH_THRESHOLD and page_height < SCREENSHOT_MAX_TOTAL_HEIGHT ):
-        logger.debug("Using default screenshot method")
+    # Capture screenshots in chunks up to the max total height
+    while y < min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT):
         page.request_gc()
-        screenshot = page.screenshot(
+        page.evaluate(f"window.scrollTo(0, {y})")
+        page.request_gc()
+        screenshot_chunks.append(page.screenshot(
             type="jpeg",
-            quality=int(os.getenv("SCREENSHOT_QUALITY", SCREENSHOT_DEFAULT_QUALITY)),
-            full_page=True,
-        )
+            full_page=False,
+            quality=int(os.getenv("SCREENSHOT_QUALITY", 72))
+        ))
+        y += step_size
         page.request_gc()
-        logger.debug(f"Screenshot captured in {time.time() - start:.2f}s")
+
+    # Restore original viewport size
+    page.set_viewport_size({'width': original_viewport['width'], 'height': original_viewport['height']})
+
+    # If we have multiple chunks, stitch them together
+    if len(screenshot_chunks) > 1:
+        from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
+        logger.debug(f"Screenshot stitching {len(screenshot_chunks)} chunks together")
+        parent_conn, child_conn = Pipe()
+        p = Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
+        p.start()
+        screenshot = parent_conn.recv_bytes()
+        p.join()
+        logger.debug(
+            f"Screenshot (chunked/stitched) - Page height: {page_height} Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT} - Stitched together in {time.time() - start:.2f}s")
+
+        screenshot_chunks = None
         return screenshot
 
-
-
-    ###################################################################################
-    #### CASE FOR LARGE SCREENSHOTS THAT NEED TO BE TRIMMED DUE TO MEMORY ISSUES  #####
-    ###################################################################################
-    # - PIL can easily allocate memory and not release it cleanly
-    # - Fetching screenshot from playwright seems  OK
-    # Image.new is leaky even with .close()
-    # So lets prepare all the data chunks and farm it out to a subprocess for clean memory handling
-
     logger.debug(
-        "Using stitching method for large screenshot because page height exceeds threshold"
-    )
+        f"Screenshot Page height: {page_height} Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT} - Stitched together in {time.time() - start:.2f}s")
 
-    # Limit the total capture height
-    capture_height = min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT)
-
-    # Calculate number of chunks needed using ORIGINAL viewport height
-    num_chunks = (capture_height + page.viewport_size['height'] - 1) // page.viewport_size['height']
-    screenshot_chunks = []
-
-    # Track cumulative paste position
-    y_offset = 0
-    for _ in range(num_chunks):
-
-        page.request_gc()
-        page.evaluate(f"window.scrollTo(0, {y_offset})")
-        page.request_gc()
-        h = min(page.viewport_size['height'], capture_height - y_offset)
-        screenshot_chunks.append(page.screenshot(
-                type="jpeg",
-                clip={
-                    "x": 0,
-                    "y": 0,
-                    "width": page.viewport_size['width'],
-                    "height": h,
-                },
-                quality=int(os.getenv("SCREENSHOT_QUALITY", SCREENSHOT_DEFAULT_QUALITY)),
-            ))
-
-        y_offset += h # maybe better to inspect the image here?
-        page.request_gc()
-
-    # PIL can leak memory in various situations, assign the work to a subprocess for totally clean handling
-
-    parent_conn, child_conn = Pipe()
-    p = Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, capture_height))
-    p.start()
-    result = parent_conn.recv_bytes()
-    p.join()
-
-    screenshot_chunks = None
-    logger.debug(f"Screenshot - Page height: {page_height} Capture height: {capture_height} - Stitched together in {time.time() - start:.2f}s")
-
-    return result
+    return screenshot_chunks[0]
 
 
 class fetcher(Fetcher):
