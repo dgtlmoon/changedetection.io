@@ -4,9 +4,7 @@ from . import auth
 from flask_restful import abort, Resource
 from flask import request
 from . import auth
-
-# Import schemas from __init__.py
-from . import schema_notification_urls, schema_create_notification_url
+from . import schema_create_notification_urls
 
 class Notifications(Resource):
     def __init__(self, **kwargs):
@@ -35,57 +33,66 @@ class Notifications(Resource):
                }, 200
     
     @auth.check_token
-    @expects_json(schema_create_notification_url)    
+    @expects_json(schema_create_notification_urls)
     def post(self):
         """
-        @api {post} /api/v1/notifications Create a single Notification URL
-        @apiDescription Add a new the notification URL to the configuration
+        @api {post} /api/v1/notifications Create Notification URLs
+        @apiDescription Add one or more notification URLs from the configuration
         @apiExample {curl} Example usage:
-            curl http://localhost:5000/api/v1/notifications -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"notification_url": "posts://service.com?yes=please&+custom-header=hello"}'
-        @apiName Create
+            curl http://localhost:5000/api/v1/notifications/batch -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"notification_urls": ["url1", "url2"]}'
+        @apiName CreateBatch
         @apiGroup Notifications
-        @apiSuccess (201) {String} OK Was created
-        @apiSuccess (500) {String} ERR Some other error
+        @apiSuccess (201) {Object[]} notification_urls List of added notification URLs
+        @apiError (400) {String} Invalid input
         """
 
         json_data = request.get_json()
-        notification_url = json_data.get("notification_url",'').strip()
+        notification_urls = json_data.get("notification_urls", [])
+        added_urls = []
 
-        new_notification_url = self.datastore.add_notification_url(notification_url)
-        if new_notification_url:
-            return {'notification_url': new_notification_url}, 201
-        else:
-            return "Invalid or unsupported notification_url", 400
+        for url in notification_urls:
+            clean_url = url.strip()
+            added_url = self.datastore.add_notification_url(clean_url)
+            if added_url:
+                added_urls.append(added_url)
+
+        if not added_urls:
+            return "No valid notification URLs were added", 400
+
+        return {'notification_urls': added_urls}, 201
         
     @auth.check_token
     def delete(self):
         """
-        @api {delete} /api/v1/notifications Delete a single Notification URL
-        @apiDescription Deletes a specific notification URL from the configuration
+        @api {delete} /api/v1/notifications Delete Notification URLs
+        @apiDescription Deletes one or more notification URLs from the configuration
         @apiExample {curl} Example usage:
-            curl http://localhost:5000/api/v1/notifications -X DELETE -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"notification_url": "your-url-here"}'
-        @apiParam {String} notification_url The notification URL to delete.
+            curl http://localhost:5000/api/v1/notifications -X DELETE -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"notification_urls": ["url1", "url2"]}'
+        @apiParam {String[]} notification_urls The notification URLs to delete.
         @apiName Delete
         @apiGroup Notifications
-        @apiSuccess (204) {String} OK Was deleted
-        @apiError (400) {String} No notification URL found matching the provided input.
+        @apiSuccess (204) {String} OK Deleted
+        @apiError (400) {String} No matching notification URLs found.
         """
 
         json_data = request.get_json()
-        notification_url = json_data.get("notification_url",'').strip()
-        
+        urls_to_delete = json_data.get("notification_urls", [])
+        if not isinstance(urls_to_delete, list):
+            abort(400, message="Expected a list of notification URLs.")
+
         notification_urls = self.datastore.data['settings']['application'].get('notification_urls', [])
+        deleted = []
 
-        if notification_url not in notification_urls:
-            abort(400, message=f"No notification URL found matching: {notification_url}")
+        for url in urls_to_delete:
+            clean_url = url.strip()
+            if clean_url in notification_urls:
+                notification_urls.remove(clean_url)
+                deleted.append(clean_url)
 
-        # Remove the URL
-        notification_urls.remove(notification_url)
+        if not deleted:
+            abort(400, message="No matching notification URLs found.")
 
-        # Save the updated list back
         self.datastore.data['settings']['application']['notification_urls'] = notification_urls
-
-        # Mark for saving
         self.datastore.needs_write = True
 
         return 'OK', 204
