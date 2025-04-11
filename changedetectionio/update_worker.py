@@ -592,6 +592,7 @@ class update_worker(threading.Thread):
 
                 self.current_uuid = None  # Done
                 self.q.task_done()
+                update_handler = None
                 logger.debug(f"Watch {uuid} done in {time.time()-fetch_start_time:.2f}s")
 
                 # Give the CPU time to interrupt
