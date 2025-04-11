@@ -514,7 +514,8 @@ def notification_runner():
             sent_obj = None
 
             try:
-                from changedetectionio import notification
+                from changedetectionio.notification.handler import process_notification
+
                 # Fallback to system config if not set
                 if not n_object.get('notification_body') and datastore.data['settings']['application'].get('notification_body'):
                     n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
@@ -524,8 +525,8 @@ def notification_runner():
 
                 if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
                     n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
-
-                sent_obj = notification.process_notification(n_object, datastore)
+                if n_object.get('notification_urls', {}):
+                    sent_obj = process_notification(n_object, datastore)
 
             except Exception as e:
                 logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")

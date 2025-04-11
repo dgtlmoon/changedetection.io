@@ -4,7 +4,6 @@ from loguru import logger
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
-from changedetectionio.notification import process_notification
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     notification_blueprint = Blueprint('ui_notification', __name__, template_folder="../ui/templates")
@@ -18,8 +17,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Watch_uuid could be unset in the case it`s used in tag editor, global settings
         import apprise
-        from ...apprise_plugin.assets import apprise_asset
-        from ...apprise_plugin.custom_handlers import apprise_http_custom_handler  # noqa: F401
+        from changedetectionio.notification.handler import process_notification
+        from changedetectionio.notification.apprise_plugin.assets import apprise_asset
+
+        from changedetectionio.notification.apprise_plugin.custom_handlers import apprise_http_custom_handler
+
         apobj = apprise.Apprise(asset=apprise_asset)
 
         is_global_settings_form = request.args.get('mode', '') == 'global-settings'
