@@ -59,7 +59,10 @@ def capture_full_page(page):
         p.join()
         logger.debug(
             f"Screenshot (chunked/stitched) - Page height: {page_height} Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT} - Stitched together in {time.time() - start:.2f}s")
-
+        # Explicit cleanup
+        del screenshot_chunks
+        del p
+        del parent_conn, child_conn
         screenshot_chunks = None
         return screenshot
 
@@ -286,12 +289,28 @@ class fetcher(Fetcher):
                     pass
                 
                 # Clean up resources properly
-                context.close()
-                context = None
+                try:
+                    self.page.request_gc()
+                except:
+                    pass
 
-                self.page.close()
+                try:
+                    self.page.close()
+                except:
+                    pass
                 self.page = None
 
-                browser.close()
-                borwser = None
+                try:
+                    context.close()
+                except:
+                    pass
+                context = None
+
+                try:
+                    browser.close()
+                except:
+                    pass
+                browser = None
+
+
 
