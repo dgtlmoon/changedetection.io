@@ -4,7 +4,7 @@ from . import auth
 from flask_restful import abort, Resource
 from flask import request
 from . import auth
-from . import schema_create_notification_urls
+from . import schema_create_notification_urls, schema_delete_notification_urls
 
 class Notifications(Resource):
     def __init__(self, **kwargs):
@@ -62,6 +62,7 @@ class Notifications(Resource):
         return {'notification_urls': added_urls}, 201
         
     @auth.check_token
+    @expects_json(schema_delete_notification_urls)
     def delete(self):
         """
         @api {delete} /api/v1/notifications Delete Notification URLs
