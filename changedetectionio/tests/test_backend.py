@@ -74,6 +74,11 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     res = client.get(url_for("ui.ui_edit.watch_get_latest_html", uuid=uuid))
     assert b'which has this one new line' in res.data
 
+    # Check the 'levenshtein' distance calc showed something useful
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
+    assert b'Last 2 snapshots: 17' in res.data
+
+
     # Now something should be ready, indicated by having a 'unviewed' class
     res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data

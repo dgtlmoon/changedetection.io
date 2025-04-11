@@ -443,6 +443,10 @@ Math: {{ 1 + 1 }}") }}
                         </tr>
                         </tbody>
                     </table>
+
+                    <h4>Text similarity</h4>
+                    <p><strong>Levenshtein Distance</strong> - Last 2 snapshots: {{ lev_info }}</p>
+                    <p style="max-width: 80%; font-size: 80%"><strong>Levenshtein Distance</strong> Calculates the minimum number of insertions, deletions, and substitutions required to change one text into the other.</p>
                     {% if watch.history_n %}
                         <p>
                              <a href="{{url_for('ui.ui_edit.watch_get_latest_html', uuid=uuid)}}" class="pure-button button-small">Download latest HTML snapshot</a>

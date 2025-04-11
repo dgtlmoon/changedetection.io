@@ -68,6 +68,8 @@ openpyxl
 jq~=1.3; python_version >= "3.8" and sys_platform == "darwin"
 jq~=1.3; python_version >= "3.8" and sys_platform == "linux"
 
+levenshtein
+
 # playwright is installed at Dockerfile build time because it's not available on all platforms
 
 pyppeteer-ng==2.0.0rc9
