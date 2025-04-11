@@ -109,7 +109,6 @@ class update_worker(threading.Thread):
             default_notification_title
         )
 
-
         # Would be better if this was some kind of Object where Watch can reference the parent datastore etc
         v = watch.get(var_name)
         if v and not watch.get('notification_muted'):
