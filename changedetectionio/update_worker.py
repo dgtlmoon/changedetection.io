@@ -109,7 +109,6 @@ class update_worker(threading.Thread):
             default_notification_title
         )
 
-
         # Would be better if this was some kind of Object where Watch can reference the parent datastore etc
         v = watch.get(var_name)
         if v and not watch.get('notification_muted'):
@@ -592,6 +591,7 @@ class update_worker(threading.Thread):
 
                 self.current_uuid = None  # Done
                 self.q.task_done()
+                update_handler = None
                 logger.debug(f"Watch {uuid} done in {time.time()-fetch_start_time:.2f}s")
 
                 # Give the CPU time to interrupt

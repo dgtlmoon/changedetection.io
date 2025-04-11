@@ -63,11 +63,6 @@ class Fetcher():
     # Time ONTOP of the system defined env minimum time
     render_extract_delay = 0
 
-    def __init__(self):
-        import importlib.resources
-        self.xpath_element_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text(encoding='utf-8')
-        self.instock_data_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('stock-not-in-stock.js').read_text(encoding='utf-8')
-
     @abstractmethod
     def get_error(self):
         return self.error
@@ -143,6 +138,7 @@ class Fetcher():
                 logger.debug(f">> Iterating check - browser Step n {step_n} - {step['operation']}...")
                 self.screenshot_step("before-" + str(step_n))
                 self.save_step_html("before-" + str(step_n))
+
                 try:
                     optional_value = step['optional_value']
                     selector = step['selector']
