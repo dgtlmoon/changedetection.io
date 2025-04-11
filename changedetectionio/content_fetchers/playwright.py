@@ -261,6 +261,7 @@ class fetcher(Fetcher):
             self.page.request_gc()
 
             self.content = self.page.content()
+            self.page.request_gc()
             logger.debug(f"Scrape xPath element data in browser done in {time.time() - now:.2f}s")
 
             # Bug 3 in Playwright screenshot handling
@@ -286,4 +287,11 @@ class fetcher(Fetcher):
                 
                 # Clean up resources properly
                 context.close()
+                context = None
+
+                self.page.close()
+                self.page = None
+
                 browser.close()
+                borwser = None
+
