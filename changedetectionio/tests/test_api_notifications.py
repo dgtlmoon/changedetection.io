@@ -17,7 +17,7 @@ def test_api_notifications_crud(client, live_server):
     assert res.json == {"notification_urls": []}
 
     # Add notification URLs
-    test_urls = ["https://example.com/notify1", "https://example.com/notify2"]
+    test_urls = ["posts://example.com/notify1", "posts://example.com/notify2"]
     res = client.post(
         url_for("notifications"),
         data=json.dumps({"notification_urls": test_urls}),
@@ -56,7 +56,7 @@ def test_api_notifications_crud(client, live_server):
     # Try deleting a non-existent URL
     res = client.delete(
         url_for("notifications"),
-        data=json.dumps({"notification_urls": ["https://nonexistent.com"]}),
+        data=json.dumps({"notification_urls": ["posts://nonexistent.com"]}),
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
     assert res.status_code == 400
@@ -69,7 +69,7 @@ def test_api_notifications_crud(client, live_server):
     assert res.status_code == 201
 
     # Replace with a new list
-    replacement_urls = ["https://new.example.com"]
+    replacement_urls = ["posts://new.example.com"]
     res = client.put(
         url_for("notifications"),
         data=json.dumps({"notification_urls": replacement_urls}),
@@ -86,3 +86,23 @@ def test_api_notifications_crud(client, live_server):
     )
     assert res.status_code == 200
     assert res.json["notification_urls"] == []
+
+    # Provide an invalid AppRise URL to trigger validation error
+    invalid_urls = ["ftp://not-app-rise"]
+    res = client.post(
+        url_for("notifications"),
+        data=json.dumps({"notification_urls": invalid_urls}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key}
+    )
+    assert res.status_code == 400
+    assert "is not a valid AppRise URL." in res.data.decode()
+
+    res = client.put(
+        url_for("notifications"),
+        data=json.dumps({"notification_urls": invalid_urls}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key}
+    )
+    assert res.status_code == 400
+    assert "is not a valid AppRise URL." in res.data.decode()
+
+    

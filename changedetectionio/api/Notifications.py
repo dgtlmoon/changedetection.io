@@ -48,6 +48,13 @@ class Notifications(Resource):
 
         json_data = request.get_json()
         notification_urls = json_data.get("notification_urls", [])
+
+        from wtforms import ValidationError
+        try:
+            validate_notification_urls(notification_urls)
+        except ValidationError as e:
+            return str(e), 400
+
         added_urls = []
 
         for url in notification_urls:
@@ -76,6 +83,13 @@ class Notifications(Resource):
         """
         json_data = request.get_json()
         notification_urls = json_data.get("notification_urls", [])
+
+        from wtforms import ValidationError
+        try:
+            validate_notification_urls(notification_urls)
+        except ValidationError as e:
+            return str(e), 400
+        
         if not isinstance(notification_urls, list):
             return "Invalid input format", 400
 
@@ -121,3 +135,11 @@ class Notifications(Resource):
         self.datastore.needs_write = True
 
         return 'OK', 204
+    
+def validate_notification_urls(notification_urls):
+    from changedetectionio.forms import ValidateAppRiseServers
+    validator = ValidateAppRiseServers()
+    class DummyForm: pass
+    dummy_form = DummyForm()
+    field = type("Field", (object,), {"data": notification_urls, "gettext": lambda self, x: x})()
+    validator(dummy_form, field)
