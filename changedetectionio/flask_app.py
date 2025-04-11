@@ -33,7 +33,7 @@ from loguru import logger
 
 from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
-from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, CreateWatch, Import, SystemInfo, Tag, Tags
+from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
 
@@ -285,7 +285,8 @@ def changedetection_app(config=None, datastore_o=None):
     watch_api.add_resource(Search, '/api/v1/search',
                            resource_class_kwargs={'datastore': datastore})
 
-
+    watch_api.add_resource(Notifications, '/api/v1/notifications',
+                           resource_class_kwargs={'datastore': datastore})
 
     @login_manager.user_loader
     def user_loader(email):

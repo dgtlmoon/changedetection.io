@@ -19,8 +19,15 @@ schema_create_tag['required'] = ['title']
 schema_update_tag = copy.deepcopy(schema_tag)
 schema_update_tag['additionalProperties'] = False
 
+schema_notification_urls = copy.deepcopy(schema)
+schema_create_notification_urls = copy.deepcopy(schema_notification_urls)
+schema_create_notification_urls['required'] = ['notification_urls']
+schema_delete_notification_urls = copy.deepcopy(schema_notification_urls)
+schema_delete_notification_urls['required'] = ['notification_urls']
+
 # Import all API resources
 from .Watch import Watch, WatchHistory, WatchSingleHistory, CreateWatch
 from .Tags import Tags, Tag
 from .Import import Import
 from .SystemInfo import SystemInfo
+from .Notifications import Notifications
