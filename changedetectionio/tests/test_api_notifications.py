@@ -60,3 +60,29 @@ def test_api_notifications_crud(client, live_server):
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
     assert res.status_code == 400
+
+    res = client.post(
+        url_for("notifications"),
+        data=json.dumps({"notification_urls": test_urls}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key}
+    )
+    assert res.status_code == 201
+
+    # Replace with a new list
+    replacement_urls = ["https://new.example.com"]
+    res = client.put(
+        url_for("notifications"),
+        data=json.dumps({"notification_urls": replacement_urls}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key}
+    )
+    assert res.status_code == 200
+    assert res.json["notification_urls"] == replacement_urls
+
+    # Replace with an empty list
+    res = client.put(
+        url_for("notifications"),
+        data=json.dumps({"notification_urls": []}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key}
+    )
+    assert res.status_code == 200
+    assert res.json["notification_urls"] == []

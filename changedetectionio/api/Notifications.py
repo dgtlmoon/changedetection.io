@@ -60,6 +60,30 @@ class Notifications(Resource):
             return "No valid notification URLs were added", 400
 
         return {'notification_urls': added_urls}, 201
+    
+    @auth.check_token
+    @expects_json(schema_create_notification_urls)
+    def put(self):
+        """
+        @api {put} /api/v1/notifications Replace Notification URLs
+        @apiDescription Replace all notification URLs with the provided list (can be empty)
+        @apiExample {curl} Example usage:
+            curl -X PUT http://localhost:5000/api/v1/notifications -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"notification_urls": ["url1", "url2"]}'
+        @apiName Replace
+        @apiGroup Notifications
+        @apiSuccess (200) {Object[]} notification_urls List of current notification URLs
+        @apiError (400) {String} Invalid input
+        """
+        json_data = request.get_json()
+        notification_urls = json_data.get("notification_urls", [])
+        if not isinstance(notification_urls, list):
+            return "Invalid input format", 400
+
+        clean_urls = [url.strip() for url in notification_urls if isinstance(url, str)]
+        self.datastore.data['settings']['application']['notification_urls'] = clean_urls
+        self.datastore.needs_write = True
+
+        return {'notification_urls': clean_urls}, 200
         
     @auth.check_token
     @expects_json(schema_delete_notification_urls)
