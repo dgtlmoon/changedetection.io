@@ -113,7 +113,7 @@ services:
 #            - SCREEN_HEIGHT=1080
 #            - SCREEN_DEPTH=24
 #          CHROME_OPTIONS: |
-#            --window-size=300,300
+#            --window-size=1280,1024
 #            --headless
 #            --disable-gpu
 #        volumes:
