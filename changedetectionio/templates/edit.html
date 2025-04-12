@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_webdriver_type_watches_warning, render_conditions_fieldlist_of_formfields_as_table %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_playwright_type_watches_warning, render_conditions_fieldlist_of_formfields_as_table %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
@@ -204,7 +204,9 @@ Math: {{ 1 + 1 }}") }}
             </div>
 
             <div class="tab-pane-inner" id="browser-steps">
-            {% if playwright_enabled and watch_uses_webdriver %}
+            {% if watch_needs_selenium_or_playwright %}
+                {# Only works with playwright #}
+                {% if system_has_playwright_configured %}
                 <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}" alt="New beta functionality">
                 <fieldset>
                     <div class="pure-control-group">
@@ -223,7 +225,6 @@ Math: {{ 1 + 1 }}") }}
                         <div class="flex-wrapper" >
 
                             <div id="browser-steps-ui" class="noselect">
-
                                 <div class="noselect"  id="browsersteps-selector-wrapper" style="width: 100%">
                                     <span class="loader" >
                                         <span id="browsersteps-click-start">
@@ -245,15 +246,16 @@ Math: {{ 1 + 1 }}") }}
                     </div>
                 </fieldset>
                 {% else %}
-                    <span class="pure-form-message-inline">
-                        {% if not watch_uses_webdriver %}
-                            {{ only_webdriver_type_watches_warning() }}
-                        {% endif %}
-                        {%  if not playwright_enabled %}
-                            {{ playwright_warning() }}
-                        {% endif %}
-                    </span>
+                    {# it's configured to use selenium or chrome but system says its not configured #}
+                    {{ playwright_warning() }}
+                    {% if system_has_webdriver_configured %}
+                        <strong>Selenium/Webdriver cant be used here because it wont fetch screenshots reliably.</strong>
+                    {% endif %}
                 {% endif %}
+            {% else %}
+                {# "This functionality needs chrome.." #}
+                {{ only_playwright_type_watches_warning() }}
+            {% endif %}
             </div>
 
 
@@ -379,7 +381,9 @@ Math: {{ 1 + 1 }}") }}
 
                 <fieldset>
                     <div class="pure-control-group">
-                        {% if playwright_enabled and watch_uses_webdriver %}
+                        {% if watch_needs_selenium_or_playwright %}
+                            {% if system_has_playwright_configured %}
+                                {%  if visual_selector_data_ready %}
                             <span class="pure-form-message-inline" id="visual-selector-heading">
                                 The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection. It automatically fills-in the filters in the "CSS/JSONPath/JQ/XPath Filters" box of the <a href="#filters-and-triggers">Filters & Triggers</a> tab. Use <strong>Shift+Click</strong> to select multiple items.
                             </span>
@@ -396,14 +400,20 @@ Math: {{ 1 + 1 }}") }}
                                 <canvas id="selector-canvas"></canvas>
                             </div>
                             <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
+                            {% else %}
+                                <strong>Error, The Visual selector data is not ready, it needs to complete atleast one fetch, please queue the item and reload.</strong>
+                            {% endif %}
                         {% else %}
-                            {% if not watch_uses_webdriver %}
-                                {{ only_webdriver_type_watches_warning() }}
-                            {% endif %}
-                            {% if not playwright_enabled %}
-                                {{ playwright_warning() }}
-                            {% endif %}
+                            {# The watch needed chrome but system says that playwright is not ready #}
+                            {{ playwright_warning() }}
                         {% endif %}
+                            {% if system_has_webdriver_configured %}
+                                <strong>Selenium/Webdriver cant be used here because it wont fetch screenshots reliably.</strong>
+                            {% endif %}
+                    {% else %}
+                        {# "This functionality needs chrome.." #}
+                        {{ only_playwright_type_watches_warning() }}
+                    {% endif %}
                     </div>
                 </fieldset>
             </div>
