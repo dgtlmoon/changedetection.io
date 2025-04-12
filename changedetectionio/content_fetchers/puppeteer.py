@@ -46,8 +46,9 @@ async def capture_full_page(page):
     screenshot_chunks = []
     y = 0
     if page_height > page.viewport['height']:
+        if page_height < step_size:
+            step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
         await page.setViewport({'width': page.viewport['width'], 'height': step_size})
-
 
     while y < min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT):
         await page.evaluate(f"window.scrollTo(0, {y})")
