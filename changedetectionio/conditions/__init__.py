@@ -96,7 +96,7 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
     
     ruleset_settings = application_datastruct['watching'].get(current_watch_uuid)
 
-    if ruleset_settings.get("conditions"):
+    if ruleset_settings and ruleset_settings.get("conditions"):
         logic_operator = "and" if ruleset_settings.get("conditions_match_logic", "ALL") == "ALL" else "or"
         complete_rules = filter_complete_rules(ruleset_settings['conditions'])
         if complete_rules:
