@@ -26,9 +26,11 @@ def capture_full_page(page):
     step_size = SCREENSHOT_SIZE_STITCH_THRESHOLD # Size that won't cause GPU to overflow
     screenshot_chunks = []
     y = 0
-    
-    # If page height is larger than current viewport, use a larger viewport for better capturing
+
     if page_height > page.viewport_size['height']:
+        if page_height < step_size:
+            step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
+        logger.debug(f"Setting bigger viewport to step through large page width W{page.viewport_size['width']}xH{step_size} because page_height > viewport_size")
         # Set viewport to a larger size to capture more content at once
         page.set_viewport_size({'width': page.viewport_size['width'], 'height': step_size})
 
