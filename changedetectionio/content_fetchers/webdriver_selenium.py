@@ -65,7 +65,17 @@ class fetcher(Fetcher):
         # request_body, request_method unused for now, until some magic in the future happens.
 
         options = ChromeOptions()
-        options.add_argument("--headless")
+
+        # Load Chrome options from env
+        CHROME_OPTIONS = [
+            line.strip()
+            for line in os.getenv("CHROME_OPTIONS", "").strip().splitlines()
+            if line.strip()
+        ]
+
+        for opt in CHROME_OPTIONS:
+            options.add_argument(opt)
+
         if self.proxy:
             options.proxy = self.proxy
 
@@ -80,13 +90,16 @@ class fetcher(Fetcher):
             self.quit()
             raise
 
-        self.driver.set_window_size(1280, 1024)
+        if not "--window-size" in os.getenv("CHROME_OPTIONS", ""):
+            self.driver.set_window_size(1280, 1024)
+
         self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
 
         if self.webdriver_js_execute_code is not None:
             self.driver.execute_script(self.webdriver_js_execute_code)
             # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
             self.driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
+
 
         # @todo - how to check this? is it possible?
         self.status_code = 200

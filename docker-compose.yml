@@ -9,15 +9,20 @@ services:
 #        - ./proxies.json:/datastore/proxies.json
 
   #    environment:
-  #        Default listening port, can also be changed with the -p option
+  #        Default listening port, can also be changed with the -p option (not to be confused with ports: below)
   #      - PORT=5000
   #
   #        Log levels are in descending order. (TRACE is the most detailed one)
   #        Log output levels: TRACE, DEBUG(default), INFO, SUCCESS, WARNING, ERROR, CRITICAL
   #      - LOGGER_LEVEL=TRACE
   #
-  #       Alternative WebDriver/selenium URL, do not use "'s or 's!
-  #      - WEBDRIVER_URL=http://browser-chrome:4444/wd/hub
+  #
+  #       Uncomment below and the "sockpuppetbrowser" to use a real Chrome browser (It uses the "playwright" protocol)
+  #      - PLAYWRIGHT_DRIVER_URL=ws://browser-sockpuppet-chrome:3000
+  #
+  #
+  #       Alternative WebDriver/selenium URL, do not use "'s or 's! (old, deprecated, does not support screenshots very well)
+  #      - WEBDRIVER_URL=http://browser-selenium-chrome:4444/wd/hub
   #
   #       WebDriver proxy settings webdriver_proxyType, webdriver_ftpProxy, webdriver_noProxy,
   #                                webdriver_proxyAutoconfigUrl, webdriver_autodetect,
@@ -25,9 +30,6 @@ services:
   #
   #             https://selenium-python.readthedocs.io/api.html#module-selenium.webdriver.common.proxy
   #
-  #       Alternative target "Chrome" Playwright URL, do not use "'s or 's!
-  #       "Playwright" is a driver/librarythat allows changedetection to talk to a Chrome or similar browser.
-  #      - PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000
   #
   #       Playwright proxy settings playwright_proxy_server, playwright_proxy_bypass, playwright_proxy_username, playwright_proxy_password
   #
@@ -86,8 +88,8 @@ services:
 
      # Sockpuppetbrowser is basically chrome wrapped in an API for allowing fast fetching of web-pages.
      # RECOMMENDED FOR FETCHING PAGES WITH CHROME, be sure to enable the "PLAYWRIGHT_DRIVER_URL" env variable in the main changedetection container
-#    sockpuppetbrowser:
-#        hostname: sockpuppetbrowser
+#    browser-sockpuppet-chrome:
+#        hostname: browser-sockpuppet-chrome
 #        image: dgtlmoon/sockpuppetbrowser:latest
 #        cap_add:
 #            - SYS_ADMIN
@@ -102,14 +104,18 @@ services:
      # Used for fetching pages via Playwright+Chrome where you need Javascript support.
      # Note: Works well but is deprecated, does not fetch full page screenshots (doesnt work with Visual Selector)
      #       Does not report status codes (200, 404, 403) and other issues
-#    browser-chrome:
-#        hostname: browser-chrome
+#    browser-selenium-chrome:
+#        hostname: browser-selenium-chrome
 #        image: selenium/standalone-chrome:4
 #        environment:
 #            - VNC_NO_PASSWORD=1
 #            - SCREEN_WIDTH=1920
 #            - SCREEN_HEIGHT=1080
 #            - SCREEN_DEPTH=24
+#          CHROME_OPTIONS: |
+#            --window-size=1280,1024
+#            --headless
+#            --disable-gpu
 #        volumes:
 #            # Workaround to avoid the browser crashing inside a docker container
 #            # See https://github.com/SeleniumHQ/docker-selenium#quick-start

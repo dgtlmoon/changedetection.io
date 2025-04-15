@@ -98,15 +98,13 @@
 
 
 {% macro playwright_warning() %}
-    <p><strong>Error - Playwright support for Chrome based fetching is not enabled.</strong> Alternatively try our <a href="https://changedetection.io">very affordable subscription based service which has all this setup for you</a>.</p>
+    <p><strong>Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled.</strong> Alternatively try our <a href="https://changedetection.io">very affordable subscription based service which has all this setup for you</a>.</p>
     <p>You may need to <a href="https://github.com/dgtlmoon/changedetection.io/blob/09ebc6ec6338545bdd694dc6eee57f2e9d2b8075/docker-compose.yml#L31">Enable playwright environment variable</a> and uncomment the <strong>sockpuppetbrowser</strong> in the <a href="https://github.com/dgtlmoon/changedetection.io/blob/master/docker-compose.yml">docker-compose.yml</a> file.</p>
     <br>
-    <p>(Also Selenium/WebDriver can not extract full page screenshots reliably so Playwright is recommended here)</p>
-
 {% endmacro %}
 
-{% macro only_webdriver_type_watches_warning() %}
-    <p><strong>Sorry, this functionality only works with Playwright/Chrome enabled watches.<br>You need to <a href="#request">Set the fetch method to Playwright/Chrome mode and resave</a> and have the Playwright connection enabled.</strong></p><br>
+{% macro only_playwright_type_watches_warning() %}
+    <p><strong>Sorry, this functionality only works with Playwright/Chrome enabled watches.<br>You need to <a href="#request">Set the fetch method to Playwright/Chrome mode and resave</a> and have the SockpuppetBrowser/Playwright or Selenium enabled.</strong></p><br>
 {% endmacro %}
 
 {% macro render_time_schedule_form(form, available_timezones, timezone_default_config) %}

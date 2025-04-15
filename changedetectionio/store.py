@@ -964,3 +964,25 @@ class ChangeDetectionStore:
                         f_d.write(zlib.compress(f_j.read()))
                         os.unlink(json_path)
 
+    def add_notification_url(self, notification_url):
+        
+        logger.debug(f">>> Adding new notification_url - '{notification_url}'")
+
+        notification_urls = self.data['settings']['application'].get('notification_urls', [])
+
+        if notification_url in notification_urls:
+            return notification_url
+
+        with self.lock:
+            notification_urls = self.__data['settings']['application'].get('notification_urls', [])
+
+            if notification_url in notification_urls:
+                return notification_url
+
+            # Append and update the datastore
+            notification_urls.append(notification_url)
+            self.__data['settings']['application']['notification_urls'] = notification_urls
+            self.needs_write = True
+
+        return notification_url
+

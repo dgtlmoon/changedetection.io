@@ -435,7 +435,9 @@ def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False
 
     return re.sub(pattern, repl, html_content)
 
-def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=False) -> str:
+
+def html_to_text_sub_worker(conn, html_content: str, render_anchor_tag_content=False, is_rss=False):
+
     from inscriptis import get_text
     from inscriptis.model.config import ParserConfig
 
@@ -470,9 +472,19 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
         html_content = re.sub(r'</title>', r'</h1>', html_content)
 
     text_content = get_text(html_content, config=parser_config)
+    conn.send(text_content)
+    conn.close()
 
-    return text_content
+# NOTE!! ANYTHING LIBXML, HTML5LIB ETC WILL CAUSE SOME SMALL MEMORY LEAK IN THE LOCAL "LIB" IMPLEMENTATION OUTSIDE PYTHON
+def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=False):
+    from multiprocessing import Process, Pipe
 
+    parent_conn, child_conn = Pipe()
+    p = Process(target=html_to_text_sub_worker, args=(child_conn, html_content, render_anchor_tag_content, is_rss))
+    p.start()
+    text = parent_conn.recv()
+    p.join()
+    return text
 
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?
 def has_ldjson_product_info(content):
