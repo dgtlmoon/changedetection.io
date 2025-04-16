@@ -45,7 +45,7 @@ services:
   #        Base URL of your changedetection.io install (Added to the notification alert)
   #      - BASE_URL=https://mysite.com
   #        Respect proxy_pass type settings, `proxy_set_header Host "localhost";` and `proxy_set_header X-Forwarded-Prefix /app;`
-  #        More here https://github.com/dgtlmoon/changedetection.io/wiki/Running-changedetection.io-behind-a-reverse-proxy-sub-directory
+  #        More here https://github.com/dgtlmoon/changedetection.io/wiki/Running-changedetection.io-behind-a-reverse-proxy
   #      - USE_X_SETTINGS=1
   #
   #        Hides the `Referer` header so that monitored websites can't see the changedetection.io hostname.
