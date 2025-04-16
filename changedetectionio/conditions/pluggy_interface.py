@@ -33,6 +33,11 @@ class ConditionsSpec:
     def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
         """Add to the datadict"""
         pass
+        
+    @hookspec
+    def ui_edit_stats_extras(watch):
+        """Return HTML content to add to the stats tab in the edit view"""
+        pass
 
 # ✅ Set up Pluggy Plugin Manager
 plugin_manager = pluggy.PluginManager(PLUGIN_NAMESPACE)
