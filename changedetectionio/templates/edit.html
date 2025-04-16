@@ -264,7 +264,7 @@ Math: {{ 1 + 1 }}") }}
                     <div  class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_muted) }}
                     </div>
-                    {% if watch_uses_webdriver %}
+                    {% if watch_needs_selenium_or_playwright %}
                     <div class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_screenshot) }}
                         <span class="pure-form-message-inline">
@@ -453,12 +453,13 @@ Math: {{ 1 + 1 }}") }}
                         </tr>
                         </tbody>
                     </table>
-                    
+
                     {% if ui_edit_stats_extras %}
-                    <div class="plugin-stats-extras">
+                    <div class="plugin-stats-extras"> <!-- from pluggy plugin -->
                         {{ ui_edit_stats_extras|safe }}
                     </div>
                     {% endif %}
+
                     {% if watch.history_n %}
                         <p>
                              <a href="{{url_for('ui.ui_edit.watch_get_latest_html', uuid=uuid)}}" class="pure-button button-small">Download latest HTML snapshot</a>
