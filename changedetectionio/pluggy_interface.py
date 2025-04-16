@@ -40,12 +40,7 @@ def load_plugins_from_directories():
         # Add more plugin directories here as needed
     }
     
-    # Also load plugins from the root directory (for example plugins)
-    try:
-        import example_word_count_plugin
-        plugin_manager.register(example_word_count_plugin, "example_word_count_plugin")
-    except ImportError:
-        pass
+    # Note: Removed the direct import of example_word_count_plugin as it's now in the conditions/plugins directory
     
     for dir_name, dir_path in plugin_dirs.items():
         if not os.path.exists(dir_path):
