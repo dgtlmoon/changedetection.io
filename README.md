@@ -128,6 +128,22 @@ Easily add the current web page to your changedetection.io tool, simply install 
 
 [Goto the Chrome Webstore to download the extension.](https://chromewebstore.google.com/detail/changedetectionio-website/kefcfmgmlhmankjmnbijimhofdjekbop) ( Or check out the [GitHub repo](https://github.com/dgtlmoon/changedetection.io-browser-extension) ) 
 
+### iOS App
+
+The Changemonitor iOS app leverages the API and includes some additional features like favicons, statistics and push notifications.
+
+[<img style="height: 3em;" src="./docs/app_store.svg" alt="Download on the App Store">](https://apps.apple.com/nl/app/changemonitor/id6473832284)
+
+<img style="max-width:80%;" src="./docs/changemonitor.png" alt="Changemonitor">
+
+#### Usage
+
+[Download the app](https://apps.apple.com/nl/app/changemonitor/id6473832284), use the built -in QR scanner from the app or the native iOS camera and scan the personal QR code that can be found under `[Your changedetion.io instance] -> Settings -> App`. You can also choose to connect the app manually. The steps for this are indicated in the app.
+
+<img style="max-width:80%;" src="./docs/settings-app.png" alt="[Your changedetion.io instance] -> Settings -> App">
+
+Note: This App is not an official changedetection.io product and comes from a third-party publisher.
+
 ## Installation
 
 ### Docker
