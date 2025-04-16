@@ -19,20 +19,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             if tag_uuid in watch.get('tags', []) and (tag.get('include_filters') or tag.get('subtractive_selectors')):
                 return True
 
-    def levenshtein_ratio_recent_history(watch):
-        try:
-            from Levenshtein import ratio, distance
-            k = list(watch.history.keys())
-            if len(k) >= 2:
-                a = watch.get_history_snapshot(timestamp=k[0])
-                b = watch.get_history_snapshot(timestamp=k[1])
-                distance = distance(a, b)
-                return distance
-        except Exception as e:
-            logger.warning("Unable to calc similarity", e)
-            return "Unable to calc similarity"
-        return ''
-
     @edit_blueprint.route("/edit/<string:uuid>", methods=['GET', 'POST'])
     @login_optionally_required
     # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
