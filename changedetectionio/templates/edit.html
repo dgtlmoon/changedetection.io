@@ -264,7 +264,7 @@ Math: {{ 1 + 1 }}") }}
                     <div  class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_muted) }}
                     </div>
-                    {% if watch_uses_webdriver %}
+                    {% if watch_needs_selenium_or_playwright %}
                     <div class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_screenshot) }}
                         <span class="pure-form-message-inline">
