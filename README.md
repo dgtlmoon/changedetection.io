@@ -138,7 +138,7 @@ The Changemonitor iOS app leverages the API and includes some additional feature
 
 #### Usage
 
-[Download the app](https://apps.apple.com/nl/app/changemonitor/id6473832284), use the built -in QR scanner from the app or the native iOS camera and scan the personal QR code that can be found under `[Your changedetion.io instance] -> Settings -> App`. You can also choose to connect the app manually. The steps for this are indicated in the app.
+[Download the app](https://apps.apple.com/nl/app/changemonitor/id6473832284), use the built -in QR scanner from the app or the native iOS camera and scan the personal QR code that can be found under `[Your changedetection.io instance] -> Settings -> App`. You can also choose to connect the app manually. The steps for this are indicated in the app.
 
 <img style="max-width:80%;" src="./docs/settings-app.png" alt="[Your changedetion.io instance] -> Settings -> App">
 
