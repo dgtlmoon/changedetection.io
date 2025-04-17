@@ -104,6 +104,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             uuid = list(datastore.data['settings']['application']['tags'].keys()).pop()
 
         default = datastore.data['settings']['application']['tags'].get(uuid)
+        if not default:
+            flash("Tag not found", "error")
+            return redirect(url_for('watchlist.index'))
 
         form = group_restock_settings_form(
                                        formdata=request.form if request.method == 'POST' else None,

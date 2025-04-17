@@ -94,11 +94,11 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
     EXECUTE_DATA = {}
     result = True
     
-    ruleset_settings = application_datastruct['watching'].get(current_watch_uuid)
+    watch = application_datastruct['watching'].get(current_watch_uuid)
 
-    if ruleset_settings.get("conditions"):
-        logic_operator = "and" if ruleset_settings.get("conditions_match_logic", "ALL") == "ALL" else "or"
-        complete_rules = filter_complete_rules(ruleset_settings['conditions'])
+    if watch and watch.get("conditions"):
+        logic_operator = "and" if watch.get("conditions_match_logic", "ALL") == "ALL" else "or"
+        complete_rules = filter_complete_rules(watch['conditions'])
         if complete_rules:
             # Give all plugins a chance to update the data dict again (that we will test the conditions against)
             for plugin in plugin_manager.get_plugins():
