@@ -31,33 +31,33 @@ def stitch_images_worker(pipe_conn, chunks_bytes, original_page_height, capture_
         # Draw caption on top (overlaid, not extending canvas)
         draw = ImageDraw.Draw(stitched)
 
+        if original_page_height > capture_height:
+            caption_text = f"WARNING: Screenshot was {original_page_height}px but trimmed to {capture_height}px because it was too long"
+            padding = 10
+            font_size = 35
+            font_color = (255, 0, 0)
+            background_color = (255, 255, 255)
 
-        caption_text = f"WARNING: Screenshot was {original_page_height}px but trimmed to {capture_height}px because it was too long"
-        padding = 10
-        font_size = 35
-        font_color = (255, 0, 0)
-        background_color = (255, 255, 255)
 
+            # Try to load a proper font
+            try:
+                font = ImageFont.truetype("arial.ttf", font_size)
+            except IOError:
+                font = ImageFont.load_default()
 
-        # Try to load a proper font
-        try:
-            font = ImageFont.truetype("arial.ttf", font_size)
-        except IOError:
-            font = ImageFont.load_default()
+            bbox = draw.textbbox((0, 0), caption_text, font=font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
 
-        bbox = draw.textbbox((0, 0), caption_text, font=font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
+            # Draw white rectangle background behind text
+            rect_top = 0
+            rect_bottom = text_height + 2 * padding
+            draw.rectangle([(0, rect_top), (max_width, rect_bottom)], fill=background_color)
 
-        # Draw white rectangle background behind text
-        rect_top = 0
-        rect_bottom = text_height + 2 * padding
-        draw.rectangle([(0, rect_top), (max_width, rect_bottom)], fill=background_color)
-
-        # Draw text centered horizontally, 10px padding from top of the rectangle
-        text_x = (max_width - text_width) // 2
-        text_y = padding
-        draw.text((text_x, text_y), caption_text, font=font, fill=font_color)
+            # Draw text centered horizontally, 10px padding from top of the rectangle
+            text_x = (max_width - text_width) // 2
+            text_y = padding
+            draw.text((text_x, text_y), caption_text, font=font, fill=font_color)
 
         # Encode and send image
         output = io.BytesIO()
