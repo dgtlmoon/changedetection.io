@@ -383,13 +383,13 @@ Math: {{ 1 + 1 }}") }}
                     <div class="pure-control-group">
                         {% if watch_needs_selenium_or_playwright %}
                             {% if system_has_playwright_configured %}
-                                {%  if visual_selector_data_ready %}
                             <span class="pure-form-message-inline" id="visual-selector-heading">
                                 The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection. It automatically fills-in the filters in the "CSS/JSONPath/JQ/XPath Filters" box of the <a href="#filters-and-triggers">Filters & Triggers</a> tab. Use <strong>Shift+Click</strong> to select multiple items.
                             </span>
 
                             <div id="selector-header">
                                 <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Clear selection</a>
+                                <!-- visual selector IMG will try to load, it will either replace this or on error replace it with some handy text -->
                                 <i class="fetching-update-notice" style="font-size: 80%;">One moment, fetching screenshot and element information..</i>
                             </div>
                             <div id="selector-wrapper" style="display: none">
@@ -400,9 +400,6 @@ Math: {{ 1 + 1 }}") }}
                                 <canvas id="selector-canvas"></canvas>
                             </div>
                             <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
-                            {% else %}
-                                <strong>Error, The Visual selector data is not ready, it needs to complete atleast one fetch, please queue the item and reload.</strong>
-                            {% endif %}
                         {% else %}
                             {# The watch needed chrome but system says that playwright is not ready #}
                             {{ playwright_warning() }}
