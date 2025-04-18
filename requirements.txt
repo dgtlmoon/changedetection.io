@@ -110,3 +110,6 @@ pluggy ~= 1.5
 
 # Needed for testing, cross-platform for process and system monitoring
 psutil==7.0.0
+
+ruff >= 0.11.2
+pre_commit >= 4.2.0
