@@ -1,0 +1,48 @@
+# Minimum supported version
+target-version = "py310"
+
+# Formatting options
+line-length = 100
+indent-width = 4
+
+exclude = [
+    "__pycache__",
+    ".eggs",
+    ".git",
+    ".tox",
+    ".venv",
+    "*.egg-info",
+    "*.pyc",
+]
+
+[lint]
+# https://docs.astral.sh/ruff/rules/
+select = [
+    "B", # flake8-bugbear
+    "B9",
+    "C", 
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "I", # isort
+    "N", # pep8-naming
+    "UP", # pyupgrade
+    "W", # pycodestyle
+]
+ignore = [
+    "B007", # unused-loop-control-variable
+    "B909", # loop-iterator-mutation
+    "E203", # whitespace-before-punctuation
+    "E266", # multiple-leading-hashes-for-block-comment
+    "E501", # redundant-backslash
+    "F403", # undefined-local-with-import-star
+    "N802", # invalid-function-name
+    "N806", # non-lowercase-variable-in-function
+    "N815", # mixed-case-variable-in-class-scope
+]
+
+[lint.mccabe]
+max-complexity = 12
+
+[format]
+indent-style = "space"
+quote-style = "preserve"
