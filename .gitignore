@@ -29,5 +29,5 @@ test-datastore/
 # Memory consumption log
 test-memory.log
 
-# macOS operating system
+# macOS operating system metadata
 /.DS_Store
