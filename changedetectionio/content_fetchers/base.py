@@ -154,6 +154,10 @@ class Fetcher():
                     self.screenshot_step(step_n)
                     self.save_step_html(step_n)
                 except (Error, TimeoutError) as e:
+                    # If the page has navigated (common with logins) then the context is destroyed
+                    if "Execution context was destroyed" in str(e):
+                        logger.debug("Execution context was destroyed, most likely because of navigation")
+                        continue
                     logger.debug(str(e))
                     # Stop processing here
                     raise BrowserStepsStepException(step_n=step_n, original_e=e)
