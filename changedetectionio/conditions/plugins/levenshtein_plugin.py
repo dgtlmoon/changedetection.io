@@ -51,7 +51,7 @@ def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
     res = {}
     watch = application_datastruct['watching'].get(current_watch_uuid)
     # ephemeral_data['text'] will be the current text after filters, they may have edited filters but not saved them yet etc
-    
+
     if watch and 'text' in ephemeral_data:
         lev_data = levenshtein_ratio_recent_history(watch, ephemeral_data['text'])
         if isinstance(lev_data, dict):

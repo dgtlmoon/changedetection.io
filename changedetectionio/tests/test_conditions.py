@@ -45,11 +45,15 @@ def set_number_out_of_range_response(number="150"):
         f.write(test_return_data)
 
 
+def test_setup(client, live_server):
+    """Test that both text and number conditions work together with AND logic."""
+    live_server_setup(live_server)
+
 def test_conditions_with_text_and_number(client, live_server):
     """Test that both text and number conditions work together with AND logic."""
     
     set_original_response("50")
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
 
     test_url = url_for('test_endpoint', _external=True)
 
@@ -195,3 +199,40 @@ def test_condition_validate_rule_row(client, live_server):
 
 
 
+
+# If there was only a change in the whitespacing, then we shouldnt have a change detected
+def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage):
+    #live_server_setup(live_server)
+
+    test_return_data = """<html>
+       <body>
+     Some initial text<br>
+     <p>Which is across multiple lines</p>
+     <br>
+     So let's see what happens.  <br>
+     </body>
+     </html>
+    """
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("imports.import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+
+    # Give the thread time to pick it up
+    wait_for_all_checks(client)
+
+    # Check it saved
+    res = client.get(
+        url_for("ui.ui_edit.edit_page", uuid="first"),
+    )
+
+    # Assert the word count is counted correctly
+    assert b'<td>13</td>' in res.data
