@@ -168,9 +168,8 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     assert b'Deleted' in res.data
 
 # When adding some ignore text, it should not trigger a change, even if something else on that line changes
-def test_check_global_ignore_text_functionality(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
-    ignore_text = "XXXXX\r\nYYYYY\r\nZZZZZ\r\n"+'/\?v=\d/' # and a regex
+def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
+    ignore_text = "XXXXX\r\nYYYYY\r\nZZZZZ\r\n"+extra_ignore
 
     set_original_ignore_response()
 
@@ -190,6 +189,10 @@ def test_check_global_ignore_text_functionality(client, live_server, measure_mem
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
+    if as_source:
+        # Switch to source mode so we can test that too!
+        test_url = "source:"+test_url
+
     res = client.post(
         url_for("imports.import_page"),
         data={"urls": test_url},
@@ -207,7 +210,7 @@ def test_check_global_ignore_text_functionality(client, live_server, measure_mem
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-
+    wait_for_all_checks(client)
     # Check it saved
     res = client.get(
         url_for("settings.settings_page"),
@@ -248,3 +251,11 @@ def test_check_global_ignore_text_functionality(client, live_server, measure_mem
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
+
+def test_check_global_ignore_text_functionality(client, live_server):
+    #live_server_setup(live_server)
+    _run_test_global_ignore(client, as_source=False)
+
+def test_check_global_ignore_text_functionality_as_source(client, live_server):
+    #live_server_setup(live_server)
+    _run_test_global_ignore(client, as_source=True, extra_ignore='/\?v=\d/')
