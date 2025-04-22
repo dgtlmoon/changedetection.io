@@ -65,41 +65,24 @@ class steppable_browser_interface():
         """Safely execute a page operation with error handling"""
         if self.page is None:
             logger.warning("Attempted operation on None page object")
-            raise Exception("Could not connect to the virtual browser. Session may have expired.")
+            return default_return
             
         try:
             return operation_fn()
         except Exception as e:
-            error_message = str(e)
-            logger.debug(f"Page operation failed: {error_message}")
-            
+            logger.debug(f"Page operation failed: {str(e)}")
             # Try to reclaim memory if possible
             try:
                 self.page.request_gc()
             except:
                 pass
-                
-            # Provide more user-friendly error messages for common issues
-            if "'Response' object is not subscriptable" in error_message:
-                raise Exception("Could not connect to the virtual browser. Connection was lost or failed.")
-            elif "session closed" in error_message.lower() or "target closed" in error_message.lower():
-                raise Exception("Browser session has closed. Please reload the page to start a new session.")
-            elif "timeout" in error_message.lower():
-                raise Exception("Browser operation timed out. The page might be loading too slowly.")
-            else:
-                # Re-raise the original exception to be handled by the caller
-                raise
+            return default_return
 
     # Convert and perform "Click Button" for example
     def call_action(self, action_name, selector=None, optional_value=None):
         if self.page is None:
             logger.warning("Cannot call action on None page object")
-            raise Exception("Could not connect to the virtual browser. Session may have expired.")
-            
-        # Check if session has expired
-        if self.has_expired:
-            logger.warning("Attempting to use an expired browser session")
-            raise Exception("Browser session has expired. Please reload the page to start a new session.")
+            return
             
         now = time.time()
         call_action_name = re.sub('[^0-9a-zA-Z]+', '_', action_name.lower())
@@ -114,7 +97,7 @@ class steppable_browser_interface():
         # Check if action handler exists
         if not hasattr(self, "action_" + call_action_name):
             logger.warning(f"Action handler for '{call_action_name}' not found")
-            raise Exception(f"Unknown browser operation: {action_name}")
+            return
             
         action_handler = getattr(self, "action_" + call_action_name)
 
@@ -133,23 +116,12 @@ class steppable_browser_interface():
             self.safe_page_operation(wait_timeout)
             logger.debug(f"Call action done in {time.time()-now:.2f}s")
         except Exception as e:
-            error_message = str(e)
-            logger.error(f"Error executing action '{call_action_name}': {error_message}")
-            
+            logger.error(f"Error executing action '{call_action_name}': {str(e)}")
             # Request garbage collection to free up resources after error
             try:
                 self.page.request_gc()
             except:
                 pass
-                
-            # Rethrow with improved messages for specific error types
-            if "'Response' object is not subscriptable" in error_message:
-                raise Exception("Could not connect to the virtual browser. Connection was lost or failed.")
-            elif "session closed" in error_message.lower() or "target closed" in error_message.lower():
-                raise Exception("Browser session has closed. Please reload the page to start a new session.")
-            else:
-                # Rethrow the exception to be handled by the caller
-                raise
 
     def action_goto_url(self, selector=None, value=None):
         if not value:
@@ -511,12 +483,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         # Safety check - don't proceed if resources are cleaned up
         if self._is_cleaned_up or self.page is None:
             logger.warning("Attempted to get current state after cleanup")
-            raise Exception("Could not connect to the virtual browser. Session may have expired.")
-
-        # Check if session has expired
-        if self.has_expired:
-            logger.warning("Attempting to use an expired browser session")
-            raise Exception("Browser session has expired. Please reload the page to start a new session.")
+            return (None, None)
 
         xpath_element_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text()
 
@@ -529,9 +496,6 @@ class browsersteps_live_ui(steppable_browser_interface):
         try:
             # Get screenshot first
             screenshot = capture_full_page(page=self.page)
-            if screenshot is None:
-                raise Exception("Could not capture screenshot from the virtual browser")
-                
             logger.debug(f"Time to get screenshot from browser {time.time() - now:.2f}s")
 
             # Then get interactive elements
@@ -546,9 +510,6 @@ class browsersteps_live_ui(steppable_browser_interface):
                 "visualselector_xpath_selectors": scan_elements,
                 "max_height": MAX_TOTAL_HEIGHT
             }))
-            if xpath_data is None:
-                raise Exception("Could not extract page elements from the virtual browser")
-                
             self.page.request_gc()
 
             # Sort elements by size
@@ -556,33 +517,18 @@ class browsersteps_live_ui(steppable_browser_interface):
             logger.debug(f"Time to scrape xPath element data in browser {time.time()-now:.2f}s")
             
         except Exception as e:
-            error_message = str(e)
-            logger.error(f"Error getting current state: {error_message}")
-            
+            logger.error(f"Error getting current state: {str(e)}")
             # Attempt recovery - force garbage collection
             try:
                 self.page.request_gc()
             except:
                 pass
-                
-            # Raise appropriate error message
-            if "'Response' object is not subscriptable" in error_message:
-                raise Exception("Could not connect to the virtual browser. Connection was lost or failed.")
-            elif "session closed" in error_message.lower() or "target closed" in error_message.lower():
-                raise Exception("Browser session has closed. Please reload the page to start a new session.")
-            else:
-                # Rethrow the exception to be handled by the caller
-                raise
         
         # Request garbage collection one final time
         try:
             self.page.request_gc()
         except:
             pass
-        
-        # Final validation before returning
-        if screenshot is None or xpath_data is None:
-            raise Exception("Could not retrieve data from the virtual browser")
             
         return (screenshot, xpath_data)
 
