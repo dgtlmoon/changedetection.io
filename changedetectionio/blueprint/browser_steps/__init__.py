@@ -56,11 +56,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         try:
             browsersteps_start_session['browser'] = io_interface_context.chromium.connect_over_cdp(base_url)
         except Exception as e:
-            if 'ECONNREFUSED' in str(e):
-                return make_response('Unable to start the Playwright Browser session, is it running?', 401)
+            error_message = str(e)
+            if 'ECONNREFUSED' in error_message:
+                return make_response('Could not connect to the virtual browser. Please check if the browser service is running.', 401)
+            elif "'Response' object is not subscriptable" in error_message:
+                return make_response('Could not connect to the virtual browser. Connection to browser failed with invalid response.', 401)
             else:
                 # Other errors, bad URL syntax, bad reply etc
-                return make_response(str(e), 401)
+                return make_response(f'Could not connect to the virtual browser: {error_message.splitlines()[0]}', 401)
 
         proxy_id = datastore.get_preferred_proxy_for_watch(uuid=watch_uuid)
         proxy = None
@@ -155,7 +158,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return make_response('No browsersteps_session_id specified', 500)
 
         if not browsersteps_sessions.get(browsersteps_session_id):
-            return make_response('No session exists under that ID', 500)
+            return make_response('Could not connect to the virtual browser. The session has expired or does not exist.', 401)
 
         is_last_step = False
         # Actions - step/apply/etc, do the thing and return state
@@ -174,9 +177,17 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                          optional_value=step_optional_value)
 
             except Exception as e:
-                logger.error(f"Exception when calling step operation {step_operation} {str(e)}")
-                # Try to find something of value to give back to the user
-                return make_response(str(e).splitlines()[0], 401)
+                error_message = str(e)
+                logger.error(f"Exception when calling step operation {step_operation} {error_message}")
+                
+                # Provide user-friendly error messages
+                if "'Response' object is not subscriptable" in error_message:
+                    return make_response('Could not connect to the virtual browser. Connection was lost or failed.', 401)
+                elif "timed out" in error_message.lower() or "timeout" in error_message.lower():
+                    return make_response('Browser operation timed out. The page might be loading too slowly.', 401)
+                else:
+                    # Try to find something of value to give back to the user
+                    return make_response(f'Browser operation failed: {error_message.splitlines()[0]}', 401)
 
 
 #        if not this_session.page:
@@ -194,9 +205,19 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     watch.save_xpath_data(data=xpath_data)
 
         except playwright._impl._api_types.Error as e:
-            return make_response("Browser session ran out of time :( Please reload this page."+str(e), 401)
+            error_message = str(e)
+            if "'Response' object is not subscriptable" in error_message:
+                return make_response("Could not connect to the virtual browser. Connection was lost or failed.", 401)
+            elif "session closed" in error_message.lower() or "target closed" in error_message.lower():
+                return make_response("Browser session has closed. Please reload the page to start a new session.", 401)
+            else:
+                return make_response("Browser session ran out of time. Please reload this page.", 401)
         except Exception as e:
-            return make_response("Error fetching screenshot and element data - " + str(e), 401)
+            error_message = str(e)
+            if "'Response' object is not subscriptable" in error_message:
+                return make_response("Could not connect to the virtual browser. Connection was lost or failed.", 401)
+            else:
+                return make_response("Error fetching screenshot and element data: " + error_message.splitlines()[0], 401)
 
         # SEND THIS BACK TO THE BROWSER
 
