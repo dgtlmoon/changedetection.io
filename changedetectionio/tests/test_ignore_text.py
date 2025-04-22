@@ -32,13 +32,14 @@ def test_strip_text_func():
     stripped_content = html_tools.strip_ignore_text(test_content, ignore)
     assert stripped_content == "Some initial text\n\nWhich is across multiple lines\n\n\n\nSo let's see what happens."
 
-def set_original_ignore_response():
-    test_return_data = """<html>
+def set_original_ignore_response(ver_stamp="123"):
+    test_return_data = f"""<html>
        <body>
      Some initial text<br>
      <p>Which is across multiple lines</p>
      <br>
      So let's see what happens.  <br>
+     <link href="https://www.somesite/wp-content/themes/cooltheme/style2.css?v={ver_stamp}" rel="stylesheet"/>
      </body>
      </html>
 
@@ -48,13 +49,14 @@ def set_original_ignore_response():
         f.write(test_return_data)
 
 
-def set_modified_original_ignore_response():
-    test_return_data = """<html>
+def set_modified_original_ignore_response(ver_stamp="123"):
+    test_return_data = f"""<html>
        <body>
      Some NEW nice initial text<br>
      <p>Which is across multiple lines</p>
      <br>
      So let's see what happens.  <br>
+     <link href="https://www.somesite/wp-content/themes/cooltheme/style2.css?v={ver_stamp}" rel="stylesheet"/>
      <p>new ignore stuff</p>
      <p>blah</p>
      </body>
@@ -67,14 +69,15 @@ def set_modified_original_ignore_response():
 
 
 # Is the same but includes ZZZZZ, 'ZZZZZ' is the last line in ignore_text
-def set_modified_ignore_response():
-    test_return_data = """<html>
+def set_modified_ignore_response(ver_stamp="123"):
+    test_return_data = f"""<html>
        <body>
      Some initial text<br>
      <p>Which is across multiple lines</p>
      <P>ZZZZz</P>
      <br>
      So let's see what happens.  <br>
+     <link href="https://www.somesite/wp-content/themes/cooltheme/style2.css?v={ver_stamp}" rel="stylesheet"/>
      </body>
      </html>
 
@@ -167,7 +170,8 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
 # When adding some ignore text, it should not trigger a change, even if something else on that line changes
 def test_check_global_ignore_text_functionality(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
-    ignore_text = "XXXXX\r\nYYYYY\r\nZZZZZ"
+    ignore_text = "XXXXX\r\nYYYYY\r\nZZZZZ\r\n"+'/\?v=\d/' # and a regex
+
     set_original_ignore_response()
 
     # Goto the settings page, add our ignore text
@@ -221,7 +225,8 @@ def test_check_global_ignore_text_functionality(client, live_server, measure_mem
 
     # Make a change which includes the ignore text, it should be ignored and no 'change' triggered
     # It adds text with "ZZZZzzzz" and "ZZZZ" is in the ignore list
-    set_modified_ignore_response()
+    # And tweaks the ver_stamp which should be picked up by global regex ignore
+    set_modified_ignore_response(ver_stamp=time.time())
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
