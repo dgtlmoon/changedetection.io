@@ -2,7 +2,7 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.49.14'
+__version__ = '0.49.15'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
@@ -106,7 +106,7 @@ def main():
     # Without this, a logger will be duplicated
     logger.remove()
     try:
-        log_level_for_stdout = { 'DEBUG', 'SUCCESS' }
+        log_level_for_stdout = { 'TRACE', 'DEBUG', 'INFO', 'SUCCESS' }
         logger.configure(handlers=[
             {"sink": sys.stdout, "level": logger_level,
              "filter" : lambda record: record['level'].name in log_level_for_stdout},

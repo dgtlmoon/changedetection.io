@@ -53,14 +53,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         a = "?" if not '?' in base_url else '&'
         base_url += a + f"timeout={keepalive_ms}"
 
-        try:
-            browsersteps_start_session['browser'] = io_interface_context.chromium.connect_over_cdp(base_url)
-        except Exception as e:
-            if 'ECONNREFUSED' in str(e):
-                return make_response('Unable to start the Playwright Browser session, is it running?', 401)
-            else:
-                # Other errors, bad URL syntax, bad reply etc
-                return make_response(str(e), 401)
+        browsersteps_start_session['browser'] = io_interface_context.chromium.connect_over_cdp(base_url)
 
         proxy_id = datastore.get_preferred_proxy_for_watch(uuid=watch_uuid)
         proxy = None
@@ -109,7 +102,16 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         logger.debug("Starting connection with playwright")
         logger.debug("browser_steps.py connecting")
-        browsersteps_sessions[browsersteps_session_id] = start_browsersteps_session(watch_uuid)
+
+        try:
+            browsersteps_sessions[browsersteps_session_id] = start_browsersteps_session(watch_uuid)
+        except Exception as e:
+            if 'ECONNREFUSED' in str(e):
+                return make_response('Unable to start the Playwright Browser session, is sockpuppetbrowser running? Network configuration is OK?', 401)
+            else:
+                # Other errors, bad URL syntax, bad reply etc
+                return make_response(str(e), 401)
+
         logger.debug("Starting connection with playwright - done")
         return {'browsersteps_session_id': browsersteps_session_id}
 
