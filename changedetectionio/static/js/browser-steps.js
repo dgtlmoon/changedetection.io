@@ -251,6 +251,10 @@ $(document).ready(function () {
                 400: function () {
                     // More than likely the CSRF token was lost when the server restarted
                     alert("There was a problem processing the request, please reload the page.");
+                },
+                401: function (err) {
+                    // This will be a custom error
+                    alert(err.responseText);
                 }
             }
         }).done(function (data) {
