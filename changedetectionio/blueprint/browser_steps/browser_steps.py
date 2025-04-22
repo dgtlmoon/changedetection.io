@@ -37,6 +37,7 @@ browser_step_ui_config = {'Choose one': '0 0',
                           'Make all child elements visible': '1 0',
                           'Press Enter': '0 0',
                           'Select by label': '1 1',
+                          '<select> by option text': '1 1',
                           'Scroll down': '0 0',
                           'Uncheck checkbox': '1 0',
                           'Wait for seconds': '0 1',
@@ -227,6 +228,15 @@ class steppable_browser_interface():
             self.safe_page_operation(click_xy_operation)
         except Exception as e:
             logger.error(f"Error parsing x,y coordinates: {str(e)}")
+
+    def action__select_by_option_text(self, selector, value):
+        if not selector or not len(selector.strip()):
+            return
+
+        def select_operation():
+            self.page.select_option(selector, label=value, timeout=self.action_timeout)
+
+        self.safe_page_operation(select_operation)
 
     def action_scroll_down(self, selector, value):
         def scroll_operation():

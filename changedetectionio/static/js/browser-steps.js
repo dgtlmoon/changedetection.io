@@ -211,7 +211,14 @@ $(document).ready(function () {
                     $('input[type=text]', first_available).first().val(x['xpath']);
                     $('input[placeholder="Value"]', first_available).addClass('ok').click().focus();
                     found_something = true;
-                } else {
+                }
+                else if (x['tagName'] === 'select') {
+                    $('select', first_available).val('<select> by option text').change();
+                    $('input[type=text]', first_available).first().val(x['xpath']);
+                    $('input[placeholder="Value"]', first_available).addClass('ok').click().focus();
+                    found_something = true;
+                }
+                else {
                     // There's no good way (that I know) to find if this
                     // see https://stackoverflow.com/questions/446892/how-to-find-event-listeners-on-a-dom-node-in-javascript-or-in-debugging
                     // https://codepen.io/azaslavsky/pen/DEJVWv
