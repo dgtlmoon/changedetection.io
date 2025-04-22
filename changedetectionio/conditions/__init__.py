@@ -102,12 +102,31 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
         if complete_rules:
             # Give all plugins a chance to update the data dict again (that we will test the conditions against)
             for plugin in plugin_manager.get_plugins():
-                new_execute_data = plugin.add_data(current_watch_uuid=current_watch_uuid,
-                                                   application_datastruct=application_datastruct,
-                                                   ephemeral_data=ephemeral_data)
-
-                if new_execute_data and isinstance(new_execute_data, dict):
-                    EXECUTE_DATA.update(new_execute_data)
+                try:
+                    import concurrent.futures
+                    import time
+                    
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(
+                            plugin.add_data,
+                            current_watch_uuid=current_watch_uuid,
+                            application_datastruct=application_datastruct,
+                            ephemeral_data=ephemeral_data
+                        )
+                        
+                        # Set a timeout of 10 seconds
+                        try:
+                            new_execute_data = future.result(timeout=10)
+                            if new_execute_data and isinstance(new_execute_data, dict):
+                                EXECUTE_DATA.update(new_execute_data)
+                        except concurrent.futures.TimeoutError:
+                            # The plugin took too long, abort processing for this watch
+                            raise Exception(f"Plugin {plugin.__class__.__name__} took more than 10 seconds to run.")
+                except Exception as e:
+                    # Log the error but continue with the next plugin
+                    import logging
+                    logging.error(f"Error executing plugin {plugin.__class__.__name__}: {str(e)}")
+                    continue
 
             # Create the ruleset
             ruleset = convert_to_jsonlogic(logic_operator=logic_operator, rule_dict=complete_rules)

@@ -12,10 +12,10 @@ def levenshtein_ratio_recent_history(watch, incoming_text=None):
         if len(k) >= 2:
             # When called from ui_edit_stats_extras, we don't have incoming_text
             if incoming_text is None:
-                a = watch.get_history_snapshot(timestamp=k[-2])  # Previous snapshot
-                b = watch.get_history_snapshot(timestamp=k[-1])  # Latest snapshot
+                a = watch.get_history_snapshot(timestamp=k[-1])  # Latest snapshot
+                b = watch.get_history_snapshot(timestamp=k[-2])  # Previous snapshot
             else:
-                a = watch.get_history_snapshot(timestamp=k[0])
+                a = watch.get_history_snapshot(timestamp=k[-2]) # Second newest, incoming_text will be "newest"
                 b = incoming_text
             
             distance_value = distance(a, b)
@@ -42,29 +42,28 @@ def register_operator_choices():
 @conditions_hookimpl
 def register_field_choices():
     return [
-        ("levenshtein_ratio", "Levenshtein text difference distance/similarity"),
+        ("levenshtein_ratio", "Levenshtein - Text similarity ratio"),
+        ("levenshtein_distance", "Levenshtein - Text change distance"),
     ]
 
 @conditions_hookimpl
 def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
     res = {}
     watch = application_datastruct['watching'].get(current_watch_uuid)
+    # ephemeral_data['text'] will be the current text after filters, they may have edited filters but not saved them yet etc
+    
     if watch and 'text' in ephemeral_data:
         lev_data = levenshtein_ratio_recent_history(watch, ephemeral_data['text'])
         if isinstance(lev_data, dict):
-            res['levenshtein_ratio'] = lev_data['distance']
-            res['levenshtein_similarity'] = lev_data['percent_similar']
-        else:
-            res['levenshtein_ratio'] = lev_data
+            res['levenshtein_ratio'] = lev_data.get('ratio', 0)
+            res['levenshtein_similarity'] = lev_data.get('percent_similar', 0)
+            res['levenshtein_distance'] = lev_data.get('distance', 0)
 
     return res
 
-@conditions_hookimpl
+@global_hookimpl
 def ui_edit_stats_extras(watch):
-    """Add Levenshtein stats to the UI through conditions plugin system"""
-    return _generate_stats_html(watch)
-    
-def _generate_stats_html(watch):
+    """Add Levenshtein stats to the UI using the global plugin system"""
     """Generate the HTML for Levenshtein stats - shared by both plugin systems"""
     if len(watch.history.keys()) < 2:
         return "<p>Not enough history to calculate Levenshtein metrics</p>"
@@ -101,7 +100,3 @@ def _generate_stats_html(watch):
         logger.error(f"Error generating Levenshtein UI extras: {str(e)}")
         return "<p>Error calculating Levenshtein metrics</p>"
         
-@global_hookimpl
-def ui_edit_stats_extras(watch):
-    """Add Levenshtein stats to the UI using the global plugin system"""
-    return _generate_stats_html(watch)
