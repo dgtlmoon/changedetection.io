@@ -215,7 +215,10 @@ def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
     res = client.get(
         url_for("settings.settings_page"),
     )
-    assert bytes(ignore_text.encode('utf-8')) in res.data
+
+    for i in ignore_text.splitlines():
+        assert bytes(i.encode('utf-8')) in res.data
+
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
