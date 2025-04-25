@@ -202,7 +202,6 @@ async (options) => {
         // Foreach filter, go and find it on the page and add it to the results so we can visualise it again
         for (const f of include_filters) {
             bbox = false;
-            q = false;
 
             if (!f.length) {
                 console.log("xpath_element_scraper: Empty filter, skipping");
@@ -255,7 +254,7 @@ async (options) => {
                             console.log("xpath_element_scraper: Got filter by ownerElement element, scroll from top was " + scroll_y)
                         } catch (e) {
                             console.log(e)
-                            console.log("xpath_element_scraper: error looking up q.ownerElement")
+                            console.log("xpath_element_scraper: error looking up node.ownerElement")
                         }
                     }
 
