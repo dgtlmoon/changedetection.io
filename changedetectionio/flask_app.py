@@ -30,6 +30,7 @@ from flask_restful import abort, Api
 from flask_cors import CORS
 from flask_wtf import CSRFProtect
 from loguru import logger
+import eventlet
 
 from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
@@ -53,6 +54,9 @@ app = Flask(__name__,
             static_url_path="",
             static_folder="static",
             template_folder="templates")
+
+# Will be initialized in changedetection_app
+socketio_server = None
 
 # Enable CORS, especially useful for the Chrome extension to operate from anywhere
 CORS(app)
@@ -215,7 +219,7 @@ class User(flask_login.UserMixin):
 def changedetection_app(config=None, datastore_o=None):
     logger.trace("TRACE log is enabled")
 
-    global datastore
+    global datastore, socketio_server
     datastore = datastore_o
 
     # so far just for read-only via tests, but this will be moved eventually to be the main source
@@ -467,6 +471,8 @@ def changedetection_app(config=None, datastore_o=None):
     if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')):
         threading.Thread(target=check_for_new_version).start()
 
+    # Return the Flask app - the Socket.IO will be attached to it but initialized separately
+    # This avoids circular dependencies
     return app
 
 

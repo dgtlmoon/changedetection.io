@@ -1,0 +1,30 @@
+// Styles for Socket.IO real-time updates
+
+@keyframes socket-highlight-flash {
+  0% {
+    background-color: rgba(var(--color-change-highlight-rgb), 0);
+  }
+  50% {
+    background-color: rgba(var(--color-change-highlight-rgb), 0.4);
+  }
+  100% {
+    background-color: rgba(var(--color-change-highlight-rgb), 0);
+  }
+}
+
+.socket-highlight {
+  animation: socket-highlight-flash 2s ease-in-out;
+}
+
+// Animation for the checking-now state
+@keyframes checking-progress {
+  0% { background-size: 0% 100%; }
+  100% { background-size: 100% 100%; }
+}
+
+tr.checking-now .last-checked {
+  background-image: linear-gradient(to right, rgba(0, 120, 255, 0.2) 0%, rgba(0, 120, 255, 0.1) 100%);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  animation: checking-progress 10s linear;
+}

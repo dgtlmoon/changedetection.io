@@ -4,11 +4,14 @@
 
 __version__ = '0.49.15'
 
-from changedetectionio.strtobool import strtobool
-from json.decoder import JSONDecodeError
+# Set environment variables before importing other modules
 import os
 os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
+# Import eventlet for WSGI server - no monkey patching to avoid conflicts
 import eventlet
+
+from changedetectionio.strtobool import strtobool
+from json.decoder import JSONDecodeError
 import eventlet.wsgi
 import getopt
 import platform
@@ -141,7 +144,27 @@ def main():
         logger.critical(str(e))
         return
 
+    # Get the Flask app 
     app = changedetection_app(app_config, datastore)
+    
+    # Now initialize Socket.IO after the app is fully set up
+    try:
+        from changedetectionio.realtime.socket_server import ChangeDetectionSocketIO
+        from changedetectionio.flask_app import socketio_server
+        import threading
+
+        # Create the Socket.IO server
+        socketio_server = ChangeDetectionSocketIO(app, datastore)
+        
+        # Run the Socket.IO server in a separate thread on port 5005
+        socket_thread = threading.Thread(target=socketio_server.run, 
+                                         kwargs={'host': host, 'port': 5005})
+        socket_thread.daemon = True
+        socket_thread.start()
+        
+        logger.info("Socket.IO server initialized successfully on port 5005")
+    except Exception as e:
+        logger.warning(f"Failed to initialize Socket.IO server: {str(e)}")
 
     signal.signal(signal.SIGTERM, sigshutdown_handler)
     signal.signal(signal.SIGINT, sigshutdown_handler)
@@ -204,5 +227,7 @@ def main():
                                                server_side=True), app)
 
     else:
+        # We'll integrate the Socket.IO server with the WSGI server
+        # The Socket.IO server is already attached to the Flask app
         eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
 

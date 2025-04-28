@@ -9,6 +9,9 @@ flask_restful
 flask_cors # For the Chrome extension to operate
 flask_wtf~=1.2
 flask~=2.3
+flask-socketio>=5.5.1
+python-socketio>=5.13.0
+python-engineio>=4.12.0
 inscriptis~=2.2
 pytz
 timeago~=1.0
