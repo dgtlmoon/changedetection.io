@@ -126,6 +126,9 @@ async () => {
         // and it should be atleast 100px from the top to ignore items in the toolbar, sometimes menu items like "Coming soon" exist
 
         function elementIsInEyeBallRange(element) {
+            // outside the 'fold' or some weird text in the heading area
+            // .getBoundingClientRect() was causing a crash in chrome 119, can only be run on contentVisibility != hidden
+            // Note: theres also an automated test that places the 'out of stock' text fairly low down
             // Skip text that could be in the header area
             if (element.getBoundingClientRect().bottom + window.scrollY <= 300 ) {
                 return false;
@@ -172,8 +175,6 @@ async () => {
         for (let i = elementsToScan.length - 1; i >= 0; i--) {
             const element = elementsToScan[i];
 
-            // outside the 'fold' or some weird text in the heading area
-            // .getBoundingClientRect() was causing a crash in chrome 119, can only be run on contentVisibility != hidden
             if (!elementIsInEyeBallRange(element)) {
                 continue
             }
@@ -201,10 +202,8 @@ async () => {
         // OTHER STUFF THAT COULD BE THAT IT'S OUT OF STOCK
         for (let i = elementsToScan.length - 1; i >= 0; i--) {
             const element = elementsToScan[i];
-            // outside the 'fold' or some weird text in the heading area
-            // .getBoundingClientRect() was causing a crash in chrome 119, can only be run on contentVisibility != hidden
-            // Note: theres also an automated test that places the 'out of stock' text fairly low down
-            if (element.getBoundingClientRect().top + window.scrollY >= vh + 250 || element.getBoundingClientRect().top + window.scrollY <= 100) {
+
+            if (!elementIsInEyeBallRange(element)) {
                 continue
             }
             elementText = "";
