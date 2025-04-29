@@ -67,7 +67,7 @@ class ChangeDetectionSocketIO:
     
     def background_task(self):
         """Background task that emits watch status periodically"""
-        check_interval = 3  # seconds between updates
+        check_interval = 4  # seconds between updates
         
         try:
             with self.main_app.app_context():
@@ -93,10 +93,10 @@ class ChangeDetectionSocketIO:
                                 'uuid': uuid,
                                 'url': watch.get('url', ''),
                                 'title': watch.get('title', ''),
-                                'last_checked': watch.get('last_checked', 0),
-                                'last_changed': watch.get('newest_history_key', 0),
+                                'last_checked': int(watch.get('last_checked', 0)),
+                                'last_changed': int(watch.get('newest_history_key', 0)),
                                 'history_n': watch.history_n if hasattr(watch, 'history_n') else 0,
-                                'viewed': watch.get('viewed', True),
+                                'unviewed_history': int(watch.get('newest_history_key', 0)) > int(watch.get('last_viewed', 0)) and watch.history_n >=2,
                                 'paused': watch.get('paused', False),
                                 'checking': uuid in currently_checking
                             }

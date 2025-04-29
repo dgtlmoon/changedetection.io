@@ -35,19 +35,66 @@ $(document).ready(function() {
     function updateWatchRow($row, data) {
       // Update the last-checked time
       const $lastChecked = $row.find('.last-checked');
-      if ($lastChecked.length && data.last_checked) {
-        // Format as timeago if we have the timeago library available
-        if (typeof timeago !== 'undefined') {
-          $lastChecked.text(timeago.format(data.last_checked, Date.now()/1000));
+      if ($lastChecked.length) {
+        // Update data-timestamp attribute
+        $lastChecked.attr('data-timestamp', data.last_checked);
+        
+        // Only show timeago if not currently checking
+        if (!data.checking) {
+          let $timeagoSpan = $lastChecked.find('.timeago');
+          
+          // If there's no timeago span yet, create one
+          if (!$timeagoSpan.length) {
+            $lastChecked.html('<span class="timeago"></span>');
+            $timeagoSpan = $lastChecked.find('.timeago');
+          }
+          
+          if (data.last_checked > 0) {
+            // Format as timeago if we have the timeago library available
+            if (typeof timeago !== 'undefined') {
+              $timeagoSpan.text(timeago.format(data.last_checked * 1000));
+            } else {
+              // Simple fallback if timeago isn't available
+              const date = new Date(data.last_checked * 1000);
+              $timeagoSpan.text(date.toLocaleString());
+            }
+          } else {
+            $lastChecked.text('Not yet');
+          }
+        }
+      }
+      
+      // Update the last-changed time
+      const $lastChanged = $row.find('.last-changed');
+      if ($lastChanged.length && data.last_changed) {
+        // Update data-timestamp attribute
+        $lastChanged.attr('data-timestamp', data.last_changed);
+        
+        // Only update the text if we have history
+        if (data.history_n >= 2 && data.last_changed > 0) {
+          let $timeagoSpan = $lastChanged.find('.timeago');
+          
+          // If there's no timeago span yet, create one
+          if (!$timeagoSpan.length) {
+            $lastChanged.html('<span class="timeago"></span>');
+            $timeagoSpan = $lastChanged.find('.timeago');
+          }
+          
+          // Format as timeago
+          if (typeof timeago !== 'undefined') {
+            $timeagoSpan.text(timeago.format(data.last_changed * 1000));
+          } else {
+            // Simple fallback if timeago isn't available
+            const date = new Date(data.last_changed * 1000);
+            $timeagoSpan.text(date.toLocaleString());
+          }
         } else {
-          // Simple fallback if timeago isn't available
-          const date = new Date(data.last_checked * 1000);
-          $lastChecked.text(date.toLocaleString());
+          $lastChanged.text('Not yet');
         }
       }
       
       // Toggle the unviewed class based on viewed status
-      $row.toggleClass('unviewed', data.viewed === false);
+      $row.toggleClass('unviewed', data.unviewed_history === false);
       
       // If the watch is currently being checked
       $row.toggleClass('checking-now', data.checking === true);

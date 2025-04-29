@@ -6,6 +6,7 @@
 @import "parts/_browser-steps";
 @import "parts/_extra_proxies";
 @import "parts/_extra_browsers";
+@import "parts/_watch_table";
 @import "parts/_pagination";
 @import "parts/_spinners";
 @import "parts/_variables";
@@ -167,56 +168,6 @@ section.content {
 code {
   background: var(--color-background-code);
   color: var(--color-text);
-}
-
-/* table related */
-.watch-table {
-  width: 100%;
-  font-size: 80%;
-
-  tr {
-    &.unviewed {
-      font-weight: bold;
-    }
-    &.error {
-      color: var(--color-watch-table-error);
-    }
-    color: var(--color-watch-table-row-text);
-  }
-
-
-  td {
-    white-space: nowrap;
-    &.title-col {
-      word-break: break-all;
-      white-space: normal;
-    }
-  }
-
-
-  th {
-    white-space: nowrap;
-
-    a {
-      font-weight: normal;
-
-      &.active {
-        font-weight: bolder;
-      }
-
-      &.inactive {
-        .arrow {
-          display: none;
-        }
-      }
-    }
-  }
-
-  .title-col a[target="_blank"]::after,
-  .current-diff-url::after {
-    content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
-    margin: 0 3px 0 5px;
-  }
 }
 
 .inline-tag {
@@ -705,115 +656,6 @@ footer {
 
   input[type='text'] {
     width: 100%;
-  }
-
-  /*
-  Max width before this PARTICULAR table gets nasty
-  This query will take effect for any screen smaller than 760px
-  and also iPads specifically.
-  */
-  .watch-table {
-    /* make headings work on mobile */
-    thead {
-      display: block;
-      tr {
-        th {
-          display: inline-block;
-          // Hide the "Last" text for smaller screens
-          @media (max-width: 768px) {
-            .hide-on-mobile {
-              display: none; 
-            }
-          }
-        }
-      }
-      .empty-cell {
-        display: none;
-      }
-    }
-
-    /* Force table to not be like tables anymore */
-    tbody {
-      td,
-      tr {
-        display: block;
-      }
-    }
-
-    tbody {
-      tr {
-        display: flex;
-        flex-wrap: wrap;
-
-        // The third child of each row will take up the remaining space
-        // This is useful for the URL column, which should expand to fill the remaining space
-        :nth-child(3) {
-          flex-grow: 1;
-        }
-        // The last three children (from the end) of each row will take up the full width
-        // This is useful for the "Last Checked", "Last Changed", and the action buttons columns, which should each take up the full width
-        :nth-last-child(-n+3) {
-          flex-basis: 100%;
-        }
-      }
-    }
-
-    .last-checked {
-      >span {
-        vertical-align: middle;
-      }
-    }
-
-    .last-checked::before {
-      color: var(--color-last-checked);
-      content: "Last Checked ";
-    }
-
-    .last-changed::before {
-      color: var(--color-last-checked);
-      content: "Last Changed ";
-    }
-
-    /* Force table to not be like tables anymore */
-    td.inline {
-      display: inline-block;
-    }
-
-    .pure-table td,
-    .pure-table th {
-      border: none;
-    }
-
-    td {
-      /* Behave  like a "row" */
-      border: none;
-      border-bottom: 1px solid var(--color-border-watch-table-cell);
-      vertical-align: middle;
-
-      &:before {
-        /* Top/left values mimic padding */
-        top: 6px;
-        left: 6px;
-        width: 45%;
-        padding-right: 10px;
-        white-space: nowrap;
-      }
-    }
-
-    &.pure-table-striped {
-      tr {
-        background-color: var(--color-table-background);
-      }
-
-      tr:nth-child(2n-1) {
-        background-color: var(--color-table-stripe);
-      }
-
-      tr:nth-child(2n-1) td {
-        background-color: inherit;
-      }
-    }
-
   }
 }
 

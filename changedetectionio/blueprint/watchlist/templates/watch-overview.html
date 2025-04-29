@@ -102,7 +102,7 @@
 
                 {% set is_unviewed = watch.newest_history_key| int > watch.last_viewed and watch.history_n>=2 %}
                 {% set checking_now = is_checking_now(watch) %}
-            <tr id="{{ watch.uuid }}" data-watch-uuid="{{ watch.uuid }}"
+            <tr id="{{ watch.uuid }}" data-watch-uuid="{{ watch.uuid }}" data-history-n="{{ watch.history_n }}"
                 class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }} processor-{{ watch['processor'] }}
                 {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
                 {% if watch.last_notification_error is defined and watch.last_notification_error != False %}error{% endif %}
@@ -111,6 +111,7 @@
                 {% if watch.has_restock_info %} has-restock-info {% if watch['restock']['in_stock'] %}in-stock{% else %}not-in-stock{% endif %} {% else %}no-restock-info{% endif %}
                 {% if watch.uuid in queued_uuids %}queued{% endif %}
                 {% if checking_now %}checking-now{% endif %}
+                {% if watch.history_n >=2 %}has-history{% endif %}
                 ">
                 <td class="inline checkbox-uuid" ><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " > <span>{{ loop.index+pagination.skip }}</span></td>
                 <td class="inline watch-controls">
@@ -194,35 +195,22 @@
                     {% if checking_now %}
                         <span class="spinner"></span><span> Checking now</span>
                     {% else %}
-                        {{watch|format_last_checked_time|safe}}</td>
-                    {% endif %}
-
-                <td class="last-changed" data-timestamp="{{ watch.last_changed }}">{% if watch.history_n >=2 and watch.last_changed >0 %}
-                    {{watch.last_changed|format_timestamp_timeago}}
-                    {% else %}
-                    Not yet
+                        <span class="timeago">{{watch|format_last_checked_time|safe}} <!-- default --></span>
                     {% endif %}
                 </td>
+                <td class="last-changed" data-timestamp="{{ watch.last_changed }}">
+                    <span class="timeago">{% if watch.history_n >=2 and watch.last_changed >0 %}{{watch|format_last_checked_time|safe}}{% else %}Not yet{% endif %}<!-- default --></span>
+                </td>
                 <td>
-                    <a {% if watch.uuid in queued_uuids %}disabled="true"{% endif %} href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
-                       class="recheck pure-button pure-button-primary">{% if watch.uuid in queued_uuids %}Queued{% else %}Recheck{% endif %}</a>
-                    <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="pure-button pure-button-primary">Edit</a>
-                    {% if watch.history_n >= 2 %}
+                    <a href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid) }}" class="recheck pure-button pure-button-primary">Recheck</a>
+                    <a href=""  disabled=disabled class="queue pure-button pure-button-primary" style="display: none;">Queued</a>
+                    <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid)}}#general" class="edit pure-button pure-button-primary">Edit</a>
 
-                        {% set open_diff_in_new_tab = datastore.data['settings']['application']['ui'].get('open_diff_in_new_tab') %}
-                        {% set target_attr = ' target="' ~ watch.uuid ~ '"' if open_diff_in_new_tab else '' %}
+                    {% set open_diff_in_new_tab = datastore.data['settings']['application']['ui'].get('open_diff_in_new_tab') %}
+                    {% set target_attr = ' target="' ~ watch.uuid ~ '"' if open_diff_in_new_tab else '' %}
 
-                        {%  if is_unviewed %}
-                           <a href="{{ url_for('ui.ui_views.diff_history_page', uuid=watch.uuid, from_version=watch.get_from_version_based_on_last_viewed) }}" {{target_attr}} class="pure-button pure-button-primary diff-link">History</a>
-                        {% else %}
-                           <a href="{{ url_for('ui.ui_views.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="pure-button pure-button-primary diff-link">History</a>
-                        {% endif %}
-
-                    {% else %}
-                        {% if watch.history_n == 1 or (watch.history_n ==0 and watch.error_text_ctime )%}
-                            <a href="{{ url_for('ui.ui_views.preview_page', uuid=watch.uuid)}}" {{target_attr}} class="pure-button pure-button-primary">Preview</a>
-                        {% endif %}
-                    {% endif %}
+                   <a href="{{ url_for('ui.ui_views.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="history pure-button pure-button-primary diff-link" >History</a>
+                   <a href="{{ url_for('ui.ui_views.preview_page', uuid=watch.uuid)}}" {{target_attr}} class="preview pure-button pure-button-primary" style="display: none;">Preview</a>
                 </td>
             </tr>
             {% endfor %}

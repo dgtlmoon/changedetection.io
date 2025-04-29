@@ -88,7 +88,9 @@
   --color-icon-github: var(--color-black);
   --color-icon-github-hover: var(--color-grey-300);
   --color-watch-table-error: var(--color-dark-red);
-  --color-watch-table-row-text: var(--color-grey-100); }
+  --color-watch-table-row-text: var(--color-grey-100);
+  --color-change-highlight-rgb: 255, 215, 0;
+  /* Gold color for socket.io highlight */ }
 
 html[data-darkmode="true"] {
   --color-link: #59bdfb;
