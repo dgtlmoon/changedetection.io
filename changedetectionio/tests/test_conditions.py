@@ -241,7 +241,7 @@ def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage):
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
 def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+    #live_server_setup(live_server)
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("""<html>
