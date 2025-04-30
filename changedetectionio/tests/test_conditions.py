@@ -196,7 +196,11 @@ def test_condition_validate_rule_row(client, live_server):
     )
     assert res.status_code == 200
     assert b'false' in res.data
-
+    # cleanup for the next
+    client.get(
+        url_for("ui.form_delete", uuid="all"),
+        follow_redirects=True
+    )
 
 
 
@@ -236,3 +240,106 @@ def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage):
 
     # Assert the word count is counted correctly
     assert b'<td>13</td>' in res.data
+
+    # cleanup for the next
+    client.get(
+        url_for("ui.form_delete", uuid="all"),
+        follow_redirects=True
+    )
+
+# If there was only a change in the whitespacing, then we shouldnt have a change detected
+def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
+    #live_server_setup(live_server)
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write("""<html>
+       <body>
+     Some initial text<br>
+     <p>Which is across multiple lines</p>
+     <br>
+     So let's see what happens.  <br>
+     </body>
+     </html>
+    """)
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
+        follow_redirects=True
+    )
+    assert b"Watch added in Paused state, saving will unpause" in res.data
+
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
+    # Give the thread time to pick it up
+    wait_for_all_checks(client)
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
+        data={
+            "url": test_url,
+            "fetch_backend": "html_requests",
+            "conditions_match_logic": "ALL",  # ALL = AND logic
+            "conditions-0-field": "levenshtein_ratio",
+            "conditions-0-operator": "<",
+            "conditions-0-value": "0.8" # needs to be more of a diff to trigger a change
+        },
+        follow_redirects=True
+    )
+
+    assert b"unpaused" in res.data
+
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'unviewed' not in res.data
+
+    # Check the content saved initially, even tho a condition was set - this is the first snapshot so shouldnt be affected by conditions
+    res = client.get(
+        url_for("ui.ui_views.preview_page", uuid=uuid),
+        follow_redirects=True
+    )
+    assert b'Which is across multiple lines' in res.data
+
+
+    ############### Now change it a LITTLE bit...
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write("""<html>
+       <body>
+     Some initial text<br>
+     <p>Which is across multiple lines</p>
+     <br>
+     So let's see what happenxxxxxxxxx.  <br>
+     </body>
+     </html>
+    """)
+
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("watchlist.index"))
+    assert b'unviewed' not in res.data #because this will be like 0.90 not 0.8 threshold
+
+    ############### Now change it a MORE THAN 50%
+    test_return_data = """<html>
+       <body>
+     Some sxxxx<br>
+     <p>Which is across a lines</p>
+     <br>
+     ok.  <br>
+     </body>
+     </html>
+    """
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'unviewed' in res.data
+    # cleanup for the next
+    client.get(
+        url_for("ui.form_delete", uuid="all"),
+        follow_redirects=True
+    )

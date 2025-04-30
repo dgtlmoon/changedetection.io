@@ -5,7 +5,7 @@ from json_logic.builtins import BUILTINS
 from .exceptions import EmptyConditionRuleRowNotUsable
 from .pluggy_interface import plugin_manager  # Import the pluggy plugin manager
 from . import default_plugin
-
+from loguru import logger
 # List of all supported JSON Logic operators
 operator_choices = [
     (None, "Choose one - Operator"),
@@ -113,12 +113,14 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
                             application_datastruct=application_datastruct,
                             ephemeral_data=ephemeral_data
                         )
-                        
+                        logger.debug(f"Trying plugin {plugin}....")
+
                         # Set a timeout of 10 seconds
                         try:
                             new_execute_data = future.result(timeout=10)
                             if new_execute_data and isinstance(new_execute_data, dict):
                                 EXECUTE_DATA.update(new_execute_data)
+
                         except concurrent.futures.TimeoutError:
                             # The plugin took too long, abort processing for this watch
                             raise Exception(f"Plugin {plugin.__class__.__name__} took more than 10 seconds to run.")
