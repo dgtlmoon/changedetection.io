@@ -125,6 +125,20 @@ async () => {
         // so it's good to filter to just the 'above the fold' elements
         // and it should be atleast 100px from the top to ignore items in the toolbar, sometimes menu items like "Coming soon" exist
 
+        function elementIsInEyeBallRange(element) {
+            // outside the 'fold' or some weird text in the heading area
+            // .getBoundingClientRect() was causing a crash in chrome 119, can only be run on contentVisibility != hidden
+            // Note: theres also an automated test that places the 'out of stock' text fairly low down
+            // Skip text that could be in the header area
+            if (element.getBoundingClientRect().bottom + window.scrollY <= 300 ) {
+                return false;
+            }
+            // Skip text that could be much further down (like a list of "you may like" products that have 'sold out' in there
+            if (element.getBoundingClientRect().bottom + window.scrollY >= 1300 ) {
+                return false;
+            }
+            return true;
+        }
 
 // @todo - if it's SVG or IMG, go into image diff mode
 
@@ -161,9 +175,7 @@ async () => {
         for (let i = elementsToScan.length - 1; i >= 0; i--) {
             const element = elementsToScan[i];
 
-            // outside the 'fold' or some weird text in the heading area
-            // .getBoundingClientRect() was causing a crash in chrome 119, can only be run on contentVisibility != hidden
-            if (element.getBoundingClientRect().top + window.scrollY >= vh || element.getBoundingClientRect().top + window.scrollY <= 100) {
+            if (!elementIsInEyeBallRange(element)) {
                 continue
             }
 
@@ -177,11 +189,11 @@ async () => {
             } catch (e) {
                 console.warn('stock-not-in-stock.js scraper - handling element for gettext failed', e);
             }
-
             if (elementText.length) {
                 // try which ones could mean its in stock
                 if (negateOutOfStockRegex.test(elementText) && !elementText.includes('(0 products)')) {
                     console.log(`Negating/overriding 'Out of Stock' back to "Possibly in stock" found "${elementText}"`)
+                    element.style.border = "2px solid green"; // highlight the element that was detected as in stock
                     return 'Possibly in stock';
                 }
             }
@@ -190,10 +202,8 @@ async () => {
         // OTHER STUFF THAT COULD BE THAT IT'S OUT OF STOCK
         for (let i = elementsToScan.length - 1; i >= 0; i--) {
             const element = elementsToScan[i];
-            // outside the 'fold' or some weird text in the heading area
-            // .getBoundingClientRect() was causing a crash in chrome 119, can only be run on contentVisibility != hidden
-            // Note: theres also an automated test that places the 'out of stock' text fairly low down
-            if (element.getBoundingClientRect().top + window.scrollY >= vh + 250 || element.getBoundingClientRect().top + window.scrollY <= 100) {
+
+            if (!elementIsInEyeBallRange(element)) {
                 continue
             }
             elementText = "";
@@ -208,6 +218,7 @@ async () => {
                 for (const outOfStockText of outOfStockTexts) {
                     if (elementText.includes(outOfStockText)) {
                         console.log(`Selected 'Out of Stock' - found text "${outOfStockText}" - "${elementText}" - offset top ${element.getBoundingClientRect().top}, page height is ${vh}`)
+                        element.style.border = "2px solid red"; // highlight the element that was detected as out of stock
                         return outOfStockText; // item is out of stock
                     }
                 }
