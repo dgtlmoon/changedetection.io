@@ -9,15 +9,20 @@ def levenshtein_ratio_recent_history(watch, incoming_text=None):
     try:
         from Levenshtein import ratio, distance
         k = list(watch.history.keys())
-        if len(k) >= 2:
-            # When called from ui_edit_stats_extras, we don't have incoming_text
-            if incoming_text is None:
-                a = watch.get_history_snapshot(timestamp=k[-1])  # Latest snapshot
-                b = watch.get_history_snapshot(timestamp=k[-2])  # Previous snapshot
-            else:
-                a = watch.get_history_snapshot(timestamp=k[-2]) # Second newest, incoming_text will be "newest"
-                b = incoming_text
-            
+        a = None
+        b = None
+
+        # When called from ui_edit_stats_extras, we don't have incoming_text
+        if incoming_text is None:
+            a = watch.get_history_snapshot(timestamp=k[-1])  # Latest snapshot
+            b = watch.get_history_snapshot(timestamp=k[-2])  # Previous snapshot
+
+        # Needs atleast one snapshot
+        elif len(k) >= 1: # Should be atleast one snapshot to compare against
+            a = watch.get_history_snapshot(timestamp=k[-1]) # Latest saved snapshot
+            b = incoming_text if incoming_text else k[-2]
+
+        if a and b:
             distance_value = distance(a, b)
             ratio_value = ratio(a, b)
             return {
@@ -53,7 +58,7 @@ def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
     # ephemeral_data['text'] will be the current text after filters, they may have edited filters but not saved them yet etc
 
     if watch and 'text' in ephemeral_data:
-        lev_data = levenshtein_ratio_recent_history(watch, ephemeral_data['text'])
+        lev_data = levenshtein_ratio_recent_history(watch, ephemeral_data.get('text',''))
         if isinstance(lev_data, dict):
             res['levenshtein_ratio'] = lev_data.get('ratio', 0)
             res['levenshtein_similarity'] = lev_data.get('percent_similar', 0)
