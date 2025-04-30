@@ -196,7 +196,11 @@ def test_condition_validate_rule_row(client, live_server):
     )
     assert res.status_code == 200
     assert b'false' in res.data
-
+    # cleanup for the next
+    client.get(
+        url_for("ui.form_delete", uuid="all"),
+        follow_redirects=True
+    )
 
 
 
@@ -237,7 +241,11 @@ def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage):
     # Assert the word count is counted correctly
     assert b'<td>13</td>' in res.data
 
-
+    # cleanup for the next
+    client.get(
+        url_for("ui.form_delete", uuid="all"),
+        follow_redirects=True
+    )
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
 def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
@@ -283,6 +291,8 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
 
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
+    with open('/tmp/fuck.html', 'wb') as f:
+        f.write(res.data)
     assert b'unviewed' not in res.data
 
     # Check the content saved initially, even tho a condition was set - this is the first snapshot so shouldnt be affected by conditions
@@ -330,3 +340,8 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
+    # cleanup for the next
+    client.get(
+        url_for("ui.form_delete", uuid="all"),
+        follow_redirects=True
+    )
