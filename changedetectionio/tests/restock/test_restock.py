@@ -14,6 +14,8 @@ from changedetectionio.notification import (
 def set_original_response():
     test_return_data = """<html>
        <body>
+       <section id=header style="padding: 50px; height: 350px">This is the header which should be ignored always - <span>add to cart</span></section>
+       <!-- stock-not-in-stock.js will ignore text in the first 300px, see elementIsInEyeBallRange(), sometimes "add to cart" and other junk is here -->
      Some initial text<br>
      <p>Which is across multiple lines</p>
      <br>
