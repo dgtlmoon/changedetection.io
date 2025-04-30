@@ -291,8 +291,6 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
 
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    with open('/tmp/fuck.html', 'wb') as f:
-        f.write(res.data)
     assert b'unviewed' not in res.data
 
     # Check the content saved initially, even tho a condition was set - this is the first snapshot so shouldnt be affected by conditions
