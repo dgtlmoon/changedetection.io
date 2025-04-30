@@ -257,17 +257,17 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
         follow_redirects=True
     )
-    assert b"1 Imported" in res.data
+    assert b"Watch added in Paused state, saving will unpause" in res.data
 
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     # Give the thread time to pick it up
     wait_for_all_checks(client)
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
             "url": test_url,
             "fetch_backend": "html_requests",
@@ -278,13 +278,19 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
         },
         follow_redirects=True
     )
-    assert b"Updated watch." in res.data
 
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
-    assert b'Queued 1 watch for rechecking.' in res.data
+    assert b"unpaused" in res.data
+
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
+
+    # Check the content saved initially, even tho a condition was set - this is the first snapshot so shouldnt be affected by conditions
+    res = client.get(
+        url_for("ui.ui_views.preview_page", uuid=uuid),
+        follow_redirects=True
+    )
+    assert b'Which is across multiple lines' in res.data
 
 
     ############### Now change it a LITTLE bit...
