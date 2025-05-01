@@ -51,6 +51,7 @@ async () => {
             'niet op voorraad',
             'no disponible',
             'no featured offers available',
+            'no longer available',
             'no longer in stock',
             'no tickets available',
             'non disponibile',
