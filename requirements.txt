@@ -55,6 +55,7 @@ elementpath==4.1.5
 
 selenium==4.31.0
 
+
 # https://github.com/pallets/werkzeug/issues/2985
 # Maybe related to pytest?
 werkzeug==3.0.6
