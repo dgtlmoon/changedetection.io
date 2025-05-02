@@ -76,8 +76,7 @@ class fetcher(Fetcher):
         for opt in CHROME_OPTIONS:
             options.add_argument(opt)
 
-        if self.proxy:
-            options.proxy = self.proxy
+        options.add_argument(f"--proxy-server={self.proxy}")
 
         self.driver = webdriver.Remote(
             command_executor=self.browser_connection_url,

@@ -101,6 +101,7 @@ docker run --network changedet-network \
   bash -c 'cd changedetectionio && FAST_PUPPETEER_CHROME_FETCHER=1 PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000 pytest tests/proxy_list/test_proxy_noconnect.py'
 
 # Selenium - todo - fix proxies
-#docker run --network changedet-network \
-#  test-changedetectionio \
-#  bash -c 'cd changedetectionio && FAST_PUPPETEER_CHROME_FETCHER=1 PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000 pytest tests/proxy_list/test_proxy_noconnect.py'
+docker run --network changedet-network \
+  -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" \
+  test-changedetectionio \
+  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_proxy_noconnect.py'

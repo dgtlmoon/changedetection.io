@@ -44,7 +44,10 @@ def test_proxy_noconnect_custom(client, live_server, measure_memory_usage):
     check_string = b'Proxy connection failed?'
 
     if os.getenv('PLAYWRIGHT_DRIVER_URL') or strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
-        check_string = b'ERR_PROXY_CONNECTION_FAILED '
+        check_string = b'ERR_PROXY_CONNECTION_FAILED'
+
+    if os.getenv("WEBDRIVER_URL"):
+        check_string = b'ERR_PROXY_CONNECTION_FAILED'
 
     assert check_string in res.data
 
