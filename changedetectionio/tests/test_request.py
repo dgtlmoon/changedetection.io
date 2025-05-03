@@ -444,8 +444,6 @@ def test_headers_validation(client, live_server):
             "headers": "User-AGent agent-from-watch\r\nsadfsadfsadfsdaf\r\n:foobar"},
         follow_redirects=True
     )
-    with open('/tmp/debug.html', 'wb') as f:
-        f.write(res.data)
 
     assert b"Line 1 is missing a &#39;:&#39; separator." in res.data
     assert b"Line 3 has an empty key." in res.data
