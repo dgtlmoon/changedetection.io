@@ -168,9 +168,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             step_optional_value = request.form.get('optional_value')
             is_last_step = strtobool(request.form.get('is_last_step'))
 
-            # @todo try.. accept.. nice errors not popups..
             try:
-
                 browsersteps_sessions[browsersteps_session_id]['browserstepper'].call_action(action_name=step_operation,
                                          selector=step_selector,
                                          optional_value=step_optional_value)
