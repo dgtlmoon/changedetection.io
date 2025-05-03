@@ -7,7 +7,7 @@ from ... import strtobool
 
 
 # Just to be sure the UI outputs the right error message on proxy connection failed
-
+# docker run -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome:4
 # PLAYWRIGHT_DRIVER_URL=ws://127.0.0.1:3000 pytest tests/proxy_list/test_proxy_noconnect.py
 # FAST_PUPPETEER_CHROME_FETCHER=True PLAYWRIGHT_DRIVER_URL=ws://127.0.0.1:3000 pytest tests/proxy_list/test_proxy_noconnect.py
 # WEBDRIVER_URL=http://127.0.0.1:4444/wd/hub pytest tests/proxy_list/test_proxy_noconnect.py
@@ -53,7 +53,6 @@ def test_proxy_noconnect_custom(client, live_server, measure_memory_usage):
     )
     assert b"unpaused" in res.data
     import time
-    time.sleep(2)
     wait_for_all_checks(client)
 
     # Requests default
@@ -64,6 +63,6 @@ def test_proxy_noconnect_custom(client, live_server, measure_memory_usage):
 
 
     res = client.get(url_for("watchlist.index"))
-    with open("/tmp/debug.html", 'wb') as f:
-        f.write(res.data)
+    #with open("/tmp/debug.html", 'wb') as f:
+    #    f.write(res.data)
     assert check_string in res.data
