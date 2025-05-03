@@ -224,27 +224,37 @@ class StringDictKeyValue(StringField):
 
     def _value(self):
         if self.data:
-            output = u''
-            for k in self.data.keys():
-                output += "{}: {}\r\n".format(k, self.data[k])
-
+            output = ''
+            for k, v in self.data.items():
+                output += f"{k}: {v}\r\n"
             return output
         else:
-            return u''
+            return ''
 
-    # incoming
+    # incoming data processing + validation
     def process_formdata(self, valuelist):
+        self.data = {}
+        errors = []
         if valuelist:
-            self.data = {}
-            # Remove empty strings
-            cleaned = list(filter(None, valuelist[0].split("\n")))
-            for s in cleaned:
-                parts = s.strip().split(':', 1)
-                if len(parts) == 2:
-                    self.data.update({parts[0].strip(): parts[1].strip()})
+            # Remove empty strings (blank lines)
+            cleaned = [line.strip() for line in valuelist[0].split("\n") if line.strip()]
+            for idx, s in enumerate(cleaned, start=1):
+                if ':' not in s:
+                    errors.append(f"Line {idx} is missing a ':' separator.")
+                    continue
+                parts = s.split(':', 1)
+                key = parts[0].strip()
+                value = parts[1].strip()
 
-        else:
-            self.data = {}
+                if not key:
+                    errors.append(f"Line {idx} has an empty key.")
+                if not value:
+                    errors.append(f"Line {idx} has an empty value.")
+
+                self.data[key] = value
+
+        if errors:
+            raise ValidationError("Invalid input:\n" + "\n".join(errors))
 
 class ValidateContentFetcherIsReady(object):
     """
