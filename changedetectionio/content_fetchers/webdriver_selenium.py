@@ -40,7 +40,7 @@ class fetcher(Fetcher):
             os.getenv('webdriver_sslProxy'),
             proxy_override, # last one should override
         ]
-
+        # The built in selenium proxy handling is super unreliable!!! so we just grab which ever proxy setting we can find and throw it in --proxy-server=
         for k in filter(None, proxy_sources):
             if not k:
                 continue
