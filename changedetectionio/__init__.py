@@ -2,7 +2,7 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.49.15'
+__version__ = '0.49.16'
 
 # Set environment variables before importing other modules
 import os

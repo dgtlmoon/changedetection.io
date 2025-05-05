@@ -28,6 +28,7 @@ class fetcher(Fetcher):
 
         import chardet
         import requests
+        from requests.exceptions import ProxyError, ConnectionError, RequestException
 
         if self.browser_steps_get_valid_steps():
             raise BrowserStepsInUnsupportedFetcher(url=url)
@@ -52,14 +53,19 @@ class fetcher(Fetcher):
         if strtobool(os.getenv('ALLOW_FILE_URI', 'false')) and url.startswith('file://'):
             from requests_file import FileAdapter
             session.mount('file://', FileAdapter())
-
-        r = session.request(method=request_method,
-                            data=request_body.encode('utf-8') if type(request_body) is str else request_body,
-                            url=url,
-                            headers=request_headers,
-                            timeout=timeout,
-                            proxies=proxies,
-                            verify=False)
+        try:
+            r = session.request(method=request_method,
+                                data=request_body.encode('utf-8') if type(request_body) is str else request_body,
+                                url=url,
+                                headers=request_headers,
+                                timeout=timeout,
+                                proxies=proxies,
+                                verify=False)
+        except Exception as e:
+            msg = str(e)
+            if proxies and 'SOCKSHTTPSConnectionPool' in msg:
+                msg = f"Proxy connection failed? {msg}"
+            raise Exception(msg) from e
 
         # If the response did not tell us what encoding format to expect, Then use chardet to override what `requests` thinks.
         # For example - some sites don't tell us it's utf-8, but return utf-8 content

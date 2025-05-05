@@ -136,7 +136,7 @@ def wait_for_all_checks(client):
         res = client.get(url_for("watchlist.index"))
         if not b'Checking now' in res.data:
             break
-        logging.getLogger().info("Waiting for watch-list to not say 'Checking now'.. {}".format(attempt))
+        logging.getLogger().info(f"Waiting for watch-list to not say 'Checking now'.. {attempt}")
         time.sleep(1)
         attempt += 1
 

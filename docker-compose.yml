@@ -72,7 +72,7 @@ services:
   
       # Comment out ports: when using behind a reverse proxy , enable networks: etc.
       ports:
-        - 5000:5000
+        - 127.0.0.1:5000:5000
       restart: unless-stopped
 
      # Used for fetching pages via WebDriver+Chrome where you need Javascript support.
@@ -82,7 +82,7 @@ services:
      # If WEBDRIVER or PLAYWRIGHT are enabled, changedetection container depends on that
      # and must wait before starting (substitute "browser-chrome" with "playwright-chrome" if last one is used)
 #      depends_on:
-#          sockpuppetbrowser:
+#          browser-sockpuppet-chrome:
 #              condition: service_started
 
 
