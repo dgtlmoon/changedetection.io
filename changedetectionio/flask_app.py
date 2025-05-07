@@ -7,6 +7,7 @@ import queue
 import threading
 import time
 import timeago
+from blinker import signal
 
 from changedetectionio.strtobool import strtobool
 from threading import Event
@@ -28,6 +29,10 @@ from flask_login import current_user
 from flask_paginate import Pagination, get_page_parameter
 from flask_restful import abort, Api
 from flask_cors import CORS
+
+# Create specific signals for application events
+# Make this a global singleton to avoid multiple signal objects
+watch_check_completed = signal('watch_check_completed', doc='Signal sent when a watch check is completed')
 from flask_wtf import CSRFProtect
 from loguru import logger
 import eventlet
@@ -225,6 +230,9 @@ def changedetection_app(config=None, datastore_o=None):
     # so far just for read-only via tests, but this will be moved eventually to be the main source
     # (instead of the global var)
     app.config['DATASTORE'] = datastore_o
+    
+    # Store the signal in the app config to ensure it's accessible everywhere
+    app.config['WATCH_CHECK_COMPLETED_SIGNAL'] = watch_check_completed
 
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'

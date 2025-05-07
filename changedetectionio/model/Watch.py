@@ -60,6 +60,10 @@ class model(watch_base):
 
         return False
 
+    @property
+    def has_unviewed(self):
+        return int(self.newest_history_key) > int(self['last_viewed']) and self.__history_n >= 2
+
     def ensure_data_dir_exists(self):
         if not os.path.isdir(self.watch_data_dir):
             logger.debug(f"> Creating data dir {self.watch_data_dir}")

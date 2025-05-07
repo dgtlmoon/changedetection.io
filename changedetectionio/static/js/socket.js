@@ -31,60 +31,18 @@ $(document).ready(function() {
   });
 
     // Listen for periodically emitted watch data
-    socket.on('watch_data', function(watches) {
-/*      console.log('Received watch data updates');
+    socket.on('watch_update', function(watch) {
+      console.log(`Watch update ${watch.uuid}`);
 
-      
-      // Update all watches with their current data
-      watches.forEach(function(watch) {
-        const $watchRow = $('tr[data-watch-uuid="' + watch.uuid + '"]');
-        if ($watchRow.length) {
-          updateWatchRow($watchRow, watch);
-        }
-      });*/
-    });
-    
-    // Function to update a watch row with new data
-    function updateWatchRow($row, data) {
-      // Update the last-checked time
-      return;
-      const $lastChecked = $row.find('.last-checked');
-      if ($lastChecked.length) {
-        // Update data-timestamp attribute
-        $lastChecked.attr('data-timestamp', data.last_checked);
-        
-        // Only show timeago if not currently checking
-        if (!data.checking) {
-          let $timeagoSpan = $lastChecked.find('.timeago');
-          
-          // If there's no timeago span yet, create one
-          if (!$timeagoSpan.length) {
-            $lastChecked.html('<span class="timeago"></span>');
-            $timeagoSpan = $lastChecked.find('.timeago');
-          }
-          
-          if (data.last_checked > 0) {
-            // Format as timeago if we have the timeago library available
-            if (typeof timeago !== 'undefined') {
-              $timeagoSpan.text(timeago.format(data.last_checked * 1000));
-            } else {
-              // Simple fallback if timeago isn't available
-              const date = new Date(data.last_checked * 1000);
-              $timeagoSpan.text(date.toLocaleString());
-            }
-          } else {
-            $lastChecked.text('Not yet');
-          }
-        }
+
+      const $watchRow = $('tr[data-watch-uuid="' + watch.uuid + '"]');
+      if ($watchRow.length) {
+        $($watchRow).toggleClass('checking-now', watch.checking_now);
+        $($watchRow).toggleClass('queued', watch.queued);
+        $($watchRow).toggleClass('unviewed', watch.unviewed);
       }
+    });
 
-      
-      // Toggle the unviewed class based on viewed status
-//      $row.toggleClass('unviewed', data.unviewed_history === false);
-      
-      // If the watch is currently being checked
-  //    $row.toggleClass('checking-now', data.checking === true);
-    }
   } catch (e) {
     // If Socket.IO fails to initialize, just log it and continue
     console.log('Socket.IO initialization error:', e);

@@ -2,6 +2,7 @@ from .processors.exceptions import ProcessorException
 import changedetectionio.content_fetchers.exceptions as content_fetchers_exceptions
 from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
 from changedetectionio import html_tools
+from changedetectionio.flask_app import watch_check_completed
 
 import importlib
 import os
@@ -242,17 +243,16 @@ class update_worker(threading.Thread):
                 os.unlink(full_path)
 
     def run(self):
-        
+
         while not self.app.config.exit.is_set():
             update_handler = None
+            watch = None
 
             try:
                 queued_item_data = self.q.get(block=False)
             except queue.Empty:
                 pass
-
             else:
-
                 uuid = queued_item_data.item.get('uuid')
                 fetch_start_time = round(time.time())  # Also used for a unique history key for now
                 self.current_uuid = uuid
@@ -272,6 +272,9 @@ class update_worker(threading.Thread):
                     logger.info(f"Processing watch UUID {uuid} Priority {queued_item_data.priority} URL {watch['url']}")
 
                     try:
+                        #watch_check_completed.send(sender=self, watch=watch)
+                        watch_check_completed.send(watch_uuid=watch['uuid'])
+
                         # Processor is what we are using for detecting the "Change"
                         processor = watch.get('processor', 'text_json_diff')
 
@@ -588,11 +591,17 @@ class update_worker(threading.Thread):
                                                                        'check_count': count
                                                                        })
 
-
                 self.current_uuid = None  # Done
                 self.q.task_done()
+
+                # Send signal for watch check completion with the watch data
+                if watch:
+                    logger.info(f"Sending watch_check_completed signal for UUID {watch['uuid']}")
+                    watch_check_completed.send(watch_uuid=watch['uuid'])
+
                 update_handler = None
                 logger.debug(f"Watch {uuid} done in {time.time()-fetch_start_time:.2f}s")
+
 
                 # Give the CPU time to interrupt
                 time.sleep(0.1)
