@@ -551,7 +551,13 @@ body.preview-text-enabled {
   .watch-table .current-diff-url::after {
     content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
     margin: 0 3px 0 5px; }
-  .watch-table tr.checking-now td.last-checked .spinner, .watch-table tr.checking-now td.last-checked .spinner-text {
+  .watch-table tr.checking-now td.last-checked .spinner-wrapper {
+    display: inline-block !important; }
+  .watch-table tr.checking-now td.last-checked .innertext {
+    display: none !important; }
+  .watch-table tr.queued a.recheck {
+    display: none !important; }
+  .watch-table tr.queued a.already-in-queue-button {
     display: inline-block !important; }
 
 ul#conditions_match_logic {

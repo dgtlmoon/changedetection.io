@@ -52,9 +52,20 @@
   /* Row with 'checking-now' */
   tr.checking-now {
     td.last-checked {
-      .spinner, .spinner-text {
+      .spinner-wrapper {
         display: inline-block !important;
       }
+      .innertext {
+        display: none !important;
+      }
+    }
+  }
+  tr.queued {
+    a.recheck {
+      display: none !important;
+    }
+    a.already-in-queue-button {
+      display: inline-block !important;
     }
   }
 }

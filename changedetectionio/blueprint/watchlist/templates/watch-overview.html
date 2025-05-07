@@ -103,6 +103,7 @@
                 {% set checking_now = is_checking_now(watch) %}
             <tr id="{{ watch.uuid }}" data-watch-uuid="{{ watch.uuid }}"
                 class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }} processor-{{ watch['processor'] }}
+                {# socket.js also sets these vars on the row for update #}
                 {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
                 {% if watch.last_notification_error is defined and watch.last_notification_error != False %}error{% endif %}
                 {% if watch.paused is defined and watch.paused != False %}paused{% endif %}
@@ -189,11 +190,11 @@
                 </td>
 {% endif %}
             {#last_checked becomes fetch-start-time#}
-                <td class="last-checked" data-timestamp="{{ watch.last_checked }}" {% if checking_now %} data-fetchduration={{ watch.fetch_time }} data-eta_complete="{{ watch.last_checked+watch.fetch_time }}" {% endif %} >
-
-                    <span style="display:none;" class="spinner"></span><span class="spinner-text" style="display:none;" >&nbsp;Checking now</span>
-
-                        {{watch|format_last_checked_time|safe}}
+                <td class="last-checked" data-timestamp="{{ watch.last_checked }}" data-fetchduration={{ watch.fetch_time }} data-eta_complete="{{ watch.last_checked+watch.fetch_time }}" >
+                    <div class="spinner-wrapper" style="display:none;" >
+                        <span class="spinner"></span><span>&nbsp;Checking now</span>
+                    </div>
+                    <span class="innertext">{{watch|format_last_checked_time|safe}}</span>
                 </td>
 
 
@@ -204,9 +205,9 @@
                     {% endif %}
                 </td>
                 <td>
-                    <a {% if watch.uuid in queued_uuids %}disabled="true"{% endif %} href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
-                       class="recheck pure-button pure-button-primary">{% if watch.uuid in queued_uuids %}Queued{% else %}Recheck{% endif %}</a>
+                    <a href="" class="already-in-queue-button recheck pure-button pure-button-primary" style="display: none;" disabled="disabled">Queued</a>
 
+                    <a href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}" class="recheck pure-button pure-button-primary">Recheck</a>
                     <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="pure-button pure-button-primary">Edit</a>
 
                     {% if watch.history_n >= 2 %}

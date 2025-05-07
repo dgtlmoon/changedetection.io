@@ -1,3 +1,4 @@
+import timeago
 from flask import Flask
 from flask_socketio import SocketIO
 import threading
@@ -94,15 +95,19 @@ class ChangeDetectionSocketIO:
                     if hasattr(q_item, 'item') and 'uuid' in q_item.item:
                         queue_list.append(q_item.item['uuid'])
 
+
                 # Create a simplified watch data object to send to clients
                 watch_data = {
-                    'uuid': watch.get('uuid'),
-                    'last_checked_text': _jinja2_filter_datetime(watch),
-                    'last_checked': watch.get('last_checked'),
-                    'last_changed': watch.get('last_changed'),
-                    'queued': True if watch.get('uuid') in queue_list else False,
                     'checking_now': True if watch.get('uuid') in running_uuids else False,
+                    'fetch_time': watch.get('fetch_time'),
+                    'has_error': watch.get('last_error') or watch.get('last_notification_error'),
+                    'last_changed': watch.get('last_changed'),
+                    'last_checked': watch.get('last_checked'),
+                    'last_checked_text': _jinja2_filter_datetime(watch),
+                    'last_changed_text': timeago.format(int(watch['last_changed']), time.time()) if watch.history_n >=2 and int(watch.get('last_changed',0)) >0 else 'Not yet',
+                    'queued': True if watch.get('uuid') in queue_list else False,
                     'unviewed': watch.has_unviewed,
+                    'uuid': watch.get('uuid'),
                 }
                 self.socketio.emit("watch_update", watch_data)
                 logger.debug(f"Socket.IO: Emitted update for watch {watch.get('uuid')}")
