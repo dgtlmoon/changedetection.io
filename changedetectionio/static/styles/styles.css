@@ -523,6 +523,37 @@ body.preview-text-enabled {
   z-index: 3;
   box-shadow: 1px 1px 4px var(--color-shadow-jump); }
 
+/* table related */
+.watch-table {
+  width: 100%;
+  font-size: 80%;
+  /* Row with 'checking-now' */ }
+  .watch-table tr {
+    color: var(--color-watch-table-row-text); }
+    .watch-table tr.unviewed {
+      font-weight: bold; }
+    .watch-table tr.error {
+      color: var(--color-watch-table-error); }
+  .watch-table td {
+    white-space: nowrap; }
+    .watch-table td.title-col {
+      word-break: break-all;
+      white-space: normal; }
+  .watch-table th {
+    white-space: nowrap; }
+    .watch-table th a {
+      font-weight: normal; }
+      .watch-table th a.active {
+        font-weight: bolder; }
+      .watch-table th a.inactive .arrow {
+        display: none; }
+  .watch-table .title-col a[target="_blank"]::after,
+  .watch-table .current-diff-url::after {
+    content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
+    margin: 0 3px 0 5px; }
+  .watch-table tr.checking-now td.last-checked .spinner, .watch-table tr.checking-now td.last-checked .spinner-text {
+    display: inline-block !important; }
+
 ul#conditions_match_logic {
   list-style: none; }
   ul#conditions_match_logic input, ul#conditions_match_logic label, ul#conditions_match_logic li {
@@ -734,34 +765,6 @@ section.content {
 code {
   background: var(--color-background-code);
   color: var(--color-text); }
-
-/* table related */
-.watch-table {
-  width: 100%;
-  font-size: 80%; }
-  .watch-table tr {
-    color: var(--color-watch-table-row-text); }
-    .watch-table tr.unviewed {
-      font-weight: bold; }
-    .watch-table tr.error {
-      color: var(--color-watch-table-error); }
-  .watch-table td {
-    white-space: nowrap; }
-    .watch-table td.title-col {
-      word-break: break-all;
-      white-space: normal; }
-  .watch-table th {
-    white-space: nowrap; }
-    .watch-table th a {
-      font-weight: normal; }
-      .watch-table th a.active {
-        font-weight: bolder; }
-      .watch-table th a.inactive .arrow {
-        display: none; }
-  .watch-table .title-col a[target="_blank"]::after,
-  .watch-table .current-diff-url::after {
-    content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
-    margin: 0 3px 0 5px; }
 
 .inline-tag, .watch-tag-list, .tracking-ldjson-price-data, .restock-label {
   white-space: nowrap;

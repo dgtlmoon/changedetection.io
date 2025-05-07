@@ -5,16 +5,16 @@ import json
 import time
 from loguru import logger
 
+from changedetectionio.flask_app import _jinja2_filter_datetime
+
+
 class ChangeDetectionSocketIO:
     def __init__(self, app, datastore):
         self.main_app = app
         self.datastore = datastore
-        
-        # Create a separate app for Socket.IO
-        self.app = Flask(__name__)
-        
+
         # Use threading mode instead of eventlet
-        self.socketio = SocketIO(self.app, 
+        self.socketio = SocketIO(self.main_app,
                                 async_mode='threading', 
                                 cors_allowed_origins="*",
                                 logger=False,
@@ -28,23 +28,7 @@ class ChangeDetectionSocketIO:
         # Just start a background thread to periodically emit watch status
         self.thread = None
         self.thread_lock = threading.Lock()
-        
-        # Set up a simple index route for the Socket.IO app
-        @self.app.route('/')
-        def index():
-            return """
-            <html>
-                <head>
-                    <title>ChangeDetection.io Socket.IO Server</title>
-                </head>
-                <body>
-                    <h1>ChangeDetection.io Socket.IO Server</h1>
-                    <p>This is the Socket.IO server for ChangeDetection.io real-time updates.</p>
-                    <p>Socket.IO endpoint is available at: <code>/socket.io/</code></p>
-                </body>
-            </html>
-            """
-        
+
     def start_background_task(self):
         """Start the background task if it's not already running"""
         with self.thread_lock:
@@ -85,22 +69,17 @@ class ChangeDetectionSocketIO:
                         for thread in threads_snapshot:
                             if hasattr(thread, 'current_uuid') and thread.current_uuid:
                                 currently_checking.append(thread.current_uuid)
-                        
+                        self.socketio.emit("checking_now", list(currently_checking))
+
                         # Send all watch data periodically
                         for uuid, watch in self.datastore.data['watching'].items():
                             # Simplified watch data to avoid sending everything
                             simplified_data = {
                                 'uuid': uuid,
-                                'url': watch.get('url', ''),
-                                'title': watch.get('title', ''),
-                                'last_checked': int(watch.get('last_checked', 0)),
-                                'last_changed': int(watch.get('newest_history_key', 0)),
-                                'history_n': watch.history_n if hasattr(watch, 'history_n') else 0,
-                                'unviewed_history': int(watch.get('newest_history_key', 0)) > int(watch.get('last_viewed', 0)) and watch.history_n >=2,
-                                'paused': watch.get('paused', False),
-                                'checking': uuid in currently_checking
+                                'last_checked': _jinja2_filter_datetime(watch),
+#                                'history_n': watch.history_n if hasattr(watch, 'history_n') else 0,
                             }
-                            watches_data.append(simplified_data)
+                            #watches_data.append(simplified_data)
                         
                         # Emit all watch data periodically
                         self.socketio.emit('watch_data', watches_data)
@@ -123,4 +102,4 @@ class ChangeDetectionSocketIO:
         # Run the Socket.IO server
         # Use 0.0.0.0 to listen on all interfaces
         logger.info(f"Starting Socket.IO server on http://{host}:{port}")
-        self.socketio.run(self.app, host=host, port=port, debug=False, use_reloader=False, allow_unsafe_werkzeug=True)
+        self.socketio.run(self.main_app, host=host, port=port, debug=False, use_reloader=False, allow_unsafe_werkzeug=True)

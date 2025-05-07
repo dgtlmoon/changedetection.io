@@ -14,13 +14,26 @@ $(document).ready(function() {
     socket.on('disconnect', function() {
       console.log('Socket.IO disconnected');
     });
-    
+
+  socket.on('checking_now', function(uuid_list) {
+    console.log("Got checking now update");
+      // Remove 'checking-now' class where it should no longer be
+      $('.watch-table tbody tr.checking-now').each(function() {
+          if (!uuid_list.includes($(this).data('watch-uuid'))) {
+              $(this).removeClass('checking-now');
+          }
+      });
+
+      // Add the class on the rows where it should be
+      uuid_list.forEach(function(uuid) {
+          $('.watch-table tbody tr[data-watch-uuid="' + uuid + '"]').addClass('checking-now');
+      });
+  });
+
     // Listen for periodically emitted watch data
     socket.on('watch_data', function(watches) {
-      console.log('Received watch data updates');
-      
-      // First, remove checking-now class from all rows
-      $('.checking-now').removeClass('checking-now');
+/*      console.log('Received watch data updates');
+
       
       // Update all watches with their current data
       watches.forEach(function(watch) {
@@ -28,12 +41,13 @@ $(document).ready(function() {
         if ($watchRow.length) {
           updateWatchRow($watchRow, watch);
         }
-      });
+      });*/
     });
     
     // Function to update a watch row with new data
     function updateWatchRow($row, data) {
       // Update the last-checked time
+      return;
       const $lastChecked = $row.find('.last-checked');
       if ($lastChecked.length) {
         // Update data-timestamp attribute
@@ -63,60 +77,13 @@ $(document).ready(function() {
           }
         }
       }
-      
-      // Update the last-changed time
-      const $lastChanged = $row.find('.last-changed');
-      if ($lastChanged.length && data.last_changed) {
-        // Update data-timestamp attribute
-        $lastChanged.attr('data-timestamp', data.last_changed);
-        
-        // Only update the text if we have history
-        if (data.history_n >= 2 && data.last_changed > 0) {
-          let $timeagoSpan = $lastChanged.find('.timeago');
-          
-          // If there's no timeago span yet, create one
-          if (!$timeagoSpan.length) {
-            $lastChanged.html('<span class="timeago"></span>');
-            $timeagoSpan = $lastChanged.find('.timeago');
-          }
-          
-          // Format as timeago
-          if (typeof timeago !== 'undefined') {
-            $timeagoSpan.text(timeago.format(data.last_changed * 1000));
-          } else {
-            // Simple fallback if timeago isn't available
-            const date = new Date(data.last_changed * 1000);
-            $timeagoSpan.text(date.toLocaleString());
-          }
-        } else {
-          $lastChanged.text('Not yet');
-        }
-      }
+
       
       // Toggle the unviewed class based on viewed status
-      $row.toggleClass('unviewed', data.unviewed_history === false);
+//      $row.toggleClass('unviewed', data.unviewed_history === false);
       
       // If the watch is currently being checked
-      $row.toggleClass('checking-now', data.checking === true);
-      
-      // If a change was detected and not viewed, add highlight effect
-      if (data.history_n > 0 && data.viewed === false) {
-        // Don't add the highlight effect too often
-        if (!$row.hasClass('socket-highlight')) {
-          $row.addClass('socket-highlight');
-          setTimeout(function() {
-            $row.removeClass('socket-highlight');
-          }, 2000);
-          
-          console.log('New change detected for:', data.title || data.url);
-        }
-        
-        // Update any change count indicators if present
-        const $changeCount = $row.find('.change-count');
-        if ($changeCount.length) {
-          $changeCount.text(data.history_n);
-        }
-      }
+  //    $row.toggleClass('checking-now', data.checking === true);
     }
   } catch (e) {
     // If Socket.IO fails to initialize, just log it and continue

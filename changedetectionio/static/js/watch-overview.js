@@ -68,7 +68,7 @@ $(function () {
             if (eta_complete + 2 > nowtimeserver && fetch_duration > 3) {
                 const remaining_seconds = Math.abs(eta_complete) - nowtimeserver - 1;
 
-                let r = (1.0 - (remaining_seconds / fetch_duration)) * 100;
+                let r = Math.round((1.0 - (remaining_seconds / fetch_duration)) * 100);
                 if (r < 10) {
                     r = 10;
                 }
@@ -76,7 +76,6 @@ $(function () {
                     r = 100;
                 }
                 $(this).css('background-size', `${r}% 100%`);
-                //$(this).text(`${r}% remain ${remaining_seconds}`);
             } else {
                 $(this).css('background-size', `100% 100%`);
             }
