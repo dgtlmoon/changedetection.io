@@ -11,6 +11,7 @@ from blinker import signal
 
 from changedetectionio.strtobool import strtobool
 from threading import Event
+from changedetectionio.custom_queue import SignalPriorityQueue
 
 from flask import (
     Flask,
@@ -51,7 +52,7 @@ ticker_thread = None
 
 extra_stylesheets = []
 
-update_q = queue.PriorityQueue()
+update_q = SignalPriorityQueue()
 notification_q = queue.Queue()
 MAX_QUEUE_SIZE = 2000
 
@@ -456,7 +457,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # watchlist UI buttons etc
     import changedetectionio.blueprint.ui as ui
-    app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData))
+    app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData, watch_check_completed))
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')

@@ -8,7 +8,7 @@ from changedetectionio.blueprint.ui.edit import construct_blueprint as construct
 from changedetectionio.blueprint.ui.notification import construct_blueprint as construct_notification_blueprint
 from changedetectionio.blueprint.ui.views import construct_blueprint as construct_views_blueprint
 
-def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_update_threads, queuedWatchMetaData):
+def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_update_threads, queuedWatchMetaData, watch_check_completed):
     ui_blueprint = Blueprint('ui', __name__, template_folder="templates")
     
     # Register the edit blueprint
@@ -20,7 +20,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
     ui_blueprint.register_blueprint(notification_blueprint)
     
     # Register the views blueprint
-    views_blueprint = construct_views_blueprint(datastore, update_q, queuedWatchMetaData)
+    views_blueprint = construct_views_blueprint(datastore, update_q, queuedWatchMetaData, watch_check_completed)
     ui_blueprint.register_blueprint(views_blueprint)
     
     # Import the login decorator
@@ -35,7 +35,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
             flash('Watch not found', 'error')
         else:
             flash("Cleared snapshot history for watch {}".format(uuid))
-
         return redirect(url_for('watchlist.index'))
 
     @ui_blueprint.route("/clear_history", methods=['GET', 'POST'])
@@ -47,7 +46,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
             if confirmtext == 'clear':
                 for uuid in datastore.data['watching'].keys():
                     datastore.clear_watch_history(uuid)
-
                 flash("Cleared snapshot history for all watches")
             else:
                 flash('Incorrect confirmation text.', 'error')
@@ -247,6 +245,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
                             datastore.data['watching'][uuid]['tags'].append(tag_uuid)
 
             flash(f"{len(uuids)} watches were tagged")
+
+        if uuids:
+            for uuid in uuids:
+                watch_check_completed.send(watch_uuid=uuid)
 
         return redirect(url_for('watchlist.index'))
 

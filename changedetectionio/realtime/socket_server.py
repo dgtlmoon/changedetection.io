@@ -105,7 +105,7 @@ class ChangeDetectionSocketIO:
                     'unviewed': watch.has_unviewed,
                 }
                 self.socketio.emit("watch_update", watch_data)
-                logger.debug(f"Socket.IO: Emitted update for watch {watch.uuid}")
+                logger.debug(f"Socket.IO: Emitted update for watch {watch.get('uuid')}")
 
         except Exception as e:
             logger.error(f"Socket.IO error in handle_watch_update: {str(e)}")
