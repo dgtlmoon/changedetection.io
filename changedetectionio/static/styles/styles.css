@@ -184,105 +184,6 @@ ul#requests-extra_browsers {
   margin: 1em;
   padding: 1em; }
 
-/* table related */
-.watch-table {
-  width: 100%;
-  font-size: 80%; }
-  .watch-table tr {
-    color: var(--color-watch-table-row-text); }
-    .watch-table tr.unviewed {
-      font-weight: bold; }
-    .watch-table tr.has-history a.preview {
-      display: none !important; }
-    .watch-table tr.has-history.history {
-      display: inline-block !important; }
-    .watch-table tr.error {
-      color: var(--color-watch-table-error); }
-    .watch-table tr.queued a.queue {
-      display: inline-block !important; }
-    .watch-table tr.queued a.recheck {
-      display: none !important; }
-  .watch-table td {
-    white-space: nowrap; }
-    .watch-table td.title-col {
-      word-break: break-all;
-      white-space: normal; }
-  .watch-table th {
-    white-space: nowrap; }
-    .watch-table th a {
-      font-weight: normal; }
-      .watch-table th a.active {
-        font-weight: bolder; }
-      .watch-table th a.inactive .arrow {
-        display: none; }
-  .watch-table .title-col a[target="_blank"]::after,
-  .watch-table .current-diff-url::after {
-    content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
-    margin: 0 3px 0 5px; }
-
-@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 800px) {
-  /*
-Max width before this PARTICULAR table gets nasty
-This query will take effect for any screen smaller than 760px
-and also iPads specifically.
-*/
-  .watch-table {
-    /* make headings work on mobile */
-    /* Force table to not be like tables anymore */
-    /* Force table to not be like tables anymore */ }
-    .watch-table thead {
-      display: block; }
-      .watch-table thead tr th {
-        display: inline-block; } }
-      @media only screen and (max-width: 760px) and (max-width: 768px), (min-device-width: 768px) and (max-device-width: 800px) and (max-width: 768px) {
-        .watch-table thead tr th .hide-on-mobile {
-          display: none; } }
-
-@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 800px) {
-      .watch-table thead .empty-cell {
-        display: none; }
-    .watch-table tbody td,
-    .watch-table tbody tr {
-      display: block; }
-    .watch-table tbody tr {
-      display: flex;
-      flex-wrap: wrap; }
-      .watch-table tbody tr :nth-child(3) {
-        flex-grow: 1; }
-      .watch-table tbody tr :nth-last-child(-n+3) {
-        flex-basis: 100%; }
-    .watch-table .last-checked > span {
-      vertical-align: middle; }
-    .watch-table .last-checked::before {
-      color: var(--color-last-checked);
-      content: "Last Checked "; }
-    .watch-table .last-changed::before {
-      color: var(--color-last-checked);
-      content: "Last Changed "; }
-    .watch-table td.inline {
-      display: inline-block; }
-    .watch-table .pure-table td,
-    .watch-table .pure-table th {
-      border: none; }
-    .watch-table td {
-      /* Behave  like a "row" */
-      border: none;
-      border-bottom: 1px solid var(--color-border-watch-table-cell);
-      vertical-align: middle; }
-      .watch-table td:before {
-        /* Top/left values mimic padding */
-        top: 6px;
-        left: 6px;
-        width: 45%;
-        padding-right: 10px;
-        white-space: nowrap; }
-    .watch-table.pure-table-striped tr {
-      background-color: var(--color-table-background); }
-    .watch-table.pure-table-striped tr:nth-child(2n-1) {
-      background-color: var(--color-table-stripe); }
-    .watch-table.pure-table-striped tr:nth-child(2n-1) td {
-      background-color: inherit; } }
-
 .pagination-page-info {
   color: #fff;
   font-size: 0.85rem;
@@ -438,9 +339,7 @@ and also iPads specifically.
   --color-icon-github: var(--color-black);
   --color-icon-github-hover: var(--color-grey-300);
   --color-watch-table-error: var(--color-dark-red);
-  --color-watch-table-row-text: var(--color-grey-100);
-  --color-change-highlight-rgb: 255, 215, 0;
-  /* Gold color for socket.io highlight */ }
+  --color-watch-table-row-text: var(--color-grey-100); }
 
 html[data-darkmode="true"] {
   --color-link: #59bdfb;
@@ -836,6 +735,34 @@ code {
   background: var(--color-background-code);
   color: var(--color-text); }
 
+/* table related */
+.watch-table {
+  width: 100%;
+  font-size: 80%; }
+  .watch-table tr {
+    color: var(--color-watch-table-row-text); }
+    .watch-table tr.unviewed {
+      font-weight: bold; }
+    .watch-table tr.error {
+      color: var(--color-watch-table-error); }
+  .watch-table td {
+    white-space: nowrap; }
+    .watch-table td.title-col {
+      word-break: break-all;
+      white-space: normal; }
+  .watch-table th {
+    white-space: nowrap; }
+    .watch-table th a {
+      font-weight: normal; }
+      .watch-table th a.active {
+        font-weight: bolder; }
+      .watch-table th a.inactive .arrow {
+        display: none; }
+  .watch-table .title-col a[target="_blank"]::after,
+  .watch-table .current-diff-url::after {
+    content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
+    margin: 0 3px 0 5px; }
+
 .inline-tag, .watch-tag-list, .tracking-ldjson-price-data, .restock-label {
   white-space: nowrap;
   border-radius: 5px;
@@ -1170,7 +1097,68 @@ footer {
     border-radius: 0px;
     margin-right: 0px; }
   input[type='text'] {
-    width: 100%; } }
+    width: 100%; }
+  /*
+  Max width before this PARTICULAR table gets nasty
+  This query will take effect for any screen smaller than 760px
+  and also iPads specifically.
+  */
+  .watch-table {
+    /* make headings work on mobile */
+    /* Force table to not be like tables anymore */
+    /* Force table to not be like tables anymore */ }
+    .watch-table thead {
+      display: block; }
+      .watch-table thead tr th {
+        display: inline-block; } }
+      @media only screen and (max-width: 760px) and (max-width: 768px), (min-device-width: 768px) and (max-device-width: 800px) and (max-width: 768px) {
+        .watch-table thead tr th .hide-on-mobile {
+          display: none; } }
+
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 800px) {
+      .watch-table thead .empty-cell {
+        display: none; }
+    .watch-table tbody td,
+    .watch-table tbody tr {
+      display: block; }
+    .watch-table tbody tr {
+      display: flex;
+      flex-wrap: wrap; }
+      .watch-table tbody tr :nth-child(3) {
+        flex-grow: 1; }
+      .watch-table tbody tr :nth-last-child(-n+3) {
+        flex-basis: 100%; }
+    .watch-table .last-checked > span {
+      vertical-align: middle; }
+    .watch-table .last-checked::before {
+      color: var(--color-last-checked);
+      content: "Last Checked "; }
+    .watch-table .last-changed::before {
+      color: var(--color-last-checked);
+      content: "Last Changed "; }
+    .watch-table td.inline {
+      display: inline-block; }
+    .watch-table .pure-table td,
+    .watch-table .pure-table th {
+      border: none; }
+    .watch-table td {
+      /* Behave  like a "row" */
+      border: none;
+      border-bottom: 1px solid var(--color-border-watch-table-cell);
+      vertical-align: middle; }
+      .watch-table td:before {
+        /* Top/left values mimic padding */
+        top: 6px;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap; }
+    .watch-table.pure-table-striped tr {
+      background-color: var(--color-table-background); }
+    .watch-table.pure-table-striped tr:nth-child(2n-1) {
+      background-color: var(--color-table-stripe); }
+    .watch-table.pure-table-striped tr:nth-child(2n-1) td {
+      background-color: inherit; } }
 
 .pure-table {
   border-color: var(--color-border-table-cell); }
@@ -1371,29 +1359,6 @@ ul {
 
 #selector-current-xpath {
   font-size: 80%; }
-
-@keyframes socket-highlight-flash {
-  0% {
-    background-color: rgba(var(--color-change-highlight-rgb), 0); }
-  50% {
-    background-color: rgba(var(--color-change-highlight-rgb), 0.4); }
-  100% {
-    background-color: rgba(var(--color-change-highlight-rgb), 0); } }
-
-.socket-highlight {
-  animation: socket-highlight-flash 2s ease-in-out; }
-
-@keyframes checking-progress {
-  0% {
-    background-size: 0% 100%; }
-  100% {
-    background-size: 100% 100%; } }
-
-tr.checking-now .last-checked {
-  background-image: linear-gradient(to right, rgba(0, 120, 255, 0.2) 0%, rgba(0, 120, 255, 0.1) 100%);
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  animation: checking-progress 10s linear; }
 
 #webdriver_delay {
   width: 5em; }
