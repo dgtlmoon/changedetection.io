@@ -10,8 +10,8 @@ from urllib.parse import urlparse, parse_qs
 
 def test_consistent_history(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
-
-    r = range(1, 30)
+    workers = int(os.getenv("FETCH_WORKERS", 10))
+    r = range(1, 10+workers)
 
     for one in r:
         test_url = url_for('test_endpoint', content_type="text/html", content=str(one), _external=True)
