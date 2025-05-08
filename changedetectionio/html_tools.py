@@ -437,60 +437,26 @@ def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False
 
 
 # NOTE!! ANYTHING LIBXML, HTML5LIB ETC WILL CAUSE SOME SMALL MEMORY LEAK IN THE LOCAL "LIB" IMPLEMENTATION OUTSIDE PYTHON
-import os
 
-def html_to_text_sub_worker(temp_file_path, html_content, render_anchor_tag_content=False, is_rss=False):
+
+def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=False, timeout=10) -> str:
     from inscriptis import get_text
     from inscriptis.model.config import ParserConfig
-    try:
-        if render_anchor_tag_content:
-            parser_config = ParserConfig(
-                annotation_rules={"a": ["hyperlink"]},
-                display_links=True
-            )
-        else:
-            parser_config = None
 
-        if is_rss:
-            html_content = re.sub(r'<title([\s>])', r'<h1\1', html_content)
-            html_content = re.sub(r'</title>', r'</h1>', html_content)
+    if render_anchor_tag_content:
+        parser_config = ParserConfig(
+            annotation_rules={"a": ["hyperlink"]},
+            display_links=True
+        )
+    else:
+        parser_config = None
 
-        text_content = get_text(html_content, config=parser_config)
+    if is_rss:
+        html_content = re.sub(r'<title([\s>])', r'<h1\1', html_content)
+        html_content = re.sub(r'</title>', r'</h1>', html_content)
 
-        with open(temp_file_path, "w", encoding="utf-8") as f:
-            f.write(text_content)
-
-    except Exception as e:
-        # Write error to file so the parent can read it
-        with open(temp_file_path, "w", encoding="utf-8") as f:
-            f.write(f"[ERROR] {e}")
-
-import tempfile
-from multiprocessing import Process
-def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=False, timeout=10) -> str:
-
-
-    with tempfile.NamedTemporaryFile(delete=False, mode="w+", encoding="utf-8") as tmp_file:
-        temp_file_path = tmp_file.name
-
-    p = Process(
-        target=html_to_text_sub_worker,
-        args=(temp_file_path, html_content, render_anchor_tag_content, is_rss)
-    )
-    p.start()
-    p.join(timeout)
-
-    if p.is_alive():
-        p.terminate()
-        p.join()
-
-    try:
-        with open(temp_file_path, "r", encoding="utf-8") as f:
-            result = f.read()
-    finally:
-        os.remove(temp_file_path)
-
-    return result
+    text_content = get_text(html_content, config=parser_config)
+    return text_content
 
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?
 def has_ldjson_product_info(content):
