@@ -50,6 +50,9 @@ def test_consistent_history(client, live_server, measure_memory_usage):
     i=0
     for w in json_obj['watching'].keys():
         i+1
+#        res = client.get(url_for("watchlist.index"))
+#        with open('/tmp/debug.html', 'wb') as f:
+#            f.write(res.data)
         history_txt_index_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, w, 'history.txt')
         assert os.path.isfile(history_txt_index_file), f"history.txt for i: {i} should exist where I expect it at {history_txt_index_file}"
 
