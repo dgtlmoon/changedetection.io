@@ -136,6 +136,9 @@ def wait_for_all_checks(client=None):
 
     # Configuration
     attempt = 0
+
+    i=0
+
     max_attempts = 60
     wait_between_attempts = 2
     required_empty_duration = 2

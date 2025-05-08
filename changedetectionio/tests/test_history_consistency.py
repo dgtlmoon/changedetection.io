@@ -45,7 +45,7 @@ def test_consistent_history(client, live_server, measure_memory_usage):
 
     # assert the right amount of watches was found in the JSON
     assert len(json_obj['watching']) == len(r), "Correct number of watches was found in the JSON"
-
+    i=0
     # each one should have a history.txt containing just one line
     i=0
     for w in json_obj['watching'].keys():
