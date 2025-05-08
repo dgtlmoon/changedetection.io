@@ -272,7 +272,6 @@ class update_worker(threading.Thread):
                     logger.info(f"Processing watch UUID {uuid} Priority {queued_item_data.priority} URL {watch['url']}")
 
                     try:
-                        #watch_check_completed.send(sender=self, watch=watch)
                         watch_check_completed.send(watch_uuid=watch['uuid'])
 
                         # Processor is what we are using for detecting the "Change"
