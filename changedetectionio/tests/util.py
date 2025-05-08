@@ -139,9 +139,10 @@ def wait_for_all_checks(client=None):
         # Get queue size safely - update_q is a SignalPriorityQueue
         q_length = global_update_q.qsize()
         if not q_length:
+            logging.getLogger().info(f"queue empty at attempt {attempt}")
             break
         logging.getLogger().info(f"Waiting for empty queue.... {attempt}")
-        time.sleep(0.8)
+        time.sleep(2)
         attempt += 1
 
     time.sleep(1.2)
