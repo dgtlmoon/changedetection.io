@@ -436,55 +436,61 @@ def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False
     return re.sub(pattern, repl, html_content)
 
 
-def html_to_text_sub_worker(conn, html_content: str, render_anchor_tag_content=False, is_rss=False):
+# NOTE!! ANYTHING LIBXML, HTML5LIB ETC WILL CAUSE SOME SMALL MEMORY LEAK IN THE LOCAL "LIB" IMPLEMENTATION OUTSIDE PYTHON
+import os
 
+def html_to_text_sub_worker(temp_file_path, html_content, render_anchor_tag_content=False, is_rss=False):
     from inscriptis import get_text
     from inscriptis.model.config import ParserConfig
+    try:
+        if render_anchor_tag_content:
+            parser_config = ParserConfig(
+                annotation_rules={"a": ["hyperlink"]},
+                display_links=True
+            )
+        else:
+            parser_config = None
 
-    """Converts html string to a string with just the text. If ignoring
-    rendering anchor tag content is enable, anchor tag content are also
-    included in the text
+        if is_rss:
+            html_content = re.sub(r'<title([\s>])', r'<h1\1', html_content)
+            html_content = re.sub(r'</title>', r'</h1>', html_content)
 
-    :param html_content: string with html content
-    :param render_anchor_tag_content: boolean flag indicating whether to extract
-    hyperlinks (the anchor tag content) together with text. This refers to the
-    'href' inside 'a' tags.
-    Anchor tag content is rendered in the following manner:
-    '[ text ](anchor tag content)'
-    :return: extracted text from the HTML
-    """
-    #  if anchor tag content flag is set to True define a config for
-    #  extracting this content
-    if render_anchor_tag_content:
-        parser_config = ParserConfig(
-            annotation_rules={"a": ["hyperlink"]},
-            display_links=True
-        )
-    # otherwise set config to None/default
-    else:
-        parser_config = None
+        text_content = get_text(html_content, config=parser_config)
 
-    # RSS Mode - Inscriptis will treat `title` as something else.
-    # Make it as a regular block display element (//item/title)
-    # This is a bit of a hack - the real way it to use XSLT to convert it to HTML #1874
-    if is_rss:
-        html_content = re.sub(r'<title([\s>])', r'<h1\1', html_content)
-        html_content = re.sub(r'</title>', r'</h1>', html_content)
+        with open(temp_file_path, "w", encoding="utf-8") as f:
+            f.write(text_content)
 
-    text_content = get_text(html_content, config=parser_config)
-    conn.send(text_content)
-    conn.close()
+    except Exception as e:
+        # Write error to file so the parent can read it
+        with open(temp_file_path, "w", encoding="utf-8") as f:
+            f.write(f"[ERROR] {e}")
 
-# NOTE!! ANYTHING LIBXML, HTML5LIB ETC WILL CAUSE SOME SMALL MEMORY LEAK IN THE LOCAL "LIB" IMPLEMENTATION OUTSIDE PYTHON
-def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=False):
-    from multiprocessing import Process, Pipe
+import tempfile
+from multiprocessing import Process
+def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=False, timeout=10) -> str:
 
-    parent_conn, child_conn = Pipe()
-    p = Process(target=html_to_text_sub_worker, args=(child_conn, html_content, render_anchor_tag_content, is_rss))
+
+    with tempfile.NamedTemporaryFile(delete=False, mode="w+", encoding="utf-8") as tmp_file:
+        temp_file_path = tmp_file.name
+
+    p = Process(
+        target=html_to_text_sub_worker,
+        args=(temp_file_path, html_content, render_anchor_tag_content, is_rss)
+    )
     p.start()
-    text = parent_conn.recv()
-    p.join()
-    return text
+    p.join(timeout)
+
+    if p.is_alive():
+        p.terminate()
+        p.join()
+
+    try:
+        with open(temp_file_path, "r", encoding="utf-8") as f:
+            result = f.read()
+    finally:
+        os.remove(temp_file_path)
+
+    return result
 
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?
 def has_ldjson_product_info(content):

@@ -59,8 +59,8 @@ def test_consistent_history(client, live_server, measure_memory_usage):
             assert len(tmp_history) == 1, "History.txt should contain 1 line"
 
         # Should be two files,. the history.txt , and the snapshot.txt
-        files_in_watch_dir = os.listdir(os.path.join(live_server.app.config['DATASTORE'].datastore_path,
-                                                     w))
+        files_in_watch_dir = os.listdir(os.path.join(live_server.app.config['DATASTORE'].datastore_path, w))
+
         # Find the snapshot one
         for fname in files_in_watch_dir:
             if fname != 'history.txt' and 'html' not in fname:
@@ -75,7 +75,6 @@ def test_consistent_history(client, live_server, measure_memory_usage):
 
 
         assert len(files_in_watch_dir) == 3, "Should be just three files in the dir, html.br snapshot, history.txt and the extracted text snapshot"
-
 
     json_db_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, 'url-watches.json')
     with open(json_db_file, 'r') as f:
