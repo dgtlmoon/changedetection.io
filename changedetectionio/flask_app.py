@@ -126,21 +126,16 @@ def get_css_version():
     return __version__
 
 @app.template_global()
-def get_socketio_url():
-    """Generate the correct Socket.IO URL based on the current request"""
-    socket_port = 5005  # Fixed port for Socket.IO server
+def get_socketio_path():
+    """Generate the correct Socket.IO path prefix for the client"""
+    # If behind a proxy with a sub-path, we need to respect that path
+    prefix = ""
+    if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Prefix' in request.headers:
+        prefix = request.headers['X-Forwarded-Prefix']
 
-    if os.getenv('USE_X_SETTINGS') and request.headers.get('X-Forwarded-Host'):
-        # When behind a proxy, use the forwarded host but maintain the Socket.IO port
-        forwarded_host = request.headers['X-Forwarded-Host'].split(':')[0]
-        return f"http://{forwarded_host}:{socket_port}"
-    elif request.host:
-        # Use the current host but with the Socket.IO port
-        client_host = request.host.split(':')[0]
-        return f"http://{client_host}:{socket_port}"
-    else:
-        # Fallback to default
-        return f"http://127.0.0.1:{socket_port}"
+    # Socket.IO will be available at {prefix}/socket.io/
+    return prefix
+
 
 @app.template_filter('format_number_locale')
 def _jinja2_filter_format_number_locale(value: float) -> str:

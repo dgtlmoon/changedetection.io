@@ -28,7 +28,7 @@
     <meta name="theme-color" content="#ffffff">
     <script>
         const csrftoken="{{ csrf_token() }}";
-        const socketio_url="{{ get_socketio_url() }}";
+        const socketio_url="{{ get_socketio_path() }}/socket.io";
     </script>
     <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
     <script src="{{url_for('static_content', group='js', filename='csrf.js')}}" defer></script>

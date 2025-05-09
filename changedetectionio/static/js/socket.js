@@ -1,4 +1,5 @@
 // Socket.IO client-side integration for changedetection.io
+// @todo only bind ajax if the socket server attached success.
 
 $(document).ready(function () {
     $('.ajax-op').click(function (e) {
@@ -20,8 +21,13 @@ $(document).ready(function () {
 
     // Try to create the socket connection to the SocketIO server - if it fails, the site will still work normally
     try {
-        // Connect to the dedicated Socket.IO server using the dynamically generated URL from the template
-        const socket = io(socketio_url);
+        // Connect to Socket.IO on the same host/port, with path from template
+        const socket = io({
+            path: socketio_url,  // This will be the path prefix like "/app/socket.io" from the template
+            transports: ['polling', 'websocket'],  // Try WebSocket but fall back to polling
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 5
+        });
 
         // Connection status logging
         socket.on('connect', function () {
