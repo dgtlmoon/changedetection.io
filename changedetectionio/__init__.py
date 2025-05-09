@@ -18,6 +18,7 @@ import platform
 import signal
 import socket
 import sys
+from flask import request
 
 from changedetectionio import store
 from changedetectionio.flask_app import changedetection_app
@@ -191,9 +192,23 @@ def main():
 
     @app.context_processor
     def inject_version():
+        # Get server host and port for Socket.IO
+        socket_host = host if host else '127.0.0.1'
+        socket_port = 5005  # Fixed port for Socket.IO server
+
+        # Create Socket.IO URL (use host from proxy if available)
+        socketio_url = None
+        if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Host' in request.headers:
+            # When behind a proxy, use the forwarded host but maintain the Socket.IO port
+            socketio_url = f"http://{request.headers['X-Forwarded-Host'].split(':')[0]}:{socket_port}"
+        else:
+            # Direct connection
+            socketio_url = f"http://{socket_host}:{socket_port}"
+
         return dict(right_sticky="v{}".format(datastore.data['version_tag']),
                     new_version_available=app.config['NEW_VERSION_AVAILABLE'],
-                    has_password=datastore.data['settings']['application']['password'] != False
+                    has_password=datastore.data['settings']['application']['password'] != False,
+                    socketio_url=socketio_url
                     )
 
     # Monitored websites will not receive a Referer header when a user clicks on an outgoing link.

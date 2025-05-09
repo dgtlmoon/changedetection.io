@@ -18,10 +18,10 @@ $(document).ready(function () {
     });
 
 
-    // Try to create the socket connection to port 5005 - if it fails, the site will still work normally
+    // Try to create the socket connection to the SocketIO server - if it fails, the site will still work normally
     try {
-        // Connect to the dedicated Socket.IO server on port 5005
-        const socket = io('http://127.0.0.1:5005');
+        // Connect to the dedicated Socket.IO server using the dynamically generated URL from the template
+        const socket = io(socketio_url);
 
         // Connection status logging
         socket.on('connect', function () {

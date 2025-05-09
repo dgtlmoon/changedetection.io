@@ -125,6 +125,23 @@ def get_darkmode_state():
 def get_css_version():
     return __version__
 
+@app.template_global()
+def get_socketio_url():
+    """Generate the correct Socket.IO URL based on the current request"""
+    socket_port = 5005  # Fixed port for Socket.IO server
+
+    if os.getenv('USE_X_SETTINGS') and request.headers.get('X-Forwarded-Host'):
+        # When behind a proxy, use the forwarded host but maintain the Socket.IO port
+        forwarded_host = request.headers['X-Forwarded-Host'].split(':')[0]
+        return f"http://{forwarded_host}:{socket_port}"
+    elif request.host:
+        # Use the current host but with the Socket.IO port
+        client_host = request.host.split(':')[0]
+        return f"http://{client_host}:{socket_port}"
+    else:
+        # Fallback to default
+        return f"http://127.0.0.1:{socket_port}"
+
 @app.template_filter('format_number_locale')
 def _jinja2_filter_format_number_locale(value: float) -> str:
     "Formats for example 4000.10 to the local locale default of 4,000.10"

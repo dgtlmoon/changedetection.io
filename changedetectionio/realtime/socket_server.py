@@ -127,3 +127,4 @@ class ChangeDetectionSocketIO:
         # Use 0.0.0.0 to listen on all interfaces
         logger.info(f"Starting Socket.IO server on http://{host}:{port}")
         self.socketio.run(self.main_app, host=host, port=port, debug=False, use_reloader=False, allow_unsafe_werkzeug=True)
+
