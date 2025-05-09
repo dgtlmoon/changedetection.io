@@ -140,11 +140,11 @@ def wait_for_all_checks(client=None):
     i=0
 
     max_attempts = 60
-    wait_between_attempts = 2
-    required_empty_duration = 2
+    wait_between_attempts = 1
+    required_empty_duration = 0.6
 
     logger = logging.getLogger()
-    time.sleep(1.2)
+    time.sleep(0.5)
 
     empty_since = None
 
@@ -152,7 +152,7 @@ def wait_for_all_checks(client=None):
         q_length = global_update_q.qsize()
 
         # Check if any threads are still processing
-        time.sleep(1.2)
+        time.sleep(wait_between_attempts)
         any_threads_busy = any(t.current_uuid for t in running_update_threads)
 
 
@@ -175,7 +175,7 @@ def wait_for_all_checks(client=None):
 
         attempt += 1
 
-    time.sleep(1.2)
+    time.sleep(wait_between_attempts)
 
 def live_server_setup(live_server):
 
