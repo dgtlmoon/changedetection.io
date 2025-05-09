@@ -42,7 +42,7 @@ paho-mqtt!=2.0.*
 cryptography~=42.0.8
 
 # Used for CSS filtering
-beautifulsoup4
+beautifulsoup4>=4.0.0
 
 # XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
 # #2328 - 5.2.0 and 5.2.1 had extra CPU flag CFLAGS set which was not compatible on older hardware

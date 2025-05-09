@@ -309,10 +309,10 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
         soup = BeautifulSoup(content, 'html.parser')
 
         if ensure_is_ldjson_info_type:
-            bs_result = soup.findAll('script', {"type": "application/ld+json"})
+            bs_result = soup.find_all('script', {"type": "application/ld+json"})
         else:
-            bs_result = soup.findAll('script')
-        bs_result += soup.findAll('body')
+            bs_result = soup.find_all('script')
+        bs_result += soup.find_all('body')
 
         bs_jsons = []
         for result in bs_result:
