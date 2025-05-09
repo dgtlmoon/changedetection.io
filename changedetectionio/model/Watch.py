@@ -1,3 +1,5 @@
+from blinker import signal
+
 from changedetectionio.strtobool import strtobool
 from changedetectionio.safe_jinja import render as jinja_render
 from . import watch_base
@@ -60,6 +62,10 @@ class model(watch_base):
 
         return False
 
+    @property
+    def has_unviewed(self):
+        return int(self.newest_history_key) > int(self['last_viewed']) and self.__history_n >= 2
+
     def ensure_data_dir_exists(self):
         if not os.path.isdir(self.watch_data_dir):
             logger.debug(f"> Creating data dir {self.watch_data_dir}")
@@ -120,6 +126,10 @@ class model(watch_base):
             'remote_server_reply': None,
             'track_ldjson_price_data': None
         })
+        watch_check_completed = signal('watch_check_completed')
+        if watch_check_completed:
+            watch_check_completed.send(watch_uuid=self.get('uuid'))
+
         return
 
     @property

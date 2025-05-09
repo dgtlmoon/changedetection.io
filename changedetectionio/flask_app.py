@@ -7,9 +7,11 @@ import queue
 import threading
 import time
 import timeago
+from blinker import signal
 
 from changedetectionio.strtobool import strtobool
 from threading import Event
+from changedetectionio.custom_queue import SignalPriorityQueue
 
 from flask import (
     Flask,
@@ -28,8 +30,13 @@ from flask_login import current_user
 from flask_paginate import Pagination, get_page_parameter
 from flask_restful import abort, Api
 from flask_cors import CORS
+
+# Create specific signals for application events
+# Make this a global singleton to avoid multiple signal objects
+watch_check_completed = signal('watch_check_completed', doc='Signal sent when a watch check is completed')
 from flask_wtf import CSRFProtect
 from loguru import logger
+import eventlet
 
 from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
@@ -45,7 +52,7 @@ ticker_thread = None
 
 extra_stylesheets = []
 
-update_q = queue.PriorityQueue()
+update_q = SignalPriorityQueue()
 notification_q = queue.Queue()
 MAX_QUEUE_SIZE = 2000
 
@@ -53,6 +60,9 @@ app = Flask(__name__,
             static_url_path="",
             static_folder="static",
             template_folder="templates")
+
+# Will be initialized in changedetection_app
+socketio_server = None
 
 # Enable CORS, especially useful for the Chrome extension to operate from anywhere
 CORS(app)
@@ -215,12 +225,15 @@ class User(flask_login.UserMixin):
 def changedetection_app(config=None, datastore_o=None):
     logger.trace("TRACE log is enabled")
 
-    global datastore
+    global datastore, socketio_server
     datastore = datastore_o
 
     # so far just for read-only via tests, but this will be moved eventually to be the main source
     # (instead of the global var)
     app.config['DATASTORE'] = datastore_o
+    
+    # Store the signal in the app config to ensure it's accessible everywhere
+    app.config['WATCH_CHECK_COMPLETED_SIGNAL'] = watch_check_completed
 
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
@@ -444,7 +457,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # watchlist UI buttons etc
     import changedetectionio.blueprint.ui as ui
-    app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData))
+    app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData, watch_check_completed))
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
@@ -467,6 +480,8 @@ def changedetection_app(config=None, datastore_o=None):
     if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')):
         threading.Thread(target=check_for_new_version).start()
 
+    # Return the Flask app - the Socket.IO will be attached to it but initialized separately
+    # This avoids circular dependencies
     return app
 
 

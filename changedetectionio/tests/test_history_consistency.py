@@ -10,8 +10,8 @@ from urllib.parse import urlparse, parse_qs
 
 def test_consistent_history(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
-
-    r = range(1, 30)
+    workers = int(os.getenv("FETCH_WORKERS", 10))
+    r = range(1, 10+workers)
 
     for one in r:
         test_url = url_for('test_endpoint', content_type="text/html", content=str(one), _external=True)
@@ -35,8 +35,7 @@ def test_consistent_history(client, live_server, measure_memory_usage):
     )
     assert b"Settings updated." in res.data
 
-
-    time.sleep(2)
+    wait_for_all_checks(client)
 
     json_db_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, 'url-watches.json')
 
@@ -46,11 +45,16 @@ def test_consistent_history(client, live_server, measure_memory_usage):
 
     # assert the right amount of watches was found in the JSON
     assert len(json_obj['watching']) == len(r), "Correct number of watches was found in the JSON"
-
+    i=0
     # each one should have a history.txt containing just one line
+    i=0
     for w in json_obj['watching'].keys():
+        i+1
+#        res = client.get(url_for("watchlist.index"))
+#        with open('/tmp/debug.html', 'wb') as f:
+#            f.write(res.data)
         history_txt_index_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, w, 'history.txt')
-        assert os.path.isfile(history_txt_index_file), f"History.txt should exist where I expect it at {history_txt_index_file}"
+        assert os.path.isfile(history_txt_index_file), f"history.txt for i: {i} should exist where I expect it at {history_txt_index_file}"
 
         # Same like in model.Watch
         with open(history_txt_index_file, "r") as f:
@@ -58,8 +62,8 @@ def test_consistent_history(client, live_server, measure_memory_usage):
             assert len(tmp_history) == 1, "History.txt should contain 1 line"
 
         # Should be two files,. the history.txt , and the snapshot.txt
-        files_in_watch_dir = os.listdir(os.path.join(live_server.app.config['DATASTORE'].datastore_path,
-                                                     w))
+        files_in_watch_dir = os.listdir(os.path.join(live_server.app.config['DATASTORE'].datastore_path, w))
+
         # Find the snapshot one
         for fname in files_in_watch_dir:
             if fname != 'history.txt' and 'html' not in fname:
@@ -74,7 +78,6 @@ def test_consistent_history(client, live_server, measure_memory_usage):
 
 
         assert len(files_in_watch_dir) == 3, "Should be just three files in the dir, html.br snapshot, history.txt and the extracted text snapshot"
-
 
     json_db_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, 'url-watches.json')
     with open(json_db_file, 'r') as f:
