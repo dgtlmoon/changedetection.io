@@ -4,6 +4,7 @@
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 <script>let nowtimeserver={{ now_time_server }};</script>
+<script>let ajax_toggle_url="{{ ajax_toggle_url }}";</script>
 
 <style>
 .checking-now .last-checked {
@@ -111,16 +112,15 @@
                 {% if watch.has_restock_info %} has-restock-info {% if watch['restock']['in_stock'] %}in-stock{% else %}not-in-stock{% endif %} {% else %}no-restock-info{% endif %}
                 {% if watch.uuid in queued_uuids %}queued{% endif %}
                 {% if checking_now %}checking-now{% endif %}
+                {% if watch.notification_muted %}notification_muted{% endif %}
                 ">
                 <td class="inline checkbox-uuid" ><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " > <span>{{ loop.index+pagination.skip }}</span></td>
                 <td class="inline watch-controls">
-                    {% if not watch.paused %}
-                    <a class="state-off" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause checks" title="Pause checks" class="icon icon-pause" ></a>
-                    {% else %}
-                    <a class="state-on" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="UnPause checks" title="UnPause checks" class="icon icon-unpause" ></a>
-                    {% endif %}
-                    {% set mute_label = 'UnMute notification' if watch.notification_muted else 'Mute notification' %}
-                    <a class="link-mute state-{{'on' if watch.notification_muted else 'off'}}" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{{ mute_label }}" title="{{ mute_label }}" class="icon icon-mute" ></a>
+                    <a class="ajax-op state-off pause-toggle" data-op="pause" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause checks" title="Pause checks" class="icon icon-pause" ></a>
+                    <a class="ajax-op state-on pause-toggle"  data-op="pause" style="display: none" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="UnPause checks" title="UnPause checks" class="icon icon-unpause" ></a>
+
+                    <a class="ajax-op state-off mute-toggle" data-op="mute" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="Mute notification" title="Mute notification" class="icon icon-mute" ></a>
+                    <a class="ajax-op state-on mute-toggle" data-op="mute"  style="display: none" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="UnMute notification" title="UnMute notification" class="icon icon-mute" ></a>
                 </td>
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
                     <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}"></a>
@@ -207,7 +207,7 @@
                 <td>
                     <a href="" class="already-in-queue-button recheck pure-button pure-button-primary" style="display: none;" disabled="disabled">Queued</a>
 
-                    <a href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}" class="recheck pure-button pure-button-primary">Recheck</a>
+                    <a href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}" data-op='recheck' class="ajax-op recheck pure-button pure-button-primary">Recheck</a>
                     <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="pure-button pure-button-primary">Edit</a>
 
                     {% if watch.history_n >= 2 %}

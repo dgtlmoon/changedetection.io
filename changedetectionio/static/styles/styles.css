@@ -559,6 +559,14 @@ body.preview-text-enabled {
     display: none !important; }
   .watch-table tr.queued a.already-in-queue-button {
     display: inline-block !important; }
+  .watch-table tr.paused a.pause-toggle.state-on {
+    display: inline !important; }
+  .watch-table tr.paused a.pause-toggle.state-off {
+    display: none !important; }
+  .watch-table tr.notification_muted a.mute-toggle.state-on {
+    display: inline !important; }
+  .watch-table tr.notification_muted a.mute-toggle.state-off {
+    display: none !important; }
 
 ul#conditions_match_logic {
   list-style: none; }
