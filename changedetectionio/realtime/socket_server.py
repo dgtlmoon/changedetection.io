@@ -4,6 +4,7 @@ from flask_socketio import SocketIO
 import threading
 import json
 import time
+import os
 from loguru import logger
 import blinker
 
@@ -96,6 +97,19 @@ def init_socketio(app, datastore):
     @socketio.on('connect')
     def handle_connect():
         """Handle client connection"""
+        from changedetectionio.auth_decorator import login_optionally_required
+        from flask import request
+        from flask_login import current_user
+
+        # Access datastore from socketio
+        datastore = socketio.datastore
+
+        # Check if authentication is required and user is not authenticated
+        has_password_enabled = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
+        if has_password_enabled and not current_user.is_authenticated:
+            logger.warning("Socket.IO: Rejecting unauthenticated connection")
+            return False  # Reject the connection
+
         logger.info("Socket.IO: Client connected")
 
     @socketio.on('disconnect')

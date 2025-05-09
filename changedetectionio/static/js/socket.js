@@ -19,15 +19,18 @@ $(document).ready(function () {
     });
 
 
-    // Try to create the socket connection to the SocketIO server - if it fails, the site will still work normally
-    try {
-        // Connect to Socket.IO on the same host/port, with path from template
-        const socket = io({
-            path: socketio_url,  // This will be the path prefix like "/app/socket.io" from the template
-            transports: ['polling', 'websocket'],  // Try WebSocket but fall back to polling
-            reconnectionDelay: 1000,
-            reconnectionAttempts: 5
-        });
+    // Only try to connect if authentication isn't required or user is authenticated
+    // The 'is_authenticated' variable will be set in the template
+    if (typeof is_authenticated !== 'undefined' ? is_authenticated : true) {
+        // Try to create the socket connection to the SocketIO server - if it fails, the site will still work normally
+        try {
+            // Connect to Socket.IO on the same host/port, with path from template
+            const socket = io({
+                path: socketio_url,  // This will be the path prefix like "/app/socket.io" from the template
+                transports: ['polling', 'websocket'],  // Try WebSocket but fall back to polling
+                reconnectionDelay: 1000,
+                reconnectionAttempts: 5
+            });
 
         // Connection status logging
         socket.on('connect', function () {
@@ -63,4 +66,5 @@ $(document).ready(function () {
         // If Socket.IO fails to initialize, just log it and continue
         console.log('Socket.IO initialization error:', e);
     }
+}
 });
