@@ -63,6 +63,5 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8,linux/arm64/v8,linux/aarch64
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
-          build:
-            args: |
-              PYTHON_VERSION=${{ matrix.python_version }}
+        build-args: |
+          PYTHON_VERSION=${{ matrix.python_version }}
