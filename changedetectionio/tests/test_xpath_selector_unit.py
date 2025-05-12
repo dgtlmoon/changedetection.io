@@ -201,3 +201,98 @@ def test_trips(html_content, xpath, answer):
     html_content = html_tools.xpath_filter(xpath, html_content, append_pretty_line_formatting=True)
     assert type(html_content) == str
     assert answer in html_content
+
+DOM_violation_two_html_root_element = """<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Hello world1</h1>
+    <p>First paragraph.</p>
+  </body>
+</html>
+<html>
+  <body>
+    <h1>Hello world2</h1>
+    <p>Browsers parse this part by fixing it but lxml doesn't and returns two root element node</p>
+    <p>Therefore, if the path is /html/body/p[1], lxml(libxml2) returns two element nodes not one.</p>
+  </body>
+</html>"""
+@pytest.mark.parametrize("html_content", [DOM_violation_two_html_root_element])
+@pytest.mark.parametrize("xpath, answer", [
+    (".", "Hello world1"),
+    (".", "First paragraph."),
+    (".", "Hello world2"),
+    (".", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
+    (".", "Therefore, if the path is /html/body/p[1], lxml(libxml2) returns two element nodes not one."),
+    ("/*", "Hello world1"),
+    ("/*", "First paragraph."),
+    ("/*", "Hello world2"),
+    ("/*", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
+    ("/*", "Therefore, if the path is /html/body/p[1], lxml(libxml2) returns two element nodes not one."),
+    ("html", "Hello world1"),
+    ("html", "First paragraph."),
+    ("html", "Hello world2"),
+    ("html", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
+    ("html", "Therefore, if the path is /html/body/p[1], lxml(libxml2) returns two element nodes not one."),
+    ("/html", "Hello world1"),
+    ("/html", "First paragraph."),
+    ("/html", "Hello world2"),
+    ("/html", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
+    ("/html", "Therefore, if the path is /html/body/p[1], lxml(libxml2) returns two element nodes not one."),
+    ("/html/body/p[1]", "First paragraph."),
+    ("/html/body/p[1]", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
+    ("count(/html/body/p[1])", "2"),
+    ("count(/html)", "2"),
+    ("count(//html)", "2"),
+    ("count(//body)", "2"),
+    ("count(/html/body)", "2"),
+    ("//html/body/p[1]", "First paragraph."),
+    ("//html/body/p[1]", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
+    ("//body/p[1]", "First paragraph."),
+    ("//body/p[1]", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
+    ("/html[2]/body/p[1]", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
+    ("//html[2]/body/p[1]", "Browsers parse this part by fixing it but lxml doesn't and returns two root element node"),
+                          ])
+def test_broken_DOM_01(html_content, xpath, answer):
+    # In normal situation, DOM's root element node is only one. So when DOM violation happens, Exception occurs.
+    with pytest.raises(Exception):
+        from lxml import etree, html
+        import elementpath
+        from elementpath.xpath3 import XPath3Parser
+        parser = etree.HTMLParser()
+        tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
+        # just example xpath
+        # Error will occur.
+        r = elementpath.select(tree, xpath.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser)
+
+    html_content = html_tools.xpath_filter(xpath, html_content, append_pretty_line_formatting=True)
+    assert type(html_content) == str
+    assert answer in html_content
+
+@pytest.mark.parametrize("html_content", [DOM_violation_two_html_root_element])
+@pytest.mark.parametrize("xpath, answer", [
+    ("/html[2]/body/p[1]", "First paragraph."),
+    ("//html[2]/body/p[1]", "First paragraph."),
+                          ])
+def test_Broken_DOM_02(html_content, xpath, answer):
+    # In normal situation, DOM's root element node is only one. So when DOM violation happens, Exception occurs.
+    html_content = html_tools.xpath_filter(xpath, html_content, append_pretty_line_formatting=True)
+    assert type(html_content) == str
+    # Check the answer is *not in* the html_content
+    assert answer not in html_content
+
+@pytest.mark.parametrize("html_content", [DOM_violation_two_html_root_element])
+@pytest.mark.parametrize("xpath, answer", [
+    ("/html/body/p[1]", 2),
+    ("/html", 2),
+    ("//html", 2),
+    ("//body", 2),
+    ("/html/body", 2),
+                          ])
+def test_Broken_DOM_03(html_content, xpath, answer):
+    """just test for xpath1"""
+    from lxml import etree, html
+    parser = etree.HTMLParser()
+    tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
+
+    # test xpath 1
+    assert len(tree.xpath(xpath)) == answer
