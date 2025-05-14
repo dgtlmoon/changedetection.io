@@ -1,12 +1,9 @@
 import timeago
-from flask import Flask
 from flask_socketio import SocketIO
-import threading
-import json
+
 import time
 import os
 from loguru import logger
-import blinker
 
 from changedetectionio.flask_app import _jinja2_filter_datetime, watch_check_completed
 
@@ -82,13 +79,13 @@ def handle_watch_update(socketio, **kwargs):
 
 def init_socketio(app, datastore):
     """Initialize SocketIO with the main Flask app"""
-    # Use threading mode only - eventlet monkey patching causes issues
-    # when patching after other modules have been imported
-    async_mode = 'threading'
-    logger.info("Using threading mode for Socket.IO (long-polling transport)")
+    # Since the app already uses eventlet, we'll use that for Socket.IO as well
+    # This provides better performance for Socket.IO operations
+    async_mode = 'eventlet'
+    logger.info(f"Using {async_mode} mode for Socket.IO")
 
     socketio = SocketIO(app,
-                      async_mode=async_mode,  # Use eventlet if available, otherwise threading
+                      async_mode=async_mode,
                       cors_allowed_origins="*",
                       logger=True,
                       engineio_logger=True)

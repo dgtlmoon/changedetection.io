@@ -273,6 +273,9 @@ def changedetection_app(config=None, datastore_o=None):
             # RSS access with token is allowed
             elif request.endpoint and 'rss.feed' in request.endpoint:
                 return None
+            # Socket.IO routes - need separate handling
+            elif request.path.startswith('/socket.io/'):
+                return None
             # API routes - use their own auth mechanism (@auth.check_token)
             elif request.path.startswith('/api/'):
                 return None
@@ -473,7 +476,13 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
-    
+
+    # Initialize Socket.IO server
+    from changedetectionio.realtime.socket_server import init_socketio
+    global socketio_server
+    socketio_server = init_socketio(app, datastore)
+    logger.info("Socket.IO server initialized")
+
     # Memory cleanup endpoint
     @app.route('/gc-cleanup', methods=['GET'])
     @login_optionally_required

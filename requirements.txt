@@ -106,6 +106,8 @@ panzi-json-logic
 # For conditions - extracted number from a body of text
 price-parser
 
+# flask_socket_io - incorrect package name, already have flask-socketio above
+
 # Scheduler - Windows seemed to miss a lot of default timezone info (even "UTC" !)
 tzdata
 

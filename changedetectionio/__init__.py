@@ -196,13 +196,73 @@ def main():
 
     s_type = socket.AF_INET6 if ipv6_enabled else socket.AF_INET
 
-    if ssl_mode:
-        # @todo finalise SSL config, but this should get you in the right direction if you need it.
-        eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen((host, port), s_type),
-                                               certfile='cert.pem',
-                                               keyfile='privkey.pem',
-                                               server_side=True), app)
+    # Get socketio_server from flask_app
+    from changedetectionio.flask_app import socketio_server
 
+    if socketio_server:
+        logger.info("Starting server with Socket.IO support (using eventlet)...")
+
+        # Use Flask-SocketIO's run method with error handling for Werkzeug warning
+        # This is the cleanest approach that works with all Flask-SocketIO versions
+        # Use '0.0.0.0' as the default host if none is specified
+        # This will listen on all available interfaces
+        listen_host = '0.0.0.0' if host == '' else host
+        logger.info(f"Using host: {listen_host} and port: {port}")
+
+        try:
+            # First try with the allow_unsafe_werkzeug parameter (newer versions)
+            if ssl_mode:
+                socketio_server.run(
+                    app,
+                    host=listen_host,
+                    port=int(port),
+                    certfile='cert.pem',
+                    keyfile='privkey.pem',
+                    debug=False,
+                    use_reloader=False,
+                    allow_unsafe_werkzeug=True  # Only in newer versions
+                )
+            else:
+                socketio_server.run(
+                    app,
+                    host=listen_host,
+                    port=int(port),
+                    debug=False,
+                    use_reloader=False,
+                    allow_unsafe_werkzeug=True  # Only in newer versions
+                )
+        except TypeError:
+            # If allow_unsafe_werkzeug is not a valid parameter, try without it
+            logger.info("Falling back to basic run method without allow_unsafe_werkzeug")
+            # Override the werkzeug safety check by setting an environment variable
+            os.environ['WERKZEUG_RUN_MAIN'] = 'true'
+            if ssl_mode:
+                socketio_server.run(
+                    app,
+                    host=listen_host,
+                    port=int(port),
+                    certfile='cert.pem',
+                    keyfile='privkey.pem',
+                    debug=False,
+                    use_reloader=False
+                )
+            else:
+                socketio_server.run(
+                    app,
+                    host=listen_host,
+                    port=int(port),
+                    debug=False,
+                    use_reloader=False
+                )
     else:
-        eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
+        logger.warning("Socket.IO server not initialized, falling back to standard WSGI server")
+        # Fallback to standard WSGI server if socketio_server is not available
+        if ssl_mode:
+            # @todo finalise SSL config, but this should get you in the right direction if you need it.
+            eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen((host, port), s_type),
+                                                certfile='cert.pem',
+                                                keyfile='privkey.pem',
+                                                server_side=True), app)
+        else:
+            eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
 
