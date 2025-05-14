@@ -78,9 +78,9 @@ def handle_watch_update(socketio, **kwargs):
 
 def init_socketio(app, datastore):
     """Initialize SocketIO with the main Flask app"""
-    # Since the app already uses eventlet, we'll use that for Socket.IO as well
-    # This provides better performance for Socket.IO operations
-    async_mode = 'eventlet'
+    # Use the threading async_mode instead of eventlet
+    # This avoids the need for monkey patching
+    async_mode = 'threading'
     logger.info(f"Using {async_mode} mode for Socket.IO")
 
     socketio = SocketIO(app,

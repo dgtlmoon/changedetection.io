@@ -7,14 +7,12 @@ __version__ = '0.49.17'
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
 import os
-os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
-import eventlet
-import eventlet.wsgi
 import getopt
 import platform
 import signal
 import socket
 import sys
+from werkzeug.serving import run_simple
 
 from changedetectionio import store
 from changedetectionio.flask_app import changedetection_app
@@ -33,8 +31,7 @@ def sigshutdown_handler(_signo, _stack_frame):
     logger.critical(f'Shutdown: Got Signal - {name} ({_signo}), Saving DB to disk and calling shutdown')
     datastore.sync_to_json()
     logger.success('Sync JSON to disk complete.')
-    # This will throw a SystemExit exception, because eventlet.wsgi.server doesn't know how to deal with it.
-    # Solution: move to gevent or other server in the future (#2014)
+    # Set flags for clean shutdown
     datastore.stop_thread = True
     app.config.exit.set()
     sys.exit()
@@ -200,7 +197,7 @@ def main():
     from changedetectionio.flask_app import socketio_server
 
     if socketio_server:
-        logger.info("Starting server with Socket.IO support (using eventlet)...")
+        logger.info("Starting server with Socket.IO support (using threading)...")
 
         # Use Flask-SocketIO's run method with error handling for Werkzeug warning
         # This is the cleanest approach that works with all Flask-SocketIO versions
@@ -257,12 +254,24 @@ def main():
     else:
         logger.warning("Socket.IO server not initialized, falling back to standard WSGI server")
         # Fallback to standard WSGI server if socketio_server is not available
+        listen_host = '0.0.0.0' if host == '' else host
         if ssl_mode:
-            # @todo finalise SSL config, but this should get you in the right direction if you need it.
-            eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen((host, port), s_type),
-                                                certfile='cert.pem',
-                                                keyfile='privkey.pem',
-                                                server_side=True), app)
+            # Use Werkzeug's run_simple with SSL support
+            run_simple(
+                hostname=listen_host,
+                port=int(port),
+                application=app,
+                use_reloader=False,
+                use_debugger=False,
+                ssl_context=('cert.pem', 'privkey.pem')
+            )
         else:
-            eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
+            # Use Werkzeug's run_simple for standard HTTP
+            run_simple(
+                hostname=listen_host,
+                port=int(port),
+                application=app,
+                use_reloader=False,
+                use_debugger=False
+            )
 
