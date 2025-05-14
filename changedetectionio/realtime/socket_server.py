@@ -5,17 +5,14 @@ import time
 import os
 from loguru import logger
 
-from changedetectionio.flask_app import _jinja2_filter_datetime, watch_check_completed
-
-
 class SignalHandler:
     """A standalone class to receive signals"""
     def __init__(self, socketio_instance, datastore):
         self.socketio_instance = socketio_instance
         self.datastore = datastore
 
-        # Connect to the watch_check_completed signal
-        from changedetectionio.flask_app import watch_check_completed as wcc
+        # Connect to the watch_check_update signal
+        from changedetectionio.flask_app import watch_check_update as wcc
         wcc.connect(self.handle_signal, weak=False)
         logger.info("SignalHandler: Connected to signal from direct import")
 
@@ -42,6 +39,7 @@ def handle_watch_update(socketio, **kwargs):
 
         # Emit the watch update to all connected clients
         from changedetectionio.flask_app import running_update_threads, update_q
+        from changedetectionio.flask_app import _jinja2_filter_datetime
 
         # Get list of watches that are currently running
         running_uuids = []
@@ -69,9 +67,10 @@ def handle_watch_update(socketio, **kwargs):
             'notification_muted': True if watch.get('notification_muted') else False,
             'unviewed': watch.has_unviewed,
             'uuid': watch.get('uuid'),
+            'event_timestamp': time.time()
         }
         socketio.emit("watch_update", watch_data)
-        logger.debug(f"Socket.IO: Emitted update for watch {watch.get('uuid')}")
+        logger.debug(f"Socket.IO: Emitted update for watch {watch.get('uuid')}, Checking now: {watch_data['checking_now']}")
 
     except Exception as e:
         logger.error(f"Socket.IO error in handle_watch_update: {str(e)}")

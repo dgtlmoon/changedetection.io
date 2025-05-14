@@ -6,7 +6,7 @@ from flask import Blueprint, request, redirect, url_for, flash, render_template,
 
 from changedetectionio.store import ChangeDetectionStore
 
-def constuct_ui_ajax_blueprint(datastore: ChangeDetectionStore, update_q, running_update_threads, queuedWatchMetaData, watch_check_completed):
+def constuct_ui_ajax_blueprint(datastore: ChangeDetectionStore, update_q, running_update_threads, queuedWatchMetaData, watch_check_update):
     ui_ajax_blueprint = Blueprint('ajax', __name__, template_folder="templates", url_prefix='/ajax')
 
     # Import the login decorator
@@ -25,9 +25,9 @@ def constuct_ui_ajax_blueprint(datastore: ChangeDetectionStore, update_q, runnin
             elif op == 'recheck':
                 update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
-            watch_check_completed = signal('watch_check_completed')
-            if watch_check_completed:
-                watch_check_completed.send(watch_uuid=uuid)
+            watch_check_update = signal('watch_check_update')
+            if watch_check_update:
+                watch_check_update.send(watch_uuid=uuid)
 
         return 'OK'
 

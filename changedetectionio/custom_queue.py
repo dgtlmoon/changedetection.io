@@ -21,7 +21,7 @@ class SignalPriorityQueue(queue.PriorityQueue):
         if hasattr(item, 'item') and isinstance(item.item, dict) and 'uuid' in item.item:
             uuid = item.item['uuid']
             # Get the signal and send it if it exists
-            watch_check_completed = signal('watch_check_completed')
-            if watch_check_completed:
+            watch_check_update = signal('watch_check_update')
+            if watch_check_update:
                 # Send the watch_uuid parameter
-                watch_check_completed.send(watch_uuid=uuid)
+                watch_check_update.send(watch_uuid=uuid)

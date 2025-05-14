@@ -167,9 +167,9 @@ class ChangeDetectionStore:
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
         self.needs_write = True
 
-        watch_check_completed = signal('watch_check_completed')
-        if watch_check_completed:
-            watch_check_completed.send(watch_uuid=uuid)
+        watch_check_update = signal('watch_check_update')
+        if watch_check_update:
+            watch_check_update.send(watch_uuid=uuid)
 
     def remove_password(self):
         self.__data['settings']['application']['password'] = False

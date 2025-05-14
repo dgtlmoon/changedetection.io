@@ -9,7 +9,7 @@ from changedetectionio.blueprint.ui.edit import construct_blueprint as construct
 from changedetectionio.blueprint.ui.notification import construct_blueprint as construct_notification_blueprint
 from changedetectionio.blueprint.ui.views import construct_blueprint as construct_views_blueprint
 
-def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_update_threads, queuedWatchMetaData, watch_check_completed):
+def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_update_threads, queuedWatchMetaData, watch_check_update):
     ui_blueprint = Blueprint('ui', __name__, template_folder="templates")
     
     # Register the edit blueprint
@@ -21,10 +21,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
     ui_blueprint.register_blueprint(notification_blueprint)
     
     # Register the views blueprint
-    views_blueprint = construct_views_blueprint(datastore, update_q, queuedWatchMetaData, watch_check_completed)
+    views_blueprint = construct_views_blueprint(datastore, update_q, queuedWatchMetaData, watch_check_update)
     ui_blueprint.register_blueprint(views_blueprint)
 
-    ui_ajax_blueprint = constuct_ui_ajax_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData, watch_check_completed)
+    ui_ajax_blueprint = constuct_ui_ajax_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData, watch_check_update)
     ui_blueprint.register_blueprint(ui_ajax_blueprint)
 
     # Import the login decorator
@@ -252,7 +252,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
 
         if uuids:
             for uuid in uuids:
-                watch_check_completed.send(watch_uuid=uuid)
+                watch_check_update.send(watch_uuid=uuid)
 
         return redirect(url_for('watchlist.index'))
 

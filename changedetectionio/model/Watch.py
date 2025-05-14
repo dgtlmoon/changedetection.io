@@ -126,9 +126,9 @@ class model(watch_base):
             'remote_server_reply': None,
             'track_ldjson_price_data': None
         })
-        watch_check_completed = signal('watch_check_completed')
-        if watch_check_completed:
-            watch_check_completed.send(watch_uuid=self.get('uuid'))
+        watch_check_update = signal('watch_check_update')
+        if watch_check_update:
+            watch_check_update.send(watch_uuid=self.get('uuid'))
 
         return
 

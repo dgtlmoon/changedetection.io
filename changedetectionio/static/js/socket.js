@@ -43,7 +43,7 @@ $(document).ready(function () {
 
         // Listen for periodically emitted watch data
         socket.on('watch_update', function (watch) {
-            console.log(`Watch update ${watch.uuid}`);
+            console.log(`${watch.event_timestamp} - Watch update ${watch.uuid} - Checking now - ${watch.checking_now}`);
 
             const $watchRow = $('tr[data-watch-uuid="' + watch.uuid + '"]');
             if ($watchRow.length) {

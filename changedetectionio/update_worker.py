@@ -2,7 +2,7 @@ from .processors.exceptions import ProcessorException
 import changedetectionio.content_fetchers.exceptions as content_fetchers_exceptions
 from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
 from changedetectionio import html_tools
-from changedetectionio.flask_app import watch_check_completed
+from changedetectionio.flask_app import watch_check_update
 
 import importlib
 import os
@@ -272,7 +272,7 @@ class update_worker(threading.Thread):
                     logger.info(f"Processing watch UUID {uuid} Priority {queued_item_data.priority} URL {watch['url']}")
 
                     try:
-                        watch_check_completed.send(watch_uuid=watch['uuid'])
+                        watch_check_update.send(watch_uuid=watch['uuid'])
 
                         # Processor is what we are using for detecting the "Change"
                         processor = watch.get('processor', 'text_json_diff')
@@ -595,8 +595,8 @@ class update_worker(threading.Thread):
 
                 # Send signal for watch check completion with the watch data
                 if watch:
-                    logger.info(f"Sending watch_check_completed signal for UUID {watch['uuid']}")
-                    watch_check_completed.send(watch_uuid=watch['uuid'])
+                    logger.info(f"Sending watch_check_update signal for UUID {watch['uuid']}")
+                    watch_check_update.send(watch_uuid=watch['uuid'])
 
                 update_handler = None
                 logger.debug(f"Watch {uuid} done in {time.time()-fetch_start_time:.2f}s")

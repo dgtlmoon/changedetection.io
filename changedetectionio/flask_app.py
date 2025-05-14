@@ -33,7 +33,7 @@ from flask_cors import CORS
 
 # Create specific signals for application events
 # Make this a global singleton to avoid multiple signal objects
-watch_check_completed = signal('watch_check_completed', doc='Signal sent when a watch check is completed')
+watch_check_update = signal('watch_check_update', doc='Signal sent when a watch check is completed')
 from flask_wtf import CSRFProtect
 from loguru import logger
 import eventlet
@@ -245,7 +245,7 @@ def changedetection_app(config=None, datastore_o=None):
     app.config['DATASTORE'] = datastore_o
     
     # Store the signal in the app config to ensure it's accessible everywhere
-    app.config['WATCH_CHECK_COMPLETED_SIGNAL'] = watch_check_completed
+    app.config['watch_check_update_SIGNAL'] = watch_check_update
 
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
@@ -472,7 +472,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # watchlist UI buttons etc
     import changedetectionio.blueprint.ui as ui
-    app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData, watch_check_completed))
+    app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData, watch_check_update))
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
