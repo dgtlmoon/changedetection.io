@@ -567,6 +567,8 @@ body.preview-text-enabled {
     display: inline !important; }
   .watch-table tr.notification_muted a.mute-toggle.state-off {
     display: none !important; }
+  .watch-table tr.error .fetch-error {
+    display: inline-block !important; }
 
 ul#conditions_match_logic {
   list-style: none; }

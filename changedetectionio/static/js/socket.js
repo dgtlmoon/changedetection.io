@@ -54,6 +54,7 @@ $(document).ready(function () {
                 $($watchRow).toggleClass('notification_muted', watch.notification_muted);
                 $($watchRow).toggleClass('paused', watch.paused);
 
+                $('td.error', $watchRow).text(watch.last_error_text)
                 $('td.last-changed', $watchRow).text(watch.last_checked_text)
                 $('td.last-checked .innertext', $watchRow).text(watch.last_checked_text)
                 $('td.last-checked', $watchRow).data('timestamp', watch.last_checked).data('fetchduration', watch.fetch_time);

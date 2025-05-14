@@ -88,5 +88,10 @@
       }
     }
   }
+  tr.error {
+    .fetch-error {
+      display: inline-block !important;
+    }
+  }
 }
 
