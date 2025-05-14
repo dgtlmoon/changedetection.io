@@ -77,6 +77,7 @@ $(function () {
                 }
                 $(this).css('background-size', `${r}% 100%`);
             } else {
+                // Snap to full complete
                 $(this).css('background-size', `100% 100%`);
             }
         });

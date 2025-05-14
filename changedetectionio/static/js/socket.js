@@ -58,15 +58,11 @@ $(document).ready(function () {
                     $('td.error', $watchRow).text(watch.last_error_text)
 
                     $('td.last-changed', $watchRow).text(watch.last_checked_text)
-                    if (!watch.checking_now) {
-                        $('td.last-changed', $watchRow).css('background-size', '0% 0%');
-                    }
 
                     $('td.last-checked .innertext', $watchRow).text(watch.last_checked_text)
                     $('td.last-checked', $watchRow).data('timestamp', watch.last_checked).data('fetchduration', watch.fetch_time);
                     $('td.last-checked', $watchRow).data('eta_complete', watch.last_checked + watch.fetch_time);
                 }
-
                 $('body').toggleClass('checking-now', watch.checking_now && window.location.href.includes(watch.uuid));
             });
 
