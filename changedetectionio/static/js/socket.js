@@ -1,10 +1,36 @@
 // Socket.IO client-side integration for changedetection.io
+// @todo only bind ajax if the socket server attached success.
 
 $(document).ready(function () {
-    // Try to create the socket connection to port 5005 - if it fails, the site will still work normally
-    try {
-        // Connect to the dedicated Socket.IO server on port 5005
-        const socket = io('http://127.0.0.1:5005');
+    $('.ajax-op').click(function (e) {
+        e.preventDefault();
+        $.ajax({
+            type: "POST",
+            url: ajax_toggle_url,
+            data: {'op': $(this).data('op'), 'uuid': $(this).closest('tr').data('watch-uuid')},
+            statusCode: {
+                400: function () {
+                    // More than likely the CSRF token was lost when the server restarted
+                    alert("There was a problem processing the request, please reload the page.");
+                }
+            }
+        });
+        return false;
+    });
+
+
+    // Only try to connect if authentication isn't required or user is authenticated
+    // The 'is_authenticated' variable will be set in the template
+    if (typeof is_authenticated !== 'undefined' ? is_authenticated : true) {
+        // Try to create the socket connection to the SocketIO server - if it fails, the site will still work normally
+        try {
+            // Connect to Socket.IO on the same host/port, with path from template
+            const socket = io({
+                path: socketio_url,  // This will be the path prefix like "/app/socket.io" from the template
+                transports: ['polling', 'websocket'],  // Try WebSocket but fall back to polling
+                reconnectionDelay: 1000,
+                reconnectionAttempts: 5
+            });
 
         // Connection status logging
         socket.on('connect', function () {
@@ -15,25 +41,9 @@ $(document).ready(function () {
             console.log('Socket.IO disconnected');
         });
 
-        socket.on('checking_now', function (uuid_list) {
-            console.log("Got checking now update");
-            // Remove 'checking-now' class where it should no longer be
-            $('.watch-table tbody tr.checking-now').each(function () {
-                if (!uuid_list.includes($(this).data('watch-uuid'))) {
-                    $(this).removeClass('checking-now');
-                }
-            });
-
-            // Add the class on the rows where it should be
-            uuid_list.forEach(function (uuid) {
-                $('.watch-table tbody tr[data-watch-uuid="' + uuid + '"]').addClass('checking-now');
-            });
-        });
-
         // Listen for periodically emitted watch data
         socket.on('watch_update', function (watch) {
             console.log(`Watch update ${watch.uuid}`);
-
 
             const $watchRow = $('tr[data-watch-uuid="' + watch.uuid + '"]');
             if ($watchRow.length) {
@@ -41,6 +51,9 @@ $(document).ready(function () {
                 $($watchRow).toggleClass('queued', watch.queued);
                 $($watchRow).toggleClass('unviewed', watch.unviewed);
                 $($watchRow).toggleClass('error', watch.has_error);
+                $($watchRow).toggleClass('notification_muted', watch.notification_muted);
+                $($watchRow).toggleClass('paused', watch.paused);
+
                 $('td.last-changed', $watchRow).text(watch.last_checked_text)
                 $('td.last-checked .innertext', $watchRow).text(watch.last_checked_text)
                 $('td.last-checked', $watchRow).data('timestamp', watch.last_checked).data('fetchduration', watch.fetch_time);
@@ -53,4 +66,5 @@ $(document).ready(function () {
         // If Socket.IO fails to initialize, just log it and continue
         console.log('Socket.IO initialization error:', e);
     }
+}
 });

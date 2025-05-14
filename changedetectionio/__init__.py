@@ -16,8 +16,9 @@ import eventlet.wsgi
 import getopt
 import platform
 import signal
-import socket
+import socket  # Make sure socket is imported at the module level
 import sys
+from flask import request
 
 from changedetectionio import store
 from changedetectionio.flask_app import changedetection_app
@@ -147,22 +148,16 @@ def main():
     # Get the Flask app 
     app = changedetection_app(app_config, datastore)
     
-    # Now initialize Socket.IO after the app is fully set up
+    # Initialize Socket.IO integrated with the main Flask app
     try:
-        from changedetectionio.realtime.socket_server import ChangeDetectionSocketIO
-        from changedetectionio.flask_app import socketio_server
-        import threading
+        from changedetectionio.realtime.socket_server import init_socketio
 
-        # Create the Socket.IO server
-        socketio_server = ChangeDetectionSocketIO(app, datastore)
-        
-        # Run the Socket.IO server in a separate thread on port 5005
-        socket_thread = threading.Thread(target=socketio_server.run, 
-                                         kwargs={'host': host, 'port': 5005})
-        socket_thread.daemon = True
-        socket_thread.start()
-        
-        logger.info("Socket.IO server initialized successfully on port 5005")
+        # Initialize Socket.IO with the main Flask app
+        # This will be used later when we run the app with socketio.run()
+        socketio = init_socketio(app, datastore)
+        app.config['SOCKETIO'] = socketio
+
+        logger.info("Socket.IO server initialized successfully (integrated with main app)")
     except Exception as e:
         logger.warning(f"Failed to initialize Socket.IO server: {str(e)}")
 
@@ -191,6 +186,9 @@ def main():
 
     @app.context_processor
     def inject_version():
+        # Socket.IO is now integrated with the main app
+        # The client will automatically connect to the Socket.IO endpoint on the same host/port
+
         return dict(right_sticky="v{}".format(datastore.data['version_tag']),
                     new_version_available=app.config['NEW_VERSION_AVAILABLE'],
                     has_password=datastore.data['settings']['application']['password'] != False
@@ -227,7 +225,20 @@ def main():
                                                server_side=True), app)
 
     else:
-        # We'll integrate the Socket.IO server with the WSGI server
-        # The Socket.IO server is already attached to the Flask app
-        eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
+        # Run the app with Socket.IO's integrated server
+        if 'SOCKETIO' in app.config:
+            # When using eventlet or threading, we need to make sure the host is valid
+            # Use '0.0.0.0' for all interfaces if host is empty or invalid
+            try:
+                socket_host = host if host else '0.0.0.0'
+                logger.info(f"Starting integrated Socket.IO server on http://{socket_host}:{port}")
+                app.config['SOCKETIO'].run(app, host=socket_host, port=int(port), debug=False, use_reloader=False, allow_unsafe_werkzeug=True)
+            except socket.gaierror:
+                # If the hostname is invalid, fall back to '0.0.0.0'
+                logger.warning(f"Invalid hostname '{host}', falling back to '0.0.0.0'")
+                app.config['SOCKETIO'].run(app, host='0.0.0.0', port=int(port), debug=False, use_reloader=False, allow_unsafe_werkzeug=True)
+        else:
+            # Fallback to eventlet if Socket.IO initialization failed
+            logger.info(f"Starting standard Flask server on http://{host}:{port}")
+            eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
 

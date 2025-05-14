@@ -125,6 +125,18 @@ def get_darkmode_state():
 def get_css_version():
     return __version__
 
+@app.template_global()
+def get_socketio_path():
+    """Generate the correct Socket.IO path prefix for the client"""
+    # If behind a proxy with a sub-path, we need to respect that path
+    prefix = ""
+    if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Prefix' in request.headers:
+        prefix = request.headers['X-Forwarded-Prefix']
+
+    # Socket.IO will be available at {prefix}/socket.io/
+    return prefix
+
+
 @app.template_filter('format_number_locale')
 def _jinja2_filter_format_number_locale(value: float) -> str:
     "Formats for example 4000.10 to the local locale default of 4,000.10"

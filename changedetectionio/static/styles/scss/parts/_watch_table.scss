@@ -68,5 +68,25 @@
       display: inline-block !important;
     }
   }
+  tr.paused {
+    a.pause-toggle {
+      &.state-on {
+        display: inline !important;
+      }
+      &.state-off {
+        display: none !important;
+      }
+    }
+  }
+  tr.notification_muted {
+    a.mute-toggle {
+      &.state-on {
+        display: inline !important;
+      }
+      &.state-off {
+        display: none !important;
+      }
+    }
+  }
 }
 
