@@ -401,6 +401,70 @@ class model(watch_base):
         # False is not an option for AppRise, must be type None
         return None
 
+    def get_screenshot_as_thumbnail(self, max_age=3200):
+        """Return path to a square thumbnail of the most recent screenshot.
+
+        Creates a 150x150 pixel thumbnail from the top portion of the screenshot.
+
+        Args:
+            max_age: Maximum age in seconds before recreating thumbnail
+
+        Returns:
+            Path to thumbnail or None if no screenshot exists
+        """
+        import os
+        import time
+
+        thumbnail_path = os.path.join(self.watch_data_dir, "thumbnail.jpeg")
+        top_trim = 500  # Pixels from top of screenshot to use
+
+        screenshot_path = self.get_screenshot()
+        if not screenshot_path:
+            return None
+
+        # Reuse thumbnail if it's fresh and screenshot hasn't changed
+        if os.path.isfile(thumbnail_path):
+            thumbnail_mtime = os.path.getmtime(thumbnail_path)
+            screenshot_mtime = os.path.getmtime(screenshot_path)
+
+            if screenshot_mtime <= thumbnail_mtime and time.time() - thumbnail_mtime < max_age:
+                return thumbnail_path
+
+        try:
+            from PIL import Image
+
+            with Image.open(screenshot_path) as img:
+                # Crop top portion first (full width, top_trim height)
+                top_crop_height = min(top_trim, img.height)
+                img = img.crop((0, 0, img.width, top_crop_height))
+
+                # Create a smaller intermediate image (to reduce memory usage)
+                aspect = img.width / img.height
+                interim_width = min(top_trim, img.width)
+                interim_height = int(interim_width / aspect) if aspect > 0 else top_trim
+                img = img.resize((interim_width, interim_height), Image.NEAREST)
+
+                # Convert to RGB if needed
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+
+                # Crop to square from top center
+                square_size = min(img.width, img.height)
+                left = (img.width - square_size) // 2
+                img = img.crop((left, 0, left + square_size, square_size))
+
+                # Final resize to exact thumbnail size with better filter
+                img = img.resize((150, 150), Image.BILINEAR)
+
+                # Save with optimized settings
+                img.save(thumbnail_path, "JPEG", quality=75, optimize=True)
+
+            return thumbnail_path
+
+        except Exception as e:
+            logger.error(f"Error creating thumbnail for {self.get('uuid')}: {str(e)}")
+            return None
+
     def __get_file_ctime(self, filename):
         fname = os.path.join(self.watch_data_dir, filename)
         if os.path.isfile(fname):

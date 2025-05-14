@@ -122,7 +122,11 @@
                     {% set mute_label = 'UnMute notification' if watch.notification_muted else 'Mute notification' %}
                     <a class="link-mute state-{{'on' if watch.notification_muted else 'off'}}" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{{ mute_label }}" title="{{ mute_label }}" class="icon icon-mute" ></a>
                 </td>
-                <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
+                <td class="title-col inline">
+                    {% if watch.get_screenshot() %}
+                    <img class="thumbnail" src="{{url_for('static_content', group='thumbnail', filename=watch.uuid)}}" alt="thumbnail screenshot" title="thumbnail screenshot" >
+                    {% endif %}
+                    <span>{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}</span>
                     <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}"></a>
                     <a class="link-spread" href="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="Create a link to share watch config with others" ></a>
 
@@ -137,13 +141,11 @@
                     {% if watch.has_browser_steps %}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" title="Browser Steps is enabled" >{% endif %}
                     {% if watch.last_error is defined and watch.last_error != False %}
                     <div class="fetch-error">{{ watch.last_error }}
-
                         {% if '403' in watch.last_error %}
                             {% if has_proxies %}
                                 <a href="{{ url_for('settings.settings_page', uuid=watch.uuid) }}#proxies">Try other proxies/location</a>&nbsp;
                             {% endif %}
                             <a href="{{ url_for('settings.settings_page', uuid=watch.uuid) }}#proxies">Try adding external proxies/locations</a>
-                        
                         {% endif %}
                         {% if 'empty result or contain only an image' in watch.last_error %}
                             <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Detecting-changes-in-images">more help here</a>.
@@ -166,7 +168,7 @@
                       <span class="watch-tag-list">{{ watch_tag.title }}</span>
                     {% endfor %}
                 </td>
-            <!-- @todo make it so any watch handler obj can expose this --->
+
 {% if any_has_restock_price_processor %}
                 <td class="restock-and-price">
                     {% if watch['processor'] == 'restock_diff'  %}
