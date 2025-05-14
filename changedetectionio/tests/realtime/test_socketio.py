@@ -1,37 +1,72 @@
 import asyncio
 import socketio
+from aiohttp import web
 
-# URL of your Socket.IO server
-SOCKETIO_URL = "http://localhost:5000"  # Change as needed
-SOCKETIO_PATH = "/socket.io"  # Match the path used in your JS config
+SOCKETIO_URL = "http://localhost:5000"
+SOCKETIO_PATH = "/socket.io"
+NUM_CLIENTS = 100
 
-# Number of clients to simulate
-NUM_CLIENTS = 10
+clients = []
+shutdown_event = asyncio.Event()
 
-async def start_client(client_id: int):
-    sio = socketio.AsyncClient(reconnection_attempts=5, reconnection_delay=1)
+class WatchClient:
+    def __init__(self, client_id: int):
+        self.client_id = client_id
+        self.i_got_watch_update_event = False
+        self.sio = socketio.AsyncClient(reconnection_attempts=5, reconnection_delay=1)
 
-    @sio.event
-    async def connect():
-        print(f"[Client {client_id}] Connected")
+        @self.sio.event
+        async def connect():
+            print(f"[Client {self.client_id}] Connected")
 
-    @sio.event
-    async def disconnect():
-        print(f"[Client {client_id}] Disconnected")
+        @self.sio.event
+        async def disconnect():
+            print(f"[Client {self.client_id}] Disconnected")
 
-    @sio.on("watch_update")
-    async def on_watch_update(watch):
-        print(f"[Client {client_id}] Received update: {watch}")
+        @self.sio.on("watch_update")
+        async def on_watch_update(watch):
+            self.i_got_watch_update_event = True
+            print(f"[Client {self.client_id}] Received update: {watch}")
 
-    try:
-        await sio.connect(SOCKETIO_URL, socketio_path=SOCKETIO_PATH, transports=["websocket", "polling"])
-        await sio.wait()
-    except Exception as e:
-        print(f"[Client {client_id}] Connection error: {e}")
+    async def run(self):
+        try:
+            await self.sio.connect(SOCKETIO_URL, socketio_path=SOCKETIO_PATH, transports=["websocket", "polling"])
+            await self.sio.wait()
+        except Exception as e:
+            print(f"[Client {self.client_id}] Connection error: {e}")
+
+async def handle_check(request):
+    all_received = all(c.i_got_watch_update_event for c in clients)
+    result = "yes" if all_received else "no"
+    print(f"Received HTTP check — returning '{result}'")
+    shutdown_event.set()  # Signal shutdown
+    return web.Response(text=result)
+
+async def start_http_server():
+    app = web.Application()
+    app.add_routes([web.get('/did_all_clients_get_watch_update', handle_check)])
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', 6666)
+    await site.start()
 
 async def main():
-    clients = [start_client(i) for i in range(NUM_CLIENTS)]
-    await asyncio.gather(*clients)
+    await start_http_server()
+
+    for i in range(NUM_CLIENTS):
+        client = WatchClient(i)
+        clients.append(client)
+        asyncio.create_task(client.run())
+
+    await shutdown_event.wait()
+
+    print("Shutting down...")
+    # Graceful disconnect
+    for c in clients:
+        await c.sio.disconnect()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Interrupted")
