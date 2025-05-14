@@ -32,42 +32,47 @@ $(document).ready(function () {
                 reconnectionAttempts: 5
             });
 
-        // Connection status logging
-        socket.on('connect', function () {
-            console.log('Socket.IO connected');
-        });
+            // Connection status logging
+            socket.on('connect', function () {
+                console.log('Socket.IO connected');
+            });
 
-        socket.on('disconnect', function () {
-            console.log('Socket.IO disconnected');
-        });
+            socket.on('disconnect', function () {
+                console.log('Socket.IO disconnected');
+            });
 
-        // Listen for periodically emitted watch data
-        socket.on('watch_update', function (watch) {
-            console.log(`${watch.event_timestamp} - Watch update ${watch.uuid} - Checking now - ${watch.checking_now} - UUID in URL ${window.location.href.includes(watch.uuid)}`);
+            // Listen for periodically emitted watch data
+            socket.on('watch_update', function (watch) {
+                console.log(`${watch.event_timestamp} - Watch update ${watch.uuid} - Checking now - ${watch.checking_now} - UUID in URL ${window.location.href.includes(watch.uuid)}`);
 
-            // Updating watch table rows
-            const $watchRow = $('tr[data-watch-uuid="' + watch.uuid + '"]');
-            if ($watchRow.length) {
-                $($watchRow).toggleClass('checking-now', watch.checking_now);
-                $($watchRow).toggleClass('queued', watch.queued);
-                $($watchRow).toggleClass('unviewed', watch.unviewed);
-                $($watchRow).toggleClass('error', watch.has_error);
-                $($watchRow).toggleClass('notification_muted', watch.notification_muted);
-                $($watchRow).toggleClass('paused', watch.paused);
+                // Updating watch table rows
+                const $watchRow = $('tr[data-watch-uuid="' + watch.uuid + '"]');
+                if ($watchRow.length) {
+                    $($watchRow).toggleClass('checking-now', watch.checking_now);
+                    $($watchRow).toggleClass('queued', watch.queued);
+                    $($watchRow).toggleClass('unviewed', watch.unviewed);
+                    $($watchRow).toggleClass('error', watch.has_error);
+                    $($watchRow).toggleClass('notification_muted', watch.notification_muted);
+                    $($watchRow).toggleClass('paused', watch.paused);
 
-                $('td.error', $watchRow).text(watch.last_error_text)
-                $('td.last-changed', $watchRow).text(watch.last_checked_text)
-                $('td.last-checked .innertext', $watchRow).text(watch.last_checked_text)
-                $('td.last-checked', $watchRow).data('timestamp', watch.last_checked).data('fetchduration', watch.fetch_time);
-                $('td.last-checked', $watchRow).data('eta_complete', watch.last_checked + watch.fetch_time);
-            }
+                    $('td.error', $watchRow).text(watch.last_error_text)
 
-            $('body').toggleClass('checking-now', watch.checking_now && window.location.href.includes(watch.uuid) );
-        });
+                    $('td.last-changed', $watchRow).text(watch.last_checked_text)
+                    if (!watch.checking_now) {
+                        $('td.last-changed', $watchRow).css('background-size', '0% 0%');
+                    }
 
-    } catch (e) {
-        // If Socket.IO fails to initialize, just log it and continue
-        console.log('Socket.IO initialization error:', e);
+                    $('td.last-checked .innertext', $watchRow).text(watch.last_checked_text)
+                    $('td.last-checked', $watchRow).data('timestamp', watch.last_checked).data('fetchduration', watch.fetch_time);
+                    $('td.last-checked', $watchRow).data('eta_complete', watch.last_checked + watch.fetch_time);
+                }
+
+                $('body').toggleClass('checking-now', watch.checking_now && window.location.href.includes(watch.uuid));
+            });
+
+        } catch (e) {
+            // If Socket.IO fails to initialize, just log it and continue
+            console.log('Socket.IO initialization error:', e);
+        }
     }
-}
 });
