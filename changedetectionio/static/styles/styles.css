@@ -670,6 +670,20 @@ ul#conditions_match_logic {
   .fieldlist_formfields .addRuleRow:hover, .fieldlist_formfields .removeRuleRow:hover, .fieldlist_formfields .verifyRuleRow:hover {
     background-color: #999; }
 
+body.checking-now #checking-now-fixed-tab {
+  display: block !important; }
+
+#checking-now-fixed-tab {
+  background: #ccc;
+  border-radius: 5px;
+  bottom: 0;
+  color: var(--color-text);
+  display: none;
+  font-size: 0.8rem;
+  left: 0;
+  padding: 5px;
+  position: fixed; }
+
 body {
   color: var(--color-text);
   background: var(--color-background-page);
