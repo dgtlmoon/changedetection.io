@@ -1,4 +1,3 @@
-
 /* table related */
 .watch-table {
   width: 100%;
@@ -8,15 +7,18 @@
     &.unviewed {
       font-weight: bold;
     }
+
     &.error {
       color: var(--color-watch-table-error);
     }
+
     color: var(--color-watch-table-row-text);
   }
 
 
   td {
     white-space: nowrap;
+
     &.title-col {
       word-break: break-all;
       white-space: normal;
@@ -51,43 +53,65 @@
 
   /* Row with 'checking-now' */
   tr.checking-now {
+    td:first-child {
+        position: relative;
+    }
+
+    td:first-child::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 3px;
+        background-color: #1af61b;
+    }
+
     td.last-checked {
       .spinner-wrapper {
         display: inline-block !important;
       }
+
       .innertext {
         display: none !important;
       }
     }
   }
+
   tr.queued {
     a.recheck {
       display: none !important;
     }
+
     a.already-in-queue-button {
       display: inline-block !important;
     }
   }
+
   tr.paused {
     a.pause-toggle {
       &.state-on {
         display: inline !important;
       }
+
       &.state-off {
         display: none !important;
       }
     }
   }
+
   tr.notification_muted {
     a.mute-toggle {
       &.state-on {
         display: inline !important;
       }
+
       &.state-off {
         display: none !important;
       }
     }
   }
+
   tr.error {
     .fetch-error {
       display: inline-block !important;

@@ -551,6 +551,16 @@ body.preview-text-enabled {
   .watch-table .current-diff-url::after {
     content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
     margin: 0 3px 0 5px; }
+  .watch-table tr.checking-now td:first-child {
+    position: relative; }
+  .watch-table tr.checking-now td:first-child::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    background-color: #1af61b; }
   .watch-table tr.checking-now td.last-checked .spinner-wrapper {
     display: inline-block !important; }
   .watch-table tr.checking-now td.last-checked .innertext {
