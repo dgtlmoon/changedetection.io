@@ -147,7 +147,7 @@ class fetcher(Fetcher):
                          is_binary,
                          empty_pages_are_a_change
                          ):
-
+        import re
         self.delete_browser_steps_screenshots()
         extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
 
@@ -171,6 +171,17 @@ class fetcher(Fetcher):
         # non-headless - newPage() will launch an extra tab/window, .browser should already contain 1 page/tab
         # headless - ask a new page
         self.page = (pages := await browser.pages) and len(pages) or await browser.newPage()
+
+        if '--window-size' in self.browser_connection_url:
+            # Be sure the viewport is always the window-size, this is often not the same thing
+            match = re.search(r'--window-size=(\d+),(\d+)', self.browser_connection_url)
+            if match:
+                logger.debug(f"Setting viewport to same as --window-size in browser connection URL {int(match.group(1))},{int(match.group(2))}")
+                await self.page.setViewport({
+                    "width": int(match.group(1)),
+                    "height": int(match.group(2))
+                })
+                logger.debug(f"Puppeteer viewport size {self.page.viewport}")
 
         try:
             from pyppeteerstealth import inject_evasions_into_page
@@ -217,7 +228,6 @@ class fetcher(Fetcher):
         #            browsersteps_interface.page = self.page
 
         response = await self.page.goto(url, waitUntil="load")
-
 
         if response is None:
             await self.page.close()

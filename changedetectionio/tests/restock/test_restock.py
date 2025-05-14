@@ -14,6 +14,8 @@ from changedetectionio.notification import (
 def set_original_response():
     test_return_data = """<html>
        <body>
+       <section id=header style="padding: 50px; height: 350px">This is the header which should be ignored always - <span>add to cart</span></section>
+       <!-- stock-not-in-stock.js will ignore text in the first 300px, see elementIsInEyeBallRange(), sometimes "add to cart" and other junk is here -->
      Some initial text<br>
      <p>Which is across multiple lines</p>
      <br>
@@ -52,8 +54,6 @@ def test_restock_detection(client, live_server, measure_memory_usage):
 
     set_original_response()
     #assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
-
-    time.sleep(1)
     live_server_setup(live_server)
     #####################
     notification_url = url_for('test_notification_endpoint', _external=True).replace('http://localhost', 'http://changedet').replace('http', 'json')
@@ -84,7 +84,8 @@ def test_restock_detection(client, live_server, measure_memory_usage):
     # Is it correctly show as NOT in stock?
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'not-in-stock' in res.data
+    assert b'processor-restock_diff' in res.data # Should have saved in restock mode
+    assert b'not-in-stock' in res.data # should be out of stock
 
     # Is it correctly shown as in stock
     set_back_in_stock_response()

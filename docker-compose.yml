@@ -36,7 +36,6 @@ services:
       - DEFAULT_IGNORE_HTTPS_ERRORS=true
 # Configurable proxy list support, see https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#proxy-list-support
 #        - ./proxies.json:/datastore/proxies.json
-
 #    environment:
 #        Default listening port, can also be changed with the -p option (not to be confused with ports: below)
 #      - PORT=5000
@@ -103,6 +102,73 @@ services:
 # ports:
 #   - 5000:5000
 # restart: unless-stopped
+=======
+  #    environment:
+  #        Default listening port, can also be changed with the -p option (not to be confused with ports: below)
+  #      - PORT=5000
+  #
+  #        Log levels are in descending order. (TRACE is the most detailed one)
+  #        Log output levels: TRACE, DEBUG(default), INFO, SUCCESS, WARNING, ERROR, CRITICAL
+  #      - LOGGER_LEVEL=TRACE
+  #
+  #
+  #       Uncomment below and the "sockpuppetbrowser" to use a real Chrome browser (It uses the "playwright" protocol)
+  #      - PLAYWRIGHT_DRIVER_URL=ws://browser-sockpuppet-chrome:3000
+  #
+  #
+  #       Alternative WebDriver/selenium URL, do not use "'s or 's! (old, deprecated, does not support screenshots very well)
+  #      - WEBDRIVER_URL=http://browser-selenium-chrome:4444/wd/hub
+  #
+  #       WebDriver proxy settings webdriver_proxyType, webdriver_ftpProxy, webdriver_noProxy,
+  #                                webdriver_proxyAutoconfigUrl, webdriver_autodetect,
+  #                                webdriver_socksProxy, webdriver_socksUsername, webdriver_socksVersion, webdriver_socksPassword
+  #
+  #             https://selenium-python.readthedocs.io/api.html#module-selenium.webdriver.common.proxy
+  #
+  #
+  #       Playwright proxy settings playwright_proxy_server, playwright_proxy_bypass, playwright_proxy_username, playwright_proxy_password
+  #
+  #             https://playwright.dev/python/docs/api/class-browsertype#browser-type-launch-option-proxy
+  #
+  #        Plain requests - proxy support example.
+  #      - HTTP_PROXY=socks5h://10.10.1.10:1080
+  #      - HTTPS_PROXY=socks5h://10.10.1.10:1080
+  #
+  #        An exclude list (useful for notification URLs above) can be specified by with
+  #      - NO_PROXY="localhost,192.168.0.0/24"
+  #
+  #        Base URL of your changedetection.io install (Added to the notification alert)
+  #      - BASE_URL=https://mysite.com
+  #        Respect proxy_pass type settings, `proxy_set_header Host "localhost";` and `proxy_set_header X-Forwarded-Prefix /app;`
+  #        More here https://github.com/dgtlmoon/changedetection.io/wiki/Running-changedetection.io-behind-a-reverse-proxy
+  #      - USE_X_SETTINGS=1
+  #
+  #        Hides the `Referer` header so that monitored websites can't see the changedetection.io hostname.
+  #      - HIDE_REFERER=true
+  #        
+  #        Default number of parallel/concurrent fetchers
+  #      - FETCH_WORKERS=10
+  #
+  #        Absolute minimum seconds to recheck, overrides any watch minimum, change to 0 to disable
+  #      - MINIMUM_SECONDS_RECHECK_TIME=3
+  #
+  #        If you want to watch local files file:///path/to/file.txt (careful! security implications!)
+  #      - ALLOW_FILE_URI=False
+  #
+  #        For complete privacy if you don't want to use the 'check version' / telemetry service
+  #      - DISABLE_VERSION_CHECK=true
+  #
+  #        A valid timezone name to run as (for scheduling watch checking) see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  #      - TZ=America/Los_Angeles
+  #
+  #        Maximum height of screenshots, default is 16000 px, screenshots will be clipped to this if exceeded.
+  #        RAM usage will be higher if you increase this.
+  #      - SCREENSHOT_MAX_HEIGHT=16000
+  
+      # Comment out ports: when using behind a reverse proxy , enable networks: etc.
+      ports:
+        - 127.0.0.1:5000:5000
+      restart: unless-stopped
 
 # Used for fetching pages via WebDriver+Chrome where you need Javascript support.
 # Now working on arm64 (needs testing on rPi - tested on Oracle ARM instance)
@@ -111,7 +177,7 @@ services:
 # If WEBDRIVER or PLAYWRIGHT are enabled, changedetection container depends on that
 # and must wait before starting (substitute "browser-chrome" with "playwright-chrome" if last one is used)
 #      depends_on:
-#          sockpuppetbrowser:
+#          browser-sockpuppet-chrome:
 #              condition: service_started
 
 # Sockpuppetbrowser is basically chrome wrapped in an API for allowing fast fetching of web-pages.

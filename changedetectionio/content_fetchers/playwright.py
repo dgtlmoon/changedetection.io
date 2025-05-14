@@ -194,13 +194,14 @@ class fetcher(Fetcher):
             browsersteps_interface.page = self.page
 
             response = browsersteps_interface.action_goto_url(value=url)
-            self.headers = response.all_headers()
 
             if response is None:
                 context.close()
                 browser.close()
                 logger.debug("Content Fetcher > Response object from the browser communication was none")
                 raise EmptyReply(url=url, status_code=None)
+
+            self.headers = response.all_headers()
 
             try:
                 if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
