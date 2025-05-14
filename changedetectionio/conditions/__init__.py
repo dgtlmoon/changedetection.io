@@ -1,5 +1,3 @@
-from flask import Blueprint
-
 from json_logic.builtins import BUILTINS
 
 from .exceptions import EmptyConditionRuleRowNotUsable
