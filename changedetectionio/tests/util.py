@@ -126,6 +126,7 @@ def extract_UUID_from_client(client):
     uuid = m.group(1)
     return uuid.strip()
 
+
 def wait_for_all_checks(client=None):
     """
     Waits until the queue is empty and remains empty for at least `required_empty_duration` seconds,
@@ -136,15 +137,13 @@ def wait_for_all_checks(client=None):
 
     # Configuration
     attempt = 0
-
     i=0
-
     max_attempts = 60
-    wait_between_attempts = 1
-    required_empty_duration = 0.6
+    wait_between_attempts = 2
+    required_empty_duration = 2
 
     logger = logging.getLogger()
-    time.sleep(0.5)
+    time.sleep(1.2)
 
     empty_since = None
 
@@ -152,7 +151,7 @@ def wait_for_all_checks(client=None):
         q_length = global_update_q.qsize()
 
         # Check if any threads are still processing
-        time.sleep(wait_between_attempts)
+        time.sleep(1.2)
         any_threads_busy = any(t.current_uuid for t in running_update_threads)
 
 
@@ -172,10 +171,9 @@ def wait_for_all_checks(client=None):
                 busy_threads = [t.name for t in running_update_threads if t.current_uuid]
                 logger.info(f"Threads still busy: {busy_threads}, resetting timer.")
             empty_since = None
-
         attempt += 1
 
-    time.sleep(wait_between_attempts)
+    time.sleep(1)
 
 def live_server_setup(live_server):
 

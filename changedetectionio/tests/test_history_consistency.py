@@ -35,7 +35,8 @@ def test_consistent_history(client, live_server, measure_memory_usage):
     )
     assert b"Settings updated." in res.data
 
-    wait_for_all_checks(client)
+
+    time.sleep(2)
 
     json_db_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, 'url-watches.json')
 
@@ -47,14 +48,10 @@ def test_consistent_history(client, live_server, measure_memory_usage):
     assert len(json_obj['watching']) == len(r), "Correct number of watches was found in the JSON"
     i=0
     # each one should have a history.txt containing just one line
-    i=0
     for w in json_obj['watching'].keys():
-        i+1
-#        res = client.get(url_for("watchlist.index"))
-#        with open('/tmp/debug.html', 'wb') as f:
-#            f.write(res.data)
+        i+=1
         history_txt_index_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, w, 'history.txt')
-        assert os.path.isfile(history_txt_index_file), f"history.txt for i: {i} should exist where I expect it at {history_txt_index_file}"
+        assert os.path.isfile(history_txt_index_file), f"History.txt should exist where I expect it at {history_txt_index_file}"
 
         # Same like in model.Watch
         with open(history_txt_index_file, "r") as f:
