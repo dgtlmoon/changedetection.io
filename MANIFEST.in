@@ -5,6 +5,7 @@ recursive-include changedetectionio/conditions *
 recursive-include changedetectionio/model *
 recursive-include changedetectionio/notification *
 recursive-include changedetectionio/processors *
+recursive-include changedetectionio/realtime *
 recursive-include changedetectionio/static *
 recursive-include changedetectionio/templates *
 recursive-include changedetectionio/tests *
