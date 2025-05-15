@@ -1,5 +1,6 @@
 import queue
 from blinker import signal
+from loguru import logger
 
 class SignalPriorityQueue(queue.PriorityQueue):
     """
@@ -12,7 +13,11 @@ class SignalPriorityQueue(queue.PriorityQueue):
     
     def __init__(self, maxsize=0):
         super().__init__(maxsize)
-        
+        try:
+            self.queue_length_signal = signal('queue_length')
+        except Exception as e:
+            logger.critical(f"Exception: {e}")
+
     def put(self, item, block=True, timeout=None):
         # Call the parent's put method first
         super().put(item, block, timeout)
@@ -25,3 +30,23 @@ class SignalPriorityQueue(queue.PriorityQueue):
             if watch_check_update:
                 # Send the watch_uuid parameter
                 watch_check_update.send(watch_uuid=uuid)
+        
+        # Send queue_length signal with current queue size
+        try:
+
+            if self.queue_length_signal:
+                self.queue_length_signal.send(length=self.qsize())
+        except Exception as e:
+            logger.critical(f"Exception: {e}")
+
+    def get(self, block=True, timeout=None):
+        # Call the parent's get method first
+        item = super().get(block, timeout)
+        
+        # Send queue_length signal with current queue size
+        try:
+            if self.queue_length_signal:
+                self.queue_length_signal.send(length=self.qsize())
+        except Exception as e:
+            logger.critical(f"Exception: {e}")
+        return item

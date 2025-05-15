@@ -41,6 +41,11 @@ $(document).ready(function () {
                 console.log('Socket.IO disconnected');
             });
 
+            socket.on('queue_size', function (data) {
+                console.log(`${data.event_timestamp} - Queue size update: ${data.q_length}`);
+                // Update queue size display if implemented in the UI
+            })
+
             // Listen for periodically emitted watch data
             socket.on('watch_update', function (watch) {
                 console.log(`${watch.event_timestamp} - Watch update ${watch.uuid} - Checking now - ${watch.checking_now} - UUID in URL ${window.location.href.includes(watch.uuid)}`);

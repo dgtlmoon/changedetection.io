@@ -31,6 +31,16 @@ def sigshutdown_handler(_signo, _stack_frame):
     logger.critical(f'Shutdown: Got Signal - {name} ({_signo}), Saving DB to disk and calling shutdown')
     datastore.sync_to_json()
     logger.success('Sync JSON to disk complete.')
+    
+    # Shutdown socketio server if available
+    from changedetectionio.flask_app import socketio_server
+    if socketio_server and hasattr(socketio_server, 'shutdown'):
+        try:
+            logger.info("Shutting down Socket.IO server...")
+            socketio_server.shutdown()
+        except Exception as e:
+            logger.error(f"Error shutting down Socket.IO server: {str(e)}")
+    
     # Set flags for clean shutdown
     datastore.stop_thread = True
     app.config.exit.set()
