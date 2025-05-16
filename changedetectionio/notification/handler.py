@@ -2,9 +2,7 @@
 import time
 import apprise
 from loguru import logger
-
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
-
 
 def process_notification(n_object, datastore):
     from changedetectionio.safe_jinja import render as jinja_render

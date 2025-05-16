@@ -27,7 +27,6 @@ from flask import (
 )
 from flask_compress import Compress as FlaskCompress
 from flask_login import current_user
-from flask_paginate import Pagination, get_page_parameter
 from flask_restful import abort, Api
 from flask_cors import CORS
 
@@ -36,7 +35,6 @@ from flask_cors import CORS
 watch_check_update = signal('watch_check_update', doc='Signal sent when a watch check is completed')
 from flask_wtf import CSRFProtect
 from loguru import logger
-import eventlet
 
 from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
@@ -580,6 +578,8 @@ def notification_runner():
             notification_debug_log+= ["{} - SENDING - {}".format(now.strftime("%Y/%m/%d %H:%M:%S,000"), json.dumps(sent_obj))]
             # Trim the log length
             notification_debug_log = notification_debug_log[-100:]
+
+
 
 # Threaded runner, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():

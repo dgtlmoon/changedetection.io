@@ -9,7 +9,6 @@ from blinker import signal
 
 from changedetectionio import strtobool
 
-
 class SignalHandler:
     """A standalone class to receive signals"""
     def __init__(self, socketio_instance, datastore):
@@ -79,14 +78,13 @@ def handle_watch_update(socketio, **kwargs):
                 queue_list.append(q_item.item['uuid'])
 
         # Create a simplified watch data object to send to clients
-        last_error_text = ' - '.join(filter(None, [watch.get('last_notification_error', ''), watch.get('error_text', '')])).strip()
         watch_data = {
             'checking_now': True if watch.get('uuid') in running_uuids else False,
             'fetch_time': watch.get('fetch_time'),
-            'has_error': True if watch.get('last_error') or watch.get('last_notification_error') else False,
+            'has_error': True if watch.compile_error_texts.strip() else False,
             'last_changed': watch.get('last_changed'),
             'last_checked': watch.get('last_checked'),
-            'error_text': last_error_text,
+            'error_text': watch.compile_error_texts,
             'last_checked_text': _jinja2_filter_datetime(watch),
             'last_changed_text': timeago.format(int(watch['last_changed']), time.time()) if watch.history_n >= 2 and int(watch.get('last_changed', 0)) > 0 else 'Not yet',
             'queued': True if watch.get('uuid') in queue_list else False,
@@ -224,8 +222,8 @@ def init_socketio(app, datastore):
                            else "Socket.IO: Queue update thread did not exit in time")
             
             # Close any remaining client connections
-            if hasattr(socketio, 'server'):
-                socketio.server.disconnect()
+            #if hasattr(socketio, 'server'):
+            #    socketio.server.disconnect()
             logger.info("Socket.IO: Server shutdown complete")
         except Exception as e:
             logger.error(f"Socket.IO error during shutdown: {str(e)}")

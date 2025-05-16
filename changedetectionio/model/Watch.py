@@ -658,3 +658,29 @@ class model(watch_base):
             if step_n:
                 available.append(step_n.group(1))
         return available
+
+    @property
+    def compile_error_texts(self):
+
+        from flask import (
+            Markup, url_for
+        )
+
+        output = ""
+        last_error = self.get('last_error','')
+        has_proxies = datastore.proxy_list
+
+        if last_error and '403' in last_error:
+            if has_proxies:
+                output.append(str(Markup(f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try other proxies/location</a>&nbsp;'")))
+            else:
+                output.append(str(Markup(f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try adding external proxies/locations</a>&nbsp;'")))
+
+        if self.get('last_notification_error'):
+            output.append(str(Markup(f"<div class=\"notification-error\"><a href=\"{url_for('settings.notification_logs')}\">{ self.get('last_notification_error') }</a></div>")))
+
+
+        res = "\n".join(output)
+
+        return res
+

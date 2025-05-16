@@ -105,7 +105,7 @@
             <tr id="{{ watch.uuid }}" data-watch-uuid="{{ watch.uuid }}"
                 class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }} processor-{{ watch['processor'] }}
                 {# socket.js also sets these vars on the row for update #}
-                {% if watch.last_error is defined and watch.last_error != False %}error{% endif %}
+                {% if watch.render_errors_as_text %}has-error{% endif %}
                 {% if watch.last_notification_error is defined and watch.last_notification_error != False %}error{% endif %}
                 {% if watch.paused is defined and watch.paused != False %}paused{% endif %}
                 {% if watch.has_unviewed %}unviewed{% endif %}
@@ -133,26 +133,10 @@
                     <img class="status-icon" src="{{url_for('static_content', group='images', filename='google-chrome-icon.png')}}" alt="Using a Chrome browser" title="Using a Chrome browser" >
                     {% endif %}
 
-                    {%if watch.is_pdf  %}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" title="Converting PDF to text" >{% endif %}
-                    {% if watch.has_browser_steps %}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" title="Browser Steps is enabled" >{% endif %}
+                    {%if watch.is_pdf  %}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" alt="Converting PDF to text" >{% endif %}
+                    {% if watch.has_browser_steps %}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" alt="Browser Steps is enabled" >{% endif %}
 
-                    <div class="error" style="display: none;">{{ watch.last_error }} {{ watch.last_notification_error }}
-                        {# @todo - link this to ajax update or update someother way.. maybe watch.full_error text method? #}
-                        {# #}{% if watch.last_error and '403' in watch.last_error %}
-                            {# #}{% if has_proxies %}
-                                {# #}<a href="{{ url_for('settings.settings_page', uuid=watch.uuid) }}#proxies">Try other proxies/location</a>&nbsp;
-                            {# #}{% endif %}
-                            {# #}<a href="{{ url_for('settings.settings_page', uuid=watch.uuid) }}#proxies">Try adding external proxies/locations</a>
-                        {# #}{% endif %}
-                        {# #}{% if watch.last_error and 'empty result or contain only an image' in watch.last_error %}
-                            {# #}<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Detecting-changes-in-images">more help here</a>.
-                        {# #}{% endif %}
-                    </div>
-
-                    {#@todo - link this to ajax update or update someother way.. maybe watch.full_error text method?#}
-                    {# #}{% if watch.last_notification_error is defined and watch.last_notification_error != False %}
-                    {# #}<div class="fetch-error notification-error"><a href="{{url_for('settings.notification_logs')}}">{{ watch.last_notification_error }}</a></div>
-                    {# #}{% endif %}
+                    <div class="error-text">{{ watch.compile_error_texts|safe }}</div>
 
                     {% if watch['processor'] == 'text_json_diff'  %}
                         {% if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  %}
