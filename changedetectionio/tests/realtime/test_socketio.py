@@ -2,9 +2,9 @@ import asyncio
 import socketio
 from aiohttp import web
 
-SOCKETIO_URL = "http://localhost:5000"
+SOCKETIO_URL = 'ws://localhost.localdomain:5005'
 SOCKETIO_PATH = "/socket.io"
-NUM_CLIENTS = 100
+NUM_CLIENTS = 1
 
 clients = []
 shutdown_event = asyncio.Event()
@@ -13,7 +13,7 @@ class WatchClient:
     def __init__(self, client_id: int):
         self.client_id = client_id
         self.i_got_watch_update_event = False
-        self.sio = socketio.AsyncClient(reconnection_attempts=5, reconnection_delay=1)
+        self.sio = socketio.AsyncClient(reconnection_attempts=50, reconnection_delay=1)
 
         @self.sio.event
         async def connect():
@@ -51,7 +51,7 @@ async def start_http_server():
     await site.start()
 
 async def main():
-    await start_http_server()
+    #await start_http_server()
 
     for i in range(NUM_CLIENTS):
         client = WatchClient(i)
