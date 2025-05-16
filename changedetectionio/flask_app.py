@@ -536,48 +536,51 @@ def notification_runner():
     global notification_debug_log
     from datetime import datetime
     import json
-    while not app.config.exit.is_set():
-        try:
-            # At the moment only one thread runs (single runner)
-            n_object = notification_q.get(block=False)
-        except queue.Empty:
-            time.sleep(1)
-
-        else:
-
-            now = datetime.now()
-            sent_obj = None
-
+    with app.app_context():
+        while not app.config.exit.is_set():
             try:
-                from changedetectionio.notification.handler import process_notification
+                # At the moment only one thread runs (single runner)
+                n_object = notification_q.get(block=False)
+            except queue.Empty:
+                time.sleep(1)
 
-                # Fallback to system config if not set
-                if not n_object.get('notification_body') and datastore.data['settings']['application'].get('notification_body'):
-                    n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
+            else:
 
-                if not n_object.get('notification_title') and datastore.data['settings']['application'].get('notification_title'):
-                    n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
+                now = datetime.now()
+                sent_obj = None
 
-                if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
-                    n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
-                if n_object.get('notification_urls', {}):
-                    sent_obj = process_notification(n_object, datastore)
+                try:
+                    from changedetectionio.notification.handler import process_notification
 
-            except Exception as e:
-                logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
+                    # Fallback to system config if not set
+                    if not n_object.get('notification_body') and datastore.data['settings']['application'].get('notification_body'):
+                        n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
 
-                # UUID wont be present when we submit a 'test' from the global settings
-                if 'uuid' in n_object:
-                    datastore.update_watch(uuid=n_object['uuid'],
-                                           update_obj={'last_notification_error': "Notification error detected, goto notification log."})
+                    if not n_object.get('notification_title') and datastore.data['settings']['application'].get('notification_title'):
+                        n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
 
-                log_lines = str(e).splitlines()
-                notification_debug_log += log_lines
+                    if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
+                        n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
+                    if n_object.get('notification_urls', {}):
+                        sent_obj = process_notification(n_object, datastore)
 
-            # Process notifications
-            notification_debug_log+= ["{} - SENDING - {}".format(now.strftime("%Y/%m/%d %H:%M:%S,000"), json.dumps(sent_obj))]
-            # Trim the log length
-            notification_debug_log = notification_debug_log[-100:]
+                except Exception as e:
+                    logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
+
+                    # UUID wont be present when we submit a 'test' from the global settings
+                    if 'uuid' in n_object:
+                        datastore.update_watch(uuid=n_object['uuid'],
+                                               update_obj={'last_notification_error': "Notification error detected, goto notification log."})
+
+                    log_lines = str(e).splitlines()
+                    notification_debug_log += log_lines
+
+                app.config['watch_check_update_SIGNAL'].send(watch_uuid=n_object.get('uuid'))
+
+                # Process notifications
+                notification_debug_log+= ["{} - SENDING - {}".format(now.strftime("%Y/%m/%d %H:%M:%S,000"), json.dumps(sent_obj))]
+                # Trim the log length
+                notification_debug_log = notification_debug_log[-100:]
 
 
 

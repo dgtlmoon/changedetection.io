@@ -81,10 +81,10 @@ def handle_watch_update(socketio, **kwargs):
         watch_data = {
             'checking_now': True if watch.get('uuid') in running_uuids else False,
             'fetch_time': watch.get('fetch_time'),
-            'has_error': True if watch.compile_error_texts.strip() else False,
+            'has_error': True if watch.compile_error_texts() else False,
             'last_changed': watch.get('last_changed'),
             'last_checked': watch.get('last_checked'),
-            'error_text': watch.compile_error_texts,
+            'error_text': watch.compile_error_texts(),
             'last_checked_text': _jinja2_filter_datetime(watch),
             'last_changed_text': timeago.format(int(watch['last_changed']), time.time()) if watch.history_n >= 2 and int(watch.get('last_changed', 0)) > 0 else 'Not yet',
             'queued': True if watch.get('uuid') in queue_list else False,
