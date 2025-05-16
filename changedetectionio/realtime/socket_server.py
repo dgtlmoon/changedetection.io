@@ -152,7 +152,7 @@ def init_socketio(app, datastore):
     # Use the threading async_mode instead of eventlet
     # This avoids the need for monkey patching eventlet,
     # Which leads to problems with async playwright etc
-    async_mode = 'threading'
+    async_mode = 'gevent'
     logger.info(f"Using {async_mode} mode for Socket.IO")
 
     # Restrict SocketIO CORS to same origin by default, can be overridden with env var
