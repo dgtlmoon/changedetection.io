@@ -252,8 +252,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
 
         if uuids:
             for uuid in uuids:
-                with app.app_context():
-                    watch_check_update.send(watch_uuid=uuid)
+#                with app.app_context():
+                watch_check_update.send(watch_uuid=uuid)
 
         return redirect(url_for('watchlist.index'))
 
