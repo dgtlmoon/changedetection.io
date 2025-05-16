@@ -7,11 +7,6 @@
     &.unviewed {
       font-weight: bold;
     }
-
-    &.error {
-      color: var(--color-watch-table-error);
-    }
-
     color: var(--color-watch-table-row-text);
   }
 
@@ -112,9 +107,11 @@
     }
   }
 
-  tr.error {
-    .fetch-error {
-      display: inline-block !important;
+
+  tr.has-error {
+    color: var(--color-watch-table-error);
+    .error-text {
+      display: block !important;
     }
   }
 }

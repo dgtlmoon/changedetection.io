@@ -105,8 +105,7 @@
             <tr id="{{ watch.uuid }}" data-watch-uuid="{{ watch.uuid }}"
                 class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }} processor-{{ watch['processor'] }}
                 {# socket.js also sets these vars on the row for update #}
-                {% if watch.render_errors_as_text %}has-error{% endif %}
-                {% if watch.last_notification_error is defined and watch.last_notification_error != False %}error{% endif %}
+                {% if watch.compile_error_texts()|length >2 %}has-error{% endif %}
                 {% if watch.paused is defined and watch.paused != False %}paused{% endif %}
                 {% if watch.has_unviewed %}unviewed{% endif %}
                 {% if watch.has_restock_info %} has-restock-info {% if watch['restock']['in_stock'] %}in-stock{% else %}not-in-stock{% endif %} {% else %}no-restock-info{% endif %}
@@ -133,10 +132,10 @@
                     <img class="status-icon" src="{{url_for('static_content', group='images', filename='google-chrome-icon.png')}}" alt="Using a Chrome browser" title="Using a Chrome browser" >
                     {% endif %}
 
-                    {%if watch.is_pdf  %}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" alt="Converting PDF to text" >{% endif %}
+                    {% if watch.is_pdf  %}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" alt="Converting PDF to text" >{% endif %}
                     {% if watch.has_browser_steps %}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" alt="Browser Steps is enabled" >{% endif %}
 
-                    <div class="error-text">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list)|safe }}</div>
+                    <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list)|safe }}</div>
 
                     {% if watch['processor'] == 'text_json_diff'  %}
                         {% if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  %}

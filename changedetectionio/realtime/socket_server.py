@@ -1,6 +1,5 @@
 import timeago
 from flask_socketio import SocketIO
-from flask import has_app_context, current_app
 
 import time
 import os
@@ -88,12 +87,11 @@ def handle_watch_update(socketio, **kwargs):
                 queue_list.append(q_item.item['uuid'])
 
         error_texts = ""
-        if has_app_context():
             # So anything with 'url_for' etc needs to be triggered with app_context of the current app when sending the signal
 #            with app.app_context():
 #                watch_check_update.send(app_context=app, watch_uuid=uuid)
 
-            error_texts = watch.compile_error_texts()
+        error_texts = watch.compile_error_texts()
 
         # Create a simplified watch data object to send to clients
         watch_data = {
@@ -114,7 +112,7 @@ def handle_watch_update(socketio, **kwargs):
         }
 
         socketio.emit("watch_update", watch_data)
-        logger.debug(f"Socket.IO: Emitted update for watch {watch.get('uuid')}, Checking now: {watch_data['checking_now']}")
+        logger.trace(f"Socket.IO: Emitted update for watch {watch.get('uuid')}, Checking now: {watch_data['checking_now']}")
 
     except Exception as e:
         logger.error(f"Socket.IO error in handle_watch_update: {str(e)}")

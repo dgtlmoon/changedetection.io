@@ -2,21 +2,24 @@
 // @todo only bind ajax if the socket server attached success.
 
 $(document).ready(function () {
-    $('.ajax-op').click(function (e) {
-        e.preventDefault();
-        $.ajax({
-            type: "POST",
-            url: ajax_toggle_url,
-            data: {'op': $(this).data('op'), 'uuid': $(this).closest('tr').data('watch-uuid')},
-            statusCode: {
-                400: function () {
-                    // More than likely the CSRF token was lost when the server restarted
-                    alert("There was a problem processing the request, please reload the page.");
+
+    function bindAjaxHandlerButtonsEvents() {
+        $('.ajax-op').on('click.ajaxHandlerNamespace', function (e) {
+            e.preventDefault();
+            $.ajax({
+                type: "POST",
+                url: ajax_toggle_url,
+                data: {'op': $(this).data('op'), 'uuid': $(this).closest('tr').data('watch-uuid')},
+                statusCode: {
+                    400: function () {
+                        // More than likely the CSRF token was lost when the server restarted
+                        alert("There was a problem processing the request, please reload the page.");
+                    }
                 }
-            }
+            });
+            return false;
         });
-        return false;
-    });
+    }
 
 
     // Only try to connect if authentication isn't required or user is authenticated
@@ -35,10 +38,12 @@ $(document).ready(function () {
             // Connection status logging
             socket.on('connect', function () {
                 console.log('Socket.IO connected');
+                bindAjaxHandlerButtonsEvents();
             });
 
             socket.on('disconnect', function () {
                 console.log('Socket.IO disconnected');
+                $('.ajax-op').off('.ajaxHandlerNamespace')
             });
 
             socket.on('queue_size', function (data) {
@@ -56,11 +61,11 @@ $(document).ready(function () {
                     $($watchRow).toggleClass('checking-now', watch.checking_now);
                     $($watchRow).toggleClass('queued', watch.queued);
                     $($watchRow).toggleClass('unviewed', watch.unviewed);
-                    $($watchRow).toggleClass('error', watch.has_error);
+                    $($watchRow).toggleClass('has-error', watch.has_error);
                     $($watchRow).toggleClass('notification_muted', watch.notification_muted);
                     $($watchRow).toggleClass('paused', watch.paused);
 
-                    $('td.error-text', $watchRow).text(watch.error_text)
+                    $('td.title-col .error-text', $watchRow).html(watch.error_text)
 
                     $('td.last-changed', $watchRow).text(watch.last_checked_text)
 

@@ -532,8 +532,6 @@ body.preview-text-enabled {
     color: var(--color-watch-table-row-text); }
     .watch-table tr.unviewed {
       font-weight: bold; }
-    .watch-table tr.error {
-      color: var(--color-watch-table-error); }
   .watch-table td {
     white-space: nowrap; }
     .watch-table td.title-col {
@@ -577,8 +575,10 @@ body.preview-text-enabled {
     display: inline !important; }
   .watch-table tr.notification_muted a.mute-toggle.state-off {
     display: none !important; }
-  .watch-table tr.error .fetch-error {
-    display: inline-block !important; }
+  .watch-table tr.has-error {
+    color: var(--color-watch-table-error); }
+    .watch-table tr.has-error .error-text {
+      display: block !important; }
 
 ul#conditions_match_logic {
   list-style: none; }

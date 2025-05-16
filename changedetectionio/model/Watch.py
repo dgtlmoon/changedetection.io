@@ -669,15 +669,28 @@ class model(watch_base):
 
         output = []  # Initialize as list since we're using append
         last_error = self.get('last_error','')
+        from flask import has_app_context, current_app
 
-        if last_error and '403' in last_error:
-            if has_proxies:
-                output.append(str(Markup(f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try other proxies/location</a>&nbsp;'")))
-            else:
-                output.append(str(Markup(f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try adding external proxies/locations</a>&nbsp;'")))
+        # has app+request context, we can use url_for()
+        if has_app_context:
+            if last_error:
+                if '403' in last_error:
+                    if has_proxies:
+                        output.append(str(Markup(f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try other proxies/location</a>&nbsp;'")))
+                    else:
+                        output.append(str(Markup(f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try adding external proxies/locations</a>&nbsp;'")))
+                else:
+                    output.append(str(Markup(last_error)))
 
-        if self.get('last_notification_error'):
-            output.append(str(Markup(f"<div class=\"notification-error\"><a href=\"{url_for('settings.notification_logs')}\">{ self.get('last_notification_error') }</a></div>")))
+            if self.get('last_notification_error'):
+                output.append(str(Markup(f"<div class=\"notification-error\"><a href=\"{url_for('settings.notification_logs')}\">{ self.get('last_notification_error') }</a></div>")))
+
+        else:
+            # Lo_Fi version
+            if last_error:
+                output.append(str(Markup(last_error)))
+            if self.get('last_notification_error'):
+                output.append(str(Markup(self.get('last_notification_error'))))
 
         res = "\n".join(output)
         return res
