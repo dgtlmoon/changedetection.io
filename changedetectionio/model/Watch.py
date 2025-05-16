@@ -669,7 +669,13 @@ class model(watch_base):
 
         output = []  # Initialize as list since we're using append
         last_error = self.get('last_error','')
-        from flask import has_app_context, current_app
+
+        try:
+            url_for('settings.settings_page')
+        except Exception as e:
+            has_app_context = False
+        else:
+            has_app_context = True
 
         # has app+request context, we can use url_for()
         if has_app_context:
