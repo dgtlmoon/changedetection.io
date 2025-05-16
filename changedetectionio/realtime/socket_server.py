@@ -146,8 +146,8 @@ def init_socketio(app, datastore):
     socketio = SocketIO(app,
                       async_mode=async_mode,
                       cors_allowed_origins=cors_origins,  # None means same-origin only
-                      logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'True')),
-                      engineio_logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'True')))
+                      logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')),
+                      engineio_logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')))
 
     # Set up event handlers
     @socketio.on('connect')
